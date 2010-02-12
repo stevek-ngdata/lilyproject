@@ -93,7 +93,8 @@ public class Index {
         }
 
         Scan scan = new Scan(fromKey);
+//        scan.setFilter(new InclusiveStopFilter(toKey));
         scan.setFilter(new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryPrefixComparator(toKey)));
-        return new QueryResult(htable.getScanner(scan), indexKeyLength);
+        return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength);
     }
 }

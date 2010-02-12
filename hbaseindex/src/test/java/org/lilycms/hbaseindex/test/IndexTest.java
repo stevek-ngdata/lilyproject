@@ -46,7 +46,7 @@ public class IndexTest {
         }
 
         Query query = new Query();
-        query.setRangeCondition("field1", "a", "e");
+        query.setRangeCondition("field1", "a", "d");
         QueryResult result = index.performQuery(query);
 
         assertEquals("targetkey1", Bytes.toString(result.next()));
@@ -95,7 +95,6 @@ public class IndexTest {
         assertNull(result.next());
     }
 
-    /*
     @Test
     public void testDuplicateValuesIndex() throws Exception {
         final String INDEX_NAME = "duplicatevalues";
@@ -169,5 +168,4 @@ public class IndexTest {
 
         assertResultSize(3, result);
     }
-    */
 }
