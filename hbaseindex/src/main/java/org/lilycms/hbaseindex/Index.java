@@ -1,5 +1,6 @@
 package org.lilycms.hbaseindex;
 
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
@@ -26,12 +27,30 @@ public class Index {
         this.definition = definition;
     }
 
-    public void addEntry(IndexEntry entry, byte[] targetKey) throws IOException {
+    public void addEntry(IndexEntry entry, byte[] targetRowKey) throws IOException {
         // check entry does not conflict with definition
         // TODO
 
-        // build index key
+        byte[] indexKey = buildRowKey(entry, targetRowKey);
+        Put put = new Put(indexKey);
+        put.add(DUMMY_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
 
+        htable.put(put);
+    }
+
+    /**
+     * Removes an entry from the index. The contents of the supplied
+     * entry and the targetRowKey should exactly match those supplied
+     * when creating the index entry.
+     */
+    public void removeEntry(IndexEntry entry, byte[] targetRowKey) throws IOException {
+        // TODO verify entry
+        byte[] indexKey = buildRowKey(entry, targetRowKey);
+        Delete delete = new Delete(indexKey);
+        htable.delete(delete);
+    }
+
+    private byte[] buildRowKey(IndexEntry entry, byte[] targetKey) {
         // calculate size of the index key
         int keyLength = targetKey.length + getIndexKeyLength();
 
@@ -47,10 +66,7 @@ public class Index {
         // put target key in the key
         System.arraycopy(targetKey, 0, indexKey, offset, targetKey.length);
 
-        Put put = new Put(indexKey);
-        put.add(DUMMY_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
-
-        htable.put(put);
+        return indexKey;
     }
 
     private int getIndexKeyLength() {

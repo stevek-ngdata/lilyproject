@@ -236,4 +236,40 @@ public class IndexTest {
 
         assertResultSize(3, result);
     }
+
+    @Test
+    public void testDeleteFromIndex() throws Exception {
+        final String INDEX_NAME = "deletefromindex";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addStringField("field1");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        // Add the entry
+        IndexEntry entry = new IndexEntry();
+        entry.addField("field1", "foobar");
+        index.addEntry(entry, Bytes.toBytes("key1"));
+
+        // Test it is there
+        Query query = new Query();
+        query.addEqualsCondition("field1", "foobar");
+        QueryResult result = index.performQuery(query);
+        assertEquals("key1", Bytes.toString(result.next()));
+        assertNull(result.next());
+
+        // Delete the entry
+        index.removeEntry(entry, Bytes.toBytes("key1"));
+
+        // Test it is gone
+        result = index.performQuery(query);
+        assertNull(result.next());
+
+        // Delete the entry again, this should not give an error
+        index.removeEntry(entry, Bytes.toBytes("key1"));
+    }
+
 }
