@@ -272,4 +272,49 @@ public class IndexTest {
         index.removeEntry(entry, Bytes.toBytes("key1"));
     }
 
+    @Test
+    public void testNullIndex() throws Exception {
+        final String INDEX_NAME = "nullindex";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addStringField("field1");
+        indexDef.addStringField("field2");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        IndexEntry entry = new IndexEntry();
+        entry.addField("field1", "foobar");
+        index.addEntry(entry, Bytes.toBytes("key1"));
+
+        entry = new IndexEntry();
+        index.addEntry(entry, Bytes.toBytes("key2"));
+
+        entry = new IndexEntry();
+        entry.addField("field2", "foobar");
+        index.addEntry(entry, Bytes.toBytes("key3"));
+
+        Query query = new Query();
+        query.addEqualsCondition("field1", "foobar");
+        query.addEqualsCondition("field2", null);
+        QueryResult result = index.performQuery(query);
+        assertEquals("key1", Bytes.toString(result.next()));
+        assertNull(result.next());
+
+        query = new Query();
+        query.addEqualsCondition("field1", null);
+        query.addEqualsCondition("field2", null);
+        result = index.performQuery(query);
+        assertEquals("key2", Bytes.toString(result.next()));
+        assertNull(result.next());
+
+        query = new Query();
+        query.addEqualsCondition("field1", null);
+        query.addEqualsCondition("field2", "foobar");
+        result = index.performQuery(query);
+        assertEquals("key3", Bytes.toString(result.next()));
+        assertNull(result.next());
+    }
 }

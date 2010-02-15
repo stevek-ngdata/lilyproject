@@ -22,6 +22,9 @@ public class Index {
     private static final byte[] DUMMY_QUALIFIER = Bytes.toBytes("dummy");
     private static final byte[] DUMMY_VALUE = Bytes.toBytes("dummy");
 
+    /** Number of bytes overhead per field. */
+    private static final int FIELD_OVERHEAD = 1;
+
     public Index(HTable htable, IndexDefinition definition) {
         this.htable = htable;
         this.definition = definition;
@@ -33,6 +36,8 @@ public class Index {
 
         byte[] indexKey = buildRowKey(entry, targetRowKey);
         Put put = new Put(indexKey);
+
+        // HBase does not allow to create a row without columns, so add some dummy ones.
         put.add(DUMMY_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
 
         htable.put(put);
@@ -50,6 +55,18 @@ public class Index {
         htable.delete(delete);
     }
 
+    /**
+     * Build the index row key.
+     *
+     * <p>The format is as follows:
+     *
+     * <pre>
+     * ([1 byte field flags][fixed length value as bytes])*[target key]
+     * </pre>
+     *
+     * <p>The field flags are currently used to mark if a field is null
+     * or not. If a field is null, its value will be encoded as all-zero bits.
+     */
     private byte[] buildRowKey(IndexEntry entry, byte[] targetKey) {
         // calculate size of the index key
         int keyLength = targetKey.length + getIndexKeyLength();
@@ -60,7 +77,7 @@ public class Index {
         int offset = 0;
         for (IndexFieldDefinition fieldDef : definition.getFields()) {
             Object value = entry.getValue(fieldDef.getName());
-            offset = fieldDef.toBytes(indexKey, offset, value);
+            offset = putField(indexKey, offset, fieldDef, value);
         }
 
         // put target key in the key
@@ -72,9 +89,27 @@ public class Index {
     private int getIndexKeyLength() {
         int length = 0;
         for (IndexFieldDefinition fieldDef : definition.getFields()) {
-            length += fieldDef.getByteLength();
+            length += fieldDef.getByteLength() + FIELD_OVERHEAD;
         }
         return length;
+    }
+
+    private int putField(byte[] bytes, int offset, IndexFieldDefinition fieldDef, Object value) {
+        if (value == null) {
+            bytes[offset] = setNullFlag((byte)0);
+        }
+        offset++;
+
+        if (value != null) {
+            fieldDef.toBytes(bytes, offset, value);
+        }
+        offset += fieldDef.getByteLength();
+
+        return offset;
+    }
+
+    private byte setNullFlag(byte flags) {
+        return (byte)(flags | 0x01);
     }
 
     public QueryResult performQuery(Query query) throws IOException {
@@ -94,7 +129,7 @@ public class Index {
             IndexFieldDefinition fieldDef = fieldDefs.get(i);
 
             Object value = query.getCondition(fieldDef.getName()).getValue();
-            keyOffset = fieldDef.toBytes(fromKey, keyOffset, value);
+            keyOffset = putField(fromKey, keyOffset, fieldDef, value);
         }
 
         System.arraycopy(fromKey, 0, toKey, 0, keyOffset);
@@ -104,13 +139,13 @@ public class Index {
             Object toValue = query.getRangeCondition().getToValue();
 
             IndexFieldDefinition fieldDef = fieldDefs.get(fieldDefs.size() - 1);
-            fieldDef.toBytes(fromKey, keyOffset, fromValue);
-            fieldDef.toBytes(toKey, keyOffset, toValue);
+            putField(fromKey, keyOffset, fieldDef, fromValue);
+            putField(toKey, keyOffset, fieldDef, toValue);
         }
 
         Scan scan = new Scan(fromKey);
-//        scan.setFilter(new InclusiveStopFilter(toKey));
         scan.setFilter(new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryPrefixComparator(toKey)));
         return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength);
     }
+
 }
