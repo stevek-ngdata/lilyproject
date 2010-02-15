@@ -30,10 +30,6 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
         super(name, IndexValueType.STRING);
     }
 
-    public int getLength() {
-        return length;
-    }
-
     /**
      * The number of bytes this field takes in a index entry. This is
      * not the same as the number of characters, the number of bytes

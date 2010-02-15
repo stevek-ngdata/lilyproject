@@ -8,9 +8,11 @@ import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilycms.util.ArgumentValidator;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Allows to query an index, and add entries to it or remove entries from it.
@@ -37,8 +39,9 @@ public class Index {
     }
 
     public void addEntry(IndexEntry entry, byte[] targetRowKey) throws IOException {
-        // check entry does not conflict with definition
-        // TODO
+        ArgumentValidator.notNull(entry, "entry");
+        ArgumentValidator.notNull(targetRowKey, "targetRowKey");
+        validateIndexEntry(entry);
 
         byte[] indexKey = buildRowKey(entry, targetRowKey);
         Put put = new Put(indexKey);
@@ -55,10 +58,31 @@ public class Index {
      * when creating the index entry.
      */
     public void removeEntry(IndexEntry entry, byte[] targetRowKey) throws IOException {
-        // TODO verify entry
+        ArgumentValidator.notNull(entry, "entry");
+        ArgumentValidator.notNull(targetRowKey, "targetRowKey");
+        validateIndexEntry(entry);
+
         byte[] indexKey = buildRowKey(entry, targetRowKey);
         Delete delete = new Delete(indexKey);
         htable.delete(delete);
+    }
+
+    private void validateIndexEntry(IndexEntry indexEntry) {
+        for (Map.Entry<String, Object> entry : indexEntry.getValues().entrySet()) {
+            IndexFieldDefinition fieldDef = definition.getField(entry.getKey());
+            if (fieldDef == null) {
+                throw new MalformedIndexEntryException("Index entry contains a field that is not part of " +
+                        "the index definition: " + entry.getKey());
+            }
+
+            if (entry.getValue() != null) {
+                if (!fieldDef.getType().supportsType(entry.getValue().getClass())) {
+                    throw new MalformedIndexEntryException("Index entry for field " + entry.getKey() + " contains " +
+                            " a value of an incorrect type. Expected: " + fieldDef.getType().getType().getName() +
+                            ", found: " + entry.getValue().getClass().getName());
+                }
+            }
+        }
     }
 
     /**

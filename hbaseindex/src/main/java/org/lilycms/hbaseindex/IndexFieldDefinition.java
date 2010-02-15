@@ -1,7 +1,7 @@
 package org.lilycms.hbaseindex;
 
 public abstract class IndexFieldDefinition {
-    private String name;
+    private final String name;
     private IndexValueType type;
 
     public IndexFieldDefinition(String name, IndexValueType type) {
@@ -14,7 +14,7 @@ public abstract class IndexFieldDefinition {
     }
 
     public IndexValueType getType() {
-        return IndexValueType.INTEGER;
+        return type;
     }
 
     /**

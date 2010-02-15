@@ -13,4 +13,8 @@ public class IndexEntry {
     public Object getValue(String name) {
         return values.get(name);
     }
+
+    protected Map<String, Object> getValues() {
+        return values;
+    }
 }

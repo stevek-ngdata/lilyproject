@@ -350,4 +350,49 @@ public class IndexTest {
             // ok
         }
     }
+
+    @Test
+    public void testIndexEntryVerificationIndex() throws Exception {
+        final String INDEX_NAME = "indexentryverification";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addStringField("stringfield");
+        indexDef.addFloatField("floatfield");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        IndexEntry entry = new IndexEntry();
+        entry.addField("nonexistingfield", "foobar");
+
+        try {
+            index.addEntry(entry, Bytes.toBytes("key"));
+            fail("Expected a MalformedIndexEntryException.");
+        } catch (MalformedIndexEntryException e) {
+            // ok
+        }
+
+        entry = new IndexEntry();
+        entry.addField("stringfield", new Integer(55));
+
+        try {
+            index.addEntry(entry, Bytes.toBytes("key"));
+            fail("Expected a MalformedIndexEntryException.");
+        } catch (MalformedIndexEntryException e) {
+            // ok
+        }
+
+        entry = new IndexEntry();
+        entry.addField("floatfield", "hello world");
+
+        try {
+            index.addEntry(entry, Bytes.toBytes("key"));
+            fail("Expected a MalformedIndexEntryException.");
+        } catch (MalformedIndexEntryException e) {
+            // ok
+        }
+    }
 }
+
