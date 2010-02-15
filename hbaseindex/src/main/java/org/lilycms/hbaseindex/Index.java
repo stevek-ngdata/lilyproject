@@ -6,14 +6,20 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.InclusiveStopFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.List;
 
-// TODO is this threadsafe or not
+/**
+ * Allows to query an index, and add entries to it or remove entries from it.
+ *
+ * <p>The Index class <b>is not thread safe</b>, because the underlying HBase HTable
+ * is not thread safe. Therefore, let each thread fetch its own copy of Index from
+ * the {@link IndexManager}.
+ *
+ */
 public class Index {
     private HTable htable;
     private IndexDefinition definition;

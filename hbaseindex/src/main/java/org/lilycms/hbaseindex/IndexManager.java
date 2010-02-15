@@ -29,9 +29,25 @@ public class IndexManager {
         indexDefs.put(indexDef.getName(), indexDef);
     }
 
-    public Index getIndex(String name) throws IOException {
+    public Index getIndex(String name) throws IOException, IndexNotFoundException {
+        IndexDefinition indexDef = indexDefs.get(name);
+        if (indexDef == null)
+            throw new IndexNotFoundException(name);
+        
         HTable htable = new HTable(hbaseConf, name);
-        Index index = new Index(htable, indexDefs.get(name));
+        Index index = new Index(htable, indexDef);
         return index;
+    }
+
+    public void deleteIndex(String name) throws IOException, IndexNotFoundException {
+        if (!indexDefs.containsKey(name)) {
+            throw new IndexNotFoundException(name);
+        }
+
+        indexDefs.remove(name);
+
+        // TODO what if this fails in between operations? Log this...
+        hbaseAdmin.disableTable(name);
+        hbaseAdmin.deleteTable(name);
     }
 }

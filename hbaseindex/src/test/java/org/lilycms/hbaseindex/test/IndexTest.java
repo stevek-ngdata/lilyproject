@@ -317,4 +317,37 @@ public class IndexTest {
         assertEquals("key3", Bytes.toString(result.next()));
         assertNull(result.next());
     }
+
+    @Test
+    public void testNotExistingIndex() throws Exception {
+        final String INDEX_NAME = "notexisting";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        try {
+            indexManager.getIndex(INDEX_NAME);
+            fail("Expected an IndexNotFoundException.");
+        } catch (IndexNotFoundException e) {
+            // ok
+        }
+    }
+
+    @Test
+    public void testDeleteIndex() throws Exception {
+        final String INDEX_NAME = "deleteindex";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexManager.createIndex(indexDef);
+
+        indexManager.getIndex(INDEX_NAME);
+
+        indexManager.deleteIndex(INDEX_NAME);
+
+        try {
+            indexManager.getIndex(INDEX_NAME);
+            fail("Expected an IndexNotFoundException.");
+        } catch (IndexNotFoundException e) {
+            // ok
+        }
+    }
 }
