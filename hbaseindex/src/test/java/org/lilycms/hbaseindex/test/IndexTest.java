@@ -2,6 +2,8 @@ package org.lilycms.hbaseindex.test;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,6 +12,7 @@ import org.lilycms.hbaseindex.*;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 
 public class IndexTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -32,12 +35,12 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createCompositeIndex(indexDef);
+        indexManager.createIndex(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
         // Create a few index entries, inserting them in non-sorted order
-        String[] values = {"d", "a", "c", "b"};
+        String[] values = {"d", "a", "c", "e", "b"};
 
         for (int i = 0; i < values.length; i++) {
             IndexEntry entry = new IndexEntry();
@@ -46,11 +49,10 @@ public class IndexTest {
         }
 
         Query query = new Query();
-        query.setRangeCondition("field1", "a", "d");
+        query.setRangeCondition("field1", "b", "d");
         QueryResult result = index.performQuery(query);
 
-        assertEquals("targetkey1", Bytes.toString(result.next()));
-        assertEquals("targetkey3", Bytes.toString(result.next()));
+        assertEquals("targetkey4", Bytes.toString(result.next()));
         assertEquals("targetkey2", Bytes.toString(result.next()));
         assertEquals("targetkey0", Bytes.toString(result.next()));
         assertNull(result.next());
@@ -64,7 +66,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
 
-        indexManager.createCompositeIndex(indexDef);
+        indexManager.createIndex(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -96,6 +98,72 @@ public class IndexTest {
     }
 
     @Test
+    public void testSingleFloatFieldIndex() throws Exception {
+        final String INDEX_NAME = "singlefloatfield";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addFloatField("field1");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        float[] values = {55.45f, 63.88f, 55.46f, 55.47f, -0.3f};
+
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("targetkey" + i));
+        }
+
+        Query query = new Query();
+        query.setRangeCondition("field1", new Float(55.44f), new Float(55.48f));
+        QueryResult result = index.performQuery(query);
+
+        assertEquals("targetkey0", Bytes.toString(result.next()));
+        assertEquals("targetkey2", Bytes.toString(result.next()));
+        assertEquals("targetkey3", Bytes.toString(result.next()));
+        assertNull(result.next());
+    }
+
+    @Test
+    public void testSingleDateTimeFieldIndex() throws Exception {
+        final String INDEX_NAME = "singledatetimefield";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        DateTimeIndexFieldDefinition fieldDef = indexDef.addDateTimeField("field1");
+        fieldDef.setPrecision(DateTimeIndexFieldDefinition.Precision.DATETIME_NOMILLIS);
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        DateTimeFormatter formatter = ISODateTimeFormat.basicDateTimeNoMillis();
+        Date[] values = {
+                formatter.parseDateTime("20100215T140500Z").toDate(),
+                formatter.parseDateTime("20100215T140501Z").toDate(),
+                formatter.parseDateTime("20100216T100000Z").toDate(),
+                formatter.parseDateTime("20100217T100000Z").toDate()
+        };
+
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("targetkey" + i));
+        }
+
+        Query query = new Query();
+        query.setRangeCondition("field1", formatter.parseDateTime("20100215T140500Z").toDate(),
+                formatter.parseDateTime("20100215T140501Z").toDate());
+        QueryResult result = index.performQuery(query);
+
+        assertEquals("targetkey0", Bytes.toString(result.next()));
+        assertEquals("targetkey1", Bytes.toString(result.next()));
+        assertNull(result.next());
+    }
+
+    @Test
     public void testDuplicateValuesIndex() throws Exception {
         final String INDEX_NAME = "duplicatevalues";
         IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
@@ -103,7 +171,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createCompositeIndex(indexDef);
+        indexManager.createIndex(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -140,7 +208,7 @@ public class IndexTest {
         indexDef.addIntegerField("field1");
         indexDef.addStringField("field2");
 
-        indexManager.createCompositeIndex(indexDef);
+        indexManager.createIndex(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 

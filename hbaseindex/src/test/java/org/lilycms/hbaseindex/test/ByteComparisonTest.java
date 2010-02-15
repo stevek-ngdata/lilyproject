@@ -2,13 +2,17 @@ package org.lilycms.hbaseindex.test;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
+import org.lilycms.hbaseindex.FloatIndexFieldDefinition;
+import org.lilycms.hbaseindex.IntegerIndexFieldDefinition;
+import org.lilycms.hbaseindex.StringIndexFieldDefinition;
+
 import static org.junit.Assert.*;
 
 /**
- * At the time of this writing, these are just some test to verify
- * some number byte sorting ideas.
+ * Various tests that check whether the comparison of the binary representations
+ * of values gives the expected result.
  */
-public class ByteNumberComparisonTest {
+public class ByteComparisonTest {
     @Test
     public void testSignedIntegerCompare() throws Exception {
         int[] testNumbers = {
@@ -84,58 +88,60 @@ public class ByteNumberComparisonTest {
         }
     }
 
-    /**
-     * Converts an integer to a byte representation such that comparing the bytes
-     * lexicographically compares the integer values.
-     *
-     * <p>Basically this is a matter of flipping the sign bit.
-     */
-    private byte[] toSortableBytes(int value) {
-        byte[] bytes = Bytes.toBytes(value);
+    @Test
+    public void testCollatorStringCompare() throws Exception {
+        StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
+        fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.COLLATOR);
 
-        if (value < 0) {
-            bytes[0] = (byte)(bytes[0] & 0x7F);
-        } else if (value >= 0) {
-            bytes[0] = (byte)(bytes[0] | 0x80);            
-        }
+        byte[] string1 = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(string1, 0, "être");
 
-        return bytes;
+        byte[] string2 = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(string2, 0, "heureux");
+
+        assertTrue(Bytes.compareTo(string1, string2) < 0);
     }
 
-    /**
-     * Converts a float to a byte representation such that comparing the bytes
-     * lexicographically compares the float values.
-     *
-     * <p>A description of the IEEE float format used by Java can be found at
-     * http://docs.sun.com/source/806-3568/ncg_math.html
-     *
-     * <p>Basically it consists of [sign bit][exponent bits][mantissa bits],
-     * with the more significant bits to the left. For positive numbers, the
-     * sorting will be automatically OK, but to get them bigger than the negatives
-     * we flip the sign bit. Negative numbers are in sign-magnitude format (in
-     * contrast to the two's complement representation of integers), to get
-     * bigger magnitudes to become smaller we simply flip both the exponent and
-     * mantissa bits.
-     *
-     * <p>Handling of infinity, subnormal numbers and both zeros (pos & neg) should
-     * be fine, handling of not-a-number is undefined.
-     */
+    @Test
+    public void testUtf8StringCompare() throws Exception {
+        StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
+        fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.UTF8);
+
+        byte[] string1 = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(string1, 0, "être");
+
+        byte[] string2 = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(string2, 0, "heureux");
+
+        assertTrue(Bytes.compareTo(string1, string2) > 0);
+    }
+
+    @Test
+    public void testAsciiFoldingStringCompare() throws Exception {
+        StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
+        fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.ASCII_FOLDING);
+
+        byte[] string1 = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(string1, 0, "être");
+
+        byte[] string2 = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(string2, 0, "etre");
+
+        assertTrue(Bytes.compareTo(string1, string2) == 0);               
+    }
+
+    private byte[] toSortableBytes(int value) {
+        IntegerIndexFieldDefinition fieldDef = new IntegerIndexFieldDefinition("foobar");
+        byte[] result = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(result, 0, value);
+        return result;
+    }
+
     private byte[] toSortableBytes(float value) {
-        byte[] bytes = Bytes.toBytes(value);
-
-        // Check the leftmost bit to determine if the value is negative
-        int test = (bytes[0] >>> 7) & 0x01;
-        if (test == 1) {
-            // Negative numbers: flip all bits: sign, exponent and mantissa
-            for (int i = 0; i < bytes.length; i++) {
-                bytes[i] = (byte)(bytes[i] ^ 0xFF);
-            }
-        } else {
-            // Positive numbers: flip the sign bit
-            bytes[0] = (byte)(bytes[0] | 0x80);
-        }
-
-        return bytes;
+        FloatIndexFieldDefinition fieldDef = new FloatIndexFieldDefinition("foobar");
+        byte[] result = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(result, 0, value);
+        return result;
     }
 
     /**

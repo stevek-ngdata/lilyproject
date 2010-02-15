@@ -2,5 +2,7 @@ package org.lilycms.hbaseindex;
 
 public enum IndexValueType {
     STRING,
-    INTEGER;
+    INTEGER,
+    FLOAT,
+    DATETIME;
 }

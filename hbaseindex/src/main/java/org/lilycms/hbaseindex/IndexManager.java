@@ -21,7 +21,7 @@ public class IndexManager {
         hbaseAdmin = new HBaseAdmin(hbaseConf);
     }
 
-    public void createCompositeIndex(IndexDefinition indexDef) throws IOException {
+    public void createIndex(IndexDefinition indexDef) throws IOException {
         HTableDescriptor table = new HTableDescriptor(indexDef.getName());
         HColumnDescriptor family = new HColumnDescriptor("dummy");
         table.addFamily(family);
