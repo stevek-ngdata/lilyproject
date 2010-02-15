@@ -1,4 +1,4 @@
-HBASE_VERSION=0.21.0-dev-r908077
+HBASE_VERSION=0.21.0-dev-r910185
 ZK_VERSION=3.2.2
 
 mvn install:install-file -DgroupId=org.apache.hadoop -DartifactId=hbase -Dversion=$HBASE_VERSION -Dpackaging=jar -Dfile=hbase-$HBASE_VERSION.jar -DpomFile=hbase.pom
