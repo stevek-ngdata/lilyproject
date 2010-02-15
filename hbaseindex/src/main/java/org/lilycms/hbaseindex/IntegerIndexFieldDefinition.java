@@ -14,6 +14,11 @@ public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
 
     @Override
     public int toBytes(byte[] bytes, int offset, Object value) {
+        return toBytes(bytes, offset, value, true);
+    }
+
+    @Override
+    public int toBytes(byte[] bytes, int offset, Object value, boolean fillFieldLength) {
         int integer = (Integer)value;
         int nextOffset = Bytes.putInt(bytes, offset, integer);
 

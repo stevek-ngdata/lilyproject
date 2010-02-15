@@ -125,15 +125,20 @@ public class Index {
     }
 
     private int putField(byte[] bytes, int offset, IndexFieldDefinition fieldDef, Object value) {
+        return putField(bytes, offset, fieldDef, value, true);
+    }
+
+    private int putField(byte[] bytes, int offset, IndexFieldDefinition fieldDef, Object value, boolean fillFieldLength) {
         if (value == null) {
             bytes[offset] = setNullFlag((byte)0);
         }
         offset++;
 
         if (value != null) {
-            fieldDef.toBytes(bytes, offset, value);
+            offset = fieldDef.toBytes(bytes, offset, value, fillFieldLength);
+        } else if (fillFieldLength) {
+            offset += fieldDef.getByteLength();
         }
-        offset += fieldDef.getByteLength();
 
         return offset;
     }
@@ -153,29 +158,59 @@ public class Index {
 
         List<IndexFieldDefinition> fieldDefs = definition.getFields();
 
+        Query.RangeCondition rangeCond = query.getRangeCondition();
         int keyOffset = 0;
-        int fieldDefCount = query.getRangeCondition() == null ? fieldDefs.size() : fieldDefs.size() - 1;
-        for (int i = 0; i < fieldDefCount; i++) {
+        boolean rangeCondSet = false;
+        for (int i = 0; i < fieldDefs.size(); i++) {
             IndexFieldDefinition fieldDef = fieldDefs.get(i);
 
-            Object value = query.getCondition(fieldDef.getName()).getValue();
-            keyOffset = putField(fromKey, keyOffset, fieldDef, value);
+            Query.EqualsCondition eqCond = query.getCondition(fieldDef.getName());
+            if (eqCond != null) {
+                keyOffset = putField(fromKey, keyOffset, fieldDef, eqCond.getValue());
+            } else if (rangeCond != null) {
+                if (!rangeCond.getName().equals(fieldDef.getName())) {
+                    throw new MalformedQueryException("No equals condition supplied for field " + fieldDef.getName() +
+                            ", and the range condition is not for this field either.");
+                }
+
+                System.arraycopy(fromKey, 0, toKey, 0, keyOffset);
+
+                Object fromValue = query.getRangeCondition().getFromValue();
+                Object toValue = query.getRangeCondition().getToValue();
+
+                int fromEnd = putField(fromKey, keyOffset, fieldDef, fromValue, false);
+                int toEnd = putField(toKey, keyOffset, fieldDef, toValue, false);
+
+                fromKey = reduceToLength(fromKey, fromEnd);
+                toKey = reduceToLength(toKey, toEnd);
+
+                rangeCondSet = true;
+
+                break;
+            } else {
+                // we're done
+                break;
+            }
         }
 
-        System.arraycopy(fromKey, 0, toKey, 0, keyOffset);
+        // TODO check if all the set conditions were used, if not throw a MalformedQueryException
 
-        if (query.getRangeCondition() != null)  {
-            Object fromValue = query.getRangeCondition().getFromValue();
-            Object toValue = query.getRangeCondition().getToValue();
-
-            IndexFieldDefinition fieldDef = fieldDefs.get(fieldDefs.size() - 1);
-            putField(fromKey, keyOffset, fieldDef, fromValue);
-            putField(toKey, keyOffset, fieldDef, toValue);
+        if (!rangeCondSet) {
+            // TODO strip up to the length of the set fields
+            System.arraycopy(fromKey, 0, toKey, 0, keyOffset);
         }
 
         Scan scan = new Scan(fromKey);
         scan.setFilter(new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryPrefixComparator(toKey)));
         return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength);
+    }
+
+    private byte[] reduceToLength(byte[] bytes, int length) {
+        if (bytes.length == length)
+            return bytes;
+        byte[] result = new byte[length];
+        System.arraycopy(bytes, 0, result, 0, length);
+        return result;
     }
 
 }

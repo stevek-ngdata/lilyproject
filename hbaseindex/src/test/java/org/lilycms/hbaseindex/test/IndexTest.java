@@ -394,5 +394,36 @@ public class IndexTest {
             // ok
         }
     }
+
+    @Test
+    public void testStringPrefixQuery() throws Exception {
+        final String INDEX_NAME = "stringprefixquery";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addStringField("field1");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        // Create a few index entries, inserting them in non-sorted order
+        String[] values = {"baard", "boer", "beek", "kanaal", "paard"};
+
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("targetkey" + i));
+        }
+
+        Query query = new Query();
+        query.setRangeCondition("field1", "b", "b");
+        QueryResult result = index.performQuery(query);
+
+        assertEquals("targetkey0", Bytes.toString(result.next()));
+        assertEquals("targetkey2", Bytes.toString(result.next()));
+        assertEquals("targetkey1", Bytes.toString(result.next()));
+        assertNull(result.next());
+    }
 }
 

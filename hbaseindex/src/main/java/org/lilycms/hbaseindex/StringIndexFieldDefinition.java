@@ -84,6 +84,11 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     public int toBytes(byte[] bytes, int offset, Object value) {
+        return toBytes(bytes, offset, value, true);
+    }
+
+    @Override
+    public int toBytes(byte[] bytes, int offset, Object value, boolean fillFieldLength) {
         String string = (String)value;
         string = Normalizer.normalize(string, Normalizer.Form.NFC);
 
@@ -93,13 +98,10 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
 
         byte[] stringAsBytes = ENCODERS.get(byteEncodeMode).toBytes(string, locale);
 
-        if (stringAsBytes.length < length) {
-            byte[] buffer = new byte[length];
-            System.arraycopy(stringAsBytes, 0, buffer, 0, stringAsBytes.length);
-            stringAsBytes = buffer;
-        }
+        int putLength = stringAsBytes.length < length ? stringAsBytes.length : length;
+        int newOffset = Bytes.putBytes(bytes, offset, stringAsBytes, 0, putLength);
 
-        return Bytes.putBytes(bytes, offset, stringAsBytes, 0, length);
+        return fillFieldLength ? offset + length : newOffset;
     }
 
     private interface StringEncoder {
