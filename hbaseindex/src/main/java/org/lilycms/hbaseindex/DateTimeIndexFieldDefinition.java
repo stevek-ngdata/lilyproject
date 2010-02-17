@@ -1,6 +1,7 @@
 package org.lilycms.hbaseindex;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.codehaus.jackson.node.ObjectNode;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -10,6 +11,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * <p>TODO this class could be improved to handle negative years.
+ */
 public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
     public enum Precision {DATETIME, DATETIME_NOMILLIS, DATE, TIME, TIME_NOMILLIS}
     private Precision precision = Precision.DATETIME_NOMILLIS;
@@ -36,6 +40,13 @@ public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
     
     public DateTimeIndexFieldDefinition(String name) {
         super(name, IndexValueType.DATETIME);
+    }
+
+    public DateTimeIndexFieldDefinition(String name, ObjectNode jsonObject) {
+        this(name);
+
+        if (jsonObject.get("precision") != null)
+            this.precision = Precision.valueOf(jsonObject.get("precision").getTextValue());
     }
 
     public Precision getPrecision() {
@@ -76,6 +87,13 @@ public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
         System.arraycopy(datetimeBytes, 0, bytes, 0, datetimeBytes.length);
 
         return offset + datetimeBytes.length;
+    }
+
+    @Override
+    public ObjectNode toJson() {
+        ObjectNode object = super.toJson();
+        object.put("precision", precision.toString());
+        return object;
     }
 }
 

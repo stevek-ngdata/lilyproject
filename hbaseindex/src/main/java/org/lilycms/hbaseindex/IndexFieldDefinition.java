@@ -1,5 +1,8 @@
 package org.lilycms.hbaseindex;
 
+import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
+
 public abstract class IndexFieldDefinition {
     private final String name;
     private IndexValueType type;
@@ -44,4 +47,11 @@ public abstract class IndexFieldDefinition {
      * @return the offset after the written data, thus where the next data could be written
      */
     public abstract int toBytes(byte[] bytes, int offset, Object value, boolean fillFieldLength);
+
+    public ObjectNode toJson() {
+        JsonNodeFactory factory = JsonNodeFactory.instance;
+        ObjectNode object = factory.objectNode();
+        object.put("class", this.getClass().getName());
+        return object;
+    }
 }

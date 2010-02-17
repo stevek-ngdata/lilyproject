@@ -1,7 +1,9 @@
 package org.lilycms.hbaseindex;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.codehaus.jackson.node.ObjectNode;
 import org.lilycms.util.ArgumentValidator;
+import org.lilycms.util.LocaleHelper;
 
 import java.io.UnsupportedEncodingException;
 import java.text.Collator;
@@ -28,6 +30,19 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
 
     public StringIndexFieldDefinition(String name) {
         super(name, IndexValueType.STRING);
+    }
+
+    public StringIndexFieldDefinition(String name, ObjectNode jsonObject) {
+        this(name);
+
+        if (jsonObject.get("length") != null)
+            this.length = jsonObject.get("length").getIntValue();
+        if (jsonObject.get("locale") != null)
+            this.locale = LocaleHelper.parseLocale(jsonObject.get("locale").getTextValue());
+        if (jsonObject.get("byteEncodeMode") != null)
+            this.byteEncodeMode = ByteEncodeMode.valueOf(jsonObject.get("byteEncodeMode").getTextValue());
+        if (jsonObject.get("caseSensitive") != null)
+            this.caseSensitive = jsonObject.get("caseSensitive").getBooleanValue();
     }
 
     /**
@@ -133,5 +148,15 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
             Collator collator = Collator.getInstance(locale);
             return collator.getCollationKey(string).toByteArray();
         }
+    }
+
+    @Override
+    public ObjectNode toJson() {
+        ObjectNode object = super.toJson();
+        object.put("length", length);
+        object.put("locale", LocaleHelper.getString(locale));
+        object.put("byteEncodeMode", byteEncodeMode.toString());
+        object.put("caseSensitive", caseSensitive);
+        return object;
     }
 }

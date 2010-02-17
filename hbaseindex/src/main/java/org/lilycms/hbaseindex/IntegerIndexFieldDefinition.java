@@ -1,10 +1,15 @@
 package org.lilycms.hbaseindex;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.codehaus.jackson.node.ObjectNode;
 
 public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
     public IntegerIndexFieldDefinition(String name) {
         super(name, IndexValueType.INTEGER);
+    }
+
+    public IntegerIndexFieldDefinition(String name, ObjectNode jsonObject) {
+        this(name);
     }
 
     @Override

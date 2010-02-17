@@ -1,6 +1,7 @@
 package org.lilycms.hbaseindex;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.codehaus.jackson.node.ObjectNode;
 
 /**
  * An IndexFieldDefinition for floats.
@@ -11,6 +12,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class FloatIndexFieldDefinition  extends IndexFieldDefinition {
     public FloatIndexFieldDefinition(String name) {
         super(name, IndexValueType.FLOAT);
+    }
+
+    public FloatIndexFieldDefinition(String name, ObjectNode jsonObject) {
+        this(name);
     }
 
     @Override

@@ -2,6 +2,9 @@ package org.lilycms.hbaseindex.test;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.AfterClass;
@@ -9,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.lilycms.hbaseindex.*;
+import org.lilycms.testfw.TestHelper;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,12 +23,15 @@ public class IndexTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-      TEST_UTIL.startMiniCluster(1);
+        TestHelper.setupLogging();
+        TEST_UTIL.startMiniCluster(1);
+
+        IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-      TEST_UTIL.shutdownMiniCluster();
+        TEST_UTIL.shutdownMiniCluster();
     }
 
     @Test
@@ -407,7 +414,6 @@ public class IndexTest {
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
-        // Create a few index entries, inserting them in non-sorted order
         String[] values = {"baard", "boer", "beek", "kanaal", "paard"};
 
         for (int i = 0; i < values.length; i++) {

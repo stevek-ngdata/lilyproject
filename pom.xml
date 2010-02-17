@@ -18,14 +18,34 @@
   <modules>
     <module>repository</module>
     <module>hbaseindex</module>
+    <module>util</module>
+    <module>testfw</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-util</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-testfw</artifactId>
+        <version>0.1-dev</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hbase</artifactId>
         <version>${hbase.version}</version>
+        <!-- We use the log4j binding for slf4j instead of the simple one -->
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -44,6 +64,17 @@
         <artifactId>log4j</artifactId>
         <version>1.2.15</version>
         <scope>runtime</scope>
+        <!-- jmxtools and jmxri dependencies were broken in repo -->
+        <exclusions>
+          <exclusion>
+            <groupId>com.sun.jdmk</groupId>
+            <artifactId>jmxtools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jmx</groupId>
+            <artifactId>jmxri</artifactId>
+          </exclusion>
+        </exclusions>        
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>

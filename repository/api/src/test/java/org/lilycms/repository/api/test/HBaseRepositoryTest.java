@@ -20,6 +20,7 @@ import org.lilycms.repository.api.NoSuchRecordException;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordExistsException;
 import org.lilycms.repository.api.Repository;
+import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest {
 
@@ -27,6 +28,7 @@ public class HBaseRepositoryTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging();
         TEST_UTIL.startMiniCluster(1);
     }
 
