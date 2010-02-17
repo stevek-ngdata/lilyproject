@@ -94,7 +94,7 @@ public class ByteComparisonTest {
         fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.COLLATOR);
 
         byte[] string1 = new byte[fieldDef.getByteLength()];
-        fieldDef.toBytes(string1, 0, "être");
+        fieldDef.toBytes(string1, 0, "\u00EAtre"); // être
 
         byte[] string2 = new byte[fieldDef.getByteLength()];
         fieldDef.toBytes(string2, 0, "heureux");
@@ -108,7 +108,7 @@ public class ByteComparisonTest {
         fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.UTF8);
 
         byte[] string1 = new byte[fieldDef.getByteLength()];
-        fieldDef.toBytes(string1, 0, "être");
+        fieldDef.toBytes(string1, 0, "\u00EAtre");
 
         byte[] string2 = new byte[fieldDef.getByteLength()];
         fieldDef.toBytes(string2, 0, "heureux");
@@ -122,7 +122,7 @@ public class ByteComparisonTest {
         fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.ASCII_FOLDING);
 
         byte[] string1 = new byte[fieldDef.getByteLength()];
-        fieldDef.toBytes(string1, 0, "être");
+        fieldDef.toBytes(string1, 0, "\u00EAtre");
 
         byte[] string2 = new byte[fieldDef.getByteLength()];
         fieldDef.toBytes(string2, 0, "etre");
