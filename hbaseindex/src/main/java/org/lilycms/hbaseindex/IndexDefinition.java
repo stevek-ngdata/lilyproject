@@ -73,6 +73,13 @@ public class IndexDefinition {
         return definition;
     }
 
+    public DecimalIndexFieldDefinition addDecimalField(String name) {
+        validateName(name);
+        DecimalIndexFieldDefinition definition = new DecimalIndexFieldDefinition(name);
+        add(definition);
+        return definition;
+    }
+
     private void add(IndexFieldDefinition fieldDef) {
         fields.add(fieldDef);
         fieldsByName.put(fieldDef.getName(), fieldDef);

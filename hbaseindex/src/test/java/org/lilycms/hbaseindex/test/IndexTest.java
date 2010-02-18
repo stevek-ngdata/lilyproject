@@ -2,9 +2,6 @@ package org.lilycms.hbaseindex.test;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.AfterClass;
@@ -15,6 +12,7 @@ import org.lilycms.hbaseindex.*;
 import org.lilycms.testfw.TestHelper;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -167,6 +165,42 @@ public class IndexTest {
 
         assertEquals("targetkey0", Bytes.toString(result.next()));
         assertEquals("targetkey1", Bytes.toString(result.next()));
+        assertNull(result.next());
+    }
+
+    @Test
+    public void testSingleDecimalFieldIndex() throws Exception {
+        final String INDEX_NAME = "singledecimalfield";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addDecimalField("field1");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        String[] values = {"33.66", "-1", "-3.00007E77"};
+
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", new BigDecimal(values[i]));
+            index.addEntry(entry, Bytes.toBytes("targetkey" + i));
+        }
+
+        Query query = new Query();
+        query.setRangeCondition("field1", new BigDecimal(values[2]), new BigDecimal(values[0]));
+        QueryResult result = index.performQuery(query);
+
+        assertEquals("targetkey2", Bytes.toString(result.next()));
+        assertEquals("targetkey1", Bytes.toString(result.next()));
+        assertEquals("targetkey0", Bytes.toString(result.next()));
+        assertNull(result.next());
+
+        query = new Query();
+        query.addEqualsCondition("field1", new BigDecimal(values[2]));
+        result = index.performQuery(query);
+        assertEquals("targetkey2", Bytes.toString(result.next()));
         assertNull(result.next());
     }
 

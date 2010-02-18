@@ -4,7 +4,8 @@ public enum IndexValueType {
     STRING(java.lang.String.class),
     INTEGER(java.lang.Integer.class),
     FLOAT(java.lang.Float.class),
-    DATETIME(java.util.Date.class);
+    DATETIME(java.util.Date.class),
+    DECIMAL(java.math.BigDecimal.class);
 
     private Class clazz;
 

@@ -2,9 +2,12 @@ package org.lilycms.hbaseindex.test;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
+import org.lilycms.hbaseindex.DecimalIndexFieldDefinition;
 import org.lilycms.hbaseindex.FloatIndexFieldDefinition;
 import org.lilycms.hbaseindex.IntegerIndexFieldDefinition;
 import org.lilycms.hbaseindex.StringIndexFieldDefinition;
+
+import java.math.BigDecimal;
 
 import static org.junit.Assert.*;
 
@@ -142,6 +145,74 @@ public class ByteComparisonTest {
         byte[] result = new byte[fieldDef.getByteLength()];
         fieldDef.toBytes(result, 0, value);
         return result;
+    }
+
+    private byte[] toSortableBytes(BigDecimal value) {
+        DecimalIndexFieldDefinition fieldDef = new DecimalIndexFieldDefinition("foobar");
+        fieldDef.setLength(50);
+        byte[] result = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(result, 0, value);
+        return result;
+    }
+
+    @Test
+    public void testDecimalCompare() throws Exception {
+        String[] testNumbers = {"-99999999999999999999999999999999999999999999999999999999999999999999999999999999",
+        "-10.000000000000000000000000000000000000000000000000000000000000000000000000000000002",
+        "-10.000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+        "0",
+        "5.5",
+        "55.5",
+        "0.1E16383"};
+
+        BigDecimal[] testDecimals = new BigDecimal[testNumbers.length];
+        for (int i = 0; i < testDecimals.length; i++) {
+            testDecimals[i] = new BigDecimal(testNumbers[i]);
+        }
+
+        for (BigDecimal d1 : testDecimals) {
+            for (BigDecimal d2 : testDecimals) {
+                byte[] b1 = toSortableBytes(d1);
+                byte[] b2 = toSortableBytes(d2);
+                int cmp = Bytes.compareTo(b1, b2);
+                if (cmp == 0) {
+                    if (!d1.equals(d2)) {
+                        System.out.println(d1 + " == " + d2);
+                        fail();
+                    }
+                } else if (cmp < 0) {
+                    if (!(d1.compareTo(d2) < 0)) {
+                        System.out.println(d1 + " < " + d2);
+                        fail();
+                    }
+                } else if (cmp > 0) {
+                    if (!(d1.compareTo(d2) > 0)) {
+                        System.out.println(d1 + " > " + d2);
+                        fail();
+                    }
+                }
+            }
+        }
+
+        // Verify cutoff of precision
+        DecimalIndexFieldDefinition fieldDef = new DecimalIndexFieldDefinition("foobar");
+        fieldDef.setLength(5);
+        byte[] r1 = new byte[fieldDef.getByteLength()];
+        byte[] r2 = new byte[fieldDef.getByteLength()];
+        fieldDef.toBytes(r1, 0, new BigDecimal("10.000000000000000000000000000000000000000000000000000000000000001"));
+        fieldDef.toBytes(r2, 0, new BigDecimal("10.000000000000000000000000000000000000000000000000000000000000002"));
+        assertEquals(0, Bytes.compareTo(r1, r2));
+
+        // Verify checks on maximum supported exponents
+        try {
+            toSortableBytes(new BigDecimal("0.1E16384"));
+            fail("Expected error");
+        } catch (RuntimeException e) {}
+
+        try {
+            toSortableBytes(new BigDecimal("0.1E-16385"));
+            fail("Expected error");
+        } catch (RuntimeException e) {}
     }
 
     /**
