@@ -12,6 +12,20 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * A string field in an index.
+ *
+ * <p>Various options can be set for this field:
+ *
+ * <ul>
+ *  <li>{@link #setLength}: the length in bytes
+ *  <li>{@link #setByteEncodeMode}: the way a string should be mapped onto bytes: as utf8,
+ *    by folding everything to ascii, or by using collation keys.
+ *  <li>
+ *  <li>{@link #setLocale}
+ *  <li>{@link #setCaseSensitive}
+ * </ul>
+ */
 public class StringIndexFieldDefinition extends IndexFieldDefinition {
     public enum ByteEncodeMode { UTF8, ASCII_FOLDING, COLLATOR }
 

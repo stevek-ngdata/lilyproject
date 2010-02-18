@@ -56,12 +56,12 @@ public class FloatIndexFieldDefinition  extends IndexFieldDefinition {
         // Check the leftmost bit to determine if the value is negative
         int test = (bytes[offset] >>> 7) & 0x01;
         if (test == 1) {
-            // Negative numbers: flip all bits: sign, exponent and mantissa
+            // Negative numbers: invert all bits: sign, exponent and mantissa
             for (int i = offset; i < getByteLength(); i++) {
                 bytes[i] = (byte)(bytes[i] ^ 0xFF);
             }
         } else {
-            // Positive numbers: flip the sign bit
+            // Positive numbers: invert the sign bit
             bytes[offset] = (byte)(bytes[offset] | 0x80);
         }
 
