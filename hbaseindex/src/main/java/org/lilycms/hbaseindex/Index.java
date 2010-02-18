@@ -17,6 +17,8 @@ import java.util.Map;
 /**
  * Allows to query an index, and add entries to it or remove entries from it.
  *
+ * <p>An index is retrieved from {@link IndexManager#getIndex}.
+ *
  * <p>The Index class <b>is not thread safe</b>, because the underlying HBase HTable
  * is not thread safe. Therefore, let each thread fetch its own copy of Index from
  * the {@link IndexManager}.
@@ -33,7 +35,7 @@ public class Index {
     /** Number of bytes overhead per field. */
     private static final int FIELD_OVERHEAD = 1;
 
-    public Index(HTable htable, IndexDefinition definition) {
+    protected Index(HTable htable, IndexDefinition definition) {
         this.htable = htable;
         this.definition = definition;
     }

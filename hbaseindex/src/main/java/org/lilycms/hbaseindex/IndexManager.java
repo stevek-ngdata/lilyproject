@@ -11,6 +11,13 @@ import org.codehaus.jackson.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+/**
+ * Starting point for all the index and query functionality.
+ *
+ * <p>This class should be instantiated yourself. This class is threadsafe,
+ * but on the other hand rather lightweight so it does not harm to have multiple
+ * instances.
+ */
 public class IndexManager {
     private Configuration hbaseConf;
     private HBaseAdmin hbaseAdmin;
@@ -41,7 +48,17 @@ public class IndexManager {
         metaTable = new HTable(hbaseConf, metaTableName);
     }
 
-    public void createIndex(IndexDefinition indexDef) throws IOException {
+    /**
+     * Creates a new index.
+     *
+     * <p>This first creates the HBase table for this index, then adds the index
+     * definition to the indexmeta table.
+     */
+    public synchronized void createIndex(IndexDefinition indexDef) throws IOException {
+        if (indexDef.getFields().size() == 0) {
+            throw new IllegalArgumentException("An IndexDefinition should contain at least one field.");
+        }
+
         byte[] jsonData = serialize(indexDef);
 
         HTableDescriptor table = new HTableDescriptor(indexDef.getName());
@@ -66,6 +83,11 @@ public class IndexManager {
         return new IndexDefinition(name, mapper.readValue(jsonData, 0, jsonData.length, ObjectNode.class));
     }
 
+    /**
+     * Retrieves an Index.
+     *
+     * @throws IndexNotFoundException if the index does not exist
+     */
     public Index getIndex(String name) throws IOException, IndexNotFoundException {
         Get get = new Get(Bytes.toBytes(name));
         Result result = metaTable.get(get);
@@ -81,7 +103,16 @@ public class IndexManager {
         return index;
     }
 
-    public void deleteIndex(String name) throws IOException, IndexNotFoundException {
+    /**
+     * Deletes an index.
+     *
+     * <p>This removes the index definition from the index meta table, disables the
+     * index table and deletes it. If this would fail in between any of these operations,
+     * it is up to the administrator to perform the remaining work.
+     *
+     * @throws IndexNotFoundException if the index does not exist.
+     */
+    public synchronized void deleteIndex(String name) throws IOException, IndexNotFoundException {
         Get get = new Get(Bytes.toBytes(name));
         Result result = metaTable.get(get);
 

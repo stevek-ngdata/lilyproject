@@ -8,6 +8,15 @@ import org.lilycms.util.ArgumentValidator;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
+/**
+ * Defines the structure of an index.
+ *
+ * <p>An index is defined by instantiating an object of this class, adding one
+ * or more fields to it using the methods like {@link #addStringField},
+ * {@link #addIntegerField}, etc. Finally the index is created by calling
+ * {@link IndexManager#createIndex}. After creation, the definition of an index
+ * cannot be modified.
+ */
 public class IndexDefinition {
     private String name;
     private List<IndexFieldDefinition> fields = new ArrayList<IndexFieldDefinition>();

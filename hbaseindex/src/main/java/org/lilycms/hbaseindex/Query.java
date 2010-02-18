@@ -3,6 +3,12 @@ package org.lilycms.hbaseindex;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Description of query.
+ *
+ * <p>A query is performed by instantiating this object, adding conditions
+ * to it, and then passing it to {@link Index#performQuery}.
+ */
 public class Query {
     private List<EqualsCondition> eqConditions = new ArrayList<EqualsCondition>();
     private RangeCondition rangeCondition;

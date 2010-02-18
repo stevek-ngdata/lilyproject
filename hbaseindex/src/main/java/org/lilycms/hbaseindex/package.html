@@ -114,6 +114,13 @@
 <p>If you want to combine more than two indexes, you could nest multiple
   Conjunctions.</p>
 
+<h2>Null values</h2>
+
+<p>Indexing and querying on null values is supported.</p>
+
+<p>This works because in the index row key there is a meta-byte for
+  each field which records if the field is null or not.</p>
+
 <h2>Using key-value style indexes</h2>
 
 <p>Note that you could create an index with "key" and "value" fields
