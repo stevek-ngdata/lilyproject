@@ -28,12 +28,8 @@ public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
         int nextOffset = Bytes.putInt(bytes, offset, integer);
 
         // To make the integers sort correctly when comparing their binary
-        // representations, we need to flip the sign bit
-        if (integer < 0) {
-            bytes[offset] = (byte)(bytes[offset] & 0x7F);
-        } else { // if (integer >= 0)
-            bytes[offset] = (byte)(bytes[offset] | 0x80);
-        }
+        // representations, we need to invert the sign bit
+        bytes[offset] = (byte)(bytes[offset] ^ 0x80);
 
         return nextOffset;
     }
