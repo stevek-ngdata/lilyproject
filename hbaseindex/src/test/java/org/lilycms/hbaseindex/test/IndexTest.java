@@ -703,5 +703,64 @@ public class IndexTest {
             fail("Exception expected.");
         } catch (IllegalArgumentException e) {}
     }    
+
+    @Test
+    public void testExclusiveRanges() throws Exception {
+        final String INDEX_NAME = "exclusiveranges";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addIntegerField("field1");
+        indexManager.createIndex(indexDef);
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        int[] values = {1, 2, 3, 4};
+        for (int value : values) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", value);
+            index.addEntry(entry, Bytes.toBytes("row" + value));
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", 1, 4);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row1", "row2", "row3", "row4");            
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", 1, 4, false, false);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row2", "row3");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", 1, 4, false, true);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row2", "row3", "row4");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", 1, 4, true, false);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row1", "row2", "row3");
+        }
+    }
+
+    private void testResultKeys(QueryResult result, String... keys) throws IOException {
+        int i = 0;
+        byte[] key;
+        while ((key = result.next()) != null) {
+            if (i >= keys.length) {
+                fail("Too many query results.");
+            }
+            assertEquals(keys[i], Bytes.toString(key));
+            i++;
+        }
+        assertNull(result.next());
+    }
 }
 

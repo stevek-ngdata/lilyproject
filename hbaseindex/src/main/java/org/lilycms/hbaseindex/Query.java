@@ -43,15 +43,29 @@ public class Query {
      * <p>The order in which the conditions are added to the query
      * does not matter.
      *
-     * @param name matching the name of the field in the {@link IndexDefinition}
+     * @param fieldName matching the name of the field in the {@link IndexDefinition}
      * @param value value of the correct type, or null
      */
-    public void addEqualsCondition(String name, Object value) {
-        eqConditions.add(new EqualsCondition(name, value));
+    public void addEqualsCondition(String fieldName, Object value) {
+        eqConditions.add(new EqualsCondition(fieldName, value));
     }
 
-    public void setRangeCondition(String name, Object fromValue, Object toValue) {
-        rangeCondition = new RangeCondition(name, fromValue, toValue);
+    /**
+     * Sets the range condition to search on the given field for >= fromValue and
+     * <= toValue. To use exclusive bounds, see the other setRangeCondition method.
+     */
+    public void setRangeCondition(String fieldName, Object fromValue, Object toValue) {
+        rangeCondition = new RangeCondition(fieldName, fromValue, toValue, true, true);
+    }
+
+    /**
+     *
+     * @param lowerBoundInclusive true means >= fromValue, false means > fromValue
+     * @param upperBoundInclusive true means <= toValue, false means < toValue
+     */
+    public void setRangeCondition(String fieldName, Object fromValue, Object toValue, boolean lowerBoundInclusive,
+            boolean upperBoundInclusive) {
+        rangeCondition = new RangeCondition(fieldName, fromValue, toValue, lowerBoundInclusive, upperBoundInclusive);
     }
 
     public List<EqualsCondition> getEqConditions() {
@@ -93,11 +107,16 @@ public class Query {
         private String name;
         private Object fromValue;
         private Object toValue;
+        private boolean lowerBoundInclusive;
+        private boolean upperBoundInclusive;
 
-        public RangeCondition(String name, Object fromValue, Object toValue) {
+        public RangeCondition(String name, Object fromValue, Object toValue, boolean lowerBoundInclusive,
+                boolean upperBoundInclusive) {
             this.name = name;
             this.fromValue = fromValue;
             this.toValue = toValue;
+            this.lowerBoundInclusive = lowerBoundInclusive;
+            this.upperBoundInclusive = upperBoundInclusive;
         }
 
         public String getName() {
@@ -110,6 +129,14 @@ public class Query {
 
         public Object getToValue() {
             return toValue;
+        }
+
+        public boolean isLowerBoundInclusive() {
+            return lowerBoundInclusive;
+        }
+
+        public boolean isUpperBoundInclusive() {
+            return upperBoundInclusive;
         }
     }
 }

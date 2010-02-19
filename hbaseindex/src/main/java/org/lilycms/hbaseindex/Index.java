@@ -19,9 +19,8 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.util.ArgumentValidator;
 
@@ -246,7 +245,24 @@ public class Index {
         }
 
         Scan scan = new Scan(fromKey);
-        scan.setFilter(new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryPrefixComparator(toKey)));
+
+        CompareOp op = rangeCondSet && !rangeCond.isUpperBoundInclusive() ? CompareOp.LESS : CompareOp.LESS_OR_EQUAL;
+        Filter toFilter = new RowFilter(op, new BinaryPrefixComparator(toKey));
+
+        if (rangeCondSet && !rangeCond.isLowerBoundInclusive()) {
+            // TODO: optimize the performance hit caused by the extra filter
+            //  Once the greater filter on the fromKey returns true, it will remain true because
+            //  row keys are sorted. The RowFilter will however keep doing the check again and again
+            //  on each new row key. We need a new filter in HBase, something like the opposite of the
+            //  WhileMatchFilter.
+            FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+            filters.addFilter(new RowFilter(CompareOp.GREATER, new BinaryPrefixComparator(fromKey)));
+            filters.addFilter(toFilter);
+            scan.setFilter(filters);
+        } else {
+            scan.setFilter(toFilter);
+        }
+
         return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength);
     }
 
