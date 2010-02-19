@@ -44,7 +44,7 @@ public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
 
         // To make the integers sort correctly when comparing their binary
         // representations, we need to invert the sign bit
-        bytes[offset] = (byte)(bytes[offset] ^ 0x80);
+        bytes[offset] ^= 0x80;
 
         return nextOffset;
     }
