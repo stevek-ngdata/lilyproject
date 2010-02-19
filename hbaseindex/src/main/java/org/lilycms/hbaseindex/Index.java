@@ -197,11 +197,27 @@ public class Index {
                 Object fromValue = query.getRangeCondition().getFromValue();
                 Object toValue = query.getRangeCondition().getToValue();
 
-                checkQueryValueType(fieldDef, fromValue);
-                checkQueryValueType(fieldDef, toValue);
+                int fromEnd;
+                int toEnd;
 
-                int fromEnd = putField(fromKey, offset, fieldDef, fromValue, false);
-                int toEnd = putField(toKey, offset, fieldDef, toValue, false);
+                if (fromValue == Query.MIN_VALUE) {
+                    // array is filled with zeros by default, which is smaller than anything else
+                    fromEnd = offset + fieldDef.getLength() + FIELD_OVERHEAD;
+                } else {
+                    checkQueryValueType(fieldDef, fromValue);
+                    fromEnd = putField(fromKey, offset, fieldDef, fromValue, false);
+                }
+
+                if (toValue == Query.MAX_VALUE) {
+                    toEnd = offset + fieldDef.getLength() + FIELD_OVERHEAD;
+                    // fill array with all 1 bits, which is larger than anything else
+                    for (int j = offset; j < toEnd; j++) {
+                        toKey[j] |= 0xFF;
+                    }
+                } else {
+                    checkQueryValueType(fieldDef, toValue);
+                    toEnd = putField(toKey, offset, fieldDef, toValue, false);
+                }
 
                 fromKey = reduceToLength(fromKey, fromEnd);
                 toKey = reduceToLength(toKey, toEnd);

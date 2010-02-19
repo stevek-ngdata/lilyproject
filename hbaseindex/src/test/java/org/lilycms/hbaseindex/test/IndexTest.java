@@ -750,6 +750,45 @@ public class IndexTest {
         }
     }
 
+    @Test
+    public void testMinMaxRanges() throws Exception {
+        final String INDEX_NAME = "minmaxranges";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addIntegerField("field1");
+        indexManager.createIndex(indexDef);
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        Integer[] values = {Integer.MIN_VALUE, 1, 2, Integer.MAX_VALUE, null};
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("row" + (i + 1)));
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row1", "row2", "row3", "row4", "row5");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", Query.MIN_VALUE, 0);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row1");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", 0, Query.MAX_VALUE);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row2", "row3", "row4", "row5");
+        }
+    }
+
     private void testResultKeys(QueryResult result, String... keys) throws IOException {
         int i = 0;
         byte[] key;

@@ -37,6 +37,20 @@ public class Query {
     private List<EqualsCondition> eqConditions = new ArrayList<EqualsCondition>();
     private RangeCondition rangeCondition;
 
+    public static final Object MIN_VALUE = new Object() {
+        @Override
+        public String toString() {
+            return "Range condition minimum value.";
+        }
+    };
+
+    public static final Object MAX_VALUE = new Object() {
+        @Override
+        public String toString() {
+            return "Range condition maximum value.";
+        }
+    };
+
     /**
      * Adds an equals condition.
      *
@@ -59,7 +73,16 @@ public class Query {
     }
 
     /**
+     * Sets the range condition.
      *
+     * <p>The fromValue and toValue can be:
+     * <ul>
+     *   <li>a value of the correct type, corresponding to the index definition
+     *   <li>null, which searches from or to null. Thus supplying null does NOT mean
+     *       that there is no lower or upper bound on the range.
+     *   <li>{@link #MIN_VALUE} or {@link #MAX_VALUE}, which are values that are
+     *       smaller or larger than any other value.
+     * </ul>
      * @param lowerBoundInclusive true means >= fromValue, false means > fromValue
      * @param upperBoundInclusive true means <= toValue, false means < toValue
      */
