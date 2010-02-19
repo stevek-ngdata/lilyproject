@@ -2,8 +2,6 @@ package org.lilycms.hbaseindex.test;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -15,6 +13,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class IndexTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -197,12 +196,11 @@ public class IndexTest {
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
-        DateTimeFormatter formatter = ISODateTimeFormat.basicDateTimeNoMillis();
         Date[] values = {
-                formatter.parseDateTime("20100215T140500Z").toDate(),
-                formatter.parseDateTime("20100215T140501Z").toDate(),
-                formatter.parseDateTime("20100216T100000Z").toDate(),
-                formatter.parseDateTime("20100217T100000Z").toDate()
+                new GregorianCalendar(2010, 1, 15, 14, 5, 0).getTime(),
+                new GregorianCalendar(2010, 1, 15, 14, 5, 1).getTime(),
+                new GregorianCalendar(2010, 1, 16, 10, 0, 0).getTime(),
+                new GregorianCalendar(2010, 1, 17, 10, 0, 0).getTime()
         };
 
         for (int i = 0; i < values.length; i++) {
@@ -212,8 +210,8 @@ public class IndexTest {
         }
 
         Query query = new Query();
-        query.setRangeCondition("field1", formatter.parseDateTime("20100215T140500Z").toDate(),
-                formatter.parseDateTime("20100215T140501Z").toDate());
+        query.setRangeCondition("field1", new GregorianCalendar(2010, 1, 15, 14, 5, 0).getTime(),
+                new GregorianCalendar(2010, 1, 15, 14, 5, 1).getTime());
         QueryResult result = index.performQuery(query);
 
         assertEquals("targetkey0", Bytes.toString(result.next()));

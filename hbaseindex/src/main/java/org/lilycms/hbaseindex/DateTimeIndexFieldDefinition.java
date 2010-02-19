@@ -2,42 +2,23 @@ package org.lilycms.hbaseindex;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.node.ObjectNode;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.lilycms.util.ArgumentValidator;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
- * <p>TODO this class could be improved to handle negative years.
+ * Index field for datetimes, dates, times.
+ *
+ * <p>The instant is stored in the index as a long, or in case there is only a time
+ * component, as an integer.
+ *
+ * <p>This class accepts java.util.Date as date/time representation. It is up to the
+ * user to make sure any timezone corrections have happened already.
  */
 public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
     public enum Precision {DATETIME, DATETIME_NOMILLIS, DATE, TIME, TIME_NOMILLIS}
     private Precision precision = Precision.DATETIME_NOMILLIS;
 
-    private static Map<Precision, Integer> LENGTHS;
-    static {
-        LENGTHS = new HashMap<Precision, Integer>();
-        LENGTHS.put(Precision.DATETIME, "yyyyMMddTHHmmss.SSSZ".length());
-        LENGTHS.put(Precision.DATETIME_NOMILLIS, "yyyyMMddTHHmmssZ".length());
-        LENGTHS.put(Precision.DATE, "yyyyMMdd".length());
-        LENGTHS.put(Precision.TIME, "HHmmss.SSSZ".length());
-        LENGTHS.put(Precision.TIME_NOMILLIS, "HHmmssZ".length());
-    }
-
-    private static Map<Precision, DateTimeFormatter> FORMATTERS;
-    static {
-        FORMATTERS = new HashMap<Precision, DateTimeFormatter>();
-        FORMATTERS.put(Precision.DATETIME, ISODateTimeFormat.basicDateTime().withZone(DateTimeZone.UTC));
-        FORMATTERS.put(Precision.DATETIME_NOMILLIS, ISODateTimeFormat.basicDateTimeNoMillis().withZone(DateTimeZone.UTC));
-        FORMATTERS.put(Precision.DATE, ISODateTimeFormat.basicDate().withZone(DateTimeZone.UTC));
-        FORMATTERS.put(Precision.TIME, ISODateTimeFormat.basicTime().withZone(DateTimeZone.UTC));
-        FORMATTERS.put(Precision.TIME_NOMILLIS, ISODateTimeFormat.basicTimeNoMillis().withZone(DateTimeZone.UTC));
-    }
-    
     public DateTimeIndexFieldDefinition(String name) {
         super(name, IndexValueType.DATETIME);
     }
@@ -60,11 +41,13 @@ public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
 
     @Override
     public int getLength() {
-        Integer length = LENGTHS.get(precision);
-        if (length == null) {
-            throw new RuntimeException("Missing length for precision " + precision);
+        switch (precision) {
+            case TIME:
+            case TIME_NOMILLIS:
+                return Bytes.SIZEOF_INT;
+            default:
+                return Bytes.SIZEOF_LONG;
         }
-        return length;
     }
 
     @Override
@@ -74,19 +57,55 @@ public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
 
     @Override
     public int toBytes(byte[] bytes, int offset, Object value, boolean fillFieldLength) {
-        DateTimeFormatter format = FORMATTERS.get(precision);
-        String string = format.print(((Date)value).getTime());
+        Date date = (Date)value;
 
-        byte[] datetimeBytes = Bytes.toBytes(string);
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTime(date);
 
-        if (datetimeBytes.length != getLength()) {
-            throw new RuntimeException("Unexpected situation: byte-formatted datetime is " + datetimeBytes.length
-                    + " bytes long, but expected " + getLength() + ", date = " + string);
+        long result;
+
+        switch (precision) {
+            case DATETIME:
+                result = calendar.getTimeInMillis();
+                break;
+            case DATETIME_NOMILLIS:
+                calendar.set(Calendar.MILLISECOND, 0);
+                result = calendar.getTimeInMillis();
+                break;
+            case DATE:
+                calendar.set(Calendar.HOUR_OF_DAY, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                result = calendar.getTimeInMillis();
+                break;
+            case TIME:
+            case TIME_NOMILLIS:
+                int hours = calendar.get(Calendar.HOUR_OF_DAY);
+                int minutes = calendar.get(Calendar.MINUTE);
+                int seconds = calendar.get(Calendar.SECOND);
+                int millis = precision == Precision.TIME ? calendar.get(Calendar.MILLISECOND) : 0;
+                result = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000) + millis;
+                break;
+            default:
+                throw new RuntimeException("Unexpected precision: " + precision);
         }
 
-        System.arraycopy(datetimeBytes, 0, bytes, 0, datetimeBytes.length);
+        int nextOffset;
 
-        return offset + datetimeBytes.length;
+        switch (precision) {
+            case TIME:
+            case TIME_NOMILLIS:
+                nextOffset = Bytes.putInt(bytes, offset, (int)result);
+                break;
+            default:
+                nextOffset = Bytes.putLong(bytes, offset, result);
+        }
+
+        // To make the ints/longs sort correctly when comparing their binary
+        // representations, we need to invert the sign bit
+        bytes[offset] = (byte)(bytes[offset] ^ 0x80);
+        return nextOffset;
     }
 
     @Override

@@ -2,14 +2,14 @@ package org.lilycms.hbaseindex.test;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
-import org.lilycms.hbaseindex.DecimalIndexFieldDefinition;
-import org.lilycms.hbaseindex.FloatIndexFieldDefinition;
-import org.lilycms.hbaseindex.IntegerIndexFieldDefinition;
-import org.lilycms.hbaseindex.StringIndexFieldDefinition;
-
+import org.lilycms.hbaseindex.*;
+import org.lilycms.hbaseindex.DateTimeIndexFieldDefinition.Precision;
 import java.math.BigDecimal;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Various tests that check whether the comparison of the binary representations
@@ -213,6 +213,69 @@ public class ByteComparisonTest {
             toSortableBytes(new BigDecimal("0.1E-16385"));
             fail("Expected error");
         } catch (RuntimeException e) {}
+    }
+
+    @Test
+    public void testDateCompare() throws Exception {
+        byte[] bytes1 = date(Precision.DATE, 2010, 2, 1, 14, 20, 10, 333);
+        byte[] bytes2 = date(Precision.DATE, 2010, 2, 1, 8, 15, 11, 250);
+        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
+    }
+
+    @Test
+    public void testTimeCompare() throws Exception {
+        byte[] bytes1 = date(Precision.TIME, 2008, 5, 12, 8, 15, 11, 250);
+        byte[] bytes2 = date(Precision.TIME, 2010, 2, 1, 8, 15, 11, 250);
+        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
+
+        bytes1 = date(Precision.TIME, 2008, 5, 12, 8, 15, 11, 250);
+        bytes2 = date(Precision.TIME, 2010, 2, 1, 8, 15, 11, 251);
+        assertTrue(Bytes.compareTo(bytes1, bytes2) < 0);
+
+        bytes1 = date(Precision.TIME, 2008, 5, 12, 8, 15, 11, 251);
+        bytes2 = date(Precision.TIME, 2010, 2, 1, 8, 15, 11, 250);
+        assertTrue(Bytes.compareTo(bytes1, bytes2) > 0);
+    }
+
+    @Test
+    public void testTimeNoMillisCompare() throws Exception {
+        byte[] bytes1 = date(Precision.TIME_NOMILLIS, 2008, 5, 12, 8, 15, 11, 250);
+        byte[] bytes2 = date(Precision.TIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 251);
+        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
+    }
+
+    @Test
+    public void testDateTimeCompare() throws Exception {
+        byte[] bytes1 = date(Precision.DATETIME, 2010, 2, 1, 8, 15, 11, 250);
+        byte[] bytes2 = date(Precision.DATETIME, 2010, 2, 1, 8, 15, 11, 250);
+        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
+    }
+
+    @Test
+    public void testDateTimeNoMillisCompare() throws Exception {
+        byte[] bytes1 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 250);
+        byte[] bytes2 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 251);
+        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
+
+        bytes1 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 250);
+        bytes2 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 12, 250);
+        assertTrue(Bytes.compareTo(bytes1, bytes2) < 0);
+
+        bytes1 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 12, 250);
+        bytes2 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 250);
+        assertTrue(Bytes.compareTo(bytes1, bytes2) > 0);
+    }
+
+    private byte[] date(Precision precision, int year, int month, int day, int hour, int minutes, int seconds, int millis) {
+        GregorianCalendar calendar = new GregorianCalendar(year, month - 1, day, hour, minutes, seconds);
+        calendar.set(Calendar.MILLISECOND, millis);
+
+        DateTimeIndexFieldDefinition fieldDef = new DateTimeIndexFieldDefinition("foobar");
+        fieldDef.setPrecision(precision);
+
+        byte[] bytes = new byte[fieldDef.getLength()];
+        fieldDef.toBytes(bytes, 0, calendar.getTime());
+        return bytes;
     }
 
     /**
