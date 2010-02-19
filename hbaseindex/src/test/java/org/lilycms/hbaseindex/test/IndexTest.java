@@ -378,6 +378,7 @@ public class IndexTest {
         IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addStringField("foo");
         indexManager.createIndex(indexDef);
 
         indexManager.getIndex(INDEX_NAME);
@@ -465,5 +466,176 @@ public class IndexTest {
         assertEquals("targetkey1", Bytes.toString(result.next()));
         assertNull(result.next());
     }
+
+    /**
+     * Test searching on a subset of the fields.
+     */
+    @Test
+    public void testPartialQuery() throws Exception {
+        final String INDEX_NAME = "partialquery";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addStringField("field1");
+        indexDef.addIntegerField("field2");
+        indexDef.addStringField("field3");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        for (int i = 0; i < 3; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", "value A " + i);
+            entry.addField("field2", 10 + i);
+            entry.addField("field3", "value B " + i);
+            index.addEntry(entry, Bytes.toBytes("targetkey" + i));
+        }
+
+        // Search only on the leftmost field
+        {
+            Query query = new Query();
+            query.addEqualsCondition("field1", "value A 0");
+            QueryResult result = index.performQuery(query);
+            assertEquals("targetkey0", Bytes.toString(result.next()));
+            assertNull(result.next());
+        }
+
+        // Search only on the two leftmost fields
+        {
+            Query query = new Query();
+            query.addEqualsCondition("field1", "value A 0");
+            query.addEqualsCondition("field2", 10);
+            QueryResult result = index.performQuery(query);
+            assertEquals("targetkey0", Bytes.toString(result.next()));
+            assertNull(result.next());
+        }
+
+        // Search only on the two leftmost fields, with range query on the second
+        {
+            Query query = new Query();
+            query.addEqualsCondition("field1", "value A 0");
+            query.setRangeCondition("field2", 9, 11);
+            QueryResult result = index.performQuery(query);
+            assertEquals("targetkey0", Bytes.toString(result.next()));
+            assertNull(result.next());
+        }
+
+        // Try searching on just the second field, should give error
+        {
+            Query query = new Query();
+            query.addEqualsCondition("field2", 10);
+            try {
+                index.performQuery(query);
+                fail("Exception expected");
+            } catch (MalformedQueryException e) {
+                //System.out.println(e.getMessage());
+            }
+        }
+
+        // Try searching on just the second field, should give error
+        {
+            Query query = new Query();
+            query.setRangeCondition("field2", 9, 11);
+            try {
+                index.performQuery(query);
+                fail("Exception expected");
+            } catch (MalformedQueryException e) {
+                //System.out.println(e.getMessage());
+            }
+        }
+
+        // Try not using all fields from left to right, should give error
+        {
+            Query query = new Query();
+            query.addEqualsCondition("field1", "value A 0");
+            // skip field 2
+            query.addEqualsCondition("field3", "value B 0");
+            try {
+                index.performQuery(query);
+                fail("Exception expected");
+            } catch (MalformedQueryException e) {
+                //System.out.println(e.getMessage());
+            }
+        }
+
+        // Try not using all fields from left to right, should give error
+        {
+            Query query = new Query();
+            query.addEqualsCondition("field1", "value A 0");
+            // skip field 2
+            query.setRangeCondition("field3", "a", "b");
+            try {
+                index.performQuery(query);
+                fail("Exception expected");
+            } catch (MalformedQueryException e) {
+                //System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testDataTypeChecks() throws Exception {
+        final String INDEX_NAME = "datatypechecks";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addStringField("field1");
+        indexDef.addIntegerField("field2");
+
+        indexManager.createIndex(indexDef);
+
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        //
+        // Index entry checks
+        //
+
+        // First test correct situation
+        IndexEntry entry = new IndexEntry();
+        entry.addField("field1", "a");
+        index.addEntry(entry, Bytes.toBytes("1"));
+
+        // Now test incorrect situation
+        entry = new IndexEntry();
+        entry.addField("field1", 55);
+        try {
+            index.addEntry(entry, Bytes.toBytes("1"));
+            fail("Expected exception.");
+        } catch (MalformedIndexEntryException e) {
+            //System.out.println(e.getMessage());
+        }
+
+        //
+        // Query checks
+        //
+
+        // First test correct situation
+        Query query = new Query();
+        query.addEqualsCondition("field1", "a");
+        index.performQuery(query);
+
+        // Now test incorrect situation
+        query = new Query();
+        query.addEqualsCondition("field1", 55);
+        try {
+            index.performQuery(query);
+            fail("Expected exception.");
+        } catch (MalformedQueryException e) {
+            //System.out.println(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testEmptyDefinition() throws Exception {
+        final String INDEX_NAME = "emptydef";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        try {
+            indexManager.createIndex(indexDef);
+            fail("Exception expected.");
+        } catch (IllegalArgumentException e) {}
+    }    
 }
 

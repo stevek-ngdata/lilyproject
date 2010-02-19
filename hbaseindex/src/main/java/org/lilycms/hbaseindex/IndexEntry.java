@@ -8,6 +8,13 @@ import java.util.Map;
  *
  * <p>This object can be simply instantiated yourself and passed to
  * {@link Index#addEntry} or {@link Index#removeEntry}.
+ *
+ * <p>The fields added to this entry should correspond in name
+ * and type to the fields defined in the {@link IndexDefinition}.
+ * This is not validated when adding the fields to this IndexEntry,
+ * but only later on when passing it to a method of {@link Index}.
+ *
+ * <p>Missing fields will be interpreted as fields with a null value.
  */
 public class IndexEntry {
     private Map<String, Object> values = new HashMap<String, Object>();

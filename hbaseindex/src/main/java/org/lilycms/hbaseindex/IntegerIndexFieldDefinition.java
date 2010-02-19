@@ -13,7 +13,7 @@ public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     @Override
-    public int getByteLength() {
+    public int getLength() {
         return Bytes.SIZEOF_INT;
     }
 

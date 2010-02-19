@@ -8,7 +8,7 @@ import java.io.IOException;
 /**
  * A QueryResult on top of a HBase scanner.
  */
-public class ScannerQueryResult implements QueryResult {
+class ScannerQueryResult implements QueryResult {
     private ResultScanner scanner;
     private int indexKeyLength;
 

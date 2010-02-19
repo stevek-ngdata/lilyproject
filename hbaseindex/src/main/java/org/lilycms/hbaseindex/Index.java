@@ -17,11 +17,10 @@ import java.util.Map;
 /**
  * Allows to query an index, and add entries to it or remove entries from it.
  *
- * <p>An index is retrieved from {@link IndexManager#getIndex}.
+ * <p>An Index instance can be obtained from {@link IndexManager#getIndex}.
  *
- * <p>The Index class <b>is not thread safe</b>, because the underlying HBase HTable
- * is not thread safe. Therefore, let each thread fetch its own copy of Index from
- * the {@link IndexManager}.
+ * <p>The Index class <b>is not thread safe</b> for writes, because the underlying
+ * HBase HTable is not thread safe for writes.
  *
  */
 public class Index {
@@ -79,7 +78,7 @@ public class Index {
 
             if (entry.getValue() != null) {
                 if (!fieldDef.getType().supportsType(entry.getValue().getClass())) {
-                    throw new MalformedIndexEntryException("Index entry for field " + entry.getKey() + " contains " +
+                    throw new MalformedIndexEntryException("Index entry for field " + entry.getKey() + " contains" +
                             " a value of an incorrect type. Expected: " + fieldDef.getType().getType().getName() +
                             ", found: " + entry.getValue().getClass().getName());
                 }
@@ -121,7 +120,7 @@ public class Index {
     private int getIndexKeyLength() {
         int length = 0;
         for (IndexFieldDefinition fieldDef : definition.getFields()) {
-            length += fieldDef.getByteLength() + FIELD_OVERHEAD;
+            length += fieldDef.getLength() + FIELD_OVERHEAD;
         }
         return length;
     }
@@ -138,8 +137,8 @@ public class Index {
 
         if (value != null) {
             offset = fieldDef.toBytes(bytes, offset, value, fillFieldLength);
-        } else if (fillFieldLength) {
-            offset += fieldDef.getByteLength();
+        } else if (fillFieldLength) { // and value is null
+            offset += fieldDef.getLength();
         }
 
         return offset;
@@ -150,43 +149,51 @@ public class Index {
     }
 
     public QueryResult performQuery(Query query) throws IOException {
-        // TODO validate that the query fields match the index def fields and that the values are of correct type
-
         // construct from and to keys
         int indexKeyLength = getIndexKeyLength();
 
         byte[] fromKey = new byte[indexKeyLength];
-        byte[] toKey = new byte[indexKeyLength];
+        byte[] toKey = null;
 
         List<IndexFieldDefinition> fieldDefs = definition.getFields();
 
         Query.RangeCondition rangeCond = query.getRangeCondition();
-        int keyOffset = 0;
+        int offset = 0;
         boolean rangeCondSet = false;
-        for (int i = 0; i < fieldDefs.size(); i++) {
+        int usedConditionsCount = 0;
+        int i = 0;
+        for (; i < fieldDefs.size(); i++) {
             IndexFieldDefinition fieldDef = fieldDefs.get(i);
 
             Query.EqualsCondition eqCond = query.getCondition(fieldDef.getName());
             if (eqCond != null) {
-                keyOffset = putField(fromKey, keyOffset, fieldDef, eqCond.getValue());
+                checkQueryValueType(fieldDef, eqCond.getValue());
+                offset = putField(fromKey, offset, fieldDef, eqCond.getValue());
+                usedConditionsCount++;
             } else if (rangeCond != null) {
                 if (!rangeCond.getName().equals(fieldDef.getName())) {
-                    throw new MalformedQueryException("No equals condition supplied for field " + fieldDef.getName() +
-                            ", and the range condition is not for this field either.");
+                    throw new MalformedQueryException("Query defines range condition on field " + rangeCond.getName() +
+                            " but has no equals condition on field " + fieldDef.getName() +
+                            " which comes earlier in the index definition.");
                 }
 
-                System.arraycopy(fromKey, 0, toKey, 0, keyOffset);
+                toKey = new byte[fromKey.length];
+                System.arraycopy(fromKey, 0, toKey, 0, offset);
 
                 Object fromValue = query.getRangeCondition().getFromValue();
                 Object toValue = query.getRangeCondition().getToValue();
 
-                int fromEnd = putField(fromKey, keyOffset, fieldDef, fromValue, false);
-                int toEnd = putField(toKey, keyOffset, fieldDef, toValue, false);
+                checkQueryValueType(fieldDef, fromValue);
+                checkQueryValueType(fieldDef, toValue);
+
+                int fromEnd = putField(fromKey, offset, fieldDef, fromValue, false);
+                int toEnd = putField(toKey, offset, fieldDef, toValue, false);
 
                 fromKey = reduceToLength(fromKey, fromEnd);
                 toKey = reduceToLength(toKey, toEnd);
 
                 rangeCondSet = true;
+                usedConditionsCount++;
 
                 break;
             } else {
@@ -195,16 +202,45 @@ public class Index {
             }
         }
 
-        // TODO check if all the set conditions were used, if not throw a MalformedQueryException
+        // Check if we have used all conditions defined in the query
+        if (i < fieldDefs.size() && usedConditionsCount < query.getEqConditions().size() + (rangeCond != null ? 1 : 0)) {
+            StringBuilder message = new StringBuilder();
+            message.append("The query contains conditions on fields which either did not follow immediately on ");
+            message.append("the previous equals condition or followed after a range condition on a field. The fields are: ");
+            for (; i < fieldDefs.size(); i++) {
+                IndexFieldDefinition fieldDef = fieldDefs.get(i);
+                if (query.getCondition(fieldDef.getName()) != null) {
+                    message.append(fieldDef.getName());
+                } else if (rangeCond != null && rangeCond.getName().equals(fieldDef.getName())) {
+                    message.append(fieldDef.getName());
+                }
+                message.append(" ");
+            }
+            throw new MalformedQueryException(message.toString());
+        }
 
         if (!rangeCondSet) {
-            // TODO strip up to the length of the set fields
-            System.arraycopy(fromKey, 0, toKey, 0, keyOffset);
+            // Limit the keys to the length of the used fields.
+            // Note that this is different than what we do for range queries above: in the case of range queries,
+            // the keys are reduced in length to the length of the from/to value of the range condition, in order
+            // to support prefix queries. But for equals conditions we want exact matches, so we fill up the complete
+            // field length.
+            fromKey = reduceToLength(fromKey, offset);
+            toKey = new byte[fromKey.length];
+            System.arraycopy(fromKey, 0, toKey, 0, offset);
         }
 
         Scan scan = new Scan(fromKey);
         scan.setFilter(new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryPrefixComparator(toKey)));
         return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength);
+    }
+
+    private void checkQueryValueType(IndexFieldDefinition fieldDef, Object value) {
+        if (value != null && !fieldDef.getType().supportsType(value.getClass())) {
+            throw new MalformedQueryException("Query includes a condition on field " + fieldDef.getName() + " with" +
+                    " a value of an incorrect type. Expected: " + fieldDef.getType().getType().getName() +
+                    ", found: " + value.getClass().getName());
+        }
     }
 
     private byte[] reduceToLength(byte[] bytes, int length) {

@@ -96,10 +96,10 @@ public class ByteComparisonTest {
         StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
         fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.COLLATOR);
 
-        byte[] string1 = new byte[fieldDef.getByteLength()];
+        byte[] string1 = new byte[fieldDef.getLength()];
         fieldDef.toBytes(string1, 0, "\u00EAtre"); // être
 
-        byte[] string2 = new byte[fieldDef.getByteLength()];
+        byte[] string2 = new byte[fieldDef.getLength()];
         fieldDef.toBytes(string2, 0, "heureux");
 
         assertTrue(Bytes.compareTo(string1, string2) < 0);
@@ -110,10 +110,10 @@ public class ByteComparisonTest {
         StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
         fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.UTF8);
 
-        byte[] string1 = new byte[fieldDef.getByteLength()];
+        byte[] string1 = new byte[fieldDef.getLength()];
         fieldDef.toBytes(string1, 0, "\u00EAtre");
 
-        byte[] string2 = new byte[fieldDef.getByteLength()];
+        byte[] string2 = new byte[fieldDef.getLength()];
         fieldDef.toBytes(string2, 0, "heureux");
 
         assertTrue(Bytes.compareTo(string1, string2) > 0);
@@ -124,10 +124,10 @@ public class ByteComparisonTest {
         StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
         fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.ASCII_FOLDING);
 
-        byte[] string1 = new byte[fieldDef.getByteLength()];
+        byte[] string1 = new byte[fieldDef.getLength()];
         fieldDef.toBytes(string1, 0, "\u00EAtre");
 
-        byte[] string2 = new byte[fieldDef.getByteLength()];
+        byte[] string2 = new byte[fieldDef.getLength()];
         fieldDef.toBytes(string2, 0, "etre");
 
         assertTrue(Bytes.compareTo(string1, string2) == 0);               
@@ -135,14 +135,14 @@ public class ByteComparisonTest {
 
     private byte[] toSortableBytes(int value) {
         IntegerIndexFieldDefinition fieldDef = new IntegerIndexFieldDefinition("foobar");
-        byte[] result = new byte[fieldDef.getByteLength()];
+        byte[] result = new byte[fieldDef.getLength()];
         fieldDef.toBytes(result, 0, value);
         return result;
     }
 
     private byte[] toSortableBytes(float value) {
         FloatIndexFieldDefinition fieldDef = new FloatIndexFieldDefinition("foobar");
-        byte[] result = new byte[fieldDef.getByteLength()];
+        byte[] result = new byte[fieldDef.getLength()];
         fieldDef.toBytes(result, 0, value);
         return result;
     }
@@ -150,7 +150,7 @@ public class ByteComparisonTest {
     private byte[] toSortableBytes(BigDecimal value) {
         DecimalIndexFieldDefinition fieldDef = new DecimalIndexFieldDefinition("foobar");
         fieldDef.setLength(50);
-        byte[] result = new byte[fieldDef.getByteLength()];
+        byte[] result = new byte[fieldDef.getLength()];
         fieldDef.toBytes(result, 0, value);
         return result;
     }
@@ -197,8 +197,8 @@ public class ByteComparisonTest {
         // Verify cutoff of precision
         DecimalIndexFieldDefinition fieldDef = new DecimalIndexFieldDefinition("foobar");
         fieldDef.setLength(5);
-        byte[] r1 = new byte[fieldDef.getByteLength()];
-        byte[] r2 = new byte[fieldDef.getByteLength()];
+        byte[] r1 = new byte[fieldDef.getLength()];
+        byte[] r2 = new byte[fieldDef.getLength()];
         fieldDef.toBytes(r1, 0, new BigDecimal("10.000000000000000000000000000000000000000000000000000000000000001"));
         fieldDef.toBytes(r2, 0, new BigDecimal("10.000000000000000000000000000000000000000000000000000000000000002"));
         assertEquals(0, Bytes.compareTo(r1, r2));

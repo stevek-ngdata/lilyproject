@@ -19,7 +19,7 @@ public class FloatIndexFieldDefinition  extends IndexFieldDefinition {
     }
 
     @Override
-    public final int getByteLength() {
+    public final int getLength() {
         return Bytes.SIZEOF_FLOAT;
     }
 
@@ -57,7 +57,7 @@ public class FloatIndexFieldDefinition  extends IndexFieldDefinition {
         int test = (bytes[offset] >>> 7) & 0x01;
         if (test == 1) {
             // Negative numbers: invert all bits: sign, exponent and mantissa
-            for (int i = offset; i < getByteLength(); i++) {
+            for (int i = offset; i < getLength(); i++) {
                 bytes[i] = (byte)(bytes[i] ^ 0xFF);
             }
         } else {

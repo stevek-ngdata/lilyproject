@@ -22,7 +22,7 @@ public class DecimalIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     @Override
-    public int getByteLength() {
+    public int getLength() {
         return length;
     }
 

@@ -56,7 +56,7 @@ package org.lilycms.hbaseindex;
  * accents from Latin1 characters.  For example, '&agrave;' will be replaced by
  * 'a'.
  */
-public final class ASCIIFoldingUtil {
+final class ASCIIFoldingUtil {
 
 
   /**

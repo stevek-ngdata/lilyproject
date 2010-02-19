@@ -3,6 +3,9 @@ package org.lilycms.hbaseindex;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 
+/**
+ * Defines a field that is part of an {@link IndexDefinition}.
+ */
 public abstract class IndexFieldDefinition {
     private final String name;
     private IndexValueType type;
@@ -21,9 +24,10 @@ public abstract class IndexFieldDefinition {
     }
 
     /**
-     * The number of bytes this entry takes in the index row key.
+     * The length of this index field in bytes, thus the number of bytes
+     * this entry needs in the index row key.
      */
-    public abstract int getByteLength();
+    public abstract int getLength();
 
     /**
      * Same as the other toBytes method, with fillFieldLength = true.
@@ -35,11 +39,11 @@ public abstract class IndexFieldDefinition {
      * IndexFieldDefinition.
      *
      * @param bytes the byte array into which the bytes should be added. The byte array
-     *              should be large enough to store {@link #getByteLength()} bytes after the
+     *              should be large enough to store {@link #getLength()} bytes after the
      *              offset.
      * @param offset the offset at which the bytes should be added
      * @param value the value, assumed to be of the correct type
-     * @param fillFieldLength if true, the bytes will be padded up to {@link #getByteLength()},
+     * @param fillFieldLength if true, the bytes will be padded up to {@link #getLength ()},
      *                        and the returned offset will hence be located after this length.
      *                        If false, the returned offset will only be after the actual
      *                        value length. Note that data types like number always use the

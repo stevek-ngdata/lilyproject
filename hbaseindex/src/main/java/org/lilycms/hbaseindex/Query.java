@@ -8,11 +8,29 @@ import java.util.List;
  *
  * <p>A query is performed by instantiating this object, adding conditions
  * to it, and then passing it to {@link Index#performQuery}.
+ *
+ * <p>A query can contain equals conditions on zero or more fields,
+ * and at most one range condition. The range condition should always
+ * be on the last used field. A query does not need to use all fields
+ * defined in the index, but you have to use them 'left to right'.
+ *
+ * <p>The structural validity of the query will be checked once the
+ * query is supplied to {@link Index#performQuery}, not while adding
+ * the individual conditions. 
  */
 public class Query {
     private List<EqualsCondition> eqConditions = new ArrayList<EqualsCondition>();
     private RangeCondition rangeCondition;
 
+    /**
+     * Adds an equals condition.
+     *
+     * <p>The order in which the conditions are added to the query
+     * does not matter.
+     *
+     * @param name matching the name of the field in the {@link IndexDefinition}
+     * @param value value of the correct type, or null
+     */
     public void addEqualsCondition(String name, Object value) {
         eqConditions.add(new EqualsCondition(name, value));
     }

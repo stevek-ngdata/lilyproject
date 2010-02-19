@@ -108,7 +108,7 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
         this.caseSensitive = caseSensitive;
     }
 
-    public int getByteLength() {
+    public int getLength() {
         return length;
     }
 

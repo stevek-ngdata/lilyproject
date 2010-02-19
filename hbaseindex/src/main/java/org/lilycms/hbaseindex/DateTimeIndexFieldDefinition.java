@@ -59,7 +59,7 @@ public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
     }
 
     @Override
-    public int getByteLength() {
+    public int getLength() {
         Integer length = LENGTHS.get(precision);
         if (length == null) {
             throw new RuntimeException("Missing length for precision " + precision);
@@ -79,9 +79,9 @@ public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
 
         byte[] datetimeBytes = Bytes.toBytes(string);
 
-        if (datetimeBytes.length != getByteLength()) {
+        if (datetimeBytes.length != getLength()) {
             throw new RuntimeException("Unexpected situation: byte-formatted datetime is " + datetimeBytes.length
-                    + " bytes long, but expected " + getByteLength() + ", date = " + string);
+                    + " bytes long, but expected " + getLength() + ", date = " + string);
         }
 
         System.arraycopy(datetimeBytes, 0, bytes, 0, datetimeBytes.length);

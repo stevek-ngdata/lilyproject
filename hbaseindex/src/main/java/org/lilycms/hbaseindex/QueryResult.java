@@ -10,7 +10,7 @@ public interface QueryResult {
     /**
      * Move to and return the next result.
      *
-     * @return the row key of the next matching query result.
+     * @return the row key of the next matching query result, or null if the end is reached.
      */
     public byte[] next() throws IOException;
 }
