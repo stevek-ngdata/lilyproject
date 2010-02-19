@@ -789,6 +789,107 @@ public class IndexTest {
         }
     }
 
+    @Test
+    public void testDescendingIntIndex() throws Exception {
+        final String INDEX_NAME = "descendingIntIndex";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.setKeyOrder(Order.DESCENDING);
+        IntegerIndexFieldDefinition fieldDef = indexDef.addIntegerField("field1");
+        fieldDef.setOrder(Order.DESCENDING);
+        indexManager.createIndex(indexDef);
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        Integer[] values = {1, 2, 2, 3, null};
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("row" + (i + 1)));
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row5", "row4", "row3", "row2", "row1");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", 3, 1);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row4", "row3", "row2", "row1");
+        }
+    }
+
+    @Test
+    public void testDescendingIntAscendingKeyIndex() throws Exception {
+        final String INDEX_NAME = "descendingIntAscendingKey";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        IntegerIndexFieldDefinition fieldDef = indexDef.addIntegerField("field1");
+        fieldDef.setOrder(Order.DESCENDING);
+        indexManager.createIndex(indexDef);
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        Integer[] values = {1, 1, 2, 2};
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("row" + (i + 1)));
+        }
+
+        // The index on the value is descending, the target keys themselves are ascending!
+
+        Query query = new Query();
+        query.setRangeCondition("field1", 2, 1);
+        QueryResult result = index.performQuery(query);
+        testResultKeys(result, "row3", "row4", "row1", "row2");
+    }
+
+    @Test
+    public void testDescendingStringIndex() throws Exception {
+        final String INDEX_NAME = "descendingStringIndex";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.setKeyOrder(Order.DESCENDING);
+        StringIndexFieldDefinition fieldDef = indexDef.addStringField("field1");
+        fieldDef.setOrder(Order.DESCENDING);
+        indexManager.createIndex(indexDef);
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        String[] values = {"a", "ab", "abc", "b"};
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("row" + (i + 1)));
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row4", "row3", "row2", "row1");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", "b", "a");
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row4", "row3", "row2", "row1");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", "a", "a");
+            QueryResult result = index.performQuery(query);
+            testResultKeys(result, "row3", "row2", "row1");
+        }
+    }
+
     private void testResultKeys(QueryResult result, String... keys) throws IOException {
         int i = 0;
         byte[] key;

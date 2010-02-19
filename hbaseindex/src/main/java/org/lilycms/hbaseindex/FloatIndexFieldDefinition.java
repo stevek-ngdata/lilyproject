@@ -30,7 +30,7 @@ public class FloatIndexFieldDefinition  extends IndexFieldDefinition {
     }
 
     public FloatIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        this(name);
+        super(name, IndexValueType.FLOAT, jsonObject);
     }
 
     @Override

@@ -30,7 +30,7 @@ public class DecimalIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     public DecimalIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        this(name);
+        super(name, IndexValueType.DECIMAL, jsonObject);
 
         if (jsonObject.get("length") != null)
             this.length = jsonObject.get("length").getIntValue();

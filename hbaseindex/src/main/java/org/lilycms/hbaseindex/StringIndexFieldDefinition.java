@@ -62,7 +62,7 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     public StringIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        this(name);
+        super(name, IndexValueType.STRING, jsonObject);
 
         if (jsonObject.get("length") != null)
             this.length = jsonObject.get("length").getIntValue();

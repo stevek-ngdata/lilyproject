@@ -30,7 +30,7 @@ public class ByteIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     public ByteIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        this(name);
+        super(name, IndexValueType.BYTES, jsonObject);
 
         if (jsonObject.get("length") != null)
             this.length = jsonObject.get("length").getIntValue();

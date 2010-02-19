@@ -17,17 +17,31 @@ package org.lilycms.hbaseindex;
 
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilycms.util.ArgumentValidator;
 
 /**
  * Defines a field that is part of an {@link IndexDefinition}.
  */
 public abstract class IndexFieldDefinition {
     private final String name;
+    private Order order;
     private IndexValueType type;
 
     public IndexFieldDefinition(String name, IndexValueType type) {
+        this(name, type, Order.ASCENDING);
+    }
+
+    public IndexFieldDefinition(String name, IndexValueType type, Order order) {
         this.name = name;
+        this.order = order;
         this.type = type;
+    }
+
+    public IndexFieldDefinition(String name, IndexValueType type, ObjectNode jsonObject) {
+        this(name, type);
+
+        if (jsonObject.get("order") != null)
+            this.order = Order.valueOf(jsonObject.get("order").getTextValue());
     }
 
     public String getName() {
@@ -36,6 +50,15 @@ public abstract class IndexFieldDefinition {
 
     public IndexValueType getType() {
         return type;
+    }
+
+    public Order getOrder() {
+        return order;
+    }
+
+    public void setOrder(Order order) {
+        ArgumentValidator.notNull(order, "order");
+        this.order = order;
     }
 
     /**
@@ -71,6 +94,7 @@ public abstract class IndexFieldDefinition {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode object = factory.objectNode();
         object.put("class", this.getClass().getName());
+        object.put("order", this.order.toString());
         return object;
     }
 }

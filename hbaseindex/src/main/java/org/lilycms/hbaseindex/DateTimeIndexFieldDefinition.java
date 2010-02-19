@@ -39,7 +39,7 @@ public class DateTimeIndexFieldDefinition  extends IndexFieldDefinition {
     }
 
     public DateTimeIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        this(name);
+        super(name, IndexValueType.DATETIME);
 
         if (jsonObject.get("precision") != null)
             this.precision = Precision.valueOf(jsonObject.get("precision").getTextValue());

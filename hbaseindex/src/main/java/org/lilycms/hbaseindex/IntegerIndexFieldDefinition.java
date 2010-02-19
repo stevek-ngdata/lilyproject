@@ -24,7 +24,7 @@ public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     public IntegerIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        this(name);
+        super(name, IndexValueType.INTEGER, jsonObject);
     }
 
     @Override

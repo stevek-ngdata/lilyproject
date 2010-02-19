@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.util.ArgumentValidator;
+import org.lilycms.hbaseindex.Order;
 
 import java.io.IOException;
 import java.util.List;
@@ -128,6 +129,10 @@ public class Index {
         // put target key in the key
         System.arraycopy(targetKey, 0, indexKey, offset, targetKey.length);
 
+        if (definition.getKeyOrder() == Order.DESCENDING) {
+            invertBits(indexKey, offset, indexKey.length);
+        }
+
         return indexKey;
     }
 
@@ -144,6 +149,8 @@ public class Index {
     }
 
     private int putField(byte[] bytes, int offset, IndexFieldDefinition fieldDef, Object value, boolean fillFieldLength) {
+        int origOffset = offset;
+
         if (value == null) {
             bytes[offset] = setNullFlag((byte)0);
         }
@@ -155,7 +162,17 @@ public class Index {
             offset += fieldDef.getLength();
         }
 
+        if (fieldDef.getOrder() == Order.DESCENDING) {
+            invertBits(bytes, origOffset, offset);
+        }
+
         return offset;
+    }
+
+    private void invertBits(byte[] bytes, int startOffset, int endOffset) {
+        for (int i = startOffset; i < endOffset; i++) {
+            bytes[i] ^= 0xFF;
+        }
     }
 
     private byte setNullFlag(byte flags) {
@@ -279,7 +296,7 @@ public class Index {
             scan.setFilter(toFilter);
         }
 
-        return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength);
+        return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength, definition.getKeyOrder() == Order.DESCENDING);
     }
 
     private void checkQueryValueType(IndexFieldDefinition fieldDef, Object value) {

@@ -24,7 +24,7 @@ public class LongIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     public LongIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        this(name);
+        super(name, IndexValueType.LONG, jsonObject);
     }
 
     @Override
