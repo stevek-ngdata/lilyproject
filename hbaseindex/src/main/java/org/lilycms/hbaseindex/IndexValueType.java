@@ -3,9 +3,11 @@ package org.lilycms.hbaseindex;
 public enum IndexValueType {
     STRING(java.lang.String.class),
     INTEGER(java.lang.Integer.class),
+    LONG(java.lang.Long.class),
     FLOAT(java.lang.Float.class),
     DATETIME(java.util.Date.class),
-    DECIMAL(java.math.BigDecimal.class);
+    DECIMAL(java.math.BigDecimal.class),
+    BYTES(byte[].class);
 
     private Class clazz;
 

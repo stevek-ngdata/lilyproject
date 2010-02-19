@@ -39,9 +39,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
-
         indexManager.createIndex(indexDef);
-
         Index index = indexManager.getIndex(INDEX_NAME);
 
         // Create a few index entries, inserting them in non-sorted order
@@ -64,15 +62,42 @@ public class IndexTest {
     }
 
     @Test
+    public void testSingleByteFieldIndex() throws Exception {
+        final String INDEX_NAME = "singlebytefield";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        ByteIndexFieldDefinition fieldDef = indexDef.addByteField("field1");
+        fieldDef.setLength(3);
+        indexManager.createIndex(indexDef);
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        // Create a few index entries, inserting them in non-sorted order
+        byte[][] values = {Bytes.toBytes("aaa"), Bytes.toBytes("aab")};
+
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", values[i]);
+            index.addEntry(entry, Bytes.toBytes("targetkey" + i));
+        }
+
+        Query query = new Query();
+        query.setRangeCondition("field1", Bytes.toBytes("aaa"), Bytes.toBytes("aab"));
+        QueryResult result = index.performQuery(query);
+
+        assertEquals("targetkey0", Bytes.toString(result.next()));
+        assertEquals("targetkey1", Bytes.toString(result.next()));
+        assertNull(result.next());
+    }
+
+    @Test
     public void testSingleIntFieldIndex() throws Exception {
         final String INDEX_NAME = "singleintfield";
         IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
-
         indexManager.createIndex(indexDef);
-
         Index index = indexManager.getIndex(INDEX_NAME);
 
         final int COUNT = 1000;
@@ -96,6 +121,34 @@ public class IndexTest {
         Arrays.sort(values);
 
         for (int value : values) {
+            assertEquals("targetkey" + value, Bytes.toString(result.next()));
+        }
+
+        assertNull(result.next());
+    }
+
+    @Test
+    public void testSingleLongFieldIndex() throws Exception {
+        final String INDEX_NAME = "singlelongfield";
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.addLongField("field1");
+        indexManager.createIndex(indexDef);
+        Index index = indexManager.getIndex(INDEX_NAME);
+
+        long values[] = {Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE};
+        for (long value : values) {
+            IndexEntry entry = new IndexEntry();
+            entry.addField("field1", value);
+            index.addEntry(entry, Bytes.toBytes("targetkey" + value));
+        }
+
+        Query query = new Query();
+        query.setRangeCondition("field1", Long.MIN_VALUE, Long.MAX_VALUE);
+        QueryResult result = index.performQuery(query);
+
+        for (long value : values) {
             assertEquals("targetkey" + value, Bytes.toString(result.next()));
         }
 

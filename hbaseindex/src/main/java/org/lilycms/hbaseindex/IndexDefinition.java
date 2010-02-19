@@ -89,6 +89,20 @@ public class IndexDefinition {
         return definition;
     }
 
+    public LongIndexFieldDefinition addLongField(String name) {
+        validateName(name);
+        LongIndexFieldDefinition definition = new LongIndexFieldDefinition(name);
+        add(definition);
+        return definition;
+    }
+
+    public ByteIndexFieldDefinition addByteField(String name) {
+        validateName(name);
+        ByteIndexFieldDefinition definition = new ByteIndexFieldDefinition(name);
+        add(definition);
+        return definition;
+    }
+
     private void add(IndexFieldDefinition fieldDef) {
         fields.add(fieldDef);
         fieldsByName.put(fieldDef.getName(), fieldDef);
