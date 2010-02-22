@@ -5,14 +5,6 @@
 Prerequisites
 =============
 
-Extra jars
-----------
-First install some extra jars in your local Maven repository by executing:
-
-cd lib
-sh install.sh
-
-
 Install Maven 2.2.x
 -------------------
 

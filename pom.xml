@@ -104,7 +104,7 @@
 
   <repositories>
     <repository>
-      <id>APACHE-SNAPSHOTS</id>
+      <id>repository.apache.org</id>
       <name>Apache snapshot repository</name>
       <url>https://repository.apache.org/content/groups/snapshots-group</url>
       <snapshots>
@@ -112,13 +112,32 @@
       </snapshots>
     </repository>
 
+    <repository>
+      <id>lilycms</id>
+      <name>Apache snapshot repository</name>
+      <url>http://lilycms.org/maven/maven2/deploy</url>
+    </repository>
+
     <!-- At the time of this writing, the JBoss repository served for junit -->
     <repository>
-      <id>JBOSS</id>
+      <id>repository.jboss.org</id>
       <name>JBoss Repository</name>
       <url>http://repository.jboss.org/maven2/</url>
     </repository>
   </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>org.lilycms.maven-deploy</id>
+      <name>Lily CMS deploy repository</name>
+      <url>scp://lilycms.org/var/www/lily/maven/maven2/deploy</url>
+    </repository>
+    <snapshotRepository>
+      <id>org.lilycms.maven-snapshot</id>
+      <name>Lily CMS dev repository</name>
+      <url>scp://lilycms.org/var/www/lily/maven/maven2/dev</url>
+    </snapshotRepository>
+  </distributionManagement>  
 
   <build>
     <pluginManagement>
