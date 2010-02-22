@@ -23,7 +23,6 @@ import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.util.ArgumentValidator;
-import org.lilycms.hbaseindex.Order;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,15 +53,23 @@ public class Index {
         this.definition = definition;
     }
 
-    public void addEntry(IndexEntry entry, byte[] targetRowKey) throws IOException {
+    /**
+     * Adds an entry to this index. See {@link IndexEntry} for more information.
+     *
+     * @param entry the values to be part of the index key, should correspond to the fields
+     *              defined in the {@link IndexDefinition}
+     * @param identifier the identifier of the indexed object, typically the key of a row in
+     *                   another HBase table
+     */
+    public void addEntry(IndexEntry entry, byte[] identifier) throws IOException {
         ArgumentValidator.notNull(entry, "entry");
-        ArgumentValidator.notNull(targetRowKey, "targetRowKey");
+        ArgumentValidator.notNull(identifier, "identifier");
         validateIndexEntry(entry);
 
-        byte[] indexKey = buildRowKey(entry, targetRowKey);
+        byte[] indexKey = buildRowKey(entry, identifier);
         Put put = new Put(indexKey);
 
-        // HBase does not allow to create a row without columns, so add some dummy ones.
+        // HBase does not allow to create a row without columns, so add a dummy column
         put.add(DUMMY_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
 
         htable.put(put);
@@ -70,15 +77,15 @@ public class Index {
 
     /**
      * Removes an entry from the index. The contents of the supplied
-     * entry and the targetRowKey should exactly match those supplied
+     * entry and the identifier should exactly match those supplied
      * when creating the index entry.
      */
-    public void removeEntry(IndexEntry entry, byte[] targetRowKey) throws IOException {
+    public void removeEntry(IndexEntry entry, byte[] identifier) throws IOException {
         ArgumentValidator.notNull(entry, "entry");
-        ArgumentValidator.notNull(targetRowKey, "targetRowKey");
+        ArgumentValidator.notNull(identifier, "identifier");
         validateIndexEntry(entry);
 
-        byte[] indexKey = buildRowKey(entry, targetRowKey);
+        byte[] indexKey = buildRowKey(entry, identifier);
         Delete delete = new Delete(indexKey);
         htable.delete(delete);
     }
@@ -107,15 +114,15 @@ public class Index {
      * <p>The format is as follows:
      *
      * <pre>
-     * ([1 byte field flags][fixed length value as bytes])*[target key]
+     * ([1 byte field flags][fixed length value as bytes])*[identifier]
      * </pre>
      *
      * <p>The field flags are currently used to mark if a field is null
      * or not. If a field is null, its value will be encoded as all-zero bits.
      */
-    private byte[] buildRowKey(IndexEntry entry, byte[] targetKey) {
+    private byte[] buildRowKey(IndexEntry entry, byte[] identifier) {
         // calculate size of the index key
-        int keyLength = targetKey.length + getIndexKeyLength();
+        int keyLength = identifier.length + getIndexKeyLength();
 
         byte[] indexKey = new byte[keyLength];
 
@@ -126,16 +133,20 @@ public class Index {
             offset = putField(indexKey, offset, fieldDef, value);
         }
 
-        // put target key in the key
-        System.arraycopy(targetKey, 0, indexKey, offset, targetKey.length);
+        // put identifier in the key
+        System.arraycopy(identifier, 0, indexKey, offset, identifier.length);
 
-        if (definition.getKeyOrder() == Order.DESCENDING) {
+        if (definition.getIdentifierOrder() == Order.DESCENDING) {
             invertBits(indexKey, offset, indexKey.length);
         }
 
         return indexKey;
     }
 
+    /**
+     * The length of a row key in the index table excluding the identifier (which is variable
+     * length).
+     */
     private int getIndexKeyLength() {
         int length = 0;
         for (IndexFieldDefinition fieldDef : definition.getFields()) {
@@ -296,7 +307,7 @@ public class Index {
             scan.setFilter(toFilter);
         }
 
-        return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength, definition.getKeyOrder() == Order.DESCENDING);
+        return new ScannerQueryResult(htable.getScanner(scan), indexKeyLength, definition.getIdentifierOrder() == Order.DESCENDING);
     }
 
     private void checkQueryValueType(IndexFieldDefinition fieldDef, Object value) {

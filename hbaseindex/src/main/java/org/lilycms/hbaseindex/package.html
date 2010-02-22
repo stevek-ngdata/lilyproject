@@ -49,13 +49,13 @@
   IndexEntry entry = new IndexEntry();
   entry.addField("myStringField", "foobar");
   entry.addField("myIntField", 55);
-  index.addEntry(entry, Bytes.toBytes("myrowkey"));
+  index.addEntry(entry, Bytes.toBytes("identifier"));
 
-  // The 'myrowkey' above is whatever you like as identifier for the
+  // The 'identifier' above is whatever you like as identifier for the
   // indexed object -- usually a row key in some other HBase table.
 
-  // You can remove entries by calling removeEnty with the
-  // same values and row key. Updating consists of deleting
+  // You can remove entries by calling removeEntry with the
+  // same values and identifier. Updating consists of deleting
   // and re-adding.
 </pre>
 
@@ -72,9 +72,9 @@
 
   QueryResult result = index.performQuery(query);
 
-  byte[] rowkey;
-  while ((rowkey = result.next()) != null) {
-    System.out.println(Bytes.toBytes(rowkey));
+  byte[] identifier;
+  while ((identifier = result.next()) != null) {
+    System.out.println(Bytes.toString(rowkey));
   }
 </pre>
 
@@ -83,11 +83,15 @@
   in the index from left to right, and only on the rightmost used
   field a range condition can be used.</p>
 
+<p>Range conditions by default have inclusive bounds ('greater
+  than or equals' and 'less than or equals'), but as
+  you can find in the API exclusive bounds are also possible.</p>
+
 <h1>Misc</h1>
 
 <h2>Merging results from multiple indexes</h2>
 
-<p>If you build up your queries such that each rowkey in the result
+<p>If you build up your queries such that each identifier in the result
   is unique, then you can merge results from multiple indexes as an
   "AND" or "OR" operation.</p>
 
@@ -105,9 +109,9 @@
   // Conjunction also implements the QueryResult interface, so
   // it is used in the same way
 
-  byte[] rowkey;
-  while ((rowkey = conjunction.next()) != null) {
-    System.out.println(Bytes.toBytes(rowkey));
+  byte[] identifier;
+  while ((identifier = conjunction.next()) != null) {
+    System.out.println(Bytes.toString(rowkey));
   }
 </pre>
 
@@ -129,6 +133,10 @@
 
 <p>In this case, using a Conjunction with queryresults from the same
   table can be useful.</p>
+
+<h2>NOT-queries</h2>
+
+<p>NOT queries can be handled manually by combining two range queries.</p>
 
 </body>
 </html>

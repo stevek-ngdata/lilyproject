@@ -68,7 +68,7 @@ public class IndexTest {
         Query query = new Query();
         query.setRangeCondition("field1", "b", "d");
         QueryResult result = index.performQuery(query);
-        assertResultKeys(result, "key4", "key2", "key0");
+        assertResultIds(result, "key4", "key2", "key0");
     }
 
     @Test
@@ -94,7 +94,7 @@ public class IndexTest {
         Query query = new Query();
         query.setRangeCondition("field1", Bytes.toBytes("aaa"), Bytes.toBytes("aab"));
         QueryResult result = index.performQuery(query);
-        assertResultKeys(result, "key0", "key1");
+        assertResultIds(result, "key0", "key1");
     }
 
     @Test
@@ -183,7 +183,7 @@ public class IndexTest {
         Query query = new Query();
         query.setRangeCondition("field1", new Float(55.44f), new Float(55.48f));
         QueryResult result = index.performQuery(query);
-        assertResultKeys(result, "key0", "key2", "key3");
+        assertResultIds(result, "key0", "key2", "key3");
     }
 
     @Test
@@ -215,7 +215,7 @@ public class IndexTest {
         query.setRangeCondition("field1", new GregorianCalendar(2010, 1, 15, 14, 5, 0).getTime(),
                 new GregorianCalendar(2010, 1, 15, 14, 5, 1).getTime());
         QueryResult result = index.performQuery(query);
-        assertResultKeys(result, "key0", "key1");
+        assertResultIds(result, "key0", "key1");
     }
 
     @Test
@@ -240,14 +240,14 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", new BigDecimal(values[2]), new BigDecimal(values[0]));
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key2", "key1", "key0");
+            assertResultIds(result, "key2", "key1", "key0");
         }
 
         {
             Query query = new Query();
             query.addEqualsCondition("field1", new BigDecimal(values[2]));
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key2");
+            assertResultIds(result, "key2");
         }
     }
 
@@ -380,19 +380,19 @@ public class IndexTest {
         query.addEqualsCondition("field1", "foobar");
         query.addEqualsCondition("field2", null);
         QueryResult result = index.performQuery(query);
-        assertResultKeys(result, "key1");
+        assertResultIds(result, "key1");
 
         query = new Query();
         query.addEqualsCondition("field1", null);
         query.addEqualsCondition("field2", null);
         result = index.performQuery(query);
-        assertResultKeys(result, "key2");
+        assertResultIds(result, "key2");
 
         query = new Query();
         query.addEqualsCondition("field1", null);
         query.addEqualsCondition("field2", "foobar");
         result = index.performQuery(query);
-        assertResultKeys(result, "key3");
+        assertResultIds(result, "key3");
     }
 
     @Test
@@ -496,7 +496,7 @@ public class IndexTest {
         Query query = new Query();
         query.setRangeCondition("field1", "b", "b");
         QueryResult result = index.performQuery(query);
-        assertResultKeys(result, "key0", "key2", "key1");
+        assertResultIds(result, "key0", "key2", "key1");
     }
 
     /**
@@ -529,7 +529,7 @@ public class IndexTest {
             Query query = new Query();
             query.addEqualsCondition("field1", "value A 0");
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key0");
+            assertResultIds(result, "key0");
         }
 
         // Search only on the two leftmost fields
@@ -538,7 +538,7 @@ public class IndexTest {
             query.addEqualsCondition("field1", "value A 0");
             query.addEqualsCondition("field2", 10);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key0");
+            assertResultIds(result, "key0");
         }
 
         // Search only on the two leftmost fields, with range query on the second
@@ -547,7 +547,7 @@ public class IndexTest {
             query.addEqualsCondition("field1", "value A 0");
             query.setRangeCondition("field2", 9, 11);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key0");
+            assertResultIds(result, "key0");
         }
 
         // Try searching on just the second field, should give error
@@ -688,28 +688,28 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", 1, 4);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key1", "key2", "key3", "key4");
+            assertResultIds(result, "key1", "key2", "key3", "key4");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", 1, 4, false, false);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key2", "key3");
+            assertResultIds(result, "key2", "key3");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", 1, 4, false, true);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key2", "key3", "key4");
+            assertResultIds(result, "key2", "key3", "key4");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", 1, 4, true, false);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key1", "key2", "key3");
+            assertResultIds(result, "key1", "key2", "key3");
         }
     }
 
@@ -734,21 +734,21 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key1", "key2", "key3", "key4", "key5");
+            assertResultIds(result, "key1", "key2", "key3", "key4", "key5");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", Query.MIN_VALUE, 0);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key1");
+            assertResultIds(result, "key1");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", 0, Query.MAX_VALUE);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key2", "key3", "key4", "key5");
+            assertResultIds(result, "key2", "key3", "key4", "key5");
         }
     }
 
@@ -758,7 +758,7 @@ public class IndexTest {
         IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
-        indexDef.setKeyOrder(Order.DESCENDING);
+        indexDef.setIdentifierOrder(Order.DESCENDING);
         IntegerIndexFieldDefinition fieldDef = indexDef.addIntegerField("field1");
         fieldDef.setOrder(Order.DESCENDING);
         indexManager.createIndex(indexDef);
@@ -775,14 +775,14 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key5", "key4", "key3", "key2", "key1");
+            assertResultIds(result, "key5", "key4", "key3", "key2", "key1");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", 3, 1);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key4", "key3", "key2", "key1");
+            assertResultIds(result, "key4", "key3", "key2", "key1");
         }
     }
 
@@ -804,12 +804,12 @@ public class IndexTest {
             index.addEntry(entry, Bytes.toBytes("key" + (i + 1)));
         }
 
-        // The index on the value is descending, the target keys themselves are ascending!
+        // The index on the value is descending, the identifiers themselves are ascending!
 
         Query query = new Query();
         query.setRangeCondition("field1", 2, 1);
         QueryResult result = index.performQuery(query);
-        assertResultKeys(result, "key3", "key4", "key1", "key2");
+        assertResultIds(result, "key3", "key4", "key1", "key2");
     }
 
     @Test
@@ -818,7 +818,7 @@ public class IndexTest {
         IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
-        indexDef.setKeyOrder(Order.DESCENDING);
+        indexDef.setIdentifierOrder(Order.DESCENDING);
         StringIndexFieldDefinition fieldDef = indexDef.addStringField("field1");
         fieldDef.setOrder(Order.DESCENDING);
         indexManager.createIndex(indexDef);
@@ -835,32 +835,32 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key4", "key3", "key2", "key1");
+            assertResultIds(result, "key4", "key3", "key2", "key1");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", "b", "a");
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key4", "key3", "key2", "key1");
+            assertResultIds(result, "key4", "key3", "key2", "key1");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", "a", "a");
             QueryResult result = index.performQuery(query);
-            assertResultKeys(result, "key3", "key2", "key1");
+            assertResultIds(result, "key3", "key2", "key1");
         }
     }
 
-    private void assertResultKeys(QueryResult result, String... keys) throws IOException {
+    private void assertResultIds(QueryResult result, String... identifiers) throws IOException {
         int i = 0;
-        byte[] key;
-        while ((key = result.next()) != null) {
-            if (i >= keys.length) {
+        byte[] identifier;
+        while ((identifier = result.next()) != null) {
+            if (i >= identifiers.length) {
                 fail("Too many query results.");
             }
-            assertEquals(keys[i], Bytes.toString(key));
+            assertEquals(identifiers[i], Bytes.toString(identifier));
             i++;
         }
         assertNull(result.next());

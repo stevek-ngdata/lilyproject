@@ -24,12 +24,12 @@ import java.io.IOException;
  * operation on two indices.
  *
  * <p>This only works if the individual QueryResults return their rows
- * sorted in increasing row key order, and return each row key at most
+ * sorted in increasing identifier order, and return each identifier at most
  * once. This will not be the case for queries that only search
  * on a subset of the fields in the index, or when using range queries
  * on multi-valued fields.
  *
- * <p>A Conjunction itself also returns its results in increasing row-key
+ * <p>A Conjunction itself also returns its results in increasing identifier
  * order, and can hence serve as input to other Conjunctions.
  */
 public class Conjunction implements QueryResult {

@@ -36,7 +36,7 @@ public class IndexDefinition {
     private String name;
     private List<IndexFieldDefinition> fields = new ArrayList<IndexFieldDefinition>();
     private Map<String, IndexFieldDefinition> fieldsByName = new HashMap<String, IndexFieldDefinition>();
-    private Order keyOrder = Order.ASCENDING;
+    private Order identifierOrder = Order.ASCENDING;
 
     public IndexDefinition(String name) {
         ArgumentValidator.notNull(name, "name");
@@ -46,8 +46,8 @@ public class IndexDefinition {
     public IndexDefinition(String name, ObjectNode jsonObject) {
         this.name = name;
 
-        if (jsonObject.get("keyOrder") != null)
-            keyOrder = Order.valueOf(jsonObject.get("keyOrder").getTextValue());
+        if (jsonObject.get("identifierOrder") != null)
+            identifierOrder = Order.valueOf(jsonObject.get("identifierOrder").getTextValue());
 
         try {
             ObjectNode fields = (ObjectNode)jsonObject.get("fields");
@@ -69,13 +69,13 @@ public class IndexDefinition {
         return name;
     }
 
-    public Order getKeyOrder() {
-        return keyOrder;
+    public Order getIdentifierOrder() {
+        return identifierOrder;
     }
 
-    public void setKeyOrder(Order keyOrder) {
-        ArgumentValidator.notNull(keyOrder, "keyOrder");
-        this.keyOrder = keyOrder;
+    public void setIdentifierOrder(Order identifierOrder) {
+        ArgumentValidator.notNull(identifierOrder, "identifierOrder");
+        this.identifierOrder = identifierOrder;
     }
 
     public IndexFieldDefinition getField(String name) {
@@ -156,7 +156,7 @@ public class IndexDefinition {
             fieldsJson.put(field.getName(), field.toJson());
         }
 
-        object.put("keyOrder", keyOrder.toString());
+        object.put("identifierOrder", identifierOrder.toString());
 
         return object;
     }

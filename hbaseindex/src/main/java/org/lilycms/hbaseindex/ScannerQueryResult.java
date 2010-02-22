@@ -26,12 +26,12 @@ import java.io.IOException;
 class ScannerQueryResult implements QueryResult {
     private ResultScanner scanner;
     private int indexKeyLength;
-    private boolean invertKey;
+    private boolean invertIdentifier;
 
-    public ScannerQueryResult(ResultScanner scanner, int indexKeyLength, boolean invertKey) {
+    public ScannerQueryResult(ResultScanner scanner, int indexKeyLength, boolean invertIdentifier) {
         this.scanner = scanner;
         this.indexKeyLength = indexKeyLength;
-        this.invertKey = invertKey;
+        this.invertIdentifier = invertIdentifier;
     }
 
     public byte[] next() throws IOException {
@@ -40,15 +40,15 @@ class ScannerQueryResult implements QueryResult {
             return null;
 
         byte[] rowKey = result.getRow();
-        byte[] targetKey = new byte[rowKey.length - indexKeyLength];
-        System.arraycopy(rowKey, indexKeyLength, targetKey, 0, targetKey.length);
+        byte[] identifier = new byte[rowKey.length - indexKeyLength];
+        System.arraycopy(rowKey, indexKeyLength, identifier, 0, identifier.length);
 
-        if (invertKey) {
-            for (int i = 0; i < targetKey.length; i++) {
-                targetKey[i] ^= 0xFF;
+        if (invertIdentifier) {
+            for (int i = 0; i < identifier.length; i++) {
+                identifier[i] ^= 0xFF;
             }
         }
 
-        return targetKey;
+        return identifier;
     }
 }
