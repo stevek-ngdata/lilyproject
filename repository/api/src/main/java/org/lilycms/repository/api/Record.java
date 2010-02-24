@@ -9,6 +9,7 @@ public class Record {
     
     private String recordId;
     private Map<String, Field> fields = new HashMap<String, Field>();
+    private Set<String> deleteFields = new HashSet<String>();
 
     public Record(String recordId) {
         this.recordId = recordId;
@@ -32,6 +33,14 @@ public class Record {
 
     public String getRecordId() {
         return recordId;
+    }
+    
+    public void deleteField(String fieldName) {
+        deleteFields.add(fieldName);
+    }
+    
+    public Set<String> getDeleteFields() {
+        return deleteFields;
     }
 
     @Override

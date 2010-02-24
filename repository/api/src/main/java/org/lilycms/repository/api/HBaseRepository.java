@@ -1,6 +1,7 @@
 package org.lilycms.repository.api;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -19,6 +20,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 public class HBaseRepository implements Repository {
 
+    private static final byte EXISTS_FLAG = (byte)0;
+    private static final byte DELETE_FLAG = (byte)1;
+    
     private static final byte[] CURRENT_VERSION_COLUMN = Bytes.toBytes("currentVersion");
     private static final byte[] SYSTEM_COLUMN_FAMILY = Bytes.toBytes("systemCF");
     private static final byte[] VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("versionableCF");
@@ -47,6 +51,11 @@ public class HBaseRepository implements Repository {
         Result result = recordTable.get(get);
         if (!result.isEmpty()) {
             throw new RecordExistsException(recordId);
+        }
+        if (record.getFields().isEmpty()) {
+            // TODO throw decent exception
+            // TODO is it actually a problem in case of updates?
+            throw new IOException("Record <" + record.getRecordId() + "> does not contain any fields");
         }
         Put put = createPut(record, 1);
         recordTable.put(put);
@@ -80,17 +89,18 @@ public class HBaseRepository implements Repository {
         return createRecord(result, version);
     }
 
-    public void update(Record record) throws IOException, NoSuchRecordException {
+    public void update(Record record) throws RecordNotFoundException, InvalidRecordException, IOException {
         Get get = new Get(Bytes.toBytes(record.getRecordId()));
         Result result = recordTable.get(get);
         if (result.isEmpty()) {
-            throw new NoSuchRecordException(record.getRecordId());
+            throw new RecordNotFoundException(record.getRecordId());
         }
         NavigableMap<byte[], byte[]> systemFamilyMap = result.getFamilyMap(SYSTEM_COLUMN_FAMILY);
         long version = Bytes.toLong(systemFamilyMap.get(CURRENT_VERSION_COLUMN));
-
-        Put put = createPut(record, ++version);
-        recordTable.put(put);
+        if (record.getFields().isEmpty() && record.getDeleteFields().isEmpty()) {
+            throw new InvalidRecordException(record.getRecordId(), "No fields to update or delete");
+        }
+        recordTable.put(createPut(record, ++version));
     }
 
     public void delete(String recordId) throws IOException {
@@ -102,24 +112,24 @@ public class HBaseRepository implements Repository {
     private Put createPut(Record record, long version) throws IOException {
         Put put = new Put(Bytes.toBytes(record.getRecordId()));
         put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN, Bytes.toBytes(version));
-        Set<Field> fields = record.getFields();
-        if (fields.isEmpty()) {
-            // TODO throw decent exception
-            // TODO is it actually a problem in case of updates?
-            throw new IOException("Record <" + record.getRecordId() + "> does not contain any fields");
-        }
-        for (Field field : fields) {
+        for (Field field : record.getFields()) {
             byte[] fieldName = Bytes.toBytes(field.getName());
             byte[] fieldValue = field.getValue();
+            byte[] prefixedValue = new byte[fieldValue.length+1];
+            prefixedValue[0] = EXISTS_FLAG;
+            System.arraycopy(fieldValue, 0, prefixedValue, 1, fieldValue.length);
             if (field.isVersionable()) {
-                put.add(VERSIONABLE_COLUMN_FAMILY, fieldName, version, fieldValue);
+                put.add(VERSIONABLE_COLUMN_FAMILY, fieldName, version, prefixedValue);
             } else {
-                put.add(NON_VERSIONABLE_COLUMN_FAMILY, fieldName, fieldValue);
+                put.add(NON_VERSIONABLE_COLUMN_FAMILY, fieldName, prefixedValue);
             }
+        }
+        for (String deleteFieldName : record.getDeleteFields()) {
+            put.add(NON_VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldName), new byte[]{DELETE_FLAG});
         }
         return put;
     }
-
+    
     private Record createRecord(Result result, Long version) {
         Record record;
         byte[] rowKey = result.getRow();
@@ -131,7 +141,7 @@ public class HBaseRepository implements Repository {
         if (nonVersionableFamilyMap != null) {
             entrySet = nonVersionableFamilyMap.entrySet();
             for (Entry<byte[], byte[]> entry : entrySet) {
-                record.addField(new Field(new String(entry.getKey()), entry.getValue(), false));
+                addField(record, entry.getKey(), entry.getValue(), false);
             }
         }
         if (version != null) {
@@ -142,11 +152,10 @@ public class HBaseRepository implements Repository {
                 Set<Entry<byte[], NavigableMap<Long, byte[]>>> columnSetWithAllVersions = versionableCFMapWithVersions
                                 .entrySet();
                 for (Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : columnSetWithAllVersions) {
-                    String fieldName = new String(columnWithAllVersions.getKey());
                     NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
                     Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(version);
                     if (ceilingEntry != null) {
-                        record.addField(new Field(fieldName, ceilingEntry.getValue(), true));
+                        addField(record, columnWithAllVersions.getKey(), ceilingEntry.getValue(), true);
                     }
                 }
             }
@@ -155,11 +164,21 @@ public class HBaseRepository implements Repository {
             if (versionableFamilyMap != null) {
                 entrySet = versionableFamilyMap.entrySet();
                 for (Entry<byte[], byte[]> entry : entrySet) {
-                    record.addField(new Field(new String(entry.getKey()), entry.getValue(), true));
+                    addField(record, entry.getKey(), entry.getValue(), true);
                 }
             }
         }
         return record;
+    }
+
+    private void addField(Record record, byte[] key, byte[] prefixedValue, boolean versionable) {
+        if (!isDeletedField(prefixedValue)) {
+            record.addField(new Field(new String(key), Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length), versionable));
+        }
+    }
+
+    private boolean isDeletedField(byte[] value) {
+        return value[0] == DELETE_FLAG;
     }
 
 }

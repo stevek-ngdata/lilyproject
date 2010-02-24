@@ -7,7 +7,7 @@ public interface Repository {
 
     void create(Record record) throws IOException, RecordExistsException;
 
-    void update(Record record) throws IOException, NoSuchRecordException;
+    void update(Record record) throws RecordNotFoundException, InvalidRecordException, IOException;
 
     Record read(String recordId) throws IOException;
 

@@ -16,9 +16,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.Field;
 import org.lilycms.repository.api.HBaseRepository;
-import org.lilycms.repository.api.NoSuchRecordException;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.testfw.TestHelper;
 
@@ -54,6 +54,20 @@ public class HBaseRepositoryTest {
 
         try {
             repository.create(record);
+            fail("A record should at least have some fields");
+        } catch (Exception expected) {
+        }
+    }
+    
+    @Test
+    public void testEmptyUpdateRecord() throws Exception {
+        Record record = generateRecord("emptyUpdateRecordId", new String[]{"aField" , "aValue", "false"});
+        repository.create(record);
+        
+        Record emptyRecord = generateRecord("emptyUpdateRecordId");
+
+        try {
+            repository.update(emptyRecord);
             fail("A record should at least have some fields");
         } catch (Exception expected) {
         }
@@ -98,7 +112,7 @@ public class HBaseRepositoryTest {
         try {
             repository.update(record);
             fail("Cannot update a non-existing document");
-        } catch (NoSuchRecordException expected) {
+        } catch (RecordNotFoundException expected) {
         }
     }
 
@@ -151,7 +165,7 @@ public class HBaseRepositoryTest {
     }
 
     @Test
-    public void testReadSpecificFields() throws Exception {
+    public void testReadSpecificFields2() throws Exception {
         String recordId = "readSpecificFieldsId";
         Record record = generateRecord(recordId, new String[] { "field1", "value1", "false" }, new String[] { "field2",
                 "value2", "false" }, new String[] { "field3", "value3", "false" });
@@ -255,7 +269,19 @@ public class HBaseRepositoryTest {
         actualRecord = repository.read(recordId, 1);
         assertEquals(expectedRecord, actualRecord);
     }
-
+    
+    @Test
+    public void testDeleteANonVersionableField() throws Exception {
+        String recordId = "deleteANonVersionableFieldId";
+        Record record = generateRecord(recordId , new String[] {"aField", "f1", "false"});
+        repository.create(record);
+        Record deleteRecord = new Record(recordId);
+        deleteRecord.deleteField("aField");
+        repository.update(deleteRecord);
+        Record actualRecord = repository.read(recordId);
+        assertEquals(null, actualRecord.getField("aField"));
+    }
+    
     private Record generateRecord(String recordId, String[]... fieldsAndValues) {
         Record record = new Record(recordId);
         for (String[] fieldInfo : fieldsAndValues) {
