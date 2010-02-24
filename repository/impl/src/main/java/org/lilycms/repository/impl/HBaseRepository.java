@@ -1,4 +1,4 @@
-package org.lilycms.repository.api;
+package org.lilycms.repository.impl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -17,6 +17,12 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilycms.repository.api.Field;
+import org.lilycms.repository.api.InvalidRecordException;
+import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordNotFoundException;
+import org.lilycms.repository.api.Repository;
 
 public class HBaseRepository implements Repository {
 
@@ -135,7 +141,7 @@ public class HBaseRepository implements Repository {
         byte[] rowKey = result.getRow();
         if (rowKey == null)
             return null;
-        record = new Record(new String(rowKey));
+        record = new RecordImpl(new String(rowKey));
         NavigableMap<byte[], byte[]> nonVersionableFamilyMap = result.getFamilyMap(NON_VERSIONABLE_COLUMN_FAMILY);
         Set<Entry<byte[], byte[]>> entrySet;
         if (nonVersionableFamilyMap != null) {
@@ -173,7 +179,7 @@ public class HBaseRepository implements Repository {
 
     private void addField(Record record, byte[] key, byte[] prefixedValue, boolean versionable) {
         if (!isDeletedField(prefixedValue)) {
-            record.addField(new Field(new String(key), Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length), versionable));
+            record.addField(new FieldImpl(new String(key), Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length), versionable));
         }
     }
 

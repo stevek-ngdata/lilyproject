@@ -23,9 +23,9 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilycms</groupId>
-  <artifactId>lily-repository-api</artifactId>
+  <artifactId>lily-repository-impl</artifactId>
   <version>0.1-dev</version>
-  <name>Lily: Repository API</name>
+  <name>Lily: Repository IMPL</name>
 
   <parent>
     <groupId>org.lilycms</groupId>
@@ -42,6 +42,38 @@
       <artifactId>hbase</artifactId>
     </dependency>
     
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hbase-test</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilycms</groupId>
+      <artifactId>lily-testfw</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilycms</groupId>
+      <artifactId>lily-repository-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+    </dependency>
+    
+    
+
   </dependencies>
 
 </project>

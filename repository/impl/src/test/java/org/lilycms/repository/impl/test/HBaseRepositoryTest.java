@@ -1,4 +1,4 @@
-package org.lilycms.repository.api.test;
+package org.lilycms.repository.impl.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -15,11 +15,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.Field;
-import org.lilycms.repository.api.HBaseRepository;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordExistsException;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.impl.FieldImpl;
+import org.lilycms.repository.impl.HBaseRepository;
+import org.lilycms.repository.impl.RecordImpl;
 import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest {
@@ -122,7 +124,7 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(recordId, new String[] { "aField", "aValue", "false" });
         repository.create(record);
 
-        Field field = new Field("aField", Bytes.toBytes("anotherValue"), false);
+        Field field = new FieldImpl("aField", Bytes.toBytes("anotherValue"), false);
         record.addField(field);
         repository.update(record);
 
@@ -135,7 +137,7 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(recordId, new String[] { "aField", "aValue", "false" });
         repository.create(record);
 
-        Field field = new Field("anotherField", Bytes.toBytes("anotherValue"), false);
+        Field field = new FieldImpl("anotherField", Bytes.toBytes("anotherValue"), false);
         record.addField(field);
         repository.update(record);
         Record actualRecord = repository.read(recordId);
@@ -275,7 +277,7 @@ public class HBaseRepositoryTest {
         String recordId = "deleteANonVersionableFieldId";
         Record record = generateRecord(recordId , new String[] {"aField", "f1", "false"});
         repository.create(record);
-        Record deleteRecord = new Record(recordId);
+        Record deleteRecord = new RecordImpl(recordId);
         deleteRecord.deleteField("aField");
         repository.update(deleteRecord);
         Record actualRecord = repository.read(recordId);
@@ -283,9 +285,9 @@ public class HBaseRepositoryTest {
     }
     
     private Record generateRecord(String recordId, String[]... fieldsAndValues) {
-        Record record = new Record(recordId);
+        Record record = new RecordImpl(recordId);
         for (String[] fieldInfo : fieldsAndValues) {
-            record.addField(new Field(fieldInfo[0], Bytes.toBytes(fieldInfo[1]), Boolean.valueOf(fieldInfo[2])));
+            record.addField(new FieldImpl(fieldInfo[0], Bytes.toBytes(fieldInfo[1]), Boolean.valueOf(fieldInfo[2])));
         }
         return record;
     }
