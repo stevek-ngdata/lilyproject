@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.lilycms.repository.api.Field;
 import org.lilycms.repository.api.FieldDescriptor;
 import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.InvalidRecordException;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordExistsException;
 import org.lilycms.repository.api.RecordNotFoundException;
@@ -75,14 +76,14 @@ public class HBaseRepositoryTest {
     }
 
     @Test
-    public void testEmptyRecord() {
+    public void testEmptyRecord() throws Exception {
         control.replay();
         Record record = generateRecord("emptyRecordId");
 
         try {
             repository.create(record);
             fail("A record should at least have some fields");
-        } catch (Exception expected) {
+        } catch (InvalidRecordException expected) {
         }
         control.verify();
     }
@@ -438,7 +439,7 @@ public class HBaseRepositoryTest {
     
     private Record generateRecord(String recordId, String[]... fieldsAndValues) {
         Record record = new RecordImpl(recordId);
-        record.setRecordType("dummyRecordType", 1);
+        record.setRecordType(recordType.getName(), recordType.getVersion());
         for (String[] fieldInfo : fieldsAndValues) {
             record.addField(new FieldImpl(fieldInfo[0], Bytes.toBytes(fieldInfo[1])));
         }

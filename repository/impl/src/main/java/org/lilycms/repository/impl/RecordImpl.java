@@ -70,8 +70,11 @@ public class RecordImpl implements Record {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((deleteFields == null) ? 0 : deleteFields.hashCode());
         result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         result = prime * result + ((recordId == null) ? 0 : recordId.hashCode());
+        result = prime * result + ((recordTypeName == null) ? 0 : recordTypeName.hashCode());
+        result = prime * result + (int) (recordTypeVersion ^ (recordTypeVersion >>> 32));
         return result;
     }
 
@@ -84,6 +87,11 @@ public class RecordImpl implements Record {
         if (getClass() != obj.getClass())
             return false;
         RecordImpl other = (RecordImpl) obj;
+        if (deleteFields == null) {
+            if (other.deleteFields != null)
+                return false;
+        } else if (!deleteFields.equals(other.deleteFields))
+            return false;
         if (fields == null) {
             if (other.fields != null)
                 return false;
@@ -94,11 +102,25 @@ public class RecordImpl implements Record {
                 return false;
         } else if (!recordId.equals(other.recordId))
             return false;
+        if (recordTypeName == null) {
+            if (other.recordTypeName != null)
+                return false;
+        } else if (!recordTypeName.equals(other.recordTypeName))
+            return false;
+        if (recordTypeVersion != other.recordTypeVersion)
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "["+recordId+", "+getFields()+"]";
+        StringBuffer stringBuffer= new StringBuffer();
+        stringBuffer.append("[");
+        stringBuffer.append(recordId).append(", ");
+        stringBuffer.append(recordTypeName).append(", ");
+        stringBuffer.append(recordTypeVersion).append(", ");
+        stringBuffer.append(getFields());
+        stringBuffer.append("]");
+        return stringBuffer.toString();
     }
 }
