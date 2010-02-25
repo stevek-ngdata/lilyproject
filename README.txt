@@ -20,4 +20,4 @@ mvn install
 
 or to run it faster (without the tests):
 
-mvn -Pfast install
+mvn -Pfast install 
