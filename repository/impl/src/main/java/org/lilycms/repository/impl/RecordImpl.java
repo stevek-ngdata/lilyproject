@@ -6,22 +6,43 @@ import java.util.Map;
 import java.util.Set;
 
 import org.lilycms.repository.api.Field;
+import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.Record;
 
 public class RecordImpl implements Record {
     private String recordId;
     private Map<String, Field> fields = new HashMap<String, Field>();
     private Set<String> deleteFields = new HashSet<String>();
+    private String recordTypeName;
+    private long recordTypeVersion;
 
+    
     public RecordImpl(String recordId) {
         this.recordId = recordId;
+    }
+    
+    public void setRecordType(String recordTypeName, long recordTypeVersion) {
+        this.recordTypeName = recordTypeName;
+        this.recordTypeVersion = recordTypeVersion;
+    }
+    
+    public String getRecordTypeName() {
+        return recordTypeName;
+    }
+    
+    public long getRecordTypeVersion() {
+        return recordTypeVersion;
     }
     
     public void addField(Field field) {
         fields.put(field.getName(), field);
     }
     
-    public Field getField(String fieldName) {
+    public Field getField(String fieldName) throws FieldNotFoundException {
+        Field field = fields.get(fieldName);
+        if (field == null) {
+            throw new FieldNotFoundException(fieldName);
+        }
         return fields.get(fieldName);
     }
     

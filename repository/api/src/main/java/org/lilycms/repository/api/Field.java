@@ -5,7 +5,5 @@ public interface Field {
     void setName(String name);
     byte[] getValue();
     void setValue(byte[] value);
-    boolean isVersionable();
-    void setVersionable(boolean versionable);
 }
 

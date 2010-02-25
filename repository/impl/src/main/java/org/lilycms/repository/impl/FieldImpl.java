@@ -7,12 +7,10 @@ import org.lilycms.repository.api.Field;
 public class FieldImpl implements Field {
     private String name;
     private byte[] value;
-    private boolean versionable; // TODO move this to the FieldType
 
-    public FieldImpl(String name, byte[] value, boolean versionable) {
+    public FieldImpl(String name, byte[] value) {
         this.name = name;
         this.value = value;
-        this.versionable = versionable;
     }
 
     public String getName() {
@@ -31,21 +29,12 @@ public class FieldImpl implements Field {
         this.value = value;
     }
 
-    public boolean isVersionable() {
-        return versionable;
-    }
-    
-    public void setVersionable(boolean versionable) {
-        this.versionable = versionable;
-    }
-    
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + Arrays.hashCode(value);
-        result = prime * result + (versionable ? 1231 : 1237);
         return result;
     }
 
@@ -65,13 +54,11 @@ public class FieldImpl implements Field {
             return false;
         if (!Arrays.equals(value, other.value))
             return false;
-        if (versionable != other.versionable)
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "["+name+","+new String(value)+","+versionable+"]";
+        return "["+name+","+new String(value)+"]";
     }
 }

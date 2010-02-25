@@ -1,7 +1,6 @@
 package org.lilycms.repository.api;
 
 import java.io.IOException;
-import java.util.Set;
 
 public interface Repository {
 
@@ -9,11 +8,10 @@ public interface Repository {
 
     void update(Record record) throws RecordNotFoundException, InvalidRecordException, IOException;
 
-    Record read(String recordId) throws IOException;
+    Record read(String recordId) throws RecordNotFoundException, IOException;
 
-    Record read(String recordId, Set<String> versionableFieldNames, Set<String> nonVersionableFieldNames)
-                    throws IOException; // TODO deduct the versionable aspect
-                                        // from the fieldType
+    Record read(String recordId, String recordTypeName, long recordTypeVersino, String... fieldNames)
+                    throws IOException;
 
     Record read(String recordId, long version) throws IOException;
 
