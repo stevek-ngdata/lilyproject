@@ -1,7 +1,7 @@
 package org.lilycms.repository.api;
 
 public interface FieldDescriptor {
-    String getName();
+    String getFieldDescriptorId();
     long getVersion();
     String getFieldType();
     boolean isMandatory();

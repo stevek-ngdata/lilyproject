@@ -1,7 +1,12 @@
 package org.lilycms.repository.api;
 
+import java.util.Collection;
+
 public interface RecordType {
-    String getName();
+    String getRecordTypeId();
     long getVersion();
-    FieldDescriptor getFieldDescriptor(String name);
+    void addFieldDescriptor(FieldDescriptor fieldDescriptor);
+    void removeFieldDescriptor(String removeFieldDescriptorId);
+    FieldDescriptor getFieldDescriptor(String fieldDescriptorId);
+    Collection<FieldDescriptor> getFieldDescriptors();
 }

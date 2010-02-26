@@ -32,11 +32,11 @@ public class HBaseRepository implements Repository {
     private static final byte EXISTS_FLAG = (byte)0;
     private static final byte DELETE_FLAG = (byte)1;
     
-    private static final byte[] CURRENT_VERSION_COLUMN = Bytes.toBytes("currentVersion");
     private static final byte[] SYSTEM_COLUMN_FAMILY = Bytes.toBytes("systemCF");
     private static final byte[] VERSIONABLE_SYSTEM_COLUMN_FAMILY = Bytes.toBytes("versionableSystemCF");
     private static final byte[] VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("versionableCF");
     private static final byte[] NON_VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("nonVersionableCF");
+    private static final byte[] CURRENT_VERSION_COLUMN_NAME = Bytes.toBytes("currentVersion");
     private static final byte[] RECORDTYPENAME_COLUMN_NAME = Bytes.toBytes("$RecordTypeName");
     private static final byte[] RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$RecordTypeVersion");
     private static final String RECORD_TABLE = "recordTable";
@@ -112,8 +112,9 @@ public class HBaseRepository implements Repository {
         if (result.isEmpty()) {
             throw new RecordNotFoundException(record.getRecordId());
         }
+        //TODO lock row
         NavigableMap<byte[], byte[]> systemFamilyMap = result.getFamilyMap(SYSTEM_COLUMN_FAMILY);
-        long version = Bytes.toLong(systemFamilyMap.get(CURRENT_VERSION_COLUMN));
+        long version = Bytes.toLong(systemFamilyMap.get(CURRENT_VERSION_COLUMN_NAME));
         if (record.getFields().isEmpty() && record.getDeleteFields().isEmpty()) {
             throw new InvalidRecordException(record.getRecordId(), "No fields to update or delete");
         }
@@ -132,16 +133,15 @@ public class HBaseRepository implements Repository {
         RecordType recordType = typeManager.getRecordType(recordTypeName, recordTypeVersion);
 
         Put put = new Put(Bytes.toBytes(record.getRecordId()));
-        put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN, Bytes.toBytes(version));
+        put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
         put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPENAME_COLUMN_NAME, version, Bytes.toBytes(recordTypeName));
         put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME, version, Bytes.toBytes(recordTypeVersion));
         for (Field field : record.getFields()) {
             String fieldName = field.getName();
             byte[] fieldNameAsBytes = Bytes.toBytes(fieldName);
             byte[] fieldValue = field.getValue();
-            byte[] prefixedValue = new byte[fieldValue.length+1];
-            prefixedValue[0] = EXISTS_FLAG;
-            System.arraycopy(fieldValue, 0, prefixedValue, 1, fieldValue.length);
+            byte[] prefixedValue = prefixValue(fieldValue, EXISTS_FLAG);
+            
             FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(fieldName);
             if (fieldDescriptor.isVersionable()) {
                 put.add(VERSIONABLE_COLUMN_FAMILY, fieldNameAsBytes, version, prefixedValue);
@@ -235,6 +235,14 @@ public class HBaseRepository implements Repository {
 
     private boolean isDeletedField(byte[] value) {
         return value[0] == DELETE_FLAG;
+    }
+    
+    private byte[] prefixValue(byte[] fieldValue, byte prefix) {
+        byte[] prefixedValue;
+        prefixedValue = new byte[fieldValue.length+1];
+        prefixedValue[0] = prefix;
+        System.arraycopy(fieldValue, 0, prefixedValue, 1, fieldValue.length);
+        return prefixedValue;
     }
 
 }

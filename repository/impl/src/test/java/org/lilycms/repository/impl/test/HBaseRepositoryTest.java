@@ -59,7 +59,7 @@ public class HBaseRepositoryTest {
         typeManager = control.createMock(TypeManager.class);
         recordType = control.createMock(RecordType.class);
         expect(typeManager.getRecordType(isA(String.class), anyLong())).andReturn(recordType).anyTimes();
-        expect(recordType.getName()).andReturn("dummyRecordType").anyTimes();
+        expect(recordType.getRecordTypeId()).andReturn("dummyRecordType").anyTimes();
         expect(recordType.getVersion()).andReturn(new Long(0)).anyTimes();
         
 
@@ -239,7 +239,7 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(recordId, new String[] { "field1", "value1"}, new String[] { "field2",
                 "value2"}, new String[] { "field3", "value3"});
         repository.create(record);
-        Record actualRecord = repository.read(recordId, recordType.getName(), recordType.getVersion(), "field1", "field3");
+        Record actualRecord = repository.read(recordId, recordType.getRecordTypeId(), recordType.getVersion(), "field1", "field3");
         assertEquals(recordId, actualRecord.getRecordId());
         assertEquals("value1", new String(actualRecord.getField("field1").getValue()));
         try {
@@ -296,7 +296,7 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(recordId, new String[] { "field1", "value1"}, new String[] { "field2",
                 "value2"});
         repository.create(record);
-        Record actualRecord = repository.read(recordId, recordType.getName(), recordType.getVersion(), "field1", "field2");
+        Record actualRecord = repository.read(recordId, recordType.getRecordTypeId(), recordType.getVersion(), "field1", "field2");
         assertEquals(record, actualRecord);
         control.verify();
     }
@@ -403,7 +403,7 @@ public class HBaseRepositoryTest {
         }
         
         //TODO should we throw already at the moment of the read operation? i.e. validate that the requested fields are not null
-        actualRecord = repository.read(recordId, recordType.getName(), recordType.getVersion(), "aField");
+        actualRecord = repository.read(recordId, recordType.getRecordTypeId(), recordType.getVersion(), "aField");
         try {
             actualRecord.getField("aField");
             fail("Getting a deleted field from a record should throw a FieldNotFoundException");
@@ -439,7 +439,7 @@ public class HBaseRepositoryTest {
     
     private Record generateRecord(String recordId, String[]... fieldsAndValues) {
         Record record = new RecordImpl(recordId);
-        record.setRecordType(recordType.getName(), recordType.getVersion());
+        record.setRecordType(recordType.getRecordTypeId(), recordType.getVersion());
         for (String[] fieldInfo : fieldsAndValues) {
             record.addField(new FieldImpl(fieldInfo[0], Bytes.toBytes(fieldInfo[1])));
         }
