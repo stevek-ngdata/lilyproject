@@ -32,6 +32,8 @@
   <version>0.1-dev</version>
   <name>Lily</name>
 
+  <url>http://lilycms.org/maven-site</url>
+
   <modules>
     <module>repository</module>
     <module>hbaseindex</module>
@@ -154,6 +156,11 @@
       <name>Lily CMS dev repository</name>
       <url>scp://lilycms.org/var/www/lily/maven/maven2/dev</url>
     </snapshotRepository>
+    <site>
+      <id>org.lilycms.website</id>
+      <name>Lily CMS maven website</name>
+      <url>scp://lilycms.org/var/www/lily/maven-site/</url>
+    </site>
   </distributionManagement>  
 
   <build>
@@ -178,5 +185,16 @@
       </properties>
     </profile>
   </profiles>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
   
 </project>
