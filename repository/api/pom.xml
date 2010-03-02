@@ -38,10 +38,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hbase</artifactId>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-core</artifactId>
     </dependency>
-    
   </dependencies>
 
 </project>
