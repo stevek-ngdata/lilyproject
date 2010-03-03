@@ -2,6 +2,7 @@ package org.lilycms.repository.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -104,9 +105,9 @@ public class HBaseTypeManager implements TypeManager {
                 if (updateFieldDescriptorPut != null) {
                     recordTypeChanged = true;
                     puts.add(updateFieldDescriptorPut);
-                    fieldDescriptors.remove(fieldDescriptorId);
-                    originalFieldDescriptorSet.remove(originalFieldDescriptor);
                 }
+                fieldDescriptors.remove(fieldDescriptorId);
+                originalFieldDescriptorSet.remove(originalFieldDescriptor);
             }
             
         }
@@ -172,30 +173,46 @@ public class HBaseTypeManager implements TypeManager {
         Set<Entry<byte[], byte[]>> fieldDescriptorEntries = fieldDescriptorsFamilyMap.entrySet();
         for (Entry<byte[], byte[]> fieldDescriptorEntry : fieldDescriptorEntries) {
             if (!isDeletedField(fieldDescriptorEntry.getValue())) {
-                recordType.addFieldDescriptor(getFieldDescriptor(fieldDescriptorEntry));
+                recordType.addFieldDescriptor(getFieldDescriptor(Bytes.toString(fieldDescriptorEntry.getKey()), Bytes.toLong(stripPrefix(fieldDescriptorEntry.getValue()))));
             }
         }
         return recordType;
     }
 
-    private FieldDescriptor getFieldDescriptor(Entry<byte[], byte[]> fieldDescriptorEntry) throws IOException {
-        Get get = new Get(fieldDescriptorEntry.getKey());
+    public RecordType getRecordType(String recordTypeId, long recordTypeVersion) throws IOException {
+        Get get = new Get(Bytes.toBytes(recordTypeId));
+        get.setMaxVersions();
         Result result = typeTable.get(get);
-        NavigableMap<byte[], byte[]> systemFamilyMap = result.getFamilyMap(SYSTEM_COLUMN_FAMILY);
-        long version = Bytes.toLong(systemFamilyMap.get(CURRENT_VERSION_COLUMN_NAME));
-        NavigableMap<byte[], byte[]> systemVersionableFamilyMap = result.getFamilyMap(SYSTEM_VERSIONABLE_COLUMN_FAMILY);
-        String fieldType = Bytes.toString(systemVersionableFamilyMap.get(FIELD_TYPE_COLUMN_NAME));
-        boolean mandatory = Bytes.toBoolean(systemVersionableFamilyMap.get(MANDATORY_COLUMN_NAME));
-        boolean versionable = Bytes.toBoolean(systemVersionableFamilyMap.get(VERSIONABLE_COLUMN_NAME));
+        RecordTypeImpl recordType = new RecordTypeImpl(recordTypeId);
+        NavigableMap<byte[],NavigableMap<byte[],NavigableMap<Long,byte[]>>> allFamiliesMap = result.getMap();
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> fieldDescriptorsVersionedMap = allFamiliesMap.get(FIELDDESCRIPTOR_COLUMN_FAMILY);
+        Set<Entry<byte[], NavigableMap<Long, byte[]>>> fieldDescriptorsEntrySet = fieldDescriptorsVersionedMap.entrySet();
+        for (Entry<byte[], NavigableMap<Long, byte[]>> fieldDescriptorEntry : fieldDescriptorsEntrySet) {
+            String fieldDescriptorId = Bytes.toString(fieldDescriptorEntry.getKey());
+            Entry<Long, byte[]> ceilingEntry = fieldDescriptorEntry.getValue().ceilingEntry(recordTypeVersion);
+            if (ceilingEntry != null && !isDeletedField(ceilingEntry.getValue())) {
+                long fieldDescriptorVersion = Bytes.toLong(stripPrefix(ceilingEntry.getValue()));
+                recordType.addFieldDescriptor(getFieldDescriptor(fieldDescriptorId, fieldDescriptorVersion));
+            }
+        }
+        recordType.setVersion(recordTypeVersion);
+        return recordType;
+    }
+
+    private FieldDescriptor getFieldDescriptor(String fieldDescriptorId, long fieldDescriptorVersion) throws IOException {
+        Get get = new Get(Bytes.toBytes(fieldDescriptorId));
+        get.setMaxVersions();
+        Result result = typeTable.get(get);
+        NavigableMap<byte[],NavigableMap<byte[],NavigableMap<Long,byte[]>>> allFamiliesMap = result.getMap();
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> systemVersionableVersionedMap = allFamiliesMap.get(SYSTEM_VERSIONABLE_COLUMN_FAMILY);
+        String fieldType = Bytes.toString(systemVersionableVersionedMap.get(FIELD_TYPE_COLUMN_NAME).ceilingEntry(fieldDescriptorVersion).getValue());
+        boolean mandatory = Bytes.toBoolean(systemVersionableVersionedMap.get(MANDATORY_COLUMN_NAME).ceilingEntry(fieldDescriptorVersion).getValue());
+        boolean versionable = Bytes.toBoolean(systemVersionableVersionedMap.get(VERSIONABLE_COLUMN_NAME).ceilingEntry(fieldDescriptorVersion).getValue());
         
-        return new FieldDescriptorImpl(Bytes.toString(fieldDescriptorEntry.getKey()), version, fieldType, mandatory, versionable);
+        return new FieldDescriptorImpl(fieldDescriptorId, fieldDescriptorVersion, fieldType, mandatory, versionable);
     }
 
-    public RecordType getRecordType(String recordTypeId, long recordTypeVersion) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
+    // TODO put in a util class, duplicate code in HBaseRepository
     private boolean isDeletedField(byte[] value) {
         return value[0] == DELETE_FLAG;
     }
@@ -207,4 +224,9 @@ public class HBaseTypeManager implements TypeManager {
         System.arraycopy(fieldValue, 0, prefixedValue, 1, fieldValue.length);
         return prefixedValue;
     }
+    
+    private byte[] stripPrefix(byte[] prefixedValue) {
+        return Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length);
+    }
+
 }

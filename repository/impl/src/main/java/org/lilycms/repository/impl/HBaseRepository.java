@@ -229,7 +229,7 @@ public class HBaseRepository implements Repository {
 
     private void addField(Record record, byte[] key, byte[] prefixedValue) {
         if (!isDeletedField(prefixedValue)) {
-            record.addField(new FieldImpl(new String(key), Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length)));
+            record.addField(new FieldImpl(new String(key), stripPrefix(prefixedValue)));
         }
     }
 
@@ -243,6 +243,10 @@ public class HBaseRepository implements Repository {
         prefixedValue[0] = prefix;
         System.arraycopy(fieldValue, 0, prefixedValue, 1, fieldValue.length);
         return prefixedValue;
+    }
+    
+    private byte[] stripPrefix(byte[] prefixedValue) {
+        return Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length);
     }
 
 }
