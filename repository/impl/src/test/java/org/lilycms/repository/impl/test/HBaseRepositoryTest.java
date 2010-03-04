@@ -4,8 +4,10 @@ import static org.easymock.EasyMock.anyLong;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.classextension.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -313,7 +315,7 @@ public class HBaseRepositoryTest {
         repository.update(recordVersion2);
         Record actualRecord = repository.read(recordId);
         assertEquals("value2", new String(actualRecord.getField("versionableField1").getValue()));
-        actualRecord = repository.read(recordId, 1);
+        actualRecord = repository.read(recordId, new Long(1), null);
         assertEquals(recordVersion1, actualRecord);
         control.verify();
     }
@@ -343,22 +345,43 @@ public class HBaseRepositoryTest {
         Record actualRecord = repository.read(recordId);
         assertEquals(expectedRecord, actualRecord);
         
-        actualRecord = repository.read(recordId, 3);
+        actualRecord = repository.read(recordId, new Long(3), null);
         assertEquals(expectedRecord, actualRecord);
         
         expectedRecord = generateRecord(recordId,
                         new String[] { "versionableField1", "f1value2"},
                         new String[] { "versionableField2", "f2value2"}, 
                         new String[] { "versionableField3", "f3value1"});
-        actualRecord = repository.read(recordId, 2);
+        actualRecord = repository.read(recordId, new Long(2), null);
         assertEquals(expectedRecord, actualRecord);
         
         expectedRecord = generateRecord(recordId,
                         new String[] { "versionableField1", "f1value1"},
                         new String[] { "versionableField2", "f2value1"}, 
                         new String[] { "versionableField3", "f3value1"});
-        actualRecord = repository.read(recordId, 1);
+        actualRecord = repository.read(recordId, new Long(1), null);
         assertEquals(expectedRecord, actualRecord);
+        control.verify();
+    }
+    
+    @Test
+    public void testReadNonExistingversion() throws Exception {
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
+        
+        control.replay();
+        String recordId = "readNonExistingversionId";
+        Record recordVersion1 = generateRecord(recordId, 
+                        new String[] { "versionableField1", "f1value1"});
+        repository.create(recordVersion1);
+        Record update1 = generateRecord(recordId, 
+                        new String[] { "versionableField1", "f1value2"});
+        repository.update(update1);
+        try {
+            repository.read(recordId, 3);
+        } catch(RecordNotFoundException expected) {
+            assertEquals(recordId, expected.getRecordId());
+            assertEquals(new Long(3), expected.getVersion());
+        }
         control.verify();
     }
     
@@ -437,6 +460,177 @@ public class HBaseRepositoryTest {
         control.verify();
     }
     
+    @Test
+    public void testCreateVariantRecord() throws Exception {
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
+
+        control.replay();
+        String recordId = "createVariantRecordId";
+        Record record = generateRecord(recordId, new String[] {"aField", "f1"});
+        repository.create(record);
+        
+        Record variantRecord = generateRecord(recordId, new String[] {"aVariantField", "vf1"});
+        variantRecord.addVariantProperty("dimension1", "dimensionValue1");
+        repository.create(variantRecord);
+        
+        Map<String, String> variantProperties = new HashMap<String, String>();
+        variantProperties.put("dimension1", "dimensionValue1");
+        Record actualVariantRecord = repository.read(recordId, variantProperties);
+        
+        assertEquals(variantRecord, actualVariantRecord);
+        
+        control.verify();
+    }
+    
+    @Test
+    public void testCreateVariantRecordWithNonExistingRecord() throws Exception {
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
+
+        control.replay();
+        String recordId = "createVariantRecordWithNonExistingRecordId";
+        
+        Record variantRecord = generateRecord(recordId, new String[] {"aVariantField", "vf1"});
+        variantRecord.addVariantProperty("dimension1", "dimensionValue1");
+        try {
+            repository.create(variantRecord);
+            fail();
+        } catch (RecordNotFoundException expected) {
+            assertEquals(recordId, expected.getRecordId());
+            assertNull(expected.getVersion());
+            assertNull(expected.getVariantProperties());
+        }
+        control.verify();
+    }
+    
+    @Test
+    public void testReadNonExistingVariantRecord() throws Exception {
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
+
+        control.replay();
+        String recordId = "readNonExistingVariantRecordId";
+        Record record = generateRecord(recordId, new String[] {"aField", "f1"});
+        repository.create(record);
+        
+        Record variantRecord = generateRecord(recordId, new String[] {"aVariantField", "vf1"});
+        variantRecord.addVariantProperty("dimension1", "dimensionValue1");
+        repository.create(variantRecord);
+        
+        Map<String, String> variantProperties = new HashMap<String, String>();
+        variantProperties.put("dimension1", "dimensionValue2");
+        try {
+            Record actualVariantRecord = repository.read(recordId, variantProperties);
+            fail("Reading a non-existing variant should throw an exception");
+        } catch (RecordNotFoundException expected) {
+            assertEquals(recordId, expected.getRecordId());
+            assertEquals(variantProperties, expected.getVariantProperties());
+        }
+        
+        Map<String, String> variantProperties2 = new HashMap<String, String>();
+        variantProperties2.put("dimension2", "dimensionValue1");
+        try {
+            Record actualVariantRecord = repository.read(recordId, variantProperties2);
+            fail("Reading a non-existing variant should throw an exception");
+        } catch (RecordNotFoundException expected) {
+            assertEquals(recordId, expected.getRecordId());
+            assertEquals(variantProperties2, expected.getVariantProperties());
+        }
+        control.verify();
+    }
+    
+    @Test
+    public void testReadNonExistingVariantRecordVersion() throws Exception {
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
+
+        control.replay();
+        String recordId = "readNonExistingVariantRecordVersionId";
+        Record record = generateRecord(recordId, new String[] {"aField", "f1"});
+        repository.create(record);
+        
+        Record variantRecord = generateRecord(recordId, new String[] {"aVariantField", "vf1"});
+        variantRecord.addVariantProperty("dimension1", "dimensionValue1");
+        repository.create(variantRecord);
+        
+        Map<String, String> variantProperties = new HashMap<String, String>();
+        variantProperties.put("dimension1", "dimensionValue2");
+        try {
+            Record actualVariantRecord = repository.read(recordId, 2, variantProperties);
+            fail("Reading a non-existing variant should throw an exception");
+        } catch (RecordNotFoundException expected) {
+            assertEquals(recordId, expected.getRecordId());
+            assertEquals(new Long(2), expected.getVersion());
+            assertEquals(variantProperties, expected.getVariantProperties());
+        }
+        
+        control.verify();
+    }
+    
+    @Test
+    public void testVariantRecordVersions() throws Exception {
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
+
+        control.replay();
+        String recordId = "variantVersionsRecordId";
+        Record record = generateRecord(recordId, new String[] {"field1", "f1"});
+        repository.create(record);
+
+        Map<String, String> variantProperties = new HashMap<String, String>();
+        variantProperties.put("dimension1", "dimensionValue1");
+
+        Record variantRecord = generateRecord(recordId, new String[] {"field1", "vf1"});
+        variantRecord.addVariantProperties(variantProperties);
+        repository.create(variantRecord);
+        
+        variantRecord = generateRecord(recordId, new String[] {"field1", "vf1B"}, new String[] {"field2", "vf2"});
+        variantRecord.addVariantProperties(variantProperties);
+        repository.update(variantRecord);
+
+        variantRecord = generateRecord(recordId, new String[] {"field2", "vf2B"}, new String[] {"field3", "vf3"});
+        variantRecord.addVariantProperties(variantProperties);
+        repository.update(variantRecord);
+        
+        variantRecord = generateRecord(recordId);
+        variantRecord.addVariantProperties(variantProperties);
+        variantRecord.deleteField("field1");
+        repository.update(variantRecord);
+        
+        variantRecord = generateRecord(recordId, new String[] {"field1", "vf1B"});
+        variantRecord.addVariantProperties(variantProperties);
+        repository.update(variantRecord);
+
+        Record actualMasterRecord = repository.read(recordId);
+        assertEquals("f1", Bytes.toString(actualMasterRecord.getField("field1").getValue()));
+        Record actualVariantRecord = repository.read(recordId, 1, variantProperties);
+        assertEquals("vf1", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
+        
+        actualVariantRecord = repository.read(recordId, 2, variantProperties);
+        assertEquals("vf1B", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
+        assertEquals("vf2", Bytes.toString(actualVariantRecord.getField("field2").getValue()));
+
+        actualVariantRecord = repository.read(recordId, 3, variantProperties);
+        assertEquals("vf1B", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
+        assertEquals("vf2B", Bytes.toString(actualVariantRecord.getField("field2").getValue()));
+        assertEquals("vf3", Bytes.toString(actualVariantRecord.getField("field3").getValue()));
+
+        actualVariantRecord = repository.read(recordId, 4, variantProperties);
+        try { 
+            actualVariantRecord.getField("field1");
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        
+        actualVariantRecord = repository.read(recordId, 5, variantProperties);
+        assertEquals("vf1B", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
+        
+        try {
+            actualVariantRecord = repository.read(recordId, 6, variantProperties);
+            fail();
+        } catch(RecordNotFoundException expected) {
+        }
+
+        control.verify();
+
+    }
+
     private Record generateRecord(String recordId, String[]... fieldsAndValues) {
         Record record = new RecordImpl(recordId);
         record.setRecordType(recordType.getRecordTypeId(), recordType.getVersion());
@@ -446,4 +640,5 @@ public class HBaseRepositoryTest {
         return record;
     }
 
+    
 }

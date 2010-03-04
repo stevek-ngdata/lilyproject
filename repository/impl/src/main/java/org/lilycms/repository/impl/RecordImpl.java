@@ -15,29 +15,29 @@ public class RecordImpl implements Record {
     private Set<String> deleteFields = new HashSet<String>();
     private String recordTypeName;
     private long recordTypeVersion;
+    private Map<String, String> variantProperties = new HashMap<String, String>();
 
-    
     public RecordImpl(String recordId) {
         this.recordId = recordId;
     }
-    
+
     public void setRecordType(String recordTypeName, long recordTypeVersion) {
         this.recordTypeName = recordTypeName;
         this.recordTypeVersion = recordTypeVersion;
     }
-    
+
     public String getRecordTypeName() {
         return recordTypeName;
     }
-    
+
     public long getRecordTypeVersion() {
         return recordTypeVersion;
     }
-    
+
     public void addField(Field field) {
         fields.put(field.getName(), field);
     }
-    
+
     public Field getField(String fieldName) throws FieldNotFoundException {
         Field field = fields.get(fieldName);
         if (field == null) {
@@ -45,11 +45,11 @@ public class RecordImpl implements Record {
         }
         return fields.get(fieldName);
     }
-    
+
     public Set<Field> getFields() {
         return new HashSet<Field>(fields.values());
     }
-    
+
     public void setRecordId(String recordId) {
         this.recordId = recordId;
     }
@@ -57,11 +57,25 @@ public class RecordImpl implements Record {
     public String getRecordId() {
         return recordId;
     }
-    
+
+    public void addVariantProperty(String dimension, String dimensionValue) {
+        variantProperties.put(dimension, dimensionValue);
+    }
+
+    public void addVariantProperties(Map<String, String> variantProperties) {
+        if (variantProperties != null) {
+            this.variantProperties.putAll(variantProperties);
+        }
+    }
+
+    public Map<String, String> getVariantProperties() {
+        return variantProperties;
+    }
+
     public void deleteField(String fieldName) {
         deleteFields.add(fieldName);
     }
-    
+
     public Set<String> getDeleteFields() {
         return deleteFields;
     }
@@ -75,6 +89,7 @@ public class RecordImpl implements Record {
         result = prime * result + ((recordId == null) ? 0 : recordId.hashCode());
         result = prime * result + ((recordTypeName == null) ? 0 : recordTypeName.hashCode());
         result = prime * result + (int) (recordTypeVersion ^ (recordTypeVersion >>> 32));
+        result = prime * result + ((variantProperties == null) ? 0 : variantProperties.hashCode());
         return result;
     }
 
@@ -109,18 +124,19 @@ public class RecordImpl implements Record {
             return false;
         if (recordTypeVersion != other.recordTypeVersion)
             return false;
+        if (variantProperties == null) {
+            if (other.variantProperties != null)
+                return false;
+        } else if (!variantProperties.equals(other.variantProperties))
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        StringBuffer stringBuffer= new StringBuffer();
-        stringBuffer.append("[");
-        stringBuffer.append(recordId).append(", ");
-        stringBuffer.append(recordTypeName).append(", ");
-        stringBuffer.append(recordTypeVersion).append(", ");
-        stringBuffer.append(getFields());
-        stringBuffer.append("]");
-        return stringBuffer.toString();
+        return "RecordImpl [recordId=" + recordId + ", variantProperties=" + variantProperties + ", recordTypeName="
+                        + recordTypeName + ", recordTypeVersion=" + recordTypeVersion + ", fields=" + fields
+                        + ", deleteFields=" + deleteFields + "]";
     }
+
 }

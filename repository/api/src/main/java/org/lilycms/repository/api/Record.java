@@ -1,5 +1,6 @@
 package org.lilycms.repository.api;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface Record {
@@ -13,4 +14,7 @@ public interface Record {
     String getRecordId();
     void deleteField(String fieldName);
     Set<String> getDeleteFields();
+    void addVariantProperty(String dimension, String dimensionValue);
+    void addVariantProperties(Map<String, String>variantProperties);
+    Map<String, String> getVariantProperties();
 }
