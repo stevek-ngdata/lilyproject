@@ -53,6 +53,7 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-core</artifactId>
       <classifier>tests</classifier>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
