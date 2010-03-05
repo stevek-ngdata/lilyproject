@@ -2,23 +2,24 @@ package org.lilycms.repository.impl;
 
 import java.util.Arrays;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Field;
 
 public class FieldImpl implements Field {
-    private String name;
+    private String fieldId;
     private byte[] value;
 
-    public FieldImpl(String name, byte[] value) {
-        this.name = name;
+    public FieldImpl(String fieldId, byte[] value) {
+        this.fieldId = fieldId;
         this.value = value;
     }
 
-    public String getName() {
-        return name;
+    public String getFieldId() {
+        return fieldId;
     }
     
-    public void setName(String name) {
-        this.name = name;
+    public void setFieldId(String fieldId) {
+        this.fieldId = fieldId;
     }
 
     public byte[] getValue() {
@@ -33,7 +34,7 @@ public class FieldImpl implements Field {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((fieldId == null) ? 0 : fieldId.hashCode());
         result = prime * result + Arrays.hashCode(value);
         return result;
     }
@@ -47,10 +48,10 @@ public class FieldImpl implements Field {
         if (getClass() != obj.getClass())
             return false;
         FieldImpl other = (FieldImpl) obj;
-        if (name == null) {
-            if (other.name != null)
+        if (fieldId == null) {
+            if (other.fieldId != null)
                 return false;
-        } else if (!name.equals(other.name))
+        } else if (!fieldId.equals(other.fieldId))
             return false;
         if (!Arrays.equals(value, other.value))
             return false;
@@ -59,6 +60,6 @@ public class FieldImpl implements Field {
 
     @Override
     public String toString() {
-        return "["+name+","+new String(value)+"]";
+        return "["+fieldId+","+ Bytes.toString(value)+"]";
     }
 }

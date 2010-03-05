@@ -2,7 +2,6 @@ package org.lilycms.repository.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -32,15 +31,12 @@ import org.lilycms.repository.api.TypeManager;
 
 public class HBaseRepository implements Repository {
 
-    private static final byte EXISTS_FLAG = (byte) 0;
-    private static final byte DELETE_FLAG = (byte) 1;
-
     private static final byte[] SYSTEM_COLUMN_FAMILY = Bytes.toBytes("systemCF");
     private static final byte[] VERSIONABLE_SYSTEM_COLUMN_FAMILY = Bytes.toBytes("versionableSystemCF");
     private static final byte[] VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("versionableCF");
     private static final byte[] NON_VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("nonVersionableCF");
     private static final byte[] CURRENT_VERSION_COLUMN_NAME = Bytes.toBytes("currentVersion");
-    private static final byte[] RECORDTYPENAME_COLUMN_NAME = Bytes.toBytes("$RecordTypeName");
+    private static final byte[] RECORDTYPEID_COLUMN_NAME = Bytes.toBytes("$RecordTypeId");
     private static final byte[] RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$RecordTypeVersion");
     private static final String RECORD_TABLE = "recordTable";
     private HTable recordTable;
@@ -87,68 +83,91 @@ public class HBaseRepository implements Repository {
         }
         Put put = createPut(record, 1);
         recordTable.put(put);
+        record.setRecordVersion(1);
     }
 
-    public Record read(String recordId) throws RecordNotFoundException, IOException {
-        return read(recordId, null);
+    public Record read(String recordId, String... fieldIds) throws RecordNotFoundException, IOException {
+        return read(recordId, null, fieldIds);
     }
     
-    public Record read(String recordId, long version) throws RecordNotFoundException, IOException {
-        return read(recordId, version, null);
+    public Record read(String recordId, long version, String... fieldIds) throws RecordNotFoundException, IOException {
+        return read(recordId, version, null, fieldIds);
     }
 
-    public Record read(String recordId, Map<String, String> variantProperties) throws RecordNotFoundException,
+    public Record read(String recordId, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException,
                     IOException {
-        return read(recordId, null, variantProperties);
+        return read(recordId, null, variantProperties, fieldIds);
     }
     
-    public Record read(String recordId, long version, Map<String, String> variantProperties) throws RecordNotFoundException, IOException {
-        return read(recordId, new Long(version), variantProperties);
+    public Record read(String recordId, long version, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException, IOException {
+        return read(recordId, Long.valueOf(version), variantProperties, fieldIds);
     }
     
-    private Record read(String recordId, Long version, Map<String, String> variantProperties) throws RecordNotFoundException, IOException {
+    private Record read(String recordId, Long version, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException, IOException {
         String rowKey = generateRowKey(recordId, variantProperties);
         Get get = new Get(Bytes.toBytes(rowKey));
         if (version != null) {
             get.setMaxVersions();
         }
+        if (fieldIds.length != 0) {
+            addFieldsToGet(get, recordId, version, variantProperties, fieldIds);
+        }
         Result result = recordTable.get(get);
         if (result.isEmpty()) {
             throw new RecordNotFoundException(recordId, version, variantProperties);
         }
+        long currentVersion = Bytes.toLong(result.getValue(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME));
+        Record record = new RecordImpl(recordId);
         if (version != null) {
-            long currentVersion = Bytes.toLong(result.getValue(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME));
             if (currentVersion < version) {
                 throw new RecordNotFoundException(recordId, version, variantProperties);
             }
+            record.setRecordVersion(version);
+        } else {
+            record.setRecordVersion(currentVersion);
         }
-        Record record = new RecordImpl(recordId);
+        
         record.addVariantProperties(variantProperties);
         extractFields(result, version, record);
         return record;
     }
-
-    public Record read(String recordId, String recordTypeName, long recordTypeVersion, String... fieldNames)
-                    throws RecordNotFoundException, IOException {
-        RecordType recordType = typeManager.getRecordType(recordTypeName, recordTypeVersion);
-        Get get = new Get(Bytes.toBytes(recordId));
-        get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPENAME_COLUMN_NAME);
-        get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME);
-        for (String fieldName : fieldNames) {
-            byte[] columnFamily = recordType.getFieldDescriptor(fieldName).isVersionable() ? VERSIONABLE_COLUMN_FAMILY
-                            : NON_VERSIONABLE_COLUMN_FAMILY;
-            get.addColumn(columnFamily, Bytes.toBytes(fieldName));
-        }
-        Result result = recordTable.get(get);
-        if (result.isEmpty()) {
-            throw new RecordNotFoundException(recordId, null, null);
-        }
-        Record record = new RecordImpl(recordId);
-        extractFields(result, null, record);
-        return record;
-    }
-
     
+    private void addFieldsToGet(Get get, String recordId, Long version, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException, IOException {
+        String recordTypeId;
+        long recordTypeVersion;
+        String rowKey = generateRowKey(recordId, variantProperties);
+        Get recordTypeGet = new Get(Bytes.toBytes(rowKey));
+        if (version != null) {
+            get.getMaxVersions();
+        }
+        get.addColumn(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME);
+        get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME);
+        get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME);
+        Result recordTypeResult = recordTable.get(recordTypeGet);
+        if (recordTypeResult.isEmpty()) {
+            throw new RecordNotFoundException(recordId, version, variantProperties);
+        }
+        
+        if (version == null) {
+            recordTypeId = Bytes.toString(recordTypeResult.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME));
+            recordTypeVersion = Bytes.toLong(recordTypeResult.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME));
+        } else {
+            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = recordTypeResult.getMap();
+            NavigableMap<byte[], NavigableMap<Long, byte[]>> allVersionsSystemColumnFamilyMap = allVersionsMap.get(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
+            recordTypeId = Bytes.toString(allVersionsSystemColumnFamilyMap.get(RECORDTYPEID_COLUMN_NAME).ceilingEntry(version).getValue());
+            recordTypeVersion = Bytes.toLong(allVersionsSystemColumnFamilyMap.get(RECORDTYPEVERSION_COLUMN_NAME).ceilingEntry(version).getValue());
+        }
+        
+        RecordType recordType = typeManager.getRecordType(recordTypeId, recordTypeVersion);
+        
+        get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME);
+        get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME);
+        for (String fieldId : fieldIds) {
+            byte[] columnFamily = recordType.getFieldDescriptor(fieldId).isVersionable() ? VERSIONABLE_COLUMN_FAMILY
+                            : NON_VERSIONABLE_COLUMN_FAMILY;
+            get.addColumn(columnFamily, Bytes.toBytes(fieldId));
+        }
+    }
 
     private void extractFields(Result result, Long version, Record record) {
         extractNonVersionableFields(result, record);
@@ -174,7 +193,9 @@ public class HBaseRepository implements Repository {
         if (record.getFields().isEmpty() && record.getDeleteFields().isEmpty()) {
             throw new InvalidRecordException(record.getRecordId(), "No fields to update or delete");
         }
-        recordTable.put(createPut(record, version+1));
+        long newVersion = version+1;
+        recordTable.put(createPut(record, newVersion));
+        record.setRecordVersion(newVersion);
     }
 
     public void delete(String recordId) throws IOException {
@@ -184,35 +205,35 @@ public class HBaseRepository implements Repository {
     }
 
     private Put createPut(Record record, long version) throws IOException {
-        String recordTypeName = record.getRecordTypeName();
+        String recordTypeId = record.getRecordTypeId();
         long recordTypeVersion = record.getRecordTypeVersion();
-        RecordType recordType = typeManager.getRecordType(recordTypeName, recordTypeVersion);
+        RecordType recordType = typeManager.getRecordType(recordTypeId, recordTypeVersion);
 
         String rowId = generateRowKey(record.getRecordId(), record.getVariantProperties());
         Put put = new Put(Bytes.toBytes(rowId));
         put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
-        put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPENAME_COLUMN_NAME, version, Bytes.toBytes(recordTypeName));
+        put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME, version, Bytes.toBytes(recordTypeId));
         put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME, version, Bytes
                         .toBytes(recordTypeVersion));
         for (Field field : record.getFields()) {
-            String fieldName = field.getName();
-            byte[] fieldNameAsBytes = Bytes.toBytes(fieldName);
+            String fieldId = field.getFieldId();
+            byte[] fieldIdAsBytes = Bytes.toBytes(fieldId);
             byte[] fieldValue = field.getValue();
-            byte[] prefixedValue = prefixValue(fieldValue, EXISTS_FLAG);
+            byte[] prefixedValue = EncodingUtil.prefixValue(fieldValue, EncodingUtil.EXISTS_FLAG);
 
-            FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(fieldName);
+            FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(fieldId);
             if (fieldDescriptor.isVersionable()) {
-                put.add(VERSIONABLE_COLUMN_FAMILY, fieldNameAsBytes, version, prefixedValue);
+                put.add(VERSIONABLE_COLUMN_FAMILY, fieldIdAsBytes, version, prefixedValue);
             } else {
-                put.add(NON_VERSIONABLE_COLUMN_FAMILY, fieldNameAsBytes, prefixedValue);
+                put.add(NON_VERSIONABLE_COLUMN_FAMILY, fieldIdAsBytes, prefixedValue);
             }
         }
-        for (String deleteFieldName : record.getDeleteFields()) {
-            FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(deleteFieldName);
+        for (String deleteFieldId : record.getDeleteFields()) {
+            FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(deleteFieldId);
             if (fieldDescriptor.isVersionable()) {
-                put.add(VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldName), version, new byte[] { DELETE_FLAG });
+                put.add(VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldId), version, new byte[] { EncodingUtil.DELETE_FLAG });
             } else {
-                put.add(NON_VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldName), new byte[] { DELETE_FLAG });
+                put.add(NON_VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldId), new byte[] { EncodingUtil.DELETE_FLAG });
             }
         }
         return put;
@@ -252,20 +273,20 @@ public class HBaseRepository implements Repository {
 
     private void extractRecordTypeInfoOnVersion(Long version, Record record,
                     NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions) {
-        NavigableMap<Long, byte[]> recordTypeNameVersions = mapWithVersions.get(RECORDTYPENAME_COLUMN_NAME);
-        Entry<Long, byte[]> recordTypeNameEntry = recordTypeNameVersions.ceilingEntry(version);
+        NavigableMap<Long, byte[]> recordTypeIdVersions = mapWithVersions.get(RECORDTYPEID_COLUMN_NAME);
+        Entry<Long, byte[]> recordTypeIdEntry = recordTypeIdVersions.ceilingEntry(version);
         NavigableMap<Long, byte[]> recordTypeVersionVersions = mapWithVersions.get(RECORDTYPEVERSION_COLUMN_NAME);
         Entry<Long, byte[]> recordTypeVersionEntry = recordTypeVersionVersions.ceilingEntry(version);
-        record.setRecordType(Bytes.toString(recordTypeNameEntry.getValue()), Bytes.toLong(recordTypeVersionEntry
+        record.setRecordType(Bytes.toString(recordTypeIdEntry.getValue()), Bytes.toLong(recordTypeVersionEntry
                         .getValue()));
     }
 
     private void extractLatestRecordTypeInfo(Result result, Record record) {
         NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
-        record.setRecordType(Bytes.toString(familyMap.get(RECORDTYPENAME_COLUMN_NAME)), Bytes.toLong(familyMap
+        record.setRecordType(Bytes.toString(familyMap.get(RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(familyMap
                         .get(RECORDTYPEVERSION_COLUMN_NAME)));
     }
-
+    
     private void extractLatestVersionableFields(Result result, Record record) {
         NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(VERSIONABLE_COLUMN_FAMILY);
         extractFields(record, familyMap);
@@ -285,25 +306,10 @@ public class HBaseRepository implements Repository {
     }
 
     private void addField(Record record, byte[] key, byte[] prefixedValue) {
-        if (!isDeletedField(prefixedValue)) {
-            record.addField(new FieldImpl(new String(key), stripPrefix(prefixedValue)));
+        if (!EncodingUtil.isDeletedField(prefixedValue)) {
+            record.addField(new FieldImpl(Bytes.toString(key), EncodingUtil.stripPrefix(prefixedValue)));
         }
     }
 
-    private boolean isDeletedField(byte[] value) {
-        return value[0] == DELETE_FLAG;
-    }
-
-    private byte[] prefixValue(byte[] fieldValue, byte prefix) {
-        byte[] prefixedValue;
-        prefixedValue = new byte[fieldValue.length + 1];
-        prefixedValue[0] = prefix;
-        System.arraycopy(fieldValue, 0, prefixedValue, 1, fieldValue.length);
-        return prefixedValue;
-    }
-
-    private byte[] stripPrefix(byte[] prefixedValue) {
-        return Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length);
-    }
-
+    
 }

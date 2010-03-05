@@ -32,7 +32,6 @@ public class HBaseTypeManagerTest {
         TEST_UTIL.shutdownMiniCluster();
     }
 
-
     @Before
     public void setUp() throws Exception {
         typeManager = new HBaseTypeManager(TEST_UTIL.getConfiguration());
@@ -41,7 +40,6 @@ public class HBaseTypeManagerTest {
     @After
     public void tearDown() throws Exception {
     }
-
 
     @Test
     public void testCreateEmptyRecordType() throws Exception {
@@ -95,7 +93,7 @@ public class HBaseTypeManagerTest {
         RecordType recordType = new RecordTypeImpl(recordTypeId);
         typeManager.createRecordType(recordType);
         
-        String fieldDescriptorId = "fieldDescriptorId";
+        String fieldDescriptorId = "updateRecordTypeAddFieldDescriptorFieldDescriptorId";
         FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         
@@ -133,7 +131,7 @@ public class HBaseTypeManagerTest {
         String recordTypeId = "updateRecordTypeUpdateFieldDescriptorId";
         RecordType recordType = new RecordTypeImpl(recordTypeId);
         
-        String fieldDescriptorId = "fieldDescriptorId";
+        String fieldDescriptorId = "updateRecordTypeUpdateFieldDescriptorFieldDescriptorId";
         FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         typeManager.createRecordType(recordType);
@@ -262,6 +260,7 @@ public class HBaseTypeManagerTest {
         String recordTypeId = "recordTypeVersionsAndDeletedFieldDescriptors";
         RecordType recordType = new RecordTypeImpl(recordTypeId);
         
+        // Create record type with field descriptor fdId1 and fdId2
         String fdId1 = "fdId1";
         FieldDescriptorImpl fd1 = new FieldDescriptorImpl(fdId1, "ft1", true, false);
         recordType.addFieldDescriptor(fd1);
@@ -270,6 +269,7 @@ public class HBaseTypeManagerTest {
         recordType.addFieldDescriptor(fd2);
         typeManager.createRecordType(recordType);
 
+        // Change fdId2, add fdId3
         recordType = new RecordTypeImpl(recordTypeId);
         recordType.addFieldDescriptor(fd1);
         fd2 = new FieldDescriptorImpl(fdId2, "ft2", false, true);
@@ -279,10 +279,18 @@ public class HBaseTypeManagerTest {
         recordType.addFieldDescriptor(fd3);
         typeManager.updateRecordType(recordType);
         
+        // Delete fdId2, change fdId3
         recordType = new RecordTypeImpl(recordTypeId);
         fd1 = new FieldDescriptorImpl(fdId1, "ft11", true, false);
         recordType.addFieldDescriptor(fd1);
         fd3 = new FieldDescriptorImpl(fdId3, "ft33", false, true);
+        recordType.addFieldDescriptor(fd3);
+        typeManager.updateRecordType(recordType);
+        
+        // Add fdId2 again
+        recordType = new RecordTypeImpl(recordTypeId);
+        recordType.addFieldDescriptor(fd1);
+        recordType.addFieldDescriptor(fd2);
         recordType.addFieldDescriptor(fd3);
         typeManager.updateRecordType(recordType);
         
@@ -310,6 +318,16 @@ public class HBaseTypeManagerTest {
         assertEquals(2, actualRecordType.getFieldDescriptor(fdId1).getVersion());
         assertEquals("ft11", actualRecordType.getFieldDescriptor(fdId1).getFieldType());
         assertNull(actualRecordType.getFieldDescriptor(fdId2));
+        assertEquals(2, actualRecordType.getFieldDescriptor(fdId3).getVersion());
+        assertEquals("ft33", actualRecordType.getFieldDescriptor(fdId3).getFieldType());
+        
+        actualRecordType = typeManager.getRecordType(recordTypeId, 4);
+        assertEquals(3, actualRecordType.getFieldDescriptors().size());
+        assertEquals(2, actualRecordType.getFieldDescriptor(fdId1).getVersion());
+        assertEquals("ft11", actualRecordType.getFieldDescriptor(fdId1).getFieldType());
+        assertEquals(3, actualRecordType.getFieldDescriptor(fdId2).getVersion());
+        assertFalse(actualRecordType.getFieldDescriptor(fdId2).isMandatory());
+        assertTrue(actualRecordType.getFieldDescriptor(fdId2).isVersionable());
         assertEquals(2, actualRecordType.getFieldDescriptor(fdId3).getVersion());
         assertEquals("ft33", actualRecordType.getFieldDescriptor(fdId3).getFieldType());
     }

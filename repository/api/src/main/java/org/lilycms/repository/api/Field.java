@@ -1,8 +1,8 @@
 package org.lilycms.repository.api;
 
 public interface Field {
-    String getName();
-    void setName(String name);
+    String getFieldId();
+    void setFieldId(String fieldId);
     byte[] getValue();
     void setValue(byte[] value);
 }

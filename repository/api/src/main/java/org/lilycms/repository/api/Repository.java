@@ -8,16 +8,13 @@ public interface Repository {
 
     void update(Record record) throws RecordNotFoundException, InvalidRecordException, IOException;
 
-    Record read(String recordId) throws RecordNotFoundException, IOException;
+    Record read(String recordId, String... fieldIds) throws RecordNotFoundException, IOException;
 
-    Record read(String recordId, long version) throws RecordNotFoundException, IOException;
+    Record read(String recordId, long version, String... fieldIds) throws RecordNotFoundException, IOException;
     
-    Record read(String recordId, Map<String, String> variantProperties) throws RecordNotFoundException, IOException;
+    Record read(String recordId, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException, IOException;
 
-    Record read(String recordId, long version, Map<String, String> variantProperties) throws RecordNotFoundException, IOException;
+    Record read(String recordId, long version, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException, IOException;
     
-    Record read(String recordId, String recordTypeName, long recordTypeVersion, String... fieldNames)
-                    throws RecordNotFoundException, IOException;
-
     void delete(String recordId) throws IOException;
 }
