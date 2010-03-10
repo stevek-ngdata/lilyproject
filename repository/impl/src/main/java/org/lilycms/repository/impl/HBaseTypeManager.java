@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010 Outerthought bvba
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lilycms.repository.impl;
 
 import java.io.IOException;
@@ -56,23 +71,24 @@ public class HBaseTypeManager implements TypeManager {
 
     public void createRecordType(RecordType recordType) throws IOException {
         List<Put> puts = new ArrayList<Put>();
-        Put put = new Put(Bytes.toBytes(recordType.getRecordTypeId()));
+        String recordTypeId = recordType.getRecordTypeId();
+        Put put = new Put(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         long recordTypeVersion = 1;
         put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
         Collection<FieldDescriptor> fieldDescriptors = recordType.getFieldDescriptors();
         for (FieldDescriptor fieldDescriptor : fieldDescriptors) {
-            puts.add(addFieldDescriptor(fieldDescriptor, recordTypeVersion, put));
+            puts.add(addFieldDescriptor(fieldDescriptor, recordTypeId, recordTypeVersion, put));
         }
         puts.add(put);
         typeTable.put(puts);
     }
 
-    private Put addFieldDescriptor(FieldDescriptor fieldDescriptor, long recordTypeVersion, Put recordTypePut)
+    private Put addFieldDescriptor(FieldDescriptor fieldDescriptor, String recordTypeId, long recordTypeVersion, Put recordTypePut)
                     throws IOException {
         String fieldDescriptorId = fieldDescriptor.getFieldDescriptorId();
-        Put put = new Put(Bytes.toBytes(fieldDescriptorId));
+        Put put = new Put(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
 
-        long fieldDescriptorVersion = getLatestFieldDescriptorVersion(fieldDescriptorId) + 1;
+        long fieldDescriptorVersion = getLatestFieldDescriptorVersion(recordTypeId, fieldDescriptorId) + 1;
         put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(fieldDescriptorVersion));
         put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, FIELD_TYPE_COLUMN_NAME, fieldDescriptorVersion, Bytes
                         .toBytes(fieldDescriptor.getFieldType()));
@@ -90,8 +106,9 @@ public class HBaseTypeManager implements TypeManager {
 
     public void updateRecordType(RecordType recordType) throws IOException {
         List<Put> puts = new ArrayList<Put>();
-        Put recordTypePut = new Put(Bytes.toBytes(recordType.getRecordTypeId()));
-        RecordType originalRecordType = getRecordType(recordType.getRecordTypeId());
+        String recordTypeId = recordType.getRecordTypeId();
+        Put recordTypePut = new Put(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
+        RecordType originalRecordType = getRecordType(recordTypeId);
         long newRecordTypeVersion = originalRecordType.getVersion() + 1;
         boolean recordTypeChanged = false;
         Map<String, FieldDescriptor> fieldDescriptors = new HashMap<String, FieldDescriptor>();
@@ -105,7 +122,7 @@ public class HBaseTypeManager implements TypeManager {
             FieldDescriptor fieldDescriptor = fieldDescriptors.get(fieldDescriptorId);
             if (fieldDescriptor != null) {
                 Put updateFieldDescriptorPut = updateFieldDescriptor(fieldDescriptor, originalFieldDescriptor,
-                                newRecordTypeVersion, recordTypePut);
+                                recordTypeId, newRecordTypeVersion, recordTypePut);
                 if (updateFieldDescriptorPut != null) {
                     recordTypeChanged = true;
                     puts.add(updateFieldDescriptorPut);
@@ -118,7 +135,7 @@ public class HBaseTypeManager implements TypeManager {
         if (!fieldDescriptors.isEmpty()) {
             recordTypeChanged = true;
             for (FieldDescriptor fieldDescriptor : fieldDescriptors.values()) {
-                puts.add(addFieldDescriptor(fieldDescriptor, newRecordTypeVersion, recordTypePut));
+                puts.add(addFieldDescriptor(fieldDescriptor, recordTypeId, newRecordTypeVersion, recordTypePut));
             }
         }
         if (!originalFieldDescriptorSet.isEmpty()) {
@@ -136,16 +153,16 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     private Put updateFieldDescriptor(FieldDescriptor fieldDescriptor, FieldDescriptor originalFieldDescriptor,
-                    long recordTypeVersion, Put recordTypePut) throws IOException {
+                    String recordTypeId, long recordTypeVersion, Put recordTypePut) throws IOException {
         boolean fieldDescriptorChanged = false;
         long fieldDescriptorVersion = 0;
         String fieldDescriptorId = fieldDescriptor.getFieldDescriptorId();
-        Put put = new Put(Bytes.toBytes(fieldDescriptorId));
+        Put put = new Put(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
 
         if (!originalFieldDescriptor.getFieldType().equals(fieldDescriptor.getFieldType())) {
             if (fieldDescriptorChanged == false) {
                 fieldDescriptorChanged = true;
-                fieldDescriptorVersion = getLatestFieldDescriptorVersion(fieldDescriptorId) + 1;
+                fieldDescriptorVersion = getLatestFieldDescriptorVersion(recordTypeId, fieldDescriptorId) + 1;
             }
             put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, FIELD_TYPE_COLUMN_NAME, fieldDescriptorVersion, Bytes
                             .toBytes(fieldDescriptor.getFieldType()));
@@ -153,7 +170,7 @@ public class HBaseTypeManager implements TypeManager {
         if (fieldDescriptor.isMandatory() != originalFieldDescriptor.isMandatory()) {
             if (fieldDescriptorChanged == false) {
                 fieldDescriptorChanged = true;
-                fieldDescriptorVersion = getLatestFieldDescriptorVersion(fieldDescriptorId) + 1;
+                fieldDescriptorVersion = getLatestFieldDescriptorVersion(recordTypeId, fieldDescriptorId) + 1;
             }
             put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, MANDATORY_COLUMN_NAME, fieldDescriptorVersion, Bytes
                             .toBytes(fieldDescriptor.isMandatory()));
@@ -161,7 +178,7 @@ public class HBaseTypeManager implements TypeManager {
         if (fieldDescriptor.isVersionable() != originalFieldDescriptor.isVersionable()) {
             if (fieldDescriptorChanged == false) {
                 fieldDescriptorChanged = true;
-                fieldDescriptorVersion = getLatestFieldDescriptorVersion(fieldDescriptorId) + 1;
+                fieldDescriptorVersion = getLatestFieldDescriptorVersion(recordTypeId, fieldDescriptorId) + 1;
             }
             put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, VERSIONABLE_COLUMN_NAME, fieldDescriptorVersion, Bytes
                             .toBytes(fieldDescriptor.isVersionable()));
@@ -182,7 +199,7 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     public RecordType getRecordType(String recordTypeId) throws IOException {
-        Get get = new Get(Bytes.toBytes(recordTypeId));
+        Get get = new Get(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         Result result = typeTable.get(get);
         NavigableMap<byte[], byte[]> systemFamilyMap = result.getFamilyMap(SYSTEM_COLUMN_FAMILY);
         long version = Bytes.toLong(systemFamilyMap.get(CURRENT_VERSION_COLUMN_NAME));
@@ -194,7 +211,7 @@ public class HBaseTypeManager implements TypeManager {
         Set<Entry<byte[], byte[]>> fieldDescriptorEntries = fieldDescriptorsFamilyMap.entrySet();
         for (Entry<byte[], byte[]> fieldDescriptorEntry : fieldDescriptorEntries) {
             if (!EncodingUtil.isDeletedField(fieldDescriptorEntry.getValue())) {
-                recordType.addFieldDescriptor(getFieldDescriptor(Bytes.toString(fieldDescriptorEntry.getKey()), Bytes
+                recordType.addFieldDescriptor(getFieldDescriptor(recordTypeId, Bytes.toString(fieldDescriptorEntry.getKey()), Bytes
                                 .toLong(EncodingUtil.stripPrefix(fieldDescriptorEntry.getValue()))));
             }
         }
@@ -202,7 +219,7 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     public RecordType getRecordType(String recordTypeId, long recordTypeVersion) throws IOException {
-        Get get = new Get(Bytes.toBytes(recordTypeId));
+        Get get = new Get(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         get.setMaxVersions();
         Result result = typeTable.get(get);
         RecordTypeImpl recordType = new RecordTypeImpl(recordTypeId);
@@ -216,16 +233,16 @@ public class HBaseTypeManager implements TypeManager {
             Entry<Long, byte[]> ceilingEntry = fieldDescriptorEntry.getValue().ceilingEntry(recordTypeVersion);
             if (ceilingEntry != null && !EncodingUtil.isDeletedField(ceilingEntry.getValue())) {
                 long fieldDescriptorVersion = Bytes.toLong(EncodingUtil.stripPrefix(ceilingEntry.getValue()));
-                recordType.addFieldDescriptor(getFieldDescriptor(fieldDescriptorId, fieldDescriptorVersion));
+                recordType.addFieldDescriptor(getFieldDescriptor(recordTypeId, fieldDescriptorId, fieldDescriptorVersion));
             }
         }
         recordType.setVersion(recordTypeVersion);
         return recordType;
     }
 
-    private FieldDescriptor getFieldDescriptor(String fieldDescriptorId, long fieldDescriptorVersion)
+    private FieldDescriptor getFieldDescriptor(String recordTypeId, String fieldDescriptorId, long fieldDescriptorVersion)
                     throws IOException {
-        Get get = new Get(Bytes.toBytes(fieldDescriptorId));
+        Get get = new Get(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
         get.setMaxVersions();
         Result result = typeTable.get(get);
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allFamiliesMap = result.getMap();
@@ -241,9 +258,9 @@ public class HBaseTypeManager implements TypeManager {
         return new FieldDescriptorImpl(fieldDescriptorId, fieldDescriptorVersion, fieldType, mandatory, versionable);
     }
 
-    private long getLatestFieldDescriptorVersion(String fieldDescriptorId)
+    private long getLatestFieldDescriptorVersion(String recordTypeId, String fieldDescriptorId)
                     throws IOException {
-        Get get = new Get(Bytes.toBytes(fieldDescriptorId));
+        Get get = new Get(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
         get.addColumn(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME);
         Result result = typeTable.get(get);
         if (result.isEmpty()) {

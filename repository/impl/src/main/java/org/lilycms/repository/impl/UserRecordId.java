@@ -15,42 +15,41 @@
  */
 package org.lilycms.repository.impl;
 
-import java.util.Arrays;
-
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.Field;
+import org.lilycms.repository.api.RecordId;
 
-public class FieldImpl implements Field {
-    private String fieldId;
-    private byte[] value;
 
-    public FieldImpl(String fieldId, byte[] value) {
-        this.fieldId = fieldId;
-        this.value = value;
+public class UserRecordId implements RecordId {
+
+    protected final String recordIdString;
+    protected byte[] recordIdBytes;
+    private final IdGenerator idGenerator;
+
+    public UserRecordId(String recordId, IdGenerator idGenerator) {
+        this.recordIdString = recordId;
+        recordIdBytes = Bytes.toBytes(recordId);
+        this.idGenerator = idGenerator;
     }
 
-    public String getFieldId() {
-        return fieldId;
-    }
-    
-    public void setFieldId(String fieldId) {
-        this.fieldId = fieldId;
+    public UserRecordId(byte[] recordId, IdGenerator idGenerator) {
+        recordIdBytes = recordId;
+        recordIdString = Bytes.toString(recordId);
+        this.idGenerator = idGenerator;
     }
 
-    public byte[] getValue() {
-        return value;
+    public byte[] toBytes() {
+        return idGenerator.toBytes(this);
     }
-    
-    public void setValue(byte[] value) {
-        this.value = value;
+
+    public String toString() {
+        return idGenerator.toString(this);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fieldId == null) ? 0 : fieldId.hashCode());
-        result = prime * result + Arrays.hashCode(value);
+        result = prime * result + ((recordIdString == null) ? 0 : recordIdString.hashCode());
         return result;
     }
 
@@ -62,19 +61,12 @@ public class FieldImpl implements Field {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        FieldImpl other = (FieldImpl) obj;
-        if (fieldId == null) {
-            if (other.fieldId != null)
+        UserRecordId other = (UserRecordId) obj;
+        if (recordIdString == null) {
+            if (other.recordIdString != null)
                 return false;
-        } else if (!fieldId.equals(other.fieldId))
-            return false;
-        if (!Arrays.equals(value, other.value))
+        } else if (!recordIdString.equals(other.recordIdString))
             return false;
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return "["+fieldId+","+ Bytes.toString(value)+"]";
     }
 }

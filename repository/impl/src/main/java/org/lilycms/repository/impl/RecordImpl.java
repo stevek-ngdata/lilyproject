@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010 Outerthought bvba
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lilycms.repository.impl;
 
 import java.util.HashMap;
@@ -8,29 +23,37 @@ import java.util.Set;
 import org.lilycms.repository.api.Field;
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.RecordId;
 
 public class RecordImpl implements Record {
-    private String recordId;
+    private RecordId recordId;
     private Map<String, Field> fields = new HashMap<String, Field>();
     private Set<String> deleteFields = new HashSet<String>();
     private String recordTypeId;
     private long recordTypeVersion;
     private Map<String, String> variantProperties = new HashMap<String, String>();
-    private long version = -1;
+    private Long version;
 
-    public RecordImpl(String recordId) {
+    public RecordImpl() {
+    }
+    
+    public RecordImpl(RecordId recordId) {
         this.recordId = recordId;
     }
     
-    public String getRecordId() {
+    public void setRecordId(RecordId recordId) {
+        this.recordId = recordId;
+    }
+    
+    public RecordId getRecordId() {
         return recordId;
     }
     
-    public void setRecordVersion(long version) {
+    public void setRecordVersion(Long version) {
         this.version = version;
     }
     
-    public long getRecordVersion() {
+    public Long getRecordVersion() {
         return version;
     }
 
@@ -95,7 +118,7 @@ public class RecordImpl implements Record {
         result = prime * result + ((recordTypeId == null) ? 0 : recordTypeId.hashCode());
         result = prime * result + (int) (recordTypeVersion ^ (recordTypeVersion >>> 32));
         result = prime * result + ((variantProperties == null) ? 0 : variantProperties.hashCode());
-        result = prime * result + (int) (version ^ (version >>> 32));
+        result = prime * result + ((version == null) ? 0 : version.hashCode());
         return result;
     }
 
@@ -135,7 +158,10 @@ public class RecordImpl implements Record {
                 return false;
         } else if (!variantProperties.equals(other.variantProperties))
             return false;
-        if (version != other.version)
+        if (version == null) {
+            if (other.version != null)
+                return false;
+        } else if (!version.equals(other.version))
             return false;
         return true;
     }

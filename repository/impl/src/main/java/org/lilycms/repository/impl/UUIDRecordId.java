@@ -15,42 +15,47 @@
  */
 package org.lilycms.repository.impl;
 
-import java.util.Arrays;
+import java.util.UUID;
 
-import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.Field;
+import org.lilycms.repository.api.RecordId;
 
-public class FieldImpl implements Field {
-    private String fieldId;
-    private byte[] value;
+public class UUIDRecordId implements RecordId {
 
-    public FieldImpl(String fieldId, byte[] value) {
-        this.fieldId = fieldId;
-        this.value = value;
-    }
+    private UUID uuid;
+    private final IdGenerator idGenerator;
 
-    public String getFieldId() {
-        return fieldId;
+    public UUIDRecordId(IdGenerator idGenerator) {
+        this.idGenerator = idGenerator;
+        uuid = UUID.randomUUID();
     }
     
-    public void setFieldId(String fieldId) {
-        this.fieldId = fieldId;
+    public UUIDRecordId(long mostSigBits, long leastSigBits, IdGenerator idGenerator) {
+        this.idGenerator = idGenerator;
+        this.uuid = new UUID(mostSigBits, leastSigBits);
     }
 
-    public byte[] getValue() {
-        return value;
+    public UUIDRecordId(String uuidString, IdGenerator idgenerator) {
+        this.idGenerator = idgenerator;
+        this.uuid = UUID.fromString(uuidString);
     }
     
-    public void setValue(byte[] value) {
-        this.value = value;
+    public UUID getUuid() {
+        return uuid;
+    }
+    
+    public String toString() {
+        return idGenerator.toString(this);
+    }
+    
+    public byte[] toBytes() {
+        return idGenerator.toBytes(this);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fieldId == null) ? 0 : fieldId.hashCode());
-        result = prime * result + Arrays.hashCode(value);
+        result = prime * result + ((uuid == null) ? 0 : uuid.hashCode());
         return result;
     }
 
@@ -62,19 +67,14 @@ public class FieldImpl implements Field {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        FieldImpl other = (FieldImpl) obj;
-        if (fieldId == null) {
-            if (other.fieldId != null)
+        UUIDRecordId other = (UUIDRecordId) obj;
+        if (uuid == null) {
+            if (other.uuid != null)
                 return false;
-        } else if (!fieldId.equals(other.fieldId))
-            return false;
-        if (!Arrays.equals(value, other.value))
+        } else if (!uuid.equals(other.uuid))
             return false;
         return true;
     }
-
-    @Override
-    public String toString() {
-        return "["+fieldId+","+ Bytes.toString(value)+"]";
-    }
+    
+    
 }

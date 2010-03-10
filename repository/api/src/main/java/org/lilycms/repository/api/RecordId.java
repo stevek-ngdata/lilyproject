@@ -15,24 +15,9 @@
  */
 package org.lilycms.repository.api;
 
-public class InvalidRecordException extends Exception {
 
-    private final Record record;
-    private final String message;
+public interface RecordId {
 
-    public InvalidRecordException(Record record, String message) {
-        this.record = record;
-        // TODO Auto-generated constructor stub
-        this.message = message;
-    }
-    
-    public Record getRecord() {
-        return record;
-    }
-    
-    @Override
-    public String getMessage() {
-        return "Record <"+record.getRecordId()+">: " + message;
-    }
-
+    String toString();
+    byte[] toBytes();
 }
