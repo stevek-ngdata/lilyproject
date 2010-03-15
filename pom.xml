@@ -39,6 +39,8 @@
     <module>hbaseindex</module>
     <module>util</module>
     <module>testfw</module>
+    <module>indexer</module>
+    <module>eventlog/queue-api</module>
   </modules>
 
   <dependencyManagement>
@@ -55,9 +57,19 @@
       </dependency>
       <dependency>
         <groupId>org.lilycms</groupId>
+        <artifactId>lily-repository-impl</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
         <artifactId>lily-testfw</artifactId>
         <version>0.1-dev</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-queue-api</artifactId>
+        <version>0.1-dev</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
@@ -106,6 +118,11 @@
         <artifactId>slf4j-log4j12</artifactId>
         <version>1.5.10</version>
         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.easymock</groupId>
