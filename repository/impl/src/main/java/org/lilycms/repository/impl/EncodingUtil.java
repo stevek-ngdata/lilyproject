@@ -46,7 +46,11 @@ public class EncodingUtil {
         return Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length);
     }
     
-    //TODO make rowkey encodings robust (backward compatible) for different encodings and versions
+    //TODO make rowkey encodings robust (backward compatible) for different encoding versions
+    //For example : make the rowkeys namespace aware
+    /**
+     * Generates an new HBase rowkey based on the recordId and optional variantProperties.
+     */
     public static byte[] generateRecordRowKey(RecordId recordId, Map<String, String> variantProperties) {
         StringBuffer rowKey = new StringBuffer();
         rowKey.append(recordId);
@@ -63,10 +67,16 @@ public class EncodingUtil {
         return Bytes.toBytes(rowKey.toString());
     }
     
+    /**
+     * Generates a new HBase rowkey based on the recordTypeId.
+     */
     public static byte[] generateRecordTypeRowKey(String recordTypeId) {
         return Bytes.toBytes(recordTypeId);
     }
     
+    /**
+     * Generates a new HBase rowkey based on the recordTypeId and fieldDescriptorId.
+     */
     public static byte[] generateFieldDescriptorRowKey(String recordTypeId, String fieldDescriptorId) {
         StringBuffer rowKey = new StringBuffer();
         rowKey.append(recordTypeId);

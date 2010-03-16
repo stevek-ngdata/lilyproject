@@ -19,29 +19,53 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * An object to be used as input for {@link Repository#create} and {@link Repository#update} operations,
- * or as result of a {link Repository#read} operation.
+ * An object to be used as input for {@link Repository#create} and
+ * {@link Repository#update} operations, or as result of a {link
+ * Repository#read} operation.
  * 
- * <p>For an {@link Repository#update} only the fields to be changed need to be given.
+ * <p>
+ * The {@link RecordType} and its version define the schema of the record.
  * 
- * <p>Fields to be deleted need to be added explicitly with their fieldId
+ * <p>
+ * For an {@link Repository#update} only the fields to be changed need to be
+ * given.
  * 
- * <p>The {@link RecordType} and its version define the schema of the record.
+ * <p>
+ * Fields to be deleted need to be added explicitly with their fieldId
+ * 
+ * <p>
+ * A record can either be an ordinary record or a variant record, in which case
+ * the variantProperties need to be provided, and the {@link RecordId} should
+ * point to the master record.
  */
 public interface Record {
     void setRecordId(RecordId recordId);
+
     RecordId getRecordId();
+
     void setRecordVersion(Long version);
+
     Long getRecordVersion();
+
     void setRecordType(String recordTypeId, long recordTypeVersion);
+
     String getRecordTypeId();
+
     long getRecordTypeVersion();
+
     void addField(Field field);
+
     Field getField(String fieldId) throws FieldNotFoundException;
+
     Set<Field> getFields();
+
     void deleteField(String fieldId);
+
     Set<String> getDeleteFields();
+
     void addVariantProperty(String dimension, String dimensionValue);
-    void addVariantProperties(Map<String, String>variantProperties);
+
+    void addVariantProperties(Map<String, String> variantProperties);
+
     Map<String, String> getVariantProperties();
 }

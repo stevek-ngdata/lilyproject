@@ -72,7 +72,7 @@ public class HBaseRepositoryTest {
     private TypeManager typeManager;
     private RecordType recordType;
     private FieldDescriptor versionableFieldDescriptor;
-    private FieldDescriptorImpl nonVersionableFieldDescriptor;
+    private FieldDescriptor nonVersionableFieldDescriptor;
     private IdGenerator idGenerator;
 
     @Before
@@ -84,12 +84,12 @@ public class HBaseRepositoryTest {
         expect(recordType.getRecordTypeId()).andReturn("dummyRecordType").anyTimes();
         expect(recordType.getVersion()).andReturn(Long.valueOf(0)).anyTimes();
         
-
+        // Using FieldDescriptorImpl since typeManager is a mock
         versionableFieldDescriptor = new FieldDescriptorImpl("aFieldDescriptor", 1, "dummyFieldType", true, true);
         nonVersionableFieldDescriptor = new FieldDescriptorImpl("aFieldDescriptor", 1, "dummyFieldType", true, false);
 
         idGenerator = new IdGenerator();
-        repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, FieldImpl.class, TEST_UTIL.getConfiguration());
     }
 
     @After
@@ -118,7 +118,7 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(new String[]{"aField" , "aValue", "false"});
         repository.create(record);
         
-        Record emptyRecord = new RecordImpl(record.getRecordId());
+        Record emptyRecord = repository.newRecord(record.getRecordId());
 
         try {
             repository.update(emptyRecord);
@@ -170,7 +170,7 @@ public class HBaseRepositoryTest {
     @Test
     public void testUpdateNonExistingRecord() throws Exception {
         control.replay();
-        Record record = new RecordImpl(idGenerator.newRecordId("nonExistingRecordId"));
+        Record record = repository.newRecord(idGenerator.newRecordId("nonExistingRecordId"));
 
         try {
             repository.update(record);
@@ -188,7 +188,7 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(new String[] { "aField", "aValue"});
         repository.create(record);
 
-        Field field = new FieldImpl("aField", Bytes.toBytes("anotherValue"));
+        Field field = repository.newField("aField", Bytes.toBytes("anotherValue"));
         record.addField(field);
         repository.update(record);
 
@@ -204,7 +204,7 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(new String[] { "aField", "aValue"});
         repository.create(record);
 
-        Field field = new FieldImpl("anotherField", Bytes.toBytes("anotherValue"));
+        Field field = repository.newField("anotherField", Bytes.toBytes("anotherValue"));
         // TODO avoid updates of non-changed fields
         record.addField(field);
         repository.update(record);
@@ -296,7 +296,7 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] { "versionableField1", "value1"});
         repository.create(record);
-        record.addField(new FieldImpl("versionableField1", Bytes.toBytes("value2")));
+        record.addField(repository.newField("versionableField1", Bytes.toBytes("value2")));
         repository.update(record);
 
         Record actualRecord = repository.read(record.getRecordId());
@@ -369,7 +369,7 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] { "versionableField1", "f1value1"});
         repository.create(record);
-        record.addField(new FieldImpl("versionableField1", Bytes.toBytes("f1value2")));
+        record.addField(repository.newField("versionableField1", Bytes.toBytes("f1value2")));
         repository.update(record);
         try {
             repository.read(record.getRecordId(), Long.valueOf(3));
@@ -409,7 +409,7 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] {"aField", "f1"});
         repository.create(record);
-        Record deleteRecord = new RecordImpl(record.getRecordId());
+        Record deleteRecord = repository.newRecord(record.getRecordId());
         deleteRecord.setRecordType("dummyRecordType", 1);
         deleteRecord.deleteField("aField");
         repository.update(deleteRecord);
@@ -429,7 +429,7 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] {"aField", "f1"});
         repository.create(record);
-        Record deleteRecord = new RecordImpl(record.getRecordId());
+        Record deleteRecord = repository.newRecord(record.getRecordId());
         deleteRecord.setRecordType("dummyRecordType", 1);
         deleteRecord.deleteField("aField");
         repository.update(deleteRecord);
@@ -457,10 +457,10 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] {"aField", "f1"});
         repository.create(record);
-        record.addField(new FieldImpl("aField", Bytes.toBytes("f2")));
+        record.addField(repository.newField("aField", Bytes.toBytes("f2")));
         repository.update(record);
         
-        Record deleteRecord = new RecordImpl(record.getRecordId());
+        Record deleteRecord = repository.newRecord(record.getRecordId());
         deleteRecord.setRecordType("dummyRecordType", 1);
         deleteRecord.deleteField("aField");
         repository.update(deleteRecord);
@@ -500,9 +500,8 @@ public class HBaseRepositoryTest {
     public void testCreateVariantRecordWithoutGivingMasterRecordId() throws Exception {
         control.replay();
         
-        // TODO disallow a Record without a recordId?
-        Record variantRecord = new RecordImpl();
-        variantRecord.addField(new FieldImpl("aVariantField", Bytes.toBytes("vf1")));
+        Record variantRecord = repository.newRecord();
+        variantRecord.addField(repository.newField("aVariantField", Bytes.toBytes("vf1")));
         variantRecord.addVariantProperty("dimension1", "dimensionValue1");
         try {
             repository.create(variantRecord);
@@ -665,15 +664,13 @@ public class HBaseRepositoryTest {
 
     }
 
-    private Record generateRecord(String[]... fieldsAndValues) {
-        Record record = new RecordImpl();
+    private Record generateRecord(String[]... fieldsAndValues) throws Exception {
+        Record record = repository.newRecord();
         
         record.setRecordType(recordType.getRecordTypeId(), recordType.getVersion());
         for (String[] fieldInfo : fieldsAndValues) {
-            record.addField(new FieldImpl(fieldInfo[0], Bytes.toBytes(fieldInfo[1])));
+            record.addField(repository.newField(fieldInfo[0], Bytes.toBytes(fieldInfo[1])));
         }
         return record;
     }
-
-    
 }

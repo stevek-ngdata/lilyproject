@@ -25,10 +25,18 @@ public class FieldDescriptorImpl implements FieldDescriptor {
     private final boolean versionable;
     private final String fieldType;
 
+    /**
+     * This constructor should not be called directly.
+     * @use {@link TypeManager#newFieldDescriptor} instead
+     */
     public FieldDescriptorImpl(String fieldDescriptorId, String fieldType, boolean mandatory, boolean versionable) {
         this(fieldDescriptorId, 0, fieldType, mandatory, versionable);
     }
-    
+
+    /**
+     * This constructor should not be called directly.
+     * @use {@link TypeManager#newFieldDescriptor} instead
+     */
     public FieldDescriptorImpl(String fieldDescriptorId, long version, String fieldType, boolean mandatory, boolean versionable) {
         this.fieldDescriptorId = fieldDescriptorId;
         this.version = version;

@@ -24,27 +24,23 @@ public class FieldImpl implements Field {
     private String fieldId;
     private byte[] value;
 
+    /**
+     * This constructor should not be called directly.
+     * @use {@link Repository#newField} instead
+     */
     public FieldImpl(String fieldId, byte[] value) {
         this.fieldId = fieldId;
         this.value = value;
     }
-
+    
     public String getFieldId() {
         return fieldId;
     }
     
-    public void setFieldId(String fieldId) {
-        this.fieldId = fieldId;
-    }
-
     public byte[] getValue() {
         return value;
     }
     
-    public void setValue(byte[] value) {
-        this.value = value;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;

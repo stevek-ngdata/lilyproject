@@ -15,11 +15,48 @@
  */
 package org.lilycms.repository.api;
 
-import java.io.IOException;
 
+/**
+ * Repository is the API for all CRUD operations on {@link RecordType}.
+ * 
+ * <p>
+ */
 public interface TypeManager {
-    void createRecordType(RecordType recordType) throws IOException;
-    RecordType getRecordType(String recordTypeId) throws IOException;
-    RecordType getRecordType(String recordTypeId, long recordTypeVersion) throws IOException;
-    void updateRecordType(RecordType recordType) throws IOException;
+    /**
+     * Creates a new {@link RecordType} object.
+     */
+    RecordType newRecordType(String recordTypeId) throws RepositoryException;
+
+    /**
+     * Creates a new {@link FieldDescriptor} object.
+     */
+    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException;
+    
+    /**
+     * Creates a new {@link FieldDescriptor} object.
+     */
+    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, long version, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException;
+    
+    /**
+     * Creates a {@link RecordType} on the repository with the properties defined in the {@link RecordType} object.
+     */
+    void createRecordType(RecordType recordType) throws RepositoryException;
+
+    /**
+     * Retrieves a {@link RecordType} from the repository.
+     */
+    RecordType getRecordType(String recordTypeId) throws RepositoryException;
+
+    /**
+     * Retrieves a specific version of a {@link RecordType} from the repository.
+     */
+    RecordType getRecordType(String recordTypeId, long recordTypeVersion) throws RepositoryException;
+
+    /**
+     * A new version of the {@link RecordType} is created. The new verion number
+     * is placed in the recordType object. If a {@link FieldDescriptor} should
+     * be deleted it should be left out of the {@link RecordType}'s list of
+     * {@link FieldDescriptor}s.
+     */
+    void updateRecordType(RecordType recordType) throws RepositoryException;
 }

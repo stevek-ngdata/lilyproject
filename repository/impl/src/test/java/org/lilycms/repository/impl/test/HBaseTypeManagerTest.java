@@ -15,7 +15,10 @@
  */
 package org.lilycms.repository.impl.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
@@ -49,7 +52,7 @@ public class HBaseTypeManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        typeManager = new HBaseTypeManager(TEST_UTIL.getConfiguration());
+        typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
     }
 
     @After
@@ -59,7 +62,7 @@ public class HBaseTypeManagerTest {
     @Test
     public void testCreateEmptyRecordType() throws Exception {
         String recordTypeId = "createEmptyRecordTypeId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         typeManager.createRecordType(recordType);
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
         assertEquals(recordTypeId, actualRecordType.getRecordTypeId());
@@ -70,46 +73,46 @@ public class HBaseTypeManagerTest {
     @Test
     public void testCreateRecordType() throws Exception {
         String recordTypeId = "createRecordTypeId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         String fieldDescriptorId = "fieldDescriptorId";
-        FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         typeManager.createRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        fieldDescriptor.setVersion(1);
+        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, 1, "dummyFieldType", true, false);
         assertEquals(fieldDescriptor, actualRecordType.getFieldDescriptor(fieldDescriptorId));
     }
 
     @Test
     public void testCreateRecordTypeMultipleFieldDescriptors() throws Exception {
         String recordTypeId = "createRecordTypeMultipleFieldDescriptorsId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         String fieldDescriptorId1 = "fieldDescriptorId1";
-        FieldDescriptorImpl fieldDescriptor1 = new FieldDescriptorImpl(fieldDescriptorId1, "dummyFieldType", true, false);
+        FieldDescriptor fieldDescriptor1 = typeManager.newFieldDescriptor(fieldDescriptorId1, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor1);
         String fieldDescriptorId2 = "fieldDescriptorId2";
-        FieldDescriptorImpl fieldDescriptor2 = new FieldDescriptorImpl(fieldDescriptorId2, "dummyFieldType2", false, true);
+        FieldDescriptor fieldDescriptor2 = typeManager.newFieldDescriptor(fieldDescriptorId2, "dummyFieldType2", false, true);
         recordType.addFieldDescriptor(fieldDescriptor2);
         
         typeManager.createRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
         assertEquals(2, actualRecordType.getFieldDescriptors().size());
-        fieldDescriptor1.setVersion(1);
+        fieldDescriptor1 = typeManager.newFieldDescriptor(fieldDescriptorId1, 1, "dummyFieldType", true, false);
         assertEquals(fieldDescriptor1, actualRecordType.getFieldDescriptor(fieldDescriptorId1));
-        fieldDescriptor2.setVersion(1);
+        fieldDescriptor2 = typeManager.newFieldDescriptor(fieldDescriptorId2, 1, "dummyFieldType2", false, true);
         assertEquals(fieldDescriptor2, actualRecordType.getFieldDescriptor(fieldDescriptorId2));
     }
     
     @Test
     public void testUpdateRecordTypeAddFieldDescriptor() throws Exception {
         String recordTypeId = "updateRecordTypeAddFieldDescriptorId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         typeManager.createRecordType(recordType);
         
         String fieldDescriptorId = "updateRecordTypeAddFieldDescriptorFieldDescriptorId";
-        FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         
         typeManager.updateRecordType(recordType);
@@ -118,22 +121,22 @@ public class HBaseTypeManagerTest {
         assertEquals(2, actualRecordType.getVersion());
         assertEquals(1, actualRecordType.getFieldDescriptors().size());
         
-        fieldDescriptor.setVersion(1);
+        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, 1, "dummyFieldType", true, false);
         assertEquals(fieldDescriptor, actualRecordType.getFieldDescriptor(fieldDescriptorId));
     }
     
     @Test
     public void testUpdateRecordTypeRemoveFieldDescriptor() throws Exception {
         String recordTypeId = "updateRecordTypeRemoveFieldDescriptorId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         
         String fieldDescriptorId = "fieldDescriptorId";
-        FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
 
         typeManager.createRecordType(recordType);
         
-        RecordType recordTypeWithoutFieldDescriptor = new RecordTypeImpl(recordTypeId);
+        RecordType recordTypeWithoutFieldDescriptor = typeManager.newRecordType(recordTypeId);
         typeManager.updateRecordType(recordTypeWithoutFieldDescriptor);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
@@ -144,14 +147,14 @@ public class HBaseTypeManagerTest {
     @Test
     public void testUpdateRecordTypeUpdateFieldDescriptor() throws Exception {
         String recordTypeId = "updateRecordTypeUpdateFieldDescriptorId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         
         String fieldDescriptorId = "updateRecordTypeUpdateFieldDescriptorFieldDescriptorId";
-        FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         typeManager.createRecordType(recordType);
         
-        FieldDescriptorImpl changedFieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "changedFieldType", false, true); 
+        FieldDescriptor changedFieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "changedFieldType", false, true); 
         recordType.addFieldDescriptor(changedFieldDescriptor);
         typeManager.updateRecordType(recordType);
         
@@ -169,14 +172,14 @@ public class HBaseTypeManagerTest {
     @Test
     public void testUpdatePartOfFieldDescriptor() throws Exception {
         String recordTypeId = "updatePartOfFieldDescriptorId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         
         String fieldDescriptorId = "updatePartFieldDescriptorId";
-        FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         typeManager.createRecordType(recordType);
         
-        FieldDescriptorImpl changedFieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "changedFieldType", true, false); 
+        FieldDescriptor changedFieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "changedFieldType", true, false); 
         recordType.addFieldDescriptor(changedFieldDescriptor);
         typeManager.updateRecordType(recordType);
         
@@ -193,10 +196,10 @@ public class HBaseTypeManagerTest {
     @Test
     public void testNoUpdateNeeded() throws Exception {
         String recordTypeId = "noUpdateNeededRecordTypeId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         
         String fieldDescriptorId = "noUpdateNeededFieldDescriptorId";
-        FieldDescriptorImpl fieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         typeManager.createRecordType(recordType);
         
@@ -215,21 +218,21 @@ public class HBaseTypeManagerTest {
     @Test
     public void testUpdateRecordTypeRemoveAddAndUpdateFieldDescriptor() throws Exception {
         String recordTypeId = "updateRecordTypeUpdateFieldDescriptorId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         
         String removeFieldDescriptorId = "removeFieldDescriptorId";
-        FieldDescriptorImpl removeFieldDescriptor = new FieldDescriptorImpl(removeFieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor removeFieldDescriptor = typeManager.newFieldDescriptor(removeFieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(removeFieldDescriptor);
         String updateFieldDescriptorId = "updateFieldDescriptorId";
-        FieldDescriptorImpl updateFieldDescriptor = new FieldDescriptorImpl(updateFieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor updateFieldDescriptor = typeManager.newFieldDescriptor(updateFieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(updateFieldDescriptor);
         typeManager.createRecordType(recordType);
         
         recordType.removeFieldDescriptor(removeFieldDescriptorId);
-        FieldDescriptorImpl changedFieldDescriptor = new FieldDescriptorImpl(updateFieldDescriptorId, "changedFieldType", false, true); 
+        FieldDescriptor changedFieldDescriptor = typeManager.newFieldDescriptor(updateFieldDescriptorId, "changedFieldType", false, true); 
         recordType.addFieldDescriptor(changedFieldDescriptor);
         String addFieldDescriptorId = "addFieldDescriptorId";
-        FieldDescriptorImpl addFieldDescriptor = new FieldDescriptorImpl(addFieldDescriptorId, "addFieldType", true, false);
+        FieldDescriptor addFieldDescriptor = typeManager.newFieldDescriptor(addFieldDescriptorId, "addFieldType", true, false);
         recordType.addFieldDescriptor(addFieldDescriptor);
         typeManager.updateRecordType(recordType);
         
@@ -252,58 +255,58 @@ public class HBaseTypeManagerTest {
     @Test
     public void testReadOldVersionRecordType() throws Exception {
         String recordTypeId = "readOldVersionRecordTypeId";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         
         String fieldDescriptorId = "oldVersionFieldDescriptorId";
-        FieldDescriptorImpl updateFieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "dummyFieldType", true, false);
+        FieldDescriptor updateFieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "dummyFieldType", true, false);
         recordType.addFieldDescriptor(updateFieldDescriptor);
         typeManager.createRecordType(recordType);
         
-        FieldDescriptorImpl changedFieldDescriptor = new FieldDescriptorImpl(fieldDescriptorId, "changedFieldType", false, true); 
+        FieldDescriptor changedFieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, "changedFieldType", false, true); 
         recordType.addFieldDescriptor(changedFieldDescriptor);
         typeManager.updateRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId, 1);
         assertEquals(1, actualRecordType.getVersion());
         FieldDescriptor actualFieldDescriptor = actualRecordType.getFieldDescriptor(fieldDescriptorId);
-        updateFieldDescriptor.setVersion(1);
+        updateFieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, 1, "dummyFieldType", true, false);
         assertEquals(updateFieldDescriptor, actualFieldDescriptor);
     }
     
     @Test
     public void testRecordTypeVersionsAndDeletedFieldDescriptors() throws Exception {
         String recordTypeId = "recordTypeVersionsAndDeletedFieldDescriptors";
-        RecordType recordType = new RecordTypeImpl(recordTypeId);
+        RecordType recordType = typeManager.newRecordType(recordTypeId);
         
         // Create record type with field descriptor fdId1 and fdId2
         String fdId1 = "fdId1";
-        FieldDescriptorImpl fd1 = new FieldDescriptorImpl(fdId1, "ft1", true, false);
+        FieldDescriptor fd1 = typeManager.newFieldDescriptor(fdId1, "ft1", true, false);
         recordType.addFieldDescriptor(fd1);
         String fdId2 = "fdId2";
-        FieldDescriptorImpl fd2 = new FieldDescriptorImpl(fdId2, "ft2", true, false);
+        FieldDescriptor fd2 = typeManager.newFieldDescriptor(fdId2, "ft2", true, false);
         recordType.addFieldDescriptor(fd2);
         typeManager.createRecordType(recordType);
 
         // Change fdId2, add fdId3
-        recordType = new RecordTypeImpl(recordTypeId);
+        recordType = typeManager.newRecordType(recordTypeId);
         recordType.addFieldDescriptor(fd1);
-        fd2 = new FieldDescriptorImpl(fdId2, "ft2", false, true);
+        fd2 = typeManager.newFieldDescriptor(fdId2, "ft2", false, true);
         recordType.addFieldDescriptor(fd2);
         String fdId3 = "fdId3";
-        FieldDescriptorImpl fd3 = new FieldDescriptorImpl(fdId3, "ft3", false, true);
+        FieldDescriptor fd3 = typeManager.newFieldDescriptor(fdId3, "ft3", false, true);
         recordType.addFieldDescriptor(fd3);
         typeManager.updateRecordType(recordType);
         
         // Delete fdId2, change fdId3
-        recordType = new RecordTypeImpl(recordTypeId);
-        fd1 = new FieldDescriptorImpl(fdId1, "ft11", true, false);
+        recordType = typeManager.newRecordType(recordTypeId);
+        fd1 = typeManager.newFieldDescriptor(fdId1, "ft11", true, false);
         recordType.addFieldDescriptor(fd1);
-        fd3 = new FieldDescriptorImpl(fdId3, "ft33", false, true);
+        fd3 = typeManager.newFieldDescriptor(fdId3, "ft33", false, true);
         recordType.addFieldDescriptor(fd3);
         typeManager.updateRecordType(recordType);
         
         // Add fdId2 again
-        recordType = new RecordTypeImpl(recordTypeId);
+        recordType = typeManager.newRecordType(recordTypeId);
         recordType.addFieldDescriptor(fd1);
         recordType.addFieldDescriptor(fd2);
         recordType.addFieldDescriptor(fd3);

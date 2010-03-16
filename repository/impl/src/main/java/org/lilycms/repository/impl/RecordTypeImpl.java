@@ -28,9 +28,12 @@ public class RecordTypeImpl implements RecordType {
     private Map<String, FieldDescriptor> fieldDescriptors = new HashMap<String, FieldDescriptor>();
     private long version;
 
+    /**
+     * This constructor should not be called directly.
+     * @use {@link TypeManager#newRecordType} instead
+     */
     public RecordTypeImpl(String recordTypeId) {
         this.recordTypeId = recordTypeId;
-        
     }
     
     public void addFieldDescriptor(FieldDescriptor fieldDescriptor) {

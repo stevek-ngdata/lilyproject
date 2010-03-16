@@ -16,8 +16,7 @@
 package org.lilycms.repository.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -43,6 +42,7 @@ import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.api.TypeManager;
 
 public class HBaseRepository implements Repository {
@@ -58,10 +58,15 @@ public class HBaseRepository implements Repository {
     private HTable recordTable;
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
+    private Class<Record> recordClass;
+    private Class<Field> fieldClass;
 
-    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, Configuration configuration) throws IOException {
+    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, Class recordClass, Class fieldClass,
+                    Configuration configuration) throws IOException {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
+        this.recordClass = recordClass;
+        this.fieldClass = fieldClass;
         try {
             recordTable = new HTable(configuration, RECORD_TABLE);
         } catch (IOException e) {
@@ -78,55 +83,98 @@ public class HBaseRepository implements Repository {
         }
     }
 
-    public void create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException, IOException {
-        
+    public Record newRecord() throws RepositoryException {
+        try {
+            return (Record) recordClass.newInstance();
+        } catch (Exception e) {
+            throw new RepositoryException("Exception occured while creating new Record object", e);
+        }
+    }
+
+    public Record newRecord(RecordId recordId) throws RepositoryException {
+        try {
+            Constructor<Record> constructor = recordClass.getConstructor(RecordId.class);
+            return constructor.newInstance(recordId);
+        } catch (Exception e) {
+            throw new RepositoryException("Exception occured while creating new Record object <" + recordId + ">", e);
+        }
+    }
+
+    public Field newField(String fieldId, byte[] value) throws RepositoryException {
+        try {
+            Constructor<Field> constructor = fieldClass.getConstructor(String.class, byte[].class);
+            return constructor.newInstance(fieldId, value);
+        } catch (Exception e) {
+            throw new RepositoryException("Exception occured while creating new Field object <" + fieldId + ">", e);
+        }
+    }
+
+    public void create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException, RepositoryException {
+
         if (record.getFields().isEmpty()) {
-            throw new InvalidRecordException(record, "Creating an empty record is not allowed.");
+            throw new InvalidRecordException(record, "Creating an empty record is not allowed");
         }
 
         RecordId recordId = record.getRecordId();
         Map<String, String> variantProperties = record.getVariantProperties();
         if (!variantProperties.isEmpty()) {
             if (recordId == null) {
-                throw new InvalidRecordException(record, "Creating a variant record without giving a master record id is not allowed.");
+                throw new InvalidRecordException(record,
+                                "Creating a variant record without giving a master record id is not allowed");
             }
             Get get = new Get(EncodingUtil.generateRecordRowKey(recordId, null));
-            Result masterResult = recordTable.get(get);
+            Result masterResult;
+            try {
+                masterResult = recordTable.get(get);
+            } catch (IOException e) {
+                throw new RepositoryException("Exception occured while checking existence of master record <"+ recordId + ">", e);
+            }
             if (masterResult.isEmpty()) {
                 throw new RecordNotFoundException(record);
             }
         }
-        
+
         if (recordId == null) {
             recordId = idGenerator.newRecordId();
             record.setRecordId(recordId);
         }
-        
+
         Get get = new Get(EncodingUtil.generateRecordRowKey(recordId, variantProperties));
-        Result result = recordTable.get(get);
+        Result result;
+        try {
+            result = recordTable.get(get);
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while checking if record <" + recordId + "> already exists", e);
+        }
         if (!result.isEmpty()) {
             throw new RecordExistsException(record);
         }
-        Put put = createPut(record, 1);
-        recordTable.put(put);
+        Put put;
+        try {
+            put = createPut(record, 1);
+            recordTable.put(put);
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while creating record <" + recordId +"> in HBase table", e);
+        }
         record.setRecordVersion(Long.valueOf(1));
     }
 
-    public Record read(RecordId recordId, String... fieldIds) throws RecordNotFoundException, IOException {
-        return read(recordId, (Long)null, fieldIds);
+    public Record read(RecordId recordId, String... fieldIds) throws RecordNotFoundException, RepositoryException {
+        return read(recordId, (Long) null, fieldIds);
     }
-    
-    public Record read(RecordId recordId, Long version, String... fieldIds) throws RecordNotFoundException, IOException {
+
+    public Record read(RecordId recordId, Long version, String... fieldIds) throws RecordNotFoundException, RepositoryException {
         return read(recordId, version, null, fieldIds);
     }
 
-    public Record read(RecordId recordId, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException,
-                    IOException {
+    public Record read(RecordId recordId, Map<String, String> variantProperties, String... fieldIds)
+                    throws RecordNotFoundException, RepositoryException {
         return read(recordId, null, variantProperties, fieldIds);
     }
-    
-    public Record read(RecordId recordId, Long version, Map<String, String> variantProperties, String... fieldIds) throws RecordNotFoundException, IOException {
-        Record record = new RecordImpl();
+
+    public Record read(RecordId recordId, Long version, Map<String, String> variantProperties, String... fieldIds)
+                    throws RecordNotFoundException, RepositoryException {
+        Record record = newRecord();
         record.setRecordId(recordId);
         record.setRecordVersion(version);
         record.addVariantProperties(variantProperties);
@@ -138,7 +186,12 @@ public class HBaseRepository implements Repository {
         if (fieldIds.length != 0) {
             addFieldsToGet(get, record, fieldIds);
         }
-        Result result = recordTable.get(get);
+        Result result;
+        try {
+            result = recordTable.get(get);
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while retrieving record <" + recordId +"> from HBase table", e);
+        }
         if (result.isEmpty()) {
             throw new RecordNotFoundException(record);
         }
@@ -150,15 +203,16 @@ public class HBaseRepository implements Repository {
         } else {
             record.setRecordVersion(currentVersion);
         }
-        
+
         extractFields(result, version, record);
         return record;
     }
-    
-    private void addFieldsToGet(Get get, Record record, String... fieldIds) throws RecordNotFoundException, IOException {
+
+    private void addFieldsToGet(Get get, Record record, String... fieldIds) throws RecordNotFoundException, RepositoryException {
         String recordTypeId;
         long recordTypeVersion;
-        Get recordTypeGet = new Get(EncodingUtil.generateRecordRowKey(record.getRecordId(), record.getVariantProperties()));
+        Get recordTypeGet = new Get(EncodingUtil.generateRecordRowKey(record.getRecordId(), record
+                        .getVariantProperties()));
         Long version = record.getRecordVersion();
         if (version != null) {
             get.getMaxVersions();
@@ -166,23 +220,34 @@ public class HBaseRepository implements Repository {
         get.addColumn(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME);
         get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME);
         get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME);
-        Result recordTypeResult = recordTable.get(recordTypeGet);
+        Result recordTypeResult;
+        try {
+            recordTypeResult = recordTable.get(recordTypeGet);
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while retrieving record <"+ record.getRecordId() +"> from HBase table", e);
+        }
         if (recordTypeResult.isEmpty()) {
             throw new RecordNotFoundException(record);
         }
-        
+
         if (version == null) {
-            recordTypeId = Bytes.toString(recordTypeResult.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME));
-            recordTypeVersion = Bytes.toLong(recordTypeResult.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME));
+            recordTypeId = Bytes.toString(recordTypeResult.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY,
+                            RECORDTYPEID_COLUMN_NAME));
+            recordTypeVersion = Bytes.toLong(recordTypeResult.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY,
+                            RECORDTYPEID_COLUMN_NAME));
         } else {
-            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = recordTypeResult.getMap();
-            NavigableMap<byte[], NavigableMap<Long, byte[]>> allVersionsSystemColumnFamilyMap = allVersionsMap.get(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
-            recordTypeId = Bytes.toString(allVersionsSystemColumnFamilyMap.get(RECORDTYPEID_COLUMN_NAME).ceilingEntry(version).getValue());
-            recordTypeVersion = Bytes.toLong(allVersionsSystemColumnFamilyMap.get(RECORDTYPEVERSION_COLUMN_NAME).ceilingEntry(version).getValue());
+            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = recordTypeResult
+                            .getMap();
+            NavigableMap<byte[], NavigableMap<Long, byte[]>> allVersionsSystemColumnFamilyMap = allVersionsMap
+                            .get(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
+            recordTypeId = Bytes.toString(allVersionsSystemColumnFamilyMap.get(RECORDTYPEID_COLUMN_NAME).ceilingEntry(
+                            version).getValue());
+            recordTypeVersion = Bytes.toLong(allVersionsSystemColumnFamilyMap.get(RECORDTYPEVERSION_COLUMN_NAME)
+                            .ceilingEntry(version).getValue());
         }
-        
+
         RecordType recordType = typeManager.getRecordType(recordTypeId, recordTypeVersion);
-        
+
         get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME);
         get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME);
         for (String fieldId : fieldIds) {
@@ -192,7 +257,7 @@ public class HBaseRepository implements Repository {
         }
     }
 
-    private void extractFields(Result result, Long version, Record record) {
+    private void extractFields(Result result, Long version, Record record) throws RepositoryException {
         extractNonVersionableFields(result, record);
         if (version != null) {
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> mapWithVersions = result.getMap();
@@ -203,10 +268,15 @@ public class HBaseRepository implements Repository {
             extractLatestRecordTypeInfo(result, record);
         }
     }
-    
-    public void update(Record record) throws RecordNotFoundException, InvalidRecordException, IOException {
+
+    public void update(Record record) throws RecordNotFoundException, InvalidRecordException, RepositoryException {
         Get get = new Get(EncodingUtil.generateRecordRowKey(record.getRecordId(), record.getVariantProperties()));
-        Result result = recordTable.get(get);
+        Result result;
+        try {
+            result = recordTable.get(get);
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while retrieving original record <" + record.getRecordId() +"> from HBase table", e);
+        }
         if (result.isEmpty()) {
             throw new RecordNotFoundException(record);
         }
@@ -216,18 +286,26 @@ public class HBaseRepository implements Repository {
         if (record.getFields().isEmpty() && record.getDeleteFields().isEmpty()) {
             throw new InvalidRecordException(record, "No fields to update or delete");
         }
-        long newVersion = version+1;
-        recordTable.put(createPut(record, newVersion));
+        long newVersion = version + 1;
+        try {
+            recordTable.put(createPut(record, newVersion));
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while putting updated record <" + record.getRecordId() +"> on HBase table", e);
+        }
         record.setRecordVersion(newVersion);
     }
 
-    public void delete(RecordId recordId) throws IOException {
+    public void delete(RecordId recordId) throws RepositoryException {
         Delete delete = new Delete(EncodingUtil.generateRecordRowKey(recordId, null));
-        recordTable.delete(delete);
+        try {
+            recordTable.delete(delete);
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while deleting record <"+recordId+"> from HBase table", e);
+        }
 
     }
 
-    private Put createPut(Record record, long version) throws IOException {
+    private Put createPut(Record record, long version) throws RepositoryException {
         String recordTypeId = record.getRecordTypeId();
         long recordTypeVersion = record.getRecordTypeVersion();
         RecordType recordType = typeManager.getRecordType(recordTypeId, recordTypeVersion);
@@ -253,16 +331,18 @@ public class HBaseRepository implements Repository {
         for (String deleteFieldId : record.getDeleteFields()) {
             FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(deleteFieldId);
             if (fieldDescriptor.isVersionable()) {
-                put.add(VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldId), version, new byte[] { EncodingUtil.DELETE_FLAG });
+                put.add(VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldId), version,
+                                new byte[] { EncodingUtil.DELETE_FLAG });
             } else {
-                put.add(NON_VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldId), new byte[] { EncodingUtil.DELETE_FLAG });
+                put.add(NON_VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(deleteFieldId),
+                                new byte[] { EncodingUtil.DELETE_FLAG });
             }
         }
         return put;
     }
 
     private void extractVersionableFieldsOnVersion(Long version, Record record,
-                    NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions) {
+                    NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions) throws RepositoryException {
         if (mapWithVersions != null) {
             Set<Entry<byte[], NavigableMap<Long, byte[]>>> columnSetWithAllVersions = mapWithVersions.entrySet();
             for (Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : columnSetWithAllVersions) {
@@ -290,18 +370,18 @@ public class HBaseRepository implements Repository {
         record.setRecordType(Bytes.toString(familyMap.get(RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(familyMap
                         .get(RECORDTYPEVERSION_COLUMN_NAME)));
     }
-    
-    private void extractLatestVersionableFields(Result result, Record record) {
+
+    private void extractLatestVersionableFields(Result result, Record record) throws RepositoryException {
         NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(VERSIONABLE_COLUMN_FAMILY);
         extractFields(record, familyMap);
     }
 
-    private void extractNonVersionableFields(Result result, Record record) {
+    private void extractNonVersionableFields(Result result, Record record) throws RepositoryException {
         NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(NON_VERSIONABLE_COLUMN_FAMILY);
         extractFields(record, familyMap);
     }
 
-    private void extractFields(Record record, NavigableMap<byte[], byte[]> familyMap) {
+    private void extractFields(Record record, NavigableMap<byte[], byte[]> familyMap) throws RepositoryException {
         if (familyMap != null) {
             for (Entry<byte[], byte[]> entry : familyMap.entrySet()) {
                 addField(record, entry.getKey(), entry.getValue());
@@ -309,11 +389,10 @@ public class HBaseRepository implements Repository {
         }
     }
 
-    private void addField(Record record, byte[] key, byte[] prefixedValue) {
+    private void addField(Record record, byte[] key, byte[] prefixedValue) throws RepositoryException {
         if (!EncodingUtil.isDeletedField(prefixedValue)) {
-            record.addField(new FieldImpl(Bytes.toString(key), EncodingUtil.stripPrefix(prefixedValue)));
+            record.addField(newField(Bytes.toString(key), EncodingUtil.stripPrefix(prefixedValue)));
         }
     }
 
-    
 }

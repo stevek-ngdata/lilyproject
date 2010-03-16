@@ -18,7 +18,13 @@ package org.lilycms.repository.api;
 /**
  * Describes the properties of a field.
  * 
- * <p>Multiple versions of a {@link FieldDescriptor} can exist.
+ * <p>
+ * Multiple versions of a {@link FieldDescriptor} can exist.
+ * 
+ * <p>
+ * A {@link FieldDescriptor} cannot exist on its own, but is always part of a
+ * {@link RecordType}. It's id must be unique within the context of the
+ * {@link RecordType}.
  * 
  * 
  */
@@ -27,21 +33,22 @@ public interface FieldDescriptor {
      * @return the id of the {@link Field}
      */
     String getFieldDescriptorId();
-    
+
     /**
-     * @return the version of the {
+     * @return the version of the {@link Field}
      */
     long getVersion();
+
     /**
      * return the type of the {@link Field}
      */
     String getFieldType();
-    
+
     /**
      * @return if the {@link Field} is mandatory
      */
     boolean isMandatory();
-    
+
     /**
      * @return if the {@link Field} is versionable
      */

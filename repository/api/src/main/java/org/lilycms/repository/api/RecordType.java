@@ -25,11 +25,15 @@ import java.util.Collection;
  * 
  * <p>
  * A collection of {@link FieldDescriptor}s describe which fields can or must be
- * part of a {@link Record} of this {@link RecordType}
+ * part of a {@link Record} of this {@link RecordType}. A
+ * {@link FieldDescriptor} is always part of a {@link RecordType} and cannot
+ * exist on its own.
  */
 public interface RecordType {
     String getRecordTypeId();
 
+    void setVersion(long version);
+    
     long getVersion();
 
     void addFieldDescriptor(FieldDescriptor fieldDescriptor);
@@ -39,4 +43,5 @@ public interface RecordType {
     FieldDescriptor getFieldDescriptor(String fieldDescriptorId);
 
     Collection<FieldDescriptor> getFieldDescriptors();
+
 }

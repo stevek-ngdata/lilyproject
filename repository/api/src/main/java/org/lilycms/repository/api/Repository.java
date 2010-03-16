@@ -15,13 +15,28 @@
  */
 package org.lilycms.repository.api;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
  * Repository is the API for all CRUD operations on Records.
  */
 public interface Repository {
+    /**
+     * Creates a new {@link Record} object.
+     */
+    Record newRecord() throws RepositoryException;
+
+    /**
+     * Creates a new {@link Record} object with the {@link RecordId} already
+     * filled in.
+     */
+    Record newRecord(RecordId recordId) throws RepositoryException;
+
+    /**
+     * Creates a new {@link Field} object.
+     */
+    Field newField(String fieldId, byte[] value) throws RepositoryException;
+
     /**
      * Creates a new record on the repository.
      * 
@@ -30,65 +45,95 @@ public interface Repository {
      * recordId is generated and placed in {@link Record}.
      * 
      * @param record
-     *            contains the data of the record or variant record to be created
-     * @throws RecordExistsException if a record with the given recordId already exists
-     * @throws RecordNotFoundException if the master record for a variant record does not exist
-     * @throws InvalidRecordException if an empty record is being created
-     * @throws IOException TBD
+     *            contains the data of the record or variant record to be
+     *            created
+     * @throws RecordExistsException
+     *             if a record with the given recordId already exists
+     * @throws RecordNotFoundException
+     *             if the master record for a variant record does not exist
+     * @throws InvalidRecordException
+     *             if an empty record is being created
+     * @throws RepostioryException
+     *             TBD
      */
     void create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
-                    IOException;
+                    RepositoryException;
 
     /**
      * Updates an existing record on the repository.
      * 
-     * <p> The {@link Record} is updated with the new version number.
-     *
-     * @param record contains the data of the record or variant record to be updated
-     * @throws RecordNotFoundException if the record does not exist
-     * @throws InvalidRecordException if no update information is provided
-     * @throws IOException TBD
+     * <p>
+     * The {@link Record} is updated with the new version number.
+     * <p>
+     * Only {@link Field}s that are mentioned in the {@link Record} will be
+     * updated.
+     * <p>
+     * Fields to be deleted should be separately and explicitly listed in the
+     * {@link Record}.
+     * 
+     * @param record
+     *            contains the data of the record or variant record to be
+     *            updated
+     * @throws RecordNotFoundException
+     *             if the record does not exist
+     * @throws InvalidRecordException
+     *             if no update information is provided
+     * @throws RepositoryException
+     *             TBD
      */
-    void update(Record record) throws RecordNotFoundException, InvalidRecordException, IOException;
-    
+    void update(Record record) throws RecordNotFoundException, InvalidRecordException, RepositoryException;
+
     /**
      * Read the latest version of a {@link Record} from the repository.
      * 
-     * @param recordId the id of the {@link Record} to read
-     * @param fieldIds the fields to read from the {@link Record}, an empty list results in reading all fields
-     * @throws RecordNotFoundException if the {@link Record} does not exist
-     * @throws IOException TBD
+     * @param recordId
+     *            the id of the {@link Record} to read
+     * @param fieldIds
+     *            the fields to read from the {@link Record}, an empty list
+     *            results in reading all fields
+     * @throws RecordNotFoundException
+     *             if the {@link Record} does not exist
+     * @throws RepositoryException
+     *             TBD
      */
-    Record read(RecordId recordId, String... fieldIds) throws RecordNotFoundException, IOException;
+    Record read(RecordId recordId, String... fieldIds) throws RecordNotFoundException, RepositoryException;
 
     /**
      * Read a specific version of a {@link Record}
      * 
-     * @param version the versionNumber to read
+     * @param version
+     *            the versionNumber to read
      * 
      */
-    Record read(RecordId recordId, Long version, String... fieldIds) throws RecordNotFoundException, IOException;
+    Record read(RecordId recordId, Long version, String... fieldIds) throws RecordNotFoundException,
+                    RepositoryException;
 
     /**
      * Read the latest version of a variant record.
      * 
-     * @param variantProperties a map of dimensions and dimensionvalues specifying the variant record to be read
+     * @param variantProperties
+     *            a map of dimensions and dimensionvalues specifying the variant
+     *            record to be read
      */
     Record read(RecordId recordId, Map<String, String> variantProperties, String... fieldIds)
-                    throws RecordNotFoundException, IOException;
+                    throws RecordNotFoundException, RepositoryException;
 
     /**
      * Read a specific version of a variant record.
      * 
-     * @param version the versionNumber to read
+     * @param version
+     *            the versionNumber to read
      */
     Record read(RecordId recordId, Long version, Map<String, String> variantProperties, String... fieldIds)
-                    throws RecordNotFoundException, IOException;
+                    throws RecordNotFoundException, RepositoryException;
 
     /**
      * Delete a {@link Record} from the repository.
-     * @param recordId id of the record to delete
-     * @throws IOException TBD
+     * 
+     * @param recordId
+     *            id of the record to delete
+     * @throws RepositoryException
+     *             TBD
      */
-    void delete(RecordId recordId) throws IOException;
+    void delete(RecordId recordId) throws RepositoryException;
 }

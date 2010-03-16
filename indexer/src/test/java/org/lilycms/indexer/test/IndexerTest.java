@@ -42,17 +42,17 @@ public class IndexerTest {
 
     @Test
     public void testIndexer() throws Exception {
-        TypeManager typeManager = new HBaseTypeManager(TEST_UTIL.getConfiguration());
+        TypeManager typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
         IdGenerator idGenerator = new IdGenerator();
-        Repository repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
+        Repository repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, FieldImpl.class, TEST_UTIL.getConfiguration());
         SolrServer solrServer = SOLR_TEST_UTIL.getSolrServer();
         TestLilyQueue queue = new TestLilyQueue();
         Indexer indexer = new Indexer(queue, repository, solrServer);
 
 
         // Create a record type
-        RecordType recordType = new RecordTypeImpl("thing");
-        recordType.addFieldDescriptor(new FieldDescriptorImpl("title", "string", true, true));
+        RecordType recordType = typeManager.newRecordType("thing");
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("title", "string", true, true));
         typeManager.createRecordType(recordType);
 
         // TODO need to re-retrieve the record type because its version property is not updated

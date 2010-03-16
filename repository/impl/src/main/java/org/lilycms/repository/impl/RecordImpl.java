@@ -34,9 +34,17 @@ public class RecordImpl implements Record {
     private Map<String, String> variantProperties = new HashMap<String, String>();
     private Long version;
 
+    /**
+     * This constructor should not be called directly.
+     * @use {@link Repository#newRecord} instead
+     */
     public RecordImpl() {
     }
     
+    /**
+     * This constructor should not be called directly.
+     * @use {@link Repository#newRecord} instead
+     */
     public RecordImpl(RecordId recordId) {
         this.recordId = recordId;
     }
