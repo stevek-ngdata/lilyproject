@@ -12,7 +12,5 @@ public interface QueueMessage {
 
     RecordId getRecordId();
 
-    Map<String, String> getVariantProperties();
-
     byte[] getData();
 }

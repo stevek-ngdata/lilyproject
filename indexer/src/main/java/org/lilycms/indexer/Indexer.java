@@ -36,7 +36,7 @@ public class Indexer {
                 QueueMessage msg = queue.getMessage(id);
 
                 if (msg.getType().equals("document-created")) {
-                    Record record = repository.read(repository.getIdGenerator().newRecordId(msg.getRecordId(), msg.getVariantProperties()));
+                    Record record = repository.read(msg.getRecordId());
 
                     // TODO find out mapping
 

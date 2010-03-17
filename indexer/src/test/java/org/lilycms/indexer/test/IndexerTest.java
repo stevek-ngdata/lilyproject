@@ -16,10 +16,7 @@ import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
 import org.lilycms.testfw.TestHelper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -65,7 +62,7 @@ public class IndexerTest {
         repository.create(record);
 
         // Generate queue message
-        QueueMessage message = new TestQueueMessage("document-created", record.getId(), null, null);
+        QueueMessage message = new TestQueueMessage("document-created", record.getId(), null);
         queue.broadCastMessage(message);
 
         // Make sure all index writes are comitted
@@ -84,13 +81,11 @@ public class IndexerTest {
     public static class TestQueueMessage implements QueueMessage {
         private String type;
         private RecordId recordId;
-        private Map<String, String> variantProperties;
         private byte[] data;
 
-        public TestQueueMessage(String type, RecordId recordId, Map<String, String> variantProperties, byte[] data) {
+        public TestQueueMessage(String type, RecordId recordId, byte[] data) {
             this.type = type;
             this.recordId = recordId;
-            this.variantProperties = variantProperties;
             this.data = data;
         }
 
@@ -100,10 +95,6 @@ public class IndexerTest {
 
         public RecordId getRecordId() {
             return recordId;
-        }
-
-        public Map<String, String> getVariantProperties() {
-            return variantProperties;
         }
 
         public byte[] getData() {
