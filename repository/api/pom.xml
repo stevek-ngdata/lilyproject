@@ -36,11 +36,4 @@
   <build>
   </build>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-core</artifactId>
-    </dependency>
-  </dependencies>
-
 </project>

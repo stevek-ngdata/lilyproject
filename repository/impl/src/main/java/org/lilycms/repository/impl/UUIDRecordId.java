@@ -17,24 +17,25 @@ package org.lilycms.repository.impl;
 
 import java.util.UUID;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.RecordId;
 
 public class UUIDRecordId implements RecordId {
 
     private UUID uuid;
-    private final IdGenerator idGenerator;
+    private final IdGeneratorImpl idGenerator;
 
-    public UUIDRecordId(IdGenerator idGenerator) {
+    protected UUIDRecordId(IdGeneratorImpl idGenerator) {
         this.idGenerator = idGenerator;
         uuid = UUID.randomUUID();
     }
     
-    public UUIDRecordId(long mostSigBits, long leastSigBits, IdGenerator idGenerator) {
+    protected UUIDRecordId(long mostSigBits, long leastSigBits, IdGeneratorImpl idGenerator) {
         this.idGenerator = idGenerator;
         this.uuid = new UUID(mostSigBits, leastSigBits);
     }
 
-    public UUIDRecordId(String uuidString, IdGenerator idgenerator) {
+    public UUIDRecordId(String uuidString, IdGeneratorImpl idgenerator) {
         this.idGenerator = idgenerator;
         this.uuid = UUID.fromString(uuidString);
     }
@@ -49,6 +50,17 @@ public class UUIDRecordId implements RecordId {
     
     public byte[] toBytes() {
         return idGenerator.toBytes(this);
+    }
+    
+    protected byte[] getBasicBytes() {
+        byte[] bytes = new byte[16];
+        Bytes.putLong(bytes, 0, uuid.getMostSignificantBits());
+        Bytes.putLong(bytes, 8, uuid.getLeastSignificantBits());
+        return bytes;
+    }
+    
+    protected String getBasicString() {
+        return uuid.toString();
     }
 
     @Override
@@ -75,6 +87,8 @@ public class UUIDRecordId implements RecordId {
             return false;
         return true;
     }
-    
-    
+
+    public RecordId getMasterRecordId() {
+        return null;
+    }
 }

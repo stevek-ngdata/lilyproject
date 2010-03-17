@@ -23,15 +23,15 @@ public class UserRecordId implements RecordId {
 
     protected final String recordIdString;
     protected byte[] recordIdBytes;
-    private final IdGenerator idGenerator;
+    private final IdGeneratorImpl idGenerator;
 
-    public UserRecordId(String recordId, IdGenerator idGenerator) {
+    protected UserRecordId(String recordId, IdGeneratorImpl idGenerator) {
         this.recordIdString = recordId;
         recordIdBytes = Bytes.toBytes(recordId);
         this.idGenerator = idGenerator;
     }
 
-    public UserRecordId(byte[] recordId, IdGenerator idGenerator) {
+    protected UserRecordId(byte[] recordId, IdGeneratorImpl idGenerator) {
         recordIdBytes = recordId;
         recordIdString = Bytes.toString(recordId);
         this.idGenerator = idGenerator;
@@ -43,6 +43,14 @@ public class UserRecordId implements RecordId {
 
     public String toString() {
         return idGenerator.toString(this);
+    }
+    
+    protected byte[] getBasicBytes() {
+        return recordIdBytes;
+    }
+    
+    protected String getBasicString() {
+        return recordIdString;
     }
 
     @Override
@@ -68,5 +76,9 @@ public class UserRecordId implements RecordId {
         } else if (!recordIdString.equals(other.recordIdString))
             return false;
         return true;
+    }
+
+    public RecordId getMasterRecordId() {
+        return null;
     }
 }

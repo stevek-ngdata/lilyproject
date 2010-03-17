@@ -65,8 +65,8 @@ public class HBaseTypeManagerTest {
         RecordType recordType = typeManager.newRecordType(recordTypeId);
         typeManager.createRecordType(recordType);
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        assertEquals(recordTypeId, actualRecordType.getRecordTypeId());
-        assertEquals(1, actualRecordType.getVersion());
+        assertEquals(recordTypeId, actualRecordType.getId());
+        assertEquals(Long.valueOf(1), actualRecordType.getVersion());
         assertTrue(actualRecordType.getFieldDescriptors().isEmpty());
     }
     
@@ -80,7 +80,7 @@ public class HBaseTypeManagerTest {
         typeManager.createRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, 1, "dummyFieldType", true, false);
+        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, Long.valueOf(1), "dummyFieldType", true, false);
         assertEquals(fieldDescriptor, actualRecordType.getFieldDescriptor(fieldDescriptorId));
     }
 
@@ -99,9 +99,9 @@ public class HBaseTypeManagerTest {
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
         assertEquals(2, actualRecordType.getFieldDescriptors().size());
-        fieldDescriptor1 = typeManager.newFieldDescriptor(fieldDescriptorId1, 1, "dummyFieldType", true, false);
+        fieldDescriptor1 = typeManager.newFieldDescriptor(fieldDescriptorId1, Long.valueOf(1), "dummyFieldType", true, false);
         assertEquals(fieldDescriptor1, actualRecordType.getFieldDescriptor(fieldDescriptorId1));
-        fieldDescriptor2 = typeManager.newFieldDescriptor(fieldDescriptorId2, 1, "dummyFieldType2", false, true);
+        fieldDescriptor2 = typeManager.newFieldDescriptor(fieldDescriptorId2, Long.valueOf(1), "dummyFieldType2", false, true);
         assertEquals(fieldDescriptor2, actualRecordType.getFieldDescriptor(fieldDescriptorId2));
     }
     
@@ -118,10 +118,10 @@ public class HBaseTypeManagerTest {
         typeManager.updateRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        assertEquals(2, actualRecordType.getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getVersion());
         assertEquals(1, actualRecordType.getFieldDescriptors().size());
         
-        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, 1, "dummyFieldType", true, false);
+        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, Long.valueOf(1), "dummyFieldType", true, false);
         assertEquals(fieldDescriptor, actualRecordType.getFieldDescriptor(fieldDescriptorId));
     }
     
@@ -140,7 +140,7 @@ public class HBaseTypeManagerTest {
         typeManager.updateRecordType(recordTypeWithoutFieldDescriptor);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        assertEquals(2, actualRecordType.getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getVersion());
         assertEquals(0, actualRecordType.getFieldDescriptors().size());
     }
     
@@ -159,10 +159,10 @@ public class HBaseTypeManagerTest {
         typeManager.updateRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        assertEquals(2, actualRecordType.getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getVersion());
         assertEquals(1, actualRecordType.getFieldDescriptors().size());
         FieldDescriptor actualFieldDescriptor = actualRecordType.getFieldDescriptor(fieldDescriptorId);
-        assertEquals(2, actualFieldDescriptor.getVersion());
+        assertEquals(Long.valueOf(2), actualFieldDescriptor.getVersion());
         assertEquals("changedFieldType", actualFieldDescriptor.getFieldType());
         assertFalse(actualFieldDescriptor.isMandatory());
         assertTrue(actualFieldDescriptor.isVersionable());
@@ -184,10 +184,10 @@ public class HBaseTypeManagerTest {
         typeManager.updateRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        assertEquals(2, actualRecordType.getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getVersion());
         assertEquals(1, actualRecordType.getFieldDescriptors().size());
         FieldDescriptor actualFieldDescriptor = actualRecordType.getFieldDescriptor(fieldDescriptorId);
-        assertEquals(2, actualFieldDescriptor.getVersion());
+        assertEquals(Long.valueOf(2), actualFieldDescriptor.getVersion());
         assertEquals("changedFieldType", actualFieldDescriptor.getFieldType());
         assertTrue(actualFieldDescriptor.isMandatory());
         assertFalse(actualFieldDescriptor.isVersionable());
@@ -206,10 +206,10 @@ public class HBaseTypeManagerTest {
         typeManager.updateRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        assertEquals(1, actualRecordType.getVersion());
+        assertEquals(Long.valueOf(1), actualRecordType.getVersion());
         assertEquals(1, actualRecordType.getFieldDescriptors().size());
         FieldDescriptor actualFieldDescriptor = actualRecordType.getFieldDescriptor(fieldDescriptorId);
-        assertEquals(1, actualFieldDescriptor.getVersion());
+        assertEquals(Long.valueOf(1), actualFieldDescriptor.getVersion());
         assertEquals("dummyFieldType", actualFieldDescriptor.getFieldType());
         assertTrue(actualFieldDescriptor.isMandatory());
         assertFalse(actualFieldDescriptor.isVersionable());
@@ -237,17 +237,17 @@ public class HBaseTypeManagerTest {
         typeManager.updateRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        assertEquals(2, actualRecordType.getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getVersion());
         assertEquals(2, actualRecordType.getFieldDescriptors().size());
         
         FieldDescriptor actualFieldDescriptor = actualRecordType.getFieldDescriptor(updateFieldDescriptorId);
-        assertEquals(2, actualFieldDescriptor.getVersion());
+        assertEquals(Long.valueOf(2), actualFieldDescriptor.getVersion());
         assertEquals("changedFieldType", actualFieldDescriptor.getFieldType());
         assertFalse(actualFieldDescriptor.isMandatory());
         assertTrue(actualFieldDescriptor.isVersionable());
 
         actualFieldDescriptor = actualRecordType.getFieldDescriptor(addFieldDescriptorId);
-        assertEquals(1, actualFieldDescriptor.getVersion());
+        assertEquals(Long.valueOf(1), actualFieldDescriptor.getVersion());
         
         assertNull(actualRecordType.getFieldDescriptor(removeFieldDescriptorId));
     }
@@ -266,10 +266,10 @@ public class HBaseTypeManagerTest {
         recordType.addFieldDescriptor(changedFieldDescriptor);
         typeManager.updateRecordType(recordType);
         
-        RecordType actualRecordType = typeManager.getRecordType(recordTypeId, 1);
-        assertEquals(1, actualRecordType.getVersion());
+        RecordType actualRecordType = typeManager.getRecordType(recordTypeId, Long.valueOf(1));
+        assertEquals(Long.valueOf(1), actualRecordType.getVersion());
         FieldDescriptor actualFieldDescriptor = actualRecordType.getFieldDescriptor(fieldDescriptorId);
-        updateFieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, 1, "dummyFieldType", true, false);
+        updateFieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, Long.valueOf(1), "dummyFieldType", true, false);
         assertEquals(updateFieldDescriptor, actualFieldDescriptor);
     }
     
@@ -312,41 +312,41 @@ public class HBaseTypeManagerTest {
         recordType.addFieldDescriptor(fd3);
         typeManager.updateRecordType(recordType);
         
-        RecordType actualRecordType = typeManager.getRecordType(recordTypeId, 1);
+        RecordType actualRecordType = typeManager.getRecordType(recordTypeId, Long.valueOf(1));
         assertEquals(2, actualRecordType.getFieldDescriptors().size());
-        assertEquals(1, actualRecordType.getFieldDescriptor(fdId1).getVersion());
+        assertEquals(Long.valueOf(1), actualRecordType.getFieldDescriptor(fdId1).getVersion());
         assertEquals("ft1", actualRecordType.getFieldDescriptor(fdId1).getFieldType());
-        assertEquals(1, actualRecordType.getFieldDescriptor(fdId2).getVersion());
+        assertEquals(Long.valueOf(1), actualRecordType.getFieldDescriptor(fdId2).getVersion());
         assertTrue(actualRecordType.getFieldDescriptor(fdId2).isMandatory());
         assertFalse(actualRecordType.getFieldDescriptor(fdId2).isVersionable());
         assertNull(actualRecordType.getFieldDescriptor(fdId3));
         
-        actualRecordType = typeManager.getRecordType(recordTypeId, 2);
+        actualRecordType = typeManager.getRecordType(recordTypeId, Long.valueOf(2));
         assertEquals(3, actualRecordType.getFieldDescriptors().size());
-        assertEquals(1, actualRecordType.getFieldDescriptor(fdId1).getVersion());
+        assertEquals(Long.valueOf(1), actualRecordType.getFieldDescriptor(fdId1).getVersion());
         assertEquals("ft1", actualRecordType.getFieldDescriptor(fdId1).getFieldType());
-        assertEquals(2, actualRecordType.getFieldDescriptor(fdId2).getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getFieldDescriptor(fdId2).getVersion());
         assertFalse(actualRecordType.getFieldDescriptor(fdId2).isMandatory());
         assertTrue(actualRecordType.getFieldDescriptor(fdId2).isVersionable());
-        assertEquals(1, actualRecordType.getFieldDescriptor(fdId3).getVersion());
+        assertEquals(Long.valueOf(1), actualRecordType.getFieldDescriptor(fdId3).getVersion());
         assertEquals("ft3", actualRecordType.getFieldDescriptor(fdId3).getFieldType());
         
-        actualRecordType = typeManager.getRecordType(recordTypeId, 3);
+        actualRecordType = typeManager.getRecordType(recordTypeId, Long.valueOf(3));
         assertEquals(2, actualRecordType.getFieldDescriptors().size());
-        assertEquals(2, actualRecordType.getFieldDescriptor(fdId1).getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getFieldDescriptor(fdId1).getVersion());
         assertEquals("ft11", actualRecordType.getFieldDescriptor(fdId1).getFieldType());
         assertNull(actualRecordType.getFieldDescriptor(fdId2));
-        assertEquals(2, actualRecordType.getFieldDescriptor(fdId3).getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getFieldDescriptor(fdId3).getVersion());
         assertEquals("ft33", actualRecordType.getFieldDescriptor(fdId3).getFieldType());
         
-        actualRecordType = typeManager.getRecordType(recordTypeId, 4);
+        actualRecordType = typeManager.getRecordType(recordTypeId, Long.valueOf(4));
         assertEquals(3, actualRecordType.getFieldDescriptors().size());
-        assertEquals(2, actualRecordType.getFieldDescriptor(fdId1).getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getFieldDescriptor(fdId1).getVersion());
         assertEquals("ft11", actualRecordType.getFieldDescriptor(fdId1).getFieldType());
-        assertEquals(3, actualRecordType.getFieldDescriptor(fdId2).getVersion());
+        assertEquals(Long.valueOf(3), actualRecordType.getFieldDescriptor(fdId2).getVersion());
         assertFalse(actualRecordType.getFieldDescriptor(fdId2).isMandatory());
         assertTrue(actualRecordType.getFieldDescriptor(fdId2).isVersionable());
-        assertEquals(2, actualRecordType.getFieldDescriptor(fdId3).getVersion());
+        assertEquals(Long.valueOf(2), actualRecordType.getFieldDescriptor(fdId3).getVersion());
         assertEquals("ft33", actualRecordType.getFieldDescriptor(fdId3).getFieldType());
     }
 }

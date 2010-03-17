@@ -15,15 +15,9 @@
  */
 package org.lilycms.repository.impl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.FieldDescriptor;
-import org.lilycms.repository.api.RecordId;
-import org.lilycms.repository.api.RecordType;
 
 public class EncodingUtil {
     
@@ -46,27 +40,6 @@ public class EncodingUtil {
         return Arrays.copyOfRange(prefixedValue, 1, prefixedValue.length);
     }
     
-    //TODO make rowkey encodings robust (backward compatible) for different encoding versions
-    //For example : make the rowkeys namespace aware
-    /**
-     * Generates an new HBase rowkey based on the recordId and optional variantProperties.
-     */
-    public static byte[] generateRecordRowKey(RecordId recordId, Map<String, String> variantProperties) {
-        StringBuffer rowKey = new StringBuffer();
-        rowKey.append(recordId);
-        if (variantProperties != null) {
-            ArrayList<String> dimensions = new ArrayList<String>(variantProperties.keySet());
-            Collections.sort(dimensions);
-            for (String dimension : dimensions) {
-                rowKey.append('|');
-                rowKey.append(dimension);
-                rowKey.append('|');
-                rowKey.append(variantProperties.get(dimension));
-            }
-        }
-        return Bytes.toBytes(rowKey.toString());
-    }
-    
     /**
      * Generates a new HBase rowkey based on the recordTypeId.
      */
@@ -78,7 +51,7 @@ public class EncodingUtil {
      * Generates a new HBase rowkey based on the recordTypeId and fieldDescriptorId.
      */
     public static byte[] generateFieldDescriptorRowKey(String recordTypeId, String fieldDescriptorId) {
-        StringBuffer rowKey = new StringBuffer();
+        StringBuilder rowKey = new StringBuilder();
         rowKey.append(recordTypeId);
         rowKey.append('|');
         rowKey.append(fieldDescriptorId);

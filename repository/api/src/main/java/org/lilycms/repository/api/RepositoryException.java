@@ -16,7 +16,8 @@
 package org.lilycms.repository.api;
 
 /**
- *
+ * This exception encapsulates any lower-level exceptions thrown by the repository.
+ * These exceptions should not occur under normal operation of the repository.
  */
 public class RepositoryException extends Exception {
 

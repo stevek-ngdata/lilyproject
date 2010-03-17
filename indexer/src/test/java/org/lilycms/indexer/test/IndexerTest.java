@@ -43,7 +43,7 @@ public class IndexerTest {
     @Test
     public void testIndexer() throws Exception {
         TypeManager typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
-        IdGenerator idGenerator = new IdGenerator();
+        IdGenerator idGenerator = new IdGeneratorImpl();
         Repository repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, FieldImpl.class, TEST_UTIL.getConfiguration());
         SolrServer solrServer = SOLR_TEST_UTIL.getSolrServer();
         TestLilyQueue queue = new TestLilyQueue();
@@ -59,13 +59,13 @@ public class IndexerTest {
         recordType = typeManager.getRecordType("thing");
 
         // Create a document
-        Record record = new RecordImpl();
+        Record record = repository.newRecord();
         record.setRecordType("thing", recordType.getVersion());
-        record.addField(new FieldImpl("title", Bytes.toBytes("something")));
+        record.addField(repository.newField("title", Bytes.toBytes("something")));
         repository.create(record);
 
         // Generate queue message
-        QueueMessage message = new TestQueueMessage("document-created", record.getRecordId(), null, null);
+        QueueMessage message = new TestQueueMessage("document-created", record.getId(), null, null);
         queue.broadCastMessage(message);
 
         // Make sure all index writes are comitted

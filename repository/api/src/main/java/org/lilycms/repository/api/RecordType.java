@@ -21,7 +21,7 @@ import java.util.Collection;
  * The RecordType describes the schema to be followed by a {@link Record}
  * 
  * <p>
- * Mulitple versions of a RecordType can exist
+ * Multiple versions of a RecordType can exist
  * 
  * <p>
  * A collection of {@link FieldDescriptor}s describe which fields can or must be
@@ -30,11 +30,11 @@ import java.util.Collection;
  * exist on its own.
  */
 public interface RecordType {
-    String getRecordTypeId();
+    String getId();
 
-    void setVersion(long version);
+    void setVersion(Long version);
     
-    long getVersion();
+    Long getVersion();
 
     void addFieldDescriptor(FieldDescriptor fieldDescriptor);
 

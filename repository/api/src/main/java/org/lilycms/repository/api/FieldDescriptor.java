@@ -16,7 +16,7 @@
 package org.lilycms.repository.api;
 
 /**
- * Describes the properties of a field.
+ * Describes the properties of a {@link Field}.
  * 
  * <p>
  * Multiple versions of a {@link FieldDescriptor} can exist.
@@ -30,17 +30,18 @@ package org.lilycms.repository.api;
  */
 public interface FieldDescriptor {
     /**
-     * @return the id of the {@link Field}
+     * The id of the {@link FieldDescriptor} is also the id to be used by the corresponding {@link Field}  
+     * @return the id of the {@link FieldDescriptor}
      */
-    String getFieldDescriptorId();
+    String getId();
 
     /**
-     * @return the version of the {@link Field}
+     * @return the version of the {@link FieldDescriptor}
      */
-    long getVersion();
+    Long getVersion();
 
     /**
-     * return the type of the {@link Field}
+     * @return the type of the {@link Field}
      */
     String getFieldType();
 

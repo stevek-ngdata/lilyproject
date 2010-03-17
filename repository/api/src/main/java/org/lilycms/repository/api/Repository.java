@@ -15,7 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-import java.util.Map;
 
 /**
  * Repository is the API for all CRUD operations on Records.
@@ -109,25 +108,6 @@ public interface Repository {
                     RepositoryException;
 
     /**
-     * Read the latest version of a variant record.
-     * 
-     * @param variantProperties
-     *            a map of dimensions and dimensionvalues specifying the variant
-     *            record to be read
-     */
-    Record read(RecordId recordId, Map<String, String> variantProperties, String... fieldIds)
-                    throws RecordNotFoundException, RepositoryException;
-
-    /**
-     * Read a specific version of a variant record.
-     * 
-     * @param version
-     *            the versionNumber to read
-     */
-    Record read(RecordId recordId, Long version, Map<String, String> variantProperties, String... fieldIds)
-                    throws RecordNotFoundException, RepositoryException;
-
-    /**
      * Delete a {@link Record} from the repository.
      * 
      * @param recordId
@@ -136,4 +116,9 @@ public interface Repository {
      *             TBD
      */
     void delete(RecordId recordId) throws RepositoryException;
+    
+    /**
+     * @return the IdGenerator service
+     */
+    IdGenerator getIdGenerator();
 }

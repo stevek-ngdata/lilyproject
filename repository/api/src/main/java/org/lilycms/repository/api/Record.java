@@ -15,7 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -39,13 +38,13 @@ import java.util.Set;
  * point to the master record.
  */
 public interface Record {
-    void setRecordId(RecordId recordId);
+    void setId(RecordId recordId);
 
-    RecordId getRecordId();
+    RecordId getId();
 
-    void setRecordVersion(Long version);
+    void setVersion(Long version);
 
-    Long getRecordVersion();
+    Long getVersion();
 
     void setRecordType(String recordTypeId, long recordTypeVersion);
 
@@ -62,10 +61,4 @@ public interface Record {
     void deleteField(String fieldId);
 
     Set<String> getDeleteFields();
-
-    void addVariantProperty(String dimension, String dimensionValue);
-
-    void addVariantProperties(Map<String, String> variantProperties);
-
-    Map<String, String> getVariantProperties();
 }

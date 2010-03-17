@@ -41,6 +41,7 @@ import org.lilycms.repository.api.FieldDescriptor;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.api.TypeManager;
+import org.lilycms.util.ArgumentValidator;
 
 public class HBaseTypeManager implements TypeManager {
 
@@ -93,9 +94,9 @@ public class HBaseTypeManager implements TypeManager {
         }
 }
     
-    public FieldDescriptor newFieldDescriptor(String fieldDescriptorId, long version, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException {
+    public FieldDescriptor newFieldDescriptor(String fieldDescriptorId, Long version, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException {
             try {
-                Constructor<FieldDescriptor> constructor = fieldDescriptorClass.getConstructor(String.class, long.class, String.class, boolean.class, boolean.class);
+                Constructor<FieldDescriptor> constructor = fieldDescriptorClass.getConstructor(String.class, Long.class, String.class, boolean.class, boolean.class);
                 return constructor.newInstance(fieldDescriptorId, version, fieldType, mandatory, versionable);
             } catch (Exception e) {
                 throw new RepositoryException("Exception occured while creating new FieldDescriptor object", e);
@@ -103,8 +104,9 @@ public class HBaseTypeManager implements TypeManager {
     }
     
     public void createRecordType(RecordType recordType) throws RepositoryException {
+        ArgumentValidator.notNull(recordType, "recordType");
         List<Put> puts = new ArrayList<Put>();
-        String recordTypeId = recordType.getRecordTypeId();
+        String recordTypeId = recordType.getId();
         Put put = new Put(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         long recordTypeVersion = 1;
         put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
@@ -117,13 +119,13 @@ public class HBaseTypeManager implements TypeManager {
             typeTable.put(puts);
         } catch (IOException e) {
             throw new RepositoryException("Exception occured while creating recordType <"
-                            + recordType.getRecordTypeId() + "> on HBase", e);
+                            + recordType.getId() + "> on HBase", e);
         }
     }
 
-    private Put addFieldDescriptor(FieldDescriptor fieldDescriptor, String recordTypeId, long recordTypeVersion,
+    private Put addFieldDescriptor(FieldDescriptor fieldDescriptor, String recordTypeId, Long recordTypeVersion,
                     Put recordTypePut) throws RepositoryException {
-        String fieldDescriptorId = fieldDescriptor.getFieldDescriptorId();
+        String fieldDescriptorId = fieldDescriptor.getId();
         Put put = new Put(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
 
         long fieldDescriptorVersion = getLatestFieldDescriptorVersion(recordTypeId, fieldDescriptorId) + 1;
@@ -142,20 +144,21 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     public void updateRecordType(RecordType recordType) throws RepositoryException {
+        ArgumentValidator.notNull(recordType, "recordType");
         List<Put> puts = new ArrayList<Put>();
-        String recordTypeId = recordType.getRecordTypeId();
+        String recordTypeId = recordType.getId();
         Put recordTypePut = new Put(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         RecordType originalRecordType = getRecordType(recordTypeId);
         long newRecordTypeVersion = originalRecordType.getVersion() + 1;
         boolean recordTypeChanged = false;
         Map<String, FieldDescriptor> fieldDescriptors = new HashMap<String, FieldDescriptor>();
         for (FieldDescriptor fieldDescriptor : recordType.getFieldDescriptors()) {
-            fieldDescriptors.put(fieldDescriptor.getFieldDescriptorId(), fieldDescriptor);
+            fieldDescriptors.put(fieldDescriptor.getId(), fieldDescriptor);
         }
         Collection<FieldDescriptor> originalFieldDescriptors = originalRecordType.getFieldDescriptors();
         Set<FieldDescriptor> originalFieldDescriptorSet = new HashSet<FieldDescriptor>(originalFieldDescriptors);
         for (FieldDescriptor originalFieldDescriptor : originalFieldDescriptors) {
-            String fieldDescriptorId = originalFieldDescriptor.getFieldDescriptorId();
+            String fieldDescriptorId = originalFieldDescriptor.getId();
             FieldDescriptor fieldDescriptor = fieldDescriptors.get(fieldDescriptorId);
             if (fieldDescriptor != null) {
                 Put updateFieldDescriptorPut = updateFieldDescriptor(fieldDescriptor, originalFieldDescriptor,
@@ -195,10 +198,10 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     private Put updateFieldDescriptor(FieldDescriptor fieldDescriptor, FieldDescriptor originalFieldDescriptor,
-                    String recordTypeId, long recordTypeVersion, Put recordTypePut) throws RepositoryException {
+                    String recordTypeId, Long recordTypeVersion, Put recordTypePut) throws RepositoryException {
         boolean fieldDescriptorChanged = false;
         long fieldDescriptorVersion = 0;
-        String fieldDescriptorId = fieldDescriptor.getFieldDescriptorId();
+        String fieldDescriptorId = fieldDescriptor.getId();
         Put put = new Put(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
 
         if (!originalFieldDescriptor.getFieldType().equals(fieldDescriptor.getFieldType())) {
@@ -234,12 +237,13 @@ public class HBaseTypeManager implements TypeManager {
         return null;
     }
 
-    private void removeFieldDescriptor(FieldDescriptor fieldDescriptor, long recordTypeVersion, Put recordTypePut) {
-        recordTypePut.add(FIELDDESCRIPTOR_COLUMN_FAMILY, Bytes.toBytes(fieldDescriptor.getFieldDescriptorId()),
+    private void removeFieldDescriptor(FieldDescriptor fieldDescriptor, Long recordTypeVersion, Put recordTypePut) {
+        recordTypePut.add(FIELDDESCRIPTOR_COLUMN_FAMILY, Bytes.toBytes(fieldDescriptor.getId()),
                         recordTypeVersion, new byte[] { EncodingUtil.DELETE_FLAG });
     }
 
     public RecordType getRecordType(String recordTypeId) throws RepositoryException {
+        ArgumentValidator.notNull(recordTypeId, "recordTypeId");
         Get get = new Get(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         Result result;
         try {
@@ -265,7 +269,11 @@ public class HBaseTypeManager implements TypeManager {
         return recordType;
     }
 
-    public RecordType getRecordType(String recordTypeId, long recordTypeVersion) throws RepositoryException {
+    public RecordType getRecordType(String recordTypeId, Long recordTypeVersion) throws RepositoryException {
+        if (recordTypeVersion == null) {
+            return getRecordType(recordTypeId);
+        }
+        ArgumentValidator.notNull(recordTypeId, "recordTypeId");
         Get get = new Get(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         get.setMaxVersions();
         Result result;
@@ -295,7 +303,7 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     private FieldDescriptor getFieldDescriptor(String recordTypeId, String fieldDescriptorId,
-                    long fieldDescriptorVersion) throws RepositoryException {
+                    Long fieldDescriptorVersion) throws RepositoryException {
         Get get = new Get(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
         get.setMaxVersions();
         Result result;

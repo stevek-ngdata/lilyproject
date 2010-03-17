@@ -33,7 +33,7 @@ public class FieldImpl implements Field {
         this.value = value;
     }
     
-    public String getFieldId() {
+    public String getId() {
         return fieldId;
     }
     

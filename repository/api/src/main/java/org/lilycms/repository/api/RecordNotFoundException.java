@@ -15,8 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class RecordNotFoundException extends Exception {
 
@@ -32,21 +30,11 @@ public class RecordNotFoundException extends Exception {
     
     @Override
     public String getMessage() {
-        StringBuffer message = new StringBuffer();
+        StringBuilder message = new StringBuilder();
         message.append("Record <");
-        message.append(record.getRecordId());
+        message.append(record.getId());
         message.append("> ");
-        Map<String, String> variantProperties = record.getVariantProperties();
-        if (variantProperties != null && !variantProperties.isEmpty()) {
-            for (Entry<String, String> variantEntry : variantProperties.entrySet()) {
-                message.append("<");
-                message.append(variantEntry.getKey());
-                message.append(":");
-                message.append(variantEntry.getValue());
-                message.append("> ");
-            }
-        }
-        Long version = record.getRecordVersion();
+        Long version = record.getVersion();
         if (version != null) {
             message.append("<version:");
             message.append(version);

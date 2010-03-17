@@ -49,19 +49,19 @@ public class RecordImpl implements Record {
         this.recordId = recordId;
     }
     
-    public void setRecordId(RecordId recordId) {
+    public void setId(RecordId recordId) {
         this.recordId = recordId;
     }
     
-    public RecordId getRecordId() {
+    public RecordId getId() {
         return recordId;
     }
     
-    public void setRecordVersion(Long version) {
+    public void setVersion(Long version) {
         this.version = version;
     }
     
-    public Long getRecordVersion() {
+    public Long getVersion() {
         return version;
     }
 
@@ -79,7 +79,7 @@ public class RecordImpl implements Record {
     }
 
     public void addField(Field field) {
-        fields.put(field.getFieldId(), field);
+        fields.put(field.getId(), field);
     }
 
     public Field getField(String fieldId) throws FieldNotFoundException {

@@ -32,7 +32,7 @@ public class InvalidRecordException extends Exception {
     
     @Override
     public String getMessage() {
-        return "Record <"+record.getRecordId()+">: " + message;
+        return "Record <"+record.getId()+">: " + message;
     }
 
 }

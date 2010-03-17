@@ -26,7 +26,7 @@ public class RecordTypeImpl implements RecordType {
     
     private final String recordTypeId;
     private Map<String, FieldDescriptor> fieldDescriptors = new HashMap<String, FieldDescriptor>();
-    private long version;
+    private Long version;
 
     /**
      * This constructor should not be called directly.
@@ -37,7 +37,7 @@ public class RecordTypeImpl implements RecordType {
     }
     
     public void addFieldDescriptor(FieldDescriptor fieldDescriptor) {
-        fieldDescriptors.put(fieldDescriptor.getFieldDescriptorId(), fieldDescriptor);
+        fieldDescriptors.put(fieldDescriptor.getId(), fieldDescriptor);
     }
     
     public void removeFieldDescriptor(String fieldDescriptorId) {
@@ -52,15 +52,15 @@ public class RecordTypeImpl implements RecordType {
         return fieldDescriptors.values();
     }
 
-    public String getRecordTypeId() {
+    public String getId() {
         return recordTypeId;
     }
 
-    public long getVersion() {
+    public Long getVersion() {
         return version;
     }
     
-    public void setVersion(long version){
+    public void setVersion(Long version){
         this.version = version;
     }
 }

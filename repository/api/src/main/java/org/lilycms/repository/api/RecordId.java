@@ -18,10 +18,11 @@ package org.lilycms.repository.api;
 /**
  * Represents the id of a {@link Record}
  * 
- * <p> A string or bytep[] representation can be requested of the Id.
+ * <p> A string or byte[] representation can be requested of the Id.
  */
 public interface RecordId {
 
     String toString();
     byte[] toBytes();
+    RecordId getMasterRecordId();
 }

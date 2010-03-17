@@ -36,7 +36,7 @@ public class Indexer {
                 QueueMessage msg = queue.getMessage(id);
 
                 if (msg.getType().equals("document-created")) {
-                    Record record = repository.read(msg.getRecordId(), msg.getVariantProperties());
+                    Record record = repository.read(repository.getIdGenerator().newRecordId(msg.getRecordId(), msg.getVariantProperties()));
 
                     // TODO find out mapping
 
@@ -44,7 +44,7 @@ public class Indexer {
 
                     // TODO store in SOLR
                     SolrInputDocument solrDoc = new SolrInputDocument();
-                    solrDoc.addField("id", record.getRecordId().toString());
+                    solrDoc.addField("id", record.getId().toString());
                     solrDoc.addField("title", Bytes.toString(record.getField("title").getValue()));
                     solrServer.add(solrDoc);                    
                 }

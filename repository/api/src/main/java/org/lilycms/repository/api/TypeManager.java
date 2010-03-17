@@ -35,7 +35,7 @@ public interface TypeManager {
     /**
      * Creates a new {@link FieldDescriptor} object.
      */
-    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, long version, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException;
+    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, Long version, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException;
     
     /**
      * Creates a {@link RecordType} on the repository with the properties defined in the {@link RecordType} object.
@@ -43,14 +43,15 @@ public interface TypeManager {
     void createRecordType(RecordType recordType) throws RepositoryException;
 
     /**
-     * Retrieves a {@link RecordType} from the repository.
+     * Retrieves the latest version of a {@link RecordType} from the repository.
      */
     RecordType getRecordType(String recordTypeId) throws RepositoryException;
 
     /**
      * Retrieves a specific version of a {@link RecordType} from the repository.
+     * If no version is given, the latest version is retrieved.
      */
-    RecordType getRecordType(String recordTypeId, long recordTypeVersion) throws RepositoryException;
+    RecordType getRecordType(String recordTypeId, Long recordTypeVersion) throws RepositoryException;
 
     /**
      * A new version of the {@link RecordType} is created. The new verion number

@@ -24,7 +24,7 @@ package org.lilycms.repository.api;
  * that {@link Record}.
  */
 public interface Field {
-    String getFieldId();
+    String getId();
 
     byte[] getValue();
 }
