@@ -24,7 +24,7 @@ public class SolrTestingUtility {
 
         // Launch SOLR
         String solrWar = System.getProperty("solr.war");
-        if (!new File(solrWar).exists()) {
+        if (solrWar == null || !new File(solrWar).exists()) {
             System.out.println();
             System.out.println("====================================================================");
             System.out.println("SOLR not found at");
