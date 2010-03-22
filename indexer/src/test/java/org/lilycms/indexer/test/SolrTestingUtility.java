@@ -5,16 +5,18 @@ import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 public class SolrTestingUtility {
     private int solrPort = 6712;
     private SolrServer solrServer;
     private Server server;
     private File solrHomeDir;
+    private String schemaLocation;
+
+    public SolrTestingUtility(String schemaLocation) {
+        this.schemaLocation = schemaLocation;
+    }
 
     public void start() throws Exception {
         // Create SOLR home dir
@@ -71,7 +73,9 @@ public class SolrTestingUtility {
         File solrConfDir = new File(solrHomeDir, "conf");
         solrConfDir.mkdir();
 
-        copyStream(getClass().getClassLoader().getResourceAsStream("org/lilycms/indexer/test/schema.xml"),
+        // Ignoring the closing of the streams here, it's just a testcase anyway ...
+
+        copyStream(new FileInputStream(schemaLocation),
                 new File(solrConfDir, "schema.xml"));
 
         copyStream(getClass().getClassLoader().getResourceAsStream("org/lilycms/indexer/test/solrconfig.xml"),
