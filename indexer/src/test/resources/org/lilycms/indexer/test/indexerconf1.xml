@@ -38,7 +38,7 @@
     </fieldTypes>
 
     <globalFields>
-
+      <indexField name="gifield1" type="text"/>
     </globalFields>
 
     <versionedContentMapping>
@@ -46,6 +46,16 @@
         <indexField name="ifield1" type="text">
           <value>
             <field name="field1"/>
+          </value>
+        </indexField>
+        <indexField name="ifield2" type="text">
+          <value>
+            <field name="field2"/>
+          </value>
+        </indexField>
+        <indexField ref="gifield1">
+          <value>
+            <field name="field3"/>
           </value>
         </indexField>
       </case>

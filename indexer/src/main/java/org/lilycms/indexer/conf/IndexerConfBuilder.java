@@ -12,6 +12,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+// Terminology: the word "field" is usually used for a field from a repository record, while
+// the term "index field" is usually used for a field in the index, though sometimes these
+// are also just called field.
+//
+// The process for parsing the configuration goes like this:
+//  * first all fields (global or defined as part of mapping) (without the binding to a value)
+//    are built and added to the registry
+//  * then the record mappings are build, with field bindings as part of them
 public class IndexerConfBuilder {
     private static LocalXPathExpression FIELDTYPES =
             new LocalXPathExpression("/indexer/mapping/fieldTypes/fieldType");
@@ -80,15 +88,30 @@ public class IndexerConfBuilder {
     }
 
     private void buildGlobalFields() throws Exception {
-        List<Element> fields = FIELD_CHILDREN.get().evalAsNativeElementList(doc);
+        List<Element> fields = GLOBAL_FIELDS.get().evalAsNativeElementList(doc);
         for (Element field : fields) {
             String name = DocumentHelper.getAttribute(field, "name", false);
             validateName(name);
+            if (conf.fields.containsKey(name)) {
+                throw new IndexerConfException("Duplicate field name " + name + " at " + LocationAttributes.getLocation(field));
+            }
+            IndexField indexField = buildIndexField(name, field);
+            conf.fields.put(indexField.getName(), indexField);
+        }
+    }
+
+    private void buildFields() throws Exception {
+        List<Element> fields = FIELDS.get().evalAsNativeElementList(doc);
+        for (Element field : fields) {
+            String name = DocumentHelper.getAttribute(field, "name", false);
+            // Name is optional because it can also be a ref to an elsewhere defined field
             if (name != null) {
-                if (conf.fields.containsKey(name)) {
+                validateName(name);
+                String qname = qualifyIndexFieldName(field);
+                if (conf.fields.containsKey(qname)) {
                     throw new IndexerConfException("Duplicate field name " + name + " at " + LocationAttributes.getLocation(field));
                 }
-                IndexField indexField = buildIndexField(name, field);
+                IndexField indexField = buildIndexField(qname, field);
                 conf.fields.put(indexField.getName(), indexField);
             }
         }
@@ -110,23 +133,6 @@ public class IndexerConfBuilder {
         // !!! TODO read other properties like indexed, stored, etc.
 
         return new IndexField(name, type, true, true, false, false, false, false, false, null);
-    }
-
-    private void buildFields() throws Exception {
-        List<Element> fields = FIELDS.get().evalAsNativeElementList(doc);
-        for (Element field : fields) {
-            String name = DocumentHelper.getAttribute(field, "name", false);
-            validateName(name);
-            // Name is optional because it can also be a ref to an elsewhere defined field
-            if (name != null) {
-                String qname = qualifyIndexFieldName(field);
-                if (conf.fields.containsKey(qname)) {
-                    throw new IndexerConfException("Duplicate field name " + name + " at " + LocationAttributes.getLocation(field));
-                }
-                IndexField indexField = buildIndexField(qname, field);
-                conf.fields.put(indexField.getName(), indexField);
-            }
-        }
     }
 
     private String qualifyIndexFieldName(Element indexFieldEl) throws Exception {
@@ -154,7 +160,7 @@ public class IndexerConfBuilder {
 
             List<Element> indexFieldEls = FIELD_CHILDREN.get().evalAsNativeElementList(caseEl);
             for (Element indexFieldEl : indexFieldEls) {
-                mapping.indexFieldBindings.add(buildIndexFieldMapping(indexFieldEl));
+                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl));
             }
 
             for (String versionTag : versionTags) {
@@ -163,7 +169,7 @@ public class IndexerConfBuilder {
         }
     }
 
-    private IndexFieldBinding buildIndexFieldMapping(Element indexFieldEl) throws Exception {
+    private IndexFieldBinding buildIndexFieldBinding(Element indexFieldEl) throws Exception {
         String name = DocumentHelper.getAttribute(indexFieldEl, "name", false);
         String ref = DocumentHelper.getAttribute(indexFieldEl, "ref", false);
 
@@ -172,16 +178,19 @@ public class IndexerConfBuilder {
                     LocationAttributes.getLocation(indexFieldEl)));
         }
 
-        if (name != null) {
-            validateName(name);
-        }
-
         IndexField field;
         if (name != null) {
             field = conf.fields.get(qualifyIndexFieldName(indexFieldEl));
+            if (field == null) {
+                throw new IndexerConfException("Unexpected problem (report this as bug): index field not found: " + name);
+            }
         } else {
             field = conf.fields.get(ref);
+            if (field == null) {
+                throw new IndexerConfException(String.format("indexField refers to a non-existing field: %1$s", ref));
+            }
         }
+
 
         Value value = buildValue(DocumentHelper.getElementChild(indexFieldEl, "value", true));
 

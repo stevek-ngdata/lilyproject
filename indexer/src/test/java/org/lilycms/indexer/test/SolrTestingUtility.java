@@ -23,6 +23,10 @@ public class SolrTestingUtility {
         solrHomeDir = createSolrHome();
         System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
         System.setProperty("solr.data.dir", new File(solrHomeDir, "data").getAbsolutePath());
+        System.out.println("====================================================================");
+        System.out.println("Created temporary SOLR home directory at:");
+        System.out.println(solrHomeDir.getAbsolutePath());
+        System.out.println("====================================================================");
 
         // Launch SOLR
         String solrWar = System.getProperty("solr.war");

@@ -47,7 +47,8 @@ public class IndexerTest {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         TEST_UTIL.shutdownMiniCluster();
-        SOLR_TEST_UTIL.stop();
+        if (SOLR_TEST_UTIL != null)
+            SOLR_TEST_UTIL.stop();
     }
 
     @Test
@@ -62,6 +63,8 @@ public class IndexerTest {
         // Create a record type
         RecordType recordType = typeManager.newRecordType("RecordType1");
         recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field1", "string", true, true));
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field2", "string", true, true));
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field3", "string", true, true));
         typeManager.createRecordType(recordType);
 
         // TODO need to re-retrieve the record type because its version property is not updated
@@ -70,7 +73,9 @@ public class IndexerTest {
         // Create a document
         Record record = repository.newRecord();
         record.setRecordType("RecordType1", recordType.getVersion());
-        record.addField(repository.newField("field1", Bytes.toBytes("something")));
+        record.addField(repository.newField("field1", Bytes.toBytes("apple")));
+        record.addField(repository.newField("field2", Bytes.toBytes("pear")));
+        record.addField(repository.newField("field3", Bytes.toBytes("orange")));
         repository.create(record);
 
         // Generate queue message
@@ -81,10 +86,30 @@ public class IndexerTest {
         solrServer.commit(true, true);
 
         // Verify the index was updated
-        SolrQuery query = new SolrQuery();
-        query.set("q", "RecordType1.ifield1:something");
-        QueryResponse response = solrServer.query(query);
-        assertEquals(1, response.getResults().getNumFound());
+        {
+            SolrQuery query = new SolrQuery();
+            query.set("q", "RecordType1.ifield1:apple");
+            QueryResponse response = solrServer.query(query);
+            assertEquals(1, response.getResults().getNumFound());
+        }
+        {
+            SolrQuery query = new SolrQuery();
+            query.set("q", "RecordType1.ifield2:apple");
+            QueryResponse response = solrServer.query(query);
+            assertEquals(0, response.getResults().getNumFound());
+        }
+        {
+            SolrQuery query = new SolrQuery();
+            query.set("q", "RecordType1.ifield2:pear");
+            QueryResponse response = solrServer.query(query);
+            assertEquals(1, response.getResults().getNumFound());
+        }
+        {
+            SolrQuery query = new SolrQuery();
+            query.set("q", "gifield1:orange");
+            QueryResponse response = solrServer.query(query);
+            assertEquals(1, response.getResults().getNumFound());
+        }
 
         indexer.stop();
     }
