@@ -43,6 +43,7 @@
 
     <versionedContentMapping>
       <case recordType="RecordType1" versionTags="live,last">
+        <!-- the 'i' prefix stands for indexed field -->
         <indexField name="ifield1" type="text">
           <value>
             <field name="field1"/>
@@ -60,5 +61,16 @@
         </indexField>
       </case>
     </versionedContentMapping>
+
+    <nonVersionedContentMapping>
+      <case recordType="RecordType1">
+        <!-- the 'nvi' prefix stands for non-versioned indexed field -->
+        <indexField name="nvifield1" type="text">
+          <value>
+            <field name="nvfield1"/>
+          </value>
+        </indexField>
+      </case>
+    </nonVersionedContentMapping>
   </mapping>
 </indexer>

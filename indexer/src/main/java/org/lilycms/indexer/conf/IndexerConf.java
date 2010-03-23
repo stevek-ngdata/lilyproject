@@ -3,30 +3,48 @@ package org.lilycms.indexer.conf;
 import org.lilycms.util.xml.XmlProducer;
 
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The configuration for the indexer, describes how record types should be mapped
  * onto index documents.
  */
 public class IndexerConf {
-    private Map<String, RecordTypeMapping> versionedContentMappings = new HashMap<String, RecordTypeMapping>();
+    /** First key is record type, second is version tag */
+    private Map<String, Map<String, RecordTypeMapping>> versionedContentMappings = new HashMap<String, Map<String, RecordTypeMapping>>();
+    private Map<String, RecordTypeMapping> nonVersionedContentMappings = new HashMap<String, RecordTypeMapping>();
     protected Map<String, IndexFieldType> fieldTypes = new HashMap<String, IndexFieldType>();
     protected Map<String, IndexField> fields = new HashMap<String, IndexField>();
     protected String defaultSearchField;
 
     public RecordTypeMapping getVersionedContentMapping(String recordTypeName, String versionTag) {
-        return versionedContentMappings.get(getMappingKey(recordTypeName, versionTag));
+        Map<String, RecordTypeMapping> mappings = versionedContentMappings.get(recordTypeName);
+        return mappings != null ? mappings.get(versionTag) : null;
+    }
+
+    public RecordTypeMapping getNonVersionedContentMapping(String recordTypeName) {
+        return nonVersionedContentMappings.get(recordTypeName);
+    }
+
+    /**
+     * Returns the set of version tags which should be indexed for the given record type.
+     */
+    public Set<String> getIndexedVersionTags(String recordType) {
+        Map<String, RecordTypeMapping> mappings = versionedContentMappings.get(recordType);
+        return mappings.keySet();
     }
 
     protected void addVersionedContentMapping(String recordTypeName, String versionTag, RecordTypeMapping mapping) {
-        versionedContentMappings.put(getMappingKey(recordTypeName, versionTag), mapping);
+        Map<String, RecordTypeMapping> mappings = versionedContentMappings.get(recordTypeName);
+        if (mappings == null){
+            mappings = new HashMap<String, RecordTypeMapping>();
+            versionedContentMappings.put(recordTypeName, mappings);
+        }
+        mappings.put(versionTag, mapping);
     }
 
-    private String getMappingKey(String recordTypeName, String versionTag){
-        return recordTypeName + "-" + versionTag;
+    protected void addNonVersionedContentMapping(String recordTypeName, RecordTypeMapping mapping) {
+        nonVersionedContentMappings.put(recordTypeName, mapping);
     }
 
     public void generateSolrSchema(OutputStream os) throws Exception {

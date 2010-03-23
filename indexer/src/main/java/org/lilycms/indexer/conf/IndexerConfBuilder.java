@@ -8,6 +8,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -65,7 +66,8 @@ public class IndexerConfBuilder {
             buildFieldTypes();
             buildGlobalFields();
             buildFields();
-            buildMappings();
+            buildVersionedContentMappings();
+            buildNonVersionedContentMappings();
             buildDefaultSearchField();
         } catch (Exception e) {
             throw new IndexerConfException("Error in the indexer configuration.", e);
@@ -141,7 +143,7 @@ public class IndexerConfBuilder {
         return recordTypeName + "." + name;
     }
 
-    private void buildMappings() throws Exception {
+    private void buildVersionedContentMappings() throws Exception {
         List<Element> cases = VERSIONED_MAPPING_CASES.get().evalAsNativeElementList(doc);
         for (Element caseEl : cases) {
             String recordType = DocumentHelper.getAttribute(caseEl, "recordType", true);
@@ -166,6 +168,22 @@ public class IndexerConfBuilder {
             for (String versionTag : versionTags) {
                 conf.addVersionedContentMapping(recordType, versionTag, mapping);
             }
+        }
+    }
+
+    private void buildNonVersionedContentMappings() throws Exception {
+        List<Element> cases = NONVERSIONED_MAPPING_CASES.get().evalAsNativeElementList(doc);
+        for (Element caseEl : cases) {
+            String recordType = DocumentHelper.getAttribute(caseEl, "recordType", true);
+
+            RecordTypeMapping mapping = new RecordTypeMapping(recordType, Collections.<String>emptySet());
+
+            List<Element> indexFieldEls = FIELD_CHILDREN.get().evalAsNativeElementList(caseEl);
+            for (Element indexFieldEl : indexFieldEls) {
+                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl));
+            }
+
+            conf.addNonVersionedContentMapping(recordType, mapping);
         }
     }
 

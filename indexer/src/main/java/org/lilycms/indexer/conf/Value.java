@@ -4,6 +4,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.Record;
 
+import java.util.Set;
+
 public class Value {
     private String fieldName;
 
@@ -18,5 +20,9 @@ public class Value {
             // TODO
             throw new RuntimeException(e);
         }
+    }
+
+    void collectFieldDependencies(Set<String> fields) {
+        fields.add(fieldName);
     }
 }

@@ -4,6 +4,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -65,6 +66,7 @@ public class IndexerTest {
         recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field1", "string", true, true));
         recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field2", "string", true, true));
         recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field3", "string", true, true));
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("nvfield1", "string", true, false));
         typeManager.createRecordType(recordType);
 
         // TODO need to re-retrieve the record type because its version property is not updated
@@ -76,44 +78,52 @@ public class IndexerTest {
         record.addField(repository.newField("field1", Bytes.toBytes("apple")));
         record.addField(repository.newField("field2", Bytes.toBytes("pear")));
         record.addField(repository.newField("field3", Bytes.toBytes("orange")));
+        record.addField(repository.newField("nvfield1", Bytes.toBytes("banana")));
         repository.create(record);
 
         // Generate queue message
+        // TODO remove this once the real queue exists
         QueueMessage message = new TestQueueMessage("document-created", record.getId(), null);
         queue.broadCastMessage(message);
 
-        // Make sure all index writes are comitted
+        // Make sure all index writes are committed
         solrServer.commit(true, true);
 
         // Verify the index was updated
-        {
-            SolrQuery query = new SolrQuery();
-            query.set("q", "RecordType1.ifield1:apple");
-            QueryResponse response = solrServer.query(query);
-            assertEquals(1, response.getResults().getNumFound());
-        }
-        {
-            SolrQuery query = new SolrQuery();
-            query.set("q", "RecordType1.ifield2:apple");
-            QueryResponse response = solrServer.query(query);
-            assertEquals(0, response.getResults().getNumFound());
-        }
-        {
-            SolrQuery query = new SolrQuery();
-            query.set("q", "RecordType1.ifield2:pear");
-            QueryResponse response = solrServer.query(query);
-            assertEquals(1, response.getResults().getNumFound());
-        }
-        {
-            SolrQuery query = new SolrQuery();
-            query.set("q", "gifield1:orange");
-            QueryResponse response = solrServer.query(query);
-            assertEquals(1, response.getResults().getNumFound());
-        }
+        verifyOneResult("RecordType1.ifield1:apple");
+        verifyOneResult("RecordType1.ifield2:apple");
+        verifyOneResult("RecordType1.ifield2:pear");
+        verifyOneResult("gifield1:orange");
+        verifyOneResult("RecordType1.nvifield1:banana");
 
+        // Update the document, creating a new version
+        record = repository.newRecord(record.getId());
+        record.addField(repository.newField("field1", Bytes.toBytes("peach")));
+        repository.update(record);
+        record = repository.read(record.getId());
+
+        // Generate queue message
+        // TODO remove this once the real queue exists
+        String msgData = "{ versionCreated: " + record.getVersion() + ", changedFields: [\"field1\"] }";
+        message = new TestQueueMessage("document-updated", record.getId(), msgData.getBytes("UTF-8"));
+        queue.broadCastMessage(message);
+
+        // Make sure all index writes are committed
+        solrServer.commit(true, true);
+
+        // Verify the index was updated
+        verifyOneResult("RecordType1.ifield1:peach");
+
+        // The end
         indexer.stop();
     }
-
+    
+    private void verifyOneResult(String query) throws SolrServerException {
+        SolrQuery solrQuery = new SolrQuery();
+        solrQuery.set("q", "RecordType1.ifield1:apple");
+        QueryResponse response = SOLR_TEST_UTIL.getSolrServer().query(solrQuery);
+        assertEquals(1, response.getResults().getNumFound());
+    }
 
     public static class TestQueueMessage implements QueueMessage {
         private String type;
