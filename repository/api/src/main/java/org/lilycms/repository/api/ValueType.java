@@ -16,16 +16,38 @@
 package org.lilycms.repository.api;
 
 /**
- *
+ * The {@link ValueType} represents the type of the actual values of a
+ * {@link FieldDescriptor}. A {@link ValueType} encapsulates a
+ * {@link PrimitiveValueType} to be used by the value or values of the
+ * {@link Field} following this {@link ValueType}. The implementors of this
+ * interface are responsible for the encoding and decoding of the values
+ * represented by their type.
+ * 
  */
 public interface ValueType {
 
+    /**
+     * If this type represents a multi value field.
+     */
     boolean isMultiValue();
+
+    /**
+     * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
+     */
     public Object fromBytes(byte[] value);
+
+    /**
+     * Encodes an object of the type represented by this {@link ValueType} to a byte[].
+     */
     byte[] toBytes(Object value);
-    
+
+    /**
+     * @return the actual {@link Class} object represented by this {@link ValueType} (e.g. {@link String}). In case of multi value, this will be a {@link List}.
+     */
     Class getType();
-    
-    // TODO should not be on this interface
+
+    /**
+     * @return an encoded byte[] representing the {@link ValueType}
+     */
     byte[] toBytes();
 }

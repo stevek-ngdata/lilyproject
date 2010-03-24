@@ -61,7 +61,15 @@ public interface TypeManager {
      */
     void updateRecordType(RecordType recordType) throws RepositoryException;
     
+    /**
+     * This method should be called to get a {@link ValueType} instance 
+     * @param primitiveValueTypeName the name of the {@link PrimitiveValueType} to be encapsulated by this {@link ValueType}
+     * @param multiValue if this {@link ValueType} should represent a multi value field or not
+     */
     ValueType getValueType(String primitiveValueTypeName, boolean multiValue);
     
+    /**
+     * A new {@link PrimitiveValueType} should be registered by calling this method before it can be used.
+     */
     void registerPrimitiveValueType(PrimitiveValueType primitiveValueType);
 }

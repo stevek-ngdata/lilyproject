@@ -16,11 +16,37 @@
 package org.lilycms.repository.api;
 
 /**
- *
+ * Represents the primitive type that can be used for the value of a field. It
+ * should be embeded in a {@link ValueType} before using it in a
+ * {@link FieldDescriptor} The implementors of this interface are responsible
+ * for the encoding to and decoding from {@code byte[]} of the values of their
+ * type.
+ * 
+ * When a new primitive type should made available, this interface needs to be
+ * implemented and registered by calling
+ * {@link TypeManager#registerPrimitiveValueType(PrimitiveValueType)}
  */
 public interface PrimitiveValueType {
+    /**
+     * @return a name which is unique over all {@link PrimitiveValueType}s
+     */
     String getName();
+
+    /**
+     * Decodes a byte[] to an object of the actual type of the
+     * {@link PrimitiveValueType}
+     */
     public Object fromBytes(byte[] value);
+
+    /**
+     * Encodes an object of the actual type of the {@link PrimitiveValueType} to
+     * a byte[]
+     */
     byte[] toBytes(Object value);
+
+    /**
+     * @return the actual type (e.g. {@link String}) that is represented by this
+     *         {@link PrimitiveValueType}
+     */
     Class getType();
 }
