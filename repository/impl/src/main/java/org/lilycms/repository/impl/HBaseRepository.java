@@ -32,8 +32,8 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.Field;
 import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.InvalidRecordException;
 import org.lilycms.repository.api.Record;
@@ -44,6 +44,7 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.ValueType;
 import org.lilycms.util.ArgumentValidator;
 
 public class HBaseRepository implements Repository {
@@ -60,14 +61,12 @@ public class HBaseRepository implements Repository {
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
     private Class<Record> recordClass;
-    private Class<Field> fieldClass;
 
-    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, Class recordClass, Class fieldClass,
+    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, Class recordClass, 
                     Configuration configuration) throws IOException {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
         this.recordClass = recordClass;
-        this.fieldClass = fieldClass;
         try {
             recordTable = new HTable(configuration, RECORD_TABLE);
         } catch (IOException e) {
@@ -102,15 +101,6 @@ public class HBaseRepository implements Repository {
             return constructor.newInstance(recordId);
         } catch (Exception e) {
             throw new RepositoryException("Exception occured while creating new Record object <" + recordId + ">", e);
-        }
-    }
-
-    public Field newField(String fieldId, byte[] value) throws RepositoryException {
-        try {
-            Constructor<Field> constructor = fieldClass.getConstructor(String.class, byte[].class);
-            return constructor.newInstance(fieldId, value);
-        } catch (Exception e) {
-            throw new RepositoryException("Exception occured while creating new Field object <" + fieldId + ">", e);
         }
     }
 
@@ -249,15 +239,15 @@ public class HBaseRepository implements Repository {
     }
 
     private void extractFields(Result result, Long version, Record record) throws RepositoryException {
-        extractNonVersionableFields(result, record);
         if (version != null) {
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> mapWithVersions = result.getMap();
-            extractVersionableFieldsOnVersion(version, record, mapWithVersions.get(VERSIONABLE_COLUMN_FAMILY));
             extractRecordTypeInfoOnVersion(version, record, mapWithVersions.get(VERSIONABLE_SYSTEM_COLUMN_FAMILY));
+            extractVersionableFieldsOnVersion(version, record, mapWithVersions.get(VERSIONABLE_COLUMN_FAMILY));
         } else {
-            extractLatestVersionableFields(result, record);
             extractLatestRecordTypeInfo(result, record);
+            extractLatestVersionableFields(result, record);
         }
+        extractNonVersionableFields(result, record);
     }
 
     public void update(Record record) throws RecordNotFoundException, InvalidRecordException, RepositoryException {
@@ -308,19 +298,30 @@ public class HBaseRepository implements Repository {
         put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME, version, Bytes.toBytes(recordTypeId));
         put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME, version, Bytes
                         .toBytes(recordTypeVersion));
-        for (Field field : record.getFields()) {
-            String fieldId = field.getId();
-            byte[] fieldIdAsBytes = Bytes.toBytes(fieldId);
-            byte[] fieldValue = field.getValue();
-            byte[] prefixedValue = EncodingUtil.prefixValue(fieldValue, EncodingUtil.EXISTS_FLAG);
+        putFields(record, version, recordType, put);
+        putDeleteFields(record, version, recordType, put);
+        return put;
+    }
 
+    private void putFields(Record record, Long version, RecordType recordType, Put put) {
+        for (Entry<String, Object> field : record.getFields().entrySet()) {
+            String fieldId = field.getKey();
+            byte[] fieldIdAsBytes = Bytes.toBytes(fieldId);
             FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(fieldId);
+            ValueType valueType = fieldDescriptor.getValueType();
+            // TODO validate with Class#isAssignableFrom()
+            byte[] fieldValue = valueType.toBytes(field.getValue());
+            byte[] prefixedValue = EncodingUtil.prefixValue(fieldValue, EncodingUtil.EXISTS_FLAG);
+            
             if (fieldDescriptor.isVersionable()) {
                 put.add(VERSIONABLE_COLUMN_FAMILY, fieldIdAsBytes, version, prefixedValue);
             } else {
                 put.add(NON_VERSIONABLE_COLUMN_FAMILY, fieldIdAsBytes, prefixedValue);
             }
         }
+    }
+
+    private void putDeleteFields(Record record, Long version, RecordType recordType, Put put) {
         for (String deleteFieldId : record.getDeleteFields()) {
             FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(deleteFieldId);
             if (fieldDescriptor.isVersionable()) {
@@ -331,7 +332,6 @@ public class HBaseRepository implements Repository {
                                 new byte[] { EncodingUtil.DELETE_FLAG });
             }
         }
-        return put;
     }
 
     private void extractVersionableFieldsOnVersion(Long version, Record record,
@@ -342,7 +342,7 @@ public class HBaseRepository implements Repository {
                 NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
                 Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(version);
                 if (ceilingEntry != null) {
-                    addField(record, columnWithAllVersions.getKey(), ceilingEntry.getValue());
+                    extractField(record, columnWithAllVersions.getKey(), ceilingEntry.getValue());
                 }
             }
         }
@@ -377,15 +377,18 @@ public class HBaseRepository implements Repository {
     private void extractFields(Record record, NavigableMap<byte[], byte[]> familyMap) throws RepositoryException {
         if (familyMap != null) {
             for (Entry<byte[], byte[]> entry : familyMap.entrySet()) {
-                addField(record, entry.getKey(), entry.getValue());
+                extractField(record, entry.getKey(), entry.getValue());
             }
         }
     }
 
-    private void addField(Record record, byte[] key, byte[] prefixedValue) throws RepositoryException {
+    private void extractField(Record record, byte[] key, byte[] prefixedValue) throws RepositoryException {
         if (!EncodingUtil.isDeletedField(prefixedValue)) {
-            record.addField(newField(Bytes.toString(key), EncodingUtil.stripPrefix(prefixedValue)));
+            RecordType recordType = typeManager.getRecordType(record.getRecordTypeId());
+            String fieldId = Bytes.toString(key);
+            FieldDescriptor fieldDescriptor = recordType.getFieldDescriptor(fieldId);
+            Object value = fieldDescriptor.getValueType().fromBytes(EncodingUtil.stripPrefix(prefixedValue));
+            record.setField(fieldId, value);
         }
     }
-
 }

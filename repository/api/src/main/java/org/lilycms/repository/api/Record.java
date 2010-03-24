@@ -15,6 +15,7 @@
  */
 package org.lilycms.repository.api;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,11 +53,11 @@ public interface Record {
 
     long getRecordTypeVersion();
 
-    void addField(Field field);
+    void setField(String fieldId, Object value);
 
-    Field getField(String fieldId) throws FieldNotFoundException;
+    Object getField(String fieldId) throws FieldNotFoundException;
 
-    Set<Field> getFields();
+    Map<String, Object> getFields();
 
     void deleteField(String fieldId);
 

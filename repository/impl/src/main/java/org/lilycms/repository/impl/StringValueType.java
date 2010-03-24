@@ -15,38 +15,34 @@
  */
 package org.lilycms.repository.impl;
 
-import java.util.Arrays;
-
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.Field;
+import org.lilycms.repository.api.PrimitiveValueType;
 
-public class FieldImpl implements Field {
-    private String fieldId;
-    private byte[] value;
+public class StringValueType implements PrimitiveValueType {
 
-    /**
-     * This constructor should not be called directly.
-     * @use {@link Repository#newField} instead
-     */
-    public FieldImpl(String fieldId, byte[] value) {
-        this.fieldId = fieldId;
-        this.value = value;
+    private final String NAME = "STRING";
+
+    public String getName() {
+        return NAME;
+    }
+
+    public String fromBytes(byte[] value) {
+        return Bytes.toString(value);
     }
     
-    public String getId() {
-        return fieldId;
+    public byte[] toBytes(Object integer) {
+        return Bytes.toBytes((String)integer);
     }
-    
-    public byte[] getValue() {
-        return value;
+
+    public Class getType() {
+        return String.class;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fieldId == null) ? 0 : fieldId.hashCode());
-        result = prime * result + Arrays.hashCode(value);
+        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
         return result;
     }
 
@@ -58,19 +54,13 @@ public class FieldImpl implements Field {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        FieldImpl other = (FieldImpl) obj;
-        if (fieldId == null) {
-            if (other.fieldId != null)
+        StringValueType other = (StringValueType) obj;
+        if (NAME == null) {
+            if (other.NAME != null)
                 return false;
-        } else if (!fieldId.equals(other.fieldId))
-            return false;
-        if (!Arrays.equals(value, other.value))
+        } else if (!NAME.equals(other.NAME))
             return false;
         return true;
     }
 
-    @Override
-    public String toString() {
-        return "["+fieldId+","+ Bytes.toString(value)+"]";
-    }
 }

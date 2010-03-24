@@ -26,14 +26,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.classextension.IMocksControl;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilycms.repository.api.Field;
 import org.lilycms.repository.api.FieldDescriptor;
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.IdGenerator;
@@ -46,10 +44,11 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.impl.FieldDescriptorImpl;
-import org.lilycms.repository.impl.FieldImpl;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.RecordImpl;
+import org.lilycms.repository.impl.StringValueType;
+import org.lilycms.repository.impl.ValueTypeImpl;
 import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest {
@@ -79,17 +78,19 @@ public class HBaseRepositoryTest {
     public void setUp() throws Exception {
         control = createControl();
         typeManager = control.createMock(TypeManager.class);
+        expect(typeManager.getValueType("STRING", false)).andReturn(new ValueTypeImpl(new StringValueType(), false)).anyTimes();
         recordType = control.createMock(RecordType.class);
         expect(typeManager.getRecordType(isA(String.class), anyLong())).andReturn(recordType).anyTimes();
+        expect(typeManager.getRecordType(isA(String.class))).andReturn(recordType).anyTimes();
         expect(recordType.getId()).andReturn("dummyRecordType").anyTimes();
         expect(recordType.getVersion()).andReturn(Long.valueOf(0)).anyTimes();
         
         // Using FieldDescriptorImpl since typeManager is a mock
-        versionableFieldDescriptor = new FieldDescriptorImpl("aFieldDescriptor", Long.valueOf(1), "dummyFieldType", true, true);
-        nonVersionableFieldDescriptor = new FieldDescriptorImpl("aFieldDescriptor", Long.valueOf(1), "dummyFieldType", true, false);
+        versionableFieldDescriptor = new FieldDescriptorImpl("aVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false), true, true);
+        nonVersionableFieldDescriptor = new FieldDescriptorImpl("aNonVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false), true, false);
 
         idGenerator = new IdGeneratorImpl();
-        repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, FieldImpl.class, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL.getConfiguration());
     }
 
     @After
@@ -130,7 +131,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testNonVersionedRecord() throws Exception {
-        expect(recordType.getFieldDescriptor("aField")).andReturn(nonVersionableFieldDescriptor);
+        expect(recordType.getFieldDescriptor("aField")).andReturn(nonVersionableFieldDescriptor).times(2);
         
         control.replay();
         Record record = generateRecord(new String[] { "aField", "aValue"});
@@ -142,7 +143,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testMultipleFields() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).times(2);
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).times(4);
 
         control.replay();
         Record record = generateRecord(new String[] { "aField", "aValue"}, new String[] {"aField2", "aValue2"});
@@ -182,14 +183,13 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateRecord() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).times(2);
+        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).times(3);
 
         control.replay();
         Record record = generateRecord(new String[] { "aField", "aValue"});
         repository.create(record);
 
-        Field field = repository.newField("aField", Bytes.toBytes("anotherValue"));
-        record.addField(field);
+        record.setField("aField", "anotherValue");
         repository.update(record);
 
         assertEquals(record, repository.read(record.getId()));
@@ -204,9 +204,8 @@ public class HBaseRepositoryTest {
         Record record = generateRecord(new String[] { "aField", "aValue"});
         repository.create(record);
 
-        Field field = repository.newField("anotherField", Bytes.toBytes("anotherValue"));
         // TODO avoid updates of non-changed fields
-        record.addField(field);
+        record.setField("anotherField", "anotherValue");
         repository.update(record);
         Record actualRecord = repository.read(record.getId());
         assertEquals(2, record.getFields().size());
@@ -237,9 +236,9 @@ public class HBaseRepositoryTest {
         assertEquals(record, actualRecord);
         assertEquals(record.getId(), actualRecord.getId());
         assertEquals(3, actualRecord.getFields().size());
-        assertEquals("value1", Bytes.toString(actualRecord.getField("field1").getValue()));
-        assertEquals("value2", Bytes.toString(actualRecord.getField("field2").getValue()));
-        assertEquals("value3", Bytes.toString(actualRecord.getField("field3").getValue()));
+        assertEquals("value1", actualRecord.getField("field1"));
+        assertEquals("value2", actualRecord.getField("field2"));
+        assertEquals("value3", actualRecord.getField("field3"));
         control.verify();
     }
 
@@ -264,8 +263,8 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testCreateVersionableAndNonVersionable() throws Exception {
-        expect(recordType.getFieldDescriptor("field1")).andReturn(nonVersionableFieldDescriptor).once();
-        expect(recordType.getFieldDescriptor("field2")).andReturn(versionableFieldDescriptor).once();
+        expect(recordType.getFieldDescriptor("field1")).andReturn(nonVersionableFieldDescriptor).times(2);
+        expect(recordType.getFieldDescriptor("field2")).andReturn(versionableFieldDescriptor).times(2);
 
         control.replay();
         Record record = generateRecord(new String[] { "field1", "value1",}, new String[] { "field2","value2"});
@@ -277,8 +276,8 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testReadVersionableAndNonVersionableField() throws Exception {
-        expect(recordType.getFieldDescriptor("field1")).andReturn(nonVersionableFieldDescriptor).times(2);
-        expect(recordType.getFieldDescriptor("field2")).andReturn(versionableFieldDescriptor).times(2);
+        expect(recordType.getFieldDescriptor("field1")).andReturn(nonVersionableFieldDescriptor).times(3);
+        expect(recordType.getFieldDescriptor("field2")).andReturn(versionableFieldDescriptor).times(3);
 
         control.replay();
         Record record = generateRecord(new String[] { "field1", "value1"}, new String[] { "field2",
@@ -296,15 +295,15 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] { "versionableField1", "value1"});
         repository.create(record);
-        record.addField(repository.newField("versionableField1", Bytes.toBytes("value2")));
+        record.setField("versionableField1", "value2");
         repository.update(record);
 
         Record actualRecord = repository.read(record.getId());
-        assertEquals("value2", Bytes.toString(actualRecord.getField("versionableField1").getValue()));
+        assertEquals("value2", actualRecord.getField("versionableField1"));
         assertEquals(Long.valueOf(2), actualRecord.getVersion());
         
         actualRecord = repository.read(record.getId(), Long.valueOf(1));
-        assertEquals("value1", Bytes.toString(actualRecord.getField("versionableField1").getValue()));
+        assertEquals("value1", actualRecord.getField("versionableField1"));
         assertEquals(Long.valueOf(1), actualRecord.getVersion());
         control.verify();
     }
@@ -369,7 +368,7 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] { "versionableField1", "f1value1"});
         repository.create(record);
-        record.addField(repository.newField("versionableField1", Bytes.toBytes("f1value2")));
+        record.setField("versionableField1", "f1value2");
         repository.update(record);
         try {
             repository.read(record.getId(), Long.valueOf(3));
@@ -392,13 +391,13 @@ public class HBaseRepositoryTest {
         repository.create(record);
         Record actualRecord = repository.read(record.getId(), "field1", "field3");
         assertEquals(record.getId(), actualRecord.getId());
-        assertEquals("value1", Bytes.toString(actualRecord.getField("field1").getValue()));
+        assertEquals("value1", actualRecord.getField("field1"));
         try {
             actualRecord.getField("field2");
             fail("An exception should be thrown because the record does not contain the requested field");
         } catch (FieldNotFoundException expected) {
         }
-        assertEquals("value3", Bytes.toString(actualRecord.getField("field3").getValue()));
+        assertEquals("value3", actualRecord.getField("field3"));
         control.verify();
     }
     
@@ -457,7 +456,7 @@ public class HBaseRepositoryTest {
         control.replay();
         Record record = generateRecord(new String[] {"aField", "f1"});
         repository.create(record);
-        record.addField(repository.newField("aField", Bytes.toBytes("f2")));
+        record.setField("aField", "f2");
         repository.update(record);
         
         Record deleteRecord = repository.newRecord(record.getId());
@@ -608,18 +607,18 @@ public class HBaseRepositoryTest {
         repository.update(variantRecord);
 
         Record actualMasterRecord = repository.read(recordId);
-        assertEquals("f1", Bytes.toString(actualMasterRecord.getField("field1").getValue()));
+        assertEquals("f1", actualMasterRecord.getField("field1"));
         Record actualVariantRecord = repository.read(variantRecordId, Long.valueOf(1));
-        assertEquals("vf1", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
+        assertEquals("vf1", actualVariantRecord.getField("field1"));
         
         actualVariantRecord = repository.read(variantRecordId, Long.valueOf(2));
-        assertEquals("vf1B", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
-        assertEquals("vf2", Bytes.toString(actualVariantRecord.getField("field2").getValue()));
+        assertEquals("vf1B", actualVariantRecord.getField("field1"));
+        assertEquals("vf2", actualVariantRecord.getField("field2"));
 
         actualVariantRecord = repository.read(variantRecordId, Long.valueOf(3));
-        assertEquals("vf1B", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
-        assertEquals("vf2B", Bytes.toString(actualVariantRecord.getField("field2").getValue()));
-        assertEquals("vf3", Bytes.toString(actualVariantRecord.getField("field3").getValue()));
+        assertEquals("vf1B", actualVariantRecord.getField("field1"));
+        assertEquals("vf2B", actualVariantRecord.getField("field2"));
+        assertEquals("vf3", actualVariantRecord.getField("field3"));
 
         actualVariantRecord = repository.read(variantRecordId, Long.valueOf(4));
         try { 
@@ -629,7 +628,7 @@ public class HBaseRepositoryTest {
         }
         
         actualVariantRecord = repository.read(variantRecordId, Long.valueOf(5));
-        assertEquals("vf1B", Bytes.toString(actualVariantRecord.getField("field1").getValue()));
+        assertEquals("vf1B", actualVariantRecord.getField("field1"));
         
         try {
             actualVariantRecord = repository.read(variantRecordId, Long.valueOf(6));
@@ -646,7 +645,7 @@ public class HBaseRepositoryTest {
         
         record.setRecordType(recordType.getId(), recordType.getVersion());
         for (String[] fieldInfo : fieldsAndValues) {
-            record.addField(repository.newField(fieldInfo[0], Bytes.toBytes(fieldInfo[1])));
+            record.setField(fieldInfo[0], fieldInfo[1]);
         }
         return record;
     }

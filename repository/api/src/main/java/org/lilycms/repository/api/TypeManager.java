@@ -30,12 +30,12 @@ public interface TypeManager {
     /**
      * Creates a new {@link FieldDescriptor} object.
      */
-    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException;
+    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, ValueType valueType, boolean mandatory, boolean versionable) throws RepositoryException;
     
     /**
      * Creates a new {@link FieldDescriptor} object.
      */
-    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, Long version, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException;
+    FieldDescriptor newFieldDescriptor(String fieldDescriptorId, Long version, ValueType valueType, boolean mandatory, boolean versionable) throws RepositoryException;
     
     /**
      * Creates a {@link RecordType} on the repository with the properties defined in the {@link RecordType} object.
@@ -60,4 +60,8 @@ public interface TypeManager {
      * {@link FieldDescriptor}s.
      */
     void updateRecordType(RecordType recordType) throws RepositoryException;
+    
+    ValueType getValueType(String primitiveValueTypeName, boolean multiValue);
+    
+    void registerPrimitiveValueType(PrimitiveValueType primitiveValueType);
 }

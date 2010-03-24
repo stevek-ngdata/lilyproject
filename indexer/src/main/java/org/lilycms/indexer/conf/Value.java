@@ -15,7 +15,7 @@ public class Value {
 
     public String eval(Record record) {
         try {
-            return Bytes.toString(record.getField(fieldName).getValue());
+            return (String)record.getField(fieldName);
         } catch (FieldNotFoundException e) {
             // TODO
             throw new RuntimeException(e);

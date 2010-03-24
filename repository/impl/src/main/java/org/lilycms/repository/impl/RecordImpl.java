@@ -20,14 +20,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.lilycms.repository.api.Field;
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordId;
+import org.lilycms.repository.api.Repository;
 
 public class RecordImpl implements Record {
     private RecordId recordId;
-    private Map<String, Field> fields = new HashMap<String, Field>();
+    private Map<String, Object> fields = new HashMap<String, Object>();
     private Set<String> deleteFields = new HashSet<String>();
     private String recordTypeId;
     private long recordTypeVersion;
@@ -78,20 +78,20 @@ public class RecordImpl implements Record {
         return recordTypeVersion;
     }
 
-    public void addField(Field field) {
-        fields.put(field.getId(), field);
+    public void setField(String fieldId, Object value) {
+        fields.put(fieldId, value);
     }
 
-    public Field getField(String fieldId) throws FieldNotFoundException {
-        Field field = fields.get(fieldId);
+    public Object getField(String fieldId) throws FieldNotFoundException {
+        Object field = fields.get(fieldId);
         if (field == null) {
             throw new FieldNotFoundException(fieldId);
         }
-        return fields.get(fieldId);
+        return field;
     }
 
-    public Set<Field> getFields() {
-        return new HashSet<Field>(fields.values());
+    public Map<String, Object> getFields() {
+        return fields;
     }
 
     public void addVariantProperty(String dimension, String dimensionValue) {

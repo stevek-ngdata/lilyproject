@@ -38,9 +38,11 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.ValueType;
 import org.lilycms.util.ArgumentValidator;
 
 public class HBaseTypeManager implements TypeManager {
@@ -50,7 +52,7 @@ public class HBaseTypeManager implements TypeManager {
     private static final byte[] SYSTEM_VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("systemVersionableCF");
     private static final byte[] FIELDDESCRIPTOR_COLUMN_FAMILY = Bytes.toBytes("fieldDescriptorCF");
     private static final byte[] CURRENT_VERSION_COLUMN_NAME = Bytes.toBytes("currentVersion");
-    private static final byte[] FIELD_TYPE_COLUMN_NAME = Bytes.toBytes("fieldType");
+    private static final byte[] VALUE_TYPE_COLUMN_NAME = Bytes.toBytes("valueType");
     private static final byte[] MANDATORY_COLUMN_NAME = Bytes.toBytes("mandatory");
     private static final byte[] VERSIONABLE_COLUMN_NAME = Bytes.toBytes("versionable");
 
@@ -58,7 +60,8 @@ public class HBaseTypeManager implements TypeManager {
     private Class<RecordType> recordTypeClass;
     private Class<FieldDescriptor> fieldDescriptorClass;
 
-    public HBaseTypeManager(Class recordTypeClass, Class fieldDescriptorClass, Configuration configuration) throws IOException {
+    public HBaseTypeManager(Class recordTypeClass, Class fieldDescriptorClass, Configuration configuration)
+                    throws IOException {
         this.recordTypeClass = recordTypeClass;
         this.fieldDescriptorClass = fieldDescriptorClass;
         try {
@@ -74,6 +77,7 @@ public class HBaseTypeManager implements TypeManager {
             admin.createTable(tableDescriptor);
             typeTable = new HTable(configuration, TYPE_TABLE);
         }
+        registerDefaultValueTypes();
     }
 
     public RecordType newRecordType(String recordTypeId) throws RepositoryException {
@@ -83,32 +87,38 @@ public class HBaseTypeManager implements TypeManager {
         } catch (Exception e) {
             throw new RepositoryException("Exception occured while creating new RecordType object", e);
         }
-}
-    
-    public FieldDescriptor newFieldDescriptor(String fieldDescriptorId, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException {
+    }
+
+    public FieldDescriptor newFieldDescriptor(String fieldDescriptorId, ValueType valueType, boolean mandatory,
+                    boolean versionable) throws RepositoryException {
         try {
-            Constructor<FieldDescriptor> constructor = fieldDescriptorClass.getConstructor(String.class, String.class, boolean.class, boolean.class);
-            return constructor.newInstance(fieldDescriptorId, fieldType, mandatory, versionable);
+            Constructor<FieldDescriptor> constructor = fieldDescriptorClass.getConstructor(String.class,
+                            ValueType.class, boolean.class, boolean.class);
+            return constructor.newInstance(fieldDescriptorId, valueType, mandatory, versionable);
         } catch (Exception e) {
             throw new RepositoryException("Exception occured while creating new FieldDescriptor object", e);
         }
-}
-    
-    public FieldDescriptor newFieldDescriptor(String fieldDescriptorId, Long version, String fieldType, boolean mandatory, boolean versionable) throws RepositoryException {
-            try {
-                Constructor<FieldDescriptor> constructor = fieldDescriptorClass.getConstructor(String.class, Long.class, String.class, boolean.class, boolean.class);
-                return constructor.newInstance(fieldDescriptorId, version, fieldType, mandatory, versionable);
-            } catch (Exception e) {
-                throw new RepositoryException("Exception occured while creating new FieldDescriptor object", e);
-            }
     }
-    
+
+    public FieldDescriptor newFieldDescriptor(String fieldDescriptorId, Long version, ValueType valueType,
+                    boolean mandatory, boolean versionable) throws RepositoryException {
+        try {
+            Constructor<FieldDescriptor> constructor = fieldDescriptorClass.getConstructor(String.class, Long.class,
+                            ValueType.class, boolean.class, boolean.class);
+            return constructor.newInstance(fieldDescriptorId, version, valueType, mandatory, versionable);
+        } catch (Exception e) {
+            throw new RepositoryException("Exception occured while creating new FieldDescriptor object", e);
+        }
+    }
+
+    // TODO return a new RecordType object
     public void createRecordType(RecordType recordType) throws RepositoryException {
         ArgumentValidator.notNull(recordType, "recordType");
         List<Put> puts = new ArrayList<Put>();
         String recordTypeId = recordType.getId();
         Put put = new Put(EncodingUtil.generateRecordTypeRowKey(recordTypeId));
         long recordTypeVersion = 1;
+        recordType.setVersion(recordTypeVersion);
         put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
         Collection<FieldDescriptor> fieldDescriptors = recordType.getFieldDescriptors();
         for (FieldDescriptor fieldDescriptor : fieldDescriptors) {
@@ -118,8 +128,8 @@ public class HBaseTypeManager implements TypeManager {
         try {
             typeTable.put(puts);
         } catch (IOException e) {
-            throw new RepositoryException("Exception occured while creating recordType <"
-                            + recordType.getId() + "> on HBase", e);
+            throw new RepositoryException("Exception occured while creating recordType <" + recordType.getId()
+                            + "> on HBase", e);
         }
     }
 
@@ -130,8 +140,8 @@ public class HBaseTypeManager implements TypeManager {
 
         long fieldDescriptorVersion = getLatestFieldDescriptorVersion(recordTypeId, fieldDescriptorId) + 1;
         put.add(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(fieldDescriptorVersion));
-        put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, FIELD_TYPE_COLUMN_NAME, fieldDescriptorVersion, Bytes
-                        .toBytes(fieldDescriptor.getFieldType()));
+        put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, VALUE_TYPE_COLUMN_NAME, fieldDescriptorVersion, fieldDescriptor
+                        .getValueType().toBytes());
         put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, MANDATORY_COLUMN_NAME, fieldDescriptorVersion, Bytes
                         .toBytes(fieldDescriptor.isMandatory()));
         put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, VERSIONABLE_COLUMN_NAME, fieldDescriptorVersion, Bytes
@@ -204,13 +214,13 @@ public class HBaseTypeManager implements TypeManager {
         String fieldDescriptorId = fieldDescriptor.getId();
         Put put = new Put(EncodingUtil.generateFieldDescriptorRowKey(recordTypeId, fieldDescriptorId));
 
-        if (!originalFieldDescriptor.getFieldType().equals(fieldDescriptor.getFieldType())) {
+        if (!originalFieldDescriptor.getValueType().equals(fieldDescriptor.getValueType())) {
             if (fieldDescriptorChanged == false) {
                 fieldDescriptorChanged = true;
                 fieldDescriptorVersion = getLatestFieldDescriptorVersion(recordTypeId, fieldDescriptorId) + 1;
             }
-            put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, FIELD_TYPE_COLUMN_NAME, fieldDescriptorVersion, Bytes
-                            .toBytes(fieldDescriptor.getFieldType()));
+            put.add(SYSTEM_VERSIONABLE_COLUMN_FAMILY, VALUE_TYPE_COLUMN_NAME, fieldDescriptorVersion, fieldDescriptor
+                            .getValueType().toBytes());
         }
         if (fieldDescriptor.isMandatory() != originalFieldDescriptor.isMandatory()) {
             if (fieldDescriptorChanged == false) {
@@ -238,8 +248,8 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     private void removeFieldDescriptor(FieldDescriptor fieldDescriptor, Long recordTypeVersion, Put recordTypePut) {
-        recordTypePut.add(FIELDDESCRIPTOR_COLUMN_FAMILY, Bytes.toBytes(fieldDescriptor.getId()),
-                        recordTypeVersion, new byte[] { EncodingUtil.DELETE_FLAG });
+        recordTypePut.add(FIELDDESCRIPTOR_COLUMN_FAMILY, Bytes.toBytes(fieldDescriptor.getId()), recordTypeVersion,
+                        new byte[] { EncodingUtil.DELETE_FLAG });
     }
 
     public RecordType getRecordType(String recordTypeId) throws RepositoryException {
@@ -316,14 +326,14 @@ public class HBaseTypeManager implements TypeManager {
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allFamiliesMap = result.getMap();
         NavigableMap<byte[], NavigableMap<Long, byte[]>> systemVersionableVersionedMap = allFamiliesMap
                         .get(SYSTEM_VERSIONABLE_COLUMN_FAMILY);
-        String fieldType = Bytes.toString(systemVersionableVersionedMap.get(FIELD_TYPE_COLUMN_NAME).ceilingEntry(
-                        fieldDescriptorVersion).getValue());
+        ValueType valueType = ValueTypeImpl.fromBytes(systemVersionableVersionedMap.get(VALUE_TYPE_COLUMN_NAME)
+                        .ceilingEntry(fieldDescriptorVersion).getValue(), this);
         boolean mandatory = Bytes.toBoolean(systemVersionableVersionedMap.get(MANDATORY_COLUMN_NAME).ceilingEntry(
                         fieldDescriptorVersion).getValue());
         boolean versionable = Bytes.toBoolean(systemVersionableVersionedMap.get(VERSIONABLE_COLUMN_NAME).ceilingEntry(
                         fieldDescriptorVersion).getValue());
 
-        return newFieldDescriptor(fieldDescriptorId, fieldDescriptorVersion, fieldType, mandatory, versionable);
+        return newFieldDescriptor(fieldDescriptorId, fieldDescriptorVersion, valueType, mandatory, versionable);
     }
 
     private long getLatestFieldDescriptorVersion(String recordTypeId, String fieldDescriptorId)
@@ -341,5 +351,22 @@ public class HBaseTypeManager implements TypeManager {
             return 0;
         }
         return Bytes.toLong(result.getValue(SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME));
+    }
+
+    // TODO move to a primitiveValueType registry
+    private Map<String, PrimitiveValueType> primitiveValueTypes = new HashMap<String, PrimitiveValueType>();
+
+    // TODO get this from some configuration file
+    private void registerDefaultValueTypes() {
+        registerPrimitiveValueType(new StringValueType());
+        registerPrimitiveValueType(new IntegerValueType());
+    }
+
+    public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {
+        primitiveValueTypes.put(primitiveValueType.getName(), primitiveValueType);
+    }
+
+    public ValueType getValueType(String primitiveValueTypeName, boolean multivalue) {
+        return new ValueTypeImpl(primitiveValueTypes.get(primitiveValueTypeName), multivalue);
     }
 }

@@ -16,6 +16,8 @@
 package org.lilycms.repository.impl;
 
 import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.ValueType;
 
 public class FieldDescriptorImpl implements FieldDescriptor {
 
@@ -23,30 +25,30 @@ public class FieldDescriptorImpl implements FieldDescriptor {
     private Long version;
     private final boolean mandatory;
     private final boolean versionable;
-    private final String fieldType;
+    private final ValueType valueType;
 
     /**
      * This constructor should not be called directly.
      * @use {@link TypeManager#newFieldDescriptor} instead
      */
-    public FieldDescriptorImpl(String fieldDescriptorId, String fieldType, boolean mandatory, boolean versionable) {
-        this(fieldDescriptorId, null, fieldType, mandatory, versionable);
+    public FieldDescriptorImpl(String fieldDescriptorId, ValueType valueType, boolean mandatory, boolean versionable) {
+        this(fieldDescriptorId, null, valueType, mandatory, versionable);
     }
 
     /**
      * This constructor should not be called directly.
      * @use {@link TypeManager#newFieldDescriptor} instead
      */
-    public FieldDescriptorImpl(String fieldDescriptorId, Long version, String fieldType, boolean mandatory, boolean versionable) {
+    public FieldDescriptorImpl(String fieldDescriptorId, Long version, ValueType valueType, boolean mandatory, boolean versionable) {
         this.fieldDescriptorId = fieldDescriptorId;
         this.version = version;
-        this.fieldType = fieldType;
+        this.valueType = valueType;
         this.mandatory = mandatory;
         this.versionable = versionable;
     }
 
-    public String getFieldType() {
-        return fieldType;
+    public ValueType getValueType() {
+        return valueType;
     }
 
     public String getId() {
@@ -74,7 +76,7 @@ public class FieldDescriptorImpl implements FieldDescriptor {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((fieldDescriptorId == null) ? 0 : fieldDescriptorId.hashCode());
-        result = prime * result + ((fieldType == null) ? 0 : fieldType.hashCode());
+        result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
         result = prime * result + (mandatory ? 1231 : 1237);
         result = prime * result + ((version == null) ? 0 : version.hashCode());
         result = prime * result + (versionable ? 1231 : 1237);
@@ -95,10 +97,10 @@ public class FieldDescriptorImpl implements FieldDescriptor {
                 return false;
         } else if (!fieldDescriptorId.equals(other.fieldDescriptorId))
             return false;
-        if (fieldType == null) {
-            if (other.fieldType != null)
+        if (valueType == null) {
+            if (other.valueType != null)
                 return false;
-        } else if (!fieldType.equals(other.fieldType))
+        } else if (!valueType.equals(other.valueType))
             return false;
         if (mandatory != other.mandatory)
             return false;
@@ -114,9 +116,8 @@ public class FieldDescriptorImpl implements FieldDescriptor {
 
     @Override
     public String toString() {
-        return "FieldDescriptorImpl [fieldDescriptorId=" + fieldDescriptorId + ", version=" + version + ", fieldType="
-                        + fieldType + ", mandatory=" + mandatory + ", versionable=" + versionable + "]";
+        return "FieldDescriptorImpl [fieldDescriptorId=" + fieldDescriptorId + ", version=" + version + ", valueType="
+                        + valueType + ", mandatory=" + mandatory + ", versionable=" + versionable + "]";
     }
-
     
 }

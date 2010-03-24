@@ -41,9 +41,9 @@ public interface FieldDescriptor {
     Long getVersion();
 
     /**
-     * @return the type of the {@link Field}
+     * @return the {@link ValueType} of the {@link Field}
      */
-    String getFieldType();
+    ValueType getValueType();
 
     /**
      * @return if the {@link Field} is mandatory

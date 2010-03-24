@@ -48,6 +48,7 @@ public class IdGeneratorImpl implements IdGenerator {
         for (IdIdentifier identifier : IdIdentifier.values()) {
             identifierByteMap.put(new Byte(identifier.getIdentifierByte()), identifier);
         }
+        
     }
     
     /* (non-Javadoc)

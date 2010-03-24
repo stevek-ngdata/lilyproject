@@ -1,7 +1,15 @@
 package org.lilycms.indexer.test;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -15,15 +23,20 @@ import org.lilycms.indexer.conf.IndexerConfBuilder;
 import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
-import org.lilycms.repository.api.*;
-import org.lilycms.repository.impl.*;
+import org.lilycms.repository.api.IdGenerator;
+import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.RecordId;
+import org.lilycms.repository.api.RecordType;
+import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.impl.FieldDescriptorImpl;
+import org.lilycms.repository.impl.HBaseRepository;
+import org.lilycms.repository.impl.HBaseTypeManager;
+import org.lilycms.repository.impl.IdGeneratorImpl;
+import org.lilycms.repository.impl.RecordImpl;
+import org.lilycms.repository.impl.RecordTypeImpl;
 import org.lilycms.testfw.TestHelper;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.*;
-
-import static org.junit.Assert.*;
 
 public class IndexerTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -56,17 +69,18 @@ public class IndexerTest {
     public void testIndexer() throws Exception {
         TypeManager typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
         IdGenerator idGenerator = new IdGeneratorImpl();
-        Repository repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, FieldImpl.class, TEST_UTIL.getConfiguration());
+        Repository repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL.getConfiguration());
         SolrServer solrServer = SOLR_TEST_UTIL.getSolrServer();
         TestLilyQueue queue = new TestLilyQueue();
         Indexer indexer = new Indexer(INDEXER_CONF, queue, repository, solrServer);
 
         // Create a record type
         RecordType recordType = typeManager.newRecordType("RecordType1");
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field1", "string", true, true));
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field2", "string", true, true));
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field3", "string", true, true));
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("nvfield1", "string", true, false));
+        ValueType stringValueType = typeManager.getValueType("STRING", false);
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field1", stringValueType, true, true));
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field2", stringValueType, true, true));
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field3", stringValueType, true, true));
+        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("nvfield1", stringValueType, true, false));
         typeManager.createRecordType(recordType);
 
         // TODO need to re-retrieve the record type because its version property is not updated
@@ -75,10 +89,10 @@ public class IndexerTest {
         // Create a document
         Record record = repository.newRecord();
         record.setRecordType("RecordType1", recordType.getVersion());
-        record.addField(repository.newField("field1", Bytes.toBytes("apple")));
-        record.addField(repository.newField("field2", Bytes.toBytes("pear")));
-        record.addField(repository.newField("field3", Bytes.toBytes("orange")));
-        record.addField(repository.newField("nvfield1", Bytes.toBytes("banana")));
+        record.setField("field1", "apple");
+        record.setField("field2", "pear");
+        record.setField("field3", "orange");
+        record.setField("nvfield1", "banana");
         repository.create(record);
 
         // Generate queue message
@@ -98,7 +112,8 @@ public class IndexerTest {
 
         // Update the document, creating a new version
         record = repository.newRecord(record.getId());
-        record.addField(repository.newField("field1", Bytes.toBytes("peach")));
+        record.setRecordType(recordType.getId(), recordType.getVersion());
+        record.setField("field1", "peach");
         repository.update(record);
         record = repository.read(record.getId());
 

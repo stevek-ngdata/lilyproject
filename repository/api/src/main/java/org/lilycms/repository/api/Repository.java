@@ -32,11 +32,6 @@ public interface Repository {
     Record newRecord(RecordId recordId) throws RepositoryException;
 
     /**
-     * Creates a new {@link Field} object.
-     */
-    Field newField(String fieldId, byte[] value) throws RepositoryException;
-
-    /**
      * Creates a new record on the repository.
      * 
      * <p>

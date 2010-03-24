@@ -16,15 +16,16 @@
 package org.lilycms.repository.api;
 
 /**
- * An data object containing the id and value of a field.
- * 
- * <p>
- * A field is part of a {@link Record} and uses the id defined in the
- * corresponding {@link FieldDescriptor} defined in the {@link RecordType} of
- * that {@link Record}.
+ *
  */
-public interface Field {
-    String getId();
+public interface ValueType {
 
-    byte[] getValue();
+    boolean isMultiValue();
+    public Object fromBytes(byte[] value);
+    byte[] toBytes(Object value);
+    
+    Class getType();
+    
+    // TODO should not be on this interface
+    byte[] toBytes();
 }
