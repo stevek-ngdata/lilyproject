@@ -32,7 +32,7 @@ import java.io.IOException;
  * <p>A Conjunction itself also returns its results in increasing identifier
  * order, and can hence serve as input to other Conjunctions.
  */
-public class Conjunction implements QueryResult {
+public class Conjunction extends BaseQueryResult {
     private QueryResult result1;
     private QueryResult result2;
 
@@ -68,7 +68,7 @@ public class Conjunction implements QueryResult {
             }
         }
 
+        currentQResult = result1;
         return key1;
     }
-
 }

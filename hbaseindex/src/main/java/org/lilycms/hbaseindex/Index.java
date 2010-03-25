@@ -42,7 +42,7 @@ public class Index {
     private HTable htable;
     private IndexDefinition definition;
 
-    private static final byte[] DUMMY_FAMILY = Bytes.toBytes("dummy");
+    protected static final byte[] DATA_FAMILY = Bytes.toBytes("data");
     private static final byte[] DUMMY_QUALIFIER = Bytes.toBytes("dummy");
     private static final byte[] DUMMY_VALUE = Bytes.toBytes("dummy");
 
@@ -72,8 +72,15 @@ public class Index {
         byte[] indexKey = buildRowKey(entry, identifier);
         Put put = new Put(indexKey);
 
-        // HBase does not allow to create a row without columns, so add a dummy column
-        put.add(DUMMY_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
+        Map<IndexEntry.ByteArrayKey, byte[]> data = entry.getData();
+        if (data.size() > 0) {
+            for (Map.Entry<IndexEntry.ByteArrayKey, byte[]> item : data.entrySet()) {
+                put.add(DATA_FAMILY, item.getKey().getKey(), item.getValue());
+            }
+        } else {
+            // HBase does not allow to create a row without columns, so add a dummy column
+            put.add(DATA_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
+        }
 
         htable.put(put);
     }
@@ -94,7 +101,7 @@ public class Index {
     }
 
     private void validateIndexEntry(IndexEntry indexEntry) {
-        for (Map.Entry<String, Object> entry : indexEntry.getValues().entrySet()) {
+        for (Map.Entry<String, Object> entry : indexEntry.getFields().entrySet()) {
             IndexFieldDefinition fieldDef = definition.getField(entry.getKey());
             if (fieldDef == null) {
                 throw new MalformedIndexEntryException("Index entry contains a field that is not part of " +
