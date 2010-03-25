@@ -57,8 +57,8 @@ public class HBaseTypeManagerTest {
     @Before
     public void setUp() throws Exception {
         typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
-        valueType1 = typeManager.getValueType("STRING", false);
-        valueType2 = typeManager.getValueType("INTEGER", false);
+        valueType1 = typeManager.getValueType("STRING", false, false);
+        valueType2 = typeManager.getValueType("INTEGER", false, false);
     }
 
     @After
@@ -81,12 +81,12 @@ public class HBaseTypeManagerTest {
         String recordTypeId = "createRecordTypeId";
         RecordType recordType = typeManager.newRecordType(recordTypeId);
         String fieldDescriptorId = "fieldDescriptorId";
-        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, typeManager.getValueType("STRING", false), true, false);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, typeManager.getValueType("STRING", false, false), true, false);
         recordType.addFieldDescriptor(fieldDescriptor);
         typeManager.createRecordType(recordType);
         
         RecordType actualRecordType = typeManager.getRecordType(recordTypeId);
-        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, Long.valueOf(1), typeManager.getValueType("STRING", false), true, false);
+        fieldDescriptor = typeManager.newFieldDescriptor(fieldDescriptorId, Long.valueOf(1), typeManager.getValueType("STRING", false, false), true, false);
         assertEquals(fieldDescriptor, actualRecordType.getFieldDescriptor(fieldDescriptorId));
     }
 

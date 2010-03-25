@@ -366,7 +366,7 @@ public class HBaseTypeManager implements TypeManager {
         primitiveValueTypes.put(primitiveValueType.getName(), primitiveValueType);
     }
 
-    public ValueType getValueType(String primitiveValueTypeName, boolean multivalue) {
-        return new ValueTypeImpl(primitiveValueTypes.get(primitiveValueTypeName), multivalue);
+    public ValueType getValueType(String primitiveValueTypeName, boolean multivalue, boolean hierarchy) {
+        return new ValueTypeImpl(primitiveValueTypes.get(primitiveValueTypeName), multivalue, hierarchy);
     }
 }

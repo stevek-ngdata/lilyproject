@@ -30,6 +30,11 @@ public interface ValueType {
      * If this type represents a multi value field.
      */
     boolean isMultiValue();
+    
+    /**
+     * If this type represents a {@link HierarchyPath}.
+     */
+    boolean isHierarchical();
 
     /**
      * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
@@ -50,4 +55,6 @@ public interface ValueType {
      * @return an encoded byte[] representing the {@link ValueType}
      */
     byte[] toBytes();
+    
+    boolean equals(Object obj);
 }

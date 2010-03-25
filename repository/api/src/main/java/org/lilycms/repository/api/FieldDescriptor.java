@@ -54,4 +54,6 @@ public interface FieldDescriptor {
      * @return if the {@link Field} is versionable
      */
     boolean isVersionable();
+    
+    boolean equals(Object obj);
 }

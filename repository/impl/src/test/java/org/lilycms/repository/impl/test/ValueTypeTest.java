@@ -17,9 +17,9 @@ package org.lilycms.repository.impl.test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
+import org.apache.commons.net.nntp.NewGroupsOrNewsQuery;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
@@ -28,13 +28,18 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.InvalidRecordException;
 import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.impl.FieldDescriptorImpl;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
+import org.lilycms.repository.impl.HierarchyPathImpl;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.RecordImpl;
 import org.lilycms.repository.impl.RecordTypeImpl;
@@ -45,8 +50,8 @@ import org.lilycms.testfw.TestHelper;
  */
 public class ValueTypeTest {
 
-private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-    
+    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+
     private HBaseTypeManager typeManager;
     private HBaseRepository repository;
 
@@ -63,8 +68,10 @@ private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
     @Before
     public void setUp() throws Exception {
-        typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
-        repository = new HBaseRepository(typeManager, new IdGeneratorImpl(), RecordImpl.class, TEST_UTIL.getConfiguration());
+        typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL
+                        .getConfiguration());
+        repository = new HBaseRepository(typeManager, new IdGeneratorImpl(), RecordImpl.class, TEST_UTIL
+                        .getConfiguration());
     }
 
     @After
@@ -73,102 +80,56 @@ private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
     @Test
     public void testStringType() throws Exception {
-        RecordType recordType = typeManager.newRecordType("stringRecordTypeId");
-        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor("aFieldId", typeManager.getValueType("STRING", false), true, true);
-        recordType.addFieldDescriptor(fieldDescriptor);
-        typeManager.createRecordType(recordType);
-        
-        Record record = repository.newRecord();
-        record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setField("aFieldId", "aStringValue");
-        repository.create(record);
-        
-        Record actualRecord = repository.read(record.getId());
-        String actualField = (String)actualRecord.getField("aFieldId");
-        assertEquals("aStringValue", actualField);
+        testType("stringRecordTypeId", "STRING", false, false, "aStringValue");
+        testType("stringRecordTypeId", "STRING", true, false, Arrays.asList(new String[] { "value1", "value2" }));
+        testType("stringRecordTypeId", "STRING", false, true, new HierarchyPathImpl(new String[] { "foo", "bar" }));
+        testType("stringRecordTypeId", "STRING", true, true, Arrays.asList(new HierarchyPathImpl[] {
+                new HierarchyPathImpl(new String[] { "foo", "bar" }),
+                new HierarchyPathImpl(new String[] { "foo", "pub" }) }));
     }
-    
+
     @Test
     public void testIntegerType() throws Exception {
-        RecordType recordType = typeManager.newRecordType("integerRecordTypeId");
-        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor("aFieldId", typeManager.getValueType("INTEGER", false), true, true);
-        recordType.addFieldDescriptor(fieldDescriptor);
-        typeManager.createRecordType(recordType);
-        
-        Record record = repository.newRecord();
-        record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setField("aFieldId", 123);
-        repository.create(record);
-        
-        Record actualRecord = repository.read(record.getId());
-        Integer actualField = (Integer)actualRecord.getField("aFieldId");
-        assertEquals(Integer.valueOf(123), actualField);
+        testType("integerRecordTypeId", "INTEGER", false, false, new Integer(123));
+        testType("integerRecordTypeId", "INTEGER", true, false, Arrays.asList(new Integer[] { Integer.valueOf(666),
+                        Integer.valueOf(777) }));
+        testType("integerRecordTypeId", "INTEGER", false, true, new HierarchyPathImpl(new Integer[] { Integer.valueOf(1),
+                        Integer.valueOf(2) }));
+        testType("integerRecordTypeId", "INTEGER", true, true, Arrays.asList(new HierarchyPathImpl[] {
+                new HierarchyPathImpl(new Integer[] { Integer.valueOf(5), Integer.valueOf(6) }),
+                new HierarchyPathImpl(new Integer[] { Integer.valueOf(5), Integer.valueOf(7) }) }));
     }
-    
-    @Test
-    public void testMultiValueType() throws Exception {
-        RecordType recordType = typeManager.newRecordType("multivalueRecordTypeId");
-        ValueType multiValueType = typeManager.getValueType("STRING", true);
-        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor("aFieldId", multiValueType, false, false);
-        recordType.addFieldDescriptor(fieldDescriptor);
-        typeManager.createRecordType(recordType);
-        
-        Record record = repository.newRecord();
-        record.setRecordType(recordType.getId(), recordType.getVersion());
-        List<String> items = new ArrayList<String>();
-        items.add("value1");
-        items.add("value2");
-        record.setField("aFieldId", items);
-        repository.create(record);
-        
-        Record actualRecord = repository.read(record.getId());
-        List<String> actualField = (List<String>)actualRecord.getField("aFieldId");
-        assertEquals(items, actualField);
-    }
-    
+
     @Test
     public void testNewPrimitiveType() throws Exception {
         typeManager.registerPrimitiveValueType(new XYPrimitiveValueType());
-        
-        RecordType recordType = typeManager.newRecordType("xyRecordTypeId");
-        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor("aFieldId", typeManager.getValueType("XY", false), true, true);
+        testType("xyRecordTypeId", "XY", false, false, new XYCoordinates(5, 6));
+        testType("xyRecordTypeId", "XY", true, false, Arrays.asList(new XYCoordinates[] { new XYCoordinates(5, 6),
+                        new XYCoordinates(30, 40) }));
+        testType("xyRecordTypeId", "XY", false, true, new HierarchyPathImpl(new XYCoordinates[] { new XYCoordinates(90, 91), new XYCoordinates(92, 93) }));
+        testType("xyRecordTypeId", "XY", true, true, Arrays.asList(new HierarchyPathImpl[] {
+                new HierarchyPathImpl(new XYCoordinates[] { new XYCoordinates(100, 100), new XYCoordinates(101, 101) }),
+                new HierarchyPathImpl(new XYCoordinates[] { new XYCoordinates(100, 100), new XYCoordinates(102, 102) }) }));
+    }
+
+    private void testType(String recordId, String valueTypeString, boolean multivalue, boolean hierarchical,
+                    Object fieldValue) throws RepositoryException, RecordExistsException, RecordNotFoundException,
+                    InvalidRecordException, FieldNotFoundException {
+        RecordType recordType = typeManager.newRecordType(recordId);
+        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor("aFieldId", typeManager.getValueType(
+                        valueTypeString, multivalue, hierarchical), true, true);
         recordType.addFieldDescriptor(fieldDescriptor);
         typeManager.createRecordType(recordType);
-        
+
         Record record = repository.newRecord();
         record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setField("aFieldId", new XYCoordinates(5, 6));
+        record.setField("aFieldId", fieldValue);
         repository.create(record);
-        
+
         Record actualRecord = repository.read(record.getId());
-        XYCoordinates actualField = (XYCoordinates)actualRecord.getField("aFieldId");
-        assertEquals(5, actualField.getX());
-        assertEquals(6, actualField.getY());
+        assertEquals(fieldValue, actualRecord.getField("aFieldId"));
     }
-    
-    @Test
-    public void testNewPrimitiveTypeAsMultiValueType() throws Exception {
-        typeManager.registerPrimitiveValueType(new XYPrimitiveValueType());
-        
-        RecordType recordType = typeManager.newRecordType("multivalueXYRecordTypeId");
-        ValueType multiValueType = typeManager.getValueType("XY", true);
-        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor("aFieldId", multiValueType, false, false);
-        recordType.addFieldDescriptor(fieldDescriptor);
-        typeManager.createRecordType(recordType);
-        
-        Record record = repository.newRecord();
-        record.setRecordType(recordType.getId(), recordType.getVersion());
-        List<XYCoordinates> items = new ArrayList<XYCoordinates>();
-        items.add(new XYCoordinates(1, 2));
-        items.add(new XYCoordinates(666, 777));
-        record.setField("aFieldId", items);
-        repository.create(record);
-        
-        Record actualRecord = repository.read(record.getId());
-        List<XYCoordinates> actualField = (List<XYCoordinates>)actualRecord.getField("aFieldId");
-        assertEquals(items, actualField);
-    }
-    
+
     private class XYPrimitiveValueType implements PrimitiveValueType {
 
         private final String NAME = "XY";
@@ -185,8 +146,8 @@ private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
         public byte[] toBytes(Object value) {
             byte[] result = new byte[0];
-            result = Bytes.add(result, Bytes.toBytes(((XYCoordinates)value).getX()));
-            result = Bytes.add(result, Bytes.toBytes(((XYCoordinates)value).getY()));
+            result = Bytes.add(result, Bytes.toBytes(((XYCoordinates) value).getX()));
+            result = Bytes.add(result, Bytes.toBytes(((XYCoordinates) value).getY()));
             return result;
         }
 
@@ -194,7 +155,7 @@ private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
             return XYCoordinates.class;
         }
     }
-    
+
     private class XYCoordinates {
         private final int x;
         private final int y;
@@ -203,11 +164,11 @@ private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
             this.x = x;
             this.y = y;
         }
-        
+
         public int getX() {
             return x;
         }
-        
+
         public int getY() {
             return y;
         }
@@ -244,5 +205,4 @@ private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
             return ValueTypeTest.this;
         }
     }
-
 }

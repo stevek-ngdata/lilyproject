@@ -44,4 +44,5 @@ public interface RecordType {
 
     Collection<FieldDescriptor> getFieldDescriptors();
 
+    boolean equals(Object obj);
 }

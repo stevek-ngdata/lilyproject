@@ -62,4 +62,6 @@ public interface Record {
     void deleteField(String fieldId);
 
     Set<String> getDeleteFields();
+    
+    boolean equals(Object obj);
 }

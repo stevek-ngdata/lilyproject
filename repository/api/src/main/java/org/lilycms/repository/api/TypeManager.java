@@ -65,8 +65,9 @@ public interface TypeManager {
      * This method should be called to get a {@link ValueType} instance 
      * @param primitiveValueTypeName the name of the {@link PrimitiveValueType} to be encapsulated by this {@link ValueType}
      * @param multiValue if this {@link ValueType} should represent a multi value field or not
+     * @param hierarchical if this{@link ValueType} should represent a {@link HierarchyPath} field or not
      */
-    ValueType getValueType(String primitiveValueTypeName, boolean multiValue);
+    ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical);
     
     /**
      * A new {@link PrimitiveValueType} should be registered by calling this method before it can be used.

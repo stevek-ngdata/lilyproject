@@ -76,7 +76,7 @@ public class IndexerTest {
 
         // Create a record type
         RecordType recordType = typeManager.newRecordType("RecordType1");
-        ValueType stringValueType = typeManager.getValueType("STRING", false);
+        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
         recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field1", stringValueType, true, true));
         recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field2", stringValueType, true, true));
         recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field3", stringValueType, true, true));

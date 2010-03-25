@@ -78,7 +78,7 @@ public class HBaseRepositoryTest {
     public void setUp() throws Exception {
         control = createControl();
         typeManager = control.createMock(TypeManager.class);
-        expect(typeManager.getValueType("STRING", false)).andReturn(new ValueTypeImpl(new StringValueType(), false)).anyTimes();
+        expect(typeManager.getValueType("STRING", false, false)).andReturn(new ValueTypeImpl(new StringValueType(), false, false)).anyTimes();
         recordType = control.createMock(RecordType.class);
         expect(typeManager.getRecordType(isA(String.class), anyLong())).andReturn(recordType).anyTimes();
         expect(typeManager.getRecordType(isA(String.class))).andReturn(recordType).anyTimes();
@@ -86,8 +86,8 @@ public class HBaseRepositoryTest {
         expect(recordType.getVersion()).andReturn(Long.valueOf(0)).anyTimes();
         
         // Using FieldDescriptorImpl since typeManager is a mock
-        versionableFieldDescriptor = new FieldDescriptorImpl("aVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false), true, true);
-        nonVersionableFieldDescriptor = new FieldDescriptorImpl("aNonVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false), true, false);
+        versionableFieldDescriptor = new FieldDescriptorImpl("aVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false, false), true, true);
+        nonVersionableFieldDescriptor = new FieldDescriptorImpl("aNonVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false, false), true, false);
 
         idGenerator = new IdGeneratorImpl();
         repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL.getConfiguration());
