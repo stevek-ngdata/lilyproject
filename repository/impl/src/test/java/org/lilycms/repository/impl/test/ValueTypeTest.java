@@ -18,8 +18,8 @@ package org.lilycms.repository.impl.test;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.Date;
 
-import org.apache.commons.net.nntp.NewGroupsOrNewsQuery;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.FieldDescriptor;
 import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.HierarchyPath;
 import org.lilycms.repository.api.InvalidRecordException;
 import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.Record;
@@ -39,21 +40,19 @@ import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.impl.FieldDescriptorImpl;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
-import org.lilycms.repository.impl.HierarchyPathImpl;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.RecordImpl;
 import org.lilycms.repository.impl.RecordTypeImpl;
 import org.lilycms.testfw.TestHelper;
 
-/**
- *
- */
 public class ValueTypeTest {
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
     private HBaseTypeManager typeManager;
     private HBaseRepository repository;
+
+    private IdGeneratorImpl idGenerator;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -68,9 +67,10 @@ public class ValueTypeTest {
 
     @Before
     public void setUp() throws Exception {
-        typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL
+        idGenerator = new IdGeneratorImpl();
+        typeManager = new HBaseTypeManager(idGenerator, RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL
                         .getConfiguration());
-        repository = new HBaseRepository(typeManager, new IdGeneratorImpl(), RecordImpl.class, TEST_UTIL
+        repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL
                         .getConfiguration());
     }
 
@@ -80,38 +80,51 @@ public class ValueTypeTest {
 
     @Test
     public void testStringType() throws Exception {
-        testType("stringRecordTypeId", "STRING", false, false, "aStringValue");
-        testType("stringRecordTypeId", "STRING", true, false, Arrays.asList(new String[] { "value1", "value2" }));
-        testType("stringRecordTypeId", "STRING", false, true, new HierarchyPathImpl(new String[] { "foo", "bar" }));
-        testType("stringRecordTypeId", "STRING", true, true, Arrays.asList(new HierarchyPathImpl[] {
-                new HierarchyPathImpl(new String[] { "foo", "bar" }),
-                new HierarchyPathImpl(new String[] { "foo", "pub" }) }));
+        runValueTypeTests("stringRecordTypeId", "STRING", "foo", "bar", "pub");
+    }
+    
+    @Test
+    public void testIntegerType() throws Exception {
+        runValueTypeTests("integerRecordTypeId", "INTEGER", Integer.MIN_VALUE, 0, Integer.MAX_VALUE);
     }
 
     @Test
-    public void testIntegerType() throws Exception {
-        testType("integerRecordTypeId", "INTEGER", false, false, new Integer(123));
-        testType("integerRecordTypeId", "INTEGER", true, false, Arrays.asList(new Integer[] { Integer.valueOf(666),
-                        Integer.valueOf(777) }));
-        testType("integerRecordTypeId", "INTEGER", false, true, new HierarchyPathImpl(new Integer[] { Integer.valueOf(1),
-                        Integer.valueOf(2) }));
-        testType("integerRecordTypeId", "INTEGER", true, true, Arrays.asList(new HierarchyPathImpl[] {
-                new HierarchyPathImpl(new Integer[] { Integer.valueOf(5), Integer.valueOf(6) }),
-                new HierarchyPathImpl(new Integer[] { Integer.valueOf(5), Integer.valueOf(7) }) }));
+    public void testLongType() throws Exception {
+        runValueTypeTests("longRecordTypeId", "LONG", Long.MIN_VALUE, Long.valueOf(0), Long.MAX_VALUE);
+    }
+    
+    @Test
+    public void testBooleanType() throws Exception {
+        runValueTypeTests("booleanRecordTypeId", "BOOLEAN", true, false, true);
+    }
+    
+    @Test
+    public void testDateType() throws Exception {
+        runValueTypeTests("dateRecordTypeId", "DATE", new Date(), new Date(Long.MAX_VALUE), new Date(Long.MIN_VALUE));
     }
 
+    @Test
+    public void testLinkType() throws Exception {
+        runValueTypeTests("linkRecordTypeId", "LINK", idGenerator.newRecordId(), idGenerator.newRecordId(), idGenerator.newRecordId());
+    }
+    
     @Test
     public void testNewPrimitiveType() throws Exception {
         typeManager.registerPrimitiveValueType(new XYPrimitiveValueType());
-        testType("xyRecordTypeId", "XY", false, false, new XYCoordinates(5, 6));
-        testType("xyRecordTypeId", "XY", true, false, Arrays.asList(new XYCoordinates[] { new XYCoordinates(5, 6),
-                        new XYCoordinates(30, 40) }));
-        testType("xyRecordTypeId", "XY", false, true, new HierarchyPathImpl(new XYCoordinates[] { new XYCoordinates(90, 91), new XYCoordinates(92, 93) }));
-        testType("xyRecordTypeId", "XY", true, true, Arrays.asList(new HierarchyPathImpl[] {
-                new HierarchyPathImpl(new XYCoordinates[] { new XYCoordinates(100, 100), new XYCoordinates(101, 101) }),
-                new HierarchyPathImpl(new XYCoordinates[] { new XYCoordinates(100, 100), new XYCoordinates(102, 102) }) }));
+        runValueTypeTests("xyRecordTypeId", "XY", new XYCoordinates(-1, 1), new XYCoordinates(Integer.MIN_VALUE, Integer.MAX_VALUE), new XYCoordinates(666, 777));
     }
 
+    private void runValueTypeTests(String recordTypeId, String primitivaValueType, Object value1, Object value2, Object value3) throws Exception {
+        testType(recordTypeId, primitivaValueType, false, false, value1);
+        testType(recordTypeId, primitivaValueType, true, false, Arrays.asList(new Object[] { value1,
+                        value2 }));
+        testType(recordTypeId, primitivaValueType, false, true, new HierarchyPath(new Object[] { value1,
+                        value2 }));
+        testType(recordTypeId, primitivaValueType, true, true, Arrays.asList(new HierarchyPath[] {
+                new HierarchyPath(new Object[] { value1, value2 }),
+                new HierarchyPath(new Object[] { value1, value3 }) }));
+    }
+    
     private void testType(String recordId, String valueTypeString, boolean multivalue, boolean hierarchical,
                     Object fieldValue) throws RepositoryException, RecordExistsException, RecordNotFoundException,
                     InvalidRecordException, FieldNotFoundException {
@@ -138,9 +151,9 @@ public class ValueTypeTest {
             return NAME;
         }
 
-        public Object fromBytes(byte[] value) {
-            int x = Bytes.toInt(value, 0, Bytes.SIZEOF_INT);
-            int y = Bytes.toInt(value, Bytes.SIZEOF_INT, Bytes.SIZEOF_INT);
+        public Object fromBytes(byte[] bytes) {
+            int x = Bytes.toInt(bytes, 0, Bytes.SIZEOF_INT);
+            int y = Bytes.toInt(bytes, Bytes.SIZEOF_INT, Bytes.SIZEOF_INT);
             return new XYCoordinates(x, y);
         }
 

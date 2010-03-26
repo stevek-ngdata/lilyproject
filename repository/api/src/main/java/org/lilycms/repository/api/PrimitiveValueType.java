@@ -36,7 +36,7 @@ public interface PrimitiveValueType {
      * Decodes a byte[] to an object of the actual type of the
      * {@link PrimitiveValueType}
      */
-    public Object fromBytes(byte[] value);
+    public Object fromBytes(byte[] bytes);
 
     /**
      * Encodes an object of the actual type of the {@link PrimitiveValueType} to

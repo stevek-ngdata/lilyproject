@@ -85,7 +85,7 @@ public class ValueTypeImpl implements ValueType {
             result.add(value);
             offset = offset + valueLenght;
         }
-        return new HierarchyPathImpl(result.toArray(new Object[result.size()]));
+        return new HierarchyPath(result.toArray(new Object[result.size()]));
     }
     
     public byte[] toBytes(Object value) {

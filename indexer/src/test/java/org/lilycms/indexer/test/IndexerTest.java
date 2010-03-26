@@ -67,8 +67,8 @@ public class IndexerTest {
 
     @Test
     public void testIndexer() throws Exception {
-        TypeManager typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
         IdGenerator idGenerator = new IdGeneratorImpl();
+        TypeManager typeManager = new HBaseTypeManager(idGenerator, RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
         Repository repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL.getConfiguration());
         SolrServer solrServer = SOLR_TEST_UTIL.getSolrServer();
         TestLilyQueue queue = new TestLilyQueue();

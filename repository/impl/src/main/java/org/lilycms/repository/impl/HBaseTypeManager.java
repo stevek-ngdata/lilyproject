@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.RepositoryException;
@@ -57,11 +58,13 @@ public class HBaseTypeManager implements TypeManager {
     private static final byte[] VERSIONABLE_COLUMN_NAME = Bytes.toBytes("versionable");
 
     private HTable typeTable;
+    private IdGenerator idGenerator;
     private Class<RecordType> recordTypeClass;
     private Class<FieldDescriptor> fieldDescriptorClass;
 
-    public HBaseTypeManager(Class recordTypeClass, Class fieldDescriptorClass, Configuration configuration)
+    public HBaseTypeManager(IdGenerator idGenerator, Class recordTypeClass, Class fieldDescriptorClass, Configuration configuration)
                     throws IOException {
+        this.idGenerator = idGenerator;
         this.recordTypeClass = recordTypeClass;
         this.fieldDescriptorClass = fieldDescriptorClass;
         try {
@@ -360,6 +363,10 @@ public class HBaseTypeManager implements TypeManager {
     private void registerDefaultValueTypes() {
         registerPrimitiveValueType(new StringValueType());
         registerPrimitiveValueType(new IntegerValueType());
+        registerPrimitiveValueType(new LongValueType());
+        registerPrimitiveValueType(new BooleanValueType());
+        registerPrimitiveValueType(new DateValueType());
+        registerPrimitiveValueType(new LinkValueType(idGenerator));
     }
 
     public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {

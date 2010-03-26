@@ -15,14 +15,49 @@
  */
 package org.lilycms.repository.api;
 
+import java.util.Arrays;
+
 // TODO move to another package
-public interface HierarchyPath {
+public class HierarchyPath {
 
-    Object[] getElements();
+    private final Object[] elements;
 
-    int lenght();
+    public HierarchyPath(Object[] elements) {
+        this.elements = elements;
+    }
+    
+    public Object[] getElements() {
+        return elements;
+    }
+    
+    public int lenght() {
+        return elements.length;
+    }
 
-    String toString();
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(elements);
+        return result;
+    }
 
-    boolean equals(Object obj);
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        HierarchyPath other = (HierarchyPath) obj;
+        if (!Arrays.equals(elements, other.elements))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(elements);
+    }
 }

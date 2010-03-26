@@ -15,30 +15,34 @@
  */
 package org.lilycms.repository.impl;
 
-import java.util.Arrays;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.lilycms.repository.api.PrimitiveValueType;
 
-import org.lilycms.repository.api.HierarchyPath;
+public class BooleanValueType implements PrimitiveValueType {
 
-public class HierarchyPathImpl implements HierarchyPath {
-    private final Object[] elements;
+    private final String NAME = "BOOLEAN";
 
-    public HierarchyPathImpl(Object[] elements) {
-        this.elements = elements;
+    public String getName() {
+        return NAME;
     }
-    
-    public Object[] getElements() {
-        return elements;
+
+    public Boolean fromBytes(byte[] bytes) {
+        return Bytes.toBoolean(bytes);
     }
-    
-    public int lenght() {
-        return elements.length;
+
+    public byte[] toBytes(Object value) {
+        return Bytes.toBytes((Boolean)value);
+    }
+
+    public Class getType() {
+        return Boolean.class;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + Arrays.hashCode(elements);
+        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
         return result;
     }
 
@@ -50,14 +54,12 @@ public class HierarchyPathImpl implements HierarchyPath {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        HierarchyPathImpl other = (HierarchyPathImpl) obj;
-        if (!Arrays.equals(elements, other.elements))
+        BooleanValueType other = (BooleanValueType) obj;
+        if (NAME == null) {
+            if (other.NAME != null)
+                return false;
+        } else if (!NAME.equals(other.NAME))
             return false;
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return Arrays.toString(elements);
     }
 }

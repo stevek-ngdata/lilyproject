@@ -26,12 +26,12 @@ public class IntegerValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public Integer fromBytes(byte[] value) {
-        return Bytes.toInt(value);
+    public Integer fromBytes(byte[] bytes) {
+        return Bytes.toInt(bytes);
     }
 
-    public byte[] toBytes(Object integer) {
-        return Bytes.toBytes((Integer)integer);
+    public byte[] toBytes(Object value) {
+        return Bytes.toBytes((Integer)value);
     }
 
     public Class getType() {

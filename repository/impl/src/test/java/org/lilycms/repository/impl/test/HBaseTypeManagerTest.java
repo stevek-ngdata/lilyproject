@@ -31,6 +31,7 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.ValueType;
 import org.lilycms.repository.impl.FieldDescriptorImpl;
 import org.lilycms.repository.impl.HBaseTypeManager;
+import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.RecordTypeImpl;
 import org.lilycms.testfw.TestHelper;
 
@@ -56,7 +57,7 @@ public class HBaseTypeManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        typeManager = new HBaseTypeManager(RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
+        typeManager = new HBaseTypeManager(new IdGeneratorImpl(), RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
         valueType1 = typeManager.getValueType("STRING", false, false);
         valueType2 = typeManager.getValueType("INTEGER", false, false);
     }

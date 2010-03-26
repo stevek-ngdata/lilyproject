@@ -15,27 +15,29 @@
  */
 package org.lilycms.repository.impl;
 
+import java.util.Date;
+
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.PrimitiveValueType;
 
-public class StringValueType implements PrimitiveValueType {
+public class DateValueType implements PrimitiveValueType {
 
-    private final String NAME = "STRING";
+    private final String NAME = "DATE";
 
     public String getName() {
         return NAME;
     }
 
-    public String fromBytes(byte[] bytes) {
-        return Bytes.toString(bytes);
+    public Date fromBytes(byte[] bytes) {
+        return new Date(Bytes.toLong(bytes));
     }
-    
+
     public byte[] toBytes(Object value) {
-        return Bytes.toBytes((String)value);
+        return Bytes.toBytes(((Date)value).getTime());
     }
 
     public Class getType() {
-        return String.class;
+        return Date.class;
     }
 
     @Override
@@ -54,7 +56,7 @@ public class StringValueType implements PrimitiveValueType {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        StringValueType other = (StringValueType) obj;
+        DateValueType other = (DateValueType) obj;
         if (NAME == null) {
             if (other.NAME != null)
                 return false;
@@ -62,5 +64,4 @@ public class StringValueType implements PrimitiveValueType {
             return false;
         return true;
     }
-
 }
