@@ -214,6 +214,20 @@ public class Index {
     }
 
     public QueryResult performQuery(Query query) throws IOException {
+        // First validate that all the fields used in the query exist in the index definition
+        for (Query.EqualsCondition eqCond : query.getEqConditions()) {
+            if (definition.getField(eqCond.getName()) == null) {
+                String msg = String.format("The query refers to a field which does not exist in this index: %1$s",
+                        eqCond.getName());
+                throw new MalformedQueryException(msg);
+            }
+        }
+        if (query.getRangeCondition() != null && definition.getField(query.getRangeCondition().getName()) == null) {
+            String msg = String.format("The query refers to a field which does not exist in this index: %1$s",
+                    query.getRangeCondition().getName());
+            throw new MalformedQueryException(msg);
+        }
+
         // Construct from and to keys
 
         List<IndexFieldDefinition> fieldDefs = definition.getFields();
