@@ -15,7 +15,7 @@
  */
 package org.lilycms.repository.impl;
 
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.RecordId;
@@ -24,6 +24,8 @@ public class UUIDRecordId implements RecordId {
 
     private UUID uuid;
     private final IdGeneratorImpl idGenerator;
+
+    private static final SortedMap<String, String> EMPTY_SORTED_MAP = Collections.unmodifiableSortedMap(new TreeMap<String, String>());
 
     protected UUIDRecordId(IdGeneratorImpl idGenerator) {
         this.idGenerator = idGenerator;
@@ -51,7 +53,11 @@ public class UUIDRecordId implements RecordId {
     public byte[] toBytes() {
         return idGenerator.toBytes(this);
     }
-    
+
+    public SortedMap<String, String> getVariantProperties() {
+        return EMPTY_SORTED_MAP;
+    }
+
     protected byte[] getBasicBytes() {
         byte[] bytes = new byte[16];
         Bytes.putLong(bytes, 0, uuid.getMostSignificantBits());

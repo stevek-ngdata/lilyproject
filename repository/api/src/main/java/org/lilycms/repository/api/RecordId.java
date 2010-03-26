@@ -15,6 +15,8 @@
  */
 package org.lilycms.repository.api;
 
+import java.util.SortedMap;
+
 /**
  * Represents the id of a {@link Record}
  * 
@@ -23,7 +25,16 @@ package org.lilycms.repository.api;
 public interface RecordId {
 
     String toString();
+
     byte[] toBytes();
+
     RecordId getMasterRecordId();
+
+    /**
+     * For variants, returns the variant properties, for master records, returns
+     * an empty map.
+     */
+    SortedMap<String, String> getVariantProperties();
+
     boolean equals(Object obj);
 }

@@ -15,9 +15,7 @@
  */
 package org.lilycms.repository.impl;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.hbase.util.Bytes;
@@ -26,13 +24,17 @@ import org.lilycms.repository.api.RecordId;
 public class VariantRecordId implements RecordId {
 
     private final RecordId masterRecordId;
-    private final Map<String, String> variantProperties = new TreeMap<String, String>(); // Make sure they are always sorted the same way
+    private final SortedMap<String, String> variantProperties;
     private final IdGeneratorImpl idGenerator;
 
 
     protected VariantRecordId(RecordId masterRecordId, Map<String, String> variantProperties, IdGeneratorImpl idGenerator) {
         this.masterRecordId = masterRecordId;
-        this.variantProperties.putAll(variantProperties);
+
+        SortedMap<String, String> varProps = createVariantPropertiesMap();
+        varProps.putAll(variantProperties);
+        this.variantProperties = Collections.unmodifiableSortedMap(varProps);
+
         this.idGenerator = idGenerator;
     }
     
@@ -46,7 +48,8 @@ public class VariantRecordId implements RecordId {
 
         int variantPropertyLength = Bytes.toInt(variantRecordIdBytes, variantRecordIdBytes.length-Bytes.SIZEOF_INT, Bytes.SIZEOF_INT);
         this.masterRecordId = idGenerator.fromBytes(Bytes.head(variantRecordIdBytes, variantRecordIdBytes.length-variantPropertyLength-Bytes.SIZEOF_INT));
-       
+
+        SortedMap<String, String> varProps = createVariantPropertiesMap();
         int offset = variantRecordIdBytes.length - variantPropertyLength - Bytes.SIZEOF_INT;
         while (offset < variantRecordIdBytes.length - Bytes.SIZEOF_INT) {
             int dimensionLength = Bytes.toInt(variantRecordIdBytes, offset, Bytes.SIZEOF_INT);
@@ -56,9 +59,15 @@ public class VariantRecordId implements RecordId {
             int dimensionValueLength = Bytes.toInt(variantRecordIdBytes, offset, Bytes.SIZEOF_INT);
             offset = offset + Bytes.SIZEOF_INT;
             String dimensionValue = Bytes.toString(variantRecordIdBytes, offset, dimensionValueLength);
-            variantProperties.put(dimension, dimensionValue);
+            varProps.put(dimension, dimensionValue);
             offset = offset + dimensionValueLength;
         }
+        this.variantProperties = Collections.unmodifiableSortedMap(varProps);
+    }
+
+    private SortedMap<String, String> createVariantPropertiesMap() {
+        // Make sure they are always sorted the same way
+        return new TreeMap<String, String>();
     }
     
     /**
@@ -68,6 +77,7 @@ public class VariantRecordId implements RecordId {
     protected VariantRecordId(RecordId masterRecordId, String variantPropertiesString, IdGeneratorImpl idGenerator) {
         this.idGenerator = idGenerator;
         this.masterRecordId = masterRecordId;
+        SortedMap<String, String> varProps = createVariantPropertiesMap();
         int offset = 0;
         int index1 = variantPropertiesString.indexOf(",");
         while (index1 != -1) {
@@ -77,10 +87,11 @@ public class VariantRecordId implements RecordId {
                 index2 = variantPropertiesString.length();
             }
             String dimensionValue = variantPropertiesString.substring(index1+1, index2);
-            variantProperties.put(dimension, dimensionValue);
+            varProps.put(dimension, dimensionValue);
             offset = index2 + 1;
             index1 = variantPropertiesString.indexOf(",", index2);
         }
+        this.variantProperties = Collections.unmodifiableSortedMap(varProps);
     }
     
     public String toString() {
@@ -110,27 +121,27 @@ public class VariantRecordId implements RecordId {
     }
     
     protected String getVariantPropertiesString() {
-            StringBuilder variantStringBuilder;
-            variantStringBuilder = new StringBuilder();
-            Set<Entry<String, String>> variantPropertyEntrySet = variantProperties.entrySet();
-            boolean first = true;
-            for (Entry<String, String> variantPropertyEntry : variantPropertyEntrySet) {
-                if (!first) {
-                    variantStringBuilder.append(":");
-                }
-                variantStringBuilder.append(variantPropertyEntry.getKey());
-                variantStringBuilder.append(",");
-                variantStringBuilder.append(variantPropertyEntry.getValue());
-                first = false;
+        StringBuilder variantStringBuilder;
+        variantStringBuilder = new StringBuilder();
+        Set<Entry<String, String>> variantPropertyEntrySet = variantProperties.entrySet();
+        boolean first = true;
+        for (Entry<String, String> variantPropertyEntry : variantPropertyEntrySet) {
+            if (!first) {
+                variantStringBuilder.append(":");
             }
-            return variantStringBuilder.toString();
+            variantStringBuilder.append(variantPropertyEntry.getKey());
+            variantStringBuilder.append(",");
+            variantStringBuilder.append(variantPropertyEntry.getValue());
+            first = false;
+        }
+        return variantStringBuilder.toString();
     }
     
     public RecordId getMasterRecordId() {
         return masterRecordId;
     }
     
-    protected Map<String, String> getVariantProperties() {
+    public SortedMap<String, String> getVariantProperties() {
         return variantProperties;
     }
 

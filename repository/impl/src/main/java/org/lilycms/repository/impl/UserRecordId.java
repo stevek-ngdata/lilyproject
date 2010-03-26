@@ -18,12 +18,18 @@ package org.lilycms.repository.impl;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.RecordId;
 
+import java.util.Collections;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 
 public class UserRecordId implements RecordId {
 
     protected final String recordIdString;
     protected byte[] recordIdBytes;
     private final IdGeneratorImpl idGenerator;
+    
+    private static final SortedMap<String, String> EMPTY_SORTED_MAP = Collections.unmodifiableSortedMap(new TreeMap<String, String>());
 
     protected UserRecordId(String recordId, IdGeneratorImpl idGenerator) {
         this.recordIdString = recordId;
@@ -51,6 +57,10 @@ public class UserRecordId implements RecordId {
     
     protected String getBasicString() {
         return recordIdString;
+    }
+
+    public SortedMap<String, String> getVariantProperties() {
+        return EMPTY_SORTED_MAP;
     }
 
     @Override
