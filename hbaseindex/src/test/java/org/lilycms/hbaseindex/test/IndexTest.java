@@ -874,7 +874,7 @@ public class IndexTest {
 
 
         Query query = new Query();
-        query.setRangeCondition("field1", "bar", "foo");
+        query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
         QueryResult result = index.performQuery(query);
 
         assertNotNull(result.next());

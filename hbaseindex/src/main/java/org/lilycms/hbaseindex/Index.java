@@ -307,7 +307,7 @@ public class Index {
         // Query.MAX_VALUE is a value which should be larger than anything, so cannot be an inclusive upper bound
         // The importance of this is because for Query.MAX_VALUE, we do a prefix scan so the operator should be
         // CompareOp.LESS_OR_EQUAL
-        boolean upperBoundInclusive = rangeCond != null && rangeCond.isUpperBoundInclusive() && rangeCond.getToValue() != Query.MAX_VALUE;
+        boolean upperBoundInclusive = rangeCond != null && (rangeCond.isUpperBoundInclusive() || rangeCond.getToValue() == Query.MAX_VALUE);
         CompareOp op = rangeCondSet && !upperBoundInclusive ? CompareOp.LESS : CompareOp.LESS_OR_EQUAL;
         Filter toFilter = new RowFilter(op, new BinaryPrefixComparator(toKey));
 
