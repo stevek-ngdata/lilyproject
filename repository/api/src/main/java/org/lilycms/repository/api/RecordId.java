@@ -28,6 +28,10 @@ public interface RecordId {
 
     byte[] toBytes();
 
+    /**
+     * For variants, return the RecordId of the master record, for master records,
+     * returns this.
+     */
     RecordId getMasterRecordId();
 
     /**

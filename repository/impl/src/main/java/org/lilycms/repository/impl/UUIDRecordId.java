@@ -95,6 +95,6 @@ public class UUIDRecordId implements RecordId {
     }
 
     public RecordId getMasterRecordId() {
-        return null;
+        return this;
     }
 }
