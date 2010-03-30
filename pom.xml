@@ -41,6 +41,7 @@
     <module>testfw</module>
     <module>indexer</module>
     <module>eventlog/queue-api</module>
+    <module>linkmgmt</module>
   </modules>
 
   <dependencyManagement>
@@ -69,6 +70,11 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-queue-api</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-hbaseindex</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>
