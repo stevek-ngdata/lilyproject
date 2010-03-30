@@ -33,7 +33,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.FieldDescriptor;
-import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.InvalidRecordException;
 import org.lilycms.repository.api.Record;
@@ -115,7 +114,7 @@ public class HBaseRepository implements Repository {
             recordId = idGenerator.newRecordId();
             record.setId(recordId);
         } else {
-            RecordId masterRecordId = recordId.getMasterRecordId();
+            RecordId masterRecordId = recordId.getMaster();
             if (masterRecordId != null) {
                 Get get = new Get(masterRecordId.toBytes());
                 Result masterResult;

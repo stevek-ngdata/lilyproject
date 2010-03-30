@@ -74,7 +74,7 @@ public class LinkManager {
         IndexEntry entry = new IndexEntry();
 
         entry.addField("vtag", vtag);
-        entry.addField("target", target.getMasterRecordId().toString());
+        entry.addField("target", target.getMaster().toString());
         entry.addField("targetvariant", formatVariantProps(target.getVariantProperties()));
         entry.addField("sourcefield", sourceField);
 
@@ -87,7 +87,7 @@ public class LinkManager {
         IndexEntry entry = new IndexEntry();
 
         entry.addField("vtag", vtag);
-        entry.addField("source", source.getMasterRecordId().toString());
+        entry.addField("source", source.getMaster().toString());
         entry.addField("sourcevariant", formatVariantProps(source.getVariantProperties()));
         entry.addField("sourcefield", sourceField);
 
@@ -99,7 +99,7 @@ public class LinkManager {
     public Set<RecordId> getReferrers(RecordId record, String vtag) throws IOException {
         Query query = new Query();
         query.addEqualsCondition("vtag", vtag);
-        query.addEqualsCondition("target", record.getMasterRecordId().toString());
+        query.addEqualsCondition("target", record.getMaster().toString());
         query.addEqualsCondition("targetvariant", formatVariantProps(record.getVariantProperties()));
 
         Set<RecordId> result = new HashSet<RecordId>();
@@ -116,7 +116,7 @@ public class LinkManager {
     public Set<FieldedLink> getFieldedReferrers(RecordId record, String vtag) throws IOException {
         Query query = new Query();
         query.addEqualsCondition("vtag", vtag);
-        query.addEqualsCondition("target", record.getMasterRecordId().toString());
+        query.addEqualsCondition("target", record.getMaster().toString());
         query.addEqualsCondition("targetvariant", formatVariantProps(record.getVariantProperties()));
 
         Set<FieldedLink> result = new HashSet<FieldedLink>();
@@ -134,7 +134,7 @@ public class LinkManager {
     public Set<FieldedLink> getFieldedLinks(RecordId record, String vtag) throws IOException {
         Query query = new Query();
         query.addEqualsCondition("vtag", vtag);
-        query.addEqualsCondition("source", record.getMasterRecordId().toString());
+        query.addEqualsCondition("source", record.getMaster().toString());
         query.addEqualsCondition("sourcevariant", formatVariantProps(record.getVariantProperties()));
 
         Set<FieldedLink> result = new HashSet<FieldedLink>();

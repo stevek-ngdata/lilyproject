@@ -88,7 +88,7 @@ public class UserRecordId implements RecordId {
         return true;
     }
 
-    public RecordId getMasterRecordId() {
+    public RecordId getMaster() {
         return this;
     }
 }

@@ -137,7 +137,7 @@ public class VariantRecordId implements RecordId {
         return variantStringBuilder.toString();
     }
     
-    public RecordId getMasterRecordId() {
+    public RecordId getMaster() {
         return masterRecordId;
     }
     

@@ -32,7 +32,7 @@ public interface RecordId {
      * For variants, return the RecordId of the master record, for master records,
      * returns this.
      */
-    RecordId getMasterRecordId();
+    RecordId getMaster();
 
     /**
      * For variants, returns the variant properties, for master records, returns

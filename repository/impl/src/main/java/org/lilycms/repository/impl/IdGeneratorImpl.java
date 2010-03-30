@@ -139,7 +139,7 @@ public class IdGeneratorImpl implements IdGenerator {
     // The variantproperties are appended to the string of the master record and are also prefixed
     protected String toString(VariantRecordId variantRecordId) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(variantRecordId.getMasterRecordId().toString());
+        stringBuilder.append(variantRecordId.getMaster().toString());
         stringBuilder.append(IdIdentifier.VARIANT.name());
         stringBuilder.append(":");
         stringBuilder.append(variantRecordId.getVariantPropertiesString());
