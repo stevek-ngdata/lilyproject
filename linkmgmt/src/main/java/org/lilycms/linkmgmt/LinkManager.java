@@ -57,6 +57,8 @@ public class LinkManager {
             FORWARD_INDEX.get().removeEntry(entry, link.getRecordId().toBytes());
         }
 
+        // TODO take care of the put after delete problem: http://search-hadoop.com/m/rNnhN15Xecu
+
         // Store links in the forwards table
         for (FieldedLink link : links) {
             IndexEntry entry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
