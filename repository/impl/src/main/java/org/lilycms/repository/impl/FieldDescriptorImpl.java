@@ -21,65 +21,63 @@ import org.lilycms.repository.api.ValueType;
 
 public class FieldDescriptorImpl implements FieldDescriptor {
 
-    private final String fieldDescriptorId;
+    private final String id;
     private Long version;
-    private final boolean mandatory;
-    private final boolean versionable;
-    private final ValueType valueType;
+    private ValueType valueType;
+    private String globalName;
 
     /**
      * This constructor should not be called directly.
      * @use {@link TypeManager#newFieldDescriptor} instead
      */
-    public FieldDescriptorImpl(String fieldDescriptorId, ValueType valueType, boolean mandatory, boolean versionable) {
-        this(fieldDescriptorId, null, valueType, mandatory, versionable);
+    public FieldDescriptorImpl(String id, ValueType valueType, String globalName) {
+        this.id = id;
+        this.valueType = valueType;
+        this.globalName = globalName;
     }
 
-    /**
-     * This constructor should not be called directly.
-     * @use {@link TypeManager#newFieldDescriptor} instead
-     */
-    public FieldDescriptorImpl(String fieldDescriptorId, Long version, ValueType valueType, boolean mandatory, boolean versionable) {
-        this.fieldDescriptorId = fieldDescriptorId;
-        this.version = version;
-        this.valueType = valueType;
-        this.mandatory = mandatory;
-        this.versionable = versionable;
+    public String getGlobalName() {
+        return globalName;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public ValueType getValueType() {
         return valueType;
     }
 
-    public String getId() {
-        return fieldDescriptorId;
-    }
-
     public Long getVersion() {
         return version;
     }
-    
-    public void setVersion(long version) {
+
+    public void setGlobalName(String name) {
+        this.globalName = name;
+    }
+
+    public void setValueType(ValueType valueType) {
+        this.valueType = valueType;
+    }
+
+    public void setVersion(Long version) {
         this.version = version;
     }
-
-    public boolean isMandatory() {
-        return mandatory;
-    }
-
-    public boolean isVersionable() {
-        return versionable;
+    
+    public FieldDescriptor clone() {
+        FieldDescriptorImpl clone = new FieldDescriptorImpl(this.id, this.valueType, this.globalName);
+        clone.version = this.version;
+        return clone;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fieldDescriptorId == null) ? 0 : fieldDescriptorId.hashCode());
+        result = prime * result + ((globalName == null) ? 0 : globalName.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
-        result = prime * result + (mandatory ? 1231 : 1237);
         result = prime * result + ((version == null) ? 0 : version.hashCode());
-        result = prime * result + (versionable ? 1231 : 1237);
         return result;
     }
 
@@ -92,32 +90,32 @@ public class FieldDescriptorImpl implements FieldDescriptor {
         if (getClass() != obj.getClass())
             return false;
         FieldDescriptorImpl other = (FieldDescriptorImpl) obj;
-        if (fieldDescriptorId == null) {
-            if (other.fieldDescriptorId != null)
+        if (globalName == null) {
+            if (other.globalName != null)
                 return false;
-        } else if (!fieldDescriptorId.equals(other.fieldDescriptorId))
+        } else if (!globalName.equals(other.globalName))
+            return false;
+        if (id == null) {
+            if (other.id != null)
+                return false;
+        } else if (!id.equals(other.id))
             return false;
         if (valueType == null) {
             if (other.valueType != null)
                 return false;
         } else if (!valueType.equals(other.valueType))
             return false;
-        if (mandatory != other.mandatory)
-            return false;
         if (version == null) {
             if (other.version != null)
                 return false;
         } else if (!version.equals(other.version))
-            return false;
-        if (versionable != other.versionable)
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "FieldDescriptorImpl [fieldDescriptorId=" + fieldDescriptorId + ", version=" + version + ", valueType="
-                        + valueType + ", mandatory=" + mandatory + ", versionable=" + versionable + "]";
+        return "FieldDescriptorImpl [id=" + id + ", version=" + version + ", globalName=" + globalName
+                        + ", valueType=" + valueType + "]";
     }
-    
 }

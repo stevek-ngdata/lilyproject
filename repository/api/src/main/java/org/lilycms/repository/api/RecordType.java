@@ -15,7 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-import java.util.Collection;
 
 /**
  * The RecordType describes the schema to be followed by a {@link Record}
@@ -35,14 +34,32 @@ public interface RecordType {
     void setVersion(Long version);
     
     Long getVersion();
+    
+    void setNonVersionableFieldGroupId(String id);
+ 
+    void setNonVersionableFieldGroupVersion(Long version);
+    
+    void setVersionableFieldGroupId(String id);
+    
+    void setVersionableFieldGroupVersion(Long version);
+    
+    void setVersionableMutableFieldGroupId(String id);
+    
+    void setVersionableMutableFieldGroupVersion(Long version);
+    
+    String getNonVersionableFieldGroupId();
+    
+    Long getNonVersionableFieldGroupVersion();
+    
+    String getVersionableFieldGroupId();
+    
+    Long getVersionableFieldGroupVersion();
+    
+    String getVersionableMutableFieldGroupId();
+    
+    Long getVersionableMutableFieldGroupVersion();
 
-    void addFieldDescriptor(FieldDescriptor fieldDescriptor);
-
-    void removeFieldDescriptor(String removeFieldDescriptorId);
-
-    FieldDescriptor getFieldDescriptor(String fieldDescriptorId);
-
-    Collection<FieldDescriptor> getFieldDescriptors();
-
+    RecordType clone();
+    
     boolean equals(Object obj);
 }

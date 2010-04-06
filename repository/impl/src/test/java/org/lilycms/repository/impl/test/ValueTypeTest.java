@@ -28,21 +28,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.FieldDescriptor;
-import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.FieldGroup;
 import org.lilycms.repository.api.HierarchyPath;
-import org.lilycms.repository.api.InvalidRecordException;
 import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordExistsException;
-import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.repository.impl.FieldDescriptorImpl;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
-import org.lilycms.repository.impl.RecordImpl;
-import org.lilycms.repository.impl.RecordTypeImpl;
 import org.lilycms.testfw.TestHelper;
 
 public class ValueTypeTest {
@@ -68,10 +61,8 @@ public class ValueTypeTest {
     @Before
     public void setUp() throws Exception {
         idGenerator = new IdGeneratorImpl();
-        typeManager = new HBaseTypeManager(idGenerator, RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL
-                        .getConfiguration());
-        repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL
-                        .getConfiguration());
+        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
     }
 
     @After
@@ -114,33 +105,38 @@ public class ValueTypeTest {
         runValueTypeTests("xyRecordTypeId", "XY", new XYCoordinates(-1, 1), new XYCoordinates(Integer.MIN_VALUE, Integer.MAX_VALUE), new XYCoordinates(666, 777));
     }
 
-    private void runValueTypeTests(String recordTypeId, String primitivaValueType, Object value1, Object value2, Object value3) throws Exception {
-        testType(recordTypeId, primitivaValueType, false, false, value1);
-        testType(recordTypeId, primitivaValueType, true, false, Arrays.asList(new Object[] { value1,
+    private void runValueTypeTests(String recordTypeId, String primitiveValueType, Object value1, Object value2, Object value3) throws Exception {
+        testType(recordTypeId, primitiveValueType, false, false, value1);
+        testType(recordTypeId, primitiveValueType, true, false, Arrays.asList(new Object[] { value1,
                         value2 }));
-        testType(recordTypeId, primitivaValueType, false, true, new HierarchyPath(new Object[] { value1,
+        testType(recordTypeId, primitiveValueType, false, true, new HierarchyPath(new Object[] { value1,
                         value2 }));
-        testType(recordTypeId, primitivaValueType, true, true, Arrays.asList(new HierarchyPath[] {
+        testType(recordTypeId, primitiveValueType, true, true, Arrays.asList(new HierarchyPath[] {
                 new HierarchyPath(new Object[] { value1, value2 }),
                 new HierarchyPath(new Object[] { value1, value3 }) }));
     }
     
-    private void testType(String recordId, String valueTypeString, boolean multivalue, boolean hierarchical,
-                    Object fieldValue) throws RepositoryException, RecordExistsException, RecordNotFoundException,
-                    InvalidRecordException, FieldNotFoundException {
-        RecordType recordType = typeManager.newRecordType(recordId);
-        FieldDescriptor fieldDescriptor = typeManager.newFieldDescriptor("aFieldId", typeManager.getValueType(
-                        valueTypeString, multivalue, hierarchical), true, true);
-        recordType.addFieldDescriptor(fieldDescriptor);
+    private void testType(String recordTypeId, String valueTypeString, boolean multivalue, boolean hierarchical,
+                    Object fieldValue) throws Exception {
+        String fieldDescriptorId = valueTypeString+"FieldId"+multivalue+hierarchical;
+        FieldDescriptor fieldDescriptor = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(fieldDescriptorId, typeManager.getValueType(
+                        valueTypeString, multivalue, hierarchical), "aGlobalName"));
+        String fieldGroupId = valueTypeString+"FieldGroupId"+multivalue+hierarchical;
+        FieldGroup fieldGroup = typeManager.newFieldGroup(fieldGroupId);
+        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor.getId(), fieldDescriptor.getVersion(), true, "anAlias"));
+        fieldGroup = typeManager.createFieldGroup(fieldGroup);
+        RecordType recordType = typeManager.newRecordType(recordTypeId+"RecordTypeId"+multivalue+hierarchical);
+        recordType.setNonVersionableFieldGroupId(fieldGroup.getId());
+        recordType.setNonVersionableFieldGroupVersion(fieldGroup.getVersion());
         typeManager.createRecordType(recordType);
 
-        Record record = repository.newRecord();
+        Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setField("aFieldId", fieldValue);
+        record.setNonVersionableField(fieldDescriptorId, fieldValue);
         repository.create(record);
 
         Record actualRecord = repository.read(record.getId());
-        assertEquals(fieldValue, actualRecord.getField("aFieldId"));
+        assertEquals(fieldValue, actualRecord.getNonVersionableField(fieldDescriptorId));
     }
 
     private class XYPrimitiveValueType implements PrimitiveValueType {

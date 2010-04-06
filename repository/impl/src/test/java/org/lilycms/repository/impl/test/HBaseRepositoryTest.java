@@ -15,24 +15,20 @@
  */
 package org.lilycms.repository.impl.test;
 
-import static org.easymock.EasyMock.anyLong;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.classextension.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.easymock.classextension.IMocksControl;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.FieldGroup;
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.InvalidRecordException;
@@ -41,24 +37,93 @@ import org.lilycms.repository.api.RecordExistsException;
 import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.RecordType;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.impl.FieldDescriptorImpl;
 import org.lilycms.repository.impl.HBaseRepository;
+import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
-import org.lilycms.repository.impl.RecordImpl;
-import org.lilycms.repository.impl.StringValueType;
-import org.lilycms.repository.impl.ValueTypeImpl;
 import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest {
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private static IdGenerator idGenerator = new IdGeneratorImpl();
+    private static TypeManager typeManager;
+    private static Repository repository;
+    private static FieldDescriptor fieldDescriptor1;
+    private static FieldDescriptor fieldDescriptor1B;
+    private static FieldDescriptor fieldDescriptor2;
+    private static FieldDescriptor fieldDescriptor3;
+    private static FieldGroup fieldGroup1;
+    private static FieldGroup fieldGroup1B;
+    private static FieldGroup fieldGroup2;
+    private static FieldGroup fieldGroup3;
+    private static RecordType recordType1;
+    private static RecordType recordType1B;
+    private static RecordType recordType2;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         TEST_UTIL.startMiniCluster(1);
+        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
+        setupTypes();
+    }
+
+    private static void setupTypes() throws Exception {
+        setupFieldDescriptors();
+        setupFieldGroups();
+        setupRecordTypes();
+    }
+
+    private static void setupFieldDescriptors() throws Exception {
+        fieldDescriptor1 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD1", typeManager.getValueType("STRING", false, false), "GN1"));
+        fieldDescriptor1B = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD1B", typeManager.getValueType("STRING", false, false), "GN1B"));
+        fieldDescriptor2 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD2", typeManager.getValueType("INTEGER", false, false), "GN2"));
+        fieldDescriptor3 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD3", typeManager.getValueType("BOOLEAN", false, false), "GN3"));
+    }
+
+    private static void setupFieldGroups() throws Exception {
+        FieldGroup fieldGroup = typeManager.newFieldGroup("FG1");
+        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor1.getId(), fieldDescriptor1.getVersion(), false, "alias1"));
+        fieldGroup1 = typeManager.createFieldGroup(fieldGroup);
+        fieldGroup = typeManager.newFieldGroup("FG1");
+        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor1B.getId(), fieldDescriptor1B.getVersion(), false, "alias1B"));
+        fieldGroup1B = typeManager.updateFieldGroup(fieldGroup);
+        
+        fieldGroup = typeManager.newFieldGroup("FG2");
+        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor2.getId(), fieldDescriptor2.getVersion(), false, "alias2"));
+        fieldGroup2 = typeManager.createFieldGroup(fieldGroup);
+        fieldGroup = typeManager.newFieldGroup("FG3");
+        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor3.getId(), fieldDescriptor3.getVersion(), false, "alias3"));
+        fieldGroup3 = typeManager.createFieldGroup(fieldGroup);
+    }
+    
+    private static void setupRecordTypes() throws Exception {
+        recordType1 = typeManager.newRecordType("RT1");
+        recordType1.setNonVersionableFieldGroupId(fieldGroup1.getId());
+        recordType1.setNonVersionableFieldGroupVersion(fieldGroup1.getVersion());
+        recordType1.setVersionableFieldGroupId(fieldGroup2.getId());
+        recordType1.setVersionableFieldGroupVersion(fieldGroup2.getVersion());
+        recordType1.setVersionableMutableFieldGroupId(fieldGroup3.getId());
+        recordType1.setVersionableMutableFieldGroupVersion(fieldGroup3.getVersion());
+        recordType1 = typeManager.createRecordType(recordType1);
+        
+        recordType1B = recordType1.clone();
+        recordType1B.setNonVersionableFieldGroupId(fieldGroup1B.getId());
+        recordType1B.setNonVersionableFieldGroupVersion(fieldGroup1B.getVersion());
+        recordType1B = typeManager.updateRecordType(recordType1B);
+        
+        recordType2 = typeManager.newRecordType("RT2");
+        recordType2.setNonVersionableFieldGroupId(fieldGroup2.getId());
+        recordType2.setNonVersionableFieldGroupVersion(fieldGroup2.getVersion());
+        recordType2.setVersionableFieldGroupId(fieldGroup3.getId());
+        recordType2.setVersionableFieldGroupVersion(fieldGroup3.getVersion());
+        recordType2.setVersionableMutableFieldGroupId(fieldGroup1.getId());
+        recordType2.setVersionableMutableFieldGroupVersion(fieldGroup1.getVersion());
+        recordType2 = typeManager.createRecordType(recordType2);
     }
 
     @AfterClass
@@ -66,587 +131,519 @@ public class HBaseRepositoryTest {
         TEST_UTIL.shutdownMiniCluster();
     }
 
-    private Repository repository;
-    private IMocksControl control;
-    private TypeManager typeManager;
-    private RecordType recordType;
-    private FieldDescriptor versionableFieldDescriptor;
-    private FieldDescriptor nonVersionableFieldDescriptor;
-    private IdGenerator idGenerator;
-
     @Before
     public void setUp() throws Exception {
-        control = createControl();
-        typeManager = control.createMock(TypeManager.class);
-        expect(typeManager.getValueType("STRING", false, false)).andReturn(new ValueTypeImpl(new StringValueType(), false, false)).anyTimes();
-        recordType = control.createMock(RecordType.class);
-        expect(typeManager.getRecordType(isA(String.class), anyLong())).andReturn(recordType).anyTimes();
-        expect(typeManager.getRecordType(isA(String.class))).andReturn(recordType).anyTimes();
-        expect(recordType.getId()).andReturn("dummyRecordType").anyTimes();
-        expect(recordType.getVersion()).andReturn(Long.valueOf(0)).anyTimes();
-        
-        // Using FieldDescriptorImpl since typeManager is a mock
-        versionableFieldDescriptor = new FieldDescriptorImpl("aVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false, false), true, true);
-        nonVersionableFieldDescriptor = new FieldDescriptorImpl("aNonVersionableFieldDescriptor", Long.valueOf(1), new ValueTypeImpl(new StringValueType(), false, false), true, false);
-
-        idGenerator = new IdGeneratorImpl();
-        repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL.getConfiguration());
     }
 
     @After
     public void tearDown() throws Exception {
-        control.reset();
     }
 
     @Test
-    public void testEmptyRecord() throws Exception {
-        control.replay();
-        Record record = generateRecord();
-
+    public void testRecordCreateWithoutRecordType() throws Exception {
+        Record record = repository.newRecord(idGenerator.newRecordId());
         try {
-            repository.create(record);
-            fail("A record should at least have some fields");
-        } catch (InvalidRecordException expected) {
+            record = repository.create(record);
+        } catch (InvalidRecordException expected){
         }
-        control.verify();
+    }
+
+    @Test
+    public void testRecordUpdateWithoutRecordType() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        try {
+            record = repository.update(updateRecord);
+        } catch (InvalidRecordException expected){
+        }
+    }
+
+    @Test
+    public void testEmptyRecordCreate() throws Exception {
+        Record record = repository.newRecord(idGenerator.newRecordId());
+        record.setRecordType(recordType1.getId(), null);
+        try {
+            record = repository.create(record);
+        } catch (InvalidRecordException expected){
+        }
     }
     
     @Test
-    public void testEmptyUpdateRecord() throws Exception {
-        expect(recordType.getFieldDescriptor("aField")).andReturn(versionableFieldDescriptor);
+    public void testCreate() throws Exception {
+        RecordId recordId = idGenerator.newRecordId();
+        Record createdRecord = createDefaultRecord(recordId);
         
-        control.replay();
-        Record record = generateRecord(new String[]{"aField" , "aValue", "false"});
-        repository.create(record);
+        assertEquals(Long.valueOf(1), createdRecord.getVersion());
+        assertEquals("value1", createdRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals(123, createdRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertTrue((Boolean)createdRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        assertEquals(recordType1.getId(), createdRecord.getRecordTypeId());
+        assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion());
+        assertEquals(recordType1.getId(), createdRecord.getNonVersionableRecordTypeId());
+        assertEquals(Long.valueOf(1), createdRecord.getNonVersionableRecordTypeVersion());
+        assertEquals(recordType1.getId(), createdRecord.getVersionableRecordTypeId());
+        assertEquals(Long.valueOf(1), createdRecord.getVersionableRecordTypeVersion());
+        assertEquals(recordType1.getId(), createdRecord.getVersionableMutableRecordTypeId());
+        assertEquals(Long.valueOf(1), createdRecord.getVersionableMutableRecordTypeVersion());
         
-        Record emptyRecord = repository.newRecord(record.getId());
-
-        try {
-            repository.update(emptyRecord);
-            fail("A record should at least have some fields");
-        } catch (Exception expected) {
-        }
-        control.verify();
+        assertEquals(createdRecord, repository.read(recordId));
     }
-
-    @Test
-    public void testNonVersionedRecord() throws Exception {
-        expect(recordType.getFieldDescriptor("aField")).andReturn(nonVersionableFieldDescriptor).times(2);
+    
+    private Record createDefaultRecord(RecordId recordId) throws Exception {
+        Record record = repository.newRecord(recordId);
+        record.setRecordType(recordType1.getId(), recordType1.getVersion());
+        record.setNonVersionableField(fieldDescriptor1.getId(), "value1");
+        record.setVersionableField(fieldDescriptor2.getId(), 123);
+        record.setVersionableMutableField(fieldDescriptor3.getId(), true);
+        return repository.create(record);
+    }
+    
+    @Test 
+    public void testCreateExistingRecordFails() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
         
-        control.replay();
-        Record record = generateRecord(new String[] { "aField", "aValue"});
-        repository.create(record);
-        Record actualRecord = repository.read(record.getId());
-        assertEquals(record, actualRecord);
-        control.verify();
-    }
-
-    @Test
-    public void testMultipleFields() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).times(4);
-
-        control.replay();
-        Record record = generateRecord(new String[] { "aField", "aValue"}, new String[] {"aField2", "aValue2"});
-        repository.create(record);
-        Record actualRecord = repository.read(record.getId());
-        assertEquals(record, actualRecord);
-        control.verify();
-    }
-
-    @Test
-    public void testCreateExistingRecord() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor);
-
-        control.replay();
-        Record record = generateRecord(new String[] { "aField", "aValue"});
-        repository.create(record);
         try {
             repository.create(record);
-            fail("Create of an existing record is not allowed");
+            fail();
         } catch (RecordExistsException expected) {
         }
-        control.verify();
-    }
-
-    @Test
-    public void testUpdateNonExistingRecord() throws Exception {
-        control.replay();
-        Record record = repository.newRecord(idGenerator.newRecordId("nonExistingRecordId"));
-
-        try {
-            repository.update(record);
-            fail("Cannot update a non-existing document");
-        } catch (RecordNotFoundException expected) {
-        }
-        control.verify();
-    }
-
-    @Test
-    public void testUpdateRecord() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).times(3);
-
-        control.replay();
-        Record record = generateRecord(new String[] { "aField", "aValue"});
-        repository.create(record);
-
-        record.setField("aField", "anotherValue");
-        repository.update(record);
-
-        assertEquals(record, repository.read(record.getId()));
-        control.verify();
-    }
-
-    @Test
-    public void testUpdateRecordWithExtraField() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] { "aField", "aValue"});
-        repository.create(record);
-
-        // TODO avoid updates of non-changed fields
-        record.setField("anotherField", "anotherValue");
-        repository.update(record);
-        Record actualRecord = repository.read(record.getId());
-        assertEquals(2, record.getFields().size());
-        assertEquals(record, actualRecord);
-        control.verify();
-    }
-
-    @Test
-    public void testReadNonExistingRecord() throws Exception {
-        control.replay();
-        try {
-            repository.read(idGenerator.newRecordId("readNonExistingRecordId"));
-            fail("A RecordNotFoundException should be thrown");
-        } catch (RecordNotFoundException expected) {
-        }
-        control.verify();
-    }
-
-    @Test
-    public void testReadAll() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] { "field1", "value1"}, new String[] { "field2",
-                "value2"}, new String[] { "field3", "value3"});
-        repository.create(record);
-        Record actualRecord = repository.read(record.getId());
-        assertEquals(record, actualRecord);
-        assertEquals(record.getId(), actualRecord.getId());
-        assertEquals(3, actualRecord.getFields().size());
-        assertEquals("value1", actualRecord.getField("field1"));
-        assertEquals("value2", actualRecord.getField("field2"));
-        assertEquals("value3", actualRecord.getField("field3"));
-        control.verify();
-    }
-
-    @Test
-    public void testRecordDelete() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] { "field1", "value1"}, new String[] { "field2","value2"}, new String[] { "field3", "value3"});
-        repository.create(record);
-        RecordId recordId = record.getId();
-        Record actualRecord = repository.read(recordId);
-        assertEquals(record, actualRecord);
-        repository.delete(recordId);
-        try {
-            repository.read(recordId);
-            fail("A RecordNotFoundException should be thrown");
-        } catch(RecordNotFoundException expected) {
-        }
-        control.verify();
-    }
-
-    @Test
-    public void testCreateVersionableAndNonVersionable() throws Exception {
-        expect(recordType.getFieldDescriptor("field1")).andReturn(nonVersionableFieldDescriptor).times(2);
-        expect(recordType.getFieldDescriptor("field2")).andReturn(versionableFieldDescriptor).times(2);
-
-        control.replay();
-        Record record = generateRecord(new String[] { "field1", "value1",}, new String[] { "field2","value2"});
-        repository.create(record);
-        Record actualRecord = repository.read(record.getId());
-        assertEquals(record, actualRecord);
-        control.verify();
-    }
-
-    @Test
-    public void testReadVersionableAndNonVersionableField() throws Exception {
-        expect(recordType.getFieldDescriptor("field1")).andReturn(nonVersionableFieldDescriptor).times(3);
-        expect(recordType.getFieldDescriptor("field2")).andReturn(versionableFieldDescriptor).times(3);
-
-        control.replay();
-        Record record = generateRecord(new String[] { "field1", "value1"}, new String[] { "field2",
-                "value2"});
-        repository.create(record);
-        Record actualRecord = repository.read(record.getId(), "field1", "field2");
-        assertEquals(record, actualRecord);
-        control.verify();
-    }
-
-    @Test
-    public void testVersionableField() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] { "versionableField1", "value1"});
-        repository.create(record);
-        record.setField("versionableField1", "value2");
-        repository.update(record);
-
-        Record actualRecord = repository.read(record.getId());
-        assertEquals("value2", actualRecord.getField("versionableField1"));
-        assertEquals(Long.valueOf(2), actualRecord.getVersion());
-        
-        actualRecord = repository.read(record.getId(), Long.valueOf(1));
-        assertEquals("value1", actualRecord.getField("versionableField1"));
-        assertEquals(Long.valueOf(1), actualRecord.getVersion());
-        control.verify();
-    }
-
-    @Test
-    public void testVersionableFields() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-        
-        control.replay();
-        Record record = generateRecord(
-                        new String[] { "versionableField1", "f1value1"},
-                        new String[] { "versionableField2", "f2value1"}, 
-                        new String[] { "versionableField3", "f3value1"});
-        repository.create(record);
-        Record update1 = generateRecord(
-                        new String[] { "versionableField1", "f1value2"}, 
-                        new String[] { "versionableField2", "f2value2"});
-        RecordId recordId = record.getId();
-        update1.setId(recordId);
-        repository.update(update1);
-        
-        Record update2 = generateRecord(new String[] { "versionableField1", "f1value3"});
-        update2.setId(recordId);
-        repository.update(update2);
-        
-        Record expectedRecord = generateRecord(
-                        new String[] { "versionableField1", "f1value3"},
-                        new String[] { "versionableField2", "f2value2"}, 
-                        new String[] { "versionableField3", "f3value1"});
-        expectedRecord.setId(recordId);
-        expectedRecord.setVersion(Long.valueOf(3));
-        Record actualRecord = repository.read(recordId);
-        assertEquals(expectedRecord, actualRecord);
-        
-        actualRecord = repository.read(recordId, Long.valueOf(3));
-        assertEquals(expectedRecord, actualRecord);
-        
-        expectedRecord = generateRecord(
-                        new String[] { "versionableField1", "f1value2"},
-                        new String[] { "versionableField2", "f2value2"}, 
-                        new String[] { "versionableField3", "f3value1"});
-        expectedRecord.setId(recordId);
-        expectedRecord.setVersion(Long.valueOf(2));
-        actualRecord = repository.read(recordId, Long.valueOf(2));
-        assertEquals(expectedRecord, actualRecord);
-        
-        expectedRecord = generateRecord(
-                        new String[] { "versionableField1", "f1value1"},
-                        new String[] { "versionableField2", "f2value1"}, 
-                        new String[] { "versionableField3", "f3value1"});
-        expectedRecord.setId(recordId);
-        expectedRecord.setVersion(Long.valueOf(1));
-        actualRecord = repository.read(recordId, Long.valueOf(1));
-        assertEquals(expectedRecord, actualRecord);
-        control.verify();
     }
     
     @Test
-    public void testReadNonExistingversion() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-        
-        control.replay();
-        Record record = generateRecord(new String[] { "versionableField1", "f1value1"});
-        repository.create(record);
-        record.setField("versionableField1", "f1value2");
-        repository.update(record);
+    public void testCreateWithNonExistingRecordTypeFails() throws Exception {
+        Record record = repository.newRecord(idGenerator.newRecordId());
+        record.setRecordType("nonExistingRecordType", null);
+        record.setNonVersionableField(fieldDescriptor1.getId(), "value1");
         try {
-            repository.read(record.getId(), Long.valueOf(3));
-        } catch(RecordNotFoundException expected) {
-            assertEquals(record.getId(), expected.getRecord().getId());
-            assertEquals(Long.valueOf(3), expected.getRecord().getVersion());
+            repository.create(record);
+            fail();
+        } catch (RecordTypeNotFoundException expected) {
         }
-        control.verify();
+    }
+    
+    @Test
+    public void testCreateUsesLatestRecordType() throws Exception {
+        Record record = repository.newRecord(idGenerator.newRecordId());
+        record.setRecordType(recordType1.getId(), null);
+        record.setNonVersionableField(fieldDescriptor1.getId(), "value1");
+        Record createdRecord = repository.create(record);
+        assertEquals(recordType1.getId(), createdRecord.getRecordTypeId());
+        assertEquals(Long.valueOf(2), createdRecord.getRecordTypeVersion());
+        assertEquals(recordType1.getId(), createdRecord.getNonVersionableRecordTypeId());
+        assertEquals(Long.valueOf(2), createdRecord.getNonVersionableRecordTypeVersion());
+        assertNull(createdRecord.getVersionableRecordTypeId());
+        assertNull(createdRecord.getVersionableRecordTypeVersion());
+        assertNull(createdRecord.getVersionableMutableRecordTypeId());
+        assertNull(createdRecord.getVersionableMutableRecordTypeVersion());
+        
+        assertEquals(createdRecord, repository.read(record.getId()));
+    }
+    
+    @Test
+    public void testCreateVariant() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        
+        Map<String, String> variantProperties = new HashMap<String, String>();
+        variantProperties.put("dimension1", "dimval1");
+        Record variant = repository.newRecord(idGenerator.newRecordId(record.getId(), variantProperties ));
+        variant.setRecordType(recordType1.getId(), null);
+        variant.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        variant.setVersionableField(fieldDescriptor2.getId(), 567);
+        variant.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        
+        Record createdVariant = repository.create(variant);
+        
+        assertEquals(Long.valueOf(1), createdVariant.getVersion());
+        assertEquals("value2", createdVariant.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals(567, createdVariant.getVersionableField(fieldDescriptor2.getId()));
+        assertFalse((Boolean)createdVariant.getVersionableMutableField(fieldDescriptor3.getId()));
+        
+        assertEquals(createdVariant, repository.read(variant.getId()));
+    }
+    
+    @Test
+    public void testUpdate() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        
+        Record updatedRecord = repository.update(updateRecord);
+        
+        assertEquals(Long.valueOf(2), updatedRecord.getVersion());
+        assertEquals("value2", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals(789, updatedRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertEquals(false, updatedRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        
+        assertEquals(updatedRecord, repository.read(record.getId()));
+    }
+    
+    @Test
+    public void testUpdateOnlyOneField() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        
+        Record updatedRecord = repository.update(updateRecord);
+        
+        assertEquals(Long.valueOf(1), updatedRecord.getVersion());
+        assertEquals("value2", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        try {
+            updatedRecord.getVersionableField(fieldDescriptor2.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            updatedRecord.getVersionableMutableField(fieldDescriptor3.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        
+        updatedRecord = repository.read(record.getId());
+        assertEquals("value2", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals(123, updatedRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertEquals(true, updatedRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+    }
+    
+    @Test
+    public void testEmptyUpdate() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        
+        Record updatedRecord = repository.update(updateRecord);
+        
+        assertEquals(Long.valueOf(1), updatedRecord.getVersion());
+        try {
+            updatedRecord.getNonVersionableField(fieldDescriptor1.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            updatedRecord.getVersionableField(fieldDescriptor2.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            updatedRecord.getVersionableMutableField(fieldDescriptor3.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        
+        assertEquals(record, repository.read(record.getId()));
+    }
+    
+    @Test
+    public void testIdempotentUpdate() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        
+        Record updatedRecord = repository.update(updateRecord);
+        
+        assertEquals(Long.valueOf(1), updatedRecord.getVersion());
+        assertEquals("value1", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals(123, updatedRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertEquals(true, updatedRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        
+        assertEquals(record, repository.read(record.getId()));
+    }
+    
+    @Test
+    public void testUpdateIgnoresVersion() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        updateRecord.setVersion(Long.valueOf(99));
+        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        
+        Record updatedRecord = repository.update(updateRecord);
+        
+        assertEquals(Long.valueOf(1), updatedRecord.getVersion());
+        
+        assertEquals(updatedRecord, repository.read(record.getId()));
+    }
+    
+    @Test
+    public void testUpdateNonVersionable() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(record.getRecordTypeId(), null);
+        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "aNewValue");
+        repository.update(updateRecord);
+        
+        Record readRecord = repository.read(record.getId());
+        assertEquals(Long.valueOf(1), readRecord.getVersion());
+        assertEquals("aNewValue", readRecord.getNonVersionableField(fieldDescriptor1.getId()));
+    }
+    
+    
+    @Test
+    public void testReadOlderVersions() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        
+        repository.update(updateRecord);
+        
+        record.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        assertEquals(record, repository.read(record.getId(), Long.valueOf(1)));
+    }
+    
+    @Test
+    public void testReadNonExistingRecord() throws Exception {
+        try {
+            repository.read(idGenerator.newRecordId());
+            fail();
+        } catch (RecordNotFoundException expected) {
+        }
+    }
+
+    @Test
+    public void testReadTooRecentRecord() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        try {
+            repository.read(record.getId(), Long.valueOf(2));
+            fail();
+        } catch (RecordNotFoundException expected) {
+        }
     }
     
     @Test
     public void testReadSpecificFields() throws Exception {
-        expect(recordType.getFieldDescriptor("field1")).andReturn(nonVersionableFieldDescriptor).anyTimes();
-        expect(recordType.getFieldDescriptor("field2")).andReturn(nonVersionableFieldDescriptor).anyTimes();
-        expect(recordType.getFieldDescriptor("field3")).andReturn(versionableFieldDescriptor).anyTimes();
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record readRecord = repository.read(record.getId(), Arrays.asList(new String[]{fieldDescriptor1.getId()}), Arrays.asList(new String[]{fieldDescriptor2.getId()}), Arrays.asList(new String[]{fieldDescriptor3.getId()}));
+        assertEquals(repository.read(record.getId()), readRecord);
+    }
     
-        control.replay();
-        Record record = generateRecord(new String[] { "field1", "value1"}, new String[] { "field2",
-                "value2"}, new String[] { "field3", "value3"});
-        repository.create(record);
-        Record actualRecord = repository.read(record.getId(), "field1", "field3");
-        assertEquals(record.getId(), actualRecord.getId());
-        assertEquals("value1", actualRecord.getField("field1"));
+    
+    @Test
+    public void testUpdateWithNewRecordTypeVersion() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(recordType1B.getId(), recordType1B.getVersion());
+        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        
+        Record updatedRecord = repository.update(updateRecord);
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion());
+        assertEquals(recordType1B.getId(),updatedRecord.getNonVersionableRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getNonVersionableRecordTypeVersion());
+        assertEquals(recordType1B.getId(),updatedRecord.getVersionableRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
+        assertEquals(recordType1B.getId(),updatedRecord.getVersionableMutableRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableMutableRecordTypeVersion());
+        
+        Record recordV1 = repository.read(record.getId(), Long.valueOf(1));
+        assertEquals(recordType1B.getId(),recordV1.getRecordTypeId());
+        assertEquals(recordType1B.getVersion(),recordV1.getRecordTypeVersion());
+        assertEquals(recordType1B.getId(),recordV1.getNonVersionableRecordTypeId());
+        assertEquals(recordType1B.getVersion(),recordV1.getNonVersionableRecordTypeVersion());
+        assertEquals(recordType1.getId(),recordV1.getVersionableRecordTypeId());
+        assertEquals(recordType1.getVersion(),recordV1.getVersionableRecordTypeVersion());
+        assertEquals(recordType1.getId(),recordV1.getVersionableMutableRecordTypeId());
+        assertEquals(recordType1.getVersion(),recordV1.getVersionableMutableRecordTypeVersion());
+    }
+    
+    @Test
+    public void testUpdateWithNewRecordTypeVersionOnlyOneFieldUpdated() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(recordType1B.getId(), recordType1B.getVersion());
+        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        
+        Record updatedRecord = repository.update(updateRecord);
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion());
+        assertEquals(recordType1B.getId(),updatedRecord.getVersionableRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
+        
+        Record readRecord = repository.read(record.getId());
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion());
+        assertEquals(recordType1.getId(),readRecord.getNonVersionableRecordTypeId());
+        assertEquals(recordType1.getVersion(),readRecord.getNonVersionableRecordTypeVersion());
+        assertEquals(recordType1B.getId(),updatedRecord.getVersionableRecordTypeId());
+        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
+        assertEquals(recordType1.getId(),readRecord.getVersionableMutableRecordTypeId());
+        assertEquals(recordType1.getVersion(),readRecord.getVersionableMutableRecordTypeVersion());
+    }
+    
+    @Test
+    public void testUpdateWithNewRecordType() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
+        updateRecord.setNonVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.setVersionableField(fieldDescriptor3.getId(), false);
+        updateRecord.setVersionableMutableField(fieldDescriptor1.getId(), "value2");
+        
+        Record updatedRecord = repository.update(updateRecord);
+        assertEquals(recordType2.getId(),updatedRecord.getRecordTypeId());
+        assertEquals(recordType2.getVersion(),updatedRecord.getRecordTypeVersion());
+        assertEquals(recordType2.getId(),updatedRecord.getNonVersionableRecordTypeId());
+        assertEquals(recordType2.getVersion(),updatedRecord.getNonVersionableRecordTypeVersion());
+        assertEquals(recordType2.getId(),updatedRecord.getVersionableRecordTypeId());
+        assertEquals(recordType2.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
+        assertEquals(recordType2.getId(),updatedRecord.getVersionableMutableRecordTypeId());
+        assertEquals(recordType2.getVersion(),updatedRecord.getVersionableMutableRecordTypeVersion());
+        
+        assertEquals(1, updatedRecord.getNonVersionableFields().size());
+        assertEquals(1, updatedRecord.getVersionableFields().size());
+        assertEquals(1, updatedRecord.getVersionableMutableFields().size());
+
+        Record readRecord = repository.read(record.getId());
+        // Nothing got deleted
+        assertEquals(2, readRecord.getNonVersionableFields().size());
+        assertEquals(2, readRecord.getVersionableFields().size());
+        assertEquals(2, readRecord.getVersionableMutableFields().size());
+        assertEquals("value1", readRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals(789, readRecord.getNonVersionableField(fieldDescriptor2.getId()));
+        assertEquals(123, readRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertFalse((Boolean)readRecord.getVersionableField(fieldDescriptor3.getId()));
+        assertTrue((Boolean)readRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        assertEquals("value2", readRecord.getVersionableMutableField(fieldDescriptor1.getId()));
+
+    }
+    
+    @Test
+    public void testDeleteField() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record deleteRecord = repository.newRecord(record.getId());
+        deleteRecord.setRecordType(record.getRecordTypeId(), null);
+        deleteRecord.addNonVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor1.getId()}));
+        deleteRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        deleteRecord.addVersionableMutableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor3.getId()}));
+        
+        repository.update(deleteRecord);
+        Record readRecord = repository.read(record.getId());
+        assertTrue(readRecord.getNonVersionableFields().isEmpty());
+        assertTrue(readRecord.getVersionableFields().isEmpty());
+        assertTrue(readRecord.getVersionableMutableFields().isEmpty());
+    }
+    
+    @Test
+    public void testDeleteFieldsNoLongerInRecordType() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
+        updateRecord.setNonVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.setVersionableField(fieldDescriptor3.getId(), false);
+        updateRecord.setVersionableMutableField(fieldDescriptor1.getId(), "value2");
+        
+        repository.update(updateRecord);
+        
+        Record deleteRecord = repository.newRecord(record.getId());
+        deleteRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
+        deleteRecord.addNonVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor1.getId()}));
+        repository.update(deleteRecord);
+        
+        Record readRecord = repository.read(record.getId());
+        assertEquals(Long.valueOf(2), readRecord.getVersion());
+        assertEquals(1, readRecord.getNonVersionableFields().size());
         try {
-            actualRecord.getField("field2");
-            fail("An exception should be thrown because the record does not contain the requested field");
+            readRecord.getNonVersionableField(fieldDescriptor1.getId());
+            fail();
         } catch (FieldNotFoundException expected) {
         }
-        assertEquals("value3", actualRecord.getField("field3"));
-        control.verify();
-    }
-    
-    @Test
-    public void testDeleteANonVersionableField() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(nonVersionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] {"aField", "f1"});
-        repository.create(record);
-        Record deleteRecord = repository.newRecord(record.getId());
-        deleteRecord.setRecordType("dummyRecordType", 1);
-        deleteRecord.deleteField("aField");
+        assertEquals("value2", readRecord.getVersionableMutableField(fieldDescriptor1.getId()));
+        assertEquals(789, readRecord.getNonVersionableField(fieldDescriptor2.getId()));
+        
+        deleteRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        deleteRecord.addVersionableMutableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor3.getId()}));
         repository.update(deleteRecord);
-        Record actualRecord = repository.read(record.getId());
-        try { 
-            actualRecord.getField("aField");
-            fail("Getting a deleted field from a record should throw a FieldNotFoundException");
-        } catch(FieldNotFoundException expected) {
-        }
-        control.verify();
+        
+        readRecord = repository.read(record.getId());
+        assertEquals(Long.valueOf(3), readRecord.getVersion());
+        assertEquals(1, readRecord.getNonVersionableFields().size());
+        assertEquals(1, readRecord.getVersionableFields().size());
+        assertEquals(1, readRecord.getVersionableMutableFields().size());
+        assertEquals(789, readRecord.getNonVersionableField(fieldDescriptor2.getId()));
+        assertEquals(false, readRecord.getVersionableField(fieldDescriptor3.getId()));
+        assertEquals("value2", readRecord.getVersionableMutableField(fieldDescriptor1.getId()));
     }
     
     @Test
-    public void testDeleteAVersionableField() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] {"aField", "f1"});
-        repository.create(record);
+    public void testUpdateAfterDelete() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
         Record deleteRecord = repository.newRecord(record.getId());
-        deleteRecord.setRecordType("dummyRecordType", 1);
-        deleteRecord.deleteField("aField");
+        deleteRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        deleteRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
         repository.update(deleteRecord);
-        Record actualRecord = repository.read(record.getId());
-        try { 
-            actualRecord.getField("aField");
-            fail("Getting a deleted field from a record should throw a FieldNotFoundException");
-        } catch(FieldNotFoundException expected) {
-        }
         
-        //TODO should we throw already at the moment of the read operation? i.e. validate that the requested fields are not null
-        actualRecord = repository.read(record.getId(), "aField");
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        repository.update(updateRecord);
+        
+        Record readRecord = repository.read(record.getId());
+        assertEquals(Long.valueOf(3), readRecord.getVersion());
+        assertEquals(789, readRecord.getVersionableField(fieldDescriptor2.getId()));
+        
+        readRecord = repository.read(record.getId(), Long.valueOf(2));
         try {
-            actualRecord.getField("aField");
-            fail("Getting a deleted field from a record should throw a FieldNotFoundException");
-        } catch(FieldNotFoundException expected) {
-        }
-        control.verify();
-    }
-    
-    @Test
-    public void testDeleteAVersionableFieldWithOlderVersions() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] {"aField", "f1"});
-        repository.create(record);
-        record.setField("aField", "f2");
-        repository.update(record);
-        
-        Record deleteRecord = repository.newRecord(record.getId());
-        deleteRecord.setRecordType("dummyRecordType", 1);
-        deleteRecord.deleteField("aField");
-        repository.update(deleteRecord);
-
-        Record actualRecord = repository.read(record.getId());
-        try { 
-            actualRecord.getField("aField");
-            fail("Getting a deleted field from a record should throw a FieldNotFoundException");
-        } catch(FieldNotFoundException expected) {
-        }
-        control.verify();
-    }
-    
-    @Test
-    public void testCreateVariantRecord() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] {"aField", "f1"});
-        repository.create(record);
-        
-        Map<String, String> variantProperties = new HashMap<String, String>();
-        variantProperties.put("dimension1", "dimensionValue1");
-        Record variantRecord = generateRecord(new String[] {"aVariantField", "vf1"});
-        RecordId variantRecordId = idGenerator.newRecordId(record.getId(), variantProperties);
-        variantRecord.setId(variantRecordId);
-        repository.create(variantRecord);
-        
-        Record actualVariantRecord = repository.read(variantRecordId);
-        
-        assertEquals(variantRecord, actualVariantRecord);
-        
-        control.verify();
-    }
-    
-    @Test
-    public void testCreateVariantRecordWithNonExistingRecord() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Map<String, String> variantProperties = new HashMap<String, String>();
-        variantProperties.put("dimension1", "dimensionValue1");
-        Record variantRecord = generateRecord(new String[] {"aVariantField", "vf1"});
-        variantRecord.setId(idGenerator.newRecordId(idGenerator.newRecordId("nonExistingMasterRecordId"), variantProperties ));
-        try {
-            repository.create(variantRecord);
-            fail();
-        } catch (RecordNotFoundException expected) {
-            assertEquals(variantRecord, expected.getRecord());
-        }
-        control.verify();
-    }
-    
-    @Test
-    public void testReadNonExistingVariantRecord() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] {"aField", "f1"});
-        repository.create(record);
-        
-        Record variantRecord = generateRecord(new String[] {"aVariantField", "vf1"});
-        Map<String, String> variantProperties = new HashMap<String, String>();
-        variantProperties.put("dimension1", "dimensionValue1");
-        RecordId variantRecordId = idGenerator.newRecordId(record.getId(), variantProperties );
-        variantRecord.setId(variantRecordId);
-        
-        try {
-            repository.read(variantRecordId);
-            fail("Reading a non-existing variant should throw an exception");
-        } catch (RecordNotFoundException expected) {
-            assertEquals(variantRecordId, expected.getRecord().getId());
-        }
-        repository.create(variantRecord);
-        
-        Map<String, String> variantProperties2 = new HashMap<String, String>();
-        variantProperties2.put("dimension2", "dimensionValue1");
-        RecordId variantRecordId2 = idGenerator.newRecordId(record.getId(), variantProperties2);
-        try {
-            repository.read(variantRecordId2);
-            fail("Reading a non-existing variant should throw an exception");
-        } catch (RecordNotFoundException expected) {
-            assertEquals(variantRecordId2, expected.getRecord().getId());
-        }
-        control.verify();
-    }
-    
-    @Test
-    public void testReadNonExistingVariantRecordVersion() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] {"aField", "f1"});
-        repository.create(record);
-        
-        Record variantRecord = generateRecord(new String[] {"aVariantField", "vf1"});
-        Map<String, String> variantProperties = new HashMap<String, String>();
-        variantProperties.put("dimension1", "dimensionValue1");
-        RecordId variantRecordId = idGenerator.newRecordId(record.getId(), variantProperties );
-        variantRecord.setId(variantRecordId);
-        repository.create(variantRecord);
-        
-        try {
-            repository.read(variantRecordId, Long.valueOf(2));
-            fail("Reading a non-existing variant should throw an exception");
-        } catch (RecordNotFoundException expected) {
-            assertEquals(variantRecordId, expected.getRecord().getId());
-            assertEquals(Long.valueOf(2), expected.getRecord().getVersion());
-        }
-        
-        control.verify();
-    }
-    
-    @Test
-    public void testVariantRecordVersions() throws Exception {
-        expect(recordType.getFieldDescriptor(isA(String.class))).andReturn(versionableFieldDescriptor).anyTimes();
-
-        control.replay();
-        Record record = generateRecord(new String[] {"field1", "f1"});
-        repository.create(record);
-        RecordId recordId = record.getId();
-        Map<String, String> variantProperties = new HashMap<String, String>();
-        variantProperties.put("dimension1", "dimensionValue1");
-        RecordId variantRecordId = idGenerator.newRecordId(recordId, variantProperties);
-
-        Record variantRecord = generateRecord(new String[] {"field1", "vf1"});
-        variantRecord.setId(variantRecordId);
-        repository.create(variantRecord);
-        
-        variantRecord = generateRecord(new String[] {"field1", "vf1B"}, new String[] {"field2", "vf2"});
-        variantRecord.setId(variantRecordId);
-        repository.update(variantRecord);
-
-        variantRecord = generateRecord(new String[] {"field2", "vf2B"}, new String[] {"field3", "vf3"});
-        variantRecord.setId(variantRecordId);
-        repository.update(variantRecord);
-        
-        variantRecord = generateRecord();
-        variantRecord.setId(variantRecordId);
-        variantRecord.deleteField("field1");
-        repository.update(variantRecord);
-        
-        variantRecord = generateRecord(new String[] {"field1", "vf1B"});
-        variantRecord.setId(variantRecordId);
-        repository.update(variantRecord);
-
-        Record actualMasterRecord = repository.read(recordId);
-        assertEquals("f1", actualMasterRecord.getField("field1"));
-        Record actualVariantRecord = repository.read(variantRecordId, Long.valueOf(1));
-        assertEquals("vf1", actualVariantRecord.getField("field1"));
-        
-        actualVariantRecord = repository.read(variantRecordId, Long.valueOf(2));
-        assertEquals("vf1B", actualVariantRecord.getField("field1"));
-        assertEquals("vf2", actualVariantRecord.getField("field2"));
-
-        actualVariantRecord = repository.read(variantRecordId, Long.valueOf(3));
-        assertEquals("vf1B", actualVariantRecord.getField("field1"));
-        assertEquals("vf2B", actualVariantRecord.getField("field2"));
-        assertEquals("vf3", actualVariantRecord.getField("field3"));
-
-        actualVariantRecord = repository.read(variantRecordId, Long.valueOf(4));
-        try { 
-            actualVariantRecord.getField("field1");
+            readRecord.getVersionableField(fieldDescriptor2.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         
-        actualVariantRecord = repository.read(variantRecordId, Long.valueOf(5));
-        assertEquals("vf1B", actualVariantRecord.getField("field1"));
+        readRecord = repository.read(record.getId(), Long.valueOf(1));
+        assertEquals(123, readRecord.getVersionableField(fieldDescriptor2.getId()));
+    }
+    
+    @Test
+    public void testDeleteNonVersionableFieldAndUpdateVersionableField() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        updateRecord.setVersionableField(fieldDescriptor2.getId(), 999);
+        updateRecord.addNonVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor1.getId()}));
+        repository.update(updateRecord);
+        
+        Record readRecord = repository.read(record.getId());
+        assertEquals(999, readRecord.getVersionableField(fieldDescriptor2.getId()));
+        try {
+            readRecord.getNonVersionableField(fieldDescriptor1.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        
+        readRecord = repository.read(record.getId(), Long.valueOf(1));
+        try {
+            readRecord.getNonVersionableField(fieldDescriptor1.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        
+    }
+    
+    @Test
+    public void testUpdateAndDeleteSameField() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = repository.newRecord(record.getId());
+        updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        repository.update(updateRecord);
         
         try {
-            actualVariantRecord = repository.read(variantRecordId, Long.valueOf(6));
+            repository.read(record.getId()).getVersionableField(fieldDescriptor2.getId());
             fail();
-        } catch(RecordNotFoundException expected) {
+        } catch (FieldNotFoundException expected) {
         }
-
-        control.verify();
-
     }
-
-    private Record generateRecord(String[]... fieldsAndValues) throws Exception {
-        Record record = repository.newRecord();
-        
-        record.setRecordType(recordType.getId(), recordType.getVersion());
-        for (String[] fieldInfo : fieldsAndValues) {
-            record.setField(fieldInfo[0], fieldInfo[1]);
+    
+    public void testDeleteRecord() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        repository.delete(record.getId());
+        try {
+            repository.read(record.getId());
+            fail();
+        } catch (RecordNotFoundException expected) {
         }
-        return record;
     }
 }

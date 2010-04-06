@@ -15,8 +15,8 @@
  */
 package org.lilycms.repository.api;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * An object to be used as input for {@link Repository#create} and
@@ -33,10 +33,6 @@ import java.util.Set;
  * <p>
  * Fields to be deleted need to be added explicitly with their fieldId
  * 
- * <p>
- * A record can either be an ordinary record or a variant record, in which case
- * the variantProperties need to be provided, and the {@link RecordId} should
- * point to the master record.
  */
 public interface Record {
     void setId(RecordId recordId);
@@ -47,21 +43,67 @@ public interface Record {
 
     Long getVersion();
 
-    void setRecordType(String recordTypeId, long recordTypeVersion);
+    void setRecordType(String id, Long version);
 
     String getRecordTypeId();
 
-    long getRecordTypeVersion();
+    Long getRecordTypeVersion();
+    
+    void setNonVersionableRecordType(String id, Long version);
+    
+    String getNonVersionableRecordTypeId();
+    
+    Long getNonVersionableRecordTypeVersion();
+    
+    void setVersionableRecordType(String id, Long version);
+    
+    String getVersionableRecordTypeId();
+    
+    Long getVersionableRecordTypeVersion();
+    
+    void setVersionableMutableRecordType(String id, Long version);
+    
+    String getVersionableMutableRecordTypeId();
+    
+    Long getVersionableMutableRecordTypeVersion();
 
-    void setField(String fieldId, Object value);
+    void setNonVersionableField(String fieldId, Object value);
 
-    Object getField(String fieldId) throws FieldNotFoundException;
+    Object getNonVersionableField(String fieldId) throws FieldNotFoundException;
 
-    Map<String, Object> getFields();
+    void setVersionableField(String fieldId, Object value);
 
-    void deleteField(String fieldId);
+    Object getVersionableField(String fieldId) throws FieldNotFoundException;
 
-    Set<String> getDeleteFields();
+    void setVersionableMutableField(String fieldId, Object value);
+
+    Object getVersionableMutableField(String fieldId) throws FieldNotFoundException;
+    
+    Map<String, Object> getNonVersionableFields();
+
+    Map<String, Object> getVersionableFields();
+
+    Map<String, Object> getVersionableMutableFields();
+    
+    void addNonVersionableFieldsToDelete(List<String> fieldIds);
+    
+    void removeNonVersionableFieldsToDelete(List<String> fieldIds);
+
+    List<String> getNonVersionableFieldsToDelete();
+    
+    void addVersionableFieldsToDelete(List<String> fieldIds);
+
+    void removeVersionableFieldsToDelete(List<String> fieldIds);
+    
+    List<String> getVersionableFieldsToDelete();
+    
+    void addVersionableMutableFieldsToDelete(List<String> fieldIds);
+
+    void removeVersionableMutableFieldsToDelete(List<String> fieldIds);
+    
+    List<String> getVersionableMutableFieldsToDelete();
+    
+    Record clone();
     
     boolean equals(Object obj);
 }

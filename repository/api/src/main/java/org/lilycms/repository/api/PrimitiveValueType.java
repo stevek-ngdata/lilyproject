@@ -49,4 +49,7 @@ public interface PrimitiveValueType {
      *         {@link PrimitiveValueType}
      */
     Class getType();
+    
+    @Override
+    boolean equals(Object obj);
 }

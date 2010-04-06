@@ -1,21 +1,26 @@
 package org.lilycms.indexer.conf;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import java.util.Set;
+
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.Record;
 
-import java.util.Set;
-
 public class Value {
     private String fieldName;
+    private final boolean versioned;
 
-    public Value(String fieldName) {
+    public Value(String fieldName, boolean versioned) {
         this.fieldName = fieldName;
+        this.versioned = versioned;
     }
 
     public String eval(Record record) {
         try {
-            return (String)record.getField(fieldName);
+            if (versioned) {
+                return (String)record.getVersionableField(fieldName);
+            } else {
+                return (String)record.getNonVersionableField(fieldName);
+            }
         } catch (FieldNotFoundException e) {
             // TODO
             throw new RuntimeException(e);

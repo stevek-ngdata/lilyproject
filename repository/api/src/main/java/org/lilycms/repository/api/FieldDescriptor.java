@@ -30,30 +30,45 @@ package org.lilycms.repository.api;
  */
 public interface FieldDescriptor {
     /**
-     * The id of the {@link FieldDescriptor} is also the id to be used by the corresponding {@link Field}  
+     * The id of the {@link FieldDescriptor} is also the id to be used by the corresponding {@link Field}
+     * The id is system generated and unique.  
      * @return the id of the {@link FieldDescriptor}
      */
     String getId();
 
+    /**
+     * Set the version of the {@link FieldDescriptor}
+     */
+    void setVersion(Long version);
+    
     /**
      * @return the version of the {@link FieldDescriptor}
      */
     Long getVersion();
 
     /**
+     * Set the global unique name of the {@link FieldDescriptor}.
+     * The name can be chose by the user.
+     */
+    void setGlobalName(String name);
+    
+    /**
+     * @return the global unique name of the {@link FieldDescriptor}
+     */
+    String getGlobalName();
+    
+    /**
+     * Set the {@link ValueType} of the {@link Field}
+     * @param valueType
+     */
+    void setValueType(ValueType valueType);
+    
+    /**
      * @return the {@link ValueType} of the {@link Field}
      */
     ValueType getValueType();
 
-    /**
-     * @return if the {@link Field} is mandatory
-     */
-    boolean isMandatory();
-
-    /**
-     * @return if the {@link Field} is versionable
-     */
-    boolean isVersionable();
-    
     boolean equals(Object obj);
+
+    FieldDescriptor clone();
 }

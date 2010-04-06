@@ -162,7 +162,7 @@ public class IndexerConfBuilder {
 
             List<Element> indexFieldEls = FIELD_CHILDREN.get().evalAsNativeElementList(caseEl);
             for (Element indexFieldEl : indexFieldEls) {
-                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl));
+                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl, true));
             }
 
             for (String versionTag : versionTags) {
@@ -180,14 +180,14 @@ public class IndexerConfBuilder {
 
             List<Element> indexFieldEls = FIELD_CHILDREN.get().evalAsNativeElementList(caseEl);
             for (Element indexFieldEl : indexFieldEls) {
-                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl));
+                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl, false));
             }
 
             conf.addNonVersionedContentMapping(recordType, mapping);
         }
     }
 
-    private IndexFieldBinding buildIndexFieldBinding(Element indexFieldEl) throws Exception {
+    private IndexFieldBinding buildIndexFieldBinding(Element indexFieldEl, boolean versioned) throws Exception {
         String name = DocumentHelper.getAttribute(indexFieldEl, "name", false);
         String ref = DocumentHelper.getAttribute(indexFieldEl, "ref", false);
 
@@ -210,15 +210,15 @@ public class IndexerConfBuilder {
         }
 
 
-        Value value = buildValue(DocumentHelper.getElementChild(indexFieldEl, "value", true));
+        Value value = buildValue(DocumentHelper.getElementChild(indexFieldEl, "value", true), versioned);
 
         return new IndexFieldBinding(field, value);
     }
 
-    private Value buildValue(Element valueEl) throws Exception {
+    private Value buildValue(Element valueEl, boolean versioned) throws Exception {
         Element fieldEl = DocumentHelper.getElementChild(valueEl, "field", true);
         String name = DocumentHelper.getAttribute(fieldEl, "name", true);
-        return new Value(name);
+        return new Value(name, versioned);
     }
 
     private Set<String> parseCSV(String input) {

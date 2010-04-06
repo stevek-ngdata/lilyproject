@@ -15,6 +15,8 @@
  */
 package org.lilycms.repository.api;
 
+import java.util.List;
+
 
 /**
  * Repository is the API for all CRUD operations on Records.
@@ -23,13 +25,13 @@ public interface Repository {
     /**
      * Creates a new {@link Record} object.
      */
-    Record newRecord() throws RepositoryException;
+    Record newRecord();
 
     /**
      * Creates a new {@link Record} object with the {@link RecordId} already
      * filled in.
      */
-    Record newRecord(RecordId recordId) throws RepositoryException;
+    Record newRecord(RecordId recordId);
 
     /**
      * Creates a new record on the repository.
@@ -47,11 +49,14 @@ public interface Repository {
      *             if the master record for a variant record does not exist
      * @throws InvalidRecordException
      *             if an empty record is being created
+     * @throws FieldDescriptorNotFoundException 
+     * @throws FieldGroupNotFoundException 
+     * @throws RecordTypeNotFoundException 
      * @throws RepostioryException
      *             TBD
      */
-    void create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
-                    RepositoryException;
+    Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
+                    RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
     /**
      * Updates an existing record on the repository.
@@ -74,33 +79,19 @@ public interface Repository {
      *             if no update information is provided
      * @throws RepositoryException
      *             TBD
+     * @throws FieldDescriptorNotFoundException 
+     * @throws FieldGroupNotFoundException 
+     * @throws RecordTypeNotFoundException 
      */
-    void update(Record record) throws RecordNotFoundException, InvalidRecordException, RepositoryException;
+    Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
-    /**
-     * Read the latest version of a {@link Record} from the repository.
-     * 
-     * @param recordId
-     *            the id of the {@link Record} to read
-     * @param fieldIds
-     *            the fields to read from the {@link Record}, an empty list
-     *            results in reading all fields
-     * @throws RecordNotFoundException
-     *             if the {@link Record} does not exist
-     * @throws RepositoryException
-     *             TBD
-     */
-    Record read(RecordId recordId, String... fieldIds) throws RecordNotFoundException, RepositoryException;
+    Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
-    /**
-     * Read a specific version of a {@link Record}
-     * 
-     * @param version
-     *            the versionNumber to read
-     * 
-     */
-    Record read(RecordId recordId, Long version, String... fieldIds) throws RecordNotFoundException,
-                    RepositoryException;
+    Record read(RecordId recordId, List<String> nonVersionableFieldIds, List<String> versionableFieldIds, List<String> versionableMutableFieldIds) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+
+    Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+
+    Record read(RecordId recordId, Long version, List<String> nonVersionableFieldIds, List<String> versionableFieldIds, List<String> versionableMutableFieldIds) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
     /**
      * Delete a {@link Record} from the repository.

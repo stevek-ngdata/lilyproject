@@ -1,10 +1,14 @@
 package org.lilycms.linkmgmt.test;
 
+import static org.junit.Assert.*;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.lilycms.hbaseindex.IndexManager;
 import org.lilycms.linkmgmt.FieldedLink;
 import org.lilycms.linkmgmt.LinkManager;
@@ -12,11 +16,10 @@ import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.impl.*;
+import org.lilycms.repository.impl.HBaseRepository;
+import org.lilycms.repository.impl.HBaseTypeManager;
+import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.testfw.TestHelper;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class LinkManagerTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -37,8 +40,8 @@ public class LinkManagerTest {
     @Test
     public void test() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
-        TypeManager typeManager = new HBaseTypeManager(idGenerator, RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
-        Repository repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL.getConfiguration());
+        TypeManager typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+        Repository repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
         IdGenerator ids = repository.getIdGenerator();
         IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
 

@@ -23,6 +23,7 @@ import org.lilycms.indexer.conf.IndexerConfBuilder;
 import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
+import org.lilycms.repository.api.FieldGroup;
 import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordId;
@@ -30,12 +31,9 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
-import org.lilycms.repository.impl.FieldDescriptorImpl;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
-import org.lilycms.repository.impl.RecordImpl;
-import org.lilycms.repository.impl.RecordTypeImpl;
 import org.lilycms.testfw.TestHelper;
 
 public class IndexerTest {
@@ -68,31 +66,42 @@ public class IndexerTest {
     @Test
     public void testIndexer() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
-        TypeManager typeManager = new HBaseTypeManager(idGenerator, RecordTypeImpl.class, FieldDescriptorImpl.class, TEST_UTIL.getConfiguration());
-        Repository repository = new HBaseRepository(typeManager, idGenerator, RecordImpl.class, TEST_UTIL.getConfiguration());
+        TypeManager typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+        Repository repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
         SolrServer solrServer = SOLR_TEST_UTIL.getSolrServer();
         TestLilyQueue queue = new TestLilyQueue();
         Indexer indexer = new Indexer(INDEXER_CONF, queue, repository, solrServer);
 
         // Create a record type
-        RecordType recordType = typeManager.newRecordType("RecordType1");
         ValueType stringValueType = typeManager.getValueType("STRING", false, false);
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field1", stringValueType, true, true));
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field2", stringValueType, true, true));
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("field3", stringValueType, true, true));
-        recordType.addFieldDescriptor(typeManager.newFieldDescriptor("nvfield1", stringValueType, true, false));
-        typeManager.createRecordType(recordType);
+        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("field1", stringValueType, "field1GN"));
+        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("field2", stringValueType, "field2GN"));
+        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("field3", stringValueType, "field3GN"));
+        FieldGroup fieldGroup1 = typeManager.newFieldGroup("fieldGroup1");
+        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry("field1", Long.valueOf(1), true, "alias1"));
+        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry("field2", Long.valueOf(1), true, "alias2"));
+        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry("field3", Long.valueOf(1), true, "alias3"));
+        fieldGroup1 = typeManager.createFieldGroup(fieldGroup1);
 
-        // TODO need to re-retrieve the record type because its version property is not updated
-        recordType = typeManager.getRecordType("RecordType1");
+        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("nvfield1", stringValueType, "nvfield1GN"));
+        FieldGroup fieldGroup2 = typeManager.newFieldGroup("fieldGroup2");
+        fieldGroup2.setFieldGroupEntry(typeManager.newFieldGroupEntry("nvfield1", Long.valueOf(1), true, "nvalias1"));
+        fieldGroup2 = typeManager.createFieldGroup(fieldGroup2);
+        
+        RecordType recordType = typeManager.newRecordType("RecordType1");
+        recordType.setVersionableFieldGroupId(fieldGroup1.getId());
+        recordType.setVersionableFieldGroupVersion(fieldGroup1.getVersion());
+        recordType.setNonVersionableFieldGroupId(fieldGroup2.getId());
+        recordType.setNonVersionableFieldGroupVersion(fieldGroup2.getVersion());
+        recordType = typeManager.createRecordType(recordType);
 
         // Create a document
-        Record record = repository.newRecord();
+        Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType("RecordType1", recordType.getVersion());
-        record.setField("field1", "apple");
-        record.setField("field2", "pear");
-        record.setField("field3", "orange");
-        record.setField("nvfield1", "banana");
+        record.setVersionableField("field1", "apple");
+        record.setVersionableField("field2", "pear");
+        record.setVersionableField("field3", "orange");
+        record.setNonVersionableField("nvfield1", "banana");
         repository.create(record);
 
         // Generate queue message
@@ -113,7 +122,7 @@ public class IndexerTest {
         // Update the document, creating a new version
         record = repository.newRecord(record.getId());
         record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setField("field1", "peach");
+        record.setVersionableField("field1", "peach");
         repository.update(record);
         record = repository.read(record.getId());
 
