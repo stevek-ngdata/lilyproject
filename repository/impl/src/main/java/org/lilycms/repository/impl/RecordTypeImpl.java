@@ -17,6 +17,7 @@ package org.lilycms.repository.impl;
 
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.Record.Scope;
 
 public class RecordTypeImpl implements RecordType {
     
@@ -49,53 +50,62 @@ public class RecordTypeImpl implements RecordType {
         this.version = version;
     }
 
-    public String getNonVersionableFieldGroupId() {
-        return nonVersionableFieldGroupId;
+    public String getFieldGroupId(Scope scope) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            return nonVersionableFieldGroupId;
+        case VERSIONABLE:
+            return versionableFieldGroupId;
+        case VERSIONABLE_MUTABLE:
+            return versionableMutableFieldGroupId;
+        default:
+            return null;
+        }
     }
 
-    public Long getNonVersionableFieldGroupVersion() {
-        return nonVersionableFieldGroupVersion;
+    public Long getFieldGroupVersion(Scope scope) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            return nonVersionableFieldGroupVersion;
+        case VERSIONABLE:
+            return versionableFieldGroupVersion;
+        case VERSIONABLE_MUTABLE:
+            return versionableMutableFieldGroupVersion;
+        default:
+            return null;
+        }
     }
 
-    public String getVersionableFieldGroupId() {
-        return versionableFieldGroupId;
+    public void setFieldGroupId(Scope scope, String id) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            nonVersionableFieldGroupId = id;
+            break;
+        case VERSIONABLE:
+            versionableFieldGroupId = id;
+            break;
+        case VERSIONABLE_MUTABLE:
+            versionableMutableFieldGroupId = id;
+            break;
+        default:
+            break;
+        }
     }
 
-
-    public Long getVersionableFieldGroupVersion() {
-        return versionableFieldGroupVersion;
-    }
-
-    public String getVersionableMutableFieldGroupId() {
-        return versionableMutableFieldGroupId;
-    }
-
-    public Long getVersionableMutableFieldGroupVersion() {
-        return versionableMutableFieldGroupVersion;
-    }
-
-    public void setNonVersionableFieldGroupId(String id) {
-        nonVersionableFieldGroupId = id;
-    }
-
-    public void setNonVersionableFieldGroupVersion(Long version) {
-        nonVersionableFieldGroupVersion = version;
-    }
-
-    public void setVersionableFieldGroupId(String id) {
-        versionableFieldGroupId = id;
-    }
-
-    public void setVersionableFieldGroupVersion(Long version) {
-        versionableFieldGroupVersion = version;
-    }
-
-    public void setVersionableMutableFieldGroupId(String id) {
-        versionableMutableFieldGroupId = id;
-    }
-    
-    public void setVersionableMutableFieldGroupVersion(Long version) {
-        versionableMutableFieldGroupVersion = version;
+    public void setFieldGroupVersion(Scope scope, Long version) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            nonVersionableFieldGroupVersion = version;
+            break;
+        case VERSIONABLE:
+            versionableFieldGroupVersion = version;
+            break;
+        case VERSIONABLE_MUTABLE:
+            versionableMutableFieldGroupVersion = version;
+            break;
+        default:
+            break;
+        }
     }
 
     public RecordType clone() {

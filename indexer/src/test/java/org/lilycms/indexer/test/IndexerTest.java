@@ -31,6 +31,7 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.Record.Scope;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
@@ -89,19 +90,19 @@ public class IndexerTest {
         fieldGroup2 = typeManager.createFieldGroup(fieldGroup2);
         
         RecordType recordType = typeManager.newRecordType("RecordType1");
-        recordType.setVersionableFieldGroupId(fieldGroup1.getId());
-        recordType.setVersionableFieldGroupVersion(fieldGroup1.getVersion());
-        recordType.setNonVersionableFieldGroupId(fieldGroup2.getId());
-        recordType.setNonVersionableFieldGroupVersion(fieldGroup2.getVersion());
+        recordType.setFieldGroupId(Scope.VERSIONABLE, fieldGroup1.getId());
+        recordType.setFieldGroupVersion(Scope.VERSIONABLE, fieldGroup1.getVersion());
+        recordType.setFieldGroupId(Scope.NON_VERSIONABLE, fieldGroup2.getId());
+        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, fieldGroup2.getVersion());
         recordType = typeManager.createRecordType(recordType);
 
         // Create a document
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType("RecordType1", recordType.getVersion());
-        record.setVersionableField("field1", "apple");
-        record.setVersionableField("field2", "pear");
-        record.setVersionableField("field3", "orange");
-        record.setNonVersionableField("nvfield1", "banana");
+        record.setField(Scope.VERSIONABLE, "field1", "apple");
+        record.setField(Scope.VERSIONABLE, "field2", "pear");
+        record.setField(Scope.VERSIONABLE, "field3", "orange");
+        record.setField(Scope.NON_VERSIONABLE, "nvfield1", "banana");
         repository.create(record);
 
         // Generate queue message
@@ -122,7 +123,7 @@ public class IndexerTest {
         // Update the document, creating a new version
         record = repository.newRecord(record.getId());
         record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setVersionableField("field1", "peach");
+        record.setField(Scope.VERSIONABLE, "field1", "peach");
         repository.update(record);
         record = repository.read(record.getId());
 

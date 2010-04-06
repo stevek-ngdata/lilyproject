@@ -87,127 +87,144 @@ public class RecordImpl implements Record {
         return recordTypeVersion;
     }
     
-    public void setNonVersionableRecordType(String id, Long version) {
-        this.nonVersionableRecordTypeId = id;
-        this.nonVersionableRecordTypeVersion = version;
+    public void setRecordType(Scope scope, String id, Long version) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            this.nonVersionableRecordTypeId = id;
+            this.nonVersionableRecordTypeVersion = version;
+            break;
+        case VERSIONABLE:
+            this.versionableRecordTypeId = id;
+            this.versionableRecordTypeVersion = version;
+            break;
+        case VERSIONABLE_MUTABLE:
+            this.versionableMutableRecordTypeId = id;
+            this.versionableMutableRecordTypeVersion = version;
+            break;
+        default:
+            break;
+        }
     }
     
-    public String getNonVersionableRecordTypeId() {
-        return nonVersionableRecordTypeId;
+    public String getRecordTypeId(Scope scope) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            return nonVersionableRecordTypeId;
+        case VERSIONABLE:
+            return versionableRecordTypeId;
+        case VERSIONABLE_MUTABLE:
+            return versionableMutableRecordTypeId;
+        default:
+            return null;
+        }
     }
     
-    public Long getNonVersionableRecordTypeVersion() {
-        return nonVersionableRecordTypeVersion;
+    public Long getRecordTypeVersion(Scope scope) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            return nonVersionableRecordTypeVersion;
+        case VERSIONABLE:
+            return versionableRecordTypeVersion;
+        case VERSIONABLE_MUTABLE:
+            return versionableMutableRecordTypeVersion;
+        default:
+            return null;
+        }
     }
     
-    public void setVersionableRecordType(String id, Long version) {
-        this.versionableRecordTypeId = id;
-        this.versionableRecordTypeVersion = version;
+    public void setField(Scope scope, String fieldId, Object value) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            this.nonVersionableFields.put(fieldId, value);
+            break;
+        case VERSIONABLE:
+            this.versionableFields.put(fieldId, value);
+            break;
+        case VERSIONABLE_MUTABLE:
+            this.versionableMutableFields.put(fieldId, value);
+            break;
+        default:
+            break;
+        }
     }
     
-    public String getVersionableRecordTypeId() {
-        return versionableRecordTypeId;
-    }
-    
-    public Long getVersionableRecordTypeVersion() {
-        return versionableRecordTypeVersion;
-    }
-    
-    public void setVersionableMutableRecordType(String id, Long version) {
-        this.versionableMutableRecordTypeId = id;
-        this.versionableMutableRecordTypeVersion = version;
-    }
-    
-    public String getVersionableMutableRecordTypeId() {
-        return versionableMutableRecordTypeId;
-    }
-
-    public Long getVersionableMutableRecordTypeVersion() {
-        return versionableMutableRecordTypeVersion;
-    }
-    
-    public void setNonVersionableField(String fieldId, Object value) {
-        this.nonVersionableFields.put(fieldId, value);
-    }
-    
-    public void setVersionableField(String fieldId, Object value) {
-        this.versionableFields.put(fieldId, value);
-    }
-    
-    public void setVersionableMutableField(String fieldId, Object value) {
-        this.versionableMutableFields.put(fieldId, value);
-    }
-
-    public Object getNonVersionableField(String fieldId) throws FieldNotFoundException {
-        Object field = nonVersionableFields.get(fieldId);
+    public Object getField(Scope scope, String fieldId) throws FieldNotFoundException {
+        Object field = null;
+        switch (scope) {
+        case NON_VERSIONABLE:
+            field = nonVersionableFields.get(fieldId);
+            break;
+        case VERSIONABLE:
+            field = versionableFields.get(fieldId);
+            break;
+        case VERSIONABLE_MUTABLE:
+            field = versionableMutableFields.get(fieldId);
+            break;
+        default:
+            break;
+        }
         if (field == null) {
             throw new FieldNotFoundException(fieldId);
         }
         return field;
     }
 
-    public Object getVersionableField(String fieldId) throws FieldNotFoundException {
-        Object field = versionableFields.get(fieldId);
-        if (field == null) {
-            throw new FieldNotFoundException(fieldId);
+    public Map<String, Object> getFields(Scope scope) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            return nonVersionableFields;
+        case VERSIONABLE:
+            return versionableFields;
+        case VERSIONABLE_MUTABLE:
+            return versionableMutableFields;
+        default:
+            return null;
         }
-        return field;
     }
 
-    public Object getVersionableMutableField(String fieldId) throws FieldNotFoundException {
-        Object field = versionableMutableFields.get(fieldId);
-        if (field == null) {
-            throw new FieldNotFoundException(fieldId);
+    public List<String> getFieldsToDelete(Scope scope) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            return nonVersionableFieldsToDelete;
+        case VERSIONABLE:
+            return versionableFieldsToDelete;
+        case VERSIONABLE_MUTABLE:
+            return versionableMutableFieldsToDelete;
+        default:
+            return null;
         }
-        return field;
     }
 
-    public Map<String, Object> getNonVersionableFields() {
-        return nonVersionableFields;
+    public void addFieldsToDelete(Scope scope, List<String> fieldIds) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            this.nonVersionableFieldsToDelete .addAll(fieldIds);
+            break;
+        case VERSIONABLE:
+            this.versionableFieldsToDelete .addAll(fieldIds);
+            break;
+        case VERSIONABLE_MUTABLE:
+            this.versionableMutableFieldsToDelete .addAll(fieldIds);
+            break;
+        default:
+            break;
+        }
     }
 
-    public Map<String, Object> getVersionableFields() {
-        return versionableFields;
-    }
-
-    public Map<String, Object> getVersionableMutableFields() {
-        return versionableMutableFields;
-    }
-    
-    public List<String> getNonVersionableFieldsToDelete() {
-        return nonVersionableFieldsToDelete;
-    }
-
-    public List<String> getVersionableFieldsToDelete() {
-        return versionableFieldsToDelete;
-    }
-
-    public List<String> getVersionableMutableFieldsToDelete() {
-        return versionableMutableFieldsToDelete;
-    }
-
-    public void addNonVersionableFieldsToDelete(List<String> fieldIds) {
-        this.nonVersionableFieldsToDelete .addAll(fieldIds);
-    }
-
-    public void addVersionableFieldsToDelete(List<String> fieldIds) {
-        this.versionableFieldsToDelete.addAll(fieldIds);
-    }
-
-    public void addVersionableMutableFieldsToDelete(List<String> fieldIds) {
-        this.versionableMutableFieldsToDelete.addAll(fieldIds);
-    }
-    
-    public void removeNonVersionableFieldsToDelete(List<String> fieldIds) {
-        this.nonVersionableFieldsToDelete .removeAll(fieldIds);
-    }
-
-    public void removeVersionableFieldsToDelete(List<String> fieldIds) {
-        this.versionableFieldsToDelete.removeAll(fieldIds);
-    }
-
-    public void removeVersionableMutableFieldsToDelete(List<String> fieldIds) {
-        this.versionableMutableFieldsToDelete.removeAll(fieldIds);
+    public void removeFieldsToDelete(Scope scope, List<String> fieldIds) {
+        switch (scope) {
+        case NON_VERSIONABLE:
+            this.nonVersionableFieldsToDelete .removeAll(fieldIds);
+            break;
+        case VERSIONABLE:
+            this.versionableFieldsToDelete .removeAll(fieldIds);
+            break;
+        case VERSIONABLE_MUTABLE:
+            this.versionableMutableFieldsToDelete .removeAll(fieldIds);
+            break;
+        default:
+            break;
+        }
     }
 
     public Record clone() {

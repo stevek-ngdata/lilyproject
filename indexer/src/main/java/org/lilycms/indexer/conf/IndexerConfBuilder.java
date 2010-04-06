@@ -1,5 +1,6 @@
 package org.lilycms.indexer.conf;
 
+import org.lilycms.repository.api.Record.Scope;
 import org.lilycms.util.location.LocationAttributes;
 import org.lilycms.util.xml.DocumentHelper;
 import org.lilycms.util.xml.LocalXPathExpression;
@@ -162,7 +163,7 @@ public class IndexerConfBuilder {
 
             List<Element> indexFieldEls = FIELD_CHILDREN.get().evalAsNativeElementList(caseEl);
             for (Element indexFieldEl : indexFieldEls) {
-                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl, true));
+                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl, Scope.VERSIONABLE));
             }
 
             for (String versionTag : versionTags) {
@@ -180,14 +181,14 @@ public class IndexerConfBuilder {
 
             List<Element> indexFieldEls = FIELD_CHILDREN.get().evalAsNativeElementList(caseEl);
             for (Element indexFieldEl : indexFieldEls) {
-                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl, false));
+                mapping.indexFieldBindings.add(buildIndexFieldBinding(indexFieldEl, Scope.NON_VERSIONABLE));
             }
 
             conf.addNonVersionedContentMapping(recordType, mapping);
         }
     }
 
-    private IndexFieldBinding buildIndexFieldBinding(Element indexFieldEl, boolean versioned) throws Exception {
+    private IndexFieldBinding buildIndexFieldBinding(Element indexFieldEl, Scope scope) throws Exception {
         String name = DocumentHelper.getAttribute(indexFieldEl, "name", false);
         String ref = DocumentHelper.getAttribute(indexFieldEl, "ref", false);
 
@@ -210,15 +211,15 @@ public class IndexerConfBuilder {
         }
 
 
-        Value value = buildValue(DocumentHelper.getElementChild(indexFieldEl, "value", true), versioned);
+        Value value = buildValue(DocumentHelper.getElementChild(indexFieldEl, "value", true), scope);
 
         return new IndexFieldBinding(field, value);
     }
 
-    private Value buildValue(Element valueEl, boolean versioned) throws Exception {
+    private Value buildValue(Element valueEl, Scope scope) throws Exception {
         Element fieldEl = DocumentHelper.getElementChild(valueEl, "field", true);
         String name = DocumentHelper.getAttribute(fieldEl, "name", true);
-        return new Value(name, versioned);
+        return new Value(name, scope);
     }
 
     private Set<String> parseCSV(String input) {

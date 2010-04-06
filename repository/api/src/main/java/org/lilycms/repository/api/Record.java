@@ -35,6 +35,10 @@ import java.util.Map;
  * 
  */
 public interface Record {
+    public static enum Scope {
+        NON_VERSIONABLE, VERSIONABLE, VERSIONABLE_MUTABLE 
+    }
+    
     void setId(RecordId recordId);
 
     RecordId getId();
@@ -49,59 +53,23 @@ public interface Record {
 
     Long getRecordTypeVersion();
     
-    void setNonVersionableRecordType(String id, Long version);
+    void setRecordType(Scope scope, String id, Long version);
     
-    String getNonVersionableRecordTypeId();
+    String getRecordTypeId(Scope scope);
     
-    Long getNonVersionableRecordTypeVersion();
+    Long getRecordTypeVersion(Scope scope);
     
-    void setVersionableRecordType(String id, Long version);
-    
-    String getVersionableRecordTypeId();
-    
-    Long getVersionableRecordTypeVersion();
-    
-    void setVersionableMutableRecordType(String id, Long version);
-    
-    String getVersionableMutableRecordTypeId();
-    
-    Long getVersionableMutableRecordTypeVersion();
+    void setField(Scope scope, String fieldId, Object value);
 
-    void setNonVersionableField(String fieldId, Object value);
+    Object getField(Scope scope, String fieldId) throws FieldNotFoundException;
 
-    Object getNonVersionableField(String fieldId) throws FieldNotFoundException;
+    Map<String, Object> getFields(Scope scope);
 
-    void setVersionableField(String fieldId, Object value);
-
-    Object getVersionableField(String fieldId) throws FieldNotFoundException;
-
-    void setVersionableMutableField(String fieldId, Object value);
-
-    Object getVersionableMutableField(String fieldId) throws FieldNotFoundException;
+    void addFieldsToDelete(Scope scope, List<String> fieldIds);
     
-    Map<String, Object> getNonVersionableFields();
+    void removeFieldsToDelete(Scope scope, List<String> fieldIds);
 
-    Map<String, Object> getVersionableFields();
-
-    Map<String, Object> getVersionableMutableFields();
-    
-    void addNonVersionableFieldsToDelete(List<String> fieldIds);
-    
-    void removeNonVersionableFieldsToDelete(List<String> fieldIds);
-
-    List<String> getNonVersionableFieldsToDelete();
-    
-    void addVersionableFieldsToDelete(List<String> fieldIds);
-
-    void removeVersionableFieldsToDelete(List<String> fieldIds);
-    
-    List<String> getVersionableFieldsToDelete();
-    
-    void addVersionableMutableFieldsToDelete(List<String> fieldIds);
-
-    void removeVersionableMutableFieldsToDelete(List<String> fieldIds);
-    
-    List<String> getVersionableMutableFieldsToDelete();
+    List<String> getFieldsToDelete(Scope scope);
     
     Record clone();
     

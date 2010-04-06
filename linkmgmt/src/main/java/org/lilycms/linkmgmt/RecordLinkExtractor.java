@@ -1,6 +1,7 @@
 package org.lilycms.linkmgmt;
 
 import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.Record.Scope;
 
 import java.util.Map;
 
@@ -13,7 +14,7 @@ public class RecordLinkExtractor {
         // TODO this will need to:
         //  run over all fields, check using the typemanager if it is a link field, if so put
         //  the resolved link into the collector.
-        for(Map.Entry<String, Object> field : record.getVersionableFields().entrySet()) {
+        for(Map.Entry<String, Object> field : record.getFields(Scope.VERSIONABLE).entrySet()) {
         }
 
         // TODO besides extracting links from link fields, this could go further and extract links

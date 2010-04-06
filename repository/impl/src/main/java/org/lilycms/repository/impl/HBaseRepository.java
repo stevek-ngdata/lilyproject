@@ -50,6 +50,7 @@ import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.Record.Scope;
 import org.lilycms.util.ArgumentValidator;
 import org.lilycms.util.Pair;
 
@@ -116,8 +117,8 @@ public class HBaseRepository implements Repository {
         if (record.getRecordTypeId() == null) {
             throw new InvalidRecordException(record, "The recordType cannot be null for a record to be created.");
         }
-        if (record.getNonVersionableFields().isEmpty() && record.getVersionableFields().isEmpty()
-                        && record.getVersionableMutableFields().isEmpty()) {
+        if (record.getFields(Scope.NON_VERSIONABLE).isEmpty() && record.getFields(Scope.VERSIONABLE).isEmpty()
+                        && record.getFields(Scope.VERSIONABLE_MUTABLE).isEmpty()) {
             throw new InvalidRecordException(record, "Creating an empty record is not allowed");
         }
 
@@ -226,11 +227,11 @@ public class HBaseRepository implements Repository {
     }
     private boolean putNonVersionableFields(Record record, Record originalRecord, RecordType recordType, Put put) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException,
     RepositoryException {
-        if (putFieldGroupFields(record.getNonVersionableFields(), record.getNonVersionableFieldsToDelete(), originalRecord.getNonVersionableFields(), recordType.getNonVersionableFieldGroupId(), recordType
-                .getNonVersionableFieldGroupVersion(), NON_VERSIONABLE_COLUMN_FAMILY, null, put)) {
+        if (putFieldGroupFields(record.getFields(Scope.NON_VERSIONABLE), record.getFieldsToDelete(Scope.NON_VERSIONABLE), originalRecord.getFields(Scope.NON_VERSIONABLE), recordType.getFieldGroupId(Scope.NON_VERSIONABLE), recordType
+                .getFieldGroupVersion(Scope.NON_VERSIONABLE), NON_VERSIONABLE_COLUMN_FAMILY, null, put)) {
         put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, NON_VERSIONABLE_RECORDTYPEID_COLUMN_NAME, Bytes.toBytes(recordType.getId()));
         put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, NON_VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME, Bytes.toBytes(recordType.getVersion()));
-        record.setNonVersionableRecordType(recordType.getId(), recordType.getVersion());
+        record.setRecordType(Scope.NON_VERSIONABLE, recordType.getId(), recordType.getVersion());
         return true;
         }
         return false;
@@ -239,11 +240,11 @@ public class HBaseRepository implements Repository {
     private boolean putVersionableFields(Record record, Record originalRecord, RecordType recordType, Long version,
                     Put put) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException,
                     RepositoryException {
-        if (putFieldGroupFields(record.getVersionableFields(), record.getVersionableFieldsToDelete(), originalRecord.getVersionableFields(), recordType.getVersionableFieldGroupId(), recordType
-                        .getVersionableFieldGroupVersion(), VERSIONABLE_COLUMN_FAMILY, version, put)) {
+        if (putFieldGroupFields(record.getFields(Scope.VERSIONABLE), record.getFieldsToDelete(Scope.VERSIONABLE), originalRecord.getFields(Scope.VERSIONABLE), recordType.getFieldGroupId(Scope.VERSIONABLE), recordType
+                        .getFieldGroupVersion(Scope.VERSIONABLE), VERSIONABLE_COLUMN_FAMILY, version, put)) {
             put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_RECORDTYPEID_COLUMN_NAME, version, Bytes.toBytes(recordType.getId()));
             put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME, version, Bytes.toBytes(recordType.getVersion()));
-            record.setVersionableRecordType(recordType.getId(), recordType.getVersion());
+            record.setRecordType(Scope.VERSIONABLE, recordType.getId(), recordType.getVersion());
             return true;
         }
         return false;
@@ -252,12 +253,12 @@ public class HBaseRepository implements Repository {
     private boolean putVersionableMutableFields(Record record, Record originalRecord, 
                     RecordType recordType, Long version, Put put) throws FieldGroupNotFoundException,
                     FieldDescriptorNotFoundException, RepositoryException {
-        if (putFieldGroupFields(record.getVersionableMutableFields(), record.getVersionableMutableFieldsToDelete(), originalRecord.getVersionableMutableFields(), recordType.getVersionableMutableFieldGroupId(),
-                        recordType.getVersionableMutableFieldGroupVersion(), VERSIONABLE_MUTABLE_COLUMN_FAMILY,
+        if (putFieldGroupFields(record.getFields(Scope.VERSIONABLE_MUTABLE), record.getFieldsToDelete(Scope.VERSIONABLE_MUTABLE), originalRecord.getFields(Scope.VERSIONABLE_MUTABLE), recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE),
+                        recordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE), VERSIONABLE_MUTABLE_COLUMN_FAMILY,
                         version, put)) {
             put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME, version, Bytes.toBytes(recordType.getId()));
             put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME, version, Bytes.toBytes(recordType.getVersion()));
-            record.setVersionableMutableRecordType(recordType.getId(), recordType.getVersion());
+            record.setRecordType(Scope.VERSIONABLE_MUTABLE, recordType.getId(), recordType.getVersion());
             return true;
         }
         return false;
@@ -511,9 +512,9 @@ public class HBaseRepository implements Repository {
             List<Pair<String, Object>> fields = extractFields(result.getFamilyMap(NON_VERSIONABLE_COLUMN_FAMILY));
             if (!fields.isEmpty()) {
                 for (Pair<String, Object> field : fields) {
-                    record.setNonVersionableField(field.getV1(), field.getV2()); 
+                    record.setField(Scope.NON_VERSIONABLE,field.getV1(), field.getV2()); 
                 }
-                record.setNonVersionableRecordType(recordTypeId, recordTypeVersion);
+                record.setRecordType(Scope.NON_VERSIONABLE, recordTypeId, recordTypeVersion);
                 retrieved = true;
             }
         }
@@ -537,9 +538,9 @@ public class HBaseRepository implements Repository {
             }
             if (!fields.isEmpty()) {
                 for (Pair<String, Object> field : fields) {
-                    record.setVersionableField(field.getV1(), field.getV2()); 
+                    record.setField(Scope.VERSIONABLE, field.getV1(), field.getV2()); 
                 }
-                record.setVersionableRecordType(recordTypeId, recordTypeVersion);
+                record.setRecordType(Scope.VERSIONABLE, recordTypeId, recordTypeVersion);
                 retrieved = true;
             }
         }
@@ -563,9 +564,9 @@ public class HBaseRepository implements Repository {
             }
             if (!fields.isEmpty()) {
                 for (Pair<String, Object> field : fields) {
-                    record.setVersionableMutableField(field.getV1(), field.getV2()); 
+                    record.setField(Scope.VERSIONABLE_MUTABLE, field.getV1(), field.getV2()); 
                 }
-                record.setVersionableMutableRecordType(recordTypeId, recordTypeVersion);
+                record.setRecordType(Scope.VERSIONABLE_MUTABLE, recordTypeId, recordTypeVersion);
                 retrieved = true;
             }
         }

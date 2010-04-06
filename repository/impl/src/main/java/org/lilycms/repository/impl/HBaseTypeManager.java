@@ -49,6 +49,7 @@ import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.Record.Scope;
 import org.lilycms.util.ArgumentValidator;
 import org.lilycms.util.Pair;
 
@@ -104,24 +105,24 @@ public class HBaseTypeManager implements TypeManager {
 
             Put put = new Put(rowId);
             put.add(NON_VERSIONABLE_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
-            String fieldGroupId = recordType.getNonVersionableFieldGroupId();
+            String fieldGroupId = recordType.getFieldGroupId(Scope.NON_VERSIONABLE);
             if (fieldGroupId != null) {
-                newRecordType.setNonVersionableFieldGroupVersion(putFieldGroupOnRecordType(recordTypeVersion, put,
-                                fieldGroupId, recordType.getNonVersionableFieldGroupVersion(),
+                newRecordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, putFieldGroupOnRecordType(recordTypeVersion, put,
+                                fieldGroupId, recordType.getFieldGroupVersion(Scope.NON_VERSIONABLE),
                                 RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME));
             }
 
-            fieldGroupId = recordType.getVersionableFieldGroupId();
+            fieldGroupId = recordType.getFieldGroupId(Scope.VERSIONABLE);
             if (fieldGroupId != null) {
-                newRecordType.setVersionableFieldGroupVersion(putFieldGroupOnRecordType(recordTypeVersion, put,
-                                fieldGroupId, recordType.getVersionableFieldGroupVersion(),
+                newRecordType.setFieldGroupVersion(Scope.VERSIONABLE, putFieldGroupOnRecordType(recordTypeVersion, put,
+                                fieldGroupId, recordType.getFieldGroupVersion(Scope.VERSIONABLE),
                                 RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME));
             }
 
-            fieldGroupId = recordType.getVersionableMutableFieldGroupId();
+            fieldGroupId = recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE);
             if (fieldGroupId != null) {
-                newRecordType.setVersionableMutableFieldGroupVersion(putFieldGroupOnRecordType(recordTypeVersion, put,
-                                fieldGroupId, recordType.getVersionableMutableFieldGroupVersion(),
+                newRecordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, putFieldGroupOnRecordType(recordTypeVersion, put,
+                                fieldGroupId, recordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
                                 RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME));
             }
 
@@ -148,34 +149,34 @@ public class HBaseTypeManager implements TypeManager {
         boolean recordTypeChanged = false;
         // non-versionable field group
         Pair<Boolean, Long> updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType
-                        .getNonVersionableFieldGroupId(), recordType.getNonVersionableFieldGroupVersion(),
-                        latestRecordType.getNonVersionableFieldGroupId(), latestRecordType
-                                        .getNonVersionableFieldGroupVersion(),
+                        .getFieldGroupId(Scope.NON_VERSIONABLE), recordType.getFieldGroupVersion(Scope.NON_VERSIONABLE),
+                        latestRecordType.getFieldGroupId(Scope.NON_VERSIONABLE), latestRecordType
+                                        .getFieldGroupVersion(Scope.NON_VERSIONABLE),
                         RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME);
         if (updateResult.getV1()) {
             recordTypeChanged =true;
-            newRecordType.setNonVersionableFieldGroupVersion(updateResult.getV2());
+            newRecordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, updateResult.getV2());
         }
 
         // versionable field group
-        updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType.getVersionableFieldGroupId(),
-                        recordType.getVersionableFieldGroupVersion(), latestRecordType.getVersionableFieldGroupId(),
-                        latestRecordType.getVersionableFieldGroupVersion(),
+        updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType.getFieldGroupId(Scope.VERSIONABLE),
+                        recordType.getFieldGroupVersion(Scope.VERSIONABLE), latestRecordType.getFieldGroupId(Scope.VERSIONABLE),
+                        latestRecordType.getFieldGroupVersion(Scope.VERSIONABLE),
                         RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME);
         if (updateResult.getV1()) {
             recordTypeChanged = true;
-            newRecordType.setVersionableFieldGroupVersion(updateResult.getV2());
+            newRecordType.setFieldGroupVersion(Scope.VERSIONABLE, updateResult.getV2());
         }
 
         // versionable mutable field group
         updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType
-                        .getVersionableMutableFieldGroupId(), recordType.getVersionableMutableFieldGroupVersion(),
-                        latestRecordType.getVersionableMutableFieldGroupId(), latestRecordType
-                                        .getVersionableMutableFieldGroupVersion(),
+                        .getFieldGroupId(Scope.VERSIONABLE_MUTABLE), recordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
+                        latestRecordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE), latestRecordType
+                                        .getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
                         RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME);
         if (updateResult.getV1()) {
             recordTypeChanged = true;
-            newRecordType.setVersionableMutableFieldGroupVersion(updateResult.getV2());
+            newRecordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, updateResult.getV2());
         }
 
         if (recordTypeChanged) {
@@ -225,26 +226,26 @@ public class HBaseTypeManager implements TypeManager {
         Put put = new Put(Bytes.toBytes(recordTypeId));
         boolean changed = false;
         if (nonVersionable) {
-            if (recordType.getNonVersionableFieldGroupId() != null) {
+            if (recordType.getFieldGroupId(Scope.NON_VERSIONABLE) != null) {
                 put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME, new byte[]{EncodingUtil.DELETE_FLAG});
-                recordType.setNonVersionableFieldGroupId(null);
-                recordType.setNonVersionableFieldGroupVersion(null);
+                recordType.setFieldGroupId(Scope.NON_VERSIONABLE, null);
+                recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,null);
                 changed = true;
             }
         }
         if (versionable) {
-            if (recordType.getVersionableFieldGroupId() != null) {
+            if (recordType.getFieldGroupId(Scope.VERSIONABLE) != null) {
                 put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME, new byte[]{EncodingUtil.DELETE_FLAG});
-                recordType.setVersionableFieldGroupId(null);
-                recordType.setVersionableFieldGroupVersion(null);
+                recordType.setFieldGroupId(Scope.VERSIONABLE, null);
+                recordType.setFieldGroupVersion(Scope.VERSIONABLE, null);
                 changed = true;
             }
         }
         if (versionableMutable) {
-            if (recordType.getVersionableMutableFieldGroupId() != null) {
+            if (recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE) != null) {
                 put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME, new byte[]{EncodingUtil.DELETE_FLAG});
-                recordType.setVersionableMutableFieldGroupId(null);
-                recordType.setVersionableMutableFieldGroupVersion(null);
+                recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE, null);
+                recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, null);
                 changed = true;
             }
         }
@@ -291,18 +292,18 @@ public class HBaseTypeManager implements TypeManager {
         Pair<String, Long> fieldGroup = extractFieldGroup(result, version,
                         RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME);
         if (fieldGroup != null) {
-            recordType.setNonVersionableFieldGroupId(fieldGroup.getV1());
-            recordType.setNonVersionableFieldGroupVersion(fieldGroup.getV2());
+            recordType.setFieldGroupId(Scope.NON_VERSIONABLE, fieldGroup.getV1());
+            recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, fieldGroup.getV2());
         }
         fieldGroup = extractFieldGroup(result, version, RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME);
         if (fieldGroup != null) {
-            recordType.setVersionableFieldGroupId(fieldGroup.getV1());
-            recordType.setVersionableFieldGroupVersion(fieldGroup.getV2());
+            recordType.setFieldGroupId(Scope.VERSIONABLE, fieldGroup.getV1());
+            recordType.setFieldGroupVersion(Scope.VERSIONABLE, fieldGroup.getV2());
         }
         fieldGroup = extractFieldGroup(result, version, RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME);
         if (fieldGroup != null) {
-            recordType.setVersionableMutableFieldGroupId(fieldGroup.getV1());
-            recordType.setVersionableMutableFieldGroupVersion(fieldGroup.getV2());
+            recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE, fieldGroup.getV1());
+            recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, fieldGroup.getV2());
         }
         return recordType;
     }

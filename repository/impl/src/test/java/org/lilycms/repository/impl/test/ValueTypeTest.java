@@ -33,6 +33,7 @@ import org.lilycms.repository.api.HierarchyPath;
 import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordType;
+import org.lilycms.repository.api.Record.Scope;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
@@ -126,17 +127,17 @@ public class ValueTypeTest {
         fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor.getId(), fieldDescriptor.getVersion(), true, "anAlias"));
         fieldGroup = typeManager.createFieldGroup(fieldGroup);
         RecordType recordType = typeManager.newRecordType(recordTypeId+"RecordTypeId"+multivalue+hierarchical);
-        recordType.setNonVersionableFieldGroupId(fieldGroup.getId());
-        recordType.setNonVersionableFieldGroupVersion(fieldGroup.getVersion());
+        recordType.setFieldGroupId(Scope.NON_VERSIONABLE, fieldGroup.getId());
+        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, fieldGroup.getVersion());
         typeManager.createRecordType(recordType);
 
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setNonVersionableField(fieldDescriptorId, fieldValue);
+        record.setField(Scope.NON_VERSIONABLE, fieldDescriptorId, fieldValue);
         repository.create(record);
 
         Record actualRecord = repository.read(record.getId());
-        assertEquals(fieldValue, actualRecord.getNonVersionableField(fieldDescriptorId));
+        assertEquals(fieldValue, actualRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptorId));
     }
 
     private class XYPrimitiveValueType implements PrimitiveValueType {

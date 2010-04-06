@@ -15,6 +15,8 @@
  */
 package org.lilycms.repository.api;
 
+import org.lilycms.repository.api.Record.Scope;
+
 
 /**
  * The RecordType describes the schema to be followed by a {@link Record}
@@ -35,30 +37,14 @@ public interface RecordType {
     
     Long getVersion();
     
-    void setNonVersionableFieldGroupId(String id);
+    void setFieldGroupId(Scope scope, String id);
  
-    void setNonVersionableFieldGroupVersion(Long version);
+    void setFieldGroupVersion(Scope scope, Long version);
     
-    void setVersionableFieldGroupId(String id);
+    String getFieldGroupId(Scope scope);
     
-    void setVersionableFieldGroupVersion(Long version);
+    Long getFieldGroupVersion(Scope scope);
     
-    void setVersionableMutableFieldGroupId(String id);
-    
-    void setVersionableMutableFieldGroupVersion(Long version);
-    
-    String getNonVersionableFieldGroupId();
-    
-    Long getNonVersionableFieldGroupVersion();
-    
-    String getVersionableFieldGroupId();
-    
-    Long getVersionableFieldGroupVersion();
-    
-    String getVersionableMutableFieldGroupId();
-    
-    Long getVersionableMutableFieldGroupVersion();
-
     RecordType clone();
     
     boolean equals(Object obj);

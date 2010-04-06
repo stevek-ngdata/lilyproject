@@ -4,23 +4,20 @@ import java.util.Set;
 
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.Record.Scope;
 
 public class Value {
     private String fieldName;
-    private final boolean versioned;
+    private final Scope scope;
 
-    public Value(String fieldName, boolean versioned) {
+    public Value(String fieldName, Scope scope) {
         this.fieldName = fieldName;
-        this.versioned = versioned;
+        this.scope = scope;
     }
 
     public String eval(Record record) {
         try {
-            if (versioned) {
-                return (String)record.getVersionableField(fieldName);
-            } else {
-                return (String)record.getNonVersionableField(fieldName);
-            }
+                return (String)record.getField(scope, fieldName);
         } catch (FieldNotFoundException e) {
             // TODO
             throw new RuntimeException(e);

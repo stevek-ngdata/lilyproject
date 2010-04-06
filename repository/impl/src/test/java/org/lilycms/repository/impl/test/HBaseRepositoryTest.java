@@ -40,6 +40,7 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.Record.Scope;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
@@ -103,26 +104,26 @@ public class HBaseRepositoryTest {
     
     private static void setupRecordTypes() throws Exception {
         recordType1 = typeManager.newRecordType("RT1");
-        recordType1.setNonVersionableFieldGroupId(fieldGroup1.getId());
-        recordType1.setNonVersionableFieldGroupVersion(fieldGroup1.getVersion());
-        recordType1.setVersionableFieldGroupId(fieldGroup2.getId());
-        recordType1.setVersionableFieldGroupVersion(fieldGroup2.getVersion());
-        recordType1.setVersionableMutableFieldGroupId(fieldGroup3.getId());
-        recordType1.setVersionableMutableFieldGroupVersion(fieldGroup3.getVersion());
+        recordType1.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
+        recordType1.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
+        recordType1.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
+        recordType1.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
+        recordType1.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
+        recordType1.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
         recordType1 = typeManager.createRecordType(recordType1);
         
         recordType1B = recordType1.clone();
-        recordType1B.setNonVersionableFieldGroupId(fieldGroup1B.getId());
-        recordType1B.setNonVersionableFieldGroupVersion(fieldGroup1B.getVersion());
+        recordType1B.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1B.getId());
+        recordType1B.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1B.getVersion());
         recordType1B = typeManager.updateRecordType(recordType1B);
         
         recordType2 = typeManager.newRecordType("RT2");
-        recordType2.setNonVersionableFieldGroupId(fieldGroup2.getId());
-        recordType2.setNonVersionableFieldGroupVersion(fieldGroup2.getVersion());
-        recordType2.setVersionableFieldGroupId(fieldGroup3.getId());
-        recordType2.setVersionableFieldGroupVersion(fieldGroup3.getVersion());
-        recordType2.setVersionableMutableFieldGroupId(fieldGroup1.getId());
-        recordType2.setVersionableMutableFieldGroupVersion(fieldGroup1.getVersion());
+        recordType2.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup2.getId());
+        recordType2.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup2.getVersion());
+        recordType2.setFieldGroupId(Scope.VERSIONABLE,fieldGroup3.getId());
+        recordType2.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup3.getVersion());
+        recordType2.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup1.getId());
+        recordType2.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup1.getVersion());
         recordType2 = typeManager.createRecordType(recordType2);
     }
 
@@ -174,17 +175,17 @@ public class HBaseRepositoryTest {
         Record createdRecord = createDefaultRecord(recordId);
         
         assertEquals(Long.valueOf(1), createdRecord.getVersion());
-        assertEquals("value1", createdRecord.getNonVersionableField(fieldDescriptor1.getId()));
-        assertEquals(123, createdRecord.getVersionableField(fieldDescriptor2.getId()));
-        assertTrue((Boolean)createdRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        assertEquals("value1", createdRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
+        assertEquals(123, createdRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
+        assertTrue((Boolean)createdRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId()));
         assertEquals(recordType1.getId(), createdRecord.getRecordTypeId());
         assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion());
-        assertEquals(recordType1.getId(), createdRecord.getNonVersionableRecordTypeId());
-        assertEquals(Long.valueOf(1), createdRecord.getNonVersionableRecordTypeVersion());
-        assertEquals(recordType1.getId(), createdRecord.getVersionableRecordTypeId());
-        assertEquals(Long.valueOf(1), createdRecord.getVersionableRecordTypeVersion());
-        assertEquals(recordType1.getId(), createdRecord.getVersionableMutableRecordTypeId());
-        assertEquals(Long.valueOf(1), createdRecord.getVersionableMutableRecordTypeVersion());
+        assertEquals(recordType1.getId(), createdRecord.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1.getId(), createdRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion(Scope.VERSIONABLE));
+        assertEquals(recordType1.getId(), createdRecord.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+        assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion(Scope.VERSIONABLE_MUTABLE));
         
         assertEquals(createdRecord, repository.read(recordId));
     }
@@ -192,9 +193,9 @@ public class HBaseRepositoryTest {
     private Record createDefaultRecord(RecordId recordId) throws Exception {
         Record record = repository.newRecord(recordId);
         record.setRecordType(recordType1.getId(), recordType1.getVersion());
-        record.setNonVersionableField(fieldDescriptor1.getId(), "value1");
-        record.setVersionableField(fieldDescriptor2.getId(), 123);
-        record.setVersionableMutableField(fieldDescriptor3.getId(), true);
+        record.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value1");
+        record.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 123);
+        record.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), true);
         return repository.create(record);
     }
     
@@ -213,7 +214,7 @@ public class HBaseRepositoryTest {
     public void testCreateWithNonExistingRecordTypeFails() throws Exception {
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType("nonExistingRecordType", null);
-        record.setNonVersionableField(fieldDescriptor1.getId(), "value1");
+        record.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value1");
         try {
             repository.create(record);
             fail();
@@ -225,16 +226,16 @@ public class HBaseRepositoryTest {
     public void testCreateUsesLatestRecordType() throws Exception {
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType(recordType1.getId(), null);
-        record.setNonVersionableField(fieldDescriptor1.getId(), "value1");
+        record.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value1");
         Record createdRecord = repository.create(record);
         assertEquals(recordType1.getId(), createdRecord.getRecordTypeId());
         assertEquals(Long.valueOf(2), createdRecord.getRecordTypeVersion());
-        assertEquals(recordType1.getId(), createdRecord.getNonVersionableRecordTypeId());
-        assertEquals(Long.valueOf(2), createdRecord.getNonVersionableRecordTypeVersion());
-        assertNull(createdRecord.getVersionableRecordTypeId());
-        assertNull(createdRecord.getVersionableRecordTypeVersion());
-        assertNull(createdRecord.getVersionableMutableRecordTypeId());
-        assertNull(createdRecord.getVersionableMutableRecordTypeVersion());
+        assertEquals(recordType1.getId(), createdRecord.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(Long.valueOf(2), createdRecord.getRecordTypeVersion(Scope.NON_VERSIONABLE));
+        assertNull(createdRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertNull(createdRecord.getRecordTypeVersion(Scope.VERSIONABLE));
+        assertNull(createdRecord.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+        assertNull(createdRecord.getRecordTypeVersion(Scope.VERSIONABLE_MUTABLE));
         
         assertEquals(createdRecord, repository.read(record.getId()));
     }
@@ -247,16 +248,16 @@ public class HBaseRepositoryTest {
         variantProperties.put("dimension1", "dimval1");
         Record variant = repository.newRecord(idGenerator.newRecordId(record.getId(), variantProperties ));
         variant.setRecordType(recordType1.getId(), null);
-        variant.setNonVersionableField(fieldDescriptor1.getId(), "value2");
-        variant.setVersionableField(fieldDescriptor2.getId(), 567);
-        variant.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        variant.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        variant.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 567);
+        variant.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
         
         Record createdVariant = repository.create(variant);
         
         assertEquals(Long.valueOf(1), createdVariant.getVersion());
-        assertEquals("value2", createdVariant.getNonVersionableField(fieldDescriptor1.getId()));
-        assertEquals(567, createdVariant.getVersionableField(fieldDescriptor2.getId()));
-        assertFalse((Boolean)createdVariant.getVersionableMutableField(fieldDescriptor3.getId()));
+        assertEquals("value2", createdVariant.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
+        assertEquals(567, createdVariant.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
+        assertFalse((Boolean)createdVariant.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId()));
         
         assertEquals(createdVariant, repository.read(variant.getId()));
     }
@@ -265,16 +266,16 @@ public class HBaseRepositoryTest {
     public void testUpdate() throws Exception {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = record.clone();
-        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
-        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
-        updateRecord.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
         
         Record updatedRecord = repository.update(updateRecord);
         
         assertEquals(Long.valueOf(2), updatedRecord.getVersion());
-        assertEquals("value2", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
-        assertEquals(789, updatedRecord.getVersionableField(fieldDescriptor2.getId()));
-        assertEquals(false, updatedRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        assertEquals("value2", updatedRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
+        assertEquals(789, updatedRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
+        assertEquals(false, updatedRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId()));
         
         assertEquals(updatedRecord, repository.read(record.getId()));
     }
@@ -284,27 +285,27 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
-        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
         
         Record updatedRecord = repository.update(updateRecord);
         
         assertEquals(Long.valueOf(1), updatedRecord.getVersion());
-        assertEquals("value2", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals("value2", updatedRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
         try {
-            updatedRecord.getVersionableField(fieldDescriptor2.getId());
+            updatedRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         try {
-            updatedRecord.getVersionableMutableField(fieldDescriptor3.getId());
+            updatedRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         
         updatedRecord = repository.read(record.getId());
-        assertEquals("value2", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
-        assertEquals(123, updatedRecord.getVersionableField(fieldDescriptor2.getId()));
-        assertEquals(true, updatedRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        assertEquals("value2", updatedRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
+        assertEquals(123, updatedRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
+        assertEquals(true, updatedRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId()));
     }
     
     @Test
@@ -317,17 +318,17 @@ public class HBaseRepositoryTest {
         
         assertEquals(Long.valueOf(1), updatedRecord.getVersion());
         try {
-            updatedRecord.getNonVersionableField(fieldDescriptor1.getId());
+            updatedRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         try {
-            updatedRecord.getVersionableField(fieldDescriptor2.getId());
+            updatedRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         try {
-            updatedRecord.getVersionableMutableField(fieldDescriptor3.getId());
+            updatedRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
@@ -343,9 +344,9 @@ public class HBaseRepositoryTest {
         Record updatedRecord = repository.update(updateRecord);
         
         assertEquals(Long.valueOf(1), updatedRecord.getVersion());
-        assertEquals("value1", updatedRecord.getNonVersionableField(fieldDescriptor1.getId()));
-        assertEquals(123, updatedRecord.getVersionableField(fieldDescriptor2.getId()));
-        assertEquals(true, updatedRecord.getVersionableMutableField(fieldDescriptor3.getId()));
+        assertEquals("value1", updatedRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
+        assertEquals(123, updatedRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
+        assertEquals(true, updatedRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId()));
         
         assertEquals(record, repository.read(record.getId()));
     }
@@ -355,7 +356,7 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = record.clone();
         updateRecord.setVersion(Long.valueOf(99));
-        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
         
         Record updatedRecord = repository.update(updateRecord);
         
@@ -369,12 +370,12 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), null);
-        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "aNewValue");
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "aNewValue");
         repository.update(updateRecord);
         
         Record readRecord = repository.read(record.getId());
         assertEquals(Long.valueOf(1), readRecord.getVersion());
-        assertEquals("aNewValue", readRecord.getNonVersionableField(fieldDescriptor1.getId()));
+        assertEquals("aNewValue", readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
     }
     
     
@@ -382,13 +383,13 @@ public class HBaseRepositoryTest {
     public void testReadOlderVersions() throws Exception {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = record.clone();
-        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
-        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
-        updateRecord.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
         
         repository.update(updateRecord);
         
-        record.setNonVersionableField(fieldDescriptor1.getId(), "value2");
+        record.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
         assertEquals(record, repository.read(record.getId(), Long.valueOf(1)));
     }
     
@@ -424,29 +425,29 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType1B.getId(), recordType1B.getVersion());
-        updateRecord.setNonVersionableField(fieldDescriptor1.getId(), "value2");
-        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
-        updateRecord.setVersionableMutableField(fieldDescriptor3.getId(), false);
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
         
         Record updatedRecord = repository.update(updateRecord);
         assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId());
         assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion());
-        assertEquals(recordType1B.getId(),updatedRecord.getNonVersionableRecordTypeId());
-        assertEquals(recordType1B.getVersion(),updatedRecord.getNonVersionableRecordTypeVersion());
-        assertEquals(recordType1B.getId(),updatedRecord.getVersionableRecordTypeId());
-        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
-        assertEquals(recordType1B.getId(),updatedRecord.getVersionableMutableRecordTypeId());
-        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableMutableRecordTypeVersion());
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion(Scope.VERSIONABLE));
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion(Scope.VERSIONABLE_MUTABLE));
         
         Record recordV1 = repository.read(record.getId(), Long.valueOf(1));
         assertEquals(recordType1B.getId(),recordV1.getRecordTypeId());
         assertEquals(recordType1B.getVersion(),recordV1.getRecordTypeVersion());
-        assertEquals(recordType1B.getId(),recordV1.getNonVersionableRecordTypeId());
-        assertEquals(recordType1B.getVersion(),recordV1.getNonVersionableRecordTypeVersion());
-        assertEquals(recordType1.getId(),recordV1.getVersionableRecordTypeId());
-        assertEquals(recordType1.getVersion(),recordV1.getVersionableRecordTypeVersion());
-        assertEquals(recordType1.getId(),recordV1.getVersionableMutableRecordTypeId());
-        assertEquals(recordType1.getVersion(),recordV1.getVersionableMutableRecordTypeVersion());
+        assertEquals(recordType1B.getId(),recordV1.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1B.getVersion(),recordV1.getRecordTypeVersion(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1.getId(),recordV1.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(recordType1.getVersion(),recordV1.getRecordTypeVersion(Scope.VERSIONABLE));
+        assertEquals(recordType1.getId(),recordV1.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+        assertEquals(recordType1.getVersion(),recordV1.getRecordTypeVersion(Scope.VERSIONABLE_MUTABLE));
     }
     
     @Test
@@ -454,23 +455,23 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType1B.getId(), recordType1B.getVersion());
-        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
         
         Record updatedRecord = repository.update(updateRecord);
         assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId());
         assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion());
-        assertEquals(recordType1B.getId(),updatedRecord.getVersionableRecordTypeId());
-        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion(Scope.VERSIONABLE));
         
         Record readRecord = repository.read(record.getId());
         assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId());
         assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion());
-        assertEquals(recordType1.getId(),readRecord.getNonVersionableRecordTypeId());
-        assertEquals(recordType1.getVersion(),readRecord.getNonVersionableRecordTypeVersion());
-        assertEquals(recordType1B.getId(),updatedRecord.getVersionableRecordTypeId());
-        assertEquals(recordType1B.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
-        assertEquals(recordType1.getId(),readRecord.getVersionableMutableRecordTypeId());
-        assertEquals(recordType1.getVersion(),readRecord.getVersionableMutableRecordTypeVersion());
+        assertEquals(recordType1.getId(),readRecord.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1.getVersion(),readRecord.getRecordTypeVersion(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1B.getId(),updatedRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(recordType1B.getVersion(),updatedRecord.getRecordTypeVersion(Scope.VERSIONABLE));
+        assertEquals(recordType1.getId(),readRecord.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+        assertEquals(recordType1.getVersion(),readRecord.getRecordTypeVersion(Scope.VERSIONABLE_MUTABLE));
     }
     
     @Test
@@ -478,35 +479,35 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
-        updateRecord.setNonVersionableField(fieldDescriptor2.getId(), 789);
-        updateRecord.setVersionableField(fieldDescriptor3.getId(), false);
-        updateRecord.setVersionableMutableField(fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor3.getId(), false);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor1.getId(), "value2");
         
         Record updatedRecord = repository.update(updateRecord);
         assertEquals(recordType2.getId(),updatedRecord.getRecordTypeId());
         assertEquals(recordType2.getVersion(),updatedRecord.getRecordTypeVersion());
-        assertEquals(recordType2.getId(),updatedRecord.getNonVersionableRecordTypeId());
-        assertEquals(recordType2.getVersion(),updatedRecord.getNonVersionableRecordTypeVersion());
-        assertEquals(recordType2.getId(),updatedRecord.getVersionableRecordTypeId());
-        assertEquals(recordType2.getVersion(),updatedRecord.getVersionableRecordTypeVersion());
-        assertEquals(recordType2.getId(),updatedRecord.getVersionableMutableRecordTypeId());
-        assertEquals(recordType2.getVersion(),updatedRecord.getVersionableMutableRecordTypeVersion());
+        assertEquals(recordType2.getId(),updatedRecord.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(recordType2.getVersion(),updatedRecord.getRecordTypeVersion(Scope.NON_VERSIONABLE));
+        assertEquals(recordType2.getId(),updatedRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(recordType2.getVersion(),updatedRecord.getRecordTypeVersion(Scope.VERSIONABLE));
+        assertEquals(recordType2.getId(),updatedRecord.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+        assertEquals(recordType2.getVersion(),updatedRecord.getRecordTypeVersion(Scope.VERSIONABLE_MUTABLE));
         
-        assertEquals(1, updatedRecord.getNonVersionableFields().size());
-        assertEquals(1, updatedRecord.getVersionableFields().size());
-        assertEquals(1, updatedRecord.getVersionableMutableFields().size());
+        assertEquals(1, updatedRecord.getFields(Scope.NON_VERSIONABLE).size());
+        assertEquals(1, updatedRecord.getFields(Scope.VERSIONABLE).size());
+        assertEquals(1, updatedRecord.getFields(Scope.VERSIONABLE_MUTABLE).size());
 
         Record readRecord = repository.read(record.getId());
         // Nothing got deleted
-        assertEquals(2, readRecord.getNonVersionableFields().size());
-        assertEquals(2, readRecord.getVersionableFields().size());
-        assertEquals(2, readRecord.getVersionableMutableFields().size());
-        assertEquals("value1", readRecord.getNonVersionableField(fieldDescriptor1.getId()));
-        assertEquals(789, readRecord.getNonVersionableField(fieldDescriptor2.getId()));
-        assertEquals(123, readRecord.getVersionableField(fieldDescriptor2.getId()));
-        assertFalse((Boolean)readRecord.getVersionableField(fieldDescriptor3.getId()));
-        assertTrue((Boolean)readRecord.getVersionableMutableField(fieldDescriptor3.getId()));
-        assertEquals("value2", readRecord.getVersionableMutableField(fieldDescriptor1.getId()));
+        assertEquals(2, readRecord.getFields(Scope.NON_VERSIONABLE).size());
+        assertEquals(2, readRecord.getFields(Scope.VERSIONABLE).size());
+        assertEquals(2, readRecord.getFields(Scope.VERSIONABLE_MUTABLE).size());
+        assertEquals("value1", readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId()));
+        assertEquals(789, readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor2.getId()));
+        assertEquals(123, readRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
+        assertFalse((Boolean)readRecord.getField(Scope.VERSIONABLE,fieldDescriptor3.getId()));
+        assertTrue((Boolean)readRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId()));
+        assertEquals("value2", readRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor1.getId()));
 
     }
     
@@ -515,15 +516,15 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(record.getRecordTypeId(), null);
-        deleteRecord.addNonVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor1.getId()}));
-        deleteRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
-        deleteRecord.addVersionableMutableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor3.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.NON_VERSIONABLE,Arrays.asList(new String[]{fieldDescriptor1.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE,Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE_MUTABLE,Arrays.asList(new String[]{fieldDescriptor3.getId()}));
         
         repository.update(deleteRecord);
         Record readRecord = repository.read(record.getId());
-        assertTrue(readRecord.getNonVersionableFields().isEmpty());
-        assertTrue(readRecord.getVersionableFields().isEmpty());
-        assertTrue(readRecord.getVersionableMutableFields().isEmpty());
+        assertTrue(readRecord.getFields(Scope.NON_VERSIONABLE).isEmpty());
+        assertTrue(readRecord.getFields(Scope.VERSIONABLE).isEmpty());
+        assertTrue(readRecord.getFields(Scope.VERSIONABLE_MUTABLE).isEmpty());
     }
     
     @Test
@@ -531,40 +532,40 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
-        updateRecord.setNonVersionableField(fieldDescriptor2.getId(), 789);
-        updateRecord.setVersionableField(fieldDescriptor3.getId(), false);
-        updateRecord.setVersionableMutableField(fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor3.getId(), false);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor1.getId(), "value2");
         
         repository.update(updateRecord);
         
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
-        deleteRecord.addNonVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor1.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.NON_VERSIONABLE,Arrays.asList(new String[]{fieldDescriptor1.getId()}));
         repository.update(deleteRecord);
         
         Record readRecord = repository.read(record.getId());
         assertEquals(Long.valueOf(2), readRecord.getVersion());
-        assertEquals(1, readRecord.getNonVersionableFields().size());
+        assertEquals(1, readRecord.getFields(Scope.NON_VERSIONABLE).size());
         try {
-            readRecord.getNonVersionableField(fieldDescriptor1.getId());
+            readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
-        assertEquals("value2", readRecord.getVersionableMutableField(fieldDescriptor1.getId()));
-        assertEquals(789, readRecord.getNonVersionableField(fieldDescriptor2.getId()));
+        assertEquals("value2", readRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor1.getId()));
+        assertEquals(789, readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor2.getId()));
         
-        deleteRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
-        deleteRecord.addVersionableMutableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor3.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE,Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE_MUTABLE, Arrays.asList(new String[]{fieldDescriptor3.getId()}));
         repository.update(deleteRecord);
         
         readRecord = repository.read(record.getId());
         assertEquals(Long.valueOf(3), readRecord.getVersion());
-        assertEquals(1, readRecord.getNonVersionableFields().size());
-        assertEquals(1, readRecord.getVersionableFields().size());
-        assertEquals(1, readRecord.getVersionableMutableFields().size());
-        assertEquals(789, readRecord.getNonVersionableField(fieldDescriptor2.getId()));
-        assertEquals(false, readRecord.getVersionableField(fieldDescriptor3.getId()));
-        assertEquals("value2", readRecord.getVersionableMutableField(fieldDescriptor1.getId()));
+        assertEquals(1, readRecord.getFields(Scope.NON_VERSIONABLE).size());
+        assertEquals(1, readRecord.getFields(Scope.VERSIONABLE).size());
+        assertEquals(1, readRecord.getFields(Scope.VERSIONABLE_MUTABLE).size());
+        assertEquals(789, readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor2.getId()));
+        assertEquals(false, readRecord.getField(Scope.VERSIONABLE,fieldDescriptor3.getId()));
+        assertEquals("value2", readRecord.getField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor1.getId()));
     }
     
     @Test
@@ -572,27 +573,27 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
-        deleteRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE,Arrays.asList(new String[]{fieldDescriptor2.getId()}));
         repository.update(deleteRecord);
         
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
-        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
         repository.update(updateRecord);
         
         Record readRecord = repository.read(record.getId());
         assertEquals(Long.valueOf(3), readRecord.getVersion());
-        assertEquals(789, readRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertEquals(789, readRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
         
         readRecord = repository.read(record.getId(), Long.valueOf(2));
         try {
-            readRecord.getVersionableField(fieldDescriptor2.getId());
+            readRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         
         readRecord = repository.read(record.getId(), Long.valueOf(1));
-        assertEquals(123, readRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertEquals(123, readRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
     }
     
     @Test
@@ -600,21 +601,21 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
-        updateRecord.setVersionableField(fieldDescriptor2.getId(), 999);
-        updateRecord.addNonVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor1.getId()}));
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 999);
+        updateRecord.addFieldsToDelete(Scope.NON_VERSIONABLE,Arrays.asList(new String[]{fieldDescriptor1.getId()}));
         repository.update(updateRecord);
         
         Record readRecord = repository.read(record.getId());
-        assertEquals(999, readRecord.getVersionableField(fieldDescriptor2.getId()));
+        assertEquals(999, readRecord.getField(Scope.VERSIONABLE,fieldDescriptor2.getId()));
         try {
-            readRecord.getNonVersionableField(fieldDescriptor1.getId());
+            readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
         
         readRecord = repository.read(record.getId(), Long.valueOf(1));
         try {
-            readRecord.getNonVersionableField(fieldDescriptor1.getId());
+            readRecord.getField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
@@ -626,12 +627,12 @@ public class HBaseRepositoryTest {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
-        updateRecord.setVersionableField(fieldDescriptor2.getId(), 789);
-        updateRecord.addVersionableFieldsToDelete(Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.addFieldsToDelete(Scope.VERSIONABLE,Arrays.asList(new String[]{fieldDescriptor2.getId()}));
         repository.update(updateRecord);
         
         try {
-            repository.read(record.getId()).getVersionableField(fieldDescriptor2.getId());
+            repository.read(record.getId()).getField(Scope.VERSIONABLE,fieldDescriptor2.getId());
             fail();
         } catch (FieldNotFoundException expected) {
         }
