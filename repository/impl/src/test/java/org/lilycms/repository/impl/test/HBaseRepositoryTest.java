@@ -638,6 +638,7 @@ public class HBaseRepositoryTest {
         }
     }
     
+    @Test
     public void testDeleteRecord() throws Exception {
         Record record = createDefaultRecord(idGenerator.newRecordId());
         repository.delete(record.getId());
@@ -646,5 +647,136 @@ public class HBaseRepositoryTest {
             fail();
         } catch (RecordNotFoundException expected) {
         }
+    }
+    
+    @Test
+    public void testUpdateMutableField() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
+        repository.update(updateRecord);
+        
+        updateRecord.setVersion(Long.valueOf(1));
+        repository.updateMutableFields(updateRecord);
+        
+        Record readRecord = repository.read(record.getId(), Long.valueOf(1));
+        assertEquals("value2", readRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptor1.getId())); 
+        assertEquals(123, readRecord.getField(Scope.VERSIONABLE, fieldDescriptor2.getId())); 
+        assertEquals(false, readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId())); 
+    }
+    
+    @Test
+    public void testUpdateMutableFieldWithNewRecordType() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
+        repository.update(updateRecord);
+        
+        Record updateMutableRecord = repository.newRecord(record.getId());
+        updateMutableRecord.setVersion(Long.valueOf(1));
+        updateMutableRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
+        updateMutableRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateMutableRecord.setField(Scope.VERSIONABLE,fieldDescriptor3.getId(), false);
+        updateMutableRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor1.getId(), "value3");
+        assertEquals(Long.valueOf(1), repository.updateMutableFields(updateMutableRecord).getVersion());
+        
+        Record readRecord = repository.read(record.getId(), Long.valueOf(1));
+        assertEquals(Long.valueOf(1), readRecord.getVersion());
+        assertEquals("value2", readRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptor1.getId())); 
+        assertEquals(123, readRecord.getField(Scope.VERSIONABLE, fieldDescriptor2.getId())); 
+        assertEquals(true, readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId())); 
+        assertEquals("value3", readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor1.getId()));
+        try {
+            readRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptor2.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            readRecord.getField(Scope.VERSIONABLE, fieldDescriptor3.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        assertEquals(recordType1.getId(), readRecord.getRecordTypeId());
+        assertEquals(recordType1.getId(), readRecord.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1.getId(), readRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(recordType2.getId(), readRecord.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+
+        readRecord = repository.read(record.getId());
+        assertEquals(Long.valueOf(2), readRecord.getVersion());
+        assertEquals("value2", readRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptor1.getId())); 
+        assertEquals(789, readRecord.getField(Scope.VERSIONABLE, fieldDescriptor2.getId())); 
+        assertEquals(false, readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId())); 
+        assertEquals("value3", readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor1.getId()));
+        assertEquals(recordType1.getId(), readRecord.getRecordTypeId());
+        assertEquals(recordType1.getId(), readRecord.getRecordTypeId(Scope.NON_VERSIONABLE));
+        assertEquals(recordType1.getId(), readRecord.getRecordTypeId(Scope.VERSIONABLE));
+        assertEquals(recordType1.getId(), readRecord.getRecordTypeId(Scope.VERSIONABLE_MUTABLE));
+    }
+    
+    @Test
+    public void testDeleteMutableField() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
+        repository.update(updateRecord);
+        
+        Record deleteRecord = repository.newRecord(record.getId());
+        deleteRecord.setVersion(Long.valueOf(1));
+        deleteRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        deleteRecord.addFieldsToDelete(Scope.NON_VERSIONABLE, Arrays.asList(new String[]{fieldDescriptor1.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE, Arrays.asList(new String[]{fieldDescriptor2.getId()}));
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE_MUTABLE, Arrays.asList(new String[]{fieldDescriptor3.getId()}));
+        
+        repository.updateMutableFields(deleteRecord);
+        
+        Record readRecord = repository.read(record.getId(), Long.valueOf(1));
+        assertEquals("value2", readRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptor1.getId())); 
+        assertEquals(123, readRecord.getField(Scope.VERSIONABLE, fieldDescriptor2.getId())); 
+        try {
+            readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+
+        readRecord = repository.read(record.getId());
+        assertEquals(false, readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId()));
+    }
+    
+    @Test
+    public void testDeleteMutableFieldCopiesValueToNext() throws Exception {
+        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record updateRecord = record.clone();
+        updateRecord.setField(Scope.NON_VERSIONABLE,fieldDescriptor1.getId(), "value2");
+        updateRecord.setField(Scope.VERSIONABLE,fieldDescriptor2.getId(), 789);
+        updateRecord = repository.update(updateRecord); // Leave mutable field same on first update
+
+        updateRecord.setField(Scope.VERSIONABLE_MUTABLE,fieldDescriptor3.getId(), false);
+        updateRecord = repository.update(updateRecord);
+        
+        Record deleteRecord = repository.newRecord(record.getId());
+        deleteRecord.setVersion(Long.valueOf(1));
+        deleteRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        deleteRecord.addFieldsToDelete(Scope.VERSIONABLE_MUTABLE, Arrays.asList(new String[]{fieldDescriptor3.getId()}));
+        
+        repository.updateMutableFields(deleteRecord);
+        
+        Record readRecord = repository.read(record.getId(), Long.valueOf(1));
+        try {
+            readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+
+        readRecord = repository.read(record.getId(), Long.valueOf(2));
+        assertEquals(true, readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId()));
+        
+        readRecord = repository.read(record.getId());
+        assertEquals(false, readRecord.getField(Scope.VERSIONABLE_MUTABLE, fieldDescriptor3.getId()));
     }
 }

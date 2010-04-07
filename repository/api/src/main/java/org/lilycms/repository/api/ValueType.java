@@ -47,6 +47,11 @@ public interface ValueType {
     byte[] toBytes(Object value);
 
     /**
+     * @return the {@link PrimitiveValueType}
+     */
+    PrimitiveValueType getPrimitive();
+    
+    /**
      * @return the actual {@link Class} object represented by this {@link ValueType} (e.g. {@link String}). In case of multi value, this will be a {@link List}.
      */
     Class getType();

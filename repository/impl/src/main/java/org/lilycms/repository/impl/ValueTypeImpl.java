@@ -125,6 +125,10 @@ public class ValueTypeImpl implements ValueType {
         return result;
     }
 
+    public PrimitiveValueType getPrimitive() {
+        return primitiveValueType;
+    }
+    
     public Class getType() {
         if (isMultiValue()) {
             return List.class;

@@ -17,6 +17,7 @@ package org.lilycms.repository.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -65,18 +66,22 @@ public class HBaseRepository implements Repository {
     private static final byte[] RECORDTYPEID_COLUMN_NAME = Bytes.toBytes("$RecordTypeId");
     private static final byte[] RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$RecordTypeVersion");
     private static final byte[] NON_VERSIONABLE_RECORDTYPEID_COLUMN_NAME = Bytes.toBytes("$NonVersionableRecordTypeId");
-    private static final byte[] NON_VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$NonVersionableRecordTypeVersion");
+    private static final byte[] NON_VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes
+                    .toBytes("$NonVersionableRecordTypeVersion");
     private static final byte[] VERSIONABLE_RECORDTYPEID_COLUMN_NAME = Bytes.toBytes("$VersionableRecordTypeId");
-    private static final byte[] VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$VersionableRecordTypeVersion");
-    private static final byte[] VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME = Bytes.toBytes("$VersionableMutableRecordTypeId");
-    private static final byte[] VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$VersionableMutableRecordTypeVersion");
+    private static final byte[] VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes
+                    .toBytes("$VersionableRecordTypeVersion");
+    private static final byte[] VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME = Bytes
+                    .toBytes("$VersionableMutableRecordTypeId");
+    private static final byte[] VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes
+                    .toBytes("$VersionableMutableRecordTypeVersion");
     private static final String RECORD_TABLE = "recordTable";
     private HTable recordTable;
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
 
-    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, 
-                    Configuration configuration) throws IOException {
+    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, Configuration configuration)
+                    throws IOException {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
         try {
@@ -151,7 +156,7 @@ public class HBaseRepository implements Repository {
             }
             Record dummyOriginalRecord = newRecord();
             dummyOriginalRecord.setVersion(Long.valueOf(1));
-            Put put = new Put(record.getId().toBytes()); 
+            Put put = new Put(record.getId().toBytes());
             putRecord(newRecord, dummyOriginalRecord, Long.valueOf(1), put);
             recordTable.put(put);
         } catch (IOException e) {
@@ -162,7 +167,9 @@ public class HBaseRepository implements Repository {
         return newRecord;
     }
 
-    public Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+    public Record update(Record record) throws RecordNotFoundException, InvalidRecordException,
+                    RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException,
+                    RepositoryException {
         ArgumentValidator.notNull(record, "record");
         if (record.getRecordTypeId() == null) {
             throw new InvalidRecordException(record, "The recordType cannot be null for a record to be updated.");
@@ -178,7 +185,7 @@ public class HBaseRepository implements Repository {
         }
         Record newRecord = record.clone();
         Record originalRecord = read(newRecord.getId());
-        
+
         Put put = new Put(newRecord.getId().toBytes());
         if (putRecord(newRecord, originalRecord, originalRecord.getVersion() + 1, put)) {
             try {
@@ -190,9 +197,10 @@ public class HBaseRepository implements Repository {
         }
         return newRecord;
     }
-    
-    private boolean putRecord(Record record, Record originalRecord, Long version, Put put) throws RecordTypeNotFoundException, FieldGroupNotFoundException,
-                    FieldDescriptorNotFoundException, RepositoryException {
+
+    private boolean putRecord(Record record, Record originalRecord, Long version, Put put)
+                    throws RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException,
+                    RepositoryException {
         String recordTypeId = record.getRecordTypeId();
         Long recordTypeVersion = record.getRecordTypeVersion();
 
@@ -218,88 +226,94 @@ public class HBaseRepository implements Repository {
             recordTypeId = recordType.getId();
             recordTypeVersion = recordType.getVersion();
             put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEID_COLUMN_NAME, Bytes.toBytes(recordTypeId));
-            put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
+            put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, RECORDTYPEVERSION_COLUMN_NAME, Bytes
+                            .toBytes(recordTypeVersion));
             record.setRecordType(recordTypeId, recordTypeVersion);
             put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
         }
         record.setVersion(version);
         return changed;
     }
-    private boolean putNonVersionableFields(Record record, Record originalRecord, RecordType recordType, Put put) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException,
-    RepositoryException {
-        if (putFieldGroupFields(record.getFields(Scope.NON_VERSIONABLE), record.getFieldsToDelete(Scope.NON_VERSIONABLE), originalRecord.getFields(Scope.NON_VERSIONABLE), recordType.getFieldGroupId(Scope.NON_VERSIONABLE), recordType
-                .getFieldGroupVersion(Scope.NON_VERSIONABLE), NON_VERSIONABLE_COLUMN_FAMILY, null, put)) {
-        put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, NON_VERSIONABLE_RECORDTYPEID_COLUMN_NAME, Bytes.toBytes(recordType.getId()));
-        put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, NON_VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME, Bytes.toBytes(recordType.getVersion()));
-        record.setRecordType(Scope.NON_VERSIONABLE, recordType.getId(), recordType.getVersion());
-        return true;
+
+    private boolean putNonVersionableFields(Record record, Record originalRecord, RecordType recordType, Put put)
+                    throws FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+        if (putUpdateAndDeleteFieldGroupFields(record.getFields(Scope.NON_VERSIONABLE), record
+                        .getFieldsToDelete(Scope.NON_VERSIONABLE), originalRecord.getFields(Scope.NON_VERSIONABLE),
+                        recordType.getFieldGroupId(Scope.NON_VERSIONABLE), recordType
+                                        .getFieldGroupVersion(Scope.NON_VERSIONABLE), NON_VERSIONABLE_COLUMN_FAMILY,
+                        null, put)) {
+            put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, NON_VERSIONABLE_RECORDTYPEID_COLUMN_NAME, Bytes
+                            .toBytes(recordType.getId()));
+            put.add(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, NON_VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME, Bytes
+                            .toBytes(recordType.getVersion()));
+            record.setRecordType(Scope.NON_VERSIONABLE, recordType.getId(), recordType.getVersion());
+            return true;
         }
         return false;
     }
-    
+
     private boolean putVersionableFields(Record record, Record originalRecord, RecordType recordType, Long version,
-                    Put put) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException,
-                    RepositoryException {
-        if (putFieldGroupFields(record.getFields(Scope.VERSIONABLE), record.getFieldsToDelete(Scope.VERSIONABLE), originalRecord.getFields(Scope.VERSIONABLE), recordType.getFieldGroupId(Scope.VERSIONABLE), recordType
-                        .getFieldGroupVersion(Scope.VERSIONABLE), VERSIONABLE_COLUMN_FAMILY, version, put)) {
-            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_RECORDTYPEID_COLUMN_NAME, version, Bytes.toBytes(recordType.getId()));
-            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME, version, Bytes.toBytes(recordType.getVersion()));
+                    Put put) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+        if (putUpdateAndDeleteFieldGroupFields(record.getFields(Scope.VERSIONABLE), record
+                        .getFieldsToDelete(Scope.VERSIONABLE), originalRecord.getFields(Scope.VERSIONABLE), recordType
+                        .getFieldGroupId(Scope.VERSIONABLE), recordType.getFieldGroupVersion(Scope.VERSIONABLE),
+                        VERSIONABLE_COLUMN_FAMILY, version, put)) {
+            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_RECORDTYPEID_COLUMN_NAME, version, Bytes
+                            .toBytes(recordType.getId()));
+            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME, version, Bytes
+                            .toBytes(recordType.getVersion()));
             record.setRecordType(Scope.VERSIONABLE, recordType.getId(), recordType.getVersion());
             return true;
         }
         return false;
     }
-    
-    private boolean putVersionableMutableFields(Record record, Record originalRecord, 
-                    RecordType recordType, Long version, Put put) throws FieldGroupNotFoundException,
-                    FieldDescriptorNotFoundException, RepositoryException {
-        if (putFieldGroupFields(record.getFields(Scope.VERSIONABLE_MUTABLE), record.getFieldsToDelete(Scope.VERSIONABLE_MUTABLE), originalRecord.getFields(Scope.VERSIONABLE_MUTABLE), recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE),
+
+    private boolean putVersionableMutableFields(Record record, Record originalRecord, RecordType recordType,
+                    Long version, Put put) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException,
+                    RepositoryException {
+        if (putUpdateAndDeleteFieldGroupFields(record.getFields(Scope.VERSIONABLE_MUTABLE), record
+                        .getFieldsToDelete(Scope.VERSIONABLE_MUTABLE), originalRecord
+                        .getFields(Scope.VERSIONABLE_MUTABLE), recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE),
                         recordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE), VERSIONABLE_MUTABLE_COLUMN_FAMILY,
                         version, put)) {
-            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME, version, Bytes.toBytes(recordType.getId()));
-            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME, version, Bytes.toBytes(recordType.getVersion()));
+            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME, version, Bytes
+                            .toBytes(recordType.getId()));
+            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME, version, Bytes
+                            .toBytes(recordType.getVersion()));
             record.setRecordType(Scope.VERSIONABLE_MUTABLE, recordType.getId(), recordType.getVersion());
             return true;
         }
         return false;
     }
 
-    private boolean putFieldGroupFields(Map<String, Object> fields, List<String> fieldsToDelete, Map<String, Object> originalFields, String fieldGroupId, Long fieldGroupVersion,
+    private boolean putUpdateAndDeleteFieldGroupFields(Map<String, Object> fields, List<String> fieldsToDelete,
+                    Map<String, Object> originalFields, String fieldGroupId, Long fieldGroupVersion,
                     byte[] columnFamily, Long version, Put put) throws FieldGroupNotFoundException,
                     FieldDescriptorNotFoundException, RepositoryException {
-        boolean changed = false;
         // Update fields
+        boolean updated = putUpdateFieldGroupFields(fields, originalFields, fieldGroupId, fieldGroupVersion,
+                        columnFamily, version, put);
+        // Delete fields
+        boolean deleted = putDeleteFieldgroupFields(fieldsToDelete, originalFields, columnFamily, version, put);
+        return updated || deleted;
+    }
+
+    private boolean putUpdateFieldGroupFields(Map<String, Object> fields, Map<String, Object> originalFields,
+                    String fieldGroupId, Long fieldGroupVersion, byte[] columnFamily, Long version, Put put)
+                    throws FieldGroupNotFoundException, RepositoryException, FieldDescriptorNotFoundException {
+        boolean changed = false;
         for (Entry<String, Object> field : fields.entrySet()) {
             String fieldId = field.getKey();
             Object newValue = field.getValue();
             Object originalValue = originalFields.get(fieldId);
             if (((newValue == null) && (originalValue != null)) || !newValue.equals(originalValue)) {
                 byte[] fieldIdAsBytes = Bytes.toBytes(fieldId);
-                FieldGroup fieldGroup = typeManager.getFieldGroup(fieldGroupId, fieldGroupVersion);
-                FieldGroupEntry fieldGroupEntry = fieldGroup.getFieldGroupEntry(fieldId);
-                FieldDescriptor fieldDescriptor = typeManager.getFieldDescriptor(fieldGroupEntry.getFieldDescriptorId(),
-                                fieldGroupEntry.getFieldDescriptorVersion());
-                ValueType valueType = fieldDescriptor.getValueType();
-    
-                // TODO validate with Class#isAssignableFrom()
-                byte[] fieldValue = valueType.toBytes(field.getValue());
-                byte[] prefixedValue = EncodingUtil.prefixValue(fieldValue, EncodingUtil.EXISTS_FLAG);
-    
+                byte[] encodedFieldValue = encodeFieldValue(fieldGroupId, fieldGroupVersion, fieldId, newValue);
+
                 if (version != null) {
-                    put.add(columnFamily, fieldIdAsBytes, version, prefixedValue);
+                    put.add(columnFamily, fieldIdAsBytes, version, encodedFieldValue);
                 } else {
-                    put.add(columnFamily, fieldIdAsBytes, prefixedValue);
-                }
-                changed = true;
-            }
-        }
-        // Delete fields
-        for (String fieldToDelete : fieldsToDelete) {
-            if (originalFields.get(fieldToDelete) != null) {
-                if (version != null) {
-                    put.add(columnFamily, Bytes.toBytes(fieldToDelete), version, new byte[]{EncodingUtil.DELETE_FLAG});
-                } else {
-                    put.add(columnFamily, Bytes.toBytes(fieldToDelete), new byte[]{EncodingUtil.DELETE_FLAG});
+                    put.add(columnFamily, fieldIdAsBytes, encodedFieldValue);
                 }
                 changed = true;
             }
@@ -307,19 +321,142 @@ public class HBaseRepository implements Repository {
         return changed;
     }
 
-    public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+    private byte[] encodeFieldValue(String fieldGroupId, Long fieldGroupVersion, String fieldId, Object fieldValue)
+                    throws FieldGroupNotFoundException, RepositoryException, FieldDescriptorNotFoundException {
+        FieldGroup fieldGroup = typeManager.getFieldGroup(fieldGroupId, fieldGroupVersion);
+        FieldGroupEntry fieldGroupEntry = fieldGroup.getFieldGroupEntry(fieldId);
+        FieldDescriptor fieldDescriptor = typeManager.getFieldDescriptor(fieldGroupEntry.getFieldDescriptorId(),
+                        fieldGroupEntry.getFieldDescriptorVersion());
+        ValueType valueType = fieldDescriptor.getValueType();
+
+        // TODO validate with Class#isAssignableFrom()
+        byte[] encodedFieldValue = valueType.toBytes(fieldValue);
+        encodedFieldValue = EncodingUtil.prefixValue(encodedFieldValue, EncodingUtil.EXISTS_FLAG);
+        return encodedFieldValue;
+    }
+
+    private boolean putDeleteFieldgroupFields(List<String> fieldsToDelete, Map<String, Object> originalFields,
+                    byte[] columnFamily, Long version, Put put) {
+        boolean changed = false;
+        for (String fieldToDelete : fieldsToDelete) {
+            if (originalFields.get(fieldToDelete) != null) {
+                if (version != null) {
+                    put.add(columnFamily, Bytes.toBytes(fieldToDelete), version,
+                                    new byte[] { EncodingUtil.DELETE_FLAG });
+                } else {
+                    put.add(columnFamily, Bytes.toBytes(fieldToDelete), new byte[] { EncodingUtil.DELETE_FLAG });
+                }
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    public Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException,
+                    RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException,
+                    RepositoryException {
+        ArgumentValidator.notNull(record, "record");
+        if (record.getRecordTypeId() == null) {
+            throw new InvalidRecordException(record, "The recordType cannot be null for a record to be updated.");
+        }
+        Get get = new Get(record.getId().toBytes());
+        try {
+            if (!recordTable.exists(get)) {
+                throw new RecordNotFoundException(record);
+            }
+        } catch (IOException e) {
+            throw new RepositoryException("Exception occured while retrieving original record <" + record.getId()
+                            + "> from HBase table", e);
+        }
+        Long version = record.getVersion();
+        if (version == null) {
+            throw new InvalidRecordException(record,
+                            "The version of the record cannot be null to update mutable fields");
+        }
+        Record newRecord = record.clone();
+        RecordType recordType = typeManager.getRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
+        Record originalRecord = read(record.getId(), version);
+        Record originalNextRecord = null;
+        try {
+            originalNextRecord = read(record.getId(), version + 1);
+        } catch (RecordNotFoundException exception) {
+            // There is no next record
+        }
+
+        Put put = new Put(record.getId().toBytes());
+        Map<String, Object> fieldsToUpdate = record.getFields(Scope.VERSIONABLE_MUTABLE);
+        Map<String, Object> originalFields = originalRecord
+                        .getFields(Scope.VERSIONABLE_MUTABLE);
+        String fieldGroupId = recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE);
+        Long fieldGroupVersion = recordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE);
+        boolean updated = putUpdateFieldGroupFields(fieldsToUpdate, originalFields, fieldGroupId,
+                        fieldGroupVersion, VERSIONABLE_MUTABLE_COLUMN_FAMILY,
+                        version, put);
+        List<String> fieldsToDelete = record.getFieldsToDelete(Scope.VERSIONABLE_MUTABLE);
+        Map<String, Object> originalNextFields = new HashMap<String, Object>();
+        if (originalNextRecord != null) {
+            originalNextFields.putAll(originalNextRecord.getFields(Scope.VERSIONABLE_MUTABLE));
+        }
+        boolean deleted = putDeleteMutableFieldgroupFields(fieldsToDelete,
+                        originalFields, originalNextFields, fieldGroupId, fieldGroupVersion,
+                        VERSIONABLE_MUTABLE_COLUMN_FAMILY, version, put);
+        if (updated || deleted) {
+            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME, version, Bytes
+                            .toBytes(recordType.getId()));
+            put.add(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME, version, Bytes
+                            .toBytes(recordType.getVersion()));
+            try {
+                recordTable.put(put);
+            } catch (IOException e) {
+                throw new RepositoryException("Exception occured while putting updated record <" + record.getId()
+                                + "> on HBase table", e);
+            }
+            newRecord.setRecordType(Scope.VERSIONABLE_MUTABLE, recordType.getId(), recordType.getVersion());
+        }
+        return newRecord;
+    }
+
+    private boolean putDeleteMutableFieldgroupFields(List<String> fieldsToDelete, Map<String, Object> originalFields,
+                    Map<String, Object> originalNextFields, String fieldGroupId, Long fieldGroupVersion,
+                    byte[] columnFamily, Long version, Put put) throws FieldGroupNotFoundException,
+                    RepositoryException, FieldDescriptorNotFoundException {
+        boolean changed = false;
+        for (String fieldToDelete : fieldsToDelete) {
+            Object originalValue = originalFields.get(fieldToDelete);
+            if (originalValue != null) {
+                put.add(columnFamily, Bytes.toBytes(fieldToDelete), version, new byte[] { EncodingUtil.DELETE_FLAG });
+                if (originalValue.equals(originalNextFields.get(fieldToDelete))) {
+                    byte[] encodedValue = encodeFieldValue(fieldGroupId, fieldGroupVersion, fieldToDelete,
+                                    originalValue);
+                    put.add(columnFamily, Bytes.toBytes(fieldToDelete), version + 1, encodedValue);
+                }
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
+                    FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
         return read(recordId, null);
     }
 
-    public Record read(RecordId recordId, List<String> nonVersionableFieldIds, List<String> versionableFieldIds, List<String> versionableMutableFieldIds) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+    public Record read(RecordId recordId, List<String> nonVersionableFieldIds, List<String> versionableFieldIds,
+                    List<String> versionableMutableFieldIds) throws RecordNotFoundException,
+                    RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException,
+                    RepositoryException {
         return read(recordId, null, nonVersionableFieldIds, versionableFieldIds, versionableMutableFieldIds);
     }
 
-    public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+    public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
+                    FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
         return read(recordId, version, null, null, null);
     }
 
-    public Record read(RecordId recordId, Long version, List<String> nonVersionableFieldIds, List<String> versionableFieldIds, List<String> versionableMutableFieldIds) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+    public Record read(RecordId recordId, Long version, List<String> nonVersionableFieldIds,
+                    List<String> versionableFieldIds, List<String> versionableMutableFieldIds)
+                    throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException,
+                    FieldDescriptorNotFoundException, RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         Record record = newRecord();
         record.setId(recordId);
@@ -360,28 +497,29 @@ public class HBaseRepository implements Repository {
     private Pair<String, Long> extractRecordType(Result result, Record record) {
         return new Pair<String, Long>(Bytes.toString(result.getValue(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY,
                         RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(result.getValue(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY,
-                                        RECORDTYPEVERSION_COLUMN_NAME)));
+                        RECORDTYPEVERSION_COLUMN_NAME)));
     }
 
     private Pair<String, Long> extractNonVersionableRecordType(Result result, Record record) {
         return new Pair<String, Long>(Bytes.toString(result.getValue(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY,
-                        NON_VERSIONABLE_RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(result.getValue(NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY,
-                                        NON_VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME)));
+                        NON_VERSIONABLE_RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(result.getValue(
+                        NON_VERSIONABLE_SYSTEM_COLUMN_FAMILY, NON_VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME)));
     }
 
     private Pair<String, Long> extractVersionableRecordType(Result result, Long version, Record record) {
         if (version == null) {
             // Get latest version
             return new Pair<String, Long>(Bytes.toString(result.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY,
-                            VERSIONABLE_RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(result.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY,
-                                            VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME)));
-            
+                            VERSIONABLE_RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(result.getValue(
+                            VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME)));
+
         } else {
             // Get on version
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
-            NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions = allVersionsMap.get(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
-            return extractVersionRecordType(version, versionableSystemCFversions,
-                            VERSIONABLE_RECORDTYPEID_COLUMN_NAME, VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME);
+            NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions = allVersionsMap
+                            .get(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
+            return extractVersionRecordType(version, versionableSystemCFversions, VERSIONABLE_RECORDTYPEID_COLUMN_NAME,
+                            VERSIONABLE_RECORDTYPEVERSION_COLUMN_NAME);
         }
     }
 
@@ -389,35 +527,39 @@ public class HBaseRepository implements Repository {
         if (version == null) {
             // Get latest version
             return new Pair<String, Long>(Bytes.toString(result.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY,
-                            VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(result.getValue(VERSIONABLE_SYSTEM_COLUMN_FAMILY,
-                            VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME)));
+                            VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME)), Bytes.toLong(result.getValue(
+                            VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME)));
         } else {
             // Get on version
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
-            NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions = allVersionsMap.get(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
+            NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions = allVersionsMap
+                            .get(VERSIONABLE_SYSTEM_COLUMN_FAMILY);
             return extractVersionRecordType(version, versionableSystemCFversions,
-                            VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME, VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME);
+                            VERSIONABLE_MUTABLE_RECORDTYPEID_COLUMN_NAME,
+                            VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME);
         }
     }
 
     private Pair<String, Long> extractVersionRecordType(Long version,
                     NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions,
                     byte[] recordTypeIdColumnName, byte[] recordTypeVersionColumnName) {
-        Entry<Long, byte[]> ceilingEntry = versionableSystemCFversions.get(recordTypeIdColumnName).ceilingEntry(version);
+        Entry<Long, byte[]> ceilingEntry = versionableSystemCFversions.get(recordTypeIdColumnName)
+                        .ceilingEntry(version);
         String recordTypeId = null;
         if (ceilingEntry != null) {
             recordTypeId = Bytes.toString(ceilingEntry.getValue());
-        } 
+        }
         Long recordTypeVersion = null;
         ceilingEntry = versionableSystemCFversions.get(recordTypeVersionColumnName).ceilingEntry(version);
         if (ceilingEntry != null) {
             recordTypeVersion = Bytes.toLong(ceilingEntry.getValue());
-        } 
+        }
         Pair<String, Long> recordType = new Pair<String, Long>(recordTypeId, recordTypeVersion);
         return recordType;
     }
-    
-    private List<Pair<String, Object>> extractFields(NavigableMap<byte[], byte[]> familyMap) throws FieldDescriptorNotFoundException, RepositoryException {
+
+    private List<Pair<String, Object>> extractFields(NavigableMap<byte[], byte[]> familyMap)
+                    throws FieldDescriptorNotFoundException, RepositoryException {
         List<Pair<String, Object>> fields = new ArrayList<Pair<String, Object>>();
         if (familyMap != null) {
             for (Entry<byte[], byte[]> entry : familyMap.entrySet()) {
@@ -429,8 +571,10 @@ public class HBaseRepository implements Repository {
         }
         return fields;
     }
-    
-    private List<Pair<String, Object>> extractVersionFields(Long version, NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions) throws FieldDescriptorNotFoundException, RepositoryException {
+
+    private List<Pair<String, Object>> extractVersionFields(Long version,
+                    NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions)
+                    throws FieldDescriptorNotFoundException, RepositoryException {
         List<Pair<String, Object>> fields = new ArrayList<Pair<String, Object>>();
         if (mapWithVersions != null) {
             for (Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : mapWithVersions.entrySet()) {
@@ -447,7 +591,8 @@ public class HBaseRepository implements Repository {
         return fields;
     }
 
-    private Pair<String, Object> extractField(byte[] key, byte[] prefixedValue) throws FieldDescriptorNotFoundException, RepositoryException {
+    private Pair<String, Object> extractField(byte[] key, byte[] prefixedValue)
+                    throws FieldDescriptorNotFoundException, RepositoryException {
         if (EncodingUtil.isDeletedField(prefixedValue)) {
             return null;
         }
@@ -456,10 +601,9 @@ public class HBaseRepository implements Repository {
         Object value = valueType.fromBytes(EncodingUtil.stripPrefix(prefixedValue));
         return new Pair<String, Object>(fieldId, value);
     }
-    
 
-    private void addFieldsToGet(Get get, List<String> nonVersionableFieldIds, List<String> versionableFieldIds, List<String> versionableMutableFieldIds)
-                    throws RecordNotFoundException, RepositoryException {
+    private void addFieldsToGet(Get get, List<String> nonVersionableFieldIds, List<String> versionableFieldIds,
+                    List<String> versionableMutableFieldIds) throws RecordNotFoundException, RepositoryException {
         boolean added = false;
         added |= addFieldsToGet(get, nonVersionableFieldIds, NON_VERSIONABLE_COLUMN_FAMILY);
         added |= addFieldsToGet(get, versionableFieldIds, VERSIONABLE_COLUMN_FAMILY);
@@ -468,7 +612,6 @@ public class HBaseRepository implements Repository {
             addSystemColumnsToGet(get);
         }
     }
-    
 
     private boolean addFieldsToGet(Get get, List<String> fieldIds, byte[] columnFamily) {
         boolean added = false;
@@ -477,7 +620,7 @@ public class HBaseRepository implements Repository {
                 get.addColumn(columnFamily, Bytes.toBytes(fieldId));
             }
             added = true;
-        } 
+        }
         return added;
     }
 
@@ -493,7 +636,8 @@ public class HBaseRepository implements Repository {
         get.addColumn(VERSIONABLE_SYSTEM_COLUMN_FAMILY, VERSIONABLE_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME);
     }
 
-    private boolean extractFields(Result result, Long version, Record record) throws RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
+    private boolean extractFields(Result result, Long version, Record record) throws RecordTypeNotFoundException,
+                    FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException {
         boolean retrieved = false;
         retrieved |= extractNonVersionableFields(result, record);
         retrieved |= extractVersionableFields(result, version, record);
@@ -502,7 +646,7 @@ public class HBaseRepository implements Repository {
     }
 
     private boolean extractNonVersionableFields(Result result, Record record) throws RecordTypeNotFoundException,
-    RepositoryException, FieldGroupNotFoundException, FieldDescriptorNotFoundException {
+                    RepositoryException, FieldGroupNotFoundException, FieldDescriptorNotFoundException {
         boolean retrieved = false;
         Pair<String, Long> recordTypePair = extractNonVersionableRecordType(result, record);
         String recordTypeId = recordTypePair.getV1();
@@ -512,7 +656,7 @@ public class HBaseRepository implements Repository {
             List<Pair<String, Object>> fields = extractFields(result.getFamilyMap(NON_VERSIONABLE_COLUMN_FAMILY));
             if (!fields.isEmpty()) {
                 for (Pair<String, Object> field : fields) {
-                    record.setField(Scope.NON_VERSIONABLE,field.getV1(), field.getV2()); 
+                    record.setField(Scope.NON_VERSIONABLE, field.getV1(), field.getV2());
                 }
                 record.setRecordType(Scope.NON_VERSIONABLE, recordTypeId, recordTypeVersion);
                 retrieved = true;
@@ -522,13 +666,13 @@ public class HBaseRepository implements Repository {
     }
 
     private boolean extractVersionableFields(Result result, Long version, Record record)
-    throws RecordTypeNotFoundException, RepositoryException, FieldGroupNotFoundException,
-    FieldDescriptorNotFoundException {
+                    throws RecordTypeNotFoundException, RepositoryException, FieldGroupNotFoundException,
+                    FieldDescriptorNotFoundException {
         boolean retrieved = false;
         Pair<String, Long> recordTypePair = extractVersionableRecordType(result, version, record);
         String recordTypeId = recordTypePair.getV1();
         Long recordTypeVersion = recordTypePair.getV2();
-     // If there is no recordType, there can't be any fields
+        // If there is no recordType, there can't be any fields
         if (recordTypeId != null) {
             List<Pair<String, Object>> fields;
             if (version == null) {
@@ -538,7 +682,7 @@ public class HBaseRepository implements Repository {
             }
             if (!fields.isEmpty()) {
                 for (Pair<String, Object> field : fields) {
-                    record.setField(Scope.VERSIONABLE, field.getV1(), field.getV2()); 
+                    record.setField(Scope.VERSIONABLE, field.getV1(), field.getV2());
                 }
                 record.setRecordType(Scope.VERSIONABLE, recordTypeId, recordTypeVersion);
                 retrieved = true;
@@ -554,7 +698,7 @@ public class HBaseRepository implements Repository {
         Pair<String, Long> recordTypePair = extractVersionableMutableRecordType(result, version, record);
         String recordTypeId = recordTypePair.getV1();
         Long recordTypeVersion = recordTypePair.getV2();
-     // If there is no recordType, there can't be any fields
+        // If there is no recordType, there can't be any fields
         if (recordTypeId != null) {
             List<Pair<String, Object>> fields;
             if (version == null) {
@@ -564,7 +708,7 @@ public class HBaseRepository implements Repository {
             }
             if (!fields.isEmpty()) {
                 for (Pair<String, Object> field : fields) {
-                    record.setField(Scope.VERSIONABLE_MUTABLE, field.getV1(), field.getV2()); 
+                    record.setField(Scope.VERSIONABLE_MUTABLE, field.getV1(), field.getV2());
                 }
                 record.setRecordType(Scope.VERSIONABLE_MUTABLE, recordTypeId, recordTypeVersion);
                 retrieved = true;

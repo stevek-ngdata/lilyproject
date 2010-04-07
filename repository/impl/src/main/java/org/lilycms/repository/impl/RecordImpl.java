@@ -57,7 +57,7 @@ public class RecordImpl implements Record {
     public RecordImpl(RecordId id) {
         this.id = id;
     }
-    
+
     public void setId(RecordId id) {
         this.id = id;
     }
