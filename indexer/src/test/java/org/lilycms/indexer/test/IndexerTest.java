@@ -23,6 +23,7 @@ import org.lilycms.indexer.conf.IndexerConfBuilder;
 import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
+import org.lilycms.repository.api.FieldDescriptor;
 import org.lilycms.repository.api.FieldGroup;
 import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.Record;
@@ -75,18 +76,18 @@ public class IndexerTest {
 
         // Create a record type
         ValueType stringValueType = typeManager.getValueType("STRING", false, false);
-        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("field1", stringValueType, "field1GN"));
-        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("field2", stringValueType, "field2GN"));
-        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("field3", stringValueType, "field3GN"));
+        FieldDescriptor fieldDescriptor1 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(stringValueType, "field1"));
+        FieldDescriptor fieldDescriptor2 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(stringValueType, "field2"));
+        FieldDescriptor fieldDescriptor3 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(stringValueType, "field3"));
         FieldGroup fieldGroup1 = typeManager.newFieldGroup("fieldGroup1");
-        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry("field1", Long.valueOf(1), true, "alias1"));
-        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry("field2", Long.valueOf(1), true, "alias2"));
-        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry("field3", Long.valueOf(1), true, "alias3"));
+        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor1.getId(), Long.valueOf(1), true, "alias1"));
+        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor2.getId(), Long.valueOf(1), true, "alias2"));
+        fieldGroup1.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor3.getId(), Long.valueOf(1), true, "alias3"));
         fieldGroup1 = typeManager.createFieldGroup(fieldGroup1);
 
-        typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("nvfield1", stringValueType, "nvfield1GN"));
+        FieldDescriptor nvFieldDescriptor1 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(stringValueType, "nvfield1"));
         FieldGroup fieldGroup2 = typeManager.newFieldGroup("fieldGroup2");
-        fieldGroup2.setFieldGroupEntry(typeManager.newFieldGroupEntry("nvfield1", Long.valueOf(1), true, "nvalias1"));
+        fieldGroup2.setFieldGroupEntry(typeManager.newFieldGroupEntry(nvFieldDescriptor1.getId(), Long.valueOf(1), true, "nvalias1"));
         fieldGroup2 = typeManager.createFieldGroup(fieldGroup2);
         
         RecordType recordType = typeManager.newRecordType("RecordType1");

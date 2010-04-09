@@ -21,23 +21,23 @@ import org.lilycms.repository.api.ValueType;
 
 public class FieldDescriptorImpl implements FieldDescriptor {
 
-    private final String id;
+    private String id;
     private Long version;
     private ValueType valueType;
-    private String globalName;
+    private String name;
 
     /**
      * This constructor should not be called directly.
      * @use {@link TypeManager#newFieldDescriptor} instead
      */
-    public FieldDescriptorImpl(String id, ValueType valueType, String globalName) {
+    public FieldDescriptorImpl(String id, ValueType valueType, String name) {
         this.id = id;
         this.valueType = valueType;
-        this.globalName = globalName;
+        this.name = name;
     }
 
-    public String getGlobalName() {
-        return globalName;
+    public String getName() {
+        return name;
     }
 
     public String getId() {
@@ -52,8 +52,12 @@ public class FieldDescriptorImpl implements FieldDescriptor {
         return version;
     }
 
-    public void setGlobalName(String name) {
-        this.globalName = name;
+    public void setId(String id) {
+        this.id = id;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setValueType(ValueType valueType) {
@@ -65,7 +69,7 @@ public class FieldDescriptorImpl implements FieldDescriptor {
     }
     
     public FieldDescriptor clone() {
-        FieldDescriptorImpl clone = new FieldDescriptorImpl(this.id, this.valueType, this.globalName);
+        FieldDescriptorImpl clone = new FieldDescriptorImpl(this.id, this.valueType, this.name);
         clone.version = this.version;
         return clone;
     }
@@ -74,7 +78,7 @@ public class FieldDescriptorImpl implements FieldDescriptor {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((globalName == null) ? 0 : globalName.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
@@ -90,10 +94,10 @@ public class FieldDescriptorImpl implements FieldDescriptor {
         if (getClass() != obj.getClass())
             return false;
         FieldDescriptorImpl other = (FieldDescriptorImpl) obj;
-        if (globalName == null) {
-            if (other.globalName != null)
+        if (name == null) {
+            if (other.name != null)
                 return false;
-        } else if (!globalName.equals(other.globalName))
+        } else if (!name.equals(other.name))
             return false;
         if (id == null) {
             if (other.id != null)
@@ -115,7 +119,7 @@ public class FieldDescriptorImpl implements FieldDescriptor {
 
     @Override
     public String toString() {
-        return "FieldDescriptorImpl [id=" + id + ", version=" + version + ", globalName=" + globalName
+        return "FieldDescriptorImpl [id=" + id + ", version=" + version + ", name=" + name
                         + ", valueType=" + valueType + "]";
     }
 }

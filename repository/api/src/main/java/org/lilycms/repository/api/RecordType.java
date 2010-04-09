@@ -15,6 +15,8 @@
  */
 package org.lilycms.repository.api;
 
+import java.util.Map;
+
 import org.lilycms.repository.api.Record.Scope;
 
 
@@ -44,6 +46,12 @@ public interface RecordType {
     String getFieldGroupId(Scope scope);
     
     Long getFieldGroupVersion(Scope scope);
+    
+    void addMixin(String recordTypeId, Long recordTypeVersion);
+    
+    void removeMixin(String recordTypeId);
+    
+    Map<String, Long> getMixins();
     
     RecordType clone();
     

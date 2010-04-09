@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.UUID;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
@@ -34,7 +35,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.FieldDescriptor;
-import org.lilycms.repository.api.FieldDescriptorExistsException;
 import org.lilycms.repository.api.FieldDescriptorNotFoundException;
 import org.lilycms.repository.api.FieldDescriptorUpdateException;
 import org.lilycms.repository.api.FieldGroup;
@@ -58,6 +58,7 @@ public class HBaseTypeManager implements TypeManager {
     private static final String TYPE_TABLE = "typeTable";
     private static final byte[] NON_VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("nonVersionableCF");
     private static final byte[] VERSIONABLE_COLUMN_FAMILY = Bytes.toBytes("versionableCF");
+    private static final byte[] MIXIN_COLUMN_FAMILY = Bytes.toBytes("mixinCF");
 
     private static final byte[] CURRENT_VERSION_COLUMN_NAME = Bytes.toBytes("$currentVersion");
 
@@ -65,7 +66,7 @@ public class HBaseTypeManager implements TypeManager {
     private static final byte[] RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME = Bytes.toBytes("$versionableFG");
     private static final byte[] RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME = Bytes
                     .toBytes("$versionableMutableFG");
-    private static final byte[] FIELDDESCRIPTOR_GLOBALNAME_COLUMN_NAME = Bytes.toBytes("$globalName");
+    private static final byte[] FIELDDESCRIPTOR_NAME_COLUMN_NAME = Bytes.toBytes("$globalName");
     private static final byte[] FIELDDESCRIPTOR_VALUETYPE_COLUMN_NAME = Bytes.toBytes("$valueType");
 
     private HTable typeTable;
@@ -81,6 +82,8 @@ public class HBaseTypeManager implements TypeManager {
             tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONABLE_COLUMN_FAMILY));
             tableDescriptor.addFamily(new HColumnDescriptor(VERSIONABLE_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none",
                             false, true, HConstants.FOREVER, false));
+            tableDescriptor.addFamily(new HColumnDescriptor(MIXIN_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none",
+                            false, true, HConstants.FOREVER, false));
             admin.createTable(tableDescriptor);
             typeTable = new HTable(configuration, TYPE_TABLE);
         }
@@ -93,7 +96,7 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     public RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException,
-                    FieldGroupNotFoundException, RepositoryException {
+                    FieldGroupNotFoundException, RecordTypeNotFoundException, RepositoryException {
         ArgumentValidator.notNull(recordType, "recordType");
         RecordType newRecordType = recordType.clone();
         Long recordTypeVersion = Long.valueOf(1);
@@ -105,10 +108,11 @@ public class HBaseTypeManager implements TypeManager {
 
             Put put = new Put(rowId);
             put.add(NON_VERSIONABLE_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
+
             String fieldGroupId = recordType.getFieldGroupId(Scope.NON_VERSIONABLE);
             if (fieldGroupId != null) {
-                newRecordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, putFieldGroupOnRecordType(recordTypeVersion, put,
-                                fieldGroupId, recordType.getFieldGroupVersion(Scope.NON_VERSIONABLE),
+                newRecordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, putFieldGroupOnRecordType(recordTypeVersion,
+                                put, fieldGroupId, recordType.getFieldGroupVersion(Scope.NON_VERSIONABLE),
                                 RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME));
             }
 
@@ -121,9 +125,15 @@ public class HBaseTypeManager implements TypeManager {
 
             fieldGroupId = recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE);
             if (fieldGroupId != null) {
-                newRecordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, putFieldGroupOnRecordType(recordTypeVersion, put,
-                                fieldGroupId, recordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
+                newRecordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, putFieldGroupOnRecordType(
+                                recordTypeVersion, put, fieldGroupId, recordType
+                                                .getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
                                 RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME));
+            }
+
+            Map<String, Long> mixins = recordType.getMixins();
+            for (Entry<String, Long> mixin : mixins.entrySet()) {
+                newRecordType.addMixin(mixin.getKey(), putMixinOnRecordType(recordTypeVersion, put, mixin.getKey(), mixin.getValue()));
             }
 
             typeTable.put(put);
@@ -149,19 +159,21 @@ public class HBaseTypeManager implements TypeManager {
         boolean recordTypeChanged = false;
         // non-versionable field group
         Pair<Boolean, Long> updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType
-                        .getFieldGroupId(Scope.NON_VERSIONABLE), recordType.getFieldGroupVersion(Scope.NON_VERSIONABLE),
-                        latestRecordType.getFieldGroupId(Scope.NON_VERSIONABLE), latestRecordType
+                        .getFieldGroupId(Scope.NON_VERSIONABLE),
+                        recordType.getFieldGroupVersion(Scope.NON_VERSIONABLE), latestRecordType
+                                        .getFieldGroupId(Scope.NON_VERSIONABLE), latestRecordType
                                         .getFieldGroupVersion(Scope.NON_VERSIONABLE),
                         RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME);
         if (updateResult.getV1()) {
-            recordTypeChanged =true;
+            recordTypeChanged = true;
             newRecordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, updateResult.getV2());
         }
 
         // versionable field group
-        updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType.getFieldGroupId(Scope.VERSIONABLE),
-                        recordType.getFieldGroupVersion(Scope.VERSIONABLE), latestRecordType.getFieldGroupId(Scope.VERSIONABLE),
-                        latestRecordType.getFieldGroupVersion(Scope.VERSIONABLE),
+        updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType
+                        .getFieldGroupId(Scope.VERSIONABLE), recordType.getFieldGroupVersion(Scope.VERSIONABLE),
+                        latestRecordType.getFieldGroupId(Scope.VERSIONABLE), latestRecordType
+                                        .getFieldGroupVersion(Scope.VERSIONABLE),
                         RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME);
         if (updateResult.getV1()) {
             recordTypeChanged = true;
@@ -170,14 +182,18 @@ public class HBaseTypeManager implements TypeManager {
 
         // versionable mutable field group
         updateResult = updateFieldGroupOnRecordType(put, newRecordTypeVersion, recordType
-                        .getFieldGroupId(Scope.VERSIONABLE_MUTABLE), recordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
-                        latestRecordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE), latestRecordType
-                                        .getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
+                        .getFieldGroupId(Scope.VERSIONABLE_MUTABLE), recordType
+                        .getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE), latestRecordType
+                        .getFieldGroupId(Scope.VERSIONABLE_MUTABLE), latestRecordType
+                        .getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE),
                         RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME);
         if (updateResult.getV1()) {
             recordTypeChanged = true;
             newRecordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, updateResult.getV2());
         }
+        
+        boolean mixinsChanged = updateMixins(put, newRecordTypeVersion, recordType, latestRecordType);
+        recordTypeChanged |= mixinsChanged;
 
         if (recordTypeChanged) {
             put.add(NON_VERSIONABLE_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(newRecordTypeVersion));
@@ -220,22 +236,52 @@ public class HBaseTypeManager implements TypeManager {
         return newFieldGroupVersion;
     }
     
-    public RecordType removeFieldGroups(String recordTypeId, boolean nonVersionable, boolean versionable, boolean versionableMutable) throws RecordTypeNotFoundException, RepositoryException {
+    private Long putMixinOnRecordType(Long recordTypeVersion, Put put, String mixinId, Long mixinVersion) throws RecordTypeNotFoundException, RepositoryException {
+        Long newMixinVersion = getRecordType(mixinId, mixinVersion).getVersion();
+        put.add(MIXIN_COLUMN_FAMILY, Bytes.toBytes(mixinId), recordTypeVersion, Bytes.toBytes(newMixinVersion));
+        return newMixinVersion;
+    }
+    
+    private boolean updateMixins(Put put, Long newRecordTypeVersion, RecordType recordType, RecordType latestRecordType) {
+        boolean changed = false;
+        Map<String, Long> latestMixins = latestRecordType.getMixins();
+        // Update mixins
+        for (Entry<String, Long> entry : recordType.getMixins().entrySet()) {
+            String mixinId = entry.getKey();
+            Long mixinVersion = entry.getValue();
+            if (!mixinVersion.equals(latestMixins.get(mixinId))) {
+                put.add(MIXIN_COLUMN_FAMILY, Bytes.toBytes(mixinId), newRecordTypeVersion, Bytes.toBytes(mixinVersion));
+                changed = true;
+            }
+            latestMixins.remove(mixinId);
+        }
+        // Remove remaining mixins
+        for (Entry<String, Long> entry : latestMixins.entrySet()) {
+            put.add(MIXIN_COLUMN_FAMILY, Bytes.toBytes(entry.getKey()), newRecordTypeVersion, new byte[] { EncodingUtil.DELETE_FLAG });
+            changed = true;
+        }
+        return changed;
+    }
+
+    public RecordType removeFieldGroups(String recordTypeId, boolean nonVersionable, boolean versionable,
+                    boolean versionableMutable) throws RecordTypeNotFoundException, RepositoryException {
         RecordType recordType = getRecordType(recordTypeId, null);
         Long version = recordType.getVersion() + 1;
         Put put = new Put(Bytes.toBytes(recordTypeId));
         boolean changed = false;
         if (nonVersionable) {
             if (recordType.getFieldGroupId(Scope.NON_VERSIONABLE) != null) {
-                put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME, new byte[]{EncodingUtil.DELETE_FLAG});
+                put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_NONVERSIONABLEFIELDGROUP_COLUMN_NAME,
+                                new byte[] { EncodingUtil.DELETE_FLAG });
                 recordType.setFieldGroupId(Scope.NON_VERSIONABLE, null);
-                recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,null);
+                recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, null);
                 changed = true;
             }
         }
         if (versionable) {
             if (recordType.getFieldGroupId(Scope.VERSIONABLE) != null) {
-                put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME, new byte[]{EncodingUtil.DELETE_FLAG});
+                put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_VERSIONABLEFIELDGROUP_COLUMN_NAME,
+                                new byte[] { EncodingUtil.DELETE_FLAG });
                 recordType.setFieldGroupId(Scope.VERSIONABLE, null);
                 recordType.setFieldGroupVersion(Scope.VERSIONABLE, null);
                 changed = true;
@@ -243,7 +289,8 @@ public class HBaseTypeManager implements TypeManager {
         }
         if (versionableMutable) {
             if (recordType.getFieldGroupId(Scope.VERSIONABLE_MUTABLE) != null) {
-                put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME, new byte[]{EncodingUtil.DELETE_FLAG});
+                put.add(VERSIONABLE_COLUMN_FAMILY, RECORDTYPE_VERSIONABLEMUTABLEFIELDGROUP_COLUMN_NAME,
+                                new byte[] { EncodingUtil.DELETE_FLAG });
                 recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE, null);
                 recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, null);
                 changed = true;
@@ -254,8 +301,8 @@ public class HBaseTypeManager implements TypeManager {
             try {
                 typeTable.put(put);
             } catch (IOException e) {
-                throw new RepositoryException("Exception occured while removing fieldGroups from recordType <" + recordTypeId
-                                + "> on HBase", e);
+                throw new RepositoryException("Exception occured while removing fieldGroups from recordType <"
+                                + recordTypeId + "> on HBase", e);
             }
             recordType.setVersion(version);
         }
@@ -305,6 +352,8 @@ public class HBaseTypeManager implements TypeManager {
             recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE, fieldGroup.getV1());
             recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE, fieldGroup.getV2());
         }
+        
+        extractMixins(result, version, recordType);
         return recordType;
     }
 
@@ -329,6 +378,33 @@ public class HBaseTypeManager implements TypeManager {
             fieldGroup = decodeFieldGroup(fieldGroupBytes);
         }
         return fieldGroup;
+    }
+    
+    private void extractMixins(Result result, Long version, RecordType recordType) {
+        if (version != null) {
+            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
+            NavigableMap<byte[], NavigableMap<Long, byte[]>> mixinVersionsMap = allVersionsMap.get(MIXIN_COLUMN_FAMILY);
+            if (mixinVersionsMap != null) {
+                for (Entry<byte[], NavigableMap<Long, byte[]>> entry : mixinVersionsMap.entrySet()) {
+                    String mixinId = Bytes.toString(entry.getKey());
+                    Entry<Long, byte[]> ceilingEntry = entry.getValue().ceilingEntry(version);
+                    if (ceilingEntry != null) {
+                        if (!EncodingUtil.isDeletedField(ceilingEntry.getValue())) {
+                            recordType.addMixin(mixinId, Bytes.toLong(ceilingEntry.getValue()));
+                        }
+                    }
+                }
+            }
+        } else {
+            NavigableMap<byte[], byte[]> mixinMap = result.getFamilyMap(MIXIN_COLUMN_FAMILY);
+            if (mixinMap != null) {
+                for (Entry<byte[], byte[]> entry : mixinMap.entrySet()) {
+                    if (!EncodingUtil.isDeletedField(entry.getValue())) {
+                        recordType.addMixin(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
+                    }
+                }
+            }
+        }
     }
 
     private byte[] encodeFieldGroup(String fieldGroupId, Long fieldGroupVersion) {
@@ -437,8 +513,9 @@ public class HBaseTypeManager implements TypeManager {
                         encodeFieldGroupEntry(newFieldGroupEntry));
         return newFieldGroupEntry;
     }
-    
-    public FieldGroup removeFieldDescriptors(String fieldGroupId, List<String> fieldDescriptorIds) throws FieldGroupNotFoundException, RepositoryException{
+
+    public FieldGroup removeFieldDescriptors(String fieldGroupId, List<String> fieldDescriptorIds)
+                    throws FieldGroupNotFoundException, RepositoryException {
         FieldGroup fieldGroup = getFieldGroup(fieldGroupId, null);
         Put put = new Put(Bytes.toBytes(fieldGroupId));
         Long version = fieldGroup.getVersion() + 1;
@@ -447,7 +524,8 @@ public class HBaseTypeManager implements TypeManager {
             if (fieldGroup.getFieldGroupEntry(fieldDescriptorId) == null) {
                 // Ignore
             } else {
-                put.add(VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(fieldDescriptorId), version, new byte[]{EncodingUtil.DELETE_FLAG});
+                put.add(VERSIONABLE_COLUMN_FAMILY, Bytes.toBytes(fieldDescriptorId), version,
+                                new byte[] { EncodingUtil.DELETE_FLAG });
                 fieldGroup.removeFieldGroupEntry(fieldDescriptorId);
                 changed = true;
             }
@@ -455,10 +533,10 @@ public class HBaseTypeManager implements TypeManager {
         if (changed) {
             put.add(NON_VERSIONABLE_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
             try {
-            typeTable.put(put);
+                typeTable.put(put);
             } catch (IOException e) {
-                throw new RepositoryException("Exception occured while removing fieldDescriptor <"+fieldGroupId+"> from fieldGroup <" + fieldGroup.getId()
-                                + "> on HBase", e);
+                throw new RepositoryException("Exception occured while removing fieldDescriptor <" + fieldGroupId
+                                + "> from fieldGroup <" + fieldGroup.getId() + "> on HBase", e);
             }
             fieldGroup.setVersion(version);
         }
@@ -466,6 +544,7 @@ public class HBaseTypeManager implements TypeManager {
     }
 
     public FieldGroup getFieldGroup(String id, Long version) throws FieldGroupNotFoundException, RepositoryException {
+        ArgumentValidator.notNull(id, "id");
         FieldGroup fieldGroup = new FieldGroupImpl(id);
         byte[] rowId = Bytes.toBytes(id);
         Get get = new Get(rowId);
@@ -494,7 +573,8 @@ public class HBaseTypeManager implements TypeManager {
                 String fieldDescriptorId = Bytes.toString(entry.getKey());
                 Entry<Long, byte[]> ceilingEntry = entry.getValue().ceilingEntry(version);
                 if (ceilingEntry != null) {
-                    FieldGroupEntry decodedFieldGroupEntry = decodeFieldGroupEntry(ceilingEntry.getValue(), fieldDescriptorId);
+                    FieldGroupEntry decodedFieldGroupEntry = decodeFieldGroupEntry(ceilingEntry.getValue(),
+                                    fieldDescriptorId);
                     if (decodedFieldGroupEntry != null) {
                         fieldGroup.setFieldGroupEntry(decodedFieldGroupEntry);
                     }
@@ -545,37 +625,59 @@ public class HBaseTypeManager implements TypeManager {
         return new FieldGroupEntryImpl(fieldDescriptorId, fieldDescriptorVersion, mandatory, alias);
     }
 
-    public FieldDescriptor newFieldDescriptor(String id, ValueType valueType, String globalName) {
-        ArgumentValidator.notNull(id, "id");
+    
+    public FieldDescriptor newFieldDescriptor(ValueType valueType, String name) {
+        return newFieldDescriptor(null, valueType, name);
+    }
+    
+    public FieldDescriptor newFieldDescriptor(String id, ValueType valueType, String name) {
         ArgumentValidator.notNull(valueType, "valueType");
-        ArgumentValidator.notNull(globalName, "globalName");
-        return new FieldDescriptorImpl(id, valueType, globalName);
+        ArgumentValidator.notNull(name, "name");
+        return new FieldDescriptorImpl(id, valueType, name);
     }
 
     public FieldDescriptor createFieldDescriptor(FieldDescriptor fieldDescriptor)
-                    throws FieldDescriptorExistsException, RepositoryException {
+                    throws RepositoryException {
         ArgumentValidator.notNull(fieldDescriptor, "fieldDescriptor");
         FieldDescriptor result;
-        byte[] rowId = Bytes.toBytes(fieldDescriptor.getId());
+        // TODO use IdGenerator
+        UUID uuid = UUID.randomUUID();
+        byte[] rowId;
+        rowId = fieldDescriptorIdToBytes(uuid);
         Long version = Long.valueOf(1);
         try {
-            if (typeTable.exists(new Get(rowId))) {
-                throw new FieldDescriptorExistsException(fieldDescriptor);
-            }
             Put put = new Put(rowId);
             put.add(NON_VERSIONABLE_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
             put.add(NON_VERSIONABLE_COLUMN_FAMILY, FIELDDESCRIPTOR_VALUETYPE_COLUMN_NAME, fieldDescriptor
                             .getValueType().toBytes());
-            put.add(VERSIONABLE_COLUMN_FAMILY, FIELDDESCRIPTOR_GLOBALNAME_COLUMN_NAME, version, Bytes
-                            .toBytes(fieldDescriptor.getGlobalName()));
+            put.add(VERSIONABLE_COLUMN_FAMILY, FIELDDESCRIPTOR_NAME_COLUMN_NAME, version, Bytes
+                            .toBytes(fieldDescriptor.getName()));
             typeTable.put(put);
         } catch (IOException e) {
             throw new RepositoryException("Exception occured while creating fieldDescriptor <"
                             + fieldDescriptor.getId() + "> version: <" + version + "> on HBase", e);
         }
         result = fieldDescriptor.clone();
+        result.setId(uuid.toString());
         result.setVersion(version);
         return result;
+    }
+
+    private byte[] fieldDescriptorIdToBytes(UUID id) {
+        byte[] rowId;
+        rowId = new byte[16];
+        Bytes.putLong(rowId, 0, id.getMostSignificantBits());
+        Bytes.putLong(rowId, 8, id.getLeastSignificantBits());
+        return rowId;
+    }
+    
+    private byte[] fieldDescriptorIdToBytes(String id) {
+        UUID uuid = UUID.fromString(id);
+        byte[] rowId;
+        rowId = new byte[16];
+        Bytes.putLong(rowId, 0, uuid.getMostSignificantBits());
+        Bytes.putLong(rowId, 8, uuid.getLeastSignificantBits());
+        return rowId;
     }
 
     public FieldDescriptor updateFieldDescriptor(FieldDescriptor fieldDescriptor)
@@ -587,11 +689,11 @@ public class HBaseTypeManager implements TypeManager {
                             + "> new<" + fieldDescriptor.getValueType() + ">");
         }
         Long version = latestFieldDescriptor.getVersion();
-        if (!fieldDescriptor.getGlobalName().equals(latestFieldDescriptor.getGlobalName())) {
+        if (!fieldDescriptor.getName().equals(latestFieldDescriptor.getName())) {
             version = version + 1;
-            Put put = new Put(Bytes.toBytes(fieldDescriptor.getId()));
-            put.add(VERSIONABLE_COLUMN_FAMILY, FIELDDESCRIPTOR_GLOBALNAME_COLUMN_NAME, version, Bytes
-                            .toBytes(fieldDescriptor.getGlobalName()));
+            Put put = new Put(fieldDescriptorIdToBytes(fieldDescriptor.getId()));
+            put.add(VERSIONABLE_COLUMN_FAMILY, FIELDDESCRIPTOR_NAME_COLUMN_NAME, version, Bytes
+                            .toBytes(fieldDescriptor.getName()));
             put.add(NON_VERSIONABLE_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
             try {
                 typeTable.put(put);
@@ -609,7 +711,7 @@ public class HBaseTypeManager implements TypeManager {
                     RepositoryException {
         ArgumentValidator.notNull(id, "id");
         Result result;
-        Get get = new Get(Bytes.toBytes(id));
+        Get get = new Get(fieldDescriptorIdToBytes(id));
         if (version != null) {
             get.setMaxVersions();
         }
@@ -625,7 +727,7 @@ public class HBaseTypeManager implements TypeManager {
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(NON_VERSIONABLE_COLUMN_FAMILY);
         Long currentVersion = Bytes.toLong(nonVersionableColumnFamily.get(CURRENT_VERSION_COLUMN_NAME));
         Long retrievedVersion;
-        String globalName;
+        String name;
         if (version != null) {
             if (version > currentVersion) {
                 throw new FieldDescriptorNotFoundException(id, version);
@@ -634,17 +736,17 @@ public class HBaseTypeManager implements TypeManager {
             NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableVersionsMap = allVersionsMap
                             .get(VERSIONABLE_COLUMN_FAMILY);
             NavigableMap<Long, byte[]> globalNameVersionsMap = versionableVersionsMap
-                            .get(FIELDDESCRIPTOR_GLOBALNAME_COLUMN_NAME);
-            globalName = Bytes.toString(globalNameVersionsMap.floorEntry(version).getValue());
+                            .get(FIELDDESCRIPTOR_NAME_COLUMN_NAME);
+            name = Bytes.toString(globalNameVersionsMap.floorEntry(version).getValue());
             retrievedVersion = version;
         } else {
             NavigableMap<byte[], byte[]> versionableColumnFamily = result.getFamilyMap(VERSIONABLE_COLUMN_FAMILY);
-            globalName = Bytes.toString(versionableColumnFamily.get(FIELDDESCRIPTOR_GLOBALNAME_COLUMN_NAME));
+            name = Bytes.toString(versionableColumnFamily.get(FIELDDESCRIPTOR_NAME_COLUMN_NAME));
             retrievedVersion = currentVersion;
         }
         ValueType valueType = ValueTypeImpl.fromBytes(nonVersionableColumnFamily
                         .get(FIELDDESCRIPTOR_VALUETYPE_COLUMN_NAME), this);
-        FieldDescriptor fieldDescriptor = new FieldDescriptorImpl(id, valueType, globalName);
+        FieldDescriptor fieldDescriptor = new FieldDescriptorImpl(id, valueType, name);
         fieldDescriptor.setVersion(retrievedVersion);
         return fieldDescriptor;
     }
@@ -670,6 +772,36 @@ public class HBaseTypeManager implements TypeManager {
 
     public ValueType getValueType(String primitiveValueTypeName, boolean multivalue, boolean hierarchy) {
         return new ValueTypeImpl(primitiveValueTypes.get(primitiveValueTypeName), multivalue, hierarchy);
+    }
+    
+    // TODO cache these things on the RecordType itself?
+    public FieldDescriptor getFieldDescriptor(Scope scope, String name, RecordType recordType) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException, RecordTypeNotFoundException, RepositoryException {
+        ArgumentValidator.notNull(scope, "scope");
+        ArgumentValidator.notNull(name, "name");
+        ArgumentValidator.notNull(recordType, "recordType");
+        String fieldGroupId = recordType.getFieldGroupId(scope);
+        Long fieldGroupVersion = recordType.getFieldGroupVersion(scope);
+        if (fieldGroupId != null) {
+            FieldGroup fieldGroup = getFieldGroup(fieldGroupId, fieldGroupVersion);
+            for (FieldGroupEntry fieldGroupEntry : fieldGroup.getFieldGroupEntries()) {
+                String fieldDescriptorId = fieldGroupEntry.getFieldDescriptorId();
+                Long fieldDescriptorVersion = fieldGroupEntry.getFieldDescriptorVersion();
+                FieldDescriptor fieldDescriptor = getFieldDescriptor(fieldDescriptorId, fieldDescriptorVersion);
+                if (name.equals(fieldDescriptor.getName())) {
+                    return fieldDescriptor;
+                }
+            }
+        }
+        for (Entry<String, Long> entry : recordType.getMixins().entrySet()) {
+            RecordType mixin = getRecordType(entry.getKey(), entry.getValue());
+            try {
+                FieldDescriptor fieldDescriptor = getFieldDescriptor(scope, name, mixin);
+                return fieldDescriptor;
+            } catch (FieldDescriptorNotFoundException exception) {
+                // skip
+            }
+        }
+        throw new FieldDescriptorNotFoundException(name, null);
     }
 
 }

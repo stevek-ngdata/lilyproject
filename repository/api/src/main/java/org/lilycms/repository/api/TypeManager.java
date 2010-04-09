@@ -17,6 +17,8 @@ package org.lilycms.repository.api;
 
 import java.util.List;
 
+import org.lilycms.repository.api.Record.Scope;
+
 
 /**
  * Repository is the API for all CRUD operations on {@link RecordType}.
@@ -33,9 +35,10 @@ public interface TypeManager {
      * Creates a {@link RecordType} on the repository with the properties defined in the {@link RecordType} object.
      * @throws RecordTypeExistsException when a recordType with the same id already exists on the repository 
      * @throws FieldGroupNotFoundException when the recordType refers to a non-existing {@link FieldGroup}
+     * @throws RecordTypeNotFoundException when a mixin of the recordType refers to a non-existing {@link RecordType} 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, FieldGroupNotFoundException, RepositoryException;
+    RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, FieldGroupNotFoundException, RecordTypeNotFoundException, RepositoryException;
     
     /**
      * Retrieves the latest version of a {@link RecordType} from the repository.
@@ -116,15 +119,16 @@ public interface TypeManager {
     /**
      * Creates a new {@link FieldDescriptor} object.
      */
+    FieldDescriptor newFieldDescriptor(ValueType valueType, String name);
+    
     FieldDescriptor newFieldDescriptor(String id, ValueType valueType, String globalName);
     
     /**
      * Creates a {@link FieldDescriptor} on the repository with the properties defined in the {@link FieldDescriptor} object.
      * @return a {@link FieldDescriptor} object containing the updated version number of the fieldDescriptor
-     * @throws FieldDescriptorExistsException if a fieldDescriptor with the same id already exists on the repository 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldDescriptor createFieldDescriptor(FieldDescriptor fieldDescriptor) throws FieldDescriptorExistsException, RepositoryException;
+    FieldDescriptor createFieldDescriptor(FieldDescriptor fieldDescriptor) throws RepositoryException;
 
     /**
      * Updates a {@link FieldDescriptor} on the repository with the properties defined in the {@link FieldDescriptor} object.
@@ -160,4 +164,7 @@ public interface TypeManager {
      * @param hierarchical if this{@link ValueType} should represent a {@link HierarchyPath} field or not
      */
     ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical);
+
+    FieldDescriptor getFieldDescriptor(Scope scope, String name, RecordType recordType) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException, RecordTypeNotFoundException, RepositoryException;
+   
 }

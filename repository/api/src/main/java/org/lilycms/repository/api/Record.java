@@ -59,15 +59,15 @@ public interface Record {
     
     Long getRecordTypeVersion(Scope scope);
     
-    void setField(Scope scope, String fieldId, Object value);
+    void setField(Scope scope, String fieldName, Object value);
 
-    Object getField(Scope scope, String fieldId) throws FieldNotFoundException;
+    Object getField(Scope scope, String fieldName) throws FieldNotFoundException;
 
     Map<String, Object> getFields(Scope scope);
 
-    void addFieldsToDelete(Scope scope, List<String> fieldIds);
+    void addFieldsToDelete(Scope scope, List<String> fieldNames);
     
-    void removeFieldsToDelete(Scope scope, List<String> fieldIds);
+    void removeFieldsToDelete(Scope scope, List<String> fieldNames);
 
     List<String> getFieldsToDelete(Scope scope);
     

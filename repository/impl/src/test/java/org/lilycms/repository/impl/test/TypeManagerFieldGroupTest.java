@@ -19,6 +19,7 @@ package org.lilycms.repository.impl.test;
 import static junit.framework.Assert.*;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
@@ -55,10 +56,10 @@ public class TypeManagerFieldGroupTest {
     }
     
     private static void setupFieldDescriptors() throws Exception {
-        fieldDescriptor1 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD1", typeManager.getValueType("STRING", false, false), "GN1"));
-        fieldDescriptor2 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD2", typeManager.getValueType("STRING", false, false), "GN2"));
-        fieldDescriptor3 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD3", typeManager.getValueType("STRING", false, false), "GN3"));
-        fieldDescriptor3B = typeManager.updateFieldDescriptor(typeManager.newFieldDescriptor("FD3", typeManager.getValueType("STRING", false, false), "GN3B"));
+        fieldDescriptor1 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(typeManager.getValueType("STRING", false, false), "name1"));
+        fieldDescriptor2 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(typeManager.getValueType("STRING", false, false), "name2"));
+        fieldDescriptor3 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(typeManager.getValueType("STRING", false, false), "name3"));
+        fieldDescriptor3B = typeManager.updateFieldDescriptor(typeManager.newFieldDescriptor(fieldDescriptor3.getId(), typeManager.getValueType("STRING", false, false), "name3B"));
     }
 
     @AfterClass
@@ -121,7 +122,7 @@ public class TypeManagerFieldGroupTest {
         fieldGroup.setVersion(Long.valueOf(1));
         FieldGroup actualFieldGroup = typeManager.getFieldGroup(id, null);
         assertEquals(fieldGroup, actualFieldGroup);
-        assertEquals(Long.valueOf(1), actualFieldGroup.getFieldGroupEntry("FD3").getFieldDescriptorVersion());
+        assertEquals(Long.valueOf(1), actualFieldGroup.getFieldGroupEntry(fieldDescriptor3.getId()).getFieldDescriptorVersion());
     }
     
     @Test
@@ -196,7 +197,7 @@ public class TypeManagerFieldGroupTest {
     public void testFieldDescriptorExistsOnCreate() throws Exception {
         String id = "testFieldDescriptorExistsOnCreate";
         FieldGroup fieldGroup = typeManager.newFieldGroup(id);
-        FieldGroupEntry fieldGroupEntry = typeManager.newFieldGroupEntry("nonExistingFD", null, false, "alias1");
+        FieldGroupEntry fieldGroupEntry = typeManager.newFieldGroupEntry(UUID.randomUUID().toString(), null, false, "alias1");
         fieldGroup.setFieldGroupEntry(fieldGroupEntry);
         try {
             typeManager.createFieldGroup(fieldGroup);
@@ -223,7 +224,7 @@ public class TypeManagerFieldGroupTest {
         String id = "testFieldDescriptorExistsOnUpdate";
         FieldGroup fieldGroup = typeManager.newFieldGroup(id);
         typeManager.createFieldGroup(fieldGroup);
-        FieldGroupEntry fieldGroupEntry = typeManager.newFieldGroupEntry("nonExistingFD", null, false, "alias1");
+        FieldGroupEntry fieldGroupEntry = typeManager.newFieldGroupEntry(UUID.randomUUID().toString(), null, false, "alias1");
         fieldGroup.setFieldGroupEntry(fieldGroupEntry);
         try {
             typeManager.updateFieldGroup(fieldGroup);
@@ -253,17 +254,17 @@ public class TypeManagerFieldGroupTest {
         FieldGroupEntry fieldGroupEntry = typeManager.newFieldGroupEntry(fieldDescriptor1.getId(), null, false, "alias1");
         fieldGroup.setFieldGroupEntry(fieldGroupEntry);
         FieldGroup createdFieldgroup = typeManager.createFieldGroup(fieldGroup);
-        assertEquals(fieldDescriptor1.getVersion(), createdFieldgroup.getFieldGroupEntry("FD1").getFieldDescriptorVersion());
+        assertEquals(fieldDescriptor1.getVersion(), createdFieldgroup.getFieldGroupEntry(fieldDescriptor1.getId()).getFieldDescriptorVersion());
         
         fieldGroupEntry = typeManager.newFieldGroupEntry(fieldDescriptor2.getId(), null, false, "alias2");
         fieldGroup.setFieldGroupEntry(fieldGroupEntry);
         FieldGroup updatedFieldgroup = typeManager.updateFieldGroup(fieldGroup);
-        assertEquals(fieldDescriptor2.getVersion(), updatedFieldgroup.getFieldGroupEntry("FD2").getFieldDescriptorVersion());
+        assertEquals(fieldDescriptor2.getVersion(), updatedFieldgroup.getFieldGroupEntry(fieldDescriptor2.getId()).getFieldDescriptorVersion());
         
         fieldGroupEntry = typeManager.newFieldGroupEntry(fieldDescriptor3.getId(), null, false, "alias3");
         fieldGroup.setFieldGroupEntry(fieldGroupEntry);
         updatedFieldgroup = typeManager.updateFieldGroup(fieldGroup);
-        assertEquals(fieldDescriptor3B.getVersion(), updatedFieldgroup.getFieldGroupEntry("FD3").getFieldDescriptorVersion());
+        assertEquals(fieldDescriptor3B.getVersion(), updatedFieldgroup.getFieldGroupEntry(fieldDescriptor3.getId()).getFieldDescriptorVersion());
     }
     
     @Test

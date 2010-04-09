@@ -15,6 +15,9 @@
  */
 package org.lilycms.repository.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.Record.Scope;
@@ -23,12 +26,9 @@ public class RecordTypeImpl implements RecordType {
     
     private final String id;
     private Long version;
-    private String nonVersionableFieldGroupId;
-    private String versionableFieldGroupId;
-    private String versionableMutableFieldGroupId;
-    private Long nonVersionableFieldGroupVersion;
-    private Long versionableFieldGroupVersion;
-    private Long versionableMutableFieldGroupVersion;
+    private Map<Scope, String> fieldGroupIds;
+    private Map<Scope, Long> fieldGroupVersions;
+    private Map<String, Long> mixins;
 
     /**
      * This constructor should not be called directly.
@@ -36,6 +36,15 @@ public class RecordTypeImpl implements RecordType {
      */
     public RecordTypeImpl(String id) {
         this.id = id;
+        fieldGroupIds = new HashMap<Scope, String>();
+        fieldGroupIds.put(Scope.NON_VERSIONABLE, null);
+        fieldGroupIds.put(Scope.VERSIONABLE, null);
+        fieldGroupIds.put(Scope.VERSIONABLE_MUTABLE, null);
+        fieldGroupVersions = new HashMap<Scope, Long>();
+        fieldGroupVersions.put(Scope.NON_VERSIONABLE, null);
+        fieldGroupVersions.put(Scope.VERSIONABLE, null);
+        fieldGroupVersions.put(Scope.VERSIONABLE_MUTABLE, null);
+        mixins = new HashMap<String, Long>();
     }
     
     public String getId() {
@@ -51,72 +60,39 @@ public class RecordTypeImpl implements RecordType {
     }
 
     public String getFieldGroupId(Scope scope) {
-        switch (scope) {
-        case NON_VERSIONABLE:
-            return nonVersionableFieldGroupId;
-        case VERSIONABLE:
-            return versionableFieldGroupId;
-        case VERSIONABLE_MUTABLE:
-            return versionableMutableFieldGroupId;
-        default:
-            return null;
-        }
+        return fieldGroupIds.get(scope);
     }
 
     public Long getFieldGroupVersion(Scope scope) {
-        switch (scope) {
-        case NON_VERSIONABLE:
-            return nonVersionableFieldGroupVersion;
-        case VERSIONABLE:
-            return versionableFieldGroupVersion;
-        case VERSIONABLE_MUTABLE:
-            return versionableMutableFieldGroupVersion;
-        default:
-            return null;
-        }
+        return fieldGroupVersions.get(scope);
     }
 
     public void setFieldGroupId(Scope scope, String id) {
-        switch (scope) {
-        case NON_VERSIONABLE:
-            nonVersionableFieldGroupId = id;
-            break;
-        case VERSIONABLE:
-            versionableFieldGroupId = id;
-            break;
-        case VERSIONABLE_MUTABLE:
-            versionableMutableFieldGroupId = id;
-            break;
-        default:
-            break;
-        }
+        fieldGroupIds.put(scope, id);
     }
 
     public void setFieldGroupVersion(Scope scope, Long version) {
-        switch (scope) {
-        case NON_VERSIONABLE:
-            nonVersionableFieldGroupVersion = version;
-            break;
-        case VERSIONABLE:
-            versionableFieldGroupVersion = version;
-            break;
-        case VERSIONABLE_MUTABLE:
-            versionableMutableFieldGroupVersion = version;
-            break;
-        default:
-            break;
-        }
+        fieldGroupVersions.put(scope, version);
+    }
+    
+    public void addMixin(String recordTypeId, Long recordTypeVersion) {
+        mixins.put(recordTypeId, recordTypeVersion);
+    }
+    
+    public void removeMixin(String recordTypeId) {
+        mixins.remove(recordTypeId);
+    }
+    
+    public Map<String, Long> getMixins() {
+        return mixins;
     }
 
     public RecordType clone() {
         RecordTypeImpl clone = new RecordTypeImpl(this.id);
         clone.version = this.version;
-        clone.nonVersionableFieldGroupId = this.nonVersionableFieldGroupId;
-        clone.nonVersionableFieldGroupVersion = this.nonVersionableFieldGroupVersion;
-        clone.versionableFieldGroupId = this.versionableFieldGroupId;
-        clone.versionableFieldGroupVersion = this.versionableFieldGroupVersion;
-        clone.versionableMutableFieldGroupId = this.versionableMutableFieldGroupId;
-        clone.versionableMutableFieldGroupVersion = this.versionableMutableFieldGroupVersion;
+        clone.fieldGroupIds.putAll(fieldGroupIds);
+        clone.fieldGroupVersions.putAll(fieldGroupVersions);
+        clone.mixins.putAll(mixins);
         return clone;
     }
 
@@ -124,20 +100,11 @@ public class RecordTypeImpl implements RecordType {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((fieldGroupIds == null) ? 0 : fieldGroupIds.hashCode());
+        result = prime * result + ((fieldGroupVersions == null) ? 0 : fieldGroupVersions.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((nonVersionableFieldGroupId == null) ? 0 : nonVersionableFieldGroupId.hashCode());
-        result = prime * result
-                        + ((nonVersionableFieldGroupVersion == null) ? 0 : nonVersionableFieldGroupVersion.hashCode());
+        result = prime * result + ((mixins == null) ? 0 : mixins.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
-        result = prime * result + ((versionableFieldGroupId == null) ? 0 : versionableFieldGroupId.hashCode());
-        result = prime * result
-                        + ((versionableFieldGroupVersion == null) ? 0 : versionableFieldGroupVersion.hashCode());
-        result = prime * result
-                        + ((versionableMutableFieldGroupId == null) ? 0 : versionableMutableFieldGroupId.hashCode());
-        result = prime
-                        * result
-                        + ((versionableMutableFieldGroupVersion == null) ? 0 : versionableMutableFieldGroupVersion
-                                        .hashCode());
         return result;
     }
 
@@ -150,56 +117,38 @@ public class RecordTypeImpl implements RecordType {
         if (getClass() != obj.getClass())
             return false;
         RecordTypeImpl other = (RecordTypeImpl) obj;
+        if (fieldGroupIds == null) {
+            if (other.fieldGroupIds != null)
+                return false;
+        } else if (!fieldGroupIds.equals(other.fieldGroupIds))
+            return false;
+        if (fieldGroupVersions == null) {
+            if (other.fieldGroupVersions != null)
+                return false;
+        } else if (!fieldGroupVersions.equals(other.fieldGroupVersions))
+            return false;
         if (id == null) {
             if (other.id != null)
                 return false;
         } else if (!id.equals(other.id))
             return false;
-        if (nonVersionableFieldGroupId == null) {
-            if (other.nonVersionableFieldGroupId != null)
+        if (mixins == null) {
+            if (other.mixins != null)
                 return false;
-        } else if (!nonVersionableFieldGroupId.equals(other.nonVersionableFieldGroupId))
-            return false;
-        if (nonVersionableFieldGroupVersion == null) {
-            if (other.nonVersionableFieldGroupVersion != null)
-                return false;
-        } else if (!nonVersionableFieldGroupVersion.equals(other.nonVersionableFieldGroupVersion))
+        } else if (!mixins.equals(other.mixins))
             return false;
         if (version == null) {
             if (other.version != null)
                 return false;
         } else if (!version.equals(other.version))
             return false;
-        if (versionableFieldGroupId == null) {
-            if (other.versionableFieldGroupId != null)
-                return false;
-        } else if (!versionableFieldGroupId.equals(other.versionableFieldGroupId))
-            return false;
-        if (versionableFieldGroupVersion == null) {
-            if (other.versionableFieldGroupVersion != null)
-                return false;
-        } else if (!versionableFieldGroupVersion.equals(other.versionableFieldGroupVersion))
-            return false;
-        if (versionableMutableFieldGroupId == null) {
-            if (other.versionableMutableFieldGroupId != null)
-                return false;
-        } else if (!versionableMutableFieldGroupId.equals(other.versionableMutableFieldGroupId))
-            return false;
-        if (versionableMutableFieldGroupVersion == null) {
-            if (other.versionableMutableFieldGroupVersion != null)
-                return false;
-        } else if (!versionableMutableFieldGroupVersion.equals(other.versionableMutableFieldGroupVersion))
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "RecordTypeImpl [id=" + id + ", version=" + version + ", nonVersionableFieldGroupId="
-                        + nonVersionableFieldGroupId + ", nonVersionableFieldGroupVersion="
-                        + nonVersionableFieldGroupVersion + ", versionableFieldGroupId=" + versionableFieldGroupId
-                        + ", versionableFieldGroupVersion=" + versionableFieldGroupVersion
-                        + ", versionableMutableFieldGroupId=" + versionableMutableFieldGroupId
-                        + ", versionableMutableFieldGroupVersion=" + versionableMutableFieldGroupVersion + "]";
+        return "RecordTypeImpl [id=" + id + ", version=" + version + ", fieldGroupIds=" + fieldGroupIds
+                        + ", fieldGroupVersions=" + fieldGroupVersions + ", mixins=" + mixins + "]";
     }
+
 }

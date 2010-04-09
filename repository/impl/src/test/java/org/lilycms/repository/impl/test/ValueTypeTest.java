@@ -119,9 +119,9 @@ public class ValueTypeTest {
     
     private void testType(String recordTypeId, String valueTypeString, boolean multivalue, boolean hierarchical,
                     Object fieldValue) throws Exception {
-        String fieldDescriptorId = valueTypeString+"FieldId"+multivalue+hierarchical;
-        FieldDescriptor fieldDescriptor = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(fieldDescriptorId, typeManager.getValueType(
-                        valueTypeString, multivalue, hierarchical), "aGlobalName"));
+        String name = valueTypeString+"FieldId"+multivalue+hierarchical;
+        FieldDescriptor fieldDescriptor = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(typeManager.getValueType(
+                        valueTypeString, multivalue, hierarchical), name));
         String fieldGroupId = valueTypeString+"FieldGroupId"+multivalue+hierarchical;
         FieldGroup fieldGroup = typeManager.newFieldGroup(fieldGroupId);
         fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor.getId(), fieldDescriptor.getVersion(), true, "anAlias"));
@@ -133,11 +133,11 @@ public class ValueTypeTest {
 
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setField(Scope.NON_VERSIONABLE, fieldDescriptorId, fieldValue);
+        record.setField(Scope.NON_VERSIONABLE, fieldDescriptor.getName(), fieldValue);
         repository.create(record);
 
         Record actualRecord = repository.read(record.getId());
-        assertEquals(fieldValue, actualRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptorId));
+        assertEquals(fieldValue, actualRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptor.getName()));
     }
 
     private class XYPrimitiveValueType implements PrimitiveValueType {

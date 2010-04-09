@@ -89,11 +89,11 @@ public interface Repository {
 
     Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId, List<String> nonVersionableFieldIds, List<String> versionableFieldIds, List<String> versionableMutableFieldIds) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record read(RecordId recordId, List<String> nonVersionableFieldNames, List<String> versionableFieldNames, List<String> versionableMutableFieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
     Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId, Long version, List<String> nonVersionableFieldIds, List<String> versionableFieldIds, List<String> versionableMutableFieldIds) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record read(RecordId recordId, Long version, List<String> nonVersionableFieldNames, List<String> versionableFieldNames, List<String> versionableMutableFieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
 
     /**
      * Delete a {@link Record} from the repository.

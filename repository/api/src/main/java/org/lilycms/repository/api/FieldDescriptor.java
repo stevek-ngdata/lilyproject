@@ -29,6 +29,8 @@ package org.lilycms.repository.api;
  * 
  */
 public interface FieldDescriptor {
+
+    void setId(String string);
     /**
      * The id of the {@link FieldDescriptor} is also the id to be used by the corresponding {@link Field}
      * The id is system generated and unique.  
@@ -50,12 +52,12 @@ public interface FieldDescriptor {
      * Set the global unique name of the {@link FieldDescriptor}.
      * The name can be chose by the user.
      */
-    void setGlobalName(String name);
+    void setName(String name);
     
     /**
      * @return the global unique name of the {@link FieldDescriptor}
      */
-    String getGlobalName();
+    String getName();
     
     /**
      * Set the {@link ValueType} of the {@link Field}
@@ -71,4 +73,5 @@ public interface FieldDescriptor {
     boolean equals(Object obj);
 
     FieldDescriptor clone();
+
 }

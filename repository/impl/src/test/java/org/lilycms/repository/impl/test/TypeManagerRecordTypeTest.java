@@ -18,7 +18,8 @@ package org.lilycms.repository.impl.test;
 
 import static junit.framework.Assert.*;
 
-import org.apache.commons.lang.NotImplementedException;
+import java.util.Map;
+
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -422,6 +423,88 @@ public class TypeManagerRecordTypeTest {
         assertEquals(fieldGroup3.getId(), recordTypeRemoved.getFieldGroupId(Scope.VERSIONABLE_MUTABLE));
         assertEquals(fieldGroup3.getVersion(), recordTypeRemoved.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE));
         assertEquals(recordTypeRemoved, typeManager.getRecordType(id, null));
+    }
+    
+    @Test
+    public void testMixin() throws Exception {
+        String id = "testMixin";
+        RecordType mixinType = typeManager.newRecordType(id+"MIX");
+        mixinType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
+        mixinType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
+        mixinType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
+        mixinType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
+        mixinType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
+        mixinType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType = typeManager.createRecordType(mixinType);
+        
+        RecordType recordType = typeManager.newRecordType(id+"RT");
+        recordType.addMixin(mixinType.getId(), mixinType.getVersion());
+        assertEquals(Long.valueOf(1), typeManager.createRecordType(recordType).getVersion());
+        recordType.setVersion(Long.valueOf(1));
+        assertEquals(recordType, typeManager.getRecordType(recordType.getId(), null));
+    }
+    
+    @Test
+    public void testMixinUpdate() throws Exception {
+        String id = "testMixinUpdate";
+        RecordType mixinType1 = typeManager.newRecordType(id+"MIX");
+        mixinType1.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
+        mixinType1.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
+        mixinType1.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
+        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
+        mixinType1.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
+        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType1 = typeManager.createRecordType(mixinType1);
+        RecordType mixinType2 = typeManager.newRecordType(id+"MIX2");
+        mixinType2.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
+        mixinType2.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
+        mixinType2.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
+        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
+        mixinType2.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
+        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType2 = typeManager.createRecordType(mixinType2);
+        
+        RecordType recordType = typeManager.newRecordType(id+"RT");
+        recordType.addMixin(mixinType1.getId(), mixinType1.getVersion());
+        typeManager.createRecordType(recordType);
+        
+        recordType.addMixin(mixinType2.getId(), mixinType2.getVersion());
+        assertEquals(Long.valueOf(2), typeManager.updateRecordType(recordType).getVersion());
+        recordType.setVersion(Long.valueOf(2));
+        assertEquals(recordType, typeManager.getRecordType(recordType.getId(), null));
+    }
+    
+    @Test
+    public void testMixinRemove() throws Exception {
+        String id = "testMixinRemove";
+        RecordType mixinType1 = typeManager.newRecordType(id+"MIX");
+        mixinType1.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
+        mixinType1.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
+        mixinType1.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
+        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
+        mixinType1.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
+        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType1 = typeManager.createRecordType(mixinType1);
+        RecordType mixinType2 = typeManager.newRecordType(id+"MIX2");
+        mixinType2.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
+        mixinType2.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
+        mixinType2.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
+        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
+        mixinType2.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
+        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType2 = typeManager.createRecordType(mixinType2);
+        
+        RecordType recordType = typeManager.newRecordType(id+"RT");
+        recordType.addMixin(mixinType1.getId(), mixinType1.getVersion());
+        typeManager.createRecordType(recordType);
+        
+        recordType.addMixin(mixinType2.getId(), mixinType2.getVersion());
+        recordType.removeMixin(mixinType1.getId());
+        assertEquals(Long.valueOf(2), typeManager.updateRecordType(recordType).getVersion());
+        RecordType readRecordType = typeManager.getRecordType(recordType.getId(), null);
+        Map<String, Long> mixins = readRecordType.getMixins();
+        assertEquals(1, mixins.size());
+        assertEquals(Long.valueOf(1), mixins.get(mixinType2.getId()));
     }
     
 //    @Test
