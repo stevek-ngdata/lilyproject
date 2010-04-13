@@ -15,9 +15,9 @@
  */
 package org.lilycms.repository.api;
 
+import java.util.Collection;
 import java.util.Map;
 
-import org.lilycms.repository.api.Record.Scope;
 
 
 /**
@@ -27,9 +27,9 @@ import org.lilycms.repository.api.Record.Scope;
  * Multiple versions of a RecordType can exist
  * 
  * <p>
- * A collection of {@link FieldDescriptor}s describe which fields can or must be
+ * A collection of {@link FieldType}s describe which fields can or must be
  * part of a {@link Record} of this {@link RecordType}. A
- * {@link FieldDescriptor} is always part of a {@link RecordType} and cannot
+ * {@link FieldType} is always part of a {@link RecordType} and cannot
  * exist on its own.
  */
 public interface RecordType {
@@ -39,13 +39,13 @@ public interface RecordType {
     
     Long getVersion();
     
-    void setFieldGroupId(Scope scope, String id);
- 
-    void setFieldGroupVersion(Scope scope, Long version);
+    void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry);
+
+    FieldTypeEntry getFieldTypeEntry(String fieldTypeId);
     
-    String getFieldGroupId(Scope scope);
+    void removeFieldTypeEntry(String fieldTypeId);
     
-    Long getFieldGroupVersion(Scope scope);
+    Collection<FieldTypeEntry> getFieldTypeEntries();
     
     void addMixin(String recordTypeId, Long recordTypeVersion);
     

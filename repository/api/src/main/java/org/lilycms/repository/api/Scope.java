@@ -15,13 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-/**
- *
- */
-public class FieldDescriptorUpdateException extends Exception {
-
-    public FieldDescriptorUpdateException(String message) {
-        super(message);
-    }
-
+public enum Scope {
+    NON_VERSIONED, VERSIONED, VERSIONED_MUTABLE 
 }

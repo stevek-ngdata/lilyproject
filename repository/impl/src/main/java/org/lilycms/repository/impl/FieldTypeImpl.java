@@ -15,28 +15,31 @@
  */
 package org.lilycms.repository.impl;
 
-import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.FieldType;
+import org.lilycms.repository.api.QName;
+import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
 
-public class FieldDescriptorImpl implements FieldDescriptor {
+public class FieldTypeImpl implements FieldType {
 
     private String id;
-    private Long version;
     private ValueType valueType;
-    private String name;
+    private QName name;
+    private Scope scope;
 
     /**
      * This constructor should not be called directly.
-     * @use {@link TypeManager#newFieldDescriptor} instead
+     * @use {@link TypeManager#newFieldType} instead
      */
-    public FieldDescriptorImpl(String id, ValueType valueType, String name) {
+    public FieldTypeImpl(String id, ValueType valueType, QName name, Scope scope) {
         this.id = id;
         this.valueType = valueType;
         this.name = name;
+        this.scope = scope;
     }
 
-    public String getName() {
+    public QName getName() {
         return name;
     }
 
@@ -48,15 +51,15 @@ public class FieldDescriptorImpl implements FieldDescriptor {
         return valueType;
     }
 
-    public Long getVersion() {
-        return version;
+    public Scope getScope() {
+        return scope;
     }
 
     public void setId(String id) {
         this.id = id;
     }
     
-    public void setName(String name) {
+    public void setName(QName name) {
         this.name = name;
     }
 
@@ -64,14 +67,12 @@ public class FieldDescriptorImpl implements FieldDescriptor {
         this.valueType = valueType;
     }
 
-    public void setVersion(Long version) {
-        this.version = version;
+    public void setScope(Scope scope) {
+        this.scope = scope;
     }
     
-    public FieldDescriptor clone() {
-        FieldDescriptorImpl clone = new FieldDescriptorImpl(this.id, this.valueType, this.name);
-        clone.version = this.version;
-        return clone;
+    public FieldType clone() {
+        return new FieldTypeImpl(this.id, this.valueType, this.name, this.scope);
     }
 
     @Override
@@ -81,7 +82,6 @@ public class FieldDescriptorImpl implements FieldDescriptor {
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
-        result = prime * result + ((version == null) ? 0 : version.hashCode());
         return result;
     }
 
@@ -93,7 +93,7 @@ public class FieldDescriptorImpl implements FieldDescriptor {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        FieldDescriptorImpl other = (FieldDescriptorImpl) obj;
+        FieldTypeImpl other = (FieldTypeImpl) obj;
         if (name == null) {
             if (other.name != null)
                 return false;
@@ -109,17 +109,12 @@ public class FieldDescriptorImpl implements FieldDescriptor {
                 return false;
         } else if (!valueType.equals(other.valueType))
             return false;
-        if (version == null) {
-            if (other.version != null)
-                return false;
-        } else if (!version.equals(other.version))
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "FieldDescriptorImpl [id=" + id + ", version=" + version + ", name=" + name
+        return "FieldTypeImpl [id=" + id + ", name=" + name
                         + ", valueType=" + valueType + "]";
     }
 }

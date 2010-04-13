@@ -18,25 +18,28 @@ package org.lilycms.repository.api;
 /**
  *
  */
-public class FieldGroupExistsException extends Exception {
+public class FieldTypeNotFoundException extends Exception {
 
-    private final FieldGroup fieldGroup;
+    private final String id;
+    private final Long version;
 
-    public FieldGroupExistsException(FieldGroup fieldGroup) {
-        this.fieldGroup = fieldGroup;
-    }
-
-    public FieldGroup getFieldGroup() {
-        return fieldGroup;
+    public FieldTypeNotFoundException(String id, Long version) {
+        this.id = id;
+        this.version = version;
     }
     
     @Override
     public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        message.append("FieldGroup <");
-        message.append(fieldGroup.getId());
-        message.append("> ");
-        message.append("already exists");
-        return message.toString();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("FieldType <");
+        stringBuilder.append(id);
+        stringBuilder.append("> ");
+        if (version != null) {
+            stringBuilder.append("version: <");
+            stringBuilder.append(version);
+            stringBuilder.append("> ");
+        }
+        stringBuilder.append("could not be found.");
+        return stringBuilder.toString();
     }
 }

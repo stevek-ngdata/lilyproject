@@ -35,10 +35,6 @@ import java.util.Map;
  * 
  */
 public interface Record {
-    public static enum Scope {
-        NON_VERSIONABLE, VERSIONABLE, VERSIONABLE_MUTABLE 
-    }
-    
     void setId(RecordId recordId);
 
     RecordId getId();
@@ -59,17 +55,17 @@ public interface Record {
     
     Long getRecordTypeVersion(Scope scope);
     
-    void setField(Scope scope, String fieldName, Object value);
+    void setField(QName fieldName, Object value);
 
-    Object getField(Scope scope, String fieldName) throws FieldNotFoundException;
+    Object getField(QName fieldName) throws FieldNotFoundException;
 
-    Map<String, Object> getFields(Scope scope);
+    Map<QName, Object> getFields();
 
-    void addFieldsToDelete(Scope scope, List<String> fieldNames);
+    void addFieldsToDelete(List<QName> fieldNames);
     
-    void removeFieldsToDelete(Scope scope, List<String> fieldNames);
+    void removeFieldsToDelete(List<QName> fieldNames);
 
-    List<String> getFieldsToDelete(Scope scope);
+    List<QName> getFieldsToDelete();
     
     Record clone();
     

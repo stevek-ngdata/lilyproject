@@ -19,6 +19,7 @@ package org.lilycms.repository.impl.test;
 import static junit.framework.Assert.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
@@ -26,13 +27,13 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilycms.repository.api.FieldDescriptor;
-import org.lilycms.repository.api.FieldGroup;
-import org.lilycms.repository.api.FieldGroupNotFoundException;
+import org.lilycms.repository.api.FieldType;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.Record.Scope;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.testfw.TestHelper;
@@ -44,50 +45,24 @@ public class TypeManagerRecordTypeTest {
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
     private static TypeManager typeManager;
-    private static FieldDescriptor fieldDescriptor1;
-    private static FieldDescriptor fieldDescriptor2;
-    private static FieldDescriptor fieldDescriptor3;
-    private static FieldGroup fieldGroup1;
-    private static FieldGroup fieldGroup2;
-    private static FieldGroup fieldGroup3;
-    private static FieldGroup fieldGroup1B;
-    private static FieldGroup fieldGroup2B;
-    private static FieldGroup fieldGroup3B;
+    private static FieldType fieldType1;
+    private static FieldType fieldType2;
+    private static FieldType fieldType3;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         TEST_UTIL.startMiniCluster(1);
         typeManager = new HBaseTypeManager(new IdGeneratorImpl(), TEST_UTIL.getConfiguration());
-        setupFieldDescriptors();
-        setupFieldGroups();
+        setupFieldTypes();
     }
     
-    private static void setupFieldDescriptors() throws Exception {
-        fieldDescriptor1 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD1", typeManager.getValueType("STRING", false, false), "GN1"));
-        fieldDescriptor2 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD2", typeManager.getValueType("INTEGER", false, false), "GN2"));
-        fieldDescriptor3 = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor("FD3", typeManager.getValueType("BOOLEAN", false, false), "GN3"));
+    private static void setupFieldTypes() throws Exception {
+        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName("ns1", "field1"), Scope.NON_VERSIONED));
+        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(null, "field2"), Scope.VERSIONED));
+        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName("ns1", "field3"), Scope.VERSIONED_MUTABLE));
     }
     
-    private static void setupFieldGroups() throws Exception {
-        FieldGroup fieldGroup = typeManager.newFieldGroup("FG1");
-        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor1.getId(), fieldDescriptor1.getVersion(), false, "alias1"));
-        fieldGroup1 = typeManager.createFieldGroup(fieldGroup);
-        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor1.getId(), fieldDescriptor1.getVersion(), true, "alias1B"));
-        fieldGroup1B = typeManager.updateFieldGroup(fieldGroup);
-        
-        fieldGroup = typeManager.newFieldGroup("FG2");
-        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor2.getId(), fieldDescriptor2.getVersion(), false, "alias2"));
-        fieldGroup2 = typeManager.createFieldGroup(fieldGroup);
-        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor2.getId(), fieldDescriptor2.getVersion(), false, "alias2B"));
-        fieldGroup2B = typeManager.updateFieldGroup(fieldGroup);
-
-        fieldGroup = typeManager.newFieldGroup("FG3");
-        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor3.getId(), fieldDescriptor3.getVersion(), false, "alias3"));
-        fieldGroup3 = typeManager.createFieldGroup(fieldGroup);
-        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor3.getId(), fieldDescriptor3.getVersion(), false, "alias3B"));
-        fieldGroup3B = typeManager.updateFieldGroup(fieldGroup);
-    }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
@@ -117,12 +92,9 @@ public class TypeManagerRecordTypeTest {
     public void testCreate() throws Exception {
         String id = "testCreate";
         RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         assertEquals(Long.valueOf(1), typeManager.createRecordType(recordType).getVersion());
         
         recordType.setVersion(Long.valueOf(1));
@@ -137,20 +109,17 @@ public class TypeManagerRecordTypeTest {
         assertEquals(Long.valueOf(1), recordTypeV1.getVersion());
         assertEquals(Long.valueOf(1), typeManager.updateRecordType(recordType).getVersion());
         
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
         RecordType recordTypeV2 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordTypeV2.getVersion());
         assertEquals(Long.valueOf(2), typeManager.updateRecordType(recordType).getVersion());
         
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), true));
         RecordType recordTypeV3 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(3), recordTypeV3.getVersion());
         assertEquals(Long.valueOf(3), typeManager.updateRecordType(recordType).getVersion());
 
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), true));
         RecordType recordTypeV4 = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(4), recordTypeV4.getVersion());
         assertEquals(Long.valueOf(4), typeManager.updateRecordType(recordType).getVersion());
@@ -194,247 +163,74 @@ public class TypeManagerRecordTypeTest {
     }
     
     @Test
-    public void testFieldGroupExistsOnCreate() throws Exception {
+    public void testFieldTypeExistsOnCreate() throws Exception {
         String id = "testUpdateNonExistingRecordTypeFails";
         RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,"nonExistingFieldGroup");
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(UUID.randomUUID().toString(), false));
         try {
             typeManager.createRecordType(recordType);
             fail();
-        } catch (FieldGroupNotFoundException expected) {
-        }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE,"nonExistingFieldGroup");
-        try {
-            typeManager.createRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,"nonExistingFieldGroup");
-        try {
-            typeManager.createRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
+        } catch (FieldTypeNotFoundException expected) {
         }
     }
 
-    @Test
-    public void testFieldGroupVersionExistsOnCreate() throws Exception {
-        String id = "testUpdateNonExistingRecordTypeFails";
-        RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,Long.valueOf(99));
-        try {
-            typeManager.createRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,Long.valueOf(99));
-        try {
-            typeManager.createRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,Long.valueOf(99));
-        try {
-            typeManager.createRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        } 
-    }
-    
     @Test
     public void testFieldGroupExistsOnUpdate() throws Exception {
         String id = "testFieldGroupExistsOnUpdate";
         RecordType recordType = typeManager.newRecordType(id);
         typeManager.createRecordType(recordType);
         
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,"nonExistingFieldGroup");
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(UUID.randomUUID().toString(), false));
         try {
             typeManager.updateRecordType(recordType);
             fail();
-        } catch (FieldGroupNotFoundException expected) {
+        } catch (FieldTypeNotFoundException expected) {
         }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE,"nonExistingFieldGroup");
-        try {
-            typeManager.updateRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,"nonExistingFieldGroup");
-        try {
-            typeManager.updateRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        } 
     }
-    
-    @Test
-    public void testFieldGroupVersionExistsOnUpdate() throws Exception {
-        String id = "testFieldGroupVersionExistsOnUpdate";
-        RecordType recordType = typeManager.newRecordType(id);
-        typeManager.createRecordType(recordType);
-        
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,Long.valueOf(99));
-        try {
-            typeManager.updateRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,Long.valueOf(99));
-        try {
-            typeManager.updateRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        }
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,Long.valueOf(99));
-        try {
-            typeManager.updateRecordType(recordType);
-            fail();
-        } catch (FieldGroupNotFoundException expected) {
-        } 
-    }
-    
-    @Test
-    public void testLatestFieldGroupIsTakenByDefaultOnCreate() throws Exception {
-        String id = "testLatestFieldGroupIsTakenByDefaultOnCreate";
-        RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        assertEquals(Long.valueOf(1), typeManager.createRecordType(recordType).getVersion());
-        RecordType actualRecordType = typeManager.getRecordType(id, null);
-        assertEquals(Long.valueOf(2), actualRecordType.getFieldGroupVersion(Scope.NON_VERSIONABLE));
-        assertEquals(Long.valueOf(2), actualRecordType.getFieldGroupVersion(Scope.VERSIONABLE));
-        assertEquals(Long.valueOf(2), actualRecordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE));
-    }
-    
-    @Test
-    public void testLatestFieldGroupIsTakenByDefaultOnUpdate() throws Exception {
-        String id = "testLatestFieldGroupIsTakenByDefaultOnUpdate";
-        RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
-        assertEquals(Long.valueOf(1), typeManager.createRecordType(recordType).getVersion());
-        
-        RecordType actualRecordType = typeManager.getRecordType(id, null);
-        assertEquals(Long.valueOf(1), actualRecordType.getFieldGroupVersion(Scope.NON_VERSIONABLE));
-        assertEquals(Long.valueOf(1), actualRecordType.getFieldGroupVersion(Scope.VERSIONABLE));
-        assertEquals(Long.valueOf(1), actualRecordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE));
-
-        recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1B.getId());
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2B.getId());
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3B.getId());
-        typeManager.updateRecordType(recordType);
-        actualRecordType = typeManager.getRecordType(id, null);
-        assertEquals(Long.valueOf(2), actualRecordType.getFieldGroupVersion(Scope.NON_VERSIONABLE));
-        assertEquals(Long.valueOf(2), actualRecordType.getFieldGroupVersion(Scope.VERSIONABLE));
-        assertEquals(Long.valueOf(2), actualRecordType.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE));
-    }
-    
     
     @Test
     public void testRemove() throws Exception {
         String id = "testRemove";
         RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         typeManager.createRecordType(recordType);
         
-        RecordType recordTypeRemovedGroups = typeManager.removeFieldGroups(id, true, true, true);
-        assertEquals(Long.valueOf(2), recordTypeRemovedGroups.getVersion());
-        assertNull(recordTypeRemovedGroups.getFieldGroupId(Scope.NON_VERSIONABLE));
-        assertNull(recordTypeRemovedGroups.getFieldGroupVersion(Scope.NON_VERSIONABLE));
-        assertNull(recordTypeRemovedGroups.getFieldGroupId(Scope.VERSIONABLE));
-        assertNull(recordTypeRemovedGroups.getFieldGroupVersion(Scope.VERSIONABLE));
-        assertNull(recordTypeRemovedGroups.getFieldGroupId(Scope.VERSIONABLE_MUTABLE));
-        assertNull(recordTypeRemovedGroups.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE));
+        recordType.removeFieldTypeEntry(fieldType1.getId());
+        recordType.removeFieldTypeEntry(fieldType2.getId());
+        recordType.removeFieldTypeEntry(fieldType3.getId());
+        typeManager.updateRecordType(recordType);
         
-        assertEquals(recordTypeRemovedGroups, typeManager.getRecordType(id, null));
-    }
-    
-    @Test
-    public void testRemoveNonExisting() throws Exception {
-        String id = "testRemoveNonExisting";
-        RecordType recordType = typeManager.createRecordType(typeManager.newRecordType(id));
-        
-        assertEquals(recordType, typeManager.removeFieldGroups(id, true, true, true));
+        RecordType readRecordType = typeManager.getRecordType(id, null);
+        assertTrue(readRecordType.getFieldTypeEntries().isEmpty());
     }
     
     @Test
     public void testRemoveLeavesOlderVersionsUntouched() throws Exception {
         String id = "testRemoveLeavesOlderVersionsUntouched";
         RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         typeManager.createRecordType(recordType);
-        typeManager.removeFieldGroups(id, true, true, true);
         
-        RecordType recordTypeV1 = typeManager.getRecordType(id, Long.valueOf(1));
-        assertEquals(fieldGroup1.getId(), recordTypeV1.getFieldGroupId(Scope.NON_VERSIONABLE));
-        assertEquals(fieldGroup1.getVersion(), recordTypeV1.getFieldGroupVersion(Scope.NON_VERSIONABLE));
-        assertEquals(fieldGroup2.getId(), recordTypeV1.getFieldGroupId(Scope.VERSIONABLE));
-        assertEquals(fieldGroup2.getVersion(), recordTypeV1.getFieldGroupVersion(Scope.VERSIONABLE));
-        assertEquals(fieldGroup3.getId(), recordTypeV1.getFieldGroupId(Scope.VERSIONABLE_MUTABLE));
-        assertEquals(fieldGroup3.getVersion(), recordTypeV1.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE));
+        recordType.removeFieldTypeEntry(fieldType1.getId());
+        recordType.removeFieldTypeEntry(fieldType2.getId());
+        recordType.removeFieldTypeEntry(fieldType3.getId());
+        typeManager.updateRecordType(recordType);
+        
+        RecordType readRecordType = typeManager.getRecordType(id, Long.valueOf(1));
+        assertEquals(3, readRecordType.getFieldTypeEntries().size());
     }
 
-    @Test
-    public void testRemoveLeavesOtherFieldGroupEntriesAlone() throws Exception {
-        String id = "testRemoveLeavesOtherFieldGroupEntriesAlone";
-        RecordType recordType = typeManager.newRecordType(id);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        recordType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        recordType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
-        typeManager.createRecordType(recordType);
-        RecordType recordTypeRemoved = typeManager.removeFieldGroups(id, true, false, false);
-        assertNull(recordTypeRemoved.getFieldGroupId(Scope.NON_VERSIONABLE));
-        assertNull(recordTypeRemoved.getFieldGroupVersion(Scope.NON_VERSIONABLE));
-        assertEquals(fieldGroup2.getId(), recordTypeRemoved.getFieldGroupId(Scope.VERSIONABLE));
-        assertEquals(fieldGroup2.getVersion(), recordTypeRemoved.getFieldGroupVersion(Scope.VERSIONABLE));
-        assertEquals(fieldGroup3.getId(), recordTypeRemoved.getFieldGroupId(Scope.VERSIONABLE_MUTABLE));
-        assertEquals(fieldGroup3.getVersion(), recordTypeRemoved.getFieldGroupVersion(Scope.VERSIONABLE_MUTABLE));
-        assertEquals(recordTypeRemoved, typeManager.getRecordType(id, null));
-    }
-    
     @Test
     public void testMixin() throws Exception {
         String id = "testMixin";
         RecordType mixinType = typeManager.newRecordType(id+"MIX");
-        mixinType.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        mixinType.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        mixinType.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        mixinType.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        mixinType.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        mixinType.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType = typeManager.createRecordType(mixinType);
         
         RecordType recordType = typeManager.newRecordType(id+"RT");
@@ -448,20 +244,14 @@ public class TypeManagerRecordTypeTest {
     public void testMixinUpdate() throws Exception {
         String id = "testMixinUpdate";
         RecordType mixinType1 = typeManager.newRecordType(id+"MIX");
-        mixinType1.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        mixinType1.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        mixinType1.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        mixinType1.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType1 = typeManager.createRecordType(mixinType1);
         RecordType mixinType2 = typeManager.newRecordType(id+"MIX2");
-        mixinType2.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        mixinType2.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        mixinType2.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        mixinType2.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType2 = typeManager.createRecordType(mixinType2);
         
         RecordType recordType = typeManager.newRecordType(id+"RT");
@@ -478,20 +268,14 @@ public class TypeManagerRecordTypeTest {
     public void testMixinRemove() throws Exception {
         String id = "testMixinRemove";
         RecordType mixinType1 = typeManager.newRecordType(id+"MIX");
-        mixinType1.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        mixinType1.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        mixinType1.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        mixinType1.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        mixinType1.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType1 = typeManager.createRecordType(mixinType1);
         RecordType mixinType2 = typeManager.newRecordType(id+"MIX2");
-        mixinType2.setFieldGroupId(Scope.NON_VERSIONABLE,fieldGroup1.getId());
-        mixinType2.setFieldGroupVersion(Scope.NON_VERSIONABLE,fieldGroup1.getVersion());
-        mixinType2.setFieldGroupId(Scope.VERSIONABLE,fieldGroup2.getId());
-        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE,fieldGroup2.getVersion());
-        mixinType2.setFieldGroupId(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getId());
-        mixinType2.setFieldGroupVersion(Scope.VERSIONABLE_MUTABLE,fieldGroup3.getVersion());
+        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        mixinType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
         mixinType2 = typeManager.createRecordType(mixinType2);
         
         RecordType recordType = typeManager.newRecordType(id+"RT");
@@ -506,9 +290,4 @@ public class TypeManagerRecordTypeTest {
         assertEquals(1, mixins.size());
         assertEquals(Long.valueOf(1), mixins.get(mixinType2.getId()));
     }
-    
-//    @Test
-//    public void testCreateWithDuplicateFieldGroupFails() throws Exception {
-//        throw new NotImplementedException();
-//    }
 }

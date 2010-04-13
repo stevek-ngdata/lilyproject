@@ -48,13 +48,13 @@ public class EncodingUtil {
     }
     
     /**
-     * Generates a new HBase rowkey based on the recordTypeId and fieldDescriptorId.
+     * Generates a new HBase rowkey based on the recordTypeId and fieldTypeId.
      */
-    public static byte[] generateFieldDescriptorRowKey(String recordTypeId, String fieldDescriptorId) {
+    public static byte[] generateFieldTypeRowKey(String recordTypeId, String fieldTypeId) {
         StringBuilder rowKey = new StringBuilder();
         rowKey.append(recordTypeId);
         rowKey.append('|');
-        rowKey.append(fieldDescriptorId);
+        rowKey.append(fieldTypeId);
         return Bytes.toBytes(rowKey.toString());
     }
 }

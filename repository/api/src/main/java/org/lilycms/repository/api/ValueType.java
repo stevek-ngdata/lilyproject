@@ -17,7 +17,7 @@ package org.lilycms.repository.api;
 
 /**
  * The {@link ValueType} represents the type of the actual values of a
- * {@link FieldDescriptor}. A {@link ValueType} encapsulates a
+ * {@link FieldType}. A {@link ValueType} encapsulates a
  * {@link PrimitiveValueType} to be used by the value or values of the
  * {@link Field} following this {@link ValueType}. The implementors of this
  * interface are responsible for the encoding and decoding of the values

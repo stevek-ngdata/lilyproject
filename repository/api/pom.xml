@@ -36,4 +36,11 @@
   <build>
   </build>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.lilycms</groupId>
+      <artifactId>lily-util</artifactId>
+    </dependency>
+  </dependencies>
+
 </project>

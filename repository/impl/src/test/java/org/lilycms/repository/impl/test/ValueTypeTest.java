@@ -27,13 +27,13 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilycms.repository.api.FieldDescriptor;
-import org.lilycms.repository.api.FieldGroup;
+import org.lilycms.repository.api.FieldType;
 import org.lilycms.repository.api.HierarchyPath;
 import org.lilycms.repository.api.PrimitiveValueType;
+import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Record.Scope;
+import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
@@ -119,25 +119,20 @@ public class ValueTypeTest {
     
     private void testType(String recordTypeId, String valueTypeString, boolean multivalue, boolean hierarchical,
                     Object fieldValue) throws Exception {
-        String name = valueTypeString+"FieldId"+multivalue+hierarchical;
-        FieldDescriptor fieldDescriptor = typeManager.createFieldDescriptor(typeManager.newFieldDescriptor(typeManager.getValueType(
-                        valueTypeString, multivalue, hierarchical), name));
-        String fieldGroupId = valueTypeString+"FieldGroupId"+multivalue+hierarchical;
-        FieldGroup fieldGroup = typeManager.newFieldGroup(fieldGroupId);
-        fieldGroup.setFieldGroupEntry(typeManager.newFieldGroupEntry(fieldDescriptor.getId(), fieldDescriptor.getVersion(), true, "anAlias"));
-        fieldGroup = typeManager.createFieldGroup(fieldGroup);
+        QName name = new QName(null, valueTypeString+"FieldId"+multivalue+hierarchical);
+        FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType(
+                        valueTypeString, multivalue, hierarchical), name, Scope.VERSIONED));
         RecordType recordType = typeManager.newRecordType(recordTypeId+"RecordTypeId"+multivalue+hierarchical);
-        recordType.setFieldGroupId(Scope.NON_VERSIONABLE, fieldGroup.getId());
-        recordType.setFieldGroupVersion(Scope.NON_VERSIONABLE, fieldGroup.getVersion());
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType.getId(), true));
         typeManager.createRecordType(recordType);
 
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType(recordType.getId(), recordType.getVersion());
-        record.setField(Scope.NON_VERSIONABLE, fieldDescriptor.getName(), fieldValue);
+        record.setField(fieldType.getName(), fieldValue);
         repository.create(record);
 
         Record actualRecord = repository.read(record.getId());
-        assertEquals(fieldValue, actualRecord.getField(Scope.NON_VERSIONABLE, fieldDescriptor.getName()));
+        assertEquals(fieldValue, actualRecord.getField(fieldType.getName()));
     }
 
     private class XYPrimitiveValueType implements PrimitiveValueType {

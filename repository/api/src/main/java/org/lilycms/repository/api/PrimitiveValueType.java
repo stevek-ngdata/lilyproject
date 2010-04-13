@@ -18,7 +18,7 @@ package org.lilycms.repository.api;
 /**
  * Represents the primitive type that can be used for the value of a field. It
  * should be embeded in a {@link ValueType} before using it in a
- * {@link FieldDescriptor} The implementors of this interface are responsible
+ * {@link FieldType} The implementors of this interface are responsible
  * for the encoding to and decoding from {@code byte[]} of the values of their
  * type.
  * 

@@ -18,28 +18,24 @@ package org.lilycms.repository.api;
 /**
  *
  */
-public class FieldDescriptorNotFoundException extends Exception {
+public class FieldTypeExistsException extends Exception {
+    private final FieldType fieldType;
 
-    private final String id;
-    private final Long version;
+    public FieldTypeExistsException(FieldType fieldType) {
+        this.fieldType = fieldType;
+    }
 
-    public FieldDescriptorNotFoundException(String id, Long version) {
-        this.id = id;
-        this.version = version;
+    public FieldType getFieldType() {
+        return fieldType;
     }
     
     @Override
     public String getMessage() {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("FieldDescriptor <");
-        stringBuilder.append(id);
-        stringBuilder.append("> ");
-        if (version != null) {
-            stringBuilder.append("version: <");
-            stringBuilder.append(version);
-            stringBuilder.append("> ");
-        }
-        stringBuilder.append("could not be found.");
-        return stringBuilder.toString();
+        StringBuilder message = new StringBuilder();
+        message.append("FieldType <");
+        message.append(fieldType.getId());
+        message.append("> ");
+        message.append("already exists");
+        return message.toString();
     }
 }

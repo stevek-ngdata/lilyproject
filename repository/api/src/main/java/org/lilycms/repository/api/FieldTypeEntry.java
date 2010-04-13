@@ -15,16 +15,11 @@
  */
 package org.lilycms.repository.api;
 
-import java.util.Collection;
-
-public interface FieldGroup {
-    String getId();
-    void setVersion(Long version);
-    Long getVersion();
-    void setFieldGroupEntry(FieldGroupEntry fieldGroupEntry);
-    FieldGroupEntry getFieldGroupEntry(String fieldDescriptorId);
-    void removeFieldGroupEntry(String fieldDescriptorId);
-    Collection<FieldGroupEntry> getFieldGroupEntries();
-    FieldGroup clone();
+public interface FieldTypeEntry {
+    void setFieldTypeId(String id);
+    String getFieldTypeId();
+    void setMandatory(boolean mandatory);
+    boolean isMandatory();
+    FieldTypeEntry clone();
     boolean equals(Object obj);
 }

@@ -15,20 +15,20 @@
  */
 package org.lilycms.repository.impl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lilycms.repository.api.FieldTypeEntry;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.Record.Scope;
 
 public class RecordTypeImpl implements RecordType {
     
     private final String id;
     private Long version;
-    private Map<Scope, String> fieldGroupIds;
-    private Map<Scope, Long> fieldGroupVersions;
-    private Map<String, Long> mixins;
+    private Map<String, Long> mixins = new HashMap<String, Long>();
+    private Map<String, FieldTypeEntry> fieldTypeEntries = new HashMap<String, FieldTypeEntry>();
 
     /**
      * This constructor should not be called directly.
@@ -36,15 +36,6 @@ public class RecordTypeImpl implements RecordType {
      */
     public RecordTypeImpl(String id) {
         this.id = id;
-        fieldGroupIds = new HashMap<Scope, String>();
-        fieldGroupIds.put(Scope.NON_VERSIONABLE, null);
-        fieldGroupIds.put(Scope.VERSIONABLE, null);
-        fieldGroupIds.put(Scope.VERSIONABLE_MUTABLE, null);
-        fieldGroupVersions = new HashMap<Scope, Long>();
-        fieldGroupVersions.put(Scope.NON_VERSIONABLE, null);
-        fieldGroupVersions.put(Scope.VERSIONABLE, null);
-        fieldGroupVersions.put(Scope.VERSIONABLE_MUTABLE, null);
-        mixins = new HashMap<String, Long>();
     }
     
     public String getId() {
@@ -58,23 +49,23 @@ public class RecordTypeImpl implements RecordType {
     public void setVersion(Long version){
         this.version = version;
     }
-
-    public String getFieldGroupId(Scope scope) {
-        return fieldGroupIds.get(scope);
-    }
-
-    public Long getFieldGroupVersion(Scope scope) {
-        return fieldGroupVersions.get(scope);
-    }
-
-    public void setFieldGroupId(Scope scope, String id) {
-        fieldGroupIds.put(scope, id);
-    }
-
-    public void setFieldGroupVersion(Scope scope, Long version) {
-        fieldGroupVersions.put(scope, version);
+    
+    public Collection<FieldTypeEntry> getFieldTypeEntries() {
+        return fieldTypeEntries.values();
     }
     
+    public FieldTypeEntry getFieldTypeEntry(String fieldTypeId) {
+        return fieldTypeEntries.get(fieldTypeId);
+    }
+    
+    public void removeFieldTypeEntry(String fieldTypeId) {
+        fieldTypeEntries.remove(fieldTypeId);
+    }
+    
+    public void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry) {
+        fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
+    }
+
     public void addMixin(String recordTypeId, Long recordTypeVersion) {
         mixins.put(recordTypeId, recordTypeVersion);
     }
@@ -90,8 +81,7 @@ public class RecordTypeImpl implements RecordType {
     public RecordType clone() {
         RecordTypeImpl clone = new RecordTypeImpl(this.id);
         clone.version = this.version;
-        clone.fieldGroupIds.putAll(fieldGroupIds);
-        clone.fieldGroupVersions.putAll(fieldGroupVersions);
+        clone.fieldTypeEntries.putAll(fieldTypeEntries);
         clone.mixins.putAll(mixins);
         return clone;
     }
@@ -100,8 +90,7 @@ public class RecordTypeImpl implements RecordType {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fieldGroupIds == null) ? 0 : fieldGroupIds.hashCode());
-        result = prime * result + ((fieldGroupVersions == null) ? 0 : fieldGroupVersions.hashCode());
+        result = prime * result + ((fieldTypeEntries == null) ? 0 : fieldTypeEntries.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((mixins == null) ? 0 : mixins.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
@@ -117,15 +106,10 @@ public class RecordTypeImpl implements RecordType {
         if (getClass() != obj.getClass())
             return false;
         RecordTypeImpl other = (RecordTypeImpl) obj;
-        if (fieldGroupIds == null) {
-            if (other.fieldGroupIds != null)
+        if (fieldTypeEntries == null) {
+            if (other.fieldTypeEntries != null)
                 return false;
-        } else if (!fieldGroupIds.equals(other.fieldGroupIds))
-            return false;
-        if (fieldGroupVersions == null) {
-            if (other.fieldGroupVersions != null)
-                return false;
-        } else if (!fieldGroupVersions.equals(other.fieldGroupVersions))
+        } else if (!fieldTypeEntries.equals(other.fieldTypeEntries))
             return false;
         if (id == null) {
             if (other.id != null)
@@ -147,8 +131,9 @@ public class RecordTypeImpl implements RecordType {
 
     @Override
     public String toString() {
-        return "RecordTypeImpl [id=" + id + ", version=" + version + ", fieldGroupIds=" + fieldGroupIds
-                        + ", fieldGroupVersions=" + fieldGroupVersions + ", mixins=" + mixins + "]";
+        return "RecordTypeImpl [id=" + id + ", version=" + version + ", fieldTypeEntries=" + fieldTypeEntries.values()
+                        + ", mixins=" + mixins + "]";
     }
+
 
 }

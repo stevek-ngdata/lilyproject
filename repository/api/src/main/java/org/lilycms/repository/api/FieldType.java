@@ -19,45 +19,34 @@ package org.lilycms.repository.api;
  * Describes the properties of a {@link Field}.
  * 
  * <p>
- * Multiple versions of a {@link FieldDescriptor} can exist.
+ * Multiple versions of a {@link FieldType} can exist.
  * 
  * <p>
- * A {@link FieldDescriptor} cannot exist on its own, but is always part of a
+ * A {@link FieldType} cannot exist on its own, but is always part of a
  * {@link RecordType}. It's id must be unique within the context of the
  * {@link RecordType}.
  * 
- * 
  */
-public interface FieldDescriptor {
+public interface FieldType {
 
     void setId(String string);
     /**
-     * The id of the {@link FieldDescriptor} is also the id to be used by the corresponding {@link Field}
+     * The id of the {@link FieldType} is also the id to be used by the corresponding {@link Field}
      * The id is system generated and unique.  
-     * @return the id of the {@link FieldDescriptor}
+     * @return the id of the {@link FieldType}
      */
     String getId();
 
     /**
-     * Set the version of the {@link FieldDescriptor}
-     */
-    void setVersion(Long version);
-    
-    /**
-     * @return the version of the {@link FieldDescriptor}
-     */
-    Long getVersion();
-
-    /**
-     * Set the global unique name of the {@link FieldDescriptor}.
+     * Set the global unique name of the {@link FieldType}.
      * The name can be chose by the user.
      */
-    void setName(String name);
+    void setName(QName name);
     
     /**
-     * @return the global unique name of the {@link FieldDescriptor}
+     * @return the global unique name of the {@link FieldType}
      */
-    String getName();
+    QName getName();
     
     /**
      * Set the {@link ValueType} of the {@link Field}
@@ -69,9 +58,13 @@ public interface FieldDescriptor {
      * @return the {@link ValueType} of the {@link Field}
      */
     ValueType getValueType();
+    
+    void setScope(Scope scope);
+    
+    Scope getScope();
 
     boolean equals(Object obj);
 
-    FieldDescriptor clone();
+    FieldType clone();
 
 }

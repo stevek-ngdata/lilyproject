@@ -15,15 +15,13 @@
  */
 package org.lilycms.repository.api;
 
-public interface FieldGroupEntry {
-    void setFieldDescriptorId(String id);
-    String getFieldDescriptorId();
-    void setFieldDescriptorVersion(Long version);
-    Long getFieldDescriptorVersion();
-    void setMandatory(boolean mandatory);
-    boolean isMandatory();
-    void setAlias(String alias);
-    String getAlias();
-    FieldGroupEntry clone();
-    boolean equals(Object obj);
+/**
+ *
+ */
+public class FieldTypeUpdateException extends Exception {
+
+    public FieldTypeUpdateException(String message) {
+        super(message);
+    }
+
 }

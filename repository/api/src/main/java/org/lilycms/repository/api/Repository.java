@@ -49,14 +49,14 @@ public interface Repository {
      *             if the master record for a variant record does not exist
      * @throws InvalidRecordException
      *             if an empty record is being created
-     * @throws FieldDescriptorNotFoundException 
+     * @throws FieldTypeNotFoundException 
      * @throws FieldGroupNotFoundException 
      * @throws RecordTypeNotFoundException 
      * @throws RepostioryException
      *             TBD
      */
     Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
-                    RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+                    RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
     /**
      * Updates an existing record on the repository.
@@ -79,21 +79,21 @@ public interface Repository {
      *             if no update information is provided
      * @throws RepositoryException
      *             TBD
-     * @throws FieldDescriptorNotFoundException 
+     * @throws FieldTypeNotFoundException 
      * @throws FieldGroupNotFoundException 
      * @throws RecordTypeNotFoundException 
      */
-    Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
     
-    Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId, List<String> nonVersionableFieldNames, List<String> versionableFieldNames, List<String> versionableMutableFieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId, Long version, List<String> nonVersionableFieldNames, List<String> versionableFieldNames, List<String> versionableMutableFieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
+    Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
     /**
      * Delete a {@link Record} from the repository.

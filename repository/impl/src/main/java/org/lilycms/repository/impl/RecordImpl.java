@@ -21,26 +21,26 @@ import java.util.List;
 import java.util.Map;
 
 import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.api.Scope;
 
 public class RecordImpl implements Record {
     private RecordId id;
-    private Map<Scope, Map<String, Object>> fields = new HashMap<Scope, Map<String, Object>>();
-    private String recordTypeId;
-    private Long recordTypeVersion;
+    private Map<QName, Object> fields = new HashMap<QName, Object>();
+    private List<QName> fieldsToDelete = new ArrayList<QName>();
     private Map<Scope, String> recordTypeIds = new HashMap<Scope, String>();
     private Map<Scope, Long> recordTypeVersions = new HashMap<Scope, Long>();
     private Long version;
-    private Map<Scope, List<String>> fieldsToDelete = new HashMap<Scope, List<String>>();
+    
 
     /**
      * This constructor should not be called directly.
      * @use {@link Repository#newRecord} instead
      */
     public RecordImpl() {
-        initialize();
     }
 
     /**
@@ -49,14 +49,6 @@ public class RecordImpl implements Record {
      */
     public RecordImpl(RecordId id) {
         this.id = id;
-        initialize();
-    }
-
-    private void initialize() {
-        for (Scope scope : Scope.values()) {
-            fields.put(scope, new HashMap<String, Object>());
-            fieldsToDelete.put(scope, new ArrayList<String>());
-        }
     }
 
     public void setId(RecordId id) {
@@ -75,17 +67,16 @@ public class RecordImpl implements Record {
         return version;
     }
 
-    public void setRecordType(String recordTypeId, Long recordTypeVersion) {
-        this.recordTypeId = recordTypeId;
-        this.recordTypeVersion = recordTypeVersion;
+    public void setRecordType(String id, Long version) {
+        setRecordType(Scope.NON_VERSIONED, id, version);
     }
 
     public String getRecordTypeId() {
-        return recordTypeId;
+        return getRecordTypeId(Scope.NON_VERSIONED);
     }
 
     public Long getRecordTypeVersion() {
-        return recordTypeVersion;
+        return getRecordTypeVersion(Scope.NON_VERSIONED);
     }
     
     public void setRecordType(Scope scope, String id, Long version) {
@@ -101,46 +92,42 @@ public class RecordImpl implements Record {
         return recordTypeVersions.get(scope);
     }
     
-    public void setField(Scope scope, String name, Object value) {
-        fields.get(scope).put(name, value);
+    public void setField(QName name, Object value) {
+        fields.put(name, value);
     }
     
-    public Object getField(Scope scope, String name) throws FieldNotFoundException {
-        Object field = fields.get(scope).get(name);
+    public Object getField(QName name) throws FieldNotFoundException {
+        Object field = fields.get(name);
         if (field == null) {
             throw new FieldNotFoundException(name);
         }
         return field;
     }
 
-    public Map<String, Object> getFields(Scope scope) {
-        return fields.get(scope);
+    public Map<QName, Object> getFields() {
+        return fields;
     }
 
-    public List<String> getFieldsToDelete(Scope scope) {
-        return fieldsToDelete.get(scope);
+    public List<QName> getFieldsToDelete() {
+        return fieldsToDelete;
     }
 
-    public void addFieldsToDelete(Scope scope, List<String> names) {
-        fieldsToDelete.get(scope).addAll(names);
+    public void addFieldsToDelete(List<QName> names) {
+        fieldsToDelete.addAll(names);
     }
 
-    public void removeFieldsToDelete(Scope scope, List<String> names) {
-        fieldsToDelete.get(scope).removeAll(names);
+    public void removeFieldsToDelete(List<QName> names) {
+        fieldsToDelete.removeAll(names);
     }
 
     public Record clone() {
         RecordImpl record = new RecordImpl();
         record.id = id;
         record.version = version;
-        record.recordTypeId = recordTypeId;
-        record.recordTypeVersion = recordTypeVersion;
         record.recordTypeIds.putAll(recordTypeIds);
         record.recordTypeVersions.putAll(recordTypeVersions);
-        for (Scope scope : Scope.values()) {
-            record.fields.get(scope).putAll(fields.get(scope));
-            record.fieldsToDelete.get(scope).addAll(fieldsToDelete.get(scope));
-        }
+        record.fields.putAll(fields);
+        record.fieldsToDelete.addAll(fieldsToDelete);
         return record;
     }
 
@@ -151,9 +138,7 @@ public class RecordImpl implements Record {
         result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         result = prime * result + ((fieldsToDelete == null) ? 0 : fieldsToDelete.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((recordTypeId == null) ? 0 : recordTypeId.hashCode());
         result = prime * result + ((recordTypeIds == null) ? 0 : recordTypeIds.hashCode());
-        result = prime * result + ((recordTypeVersion == null) ? 0 : recordTypeVersion.hashCode());
         result = prime * result + ((recordTypeVersions == null) ? 0 : recordTypeVersions.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
         return result;
@@ -183,20 +168,10 @@ public class RecordImpl implements Record {
                 return false;
         } else if (!id.equals(other.id))
             return false;
-        if (recordTypeId == null) {
-            if (other.recordTypeId != null)
-                return false;
-        } else if (!recordTypeId.equals(other.recordTypeId))
-            return false;
         if (recordTypeIds == null) {
             if (other.recordTypeIds != null)
                 return false;
         } else if (!recordTypeIds.equals(other.recordTypeIds))
-            return false;
-        if (recordTypeVersion == null) {
-            if (other.recordTypeVersion != null)
-                return false;
-        } else if (!recordTypeVersion.equals(other.recordTypeVersion))
             return false;
         if (recordTypeVersions == null) {
             if (other.recordTypeVersions != null)
@@ -213,8 +188,7 @@ public class RecordImpl implements Record {
 
     @Override
     public String toString() {
-        return "RecordImpl [id=" + id + ", version=" + version + ", recordTypeId=" + recordTypeId
-                        + ", recordTypeVersion=" + recordTypeVersion + ", recordTypeIds=" + recordTypeIds
+        return "RecordImpl [id=" + id + ", version=" + version + ", recordTypeIds=" + recordTypeIds
                         + ", recordTypeVersions=" + recordTypeVersions + ", fields=" + fields + ", fieldsToDelete="
                         + fieldsToDelete + "]";
     }

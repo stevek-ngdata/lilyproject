@@ -17,9 +17,9 @@ package org.lilycms.repository.api;
 
 public class FieldNotFoundException extends Exception {
 
-    private final String fieldName;
+    private final QName fieldName;
 
-    public FieldNotFoundException(String fieldName) {
+    public FieldNotFoundException(QName fieldName) {
         this.fieldName = fieldName;
     }
     

@@ -15,9 +15,7 @@
  */
 package org.lilycms.repository.api;
 
-import java.util.List;
 
-import org.lilycms.repository.api.Record.Scope;
 
 
 /**
@@ -26,6 +24,8 @@ import org.lilycms.repository.api.Record.Scope;
  * <p>
  */
 public interface TypeManager {
+    
+    // Record Types
     /**
      * Creates a new {@link RecordType} object.
      */
@@ -34,11 +34,11 @@ public interface TypeManager {
     /**
      * Creates a {@link RecordType} on the repository with the properties defined in the {@link RecordType} object.
      * @throws RecordTypeExistsException when a recordType with the same id already exists on the repository 
-     * @throws FieldGroupNotFoundException when the recordType refers to a non-existing {@link FieldGroup}
      * @throws RecordTypeNotFoundException when a mixin of the recordType refers to a non-existing {@link RecordType} 
+     * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, FieldGroupNotFoundException, RecordTypeNotFoundException, RepositoryException;
+    RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
     
     /**
      * Retrieves the latest version of a {@link RecordType} from the repository.
@@ -49,106 +49,51 @@ public interface TypeManager {
 
     /**
      * A new version of the {@link RecordType} is created. The new verion number
-     * is placed in the recordType object. If a {@link FieldDescriptor} should
+     * is placed in the recordType object. If a {@link FieldType} should
      * be deleted it should be left out of the {@link RecordType}'s list of
-     * {@link FieldDescriptor}s.
+     * {@link FieldType}s.
      * @throws RecordTypeNotFoundException when the recordType to be updated does not exist 
-     * @throws FieldGroupNotFoundException when a {@link FieldGroup} referred to by the recordType does not exist
+     * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType updateRecordType(RecordType recordType) throws  RecordTypeNotFoundException, FieldGroupNotFoundException, RepositoryException;
+    RecordType updateRecordType(RecordType recordType) throws  RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
+    
+    FieldTypeEntry newFieldTypeEntry(String fieldTypeId, boolean mandatory);
+    
+    // Field Types
+    /**
+     * Creates a new {@link FieldType} object.
+     */
+    FieldType newFieldType(ValueType valueType, QName name, Scope scope);
+    
+    FieldType newFieldType(String id, ValueType valueType, QName name, Scope scope);
     
     /**
-     * Removes fieldGroups from the recordType. If no fieldGroup existed it is ignored.
-     * @param recordTypeId the id of the {@link RecordType}
-     * @param nonVersionable if the non-versionable fieldGroup should be removed
-     * @param versionable if the versionable fieldGroup should be removed
-     * @param versionableMutable if the versionable-mutable fieldGroup should be removed
-     * @return a {@link RecordType} with an updated version number and the requested fieldGroups removed
-     * @throws RecordTypeNotFoundException when the recordType does not exist
+     * Creates a {@link FieldType} on the repository with the properties defined in the {@link FieldType} object.
+     * @return a {@link FieldType} 
      * @throws RepositoryException when an unexpected exception occurs on the repository
+     * @throws FieldTypeExistsException 
      */
-    RecordType removeFieldGroups(String recordTypeId, boolean nonVersionable, boolean versionable, boolean versionableMutable) throws RecordTypeNotFoundException, RepositoryException;
-    
-    /**
-     * Creates a new {@link FieldGroup} object.
-     */
-    FieldGroup newFieldGroup(String id);
-    
-    FieldGroupEntry newFieldGroupEntry(String fieldDescriptorId, Long fieldDescriptorVersion, boolean mandatory, String alias);
-    
-    /**
-     * Creates a {@link FieldGroup} on the repository with the properties defined in the {@link FieldGroup} object.
-     * @return a {@link FieldGroup} object containing the updated version number of the fieldGroup
-     * @throws FieldGroupExistsException when a fieldGroup with the same id already exists on the repository 
-     * @throws FieldDescriptorNotFoundException when the fieldGroup refers to a non-existing {@link FieldDescriptor} 
-     * @throws RepositoryException when an unexpected exception occurs on the repository
-     */
-    FieldGroup createFieldGroup(FieldGroup fieldGroup) throws FieldGroupExistsException, FieldDescriptorNotFoundException, RepositoryException;
-    
-    /**
-     * Updates a {@link FieldGroup} on the repository with the properties defined in the {@link FieldGroup} object.
-     * @return a {@link FieldGroup} object containing the updated version number of the fieldGroup
-     * @throws FieldGroupNotFoundException when the fieldGroup to update does not exist
-     * @throws FieldDescriptorNotFoundException when the updated fieldGroup refers to a non-existing {@link FieldDescriptor}
-     * @throws RepositoryException when an unexpected exception occurs on the repository
-     */
-    FieldGroup updateFieldGroup(FieldGroup fieldGroup) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException, RepositoryException;
-    
-    /**
-     * Removes fieldDescriptors from fieldGroup. This operation is performed towards the latest version of the fieldGroup.
-     * FieldDescriptors that are not known by the fieldGroup are ignored.
-     * @param fieldGroupId the id of the {@link FieldGroup} to perform this operation on
-     * @param fieldDescriptorIds a list of {@link FieldDescriptors} to remove
-     * @return a new {@link FieldGroup} with an updated version number and the remaining fieldDescriptors
-     * @throws FieldGroupNotFoundException when the fieldGroup does not exist
-     * @throws RepositoryException when an unexpected exception occurs in the repository
-     */
-    FieldGroup removeFieldDescriptors(String fieldGroupId, List<String> fieldDescriptorIds) throws FieldGroupNotFoundException, RepositoryException;
-    
-    /**
-     * Gets a {@link FieldGroup} from the repository
-     * @param version is the version of the {@link FieldGroup} to get. If null, the latest existing version is taken.
-     * @return a {@link FieldGroup} object 
-     * @throws FieldGroupNotFoundException when no fieldGroup with id and version exists
-     * @throws RepositoryException when an unexpected exception occurs on the repository
-     */
-    FieldGroup getFieldGroup(String id, Long version) throws FieldGroupNotFoundException, RepositoryException;
-    
-    // Field Descriptors
-    /**
-     * Creates a new {@link FieldDescriptor} object.
-     */
-    FieldDescriptor newFieldDescriptor(ValueType valueType, String name);
-    
-    FieldDescriptor newFieldDescriptor(String id, ValueType valueType, String globalName);
-    
-    /**
-     * Creates a {@link FieldDescriptor} on the repository with the properties defined in the {@link FieldDescriptor} object.
-     * @return a {@link FieldDescriptor} object containing the updated version number of the fieldDescriptor
-     * @throws RepositoryException when an unexpected exception occurs on the repository
-     */
-    FieldDescriptor createFieldDescriptor(FieldDescriptor fieldDescriptor) throws RepositoryException;
+    FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, RepositoryException;
 
     /**
-     * Updates a {@link FieldDescriptor} on the repository with the properties defined in the {@link FieldDescriptor} object.
-     * The version number in the given fieldDescriptor is ignored, a new version number will be assigned.
-     * @return a {@link FieldDescriptor} object containing the new version number of the fieldDescriptor
-     * @throws FieldDescriptorNotFoundException when no fieldDescriptor with id and version exists
-     * @throws FieldDescriptorUpdateException an exception occured while updating the FieldDescriptor 
+     * Updates a {@link FieldType} on the repository with the properties defined in the {@link FieldType} object.
+     * @return a {@link FieldType} 
+     * @throws FieldTypeNotFoundException when no fieldType with id and version exists
+     * @throws FieldTypeUpdateException an exception occured while updating the FieldType 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldDescriptor updateFieldDescriptor(FieldDescriptor fieldDescriptor) throws FieldDescriptorNotFoundException, FieldDescriptorUpdateException, RepositoryException; 
+    FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException, RepositoryException; 
     
     /**
-     * Gets a {@link FieldDescriptor} from the repository
-     * @param version is the version of the {@link FieldDescriptor} to get. If null, the latest existing version is taken.
-     * @return a {@link FieldDescriptor} object 
-     * @throws FieldDescriptorNotFoundException when no fieldDescriptor with id and version exists
+     * Gets a {@link FieldType} from the repository
+     * @return a {@link FieldType} object 
+     * @throws FieldTypeNotFoundException when no fieldType with id and version exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldDescriptor getFieldDescriptor(String id, Long version) throws FieldDescriptorNotFoundException, RepositoryException;
+    FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, RepositoryException;
 
+    FieldType getFieldTypeByName(QName name);
     
     // Value Types
     
@@ -165,6 +110,5 @@ public interface TypeManager {
      */
     ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical);
 
-    FieldDescriptor getFieldDescriptor(Scope scope, String name, RecordType recordType) throws FieldGroupNotFoundException, FieldDescriptorNotFoundException, RecordTypeNotFoundException, RepositoryException;
    
 }

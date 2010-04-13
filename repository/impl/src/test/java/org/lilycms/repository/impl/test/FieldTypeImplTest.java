@@ -17,18 +17,20 @@ package org.lilycms.repository.impl.test;
 
 
 import static org.easymock.classextension.EasyMock.createControl;
+import static org.junit.Assert.assertEquals;
 
 import org.easymock.classextension.IMocksControl;
 import org.junit.After;
 import org.junit.Test;
-import org.lilycms.repository.api.FieldDescriptor;
+import org.lilycms.repository.api.FieldType;
+import org.lilycms.repository.api.QName;
+import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.ValueType;
-import org.lilycms.repository.impl.FieldDescriptorImpl;
-import static org.junit.Assert.*;
+import org.lilycms.repository.impl.FieldTypeImpl;
 /**
  *
  */
-public class FieldDescriptorImplTest {
+public class FieldTypeImplTest {
 
     private IMocksControl control = createControl();
 
@@ -44,10 +46,9 @@ public class FieldDescriptorImplTest {
     public void testClone() {
         ValueType valueType = control.createMock(ValueType.class);
         control.replay();
-        FieldDescriptor fieldDescriptor = new FieldDescriptorImpl("id", valueType, "name");
-        assertEquals(fieldDescriptor, fieldDescriptor.clone());
-        fieldDescriptor.setVersion(Long.valueOf(123));
-        assertEquals(fieldDescriptor, fieldDescriptor.clone());
+        FieldType fieldType = new FieldTypeImpl("id", valueType, new QName("DS9", "name"), Scope.VERSIONED);
+        assertEquals(fieldType, fieldType.clone());
+        assertEquals(fieldType, fieldType.clone());
         control.verify();
     }
 }
