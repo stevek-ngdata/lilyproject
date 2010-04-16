@@ -27,6 +27,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilycms.repository.api.Blob;
+import org.lilycms.repository.api.BlobStoreAccessFactory;
 import org.lilycms.repository.api.FieldType;
 import org.lilycms.repository.api.HierarchyPath;
 import org.lilycms.repository.api.PrimitiveValueType;
@@ -34,9 +36,11 @@ import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
+import org.lilycms.repository.impl.SizeBasedBlobOutputStreamFactory;
 import org.lilycms.testfw.TestHelper;
 
 public class ValueTypeTest {
@@ -63,7 +67,9 @@ public class ValueTypeTest {
     public void setUp() throws Exception {
         idGenerator = new IdGeneratorImpl();
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
-        repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
+        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobOutputStreamFactory(Long.MAX_VALUE, dfsBlobStoreAccess, dfsBlobStoreAccess);
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
     }
 
     @After
@@ -98,6 +104,14 @@ public class ValueTypeTest {
     @Test
     public void testLinkType() throws Exception {
         runValueTypeTests("linkRecordTypeId", "LINK", idGenerator.newRecordId(), idGenerator.newRecordId(), idGenerator.newRecordId());
+    }
+    
+    @Test
+    public void testBlobType() throws Exception {
+        Blob blob1 = new Blob(Bytes.toBytes("aKey"), "text/html", Long.MAX_VALUE, null);
+        Blob blob2 = new Blob(Bytes.toBytes("anotherKey"), "image/jpeg", Long.MIN_VALUE, "images/image.jpg");
+        Blob blob3 = new Blob(null, "text/plain", null, null);
+        runValueTypeTests("blobTypeId", "BLOB", blob1, blob2, blob3);
     }
     
     @Test

@@ -16,6 +16,8 @@
 package org.lilycms.repository.impl;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +38,9 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilycms.repository.api.Blob;
+import org.lilycms.repository.api.BlobStoreAccess;
+import org.lilycms.repository.api.BlobStoreAccessFactory;
 import org.lilycms.repository.api.FieldType;
 import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.IdGenerator;
@@ -81,11 +86,14 @@ public class HBaseRepository implements Repository {
     private Map<Scope, byte[]> systemColumnFamilies = new HashMap<Scope, byte[]>();
     private Map<Scope, byte[]> recordTypeIdColumnNames = new HashMap<Scope, byte[]>();
     private Map<Scope, byte[]> recordTypeVersionColumnNames = new HashMap<Scope, byte[]>();
+    private BlobStoreAccessRegistry blobStoreAccessRegistry;
 
-    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, Configuration configuration)
+    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, BlobStoreAccessFactory blobStoreOutputStreamFactory, Configuration configuration)
                     throws IOException {
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
+        blobStoreAccessRegistry = new BlobStoreAccessRegistry();
+        blobStoreAccessRegistry.setBlobStoreOutputStreamFactory(blobStoreOutputStreamFactory); 
         try {
             recordTable = new HTable(configuration, RECORD_TABLE);
         } catch (IOException e) {
@@ -647,5 +655,17 @@ public class HBaseRepository implements Repository {
                             "Exception occured while deleting record <" + recordId + "> from HBase table", e);
         }
 
+    }
+
+    public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
+        blobStoreAccessRegistry.register(blobStoreAccess);
+    }
+    
+    public OutputStream getOutputStream(Blob blob) throws IOException {
+        return blobStoreAccessRegistry.getOutputStream(blob);
+    }
+    
+    public InputStream getInputStream(Blob blob) throws IOException {
+        return blobStoreAccessRegistry.getInputStream(blob);
     }
 }

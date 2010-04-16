@@ -27,6 +27,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilycms.repository.api.BlobStoreAccessFactory;
 import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.FieldType;
 import org.lilycms.repository.api.IdGenerator;
@@ -41,9 +42,11 @@ import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
+import org.lilycms.repository.impl.SizeBasedBlobOutputStreamFactory;
 import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest {
@@ -68,7 +71,9 @@ public class HBaseRepositoryTest {
         TestHelper.setupLogging();
         TEST_UTIL.startMiniCluster(1);
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
-        repository = new HBaseRepository(typeManager, idGenerator, TEST_UTIL.getConfiguration());
+        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobOutputStreamFactory(Long.MAX_VALUE, dfsBlobStoreAccess, dfsBlobStoreAccess);
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
         setupTypes();
     }
 

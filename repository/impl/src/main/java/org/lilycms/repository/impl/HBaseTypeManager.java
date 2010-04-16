@@ -106,7 +106,7 @@ public class HBaseTypeManager implements TypeManager {
 
             Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
             for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
-                newRecordType.addFieldTypeEntry(putFieldTypeEntry(recordTypeVersion, put, fieldTypeEntry));
+                putFieldTypeEntry(recordTypeVersion, put, fieldTypeEntry);
             }
 
             Map<String, Long> mixins = recordType.getMixins();
@@ -184,9 +184,8 @@ public class HBaseTypeManager implements TypeManager {
         return changed;
     }
 
-    private FieldTypeEntry putFieldTypeEntry(Long version, Put put, FieldTypeEntry fieldTypeEntry)
+    private void putFieldTypeEntry(Long version, Put put, FieldTypeEntry fieldTypeEntry)
                     throws FieldTypeNotFoundException, RepositoryException {
-        FieldTypeEntry newFieldTypeEntry = fieldTypeEntry.clone();
         byte[] idBytes = fieldTypeIdToBytes(fieldTypeEntry.getFieldTypeId());
         Get get = new Get(idBytes);
         try {
@@ -197,8 +196,7 @@ public class HBaseTypeManager implements TypeManager {
             throw new RepositoryException("Exception occured while checking existance of FieldTypeEntry <"
                             + fieldTypeEntry.getFieldTypeId() + "> on HBase", e);
         }
-        put.add(FIELDTYPEENTRY_COLUMN_FAMILY, idBytes, version, encodeFieldTypeEntry(newFieldTypeEntry));
-        return newFieldTypeEntry;
+        put.add(FIELDTYPEENTRY_COLUMN_FAMILY, idBytes, version, encodeFieldTypeEntry(fieldTypeEntry));
     }
 
     private boolean updateMixins(Put put, Long newRecordTypeVersion, RecordType recordType, RecordType latestRecordType) {
@@ -509,6 +507,7 @@ public class HBaseTypeManager implements TypeManager {
         registerPrimitiveValueType(new BooleanValueType());
         registerPrimitiveValueType(new DateValueType());
         registerPrimitiveValueType(new LinkValueType(idGenerator));
+        registerPrimitiveValueType(new BlobValueType());
     }
 
     public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {

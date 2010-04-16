@@ -15,8 +15,10 @@
  */
 package org.lilycms.repository.api;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
-
 
 /**
  * Repository is the API for all CRUD operations on Records.
@@ -109,4 +111,10 @@ public interface Repository {
      * @return the IdGenerator service
      */
     IdGenerator getIdGenerator();
+
+    void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess);
+    
+    OutputStream getOutputStream(Blob blob) throws IOException;
+    
+    InputStream getInputStream(Blob blob) throws IOException;
 }
