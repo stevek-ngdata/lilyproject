@@ -2,6 +2,7 @@ package org.lilycms.linkmgmt;
 
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.Record.Scope;
+import org.lilycms.repository.api.exception.RepositoryException;
 
 import java.util.Map;
 

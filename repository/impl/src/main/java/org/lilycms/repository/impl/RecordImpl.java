@@ -20,12 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.api.exception.FieldNotFoundException;
 
 public class RecordImpl implements Record {
     private RecordId id;

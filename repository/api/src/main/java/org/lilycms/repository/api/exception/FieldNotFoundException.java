@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api;
+package org.lilycms.repository.api.exception;
 
-/**
- * This exception encapsulates any lower-level exceptions thrown by the repository.
- * These exceptions should not occur under normal operation of the repository.
- */
-public class RepositoryException extends Exception {
+import org.lilycms.repository.api.QName;
 
-    public RepositoryException(String message, Throwable throwable) {
-        super(message, throwable);
+public class FieldNotFoundException extends Exception {
+
+    private final QName fieldName;
+
+    public FieldNotFoundException(QName fieldName) {
+        this.fieldName = fieldName;
     }
-
+    
+    @Override
+    public String getMessage() {
+        return "Field <" + fieldName + "> could not be found.";
+    }
 }

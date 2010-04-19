@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.impl;
+package org.lilycms.repository.impl.primitivevaluetype;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.PrimitiveValueType;
 
-public class StringValueType implements PrimitiveValueType {
+public class LongValueType implements PrimitiveValueType {
 
-    private final String NAME = "STRING";
+    private final String NAME = "LONG";
 
     public String getName() {
         return NAME;
     }
 
-    public String fromBytes(byte[] bytes) {
-        return Bytes.toString(bytes);
+    public Long fromBytes(byte[] bytes) {
+        return Bytes.toLong(bytes);
     }
-    
+
     public byte[] toBytes(Object value) {
-        return Bytes.toBytes((String)value);
+        return Bytes.toBytes((Long)value);
     }
 
     public Class getType() {
-        return String.class;
+        return Long.class;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class StringValueType implements PrimitiveValueType {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        StringValueType other = (StringValueType) obj;
+        LongValueType other = (LongValueType) obj;
         if (NAME == null) {
             if (other.NAME != null)
                 return false;
@@ -62,5 +62,4 @@ public class StringValueType implements PrimitiveValueType {
             return false;
         return true;
     }
-
 }

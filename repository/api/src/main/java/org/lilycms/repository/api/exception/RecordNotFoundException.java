@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api;
+package org.lilycms.repository.api.exception;
+
+import org.lilycms.repository.api.Record;
 
 
-public class RecordExistsException extends Exception {
+public class RecordNotFoundException extends Exception {
+
     private final Record record;
 
-    public RecordExistsException(Record record) {
+    public RecordNotFoundException(Record record) {
         this.record = record;
     }
-
+    
     public Record getRecord() {
         return record;
     }
@@ -33,7 +36,13 @@ public class RecordExistsException extends Exception {
         message.append("Record <");
         message.append(record.getId());
         message.append("> ");
-        message.append("already exists");
+        Long version = record.getVersion();
+        if (version != null) {
+            message.append("<version:");
+            message.append(version);
+            message.append(">");
+        }
+        message.append("not found");
         return message.toString();
     }
 }

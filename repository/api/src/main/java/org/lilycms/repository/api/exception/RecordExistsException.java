@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api;
+package org.lilycms.repository.api.exception;
 
-/**
- *
- */
-public class FieldTypeExistsException extends Exception {
-    private final FieldType fieldType;
+import org.lilycms.repository.api.Record;
 
-    public FieldTypeExistsException(FieldType fieldType) {
-        this.fieldType = fieldType;
+
+public class RecordExistsException extends Exception {
+    private final Record record;
+
+    public RecordExistsException(Record record) {
+        this.record = record;
     }
 
-    public FieldType getFieldType() {
-        return fieldType;
+    public Record getRecord() {
+        return record;
     }
     
     @Override
     public String getMessage() {
         StringBuilder message = new StringBuilder();
-        message.append("FieldType <");
-        message.append(fieldType.getId());
+        message.append("Record <");
+        message.append(record.getId());
         message.append("> ");
         message.append("already exists");
         return message.toString();

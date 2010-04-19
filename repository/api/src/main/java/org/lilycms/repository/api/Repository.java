@@ -20,6 +20,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
+import org.lilycms.repository.api.exception.InvalidRecordException;
+import org.lilycms.repository.api.exception.RecordExistsException;
+import org.lilycms.repository.api.exception.RecordNotFoundException;
+import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
+import org.lilycms.repository.api.exception.RepositoryException;
+
 /**
  * Repository is the API for all CRUD operations on Records.
  */

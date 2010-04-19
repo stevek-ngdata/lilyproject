@@ -18,6 +18,8 @@ package org.lilycms.repository.api;
 import java.util.List;
 import java.util.Map;
 
+import org.lilycms.repository.api.exception.FieldNotFoundException;
+
 /**
  * An object to be used as input for {@link Repository#create} and
  * {@link Repository#update} operations, or as result of a {link

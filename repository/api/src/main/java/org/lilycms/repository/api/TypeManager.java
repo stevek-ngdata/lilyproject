@@ -15,6 +15,13 @@
  */
 package org.lilycms.repository.api;
 
+import org.lilycms.repository.api.exception.FieldTypeExistsException;
+import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
+import org.lilycms.repository.api.exception.FieldTypeUpdateException;
+import org.lilycms.repository.api.exception.RecordTypeExistsException;
+import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
+import org.lilycms.repository.api.exception.RepositoryException;
+
 
 
 

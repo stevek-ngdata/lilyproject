@@ -2,9 +2,9 @@ package org.lilycms.indexer.conf;
 
 import java.util.Set;
 
-import org.lilycms.repository.api.FieldNotFoundException;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.Record.Scope;
+import org.lilycms.repository.api.exception.FieldNotFoundException;
 
 public class Value {
     private String fieldName;

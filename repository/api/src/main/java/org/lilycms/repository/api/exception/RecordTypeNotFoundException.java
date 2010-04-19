@@ -13,34 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api;
+package org.lilycms.repository.api.exception;
 
+/**
+ *
+ */
+public class RecordTypeNotFoundException extends Exception {
 
-public class RecordNotFoundException extends Exception {
+    private final String id;
+    private final Long version;
 
-    private final Record record;
-
-    public RecordNotFoundException(Record record) {
-        this.record = record;
-    }
-    
-    public Record getRecord() {
-        return record;
+    public RecordTypeNotFoundException(String id, Long version) {
+        this.id = id;
+        this.version = version;
     }
     
     @Override
     public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        message.append("Record <");
-        message.append(record.getId());
-        message.append("> ");
-        Long version = record.getVersion();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("RecordType <");
+        stringBuilder.append(id);
+        stringBuilder.append("> ");
         if (version != null) {
-            message.append("<version:");
-            message.append(version);
-            message.append(">");
+            stringBuilder.append("version: <");
+            stringBuilder.append(version);
+            stringBuilder.append("> ");
         }
-        message.append("not found");
-        return message.toString();
+        stringBuilder.append("could not be found.");
+        return stringBuilder.toString();
     }
 }

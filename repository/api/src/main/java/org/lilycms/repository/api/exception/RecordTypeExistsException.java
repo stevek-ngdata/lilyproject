@@ -13,18 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api;
+package org.lilycms.repository.api.exception;
 
-public class FieldNotFoundException extends Exception {
+import org.lilycms.repository.api.RecordType;
 
-    private final QName fieldName;
+/**
+ *
+ */
+public class RecordTypeExistsException extends Exception {
 
-    public FieldNotFoundException(QName fieldName) {
-        this.fieldName = fieldName;
+    private final RecordType recordType;
+
+    public RecordTypeExistsException(RecordType recordType) {
+        this.recordType = recordType;
+    }
+
+    public RecordType getRecordType() {
+        return recordType;
     }
     
     @Override
     public String getMessage() {
-        return "Field <" + fieldName + "> could not be found.";
+        StringBuilder message = new StringBuilder();
+        message.append("RecordType <");
+        message.append(recordType.getId());
+        message.append("> ");
+        message.append("already exists");
+        return message.toString();
     }
 }

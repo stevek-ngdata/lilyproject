@@ -13,30 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api;
+package org.lilycms.repository.api.exception;
 
 /**
- *
+ * This exception encapsulates any lower-level exceptions thrown by the repository.
+ * These exceptions should not occur under normal operation of the repository.
  */
-public class RecordTypeExistsException extends Exception {
+public class RepositoryException extends Exception {
 
-    private final RecordType recordType;
-
-    public RecordTypeExistsException(RecordType recordType) {
-        this.recordType = recordType;
+    public RepositoryException(String message, Throwable throwable) {
+        super(message, throwable);
     }
 
-    public RecordType getRecordType() {
-        return recordType;
-    }
-    
-    @Override
-    public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        message.append("RecordType <");
-        message.append(recordType.getId());
-        message.append("> ");
-        message.append("already exists");
-        return message.toString();
-    }
 }
