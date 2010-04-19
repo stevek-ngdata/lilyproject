@@ -15,11 +15,8 @@
  */
 package org.lilycms.repository.api;
 
-import java.io.IOException;
-
-
 public interface BlobStoreAccessFactory {
 
-    BlobStoreAccess getBlobStoreAccess(Blob blob) throws IOException;
+    BlobStoreAccess getBlobStoreAccess(Blob blob) ;
     
 }

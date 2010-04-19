@@ -26,6 +26,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Blob;
 import org.lilycms.repository.api.BlobStoreAccess;
 import org.lilycms.repository.api.BlobStoreAccessFactory;
+import org.lilycms.repository.api.exception.BlobNotFoundException;
+import org.lilycms.repository.api.exception.RepositoryException;
 import org.lilycms.util.Pair;
 
 public class BlobStoreAccessRegistry {
@@ -44,16 +46,37 @@ public class BlobStoreAccessRegistry {
         this.blobStoreAccessFactory = blobStoreAccessFactory;
     }
 
-    public InputStream getInputStream(Blob blob) throws IOException {
-        Pair<String, byte[]> decodedKey = decode(blob.getValue());
+    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
+    	BlobStoreAccess blobStoreAccess = blobStoreAccessFactory.getBlobStoreAccess(blob);
+    	return new BlobOutputStream(blobStoreAccess.getOutputStream(blob), blobStoreAccess.getId(), blob);
+    }
+
+    public InputStream getInputStream(Blob blob) throws BlobNotFoundException, RepositoryException {
+    	Pair<String, byte[]> decodedKey = decodeKey(blob);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
         return blobStoreAccess.getInputStream(decodedKey.getV2());
     }
 
-    public OutputStream getOutputStream(Blob blob) throws IOException {
-        BlobStoreAccess blobStoreAccess = blobStoreAccessFactory.getBlobStoreAccess(blob);
-        return new BlobOutputStream(blobStoreAccess.getOutputStream(blob), blobStoreAccess.getId(), blob);
-    }
+	private Pair<String, byte[]> decodeKey(Blob blob)
+			throws BlobNotFoundException, RepositoryException {
+		if (blob.getValue() == null) {
+    		throw new BlobNotFoundException(blob);
+    	}
+    	Pair<String, byte[]> decodedKey;
+    	try {
+    		decodedKey = decode(blob.getValue());
+    	} catch (Exception e) {
+    		throw new RepositoryException("Failed to decode the blobkey of the blob <"+blob+">", e);
+    	}
+		return decodedKey;
+	}
+
+    
+    public void delete(Blob blob) throws BlobNotFoundException, RepositoryException {
+    	Pair<String, byte[]> decodedKey = decodeKey(blob);
+        BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
+        blobStoreAccess.delete(decodedKey.getV2());
+	}
     
     static private byte[] encode(String id, byte[] blobKey) {
         byte[] bytes = new byte[0];
@@ -87,4 +110,6 @@ public class BlobStoreAccessRegistry {
             blob.setValue(encode(blobStoreAccessId, blob.getValue()));
         }
     }
+
+	
 }

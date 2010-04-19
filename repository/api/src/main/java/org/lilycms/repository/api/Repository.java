@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import org.lilycms.repository.api.exception.BlobNotFoundException;
 import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repository.api.exception.InvalidRecordException;
 import org.lilycms.repository.api.exception.RecordExistsException;
@@ -121,7 +122,10 @@ public interface Repository {
 
     void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess);
     
-    OutputStream getOutputStream(Blob blob) throws IOException;
+    OutputStream getOutputStream(Blob blob) throws RepositoryException;
     
-    InputStream getInputStream(Blob blob) throws IOException;
+    InputStream getInputStream(Blob blob) throws BlobNotFoundException, RepositoryException;
+    
+    void delete(Blob blob) throws BlobNotFoundException, RepositoryException;
+    
 }

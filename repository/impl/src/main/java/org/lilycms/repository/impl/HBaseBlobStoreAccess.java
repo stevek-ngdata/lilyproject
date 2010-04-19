@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -33,7 +34,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Blob;
 import org.lilycms.repository.api.BlobStoreAccess;
-import org.lilycms.util.Pair;
+import org.lilycms.repository.api.exception.RepositoryException;
 
 public class HBaseBlobStoreAccess implements BlobStoreAccess {
 
@@ -61,19 +62,33 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         return ID;
     }
         
-    public OutputStream getOutputStream(Blob blob) throws IOException {
+    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
         UUID uuid = UUID.randomUUID();
         byte[] blobKey = Bytes.toBytes(uuid.getMostSignificantBits());
         blobKey = Bytes.add(blobKey, Bytes.toBytes(uuid.getLeastSignificantBits()));
         return new HBaseBlobOutputStream(table, blobKey, blob);
     }
 
-    public InputStream getInputStream(byte[] blobKey) throws IOException {
+    public InputStream getInputStream(byte[] blobKey) throws RepositoryException {
         Get get = new Get(blobKey);
         get.addColumn(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
-        Result result = table.get(get);
+        Result result;
+		try {
+			result = table.get(get);
+		} catch (IOException e) {
+			throw new RepositoryException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the HBASE blobstore", e);
+		}
         byte[] value = result.getValue(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
         return new ByteArrayInputStream(value);
+    }
+    
+    public void delete(byte[] blobKey) throws RepositoryException {
+    	Delete delete = new Delete(blobKey);
+    	try {
+			table.delete(delete);
+		} catch (IOException e) {
+        	throw new RepositoryException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
+		}
     }
 
     private class HBaseBlobOutputStream extends ByteArrayOutputStream {

@@ -15,7 +15,11 @@
  */
 package org.lilycms.repository.impl.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +36,6 @@ import org.lilycms.repository.api.FieldType;
 import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.Scope;
@@ -46,7 +49,7 @@ import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
-import org.lilycms.repository.impl.SizeBasedBlobOutputStreamFactory;
+import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest {
@@ -72,7 +75,7 @@ public class HBaseRepositoryTest {
         TEST_UTIL.startMiniCluster(1);
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
-        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobOutputStreamFactory(Long.MAX_VALUE, dfsBlobStoreAccess, dfsBlobStoreAccess);
+        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
         setupTypes();
     }
@@ -145,17 +148,18 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testRecordUpdateWithoutRecordType() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         try {
             record = repository.update(updateRecord);
+            fail();
         } catch (InvalidRecordException expected) {
         }
     }
 
     @Test
     public void testEmptyRecordCreate() throws Exception {
-        Record record = repository.newRecord(idGenerator.newRecordId());
+        Record record = repository.newRecord();
         record.setRecordType(recordType1.getId(), null);
         try {
             record = repository.create(record);
@@ -165,8 +169,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testCreate() throws Exception {
-        RecordId recordId = idGenerator.newRecordId();
-        Record createdRecord = createDefaultRecord(recordId);
+        Record createdRecord = createDefaultRecord();
 
         assertEquals(Long.valueOf(1), createdRecord.getVersion());
         assertEquals("value1", createdRecord.getField(fieldType1.getName()));
@@ -181,11 +184,11 @@ public class HBaseRepositoryTest {
         assertEquals(recordType1.getId(), createdRecord.getRecordTypeId(Scope.VERSIONED_MUTABLE));
         assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
 
-        assertEquals(createdRecord, repository.read(recordId));
+        assertEquals(createdRecord, repository.read(createdRecord.getId()));
     }
 
-    private Record createDefaultRecord(RecordId recordId) throws Exception {
-        Record record = repository.newRecord(recordId);
+    private Record createDefaultRecord() throws Exception {
+        Record record = repository.newRecord();
         record.setRecordType(recordType1.getId(), recordType1.getVersion());
         record.setField(fieldType1.getName(), "value1");
         record.setField(fieldType2.getName(), 123);
@@ -195,7 +198,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testCreateExistingRecordFails() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
 
         try {
             repository.create(record);
@@ -218,7 +221,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testCreateUsesLatestRecordType() throws Exception {
-        Record record = repository.newRecord(idGenerator.newRecordId());
+        Record record = repository.newRecord();
         record.setRecordType(recordType1.getId(), null);
         record.setField(fieldType1.getName(), "value1");
         Record createdRecord = repository.create(record);
@@ -231,12 +234,12 @@ public class HBaseRepositoryTest {
         assertNull(createdRecord.getRecordTypeId(Scope.VERSIONED_MUTABLE));
         assertNull(createdRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
 
-        assertEquals(createdRecord, repository.read(record.getId()));
+        assertEquals(createdRecord, repository.read(createdRecord.getId()));
     }
 
     @Test
     public void testCreateVariant() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
 
         Map<String, String> variantProperties = new HashMap<String, String>();
         variantProperties.put("dimension1", "dimval1");
@@ -258,7 +261,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdate() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
@@ -276,7 +279,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateOnlyOneField() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
         updateRecord.setField(fieldType1.getName(), "value2");
@@ -304,7 +307,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testEmptyUpdate() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
 
@@ -332,7 +335,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testIdempotentUpdate() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
 
         Record updatedRecord = repository.update(updateRecord);
@@ -347,7 +350,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateIgnoresVersion() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
         updateRecord.setVersion(Long.valueOf(99));
         updateRecord.setField(fieldType1.getName(), "value2");
@@ -361,7 +364,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateNonVersionable() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), null);
         updateRecord.setField(fieldType1.getName(), "aNewValue");
@@ -374,7 +377,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testReadOlderVersions() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
@@ -397,7 +400,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testReadTooRecentRecord() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         try {
             repository.read(record.getId(), Long.valueOf(2));
             fail();
@@ -407,7 +410,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testReadSpecificFields() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record readRecord = repository.read(record.getId(), Arrays.asList(new QName[] { fieldType1.getName(),
                 fieldType2.getName(), fieldType3.getName() }));
         assertEquals(repository.read(record.getId()), readRecord);
@@ -415,7 +418,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateWithNewRecordTypeVersion() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType1B.getId(), recordType1B.getVersion());
         updateRecord.setField(fieldType1.getName(), "value2");
@@ -445,7 +448,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateWithNewRecordTypeVersionOnlyOneFieldUpdated() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType1B.getId(), recordType1B.getVersion());
         updateRecord.setField(fieldType2.getName(), 789);
@@ -469,7 +472,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateWithNewRecordType() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
         updateRecord.setField(fieldType4.getName(), 1024);
@@ -501,7 +504,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testDeleteField() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(record.getRecordTypeId(), null);
         deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName(), fieldType2.getName(),
@@ -514,7 +517,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testDeleteFieldsNoLongerInRecordType() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(recordType2.getId(), recordType2.getVersion());
         updateRecord.setField(fieldType4.getName(), 2222);
@@ -552,7 +555,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateAfterDelete() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
         deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType2.getName() }));
@@ -583,7 +586,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testDeleteNonVersionableFieldAndUpdateVersionableField() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
         updateRecord.setField(fieldType2.getName(), 999);
@@ -609,7 +612,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateAndDeleteSameField() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeId(), record.getRecordTypeVersion());
         updateRecord.setField(fieldType2.getName(), 789);
@@ -625,7 +628,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testDeleteRecord() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         repository.delete(record.getId());
         try {
             repository.read(record.getId());
@@ -636,7 +639,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateMutableField() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
@@ -662,7 +665,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testUpdateMutableFieldWithNewRecordType() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
@@ -713,7 +716,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testDeleteMutableField() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
@@ -745,7 +748,7 @@ public class HBaseRepositoryTest {
 
     @Test
     public void testDeleteMutableFieldCopiesValueToNext() throws Exception {
-        Record record = createDefaultRecord(idGenerator.newRecordId());
+        Record record = createDefaultRecord();
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);

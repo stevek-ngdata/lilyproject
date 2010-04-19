@@ -40,7 +40,7 @@ import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
-import org.lilycms.repository.impl.SizeBasedBlobOutputStreamFactory;
+import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilycms.testfw.TestHelper;
 
 public class ValueTypeTest {
@@ -68,7 +68,7 @@ public class ValueTypeTest {
         idGenerator = new IdGeneratorImpl();
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
-        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobOutputStreamFactory(Long.MAX_VALUE, dfsBlobStoreAccess, dfsBlobStoreAccess);
+        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
     }
 

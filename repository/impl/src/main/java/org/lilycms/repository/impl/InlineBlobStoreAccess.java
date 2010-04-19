@@ -23,6 +23,7 @@ import java.io.OutputStream;
 
 import org.lilycms.repository.api.Blob;
 import org.lilycms.repository.api.BlobStoreAccess;
+import org.lilycms.repository.api.exception.RepositoryException;
 
 public class InlineBlobStoreAccess implements BlobStoreAccess {
 
@@ -36,12 +37,16 @@ public class InlineBlobStoreAccess implements BlobStoreAccess {
         return ID;
     }
         
-    public OutputStream getOutputStream(Blob blob) throws IOException {
+    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
         return new InlineBlobOutputStream(blob);
     }
 
-    public InputStream getInputStream(byte[] blobKey) throws IOException {
+    public InputStream getInputStream(byte[] blobKey) throws RepositoryException {
         return new ByteArrayInputStream(blobKey);
+    }
+    
+    public void delete(byte[] blobKey) {
+    	// no-op
     }
 
     private class InlineBlobOutputStream extends ByteArrayOutputStream {

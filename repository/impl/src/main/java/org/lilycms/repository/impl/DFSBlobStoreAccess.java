@@ -21,13 +21,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Blob;
 import org.lilycms.repository.api.BlobStoreAccess;
+import org.lilycms.repository.api.exception.RepositoryException;
 
 public class DFSBlobStoreAccess implements BlobStoreAccess {
 
@@ -43,18 +43,39 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         return ID;
     }
         
-    public OutputStream getOutputStream(Blob blob) throws IOException {
+    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
         UUID uuid = UUID.randomUUID();
         byte[] blobKey = Bytes.toBytes(uuid.getMostSignificantBits());
         blobKey = Bytes.add(blobKey, Bytes.toBytes(uuid.getLeastSignificantBits()));
-        FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(uuid.toString()));
+        FSDataOutputStream fsDataOutputStream;
+		try {
+			fsDataOutputStream = fileSystem.create(new Path(uuid.toString()));
+		} catch (IOException e) {
+			throw new RepositoryException("Failed to open an outputstream for blob <" +blob+ "> on the DFS blobstore", e);
+		}
         return new DFSBlobOutputStream(fsDataOutputStream, blobKey, blob);
     }
 
-    public InputStream getInputStream(byte[] blobKey) throws IOException {
-        UUID uuid = new UUID(Bytes.toLong(blobKey), Bytes.toLong(blobKey, Bytes.SIZEOF_LONG));
-        FSDataInputStream fsDataInputStream = fileSystem.open(new Path(uuid.toString()));
-        return fsDataInputStream;
+    public InputStream getInputStream(byte[] blobKey) throws RepositoryException {
+        UUID uuid = decode(blobKey);
+        try {
+        	return fileSystem.open(new Path(uuid.toString()));
+        } catch (IOException e) {
+        	throw new RepositoryException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the DFS blobstore", e);
+        }
+    }
+
+    public void delete(byte[] blobKey) throws RepositoryException {
+        UUID uuid = decode(blobKey);
+        try {
+        	fileSystem.delete(new Path(uuid.toString()), false);
+        } catch (IOException e) {
+        	throw new RepositoryException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
+        }
+    }
+
+    private UUID decode(byte[] blobKey) {
+    	return new UUID(Bytes.toLong(blobKey), Bytes.toLong(blobKey, Bytes.SIZEOF_LONG));
     }
     
     private class DFSBlobOutputStream extends FilterOutputStream {

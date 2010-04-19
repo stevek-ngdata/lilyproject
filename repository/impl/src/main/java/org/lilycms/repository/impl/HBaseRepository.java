@@ -51,6 +51,7 @@ import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.exception.BlobNotFoundException;
 import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repository.api.exception.InvalidRecordException;
 import org.lilycms.repository.api.exception.RecordExistsException;
@@ -174,7 +175,7 @@ public class HBaseRepository implements Repository {
             }
             Record dummyOriginalRecord = newRecord();
             dummyOriginalRecord.setVersion(Long.valueOf(1));
-            Put put = new Put(record.getId().toBytes());
+            Put put = new Put(newRecord.getId().toBytes());
             putRecord(newRecord, dummyOriginalRecord, Long.valueOf(1), put);
             recordTable.put(put);
         } catch (IOException e) {
@@ -661,11 +662,15 @@ public class HBaseRepository implements Repository {
         blobStoreAccessRegistry.register(blobStoreAccess);
     }
     
-    public OutputStream getOutputStream(Blob blob) throws IOException {
+    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
         return blobStoreAccessRegistry.getOutputStream(blob);
     }
     
-    public InputStream getInputStream(Blob blob) throws IOException {
+    public InputStream getInputStream(Blob blob) throws BlobNotFoundException, RepositoryException {
         return blobStoreAccessRegistry.getInputStream(blob);
+    }
+    
+    public void delete(Blob blob) throws BlobNotFoundException, RepositoryException {
+    	blobStoreAccessRegistry.delete(blob);
     }
 }

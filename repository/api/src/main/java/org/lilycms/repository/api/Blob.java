@@ -19,6 +19,10 @@ import java.util.Arrays;
 
 import org.lilycms.util.ArgumentValidator;
 
+/**
+ * A Blob 
+ *
+ */
 public class Blob {
 
     private final String mimetype;
