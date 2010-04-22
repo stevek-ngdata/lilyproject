@@ -42,7 +42,11 @@ public class ValueTypeImpl implements ValueType {
     public boolean isHierarchical() {
         return hierarchical;
     }
-    
+
+    public boolean isPrimitive() {
+        return !multiValue && !hierarchical;
+    }
+
     public Object fromBytes(byte[] bytes) {
         if (isMultiValue()) {
             return fromMultiValueBytes(bytes);

@@ -37,6 +37,12 @@ public interface ValueType {
     boolean isHierarchical();
 
     /**
+     * A ValueType is primitive if it is not hierarchical nor multivalue, thus
+     * if its values directly correspond to the {@link #getPrimitive PrimitiveValueType}.
+     */
+    boolean isPrimitive();
+
+    /**
      * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
      */
     public Object fromBytes(byte[] value);
