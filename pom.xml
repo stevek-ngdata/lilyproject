@@ -39,9 +39,13 @@
     <module>hbaseindex</module>
     <module>util</module>
     <module>testfw</module>
+    <!--
     <module>indexer</module>
+    -->
     <module>eventlog/queue-api</module>
+    <module>eventlog/queue-mock</module>
     <module>linkmgmt</module>
+    <module>repo-util</module>
   </modules>
 
   <dependencyManagement>
@@ -49,6 +53,11 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-util</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-repo-util</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>
@@ -70,6 +79,11 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-queue-api</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-queue-mock</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>

@@ -12,4 +12,7 @@ public class LinkCollector {
         links.add(new FieldedLink(target, fieldTypeId));
     }
 
+    public Set<FieldedLink> getLinks() {
+        return links;
+    }
 }

@@ -23,9 +23,9 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilycms</groupId>
-  <artifactId>lily-linkmgmt</artifactId>
+  <artifactId>lily-queue-mock</artifactId>
   <version>0.1-dev</version>
-  <name>Lily: Link Management</name>
+  <name>Lily: mock queue implementation</name>
 
   <parent>
     <groupId>org.lilycms</groupId>
@@ -33,54 +33,12 @@
     <version>0.1-dev</version>
   </parent>
 
-  <build>
-  </build>
+  <build/>
 
   <dependencies>
     <dependency>
       <groupId>org.lilycms</groupId>
-      <artifactId>lily-repository-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
       <artifactId>lily-queue-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-queue-mock</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-hbaseindex</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-repo-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-testfw</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-repository-impl</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
 
