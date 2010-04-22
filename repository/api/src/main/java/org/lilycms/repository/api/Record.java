@@ -43,6 +43,10 @@ public interface Record {
 
     void setVersion(Long version);
 
+    /**
+     * TODO what returns this method if the record has no versions? what does it return when the record has versions
+     *      but no versioned fields were read?
+     */
     Long getVersion();
 
     void setRecordType(String id, Long version);
