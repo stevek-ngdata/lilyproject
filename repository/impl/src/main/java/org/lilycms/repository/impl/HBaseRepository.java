@@ -130,6 +130,10 @@ public class HBaseRepository implements Repository {
         return idGenerator;
     }
 
+    public TypeManager getTypeManager() {
+        return typeManager;
+    }
+
     public Record newRecord() {
         return new RecordImpl();
     }

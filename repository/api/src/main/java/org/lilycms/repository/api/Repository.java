@@ -134,6 +134,8 @@ public interface Repository {
 	 */
 	IdGenerator getIdGenerator();
 
+    TypeManager getTypeManager();
+
 	/**
 	 * A {@link BlobStoreAccess} must be registered with the repository before
 	 * it can be used. Any BlobStoreAccess that has ever been used to store
