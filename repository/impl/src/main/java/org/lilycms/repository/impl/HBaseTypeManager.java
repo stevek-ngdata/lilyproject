@@ -376,7 +376,7 @@ public class HBaseTypeManager implements TypeManager {
             put.add(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME, version, encodeName(fieldType.getName()));
             typeTable.put(put);
         } catch (IOException e) {
-            throw new RepositoryException("Exception occured while creating fieldType <" + fieldType.getId()
+            throw new RepositoryException("Exception occurred while creating fieldType <" + fieldType.getId()
                             + "> version: <" + version + "> on HBase", e);
         }
         newFieldType = fieldType.clone();
