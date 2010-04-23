@@ -73,22 +73,22 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         Get get = new Get(blobKey);
         get.addColumn(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
         Result result;
-		try {
-			result = table.get(get);
-		} catch (IOException e) {
-			throw new RepositoryException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the HBASE blobstore", e);
-		}
+        try {
+            result = table.get(get);
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the HBASE blobstore", e);
+        }
         byte[] value = result.getValue(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
         return new ByteArrayInputStream(value);
     }
     
     public void delete(byte[] blobKey) throws RepositoryException {
-    	Delete delete = new Delete(blobKey);
-    	try {
-			table.delete(delete);
-		} catch (IOException e) {
-        	throw new RepositoryException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
-		}
+        Delete delete = new Delete(blobKey);
+        try {
+            table.delete(delete);
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
+        }
     }
 
     private class HBaseBlobOutputStream extends ByteArrayOutputStream {

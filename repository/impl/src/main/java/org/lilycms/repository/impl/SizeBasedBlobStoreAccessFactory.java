@@ -29,21 +29,21 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
     private final BlobStoreAccess defaultBlobStoreAccess;
     
     public SizeBasedBlobStoreAccessFactory(BlobStoreAccess defaultBlobStoreAccess) {
-    	ArgumentValidator.notNull(defaultBlobStoreAccess, "defaultBlobStoreAccess");
-		this.defaultBlobStoreAccess = defaultBlobStoreAccess;
+        ArgumentValidator.notNull(defaultBlobStoreAccess, "defaultBlobStoreAccess");
+        this.defaultBlobStoreAccess = defaultBlobStoreAccess;
     }
 
     public void addBlobStoreAccess(long upperLimit, BlobStoreAccess blobStoreAccess) {
-    	blobStoreAccesses.put(upperLimit, blobStoreAccess);
+        blobStoreAccesses.put(upperLimit, blobStoreAccess);
     }
     
     public BlobStoreAccess getBlobStoreAccess(Blob blob) {
-    	Long size = blob.getSize();
-    	for (Long upperLimit: blobStoreAccesses.keySet()) {
-			if (size <= upperLimit) {
-				 return blobStoreAccesses.get(upperLimit);
-			}
-		}
-    	return defaultBlobStoreAccess;
+        Long size = blob.getSize();
+        for (Long upperLimit: blobStoreAccesses.keySet()) {
+            if (size <= upperLimit) {
+                 return blobStoreAccesses.get(upperLimit);
+            }
+        }
+        return defaultBlobStoreAccess;
     }
 }

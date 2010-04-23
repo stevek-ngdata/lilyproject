@@ -39,7 +39,7 @@ public class Blob {
      * @param name a name with no extra semantic meaning (e.g. a filename)
      */
     public Blob(String mimetype, Long size, String name) {
-    	this(null, mimetype, size, name);
+        this(null, mimetype, size, name);
     }
 
     /**
@@ -47,7 +47,7 @@ public class Blob {
      * @param value the value will be generated after data has been written to the OutputStream and the stream has been closed. 
      */
     public Blob(byte[] value, String mimetype, Long size, String name) {
-    	ArgumentValidator.notNull(size, "size");
+        ArgumentValidator.notNull(size, "size");
         this.value = value;
         this.mimetype = mimetype;
         this.size = size;

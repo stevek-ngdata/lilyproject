@@ -40,56 +40,56 @@ package org.lilycms.repository.api;
  */
 public interface FieldType {
 
-	/**
-	 * Sets the id of the FieldType on the value object.
-	 */
-	void setId(String id);
+    /**
+     * Sets the id of the FieldType on the value object.
+     */
+    void setId(String id);
 
-	/**
-	 * The id is unique, immutable and system-generated.
-	 * 
-	 * @return the id of the FieldType
-	 */
-	String getId();
+    /**
+     * The id is unique, immutable and system-generated.
+     *
+     * @return the id of the FieldType
+     */
+    String getId();
 
-	/**
-	 * Sets the name of the FieldType on the value object.
-	 * @param name the qualified name to be used, see {@link QName}
-	 */
-	void setName(QName name);
+    /**
+     * Sets the name of the FieldType on the value object.
+     * @param name the qualified name to be used, see {@link QName}
+     */
+    void setName(QName name);
 
-	/**
-	 * The name is unique, user-provided and can be changed by calling {@link TypeManager#updateFieldType(FieldType)}. 
-	 * @return the name of the FieldType
-	 */
-	QName getName();
+    /**
+     * The name is unique, user-provided and can be changed by calling {@link TypeManager#updateFieldType(FieldType)}.
+     * @return the name of the FieldType
+     */
+    QName getName();
 
-	/**
-	 * Sets the valueType of the FieldType on the value object.
-	 * @param valueType the valueType to be used, see {@link ValueType}
-	 * 
-	 */
-	void setValueType(ValueType valueType);
+    /**
+     * Sets the valueType of the FieldType on the value object.
+     * @param valueType the valueType to be used, see {@link ValueType}
+     *
+     */
+    void setValueType(ValueType valueType);
 
-	/**
-	 * The valueType describes the primitive type and if it is multivalue or hierarchical, see {@link ValueType}
-	 * @return the valueType of the FieldType
-	 */
-	ValueType getValueType();
+    /**
+     * The valueType describes the primitive type and if it is multivalue or hierarchical, see {@link ValueType}
+     * @return the valueType of the FieldType
+     */
+    ValueType getValueType();
 
-	/**
-	 * Sets the scope of the FieldType on the value object.
-	 * @param scope the scope to be used, see {@link Scope}
-	 */
-	void setScope(Scope scope);
+    /**
+     * Sets the scope of the FieldType on the value object.
+     * @param scope the scope to be used, see {@link Scope}
+     */
+    void setScope(Scope scope);
 
-	/**
-	 * The scope defines to which scope a FieldType (and related fields) belong (e.g. Non-Versioned, Versioned, Versioned-Mutable), see {@link Scope} 
-	 * @return the scope of the FieldType
-	 */
-	Scope getScope();
+    /**
+     * The scope defines to which scope a FieldType (and related fields) belong (e.g. Non-Versioned, Versioned, Versioned-Mutable), see {@link Scope}
+     * @return the scope of the FieldType
+     */
+    Scope getScope();
 
-	boolean equals(Object obj);
+    boolean equals(Object obj);
 
-	FieldType clone();
+    FieldType clone();
 }

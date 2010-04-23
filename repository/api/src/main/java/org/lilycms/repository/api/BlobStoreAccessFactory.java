@@ -24,6 +24,6 @@ package org.lilycms.repository.api;
  */
 public interface BlobStoreAccessFactory {
 
-	BlobStoreAccess getBlobStoreAccess(Blob blob);
+    BlobStoreAccess getBlobStoreAccess(Blob blob);
 
 }

@@ -675,6 +675,6 @@ public class HBaseRepository implements Repository {
     }
     
     public void delete(Blob blob) throws BlobNotFoundException, RepositoryException {
-    	blobStoreAccessRegistry.delete(blob);
+        blobStoreAccessRegistry.delete(blob);
     }
 }

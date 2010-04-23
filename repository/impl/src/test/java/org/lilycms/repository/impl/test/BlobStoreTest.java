@@ -106,27 +106,27 @@ public class BlobStoreTest {
     
     @Test
     public void testThreeSizes() throws Exception {
-    	Random random = new Random();
-    	byte[] small = new byte[10];
-    	random.nextBytes(small);
-    	byte[] medium = new byte[100];
-    	random.nextBytes(medium);
-    	byte[] large = new byte[2048];
-    	random.nextBytes(large);
-    	Blob smallBlob = new Blob("mime/small", (long)10, "small");
-    	Blob mediumBlob = new Blob("mime/medium", (long)100, "medium");
-    	Blob largeBlob = new Blob("mime/large", (long)2048, "large");
-    	OutputStream outputStream = repository.getOutputStream(smallBlob);
-    	outputStream.write(small);
-    	outputStream.close();
-    	outputStream = repository.getOutputStream(mediumBlob);
-    	outputStream.write(medium);
-    	outputStream.close();
-    	outputStream = repository.getOutputStream(largeBlob);
-    	outputStream.write(large);
-    	outputStream.close(); 
-    	
-    	InputStream inputStream = repository.getInputStream(smallBlob);
+        Random random = new Random();
+        byte[] small = new byte[10];
+        random.nextBytes(small);
+        byte[] medium = new byte[100];
+        random.nextBytes(medium);
+        byte[] large = new byte[2048];
+        random.nextBytes(large);
+        Blob smallBlob = new Blob("mime/small", (long)10, "small");
+        Blob mediumBlob = new Blob("mime/medium", (long)100, "medium");
+        Blob largeBlob = new Blob("mime/large", (long)2048, "large");
+        OutputStream outputStream = repository.getOutputStream(smallBlob);
+        outputStream.write(small);
+        outputStream.close();
+        outputStream = repository.getOutputStream(mediumBlob);
+        outputStream.write(medium);
+        outputStream.close();
+        outputStream = repository.getOutputStream(largeBlob);
+        outputStream.write(large);
+        outputStream.close();
+
+        InputStream inputStream = repository.getInputStream(smallBlob);
         byte[] readBytes = new byte[10];
         inputStream.read(readBytes);
         inputStream.close();
@@ -145,16 +145,16 @@ public class BlobStoreTest {
     
     @Test
     public void testCreateRecordWithBlob() throws Exception {
-    	QName fieldName = new QName("test", "ablob");
-		FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName, Scope.VERSIONED);
-    	fieldType = typeManager.createFieldType(fieldType);
-    	RecordType recordType = typeManager.newRecordType("testCreateRecordWithBlobRT");
-    	FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
-		recordType.addFieldTypeEntry(fieldTypeEntry);
-		recordType = typeManager.createRecordType(recordType);
-    	Record record = repository.newRecord();
-    	record.setRecordType(recordType.getId(), null);
-    	
+        QName fieldName = new QName("test", "ablob");
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName, Scope.VERSIONED);
+        fieldType = typeManager.createFieldType(fieldType);
+        RecordType recordType = typeManager.newRecordType("testCreateRecordWithBlobRT");
+        FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
+        recordType.addFieldTypeEntry(fieldTypeEntry);
+        recordType = typeManager.createRecordType(recordType);
+        Record record = repository.newRecord();
+        record.setRecordType(recordType.getId(), null);
+
         byte[] bytes = Bytes.toBytes("someBytes");
         Blob blob = new Blob("aMimetype", (long)bytes.length, "testCreate");
         OutputStream outputStream = repository.getOutputStream(blob);
@@ -165,7 +165,7 @@ public class BlobStoreTest {
         
         record = repository.read(record.getId());
         blob = (Blob)record.getField(fieldName);
-		InputStream inputStream = repository.getInputStream(blob);
+        InputStream inputStream = repository.getInputStream(blob);
         byte[] readBytes = new byte[blob.getSize().intValue()];
         inputStream.read(readBytes);
         inputStream.close();
@@ -176,8 +176,8 @@ public class BlobStoreTest {
     public void testReadBlobWithoutName() throws Exception {
         Blob blob = new Blob("aMimetype", (long)10, "aName");
         try {
-        	repository.getInputStream(blob);
-        	fail();
+            repository.getInputStream(blob);
+            fail();
         } catch (BlobNotFoundException expected) {
         }
     }
@@ -187,17 +187,17 @@ public class BlobStoreTest {
         Blob blob = new Blob("aMimetype", (long)10, "aName");
         blob.setValue(new byte[0]);
         try {
-        	repository.getInputStream(blob);
-        	fail();
+            repository.getInputStream(blob);
+            fail();
         } catch (RepositoryException expected) {
         }
     }
     
     @Test
     public void testDelete() throws Exception {
-    	byte[] small = new byte[10];
-    	byte[] medium = new byte[100];
-    	byte[] large = new byte[2048];
+        byte[] small = new byte[10];
+        byte[] medium = new byte[100];
+        byte[] large = new byte[2048];
         Blob smallBlob = new Blob("mime/small", (long)10, "small");
         OutputStream outputStream = repository.getOutputStream(smallBlob);
         outputStream.write(small);
@@ -216,12 +216,12 @@ public class BlobStoreTest {
         repository.getInputStream(smallBlob);
         repository.delete(mediumBlob);
         try {
-        	repository.getInputStream(smallBlob);
+            repository.getInputStream(smallBlob);
         } catch (RepositoryException expected) {
         }
         repository.delete(largeBlob);
         try {
-        	repository.getInputStream(smallBlob);
+            repository.getInputStream(smallBlob);
         } catch (RepositoryException expected) {
         }
     }

@@ -48,34 +48,34 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         byte[] blobKey = Bytes.toBytes(uuid.getMostSignificantBits());
         blobKey = Bytes.add(blobKey, Bytes.toBytes(uuid.getLeastSignificantBits()));
         FSDataOutputStream fsDataOutputStream;
-		try {
-			fsDataOutputStream = fileSystem.create(new Path(uuid.toString()));
-		} catch (IOException e) {
-			throw new RepositoryException("Failed to open an outputstream for blob <" +blob+ "> on the DFS blobstore", e);
-		}
+        try {
+            fsDataOutputStream = fileSystem.create(new Path(uuid.toString()));
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to open an outputstream for blob <" +blob+ "> on the DFS blobstore", e);
+        }
         return new DFSBlobOutputStream(fsDataOutputStream, blobKey, blob);
     }
 
     public InputStream getInputStream(byte[] blobKey) throws RepositoryException {
         UUID uuid = decode(blobKey);
         try {
-        	return fileSystem.open(new Path(uuid.toString()));
+            return fileSystem.open(new Path(uuid.toString()));
         } catch (IOException e) {
-        	throw new RepositoryException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the DFS blobstore", e);
+            throw new RepositoryException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the DFS blobstore", e);
         }
     }
 
     public void delete(byte[] blobKey) throws RepositoryException {
         UUID uuid = decode(blobKey);
         try {
-        	fileSystem.delete(new Path(uuid.toString()), false);
+            fileSystem.delete(new Path(uuid.toString()), false);
         } catch (IOException e) {
-        	throw new RepositoryException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
+            throw new RepositoryException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
         }
     }
 
     private UUID decode(byte[] blobKey) {
-    	return new UUID(Bytes.toLong(blobKey), Bytes.toLong(blobKey, Bytes.SIZEOF_LONG));
+        return new UUID(Bytes.toLong(blobKey), Bytes.toLong(blobKey, Bytes.SIZEOF_LONG));
     }
     
     private class DFSBlobOutputStream extends FilterOutputStream {
