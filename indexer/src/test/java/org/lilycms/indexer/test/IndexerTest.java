@@ -1,6 +1,7 @@
 package org.lilycms.indexer.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.lilycms.repoutil.EventType.*;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -18,7 +19,6 @@ import org.lilycms.queue.mock.TestLilyQueue;
 import org.lilycms.queue.mock.TestQueueMessage;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
-import org.lilycms.repoutil.EventType;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
@@ -61,8 +61,12 @@ public class IndexerTest {
         // Create a record type
         ValueType stringValueType = typeManager.getValueType("STRING", false, false);
         QName fieldType1Name = new QName("org.lilycms.indexer.test", "field1");
-        FieldType fieldType1 = typeManager.newFieldType(stringValueType, fieldType1Name, Scope.VERSIONED);
+        FieldType fieldType1 = typeManager.newFieldType(stringValueType, fieldType1Name, Scope.NON_VERSIONED);
         fieldType1 = typeManager.createFieldType(fieldType1);
+
+        QName fieldType2Name = new QName("org.lilycms.indexer.test", "field2");
+        FieldType fieldType2 = typeManager.newFieldType(stringValueType, fieldType2Name, Scope.NON_VERSIONED);
+        fieldType2 = typeManager.createFieldType(fieldType2);
 
         ValueType longValueType = typeManager.getValueType("LONG", false, false);
         QName liveTagName = new QName(VersionTag.NS_VTAG, "live");
@@ -74,36 +78,76 @@ public class IndexerTest {
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
         recordType1 = typeManager.createRecordType(recordType1);
 
+        //
         // Create a document
+        //
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType("RecordType1", recordType1.getVersion());
         record.setField(fieldType1Name, "apple");
-        record.setField(liveTagName, new Long(1));
         repository.create(record);
 
         // Generate queue message
-        // TODO remove this once the real queue exists
         RecordEvent event = new RecordEvent();
-        event.setVersionCreated(1);
         event.addUpdatedField(fieldType1.getId());
-        QueueMessage message = new TestQueueMessage(EventType.EVENT_RECORD_CREATED, record.getId(), event.toJsonBytes());
+        QueueMessage message = new TestQueueMessage(EVENT_RECORD_CREATED, record.getId(), event.toJsonBytes());
         queue.broadCastMessage(message);
 
-        // Make sure all index writes are committed
         solrServer.commit(true, true);
 
         // Verify the index was updated
-        verifyOneResult("field1:apple");
+        verifyResultCount("field1:apple", 1);
+
+        //
+        // Update the document
+        //
+        record.setField(fieldType1Name, "pear");
+        repository.update(record);
+
+        event = new RecordEvent();
+        event.addUpdatedField(fieldType1.getId());
+        message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
+        queue.broadCastMessage(message);
+
+        solrServer.commit(true, true);
+
+        verifyResultCount("field1:pear", 1);
+        verifyResultCount("field1:apple", 0);
+
+        // Do as if field2 changed, while field2 is not present in the document.
+        // Such situations can occur if the record is modified before earlier events are processed.
+        event = new RecordEvent();
+        event.addUpdatedField(fieldType2.getId());
+        message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
+        queue.broadCastMessage(message);
+
+        solrServer.commit(true, true);
+
+        verifyResultCount("field1:pear", 1);
+        verifyResultCount("field1:apple", 0);
+
+        // Add a vtag field. For versionless records, this should have no effect
+        record.setField(liveTagName, new Long(1));
+        repository.update(record);
+
+        event = new RecordEvent();
+        event.addUpdatedField(liveTag.getId());
+        message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
+        queue.broadCastMessage(message);
+
+        solrServer.commit(true, true);
+
+        verifyResultCount("field1:pear", 1);
+        verifyResultCount("field1:apple", 0);
 
         // The end
         indexer.stop();
     }
     
-    private void verifyOneResult(String query) throws SolrServerException {
+    private void verifyResultCount(String query, int count) throws SolrServerException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
         QueryResponse response = SOLR_TEST_UTIL.getSolrServer().query(solrQuery);
-        assertEquals(1, response.getResults().getNumFound());
+        assertEquals(count, response.getResults().getNumFound());
     }
 
 }

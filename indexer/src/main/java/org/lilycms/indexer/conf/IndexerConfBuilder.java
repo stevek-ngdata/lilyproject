@@ -60,12 +60,12 @@ public class IndexerConfBuilder {
             // TODO will need resolving of the QName
             String recordType = DocumentHelper.getAttribute(caseEl, "recordType", true);
             String vtagsSpec = DocumentHelper.getAttribute(caseEl, "vtags", false);
-            boolean indexVersionLess = DocumentHelper.getBooleanAttribute(caseEl, "indexVersionLess", false);
+            boolean indexVersionless = DocumentHelper.getBooleanAttribute(caseEl, "indexVersionless", false);
 
             Map<String, String> varPropsPattern = parseVariantPropertiesPattern(caseEl);
             Set<String> vtags = parseVersionTags(vtagsSpec);
 
-            IndexCase indexCase = new IndexCase(recordType, varPropsPattern, vtags, indexVersionLess);
+            IndexCase indexCase = new IndexCase(recordType, varPropsPattern, vtags, indexVersionless);
             conf.indexCases.add(indexCase);
         }
     }

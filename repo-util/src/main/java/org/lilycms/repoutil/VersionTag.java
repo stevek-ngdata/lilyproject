@@ -1,6 +1,9 @@
 package org.lilycms.repoutil;
 
+import org.apache.commons.logging.LogFactory;
 import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
+import org.lilycms.repository.api.exception.RepositoryException;
 
 import java.util.*;
 
@@ -84,6 +87,25 @@ public class VersionTag {
             tags.add(entry.getKey());
         }
 
+        return result;
+    }
+
+    /**
+     * Filters the given set of fields to only those that are vtag fields.
+     */
+    public static Set<String> filterVTagFields(Set<String> fieldIds, TypeManager typeManager) throws RepositoryException {
+        Set<String> result = new HashSet<String>();
+        for (String field : fieldIds) {
+            try {
+                if (VersionTag.isVersionTag(typeManager.getFieldTypeById(field))) {
+                    result.add(field);
+                }
+            } catch (FieldTypeNotFoundException e) {
+                // ignore, if it does not exist, it can't be a version tag
+            } catch (Throwable t) {
+                LogFactory.getLog(VersionTag.class).error("Error loading field type to find out if it is a vtag field.", t);
+            }
+        }
         return result;
     }
 

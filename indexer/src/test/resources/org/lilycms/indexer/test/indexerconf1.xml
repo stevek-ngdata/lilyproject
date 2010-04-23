@@ -2,7 +2,7 @@
 <indexer>
 
   <cases>
-    <case recordType="RecordType1" variant="" vtags="live"/>
+    <case recordType="RecordType1" variant="" vtags="live" indexVersionless="true"/>
   </cases>
 
   <indexFields xmlns:ns="org.lilycms.indexer.test">

@@ -58,7 +58,7 @@ public class Indexer {
                 if (!msg.getType().equals(EVENT_RECORD_CREATED) &&
                         !msg.getType().equals(EVENT_RECORD_UPDATED) &&
                         !msg.getType().equals(EVENT_RECORD_DELETED)) {
-                    // It's not one of the kinds of events we are interested in
+                    // It is not one of the kinds of events we are interested in
                     return;
                 }
 
@@ -66,56 +66,104 @@ public class Indexer {
                 Map<String, Long> vtags = VersionTag.getTagsByName(record, typeManager);
                 Map<Long, Set<String>> vtagsByVersion = VersionTag.tagsByVersion(vtags);
 
+                // Determine the IndexCase:
+                //  The indexing of all versions is determined by the record type of the non-versioned scope.
+                //  This makes that the indexing behavior of all versions is equal, and can be changed (since
+                //  the record type of the versioned scope is immutable).
                 IndexCase indexCase = conf.getIndexCase(record.getRecordTypeId(), record.getId().getVariantProperties());
 
                 if (indexCase == null) {
-                    // The record should not be indeed
+                    // The record should not be indexed
                     // But data from this record might be denormalized into other record entries
-                    // TODO therefore go to deref handling
+                    // After this we go to deref update
                 } else {
-                    Set<String> vtagsToIndex = new HashSet<String>();
-
-                    // TODO handle record type change
-
-                    // TODO delete possibly old @@versionless entries
-
                     RecordEvent event = new RecordEvent(msg.getType(), msg.getData());
 
+                    Set<String> vtagsToIndex = new HashSet<String>();
                     Map<Scope, Set<FieldType>> updatedFieldsByScope = getFieldTypeAndScope(event.getUpdatedFields());
 
-                    // If any non-versioned fields are changed
-                    if (updatedFieldsByScope.get(Scope.NON_VERSIONED).size() > 0) {
-                        if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.NON_VERSIONED))) {
-                            if (record.getVersion() != null) {
-                                vtagsToIndex.addAll(indexCase.getVersionTags());
-                            } else {
-                                vtagsToIndex.add(VersionTag.VERSIONLESS_TAG);
-                            }
-                            // TODO go to handle vtags
-                        }
-                    }
+                    if (event.getRecordTypeChanged()) {
+                        // When the record type changes, the rules to index (= the IndexCase) change
 
-                    if (vtagsToIndex.isEmpty() && (event.getVersionCreated() != -1 || event.getVersionUpdated() != -1)) {
-                        if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED))
-                                || atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE))) {
+                        // Delete everything: we do not know the previous record type, so we do not know what
+                        // version tags were indexed, so we simply delete everything
+                        solrServer.deleteByQuery("@@id:" + record.getId().toString());
 
-                            long version = event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();
-                            Set<String> tmp = new HashSet<String>();
-                            tmp.addAll(indexCase.getVersionTags());
-                            tmp.retainAll(vtagsByVersion.get(version));
-                            vtagsToIndex.addAll(tmp);
-                        }
-                    }
+                        // Reindex all needed vtags
+                        setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
 
-                    // TODO treat version tag changes
-
-                    // Index
-                    if (vtagsToIndex.contains(VersionTag.VERSIONLESS_TAG)) {
-                        if (vtagsToIndex.size() > 1) {
-                            // TODO this should never occur
-                        }
-                        // TODO get record + index
+                        // After this we go to the indexing
                     } else {
+
+                        if (event.getVersionCreated() == 1
+                                && msg.getType().equals(EVENT_RECORD_UPDATED)
+                                && indexCase.getIndexVersionless()) {
+                            // If the first version was created, but the record was not new, then there
+                            // might already be an @@versionless index entry
+                            solrServer.deleteById(getIndexId(record.getId(), VersionTag.VERSIONLESS_TAG));
+                        }
+
+                        //
+                        // Handle changes to non-versioned fields
+                        //
+                        if (updatedFieldsByScope.get(Scope.NON_VERSIONED).size() > 0) {
+                            if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.NON_VERSIONED))) {
+                                setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
+                                // After this we go to the treatment of changed vtag fields
+                            }
+                        }
+
+                        //
+                        // Handle changes to versioned(-mutable) fields
+                        //
+                        // If there were non-versioned fields changed, then we all already reindex all versions
+                        // so this can be skipped.
+                        //
+                        if (vtagsToIndex.isEmpty() && (event.getVersionCreated() != -1 || event.getVersionUpdated() != -1)) {
+                            if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED))
+                                    || atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE))) {
+
+                                long version = event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();
+                                if (vtagsByVersion.containsKey(version)) {
+                                    Set<String> tmp = new HashSet<String>();
+                                    tmp.addAll(indexCase.getVersionTags());
+                                    tmp.retainAll(vtagsByVersion.get(version));
+                                    vtagsToIndex.addAll(tmp);
+                                }
+                            }
+                        }
+
+                        //
+                        // Handle changes to version vtag fields
+                        //
+                        Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
+                        // Remove the vtags which are going to be reindexed anyway
+                        changedVTagFields.removeAll(vtagsToIndex);
+                        for (String vtag : changedVTagFields) {
+                            if (vtags.containsKey(vtag) && indexCase.getVersionTags().contains(vtag)) {
+                                vtagsToIndex.add(vtag);
+                            } else {
+                                // The vtag does not exist anymore on the document: delete from index
+                                solrServer.deleteById(getIndexId(record.getId(), vtag));
+                            }
+                        }
+                    }
+
+
+                    //
+                    // Index
+                    //
+                    if (vtagsToIndex.contains(VersionTag.VERSIONLESS_TAG)) {
+                        // Usually when the @@versionless vtag should be indexed, the vtagsToIndex set will
+                        // not contain any other tags.
+                        // It could be that there are other tags however: for example if someone added and removed
+                        // vtag fields to the (versionless) document.
+                        // If we would ever support deleting of versions, then it could also be the case,
+                        // but then we'll have to extend this to delete these old versions from the index.
+                        index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
+                    } else {
+                        // One version might have multiple vtags, so to index we iterate the version numbers
+                        // rather than the vtags
                         Map<Long, Set<String>> vtagsToIndexByVersion = getVtagsByVersion(vtagsToIndex, vtags);
                         for (Map.Entry<Long, Set<String>> entry : vtagsToIndexByVersion.entrySet()) {
                             Record version = null;
@@ -126,9 +174,10 @@ public class Indexer {
                             }
 
                             if (version == null) {
-                                // TODO send delete
+                                for (String vtag : entry.getValue()) {
+                                    solrServer.deleteById(getIndexId(record.getId(), vtag));
+                                }
                             } else {
-                                // TODO index
                                 index(version, entry.getValue());
                             }
                         }
@@ -158,8 +207,16 @@ public class Indexer {
                 }
             }
 
+            solrDoc.setField("@@id", record.getId().toString());
+
             for (String vtag : vtags) {
-                solrDoc.setField("@@key", record.getId().toString() + "-" + vtag);
+                solrDoc.setField("@@key", getIndexId(record.getId(), vtag));
+                solrDoc.setField("@@vtag", vtag);
+
+                if (vtag.equals(VersionTag.VERSIONLESS_TAG)) {
+                    solrDoc.setField("@@versionless", "true");
+                }
+
                 solrServer.add(solrDoc);
             }
         }
@@ -209,6 +266,35 @@ public class Indexer {
             }
 
             return result;
+        }
+
+        /**
+         * TODO this method is a temporary solution to detect that a record has versions,
+         *      should be removed once issue #1 is solved.
+         */
+        private boolean recordHasVersions(Record record) {
+            for (QName fieldName : record.getFields().keySet()) {
+                Scope scope = typeManager.getFieldTypeByName(fieldName).getScope();
+                if (scope == Scope.VERSIONED || scope == Scope.VERSIONED_MUTABLE) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void setIndexAllVTags(Set<String> vtagsToIndex, Map<String, Long> vtags, IndexCase indexCase, Record record) {
+            if (recordHasVersions(record)) {
+                Set<String> tmp = new HashSet<String>();
+                tmp.addAll(indexCase.getVersionTags());
+                tmp.retainAll(vtags.keySet()); // only keep the vtags which exist in the document
+                vtagsToIndex.addAll(tmp);
+            } else if (indexCase.getIndexVersionless()) {
+                vtagsToIndex.add(VersionTag.VERSIONLESS_TAG);
+            }
+        }
+
+        private String getIndexId(RecordId recordId, String vtag) {
+            return recordId + "-" + vtag;
         }
     }
 }

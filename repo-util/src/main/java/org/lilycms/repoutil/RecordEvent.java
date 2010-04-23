@@ -23,6 +23,7 @@ public class RecordEvent {
     private long versionUpdated = -1;
     private Type type;
     private Set<String> updatedFields = new HashSet<String>();
+    private boolean recordTypeChanged = false;
 
     public enum Type {CREATE, UPDATE, DELETE}
 
@@ -53,6 +54,10 @@ public class RecordEvent {
             versionUpdated = msgData.get("versionUpdated").getIntValue();
         }
 
+        if (msgData.get("recordTypeChanged") != null) {
+            recordTypeChanged = msgData.get("recordTypeChanged").getBooleanValue();
+        }
+
         JsonNode updatedFieldsNode = msgData.get("updatedFields");
         if (updatedFieldsNode != null && updatedFieldsNode.size() > 0) {
             for (int i = 0; i < updatedFieldsNode.size(); i++) {
@@ -75,6 +80,14 @@ public class RecordEvent {
 
     public void setVersionUpdated(long versionUpdated) {
         this.versionUpdated = versionUpdated;
+    }
+
+    public boolean getRecordTypeChanged() {
+        return recordTypeChanged;
+    }
+
+    public void setRecordTypeChanged(boolean recordTypeChanged) {
+        this.recordTypeChanged = recordTypeChanged;
     }
 
     public Type getType() {
@@ -107,6 +120,10 @@ public class RecordEvent {
 
         if (versionCreated != -1) {
             object.put("versionCreated", versionCreated);
+        }
+
+        if (recordTypeChanged) {
+            object.put("recordTypeChanged", true);
         }
 
         return object;

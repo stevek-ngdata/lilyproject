@@ -97,7 +97,7 @@ public class LinkIndexUpdater {
                         Set<String> vtagsToProcess = new HashSet<String>();
 
                         // Modified vtag fields
-                        Set<String> changedVTags = filterVTagFields(recordEvent.getUpdatedFields());
+                        Set<String> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), typeManager);
                         vtagsToProcess.addAll(changedVTags);
 
                         // The vtags of the created/modified version, if any
@@ -172,22 +172,4 @@ public class LinkIndexUpdater {
         return Collections.emptySet();
     }
 
-    /**
-     * Filters the given set of fields to only those that are vtag fields.
-     */
-    private Set<String> filterVTagFields(Set<String> fields) throws RepositoryException {
-        Set<String> result = new HashSet<String>();
-        for (String field : fields) {
-            try {
-                if (VersionTag.isVersionTag(typeManager.getFieldTypeById(field))) {
-                    result.add(field);
-                }
-            } catch (FieldTypeNotFoundException e) {
-                // ignore, if it does not exist, it can't be a version tag
-            } catch (Throwable t) {
-                log.error("Error loading field type to find out if it is a vtag field.", t);
-            }
-        }
-        return result;
-    }
 }
