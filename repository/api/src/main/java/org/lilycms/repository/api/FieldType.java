@@ -16,55 +16,80 @@
 package org.lilycms.repository.api;
 
 /**
- * Describes the properties of a {@link Field}.
+ * A FieldType is a value object describing the properties of a field, and is
+ * used in a RecordType to describe the fields a Record can consist of, see
+ * {@link RecordType} and {@link FieldTypeEntry}
  * 
  * <p>
- * Multiple versions of a {@link FieldType} can exist.
+ * A FieldType has an immutable system-generated unique id and a unique but
+ * mutable qualified name {@link QName}, both uniquely identifying the
+ * FieldType.
+ * <p>
+ * An immutable {@link ValueType} describes the underlying primitive type of the
+ * FieldType and if it is a multivalue field, or hierarchical.
+ * <p>
+ * The immutable {@link Scope} descibes to which Scope the field belongs.
  * 
  * <p>
- * A {@link FieldType} cannot exist on its own, but is always part of a
- * {@link RecordType}. It's id must be unique within the context of the
- * {@link RecordType}.
- * 
+ * A FieldType object should be instantiated through
+ * {@link TypeManager#newFieldType(ValueType, QName, Scope)}.
+ * <p>
+ * A new FieldType can be created on the repository by calling
+ * {@link TypeManager#createFieldType(FieldType)}. After creating a new
+ * FieldType it will be assigned a system-generated unique id.
  */
 public interface FieldType {
 
-    void setId(String string);
-    /**
-     * The id of the {@link FieldType} is also the id to be used by the corresponding {@link Field}
-     * The id is system generated and unique.  
-     * @return the id of the {@link FieldType}
-     */
-    String getId();
+	/**
+	 * Sets the id of the FieldType on the value object.
+	 */
+	void setId(String id);
 
-    /**
-     * Set the global unique name of the {@link FieldType}.
-     * The name can be chose by the user.
-     */
-    void setName(QName name);
-    
-    /**
-     * @return the global unique name of the {@link FieldType}
-     */
-    QName getName();
-    
-    /**
-     * Set the {@link ValueType} of the {@link Field}
-     * @param valueType
-     */
-    void setValueType(ValueType valueType);
-    
-    /**
-     * @return the {@link ValueType} of the {@link Field}
-     */
-    ValueType getValueType();
-    
-    void setScope(Scope scope);
-    
-    Scope getScope();
+	/**
+	 * The id is unique, immutable and system-generated.
+	 * 
+	 * @return the id of the FieldType
+	 */
+	String getId();
 
-    boolean equals(Object obj);
+	/**
+	 * Sets the name of the FieldType on the value object.
+	 * @param name the qualified name to be used, see {@link QName}
+	 */
+	void setName(QName name);
 
-    FieldType clone();
+	/**
+	 * The name is unique, user-provided and can be changed by calling {@link TypeManager#updateFieldType(FieldType)}. 
+	 * @return the name of the FieldType
+	 */
+	QName getName();
 
+	/**
+	 * Sets the valueType of the FieldType on the value object.
+	 * @param valueType the valueType to be used, see {@link ValueType}
+	 * 
+	 */
+	void setValueType(ValueType valueType);
+
+	/**
+	 * The valueType describes the primitive type and if it is multivalue or hierarchical, see {@link ValueType}
+	 * @return the valueType of the FieldType
+	 */
+	ValueType getValueType();
+
+	/**
+	 * Sets the scope of the FieldType on the value object.
+	 * @param scope the scope to be used, see {@link Scope}
+	 */
+	void setScope(Scope scope);
+
+	/**
+	 * The scope defines to which scope a FieldType (and related fields) belong (e.g. Non-Versioned, Versioned, Versioned-Mutable), see {@link Scope} 
+	 * @return the scope of the FieldType
+	 */
+	Scope getScope();
+
+	boolean equals(Object obj);
+
+	FieldType clone();
 }

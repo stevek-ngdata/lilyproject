@@ -20,8 +20,10 @@ import java.util.Arrays;
 import org.lilycms.util.ArgumentValidator;
 
 /**
- * A Blob 
- *
+ * A Blob is a primitive type that can be used to store binary data.
+ * Storing and retrieving data to and from the blob should happen through {@link OutputStream} and {@link InputStream}.
+ * These streams should be requested from the Repository through {@link Repository#getOutputStream(Blob)} and {@link Repository#getInputStream(Blob)}.
+ * After the data has been written to the OutputStream and the stream has been closed see {@link OutputStream#close()}, the Blob is ready to be stored in a {@link Record}.
  */
 public class Blob {
 
@@ -30,17 +32,28 @@ public class Blob {
     private final String name;
     private byte[] value;
 
+    /**
+     * This is the default constructor to create a Blob.
+     * @param mimetype the mimetype of the data represented by the blob
+     * @param size the size in number of bytes of the data that will be written. The size is a mandatory parameter
+     * @param name a name with no extra semantic meaning (e.g. a filename)
+     */
+    public Blob(String mimetype, Long size, String name) {
+    	this(null, mimetype, size, name);
+    }
+
+    /**
+     * This constructor should only be used internally.
+     * @param value the value will be generated after data has been written to the OutputStream and the stream has been closed. 
+     */
     public Blob(byte[] value, String mimetype, Long size, String name) {
-        ArgumentValidator.notNull(mimetype, "mimetype");
+    	ArgumentValidator.notNull(size, "size");
         this.value = value;
         this.mimetype = mimetype;
         this.size = size;
         this.name = name;
     }
     
-    public Blob(String mimetype, Long size, String name) {
-        this(null, mimetype, size, name);
-    }
     
     public byte[] getValue() {
         return value;

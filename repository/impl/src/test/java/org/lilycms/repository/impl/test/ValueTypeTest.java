@@ -110,7 +110,7 @@ public class ValueTypeTest {
     public void testBlobType() throws Exception {
         Blob blob1 = new Blob(Bytes.toBytes("aKey"), "text/html", Long.MAX_VALUE, null);
         Blob blob2 = new Blob(Bytes.toBytes("anotherKey"), "image/jpeg", Long.MIN_VALUE, "images/image.jpg");
-        Blob blob3 = new Blob(null, "text/plain", null, null);
+        Blob blob3 = new Blob("text/plain", Long.valueOf(0), null);
         runValueTypeTests("blobTypeId", "BLOB", blob1, blob2, blob3);
     }
     

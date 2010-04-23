@@ -15,8 +15,15 @@
  */
 package org.lilycms.repository.api;
 
+/**
+ * A BlobStoreAccessFactory implements an algorithm to return a
+ * {@link BlobStoreAccess} for a new blob (for example based on the size of the
+ * blob's data). The BlobStoreAccess that will be returned must have been
+ * registered with the repository, see
+ * {@link Repository#registerBlobStoreAccess(BlobStoreAccess)}
+ */
 public interface BlobStoreAccessFactory {
 
-    BlobStoreAccess getBlobStoreAccess(Blob blob) ;
-    
+	BlobStoreAccess getBlobStoreAccess(Blob blob);
+
 }
