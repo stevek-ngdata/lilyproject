@@ -104,6 +104,10 @@ public class RecordImpl implements Record {
         return field;
     }
 
+    public boolean hasField(QName fieldName) {
+        return fields.containsKey(fieldName);
+    }
+
     public Map<QName, Object> getFields() {
         return fields;
     }

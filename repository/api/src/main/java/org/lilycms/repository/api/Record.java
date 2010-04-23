@@ -63,7 +63,14 @@ public interface Record {
     
     void setField(QName fieldName, Object value);
 
+    /**
+     *
+     * @throws FieldNotFoundException if the field is not present in this Record object. To avoid the exception,
+     *         use {@link #hasField}.
+     */
     Object getField(QName fieldName) throws FieldNotFoundException;
+
+    boolean hasField(QName fieldName);
 
     Map<QName, Object> getFields();
 
