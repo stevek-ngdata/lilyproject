@@ -1,76 +1,18 @@
+<?xml version="1.0"?>
 <indexer>
-  <defaultSearchField>RecordType1.ifield1</defaultSearchField>
 
-  <mapping>
-    <fieldTypes>
-      <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
-        <analyzer type="index">
-          <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-          <!-- in this example, we will only use synonyms at query time
-          <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
-          -->
-          <!-- Case insensitive stop word removal.
-            add enablePositionIncrements=true in both the index and query
-            analyzers to leave a 'gap' for more accurate phrase queries.
-          -->
-          <filter class="solr.StopFilterFactory"
-                  ignoreCase="true"
-                  words="stopwords.txt"
-                  enablePositionIncrements="true"
-                  />
-          <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0" splitOnCaseChange="1"/>
-          <filter class="solr.LowerCaseFilterFactory"/>
-          <filter class="solr.SnowballPorterFilterFactory" language="English" protected="protwords.txt"/>
-        </analyzer>
-        <analyzer type="query">
-          <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-          <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
-          <filter class="solr.StopFilterFactory"
-                  ignoreCase="true"
-                  words="stopwords.txt"
-                  enablePositionIncrements="true"
-                  />
-          <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
-          <filter class="solr.LowerCaseFilterFactory"/>
-          <filter class="solr.SnowballPorterFilterFactory" language="English" protected="protwords.txt"/>
-        </analyzer>
-      </fieldType>
-    </fieldTypes>
+  <cases>
+    <case recordType="RecordType1" variant="" vtags="live"/>
+  </cases>
 
-    <globalFields>
-      <indexField name="gifield1" type="text"/>
-    </globalFields>
+  <indexFields xmlns:ns="org.lilycms.indexer.test">
 
-    <versionedContentMapping>
-      <case recordType="RecordType1" versionTags="live,last">
-        <!-- the 'i' prefix stands for indexed field -->
-        <indexField name="ifield1" type="text">
-          <value>
-            <field name="field1"/>
-          </value>
-        </indexField>
-        <indexField name="ifield2" type="text">
-          <value>
-            <field name="field2"/>
-          </value>
-        </indexField>
-        <indexField ref="gifield1">
-          <value>
-            <field name="field3"/>
-          </value>
-        </indexField>
-      </case>
-    </versionedContentMapping>
+    <indexField name="field1">
+      <value>
+        <field name="ns:field1"/>
+      </value>
+    </indexField>
 
-    <nonVersionedContentMapping>
-      <case recordType="RecordType1">
-        <!-- the 'nvi' prefix stands for non-versioned indexed field -->
-        <indexField name="nvifield1" type="text">
-          <value>
-            <field name="nvfield1"/>
-          </value>
-        </indexField>
-      </case>
-    </nonVersionedContentMapping>
-  </mapping>
+  </indexFields>
+
 </indexer>

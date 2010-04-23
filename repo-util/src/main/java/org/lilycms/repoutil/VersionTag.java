@@ -40,6 +40,26 @@ public class VersionTag {
     }
 
     /**
+     * Returns the vtags of a record, the key in the map is the name of the vtag field (without namespace).
+     *
+     * <p>Note that version numbers do not necessarily correspond to existing versions.
+     */
+    public static Map<String, Long> getTagsByName(Record record, TypeManager typeManager) {
+        Map<String, Long> vtags = new HashMap<String, Long>();
+
+        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
+            // TODO: once getFieldTypeByName throws a FieldTypeNotFoundException, skip such fields
+            FieldType fieldType = typeManager.getFieldTypeByName(field.getKey());
+
+            if (isVersionTag(fieldType)) {
+                vtags.put(fieldType.getName().getName(), (Long)field.getValue());
+            }
+        }
+
+        return vtags;
+    }
+
+    /**
      * Returns true if the given FieldType is a version tag.
      */
     public static boolean isVersionTag(FieldType fieldType) {

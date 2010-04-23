@@ -79,7 +79,7 @@ public class SolrTestingUtility {
 
         // Ignoring the closing of the streams here, it's just a testcase anyway ...
 
-        copyStream(new FileInputStream(schemaLocation),
+        copyStream(getClass().getClassLoader().getResourceAsStream(schemaLocation),
                 new File(solrConfDir, "schema.xml"));
 
         copyStream(getClass().getClassLoader().getResourceAsStream("org/lilycms/indexer/test/solrconfig.xml"),

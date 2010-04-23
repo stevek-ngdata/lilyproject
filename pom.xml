@@ -39,9 +39,7 @@
     <module>hbaseindex</module>
     <module>util</module>
     <module>testfw</module>
-    <!--
     <module>indexer</module>
-    -->
     <module>eventlog/queue-api</module>
     <module>eventlog/queue-mock</module>
     <module>linkmgmt</module>
@@ -85,6 +83,7 @@
         <groupId>org.lilycms</groupId>
         <artifactId>lily-queue-mock</artifactId>
         <version>0.1-dev</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilycms</groupId>
