@@ -32,9 +32,7 @@ public class IndexerConf {
 
     protected void addIndexField(IndexField indexField) {
         indexFields.add(indexField);
-
-        // TODO die collect kan wellicht een get zijn: elk indexField zal maar 1 dep hebben
-        indexField.getValue().collectFieldDependencies(repoFieldDependencies);
+        repoFieldDependencies.add(indexField.getValue().getFieldDependency());
     }
 
     /**

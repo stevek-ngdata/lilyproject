@@ -60,6 +60,8 @@ public class IndexerTest {
 
         // Create a record type
         ValueType stringValueType = typeManager.getValueType("STRING", false, false);
+        ValueType linkValueType = typeManager.getValueType("LINK", false, false);
+
         QName fieldType1Name = new QName("org.lilycms.indexer.test", "field1");
         FieldType fieldType1 = typeManager.newFieldType(stringValueType, fieldType1Name, Scope.NON_VERSIONED);
         fieldType1 = typeManager.createFieldType(fieldType1);
@@ -68,18 +70,23 @@ public class IndexerTest {
         FieldType fieldType2 = typeManager.newFieldType(stringValueType, fieldType2Name, Scope.NON_VERSIONED);
         fieldType2 = typeManager.createFieldType(fieldType2);
 
+        QName linkFieldName = new QName("org.lilycms.indexer.test", "linkfield");
+        FieldType linkFieldType = typeManager.newFieldType(linkValueType, linkFieldName, Scope.NON_VERSIONED);
+        linkFieldType = typeManager.createFieldType(linkFieldType);
+
         ValueType longValueType = typeManager.getValueType("LONG", false, false);
         QName liveTagName = new QName(VersionTag.NS_VTAG, "live");
         FieldType liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
         liveTag = typeManager.createFieldType(liveTag);
 
         RecordType recordType1 = typeManager.newRecordType("RecordType1");
-        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), true));
+        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
+        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
         recordType1 = typeManager.createRecordType(recordType1);
 
         //
-        // Create a document
+        // Create a record
         //
         Record record = repository.newRecord(idGenerator.newRecordId());
         record.setRecordType("RecordType1", recordType1.getVersion());
@@ -138,6 +145,27 @@ public class IndexerTest {
 
         verifyResultCount("field1:pear", 1);
         verifyResultCount("field1:apple", 0);
+
+        //
+        // Deref
+        //
+        {
+            Record record2 = repository.newRecord(idGenerator.newRecordId());
+            record2.setRecordType("RecordType1", recordType1.getVersion());
+            record2.setField(linkFieldName, record.getId());
+            repository.create(record2);
+
+            // Generate queue message
+            event = new RecordEvent();
+            event.addUpdatedField(linkFieldType.getId());
+            message = new TestQueueMessage(EVENT_RECORD_CREATED, record2.getId(), event.toJsonBytes());
+            queue.broadCastMessage(message);
+
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield1:pear", 1);
+        }
+
 
         // The end
         indexer.stop();

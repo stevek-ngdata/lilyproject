@@ -13,6 +13,15 @@
       </value>
     </indexField>
 
+    <indexField name="dereffield1">
+      <value>
+        <deref>
+          <follow field="ns:linkfield"/>
+          <field name="ns:field1"/>
+        </deref>
+      </value>
+    </indexField>
+
   </indexFields>
 
 </indexer>

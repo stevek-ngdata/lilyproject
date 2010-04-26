@@ -198,18 +198,29 @@ public class Indexer {
          * @param vtags the version tags under which to index
          */
         private void index(Record record, Set<String> vtags) throws IOException, SolrServerException {
-            SolrInputDocument solrDoc = new SolrInputDocument();
 
-            for (IndexField indexField : conf.getIndexFields()) {
-                String value = indexField.getValue().eval(record);
-                if (value != null) {
-                    solrDoc.addField(indexField.getName(), value);
-                }
-            }
-
-            solrDoc.setField("@@id", record.getId().toString());
-
+            // Note that it is important the the indexFields are evaluated in order, since multiple
+            // indexFields can have the same name and the order of values for multivalue fields can be important.
+            //
+            // The value of the indexFields is re-evaluated for each vtag. It is only the value of
+            // deref-values which can change from vtag to vtag, so we could optimize this by only
+            // evaluating those after the first run, but again because we want to maintain order and
+            // because a deref-field could share the same name with a non-deref field, we simply
+            // re-evaluate all fields for each vtag.
             for (String vtag : vtags) {
+                SolrInputDocument solrDoc = new SolrInputDocument();
+
+                for (IndexField indexField : conf.getIndexFields()) {
+                    List<String> values = indexField.getValue().eval(record, repository, vtag);
+                    if (values != null) {
+                        for (String value : values) {
+                            solrDoc.addField(indexField.getName(), value);
+                        }
+                    }
+                }
+
+
+                solrDoc.setField("@@id", record.getId().toString());
                 solrDoc.setField("@@key", getIndexId(record.getId(), vtag));
                 solrDoc.setField("@@vtag", vtag);
 

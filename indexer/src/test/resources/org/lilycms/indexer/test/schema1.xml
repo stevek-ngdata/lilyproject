@@ -47,6 +47,7 @@
    <field name="@@versionless" type="string" indexed="true" stored="true" required="true" />
 
    <field name="field1" type="text" indexed="true" stored="true" required="false" />
+   <field name="dereffield1" type="text" indexed="true" stored="true" required="false" />
 
  </fields>
 

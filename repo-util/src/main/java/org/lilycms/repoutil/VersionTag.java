@@ -2,8 +2,7 @@ package org.lilycms.repoutil;
 
 import org.apache.commons.logging.LogFactory;
 import org.lilycms.repository.api.*;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.exception.*;
 
 import java.util.*;
 
@@ -107,6 +106,40 @@ public class VersionTag {
             }
         }
         return result;
+    }
+
+    /**
+     * Resolves a vtag to a version number for some record.
+     *
+     * <p>It does not assume the vtag exists, is really a vtag field, etc.
+     *
+     * <p>It should not be called for the @@versionless tag, since that cannot be resolved to a version number.
+     *
+     * <p>If the specified record would not exist, you will get an {@link RecordTypeNotFoundException}.
+     *
+     * @return null if the vtag does not exist, if it is not a valid vtag field, if the record does not exist,
+     *         or if the record fails to load.
+     */
+    public static Long getVersion(RecordId recordId, String vtag, Repository repository) {
+        QName vtagField = new QName(VersionTag.NS_VTAG, vtag);
+
+        Record vtagRecord;
+        try {
+            vtagRecord = repository.read(recordId, Collections.singletonList(vtagField));
+        } catch (Exception e) {
+            return null;
+        }
+
+        // TODO this check should be done based on the ID of the field loaded in the record, once that is available (see #7)
+        FieldType fieldType = repository.getTypeManager().getFieldTypeByName(vtagField);
+        if (!VersionTag.isVersionTag(fieldType)) {
+            return null;
+        }
+
+        if (!vtagRecord.hasField(vtagField))
+            return null;
+
+        return (Long)vtagRecord.getField(vtagField);
     }
 
 }

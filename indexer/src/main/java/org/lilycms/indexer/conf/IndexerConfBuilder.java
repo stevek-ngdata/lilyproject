@@ -137,9 +137,44 @@ public class IndexerConfBuilder {
     }
 
     private Value buildValue(Element valueEl) throws Exception {
-        Element fieldEl = DocumentHelper.getElementChild(valueEl, "field", true);
-        QName name = parseQName(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
-        return new Value(name);
+        Element fieldEl = DocumentHelper.getElementChild(valueEl, "field", false);
+
+        if (fieldEl != null) {
+            QName name = parseQName(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
+            return new FieldValue(name);
+        }
+
+        Element derefEl = DocumentHelper.getElementChild(valueEl, "deref", false);
+        if (derefEl != null) {
+            Element[] children = DocumentHelper.getElementChildren(derefEl);
+
+            Element lastEl = children[children.length - 1];
+
+            if (!lastEl.getLocalName().equals("field") || lastEl.getNamespaceURI() != null) {
+                throw new IndexerConfException("Last element in a <deref> should be a field, at " + LocationAttributes.getLocationString(lastEl));
+            }
+
+            if (children.length == 1) {
+                throw new IndexerConfException("A <deref> should contain one or more <follow> elements.");
+            }
+
+            QName fieldName = parseQName(DocumentHelper.getAttribute(lastEl, "name", true), lastEl);
+
+            DerefValue deref = new DerefValue(fieldName);
+
+            // Run over all children except the last
+            for (int i = 0; i < children.length - 1; i++) {
+                Element child = children[i];
+                if (child.getLocalName().equals("follow") || child.getNamespaceURI() == null) {
+                    QName followFieldName = parseQName(DocumentHelper.getAttribute(child, "field", true), child);
+                    deref.addFieldFollow(followFieldName);
+                }
+            }
+
+            return deref;
+        }
+
+        throw new RuntimeException("No value configured for index field at " + LocationAttributes.getLocation(valueEl));
     }
 
     private QName parseQName(String qname, Element contextEl) throws IndexerConfException {
