@@ -72,6 +72,8 @@ public class Indexer {
                 //  the record type of the versioned scope is immutable).
                 IndexCase indexCase = conf.getIndexCase(record.getRecordTypeId(), record.getId().getVariantProperties());
 
+                // TODO don't forget to handle record delete!!
+
                 if (indexCase == null) {
                     // The record should not be indexed
                     // But data from this record might be denormalized into other record entries
@@ -92,6 +94,10 @@ public class Indexer {
                         // Reindex all needed vtags
                         setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
 
+                        // After this we go to the indexing
+                    } else if (msg.getType().equals(EVENT_RECORD_CREATED)) {
+                        // New record: just index everything
+                        setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
                         // After this we go to the indexing
                     } else {
 
@@ -210,13 +216,25 @@ public class Indexer {
             for (String vtag : vtags) {
                 SolrInputDocument solrDoc = new SolrInputDocument();
 
+                boolean valueAdded = false;
                 for (IndexField indexField : conf.getIndexFields()) {
                     List<String> values = indexField.getValue().eval(record, repository, vtag);
                     if (values != null) {
                         for (String value : values) {
                             solrDoc.addField(indexField.getName(), value);
+                            valueAdded = true;
                         }
                     }
+                }
+
+                if (!valueAdded) {
+                    // No single field was added to the SOLR document.
+                    // In this case we do not add it to the index.
+                    // Besides being somewhat logical, it should also be noted that if a record would not contain
+                    // any (modified) fields that serve as input to indexFields, we would never have arrived here
+                    // anyway. It is only because some fields potentially would resolve to a value (potentially:
+                    // because with deref-expressions we are never sure) that we did.
+                    continue;
                 }
 
 

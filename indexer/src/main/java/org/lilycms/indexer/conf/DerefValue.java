@@ -3,9 +3,7 @@ package org.lilycms.indexer.conf;
 import org.lilycms.repository.api.*;
 import org.lilycms.repoutil.VersionTag;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class DerefValue implements Value {
     private List<Follow> follows = new ArrayList<Follow>();
@@ -17,6 +15,14 @@ public class DerefValue implements Value {
 
     protected void addFieldFollow(QName fieldName) {
         follows.add(new FieldFollow(fieldName));
+    }
+
+    protected void addMasterFollow() {
+        follows.add(new MasterFollow());
+    }
+
+    protected void addVariantFollow(Set<String> dimensions) {
+        follows.add(new VariantFollow(dimensions));
     }
 
     private static interface Follow {
@@ -37,7 +43,7 @@ public class DerefValue implements Value {
             Object value = record.getField(fieldName);
             if (value instanceof RecordId) {
                 Record linkedRecord = resolveRecordId((RecordId)value, vtag, repository);
-                return linkedRecord == null ? null : Collections.<Record>singletonList(linkedRecord);
+                return linkedRecord == null ? null : Collections.singletonList(linkedRecord);
             } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof RecordId) {
                 List list = (List)value;
                 List<Record> result = new ArrayList<Record>(list.size());
@@ -53,23 +59,57 @@ public class DerefValue implements Value {
         }
 
         private Record resolveRecordId(RecordId recordId, String vtag, Repository repository) {
-            if (vtag.equals(VersionTag.VERSIONLESS_TAG)) {
-                try {
-                    return repository.read(recordId);
-                } catch (Exception e) {
-                    return null;
-                }
-            } else {
-                Long version = VersionTag.getVersion(recordId, vtag, repository);
-                if (version == null) {
-                    return null;
-                }
+            try {
+                // TODO we could limit this to only load the field necessary for the next follow
+                return VersionTag.getRecord(recordId, vtag, repository);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
 
-                try {
-                    return repository.read(recordId, version, Collections.singletonList(fieldName));
-                } catch (Exception e) {
+    private static class MasterFollow implements Follow {
+        public List<Record> eval(Record record, Repository repository, String vtag) {
+            if (record.getId().isMaster())
+                return null;
+
+            RecordId masterId = record.getId().getMaster();
+
+            try {
+                Record master = VersionTag.getRecord(masterId, vtag, repository);
+                return master == null ? null : Collections.singletonList(master);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
+
+    private static class VariantFollow implements Follow {
+        private Set<String> dimensions;
+
+        public VariantFollow(Set<String> dimensions) {
+            this.dimensions = dimensions;
+        }
+
+        public List<Record> eval(Record record, Repository repository, String vtag) {
+            RecordId recordId = record.getId();
+
+            Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
+
+            for (String dimension : dimensions) {
+                if (!varProps.containsKey(dimension)) {
                     return null;
                 }
+                varProps.remove(dimension);
+            }
+
+            RecordId resolvedRecordId = repository.getIdGenerator().newRecordId(recordId.getMaster(), varProps);
+
+            try {
+                Record lessDimensionedRecord = VersionTag.getRecord(resolvedRecordId, vtag, repository);
+                return lessDimensionedRecord == null ? null : Collections.singletonList(lessDimensionedRecord);
+            } catch (Exception e) {
+                return null;
             }
         }
     }
@@ -112,7 +152,13 @@ public class DerefValue implements Value {
     }
 
     public QName getFieldDependency() {
-        return ((FieldFollow)follows.get(0)).fieldName;
+        if (follows.get(0) instanceof FieldFollow) {
+            return ((FieldFollow)follows.get(0)).fieldName;
+        } else {
+            // A follow-variant is like a link to another document, but the link can never change as the
+            // identity of the document never changes. Therefore, there is no dependency on a field.
+            return null;
+        }
     }
 
 }

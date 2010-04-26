@@ -142,4 +142,33 @@ public class VersionTag {
         return (Long)vtagRecord.getField(vtagField);
     }
 
+    /**
+     * Get the version of a record as specified by the version tag.
+     *
+     * <p>Returns null if the version tag would not exist or point to a non-existing version.
+     *
+     * <p>The @@versionless version tag is supported.
+     */
+    public static Record getRecord(RecordId recordId, String vtag, Repository repository, List<QName> fieldNames)
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+        if (vtag.equals(VersionTag.VERSIONLESS_TAG)) {
+            // TODO this should include an option to only read non-versioned-scoped data
+            return repository.read(recordId);
+        } else {
+            Long version = getVersion(recordId, vtag, repository);
+            if (version == null) {
+                return null;
+            }
+
+            return repository.read(recordId, version, fieldNames);
+        }
+    }
+
+    /**
+     * See {@link #getRecord(org.lilycms.repository.api.RecordId, String, org.lilycms.repository.api.Repository, java.util.List)}.
+     */
+    public static Record getRecord(RecordId recordId, String vtag, Repository repository)
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+        return getRecord(recordId, vtag, repository, null);
+    }
 }

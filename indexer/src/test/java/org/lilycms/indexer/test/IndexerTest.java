@@ -23,6 +23,10 @@ import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 // To run this test from an IDE, set a property solr.war pointing to the SOLR war
 
 public class IndexerTest {
@@ -164,6 +168,47 @@ public class IndexerTest {
             solrServer.commit(true, true);
 
             verifyResultCount("dereffield1:pear", 1);
+        }
+
+
+        //
+        // Variant deref
+        //
+        {
+            Record masterRecord = repository.newRecord(idGenerator.newRecordId());
+            masterRecord.setRecordType("RecordType1", null);
+            masterRecord.setField(fieldType1Name, "yellow");
+            repository.create(masterRecord);
+
+            RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
+            Record var1Record = repository.newRecord(var1Id);
+            var1Record.setRecordType("RecordType1", null);
+            var1Record.setField(fieldType2Name, "green");
+            repository.create(var1Record);
+
+            Map<String, String> varProps = new HashMap<String, String>();
+            varProps.put("lang", "en");
+            varProps.put("branch", "dev");
+            RecordId var2Id = idGenerator.newRecordId(masterRecord.getId(), varProps);
+            Record var2Record = repository.newRecord(var2Id);
+            var2Record.setRecordType("RecordType1", null);
+            var2Record.setField(fieldType2Name, "blue");
+            repository.create(var2Record);
+
+            event = new RecordEvent();
+            event.addUpdatedField(fieldType2.getId());
+            message = new TestQueueMessage(EVENT_RECORD_CREATED, var2Id, event.toJsonBytes());
+            queue.broadCastMessage(message);
+
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield2:yellow", 1);
+
+            verifyResultCount("dereffield3:yellow", 1);
+
+            verifyResultCount("dereffield4:green", 1);
+
+            verifyResultCount("dereffield3:green", 0);
         }
 
 

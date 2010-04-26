@@ -2,7 +2,7 @@
 <indexer>
 
   <cases>
-    <case recordType="RecordType1" variant="" vtags="live" indexVersionless="true"/>
+    <case recordType="RecordType1" variant="*" vtags="live" indexVersionless="true"/>
   </cases>
 
   <indexFields xmlns:ns="org.lilycms.indexer.test">
@@ -18,6 +18,33 @@
         <deref>
           <follow field="ns:linkfield"/>
           <field name="ns:field1"/>
+        </deref>
+      </value>
+    </indexField>
+
+    <indexField name="dereffield2">
+      <value>
+        <deref>
+          <follow variant="-lang,-branch"/>
+          <field name="ns:field1"/>
+        </deref>
+      </value>
+    </indexField>
+
+    <indexField name="dereffield3">
+      <value>
+        <deref>
+          <follow variant="master"/>
+          <field name="ns:field1"/>
+        </deref>
+      </value>
+    </indexField>
+
+    <indexField name="dereffield4">
+      <value>
+        <deref>
+          <follow variant="-branch"/>
+          <field name="ns:field2"/>
         </deref>
       </value>
     </indexField>

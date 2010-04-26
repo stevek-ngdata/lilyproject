@@ -151,7 +151,8 @@ public class IndexerConfBuilder {
             Element lastEl = children[children.length - 1];
 
             if (!lastEl.getLocalName().equals("field") || lastEl.getNamespaceURI() != null) {
-                throw new IndexerConfException("Last element in a <deref> should be a field, at " + LocationAttributes.getLocationString(lastEl));
+                throw new IndexerConfException("Last element in a <deref> should be a field, at " +
+                        LocationAttributes.getLocationString(lastEl));
             }
 
             if (children.length == 1) {
@@ -166,8 +167,46 @@ public class IndexerConfBuilder {
             for (int i = 0; i < children.length - 1; i++) {
                 Element child = children[i];
                 if (child.getLocalName().equals("follow") || child.getNamespaceURI() == null) {
-                    QName followFieldName = parseQName(DocumentHelper.getAttribute(child, "field", true), child);
-                    deref.addFieldFollow(followFieldName);
+                    String field = DocumentHelper.getAttribute(child, "field", false);
+                    String variant = DocumentHelper.getAttribute(child, "variant", false);
+                    if (field != null) {
+                        QName followFieldName = parseQName(DocumentHelper.getAttribute(child, "field", true), child);
+                        deref.addFieldFollow(followFieldName);
+                    } else if (variant != null) {
+                        if (variant.equals("master")) {
+                            deref.addMasterFollow();
+                        } else {
+                            // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
+                            boolean validConfig = true;
+                            Set<String> dimensions = new HashSet<String>();
+                            String[] ops = variant.split(",");
+                            for (String op : ops) {
+                                op = op.trim();
+                                if (op.length() > 1 && op.startsWith("-")) {
+                                    String dimension = op.substring(1);
+                                    dimensions.add(dimension);
+                                } else {
+                                    validConfig = false;
+                                    break;
+                                }
+                            }
+                            if (dimensions.size() == 0)
+                                validConfig = false;
+
+                            if (!validConfig) {
+                                throw new IndexerConfException("Invalid specification of variants to follow: \"" +
+                                        variant + "\".");
+                            }
+
+                            deref.addVariantFollow(dimensions);
+                        }
+                    } else {
+                        throw new IndexerConfException("Required attribute missing on <follow> at " +
+                                LocationAttributes.getLocation(child));
+                    }
+                } else {
+                    throw new IndexerConfException("Unexpected element <" + child.getTagName() + "> at " +
+                            LocationAttributes.getLocation(child));
                 }
             }
 

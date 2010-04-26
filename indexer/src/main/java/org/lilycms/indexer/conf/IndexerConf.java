@@ -32,7 +32,10 @@ public class IndexerConf {
 
     protected void addIndexField(IndexField indexField) {
         indexFields.add(indexField);
-        repoFieldDependencies.add(indexField.getValue().getFieldDependency());
+
+        QName fieldDep = indexField.getValue().getFieldDependency();
+        if (fieldDep != null)
+            repoFieldDependencies.add(fieldDep);
     }
 
     /**

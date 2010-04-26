@@ -82,6 +82,10 @@ public class RecordEvent {
         this.versionUpdated = versionUpdated;
     }
 
+    /**
+     * Indicates if the record type of the non-versioned scope changed as part of this event.
+     * Should return false for newly created records.
+     */
     public boolean getRecordTypeChanged() {
         return recordTypeChanged;
     }
