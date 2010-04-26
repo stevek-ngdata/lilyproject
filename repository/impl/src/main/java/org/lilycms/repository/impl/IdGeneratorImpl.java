@@ -65,6 +65,13 @@ public class IdGeneratorImpl implements IdGenerator {
     public RecordId newRecordId(RecordId masterRecordId, Map<String, String> variantProperties) {
         ArgumentValidator.notNull(masterRecordId, "masterRecordId");
         ArgumentValidator.notNull(variantProperties, "variantProperties");
+
+        if (!masterRecordId.isMaster())
+            throw new IllegalArgumentException("Specified masterRecordId is a variant record ID.");
+
+        if (variantProperties.isEmpty())
+            return masterRecordId;
+        
         return new VariantRecordId(masterRecordId, variantProperties, this);
     }
     

@@ -140,7 +140,11 @@ public class VariantRecordId implements RecordId {
     public RecordId getMaster() {
         return masterRecordId;
     }
-    
+
+    public boolean isMaster() {
+        return false;
+    }
+
     public SortedMap<String, String> getVariantProperties() {
         return variantProperties;
     }

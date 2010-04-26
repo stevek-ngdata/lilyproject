@@ -35,6 +35,11 @@ public interface RecordId {
     RecordId getMaster();
 
     /**
+     * Returns true if this is the ID of a master record.
+     */
+    boolean isMaster();
+
+    /**
      * For variants, returns the variant properties, for master records, returns
      * an empty map.
      */

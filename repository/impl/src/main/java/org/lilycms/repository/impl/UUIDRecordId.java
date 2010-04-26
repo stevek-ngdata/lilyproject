@@ -97,4 +97,8 @@ public class UUIDRecordId implements RecordId {
     public RecordId getMaster() {
         return this;
     }
+
+    public boolean isMaster() {
+        return true;
+    }
 }
