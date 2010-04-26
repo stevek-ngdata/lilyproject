@@ -90,79 +90,97 @@ public class IndexerTest {
         recordType1 = typeManager.createRecordType(recordType1);
 
         //
-        // Create a record
+        // Basic, versionless, create-update-delete
         //
-        Record record = repository.newRecord(idGenerator.newRecordId());
-        record.setRecordType("RecordType1", recordType1.getVersion());
-        record.setField(fieldType1Name, "apple");
-        repository.create(record);
+        {
+            // Create a record
+            Record record = repository.newRecord();
+            record.setRecordType("RecordType1", null);
+            record.setField(fieldType1Name, "apple");
+            record = repository.create(record);
 
-        // Generate queue message
-        RecordEvent event = new RecordEvent();
-        event.addUpdatedField(fieldType1.getId());
-        QueueMessage message = new TestQueueMessage(EVENT_RECORD_CREATED, record.getId(), event.toJsonBytes());
-        queue.broadCastMessage(message);
+            // Generate queue message
+            RecordEvent event = new RecordEvent();
+            event.addUpdatedField(fieldType1.getId());
+            QueueMessage message = new TestQueueMessage(EVENT_RECORD_CREATED, record.getId(), event.toJsonBytes());
+            queue.broadCastMessage(message);
 
-        solrServer.commit(true, true);
+            solrServer.commit(true, true);
 
-        // Verify the index was updated
-        verifyResultCount("field1:apple", 1);
+            // Verify the index was updated
+            verifyResultCount("field1:apple", 1);
 
-        //
-        // Update the document
-        //
-        record.setField(fieldType1Name, "pear");
-        repository.update(record);
+            // Update the record
+            record.setField(fieldType1Name, "pear");
+            repository.update(record);
 
-        event = new RecordEvent();
-        event.addUpdatedField(fieldType1.getId());
-        message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
-        queue.broadCastMessage(message);
+            event = new RecordEvent();
+            event.addUpdatedField(fieldType1.getId());
+            message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
+            queue.broadCastMessage(message);
 
-        solrServer.commit(true, true);
+            solrServer.commit(true, true);
 
-        verifyResultCount("field1:pear", 1);
-        verifyResultCount("field1:apple", 0);
+            verifyResultCount("field1:pear", 1);
+            verifyResultCount("field1:apple", 0);
 
-        // Do as if field2 changed, while field2 is not present in the document.
-        // Such situations can occur if the record is modified before earlier events are processed.
-        event = new RecordEvent();
-        event.addUpdatedField(fieldType2.getId());
-        message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
-        queue.broadCastMessage(message);
+            // Do as if field2 changed, while field2 is not present in the document.
+            // Such situations can occur if the record is modified before earlier events are processed.
+            event = new RecordEvent();
+            event.addUpdatedField(fieldType2.getId());
+            message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
+            queue.broadCastMessage(message);
 
-        solrServer.commit(true, true);
+            solrServer.commit(true, true);
 
-        verifyResultCount("field1:pear", 1);
-        verifyResultCount("field1:apple", 0);
+            verifyResultCount("field1:pear", 1);
+            verifyResultCount("field1:apple", 0);
 
-        // Add a vtag field. For versionless records, this should have no effect
-        record.setField(liveTagName, new Long(1));
-        repository.update(record);
+            // Add a vtag field. For versionless records, this should have no effect
+            record.setField(liveTagName, new Long(1));
+            repository.update(record);
 
-        event = new RecordEvent();
-        event.addUpdatedField(liveTag.getId());
-        message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
-        queue.broadCastMessage(message);
+            event = new RecordEvent();
+            event.addUpdatedField(liveTag.getId());
+            message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
+            queue.broadCastMessage(message);
 
-        solrServer.commit(true, true);
+            solrServer.commit(true, true);
 
-        verifyResultCount("field1:pear", 1);
-        verifyResultCount("field1:apple", 0);
+            verifyResultCount("field1:pear", 1);
+            verifyResultCount("field1:apple", 0);
+
+            // Delete the record
+            repository.delete(record.getId());
+
+            event = new RecordEvent();
+            message = new TestQueueMessage(EVENT_RECORD_DELETED, record.getId(), event.toJsonBytes());
+            queue.broadCastMessage(message);
+
+            solrServer.commit(true, true);
+
+            verifyResultCount("field1:pear", 0);
+        }
 
         //
         // Deref
         //
         {
-            Record record2 = repository.newRecord(idGenerator.newRecordId());
-            record2.setRecordType("RecordType1", recordType1.getVersion());
+            Record record = repository.newRecord();
+            record.setRecordType("RecordType1", null);
+            record.setField(fieldType1Name, "pear");
+            record = repository.create(record);
+            // be lazy and don't send an event for this create
+
+            Record record2 = repository.newRecord();
+            record2.setRecordType("RecordType1", null);
             record2.setField(linkFieldName, record.getId());
-            repository.create(record2);
+            record2 = repository.create(record2);
 
             // Generate queue message
-            event = new RecordEvent();
+            RecordEvent event = new RecordEvent();
             event.addUpdatedField(linkFieldType.getId());
-            message = new TestQueueMessage(EVENT_RECORD_CREATED, record2.getId(), event.toJsonBytes());
+            QueueMessage message = new TestQueueMessage(EVENT_RECORD_CREATED, record2.getId(), event.toJsonBytes());
             queue.broadCastMessage(message);
 
             solrServer.commit(true, true);
@@ -175,10 +193,10 @@ public class IndexerTest {
         // Variant deref
         //
         {
-            Record masterRecord = repository.newRecord(idGenerator.newRecordId());
+            Record masterRecord = repository.newRecord();
             masterRecord.setRecordType("RecordType1", null);
             masterRecord.setField(fieldType1Name, "yellow");
-            repository.create(masterRecord);
+            masterRecord = repository.create(masterRecord);
 
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
             Record var1Record = repository.newRecord(var1Id);
@@ -195,19 +213,16 @@ public class IndexerTest {
             var2Record.setField(fieldType2Name, "blue");
             repository.create(var2Record);
 
-            event = new RecordEvent();
+            RecordEvent event = new RecordEvent();
             event.addUpdatedField(fieldType2.getId());
-            message = new TestQueueMessage(EVENT_RECORD_CREATED, var2Id, event.toJsonBytes());
+            QueueMessage message = new TestQueueMessage(EVENT_RECORD_CREATED, var2Id, event.toJsonBytes());
             queue.broadCastMessage(message);
 
             solrServer.commit(true, true);
 
             verifyResultCount("dereffield2:yellow", 1);
-
             verifyResultCount("dereffield3:yellow", 1);
-
             verifyResultCount("dereffield4:green", 1);
-
             verifyResultCount("dereffield3:green", 0);
         }
 
