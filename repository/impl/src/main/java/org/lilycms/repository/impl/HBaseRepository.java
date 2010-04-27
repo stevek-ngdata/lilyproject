@@ -522,14 +522,14 @@ public class HBaseRepository implements Repository {
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
             NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions = allVersionsMap
                             .get(systemColumnFamilies.get(scope));
-            return extractVersionRecordType(version, versionableSystemCFversions, recordTypeIdColumnNames.get(scope),
-                            recordTypeVersionColumnNames.get(scope));
+            return extractVersionRecordType(version, versionableSystemCFversions, scope);
         }
     }
 
     private Pair<String, Long> extractVersionRecordType(Long version,
-                    NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions,
-                    byte[] recordTypeIdColumnName, byte[] recordTypeVersionColumnName) {
+                    NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions, Scope scope) {
+        byte[] recordTypeIdColumnName = recordTypeIdColumnNames.get(scope); 
+        byte[] recordTypeVersionColumnName = recordTypeVersionColumnNames.get(scope);
         Entry<Long, byte[]> ceilingEntry = versionableSystemCFversions.get(recordTypeIdColumnName)
                         .ceilingEntry(version);
         String recordTypeId = null;
@@ -628,24 +628,19 @@ public class HBaseRepository implements Repository {
     private boolean extractFields(Scope scope, Result result, Long version, Record record)
                     throws RecordTypeNotFoundException, RepositoryException, FieldTypeNotFoundException {
         boolean retrieved = false;
-        Pair<String, Long> recordTypePair = extractRecordType(scope, result, version, record);
-        String recordTypeId = recordTypePair.getV1();
-        Long recordTypeVersion = recordTypePair.getV2();
-        // If there is no recordType, there can't be any fields
-        if (recordTypeId != null) {
-            List<Pair<QName, Object>> fields;
-            if (version == null) {
-                fields = extractFields(result.getFamilyMap(columnFamilies.get(scope)));
-            } else {
-                fields = extractVersionFields(version, result.getMap().get(columnFamilies.get(scope)));
+        List<Pair<QName, Object>> fields;
+        if (version == null) {
+            fields = extractFields(result.getFamilyMap(columnFamilies.get(scope)));
+        } else {
+            fields = extractVersionFields(version, result.getMap().get(columnFamilies.get(scope)));
+        }
+        if (!fields.isEmpty()) {
+            for (Pair<QName, Object> field : fields) {
+                record.setField(field.getV1(), field.getV2());
             }
-            if (!fields.isEmpty()) {
-                for (Pair<QName, Object> field : fields) {
-                    record.setField(field.getV1(), field.getV2());
-                }
-                record.setRecordType(scope, recordTypeId, recordTypeVersion);
-                retrieved = true;
-            }
+            Pair<String, Long> recordTypePair = extractRecordType(scope, result, version, record);
+            record.setRecordType(scope, recordTypePair.getV1(), recordTypePair.getV2());
+            retrieved = true;
         }
         return retrieved;
     }

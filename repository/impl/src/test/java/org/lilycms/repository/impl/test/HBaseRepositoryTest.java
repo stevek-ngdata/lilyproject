@@ -801,4 +801,17 @@ public class HBaseRepositoryTest {
         assertEquals(true, readRecord.getField(fieldType3.getName()));
         assertEquals("bar", readRecord.getField(fieldType6.getName()));
     }
+    
+    @Test
+    public void testNonVersionedToVersioned() throws Exception {
+        // Create a record with only a versioned and non-versioned field
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getId(), recordType1.getVersion());
+        record.setField(fieldType1.getName(), "hello");
+        record.setField(fieldType2.getName(), new Integer(4));
+        record = repository.create(record);
+
+        // Try to read the created version
+        record = repository.read(record.getId(), 1L);
+    }
 }
