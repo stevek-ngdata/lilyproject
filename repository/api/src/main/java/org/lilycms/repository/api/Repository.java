@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Set;
 
 import org.lilycms.repository.api.exception.BlobNotFoundException;
 import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
@@ -184,5 +185,14 @@ public interface Repository {
      * @throws RepositoryException when an unexpected exception occurs
      */
     void delete(Blob blob) throws BlobNotFoundException, RepositoryException;
+
+    /**
+     * Get all the variants that exist for the given recordId.
+     *
+     * @param recordId typically a master record id, if you specify a variant record id, its master will automatically
+     *                 be used
+     * @return the set of variants, including the master record id.
+     */
+    Set<RecordId> getVariants(RecordId recordId) throws RepositoryException;    
 
 }

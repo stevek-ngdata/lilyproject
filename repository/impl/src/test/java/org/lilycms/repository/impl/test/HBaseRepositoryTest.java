@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
@@ -31,15 +32,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilycms.repository.api.BlobStoreAccessFactory;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.exception.FieldNotFoundException;
 import org.lilycms.repository.api.exception.InvalidRecordException;
 import org.lilycms.repository.api.exception.RecordExistsException;
@@ -257,6 +250,11 @@ public class HBaseRepositoryTest {
         assertFalse((Boolean) createdVariant.getField(fieldType3.getName()));
 
         assertEquals(createdVariant, repository.read(variant.getId()));
+
+        Set<RecordId> variants = repository.getVariants(record.getId());
+        assertEquals(2, variants.size());
+        assertTrue(variants.contains(record.getId()));
+        assertTrue(variants.contains(createdVariant.getId()));
     }
 
     @Test

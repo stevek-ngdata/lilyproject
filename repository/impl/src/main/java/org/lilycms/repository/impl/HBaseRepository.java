@@ -31,12 +31,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Blob;
 import org.lilycms.repository.api.BlobStoreAccess;
@@ -671,5 +667,26 @@ public class HBaseRepository implements Repository {
     
     public void delete(Blob blob) throws BlobNotFoundException, RepositoryException {
         blobStoreAccessRegistry.delete(blob);
+    }
+
+    public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException {
+        byte[] masterRecordIdBytes = recordId.getMaster().toBytes();
+        Filter filter = new PrefixFilter(masterRecordIdBytes);
+        Scan scan = new Scan(masterRecordIdBytes, filter);
+
+        Set<RecordId> recordIds = new HashSet<RecordId>();
+
+        try {
+            ResultScanner scanner = recordTable.getScanner(scan);
+            Result result;
+            while ((result = scanner.next()) != null) {
+                RecordId id = idGenerator.fromBytes(result.getRow());
+                recordIds.add(id);
+            }
+        } catch (IOException e) {
+            throw new RepositoryException("Error getting list of variants of record " + recordId.getMaster(), e);
+        }
+
+        return recordIds;
     }
 }
