@@ -66,7 +66,7 @@ public class IndexerConfBuilder {
             Set<String> vtags = parseVersionTags(vtagsSpec);
 
             IndexCase indexCase = new IndexCase(recordType, varPropsPattern, vtags, indexVersionless);
-            conf.indexCases.add(indexCase);
+            conf.addIndexCase(indexCase);
         }
     }
 

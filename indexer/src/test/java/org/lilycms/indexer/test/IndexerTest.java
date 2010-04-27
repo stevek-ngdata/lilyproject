@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.lilycms.repoutil.EventType.*;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -11,9 +12,13 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilycms.hbaseindex.IndexManager;
 import org.lilycms.indexer.Indexer;
 import org.lilycms.indexer.conf.IndexerConf;
 import org.lilycms.indexer.conf.IndexerConfBuilder;
+import org.lilycms.linkmgmt.LinkIndex;
+import org.lilycms.linkmgmt.LinkIndexUpdater;
+import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.queue.mock.TestLilyQueue;
 import org.lilycms.queue.mock.TestQueueMessage;
@@ -33,6 +38,7 @@ public class IndexerTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
+    private TestLilyQueue queue;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -59,8 +65,16 @@ public class IndexerTest {
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         Repository repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, TEST_UTIL.getConfiguration());
         SolrServer solrServer = SOLR_TEST_UTIL.getSolrServer();
-        TestLilyQueue queue = new TestLilyQueue();
-        Indexer indexer = new Indexer(INDEXER_CONF, queue, repository, typeManager, solrServer);
+        queue = new TestLilyQueue();
+
+        IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+
+        try { LinkIndex.createIndexes(indexManager); } catch (TableExistsException e) { }
+        LinkIndex linkIndex = new LinkIndex(indexManager, repository);
+        new LinkIndexUpdater(repository, typeManager, linkIndex, queue);
+
+        Indexer indexer = new Indexer(INDEXER_CONF, queue, repository, typeManager, solrServer, linkIndex);
 
         // Create a record type
         ValueType stringValueType = typeManager.getValueType("STRING", false, false);
@@ -100,10 +114,7 @@ public class IndexerTest {
             record = repository.create(record);
 
             // Generate queue message
-            RecordEvent event = new RecordEvent();
-            event.addUpdatedField(fieldType1.getId());
-            QueueMessage message = new TestQueueMessage(EVENT_RECORD_CREATED, record.getId(), event.toJsonBytes());
-            queue.broadCastMessage(message);
+            sendEvent(EVENT_RECORD_CREATED, record.getId(), fieldType1.getId());
 
             solrServer.commit(true, true);
 
@@ -114,10 +125,7 @@ public class IndexerTest {
             record.setField(fieldType1Name, "pear");
             repository.update(record);
 
-            event = new RecordEvent();
-            event.addUpdatedField(fieldType1.getId());
-            message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
-            queue.broadCastMessage(message);
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), fieldType1.getId());
 
             solrServer.commit(true, true);
 
@@ -126,10 +134,7 @@ public class IndexerTest {
 
             // Do as if field2 changed, while field2 is not present in the document.
             // Such situations can occur if the record is modified before earlier events are processed.
-            event = new RecordEvent();
-            event.addUpdatedField(fieldType2.getId());
-            message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
-            queue.broadCastMessage(message);
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), fieldType2.getId());
 
             solrServer.commit(true, true);
 
@@ -140,10 +145,7 @@ public class IndexerTest {
             record.setField(liveTagName, new Long(1));
             repository.update(record);
 
-            event = new RecordEvent();
-            event.addUpdatedField(liveTag.getId());
-            message = new TestQueueMessage(EVENT_RECORD_UPDATED, record.getId(), event.toJsonBytes());
-            queue.broadCastMessage(message);
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
 
             solrServer.commit(true, true);
 
@@ -153,9 +155,7 @@ public class IndexerTest {
             // Delete the record
             repository.delete(record.getId());
 
-            event = new RecordEvent();
-            message = new TestQueueMessage(EVENT_RECORD_DELETED, record.getId(), event.toJsonBytes());
-            queue.broadCastMessage(message);
+            sendEvent(EVENT_RECORD_DELETED, record.getId());
 
             solrServer.commit(true, true);
 
@@ -213,22 +213,75 @@ public class IndexerTest {
             var2Record.setField(fieldType2Name, "blue");
             repository.create(var2Record);
 
-            RecordEvent event = new RecordEvent();
-            event.addUpdatedField(fieldType2.getId());
-            QueueMessage message = new TestQueueMessage(EVENT_RECORD_CREATED, var2Id, event.toJsonBytes());
-            queue.broadCastMessage(message);
+            sendEvent(EVENT_RECORD_CREATED, var2Id, fieldType2.getId());
 
             solrServer.commit(true, true);
 
             verifyResultCount("dereffield2:yellow", 1);
-            verifyResultCount("dereffield3:yellow", 1);
+            verifyResultCount("dereffield3:yellow", 2);
             verifyResultCount("dereffield4:green", 1);
             verifyResultCount("dereffield3:green", 0);
+        }
+
+        //
+        // Update denormalized data
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("RecordType1", null);
+            record1.setField(fieldType1Name, "cumcumber");
+            record1 = repository.create(record1);
+            // be lazy and don't send an event for this create
+
+            Record record2 = repository.newRecord();
+            record2.setRecordType("RecordType1", null);
+            record2.setField(linkFieldName, record1.getId());
+            record2 = repository.create(record2);
+
+            RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
+            Record record3 = repository.newRecord(record3Id);
+            record3.setRecordType("RecordType1", null);
+            record3.setField(fieldType1Name, "eggplant");
+            record3 = repository.create(record3);
+
+            // Generate queue message
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), linkFieldType.getId());
+            sendEvent(EVENT_RECORD_CREATED, record3.getId(), fieldType1.getId());
+
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield1:cumcumber", 1);
+            verifyResultCount("dereffield3:cumcumber", 1);
+
+            // Update record1, check if index for record2 and record3 is updated
+            record1.setField(fieldType1Name, "tomato");
+            record1 = repository.update(record1);
+
+            // Generate queue message
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), fieldType1.getId());
+
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield1:tomato", 1);
+//            verifyResultCount("dereffield3:tomato", 1);
+            verifyResultCount("dereffield1:cumcumber", 0);
+//            verifyResultCount("dereffield3:cumcumber", 0);
         }
 
 
         // The end
         indexer.stop();
+    }
+
+    private void sendEvent(String type, RecordId recordId, String... updatedFields) {
+        RecordEvent event = new RecordEvent();
+
+        for (String updatedField : updatedFields) {
+            event.addUpdatedField(updatedField);
+        }
+
+        QueueMessage message = new TestQueueMessage(type, recordId, event.toJsonBytes());
+        queue.broadCastMessage(message);
     }
     
     private void verifyResultCount(String query, int count) throws SolrServerException {

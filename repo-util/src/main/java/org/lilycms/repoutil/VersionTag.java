@@ -92,7 +92,7 @@ public class VersionTag {
     /**
      * Filters the given set of fields to only those that are vtag fields.
      */
-    public static Set<String> filterVTagFields(Set<String> fieldIds, TypeManager typeManager) throws RepositoryException {
+    public static Set<String> filterVTagFields(Set<String> fieldIds, TypeManager typeManager) {
         Set<String> result = new HashSet<String>();
         for (String field : fieldIds) {
             try {

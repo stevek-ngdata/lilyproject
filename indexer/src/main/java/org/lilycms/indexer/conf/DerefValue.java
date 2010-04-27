@@ -25,11 +25,23 @@ public class DerefValue implements Value {
         follows.add(new VariantFollow(dimensions));
     }
 
-    private static interface Follow {
+    public List<Follow> getFollows() {
+        return Collections.unmodifiableList(follows);
+    }
+
+    /**
+     * Returns the field taken from the document to which the follow-expressions point, thus the last
+     * field in the chain.
+     */
+    public QName getTargetField() {
+        return fieldName;
+    }
+
+    public static interface Follow {
         List<Record> eval(Record record, Repository repository, String vtag);
     }
 
-    private static class FieldFollow implements Follow {
+    public static class FieldFollow implements Follow {
         QName fieldName;
 
         public FieldFollow(QName fieldName) {
@@ -58,6 +70,10 @@ public class DerefValue implements Value {
             return null;
         }
 
+        public QName getFieldName() {
+            return fieldName;
+        }
+
         private Record resolveRecordId(RecordId recordId, String vtag, Repository repository) {
             try {
                 // TODO we could limit this to only load the field necessary for the next follow
@@ -68,7 +84,7 @@ public class DerefValue implements Value {
         }
     }
 
-    private static class MasterFollow implements Follow {
+    public static class MasterFollow implements Follow {
         public List<Record> eval(Record record, Repository repository, String vtag) {
             if (record.getId().isMaster())
                 return null;
@@ -84,7 +100,7 @@ public class DerefValue implements Value {
         }
     }
 
-    private static class VariantFollow implements Follow {
+    public static class VariantFollow implements Follow {
         private Set<String> dimensions;
 
         public VariantFollow(Set<String> dimensions) {
@@ -111,6 +127,10 @@ public class DerefValue implements Value {
             } catch (Exception e) {
                 return null;
             }
+        }
+
+        public Set<String> getDimensions() {
+            return dimensions;
         }
     }
 

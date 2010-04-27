@@ -136,10 +136,17 @@ public class LinkIndex {
     }
 
     public Set<RecordId> getReferrers(RecordId record, String vtag) throws IOException {
+        return getReferrers(record, vtag, null);
+    }
+
+    public Set<RecordId> getReferrers(RecordId record, String vtag, String sourceField) throws IOException {
         Query query = new Query();
         query.addEqualsCondition("vtag", vtag);
         query.addEqualsCondition("target", record.getMaster().toString());
         query.addEqualsCondition("targetvariant", formatVariantProps(record.getVariantProperties()));
+        if (sourceField != null) {
+            query.addEqualsCondition("sourcefield", sourceField);
+        }
 
         Set<RecordId> result = new HashSet<RecordId>();
 
