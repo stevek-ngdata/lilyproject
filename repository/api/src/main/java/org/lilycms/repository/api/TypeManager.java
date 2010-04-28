@@ -100,7 +100,7 @@ public interface TypeManager {
      */
     FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, RepositoryException;
 
-    FieldType getFieldTypeByName(QName name);
+    FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException;
     
     // Value Types
     

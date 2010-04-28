@@ -3,9 +3,10 @@
 
   <cases>
     <case recordType="RecordType1" variant="*" vtags="live" indexVersionless="true"/>
+    <case recordType="RecordType2" variant="*" vtags="live" indexVersionless="true"/>
   </cases>
 
-  <indexFields xmlns:ns="org.lilycms.indexer.test">
+  <indexFields xmlns:ns="org.lilycms.indexer.test" xmlns:ns2="org.lilycms.indexer.test.2">
 
     <indexField name="field1">
       <value>
@@ -46,6 +47,12 @@
           <follow variant="-branch"/>
           <field name="ns:field1"/>
         </deref>
+      </value>
+    </indexField>
+
+    <indexField name="field2.1">
+      <value>
+        <field name="ns2:field1"/>
       </value>
     </indexField>
 

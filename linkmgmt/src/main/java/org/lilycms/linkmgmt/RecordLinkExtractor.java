@@ -1,6 +1,7 @@
 package org.lilycms.linkmgmt;
 
 import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repository.api.exception.RepositoryException;
 
 import java.util.List;
@@ -14,7 +15,13 @@ public class RecordLinkExtractor {
     public static void extract(Record record, LinkCollector collector, TypeManager typeManager) throws RepositoryException {
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             // TODO once field type ID is available in record, use that to retrieve the field type instead of the name
-            FieldType fieldType = typeManager.getFieldTypeByName(field.getKey());
+            FieldType fieldType;
+            try {
+                fieldType = typeManager.getFieldTypeByName(field.getKey());
+            } catch (FieldTypeNotFoundException e) {
+                // Can not do anything with a field if we cannot load its type
+                continue;
+            }
             ValueType valueType = fieldType.getValueType();
             Object value = field.getValue();
 

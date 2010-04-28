@@ -44,7 +44,7 @@
    <field name="@@key" type="string" indexed="true" stored="true" required="true" />
    <field name="@@id" type="string" indexed="true" stored="true" required="true" />
    <field name="@@vtag" type="string" indexed="true" stored="true" required="true" />
-   <field name="@@versionless" type="string" indexed="true" stored="true" required="true" />
+   <field name="@@versionless" type="string" indexed="true" stored="true" required="false" />
 
    <field name="field1" type="text" indexed="true" stored="true" required="false" />
    <field name="dereffield1" type="text" indexed="true" stored="true" required="false" />
@@ -52,6 +52,7 @@
    <field name="dereffield3" type="text" indexed="true" stored="true" required="false" />
    <field name="dereffield4" type="text" indexed="true" stored="true" required="false" />
 
+   <field name="field2.1" type="text" indexed="true" stored="true" required="false" />
  </fields>
 
  <!-- Field to use to determine and enforce document uniqueness.

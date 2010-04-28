@@ -30,8 +30,14 @@ public class VersionTag {
         Map<String, Long> vtags = new HashMap<String, Long>();
 
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
-            // TODO: once getFieldTypeByName throws a FieldTypeNotFoundException, skip such fields
-            FieldType fieldType = typeManager.getFieldTypeByName(field.getKey());
+            FieldType fieldType;
+            try {
+                fieldType = typeManager.getFieldTypeByName(field.getKey());
+            } catch (FieldTypeNotFoundException e) {
+                // A field whose field type does not exist: skip it
+                // TODO would be better to do above retrieval based on ID?
+                continue;
+            }
 
             if (isVersionTag(fieldType)) {
                 vtags.put(fieldType.getId(), (Long)field.getValue());
@@ -50,8 +56,14 @@ public class VersionTag {
         Map<String, Long> vtags = new HashMap<String, Long>();
 
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
-            // TODO: once getFieldTypeByName throws a FieldTypeNotFoundException, skip such fields
-            FieldType fieldType = typeManager.getFieldTypeByName(field.getKey());
+            FieldType fieldType;
+            try {
+                fieldType = typeManager.getFieldTypeByName(field.getKey());
+            } catch (FieldTypeNotFoundException e) {
+                // A field whose field type does not exist: skip it
+                // TODO would be better to do above retrieval based on ID?
+                continue;
+            }
 
             if (isVersionTag(fieldType)) {
                 vtags.put(fieldType.getName().getName(), (Long)field.getValue());
@@ -131,7 +143,13 @@ public class VersionTag {
         }
 
         // TODO this check should be done based on the ID of the field loaded in the record, once that is available (see #7)
-        FieldType fieldType = repository.getTypeManager().getFieldTypeByName(vtagField);
+        FieldType fieldType;
+        try {
+            fieldType = repository.getTypeManager().getFieldTypeByName(vtagField);
+        } catch (FieldTypeNotFoundException e) {
+            return null;
+        }
+
         if (!VersionTag.isVersionTag(fieldType)) {
             return null;
         }

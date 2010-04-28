@@ -93,8 +93,13 @@ public class Indexer {
     private void handleRecordCreateUpdate(QueueMessage msg) throws Exception {
         RecordEvent event = new RecordEvent(msg.getType(), msg.getData());
         Record record = repository.read(msg.getRecordId());
+
+        // Read the vtags of the record. Note that while this algorithm is running, the record can meanwhile
+        // undergo changes. However, we continuously work with the snapshot of the vtags mappings read here.
+        // The processing of later events will bring the index up to date with any new changes.
         Map<String, Long> vtags = VersionTag.getTagsByName(record, typeManager);
         Map<Long, Set<String>> vtagsByVersion = VersionTag.tagsByVersion(vtags);
+
         Map<Scope, Set<FieldType>> updatedFieldsByScope = getFieldTypeAndScope(event.getUpdatedFields());
 
         // Determine the IndexCase:
@@ -169,6 +174,7 @@ public class Indexer {
                 //
                 // Handle changes to version vtag fields
                 //
+                // TODO the below does not work because the changed VTags are identified by ID and the rest by name
                 Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
                 // Remove the vtags which are going to be reindexed anyway
                 changedVTagFields.removeAll(vtagsToIndex);
@@ -277,9 +283,18 @@ public class Indexer {
         }
 
         //
+        nextIndexField:
         for (IndexField indexField : indexFields) {
             DerefValue derefValue = (DerefValue)indexField.getValue();
-            FieldType fieldType = typeManager.getFieldTypeByName(derefValue.getTargetField());
+            FieldType fieldType;
+            try {
+                fieldType = typeManager.getFieldTypeByName(derefValue.getTargetField());
+            } catch (FieldTypeNotFoundException e) {
+                // Field type does not exist: this is an error in the config
+                log.error("The following field type, used in the indexer config, does not exist: " +
+                        derefValue.getTargetField());
+                continue nextIndexField;
+            }
 
             //
             // Determine the vtags of the referrer that we should consider
@@ -333,6 +348,7 @@ public class Indexer {
         };
 
         // Run over the IndexFields
+        nextIndexField:
         for (Map.Entry<IndexField, Set<String>> entry : indexFieldsVTags.entrySet()) {
             IndexField indexField = entry.getKey();
             Set<String> referrerVTags = entry.getValue();
@@ -351,8 +367,14 @@ public class Indexer {
                     Set<RecordId> newReferrers = new HashSet<RecordId>();
 
                     if (follow instanceof DerefValue.FieldFollow) {
-                        QName fieldName = ((DerefValue.FieldFollow)follow).getFieldName();
-                        String fieldId = typeManager.getFieldTypeByName(fieldName).getId();
+                        String fieldId;
+                        try {
+                            QName fieldName = ((DerefValue.FieldFollow)follow).getFieldName();
+                            fieldId = typeManager.getFieldTypeByName(fieldName).getId();
+                        } catch (FieldTypeNotFoundException e) {
+                            // An IndexField refers to a non-existing field: continue with the next indexfield
+                            continue nextIndexField;
+                        }
                         for (RecordId referrer : referrers) {
                             try {
                                 Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);
@@ -609,7 +631,13 @@ public class Indexer {
      */
     private boolean recordHasVersions(Record record) {
         for (QName fieldName : record.getFields().keySet()) {
-            Scope scope = typeManager.getFieldTypeByName(fieldName).getScope();
+            Scope scope;
+            try {
+                scope = typeManager.getFieldTypeByName(fieldName).getScope();
+            } catch (FieldTypeNotFoundException e) {
+                // We assume this doesn't occur (this is a temporary method anyway)
+                throw new RuntimeException(e);
+            }
             if (scope == Scope.VERSIONED || scope == Scope.VERSIONED_MUTABLE) {
                 return true;
             }

@@ -357,11 +357,14 @@ public class HBaseTypeManager implements TypeManager {
 
     public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, RepositoryException {
         ArgumentValidator.notNull(fieldType, "fieldType");
-        
-        if (getFieldTypeByName(fieldType.getName()) != null) {
+
+        try {
+            getFieldTypeByName(fieldType.getName());
             throw new FieldTypeExistsException(fieldType);
+        } catch (FieldTypeNotFoundException e) {
+            // This is fine
         }
-        
+
         FieldType newFieldType;
         // TODO use IdGenerator
         UUID uuid = UUID.randomUUID();
@@ -527,9 +530,14 @@ public class HBaseTypeManager implements TypeManager {
 
     // TODO cache these things on the RecordType itself?
     // TODO Should not rely on the recordType ?
-    public FieldType getFieldTypeByName(QName name) {
+    public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(name, "name");
-        return getFieldTypeFromCache(name);
+        FieldType fieldType = getFieldTypeFromCache(name);
+        // TODO the below is a temporary fix, should probably be fixed in getFieldTypeFromCache
+        if (fieldType == null) {
+            throw new FieldTypeNotFoundException("todo", 1L);
+        }
+        return fieldType;
     }
 
 }
