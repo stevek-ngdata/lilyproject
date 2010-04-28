@@ -17,9 +17,11 @@ import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repository.api.exception.RecordNotFoundException;
+import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
 import org.lilycms.repository.api.exception.RepositoryException;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.ObjectUtils;
 
 import static org.lilycms.repoutil.EventType.*;
 
@@ -193,30 +195,43 @@ public class Indexer {
                 // but then we'll have to extend this to delete these old versions from the index.
                 index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
             } else {
-                // One version might have multiple vtags, so to index we iterate the version numbers
-                // rather than the vtags
-                Map<Long, Set<String>> vtagsToIndexByVersion = getVtagsByVersion(vtagsToIndex, vtags);
-                for (Map.Entry<Long, Set<String>> entry : vtagsToIndexByVersion.entrySet()) {
-                    Record version = null;
-                    try {
-                        version = repository.read(record.getId(), entry.getKey());
-                    } catch (RecordNotFoundException e) {
-                        // TODO handle this differently from version not found
-                    }
-
-                    if (version == null) {
-                        for (String vtag : entry.getValue()) {
-                            solrServer.deleteById(getIndexId(record.getId(), vtag));
-                        }
-                    } else {
-                        index(version, entry.getValue());
-                    }
-                }
+                indexRecord(record.getId(), vtagsToIndex, vtags);
             }
         }
 
         updateDenormalizedData(msg.getRecordId(), event, updatedFieldsByScope, vtagsByVersion);
 
+    }
+
+    /**
+     * Indexes a record for a set of vtags.
+     *
+     * @param vtagsToIndex all vtags for which to index the record, not all vtags need to exist on the record,
+     *                     but this should only contain appropriate vtags as defined by the IndexCase for this record.
+     * @param vtags the actual vtag mappings of the record
+     */
+    private void indexRecord(RecordId recordId, Set<String> vtagsToIndex, Map<String, Long> vtags)
+            throws IOException, SolrServerException, FieldTypeNotFoundException, RepositoryException,
+            RecordTypeNotFoundException {
+        // One version might have multiple vtags, so to index we iterate the version numbers
+        // rather than the vtags
+        Map<Long, Set<String>> vtagsToIndexByVersion = getVtagsByVersion(vtagsToIndex, vtags);
+        for (Map.Entry<Long, Set<String>> entry : vtagsToIndexByVersion.entrySet()) {
+            Record version = null;
+            try {
+                version = repository.read(recordId, entry.getKey());
+            } catch (RecordNotFoundException e) {
+                // TODO handle this differently from version not found
+            }
+
+            if (version == null) {
+                for (String vtag : entry.getValue()) {
+                    solrServer.deleteById(getIndexId(recordId, vtag));
+                }
+            } else {
+                index(version, entry.getValue());
+            }
+        }
     }
 
     private void updateDenormalizedData(RecordId recordId, RecordEvent event,
@@ -274,8 +289,9 @@ public class Indexer {
             // we do not know if the referrer has any versions at all, so always add the versionless tag
             referrerVtags.add(VersionTag.VERSIONLESS_TAG);
 
-            if (fieldType.getScope() == Scope.NON_VERSIONED) {
-                // If it is a non-versioned field, then all vtags should be considered
+            if (fieldType.getScope() == Scope.NON_VERSIONED || event.getType() == RecordEvent.Type.DELETE) {
+                // If it is a non-versioned field, then all vtags should be considered.
+                // If it is a delete event, we do not know what vtags existed for the record, so consider them all.
                 referrerVtags.addAll(conf.getVtags());
             } else {
                 // Otherwise only the vtags of the created/updated version, if any
@@ -350,23 +366,66 @@ public class Indexer {
                         DerefValue.VariantFollow varFollow = (DerefValue.VariantFollow)follow;
                         Set<String> dimensions = varFollow.getDimensions();
 
-                        // TODO this is wrong, it needs to navigate in the other direction (more dimensions rather than less)
+                        // We need to find out the variants of the current set of referrers which have the
+                        // same variant properties as the referrer (= same key/value pairs) and additionally
+                        // have the extra dimensions defined in the VariantFollow.
+
                         nextReferrer:
                         for (RecordId referrer : referrers) {
-                            Map<String, String> props = new HashMap<String, String>(referrer.getVariantProperties());
+
+                            Map<String, String> refprops = referrer.getVariantProperties();
+
+                            // If the referrer already has one of the dimensions, then skip it
                             for (String dimension : dimensions) {
-                                if (!props.containsKey(dimension)) {
+                                if (refprops.containsKey(dimension))
                                     continue nextReferrer;
-                                }
-                                props.remove(dimension);
                             }
-                            newReferrers.add(repository.getIdGenerator().newRecordId(referrer.getMaster(), props));
+
+                            //
+                            Set<RecordId> variants;
+                            try {
+                                variants = repository.getVariants(referrer);
+                            } catch (RepositoryException e) {
+                                // TODO we should probably throw this higher up and let it be handled there
+                                throw new RuntimeException(e);
+                            }
+
+                            nextVariant:
+                            for (RecordId variant : variants) {
+                                Map<String, String> varprops = variant.getVariantProperties();
+
+                                // Check it has each of the variant properties of the current referrer record
+                                for (Map.Entry<String, String> refprop : refprops.entrySet()) {
+                                    if (!ObjectUtils.safeEquals(varprops.get(refprop.getKey()), refprop.getValue())) {
+                                        // skip this variant
+                                        continue nextVariant;
+                                    }
+                                }
+
+                                // Check it has the additional dimensions
+                                for (String dimension : dimensions) {
+                                    if (!varprops.containsKey(dimension))
+                                        continue nextVariant;
+                                }
+
+                                // We have a hit
+                                newReferrers.add(variant);
+                            }
                         }
                     } else if (follow instanceof DerefValue.MasterFollow) {
-                        // TODO this is also wrong, for the same reason
                         for (RecordId referrer : referrers) {
-                            if (!referrer.isMaster()) {
-                                newReferrers.add(referrer.getMaster());
+                            // A MasterFollow can only point to masters
+                            if (referrer.isMaster()) {
+                                Set<RecordId> variants;
+                                try {
+                                    variants = repository.getVariants(referrer);
+                                } catch (RepositoryException e) {
+                                    // TODO we should probably throw this higher up and let it be handled there
+                                    throw new RuntimeException(e);
+                                }
+
+                                variants.remove(referrer);
+                                newReferrers.addAll(variants);
                             }
                         }
                     } else {
@@ -385,27 +444,47 @@ public class Indexer {
 
 
         //
-        // Now re-indexing all the found referrers
+        // Now re-index all the found referrers
         //
+        nextReferrer:
         for (Map.Entry<RecordId, Set<String>> entry : referrersVTags.entrySet()) {
             RecordId referrer = entry.getKey();
-            Set<String> vtags = entry.getValue();
+            Set<String> vtagsToIndex = entry.getValue();
 
             Record record = null;
             try {
+                // TODO make use of vtag:
+                //     - check if the @@versionless tag is present & if record is versionless
+                //           if so index it
+                //     - Get the indexCase for the record, filter the vtags to those that need indexing
+                //     - Build versions to tags map
+                //           we don't know the vtags yet: retrieve them
+                //     - For each tag: retrieve record + index
+                //           note that we don't know if the tags exist
+                // TODO optimize this: we are only interested to know the vtags and to know if the record has versions
                 record = repository.read(referrer);
             } catch (Exception e) {
-                // TODO
+                // TODO handle this
+                e.printStackTrace();
             }
 
+            IndexCase indexCase = conf.getIndexCase(record.getRecordTypeId(), record.getId().getVariantProperties());
+            if (indexCase == null) {
+                continue nextReferrer;
+            }
 
             try {
-                index(record, vtags);
-            } catch (IOException e) {
-                // TODO
-                e.printStackTrace();
-            } catch (SolrServerException e) {
-                // TODO
+                if (!recordHasVersions(record)) {
+                    if (indexCase.getIndexVersionless() && vtagsToIndex.contains(VersionTag.VERSIONLESS_TAG)) {
+                        index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
+                    }
+                } else {
+                    Map<String, Long> recordVTags = VersionTag.getTagsByName(record, typeManager);
+                    vtagsToIndex.retainAll(indexCase.getVersionTags());
+                    indexRecord(record.getId(), vtagsToIndex, recordVTags);
+                }
+            } catch (Exception e) {
+                // TODO handle this
                 e.printStackTrace();
             }
         }
@@ -455,6 +534,10 @@ public class Indexer {
                 // any (modified) fields that serve as input to indexFields, we would never have arrived here
                 // anyway. It is only because some fields potentially would resolve to a value (potentially:
                 // because with deref-expressions we are never sure) that we did.
+
+                // There can be a previous entry in the index which we should try to delete
+                solrServer.deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(record.getId().toString()));
+                
                 continue;
             }
 
@@ -484,13 +567,15 @@ public class Indexer {
         Map<Long, Set<String>> result = new HashMap<Long, Set<String>>();
 
         for (String vtag : vtagsToIndex) {
-            long version = vtags.get(vtag);
-            Set<String> vtagsOfVersion = result.get(version);
-            if (vtagsOfVersion == null) {
-                vtagsOfVersion = new HashSet<String>();
-                result.put(version, vtagsOfVersion);
+            Long version = vtags.get(vtag);
+            if (version != null) {
+                Set<String> vtagsOfVersion = result.get(version);
+                if (vtagsOfVersion == null) {
+                    vtagsOfVersion = new HashSet<String>();
+                    result.put(version, vtagsOfVersion);
+                }
+                vtagsOfVersion.add(vtag);
             }
-            vtagsOfVersion.add(vtag);
         }
 
         return result;

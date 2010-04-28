@@ -44,7 +44,7 @@
       <value>
         <deref>
           <follow variant="-branch"/>
-          <field name="ns:field2"/>
+          <field name="ns:field1"/>
         </deref>
       </value>
     </indexField>

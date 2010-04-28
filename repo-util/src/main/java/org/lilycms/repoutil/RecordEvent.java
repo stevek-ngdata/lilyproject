@@ -100,6 +100,8 @@ public class RecordEvent {
 
     /**
      * The fields which were updated (= added, deleted or changed), identified by their FieldType ID.
+     *
+     * <p>In case of a delete event, this list is empty.
      */
     public Set<String> getUpdatedFields() {
         return updatedFields;

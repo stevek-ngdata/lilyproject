@@ -9,6 +9,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,6 +32,7 @@ import org.lilycms.testfw.TestHelper;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 // To run this test from an IDE, set a property solr.war pointing to the SOLR war
 
@@ -201,8 +203,10 @@ public class IndexerTest {
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
             Record var1Record = repository.newRecord(var1Id);
             var1Record.setRecordType("RecordType1", null);
-            var1Record.setField(fieldType2Name, "green");
+            var1Record.setField(fieldType1Name, "green");
             repository.create(var1Record);
+
+            sendEvent(EVENT_RECORD_CREATED, var1Id, fieldType2.getId());
 
             Map<String, String> varProps = new HashMap<String, String>();
             varProps.put("lang", "en");
@@ -227,45 +231,96 @@ public class IndexerTest {
         // Update denormalized data
         //
         {
-            Record record1 = repository.newRecord();
+            Record record1 = repository.newRecord(idGenerator.newRecordId("boe"));
             record1.setRecordType("RecordType1", null);
             record1.setField(fieldType1Name, "cumcumber");
             record1 = repository.create(record1);
-            // be lazy and don't send an event for this create
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), fieldType1.getId());
 
+            // Create a record which will contain denormalized data through linking
             Record record2 = repository.newRecord();
             record2.setRecordType("RecordType1", null);
             record2.setField(linkFieldName, record1.getId());
+            record2.setField(fieldType1Name, "mushroom");
             record2 = repository.create(record2);
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), linkFieldType.getId(), fieldType1.getId());
 
+            // Create a record which will contain denormalized data through master-dereferencing
             RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
             Record record3 = repository.newRecord(record3Id);
             record3.setRecordType("RecordType1", null);
             record3.setField(fieldType1Name, "eggplant");
             record3 = repository.create(record3);
-
-            // Generate queue message
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), linkFieldType.getId());
             sendEvent(EVENT_RECORD_CREATED, record3.getId(), fieldType1.getId());
 
+            // Create a record which will contain denormalized data through variant-dereferencing
+            Map<String, String> varprops = new HashMap<String, String>();
+            varprops.put("lang", "en");
+            varprops.put("branch", "dev");
+            RecordId record4Id = idGenerator.newRecordId(record1.getId(), varprops);
+            Record record4 = repository.newRecord(record4Id);
+            record4.setRecordType("RecordType1", null);
+            record4.setField(fieldType1Name, "broccoli");
+            record4 = repository.create(record4);
+            sendEvent(EVENT_RECORD_CREATED, record4.getId(), fieldType1.getId());
             solrServer.commit(true, true);
 
             verifyResultCount("dereffield1:cumcumber", 1);
-            verifyResultCount("dereffield3:cumcumber", 1);
+            verifyResultCount("dereffield2:cumcumber", 1);
+            verifyResultCount("dereffield3:cumcumber", 2);
 
-            // Update record1, check if index for record2 and record3 is updated
+            // Update record1, check if index of the others is updated
             record1.setField(fieldType1Name, "tomato");
             record1 = repository.update(record1);
 
             // Generate queue message
             sendEvent(EVENT_RECORD_UPDATED, record1.getId(), fieldType1.getId());
-
             solrServer.commit(true, true);
 
             verifyResultCount("dereffield1:tomato", 1);
-//            verifyResultCount("dereffield3:tomato", 1);
+            verifyResultCount("dereffield2:tomato", 1);
+            verifyResultCount("dereffield3:tomato", 2);
             verifyResultCount("dereffield1:cumcumber", 0);
-//            verifyResultCount("dereffield3:cumcumber", 0);
+            verifyResultCount("dereffield2:cumcumber", 0);
+            verifyResultCount("dereffield3:cumcumber", 0);
+            verifyResultCount("dereffield4:eggplant", 1);
+
+            // Update record3, index for record4 should be updated
+            record3.setField(fieldType1Name, "courgette");
+            repository.update(record3);
+            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), fieldType1.getId());
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield4:courgette", 1);
+            verifyResultCount("dereffield4:eggplant", 0);
+
+            // Delete record 3: index for record 4 should be updated
+            verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 1);
+            repository.delete(record3.getId());
+            sendEvent(EVENT_RECORD_DELETED, record3.getId());
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield4:courgette", 0);
+            verifyResultCount("dereffield3:tomato", 1);
+            verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 0);
+
+            // Delete record 4 (at the time of this writing, because it is unsure if we will allow deleting master
+            // records while there are variants)
+            repository.delete(record4.getId());
+            sendEvent(EVENT_RECORD_DELETED, record4.getId());
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield3:tomato", 0);
+            verifyResultCount("field1:broccoli", 0);
+            verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record4.getId().toString()), 0);
+
+            // Delete record 1: index of record 2 should be updated
+            repository.delete(record1.getId());
+            sendEvent(EVENT_RECORD_DELETED, record1.getId());
+            solrServer.commit(true, true);
+
+            verifyResultCount("dereffield1:tomato", 0);
+            verifyResultCount("field1:mushroom", 1);
         }
 
 
