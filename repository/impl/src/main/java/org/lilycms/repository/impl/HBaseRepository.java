@@ -56,6 +56,7 @@ import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
 import org.lilycms.repository.api.exception.RepositoryException;
 import org.lilycms.util.ArgumentValidator;
 import org.lilycms.util.Pair;
+import org.lilycms.util.io.Closer;
 
 public class HBaseRepository implements Repository {
 
@@ -671,13 +672,16 @@ public class HBaseRepository implements Repository {
 
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException {
         byte[] masterRecordIdBytes = recordId.getMaster().toBytes();
-        Filter filter = new PrefixFilter(masterRecordIdBytes);
-        Scan scan = new Scan(masterRecordIdBytes, filter);
+        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+        filterList.addFilter(new FirstKeyOnlyFilter());
+        filterList.addFilter(new PrefixFilter(masterRecordIdBytes));
+        Scan scan = new Scan(masterRecordIdBytes, filterList);
 
         Set<RecordId> recordIds = new HashSet<RecordId>();
 
+        ResultScanner scanner = null;
         try {
-            ResultScanner scanner = recordTable.getScanner(scan);
+            scanner = recordTable.getScanner(scan);
             Result result;
             while ((result = scanner.next()) != null) {
                 RecordId id = idGenerator.fromBytes(result.getRow());
@@ -685,6 +689,8 @@ public class HBaseRepository implements Repository {
             }
         } catch (IOException e) {
             throw new RepositoryException("Error getting list of variants of record " + recordId.getMaster(), e);
+        } finally {
+            Closer.close(scanner);
         }
 
         return recordIds;
