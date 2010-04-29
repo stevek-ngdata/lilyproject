@@ -70,7 +70,7 @@
 
     <dependency>
       <groupId>org.lilycms</groupId>
-      <artifactId>lily-linkmgmt</artifactId>
+      <artifactId>lily-linkindex</artifactId>
     </dependency>
 
     <dependency>

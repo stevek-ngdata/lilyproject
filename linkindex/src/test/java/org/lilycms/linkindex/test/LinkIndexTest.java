@@ -1,4 +1,4 @@
-package org.lilycms.linkmgmt.test;
+package org.lilycms.linkindex.test;
 
 import static org.junit.Assert.*;
 
@@ -13,9 +13,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.hbaseindex.IndexManager;
-import org.lilycms.linkmgmt.FieldedLink;
-import org.lilycms.linkmgmt.LinkIndex;
-import org.lilycms.linkmgmt.LinkIndexUpdater;
+import org.lilycms.linkindex.FieldedLink;
+import org.lilycms.linkindex.LinkIndex;
+import org.lilycms.linkindex.LinkIndexUpdater;
 import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.queue.mock.TestLilyQueue;
 import org.lilycms.queue.mock.TestQueueMessage;
@@ -26,7 +26,7 @@ import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
 
-public class LinkManagerTest {
+public class LinkIndexTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
     private TypeManager typeManager;

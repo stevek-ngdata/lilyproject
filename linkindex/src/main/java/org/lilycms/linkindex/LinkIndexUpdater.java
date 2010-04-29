@@ -1,4 +1,4 @@
-package org.lilycms.linkmgmt;
+package org.lilycms.linkindex;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

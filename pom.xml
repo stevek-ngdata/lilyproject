@@ -42,7 +42,7 @@
     <module>indexer</module>
     <module>eventlog/queue-api</module>
     <module>eventlog/queue-mock</module>
-    <module>linkmgmt</module>
+    <module>linkindex</module>
     <module>repo-util</module>
   </modules>
 
@@ -70,7 +70,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilycms</groupId>
-        <artifactId>lily-linkmgmt</artifactId>
+        <artifactId>lily-linkindex</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>

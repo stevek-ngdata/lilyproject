@@ -1,4 +1,4 @@
-package org.lilycms.linkmgmt;
+package org.lilycms.linkindex;
 
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.exception.FieldTypeNotFoundException;

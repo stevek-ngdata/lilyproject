@@ -10,7 +10,7 @@ import org.lilycms.indexer.conf.DerefValue;
 import org.lilycms.indexer.conf.IndexCase;
 import org.lilycms.indexer.conf.IndexField;
 import org.lilycms.indexer.conf.IndexerConf;
-import org.lilycms.linkmgmt.LinkIndex;
+import org.lilycms.linkindex.LinkIndex;
 import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
