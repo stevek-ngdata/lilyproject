@@ -45,6 +45,8 @@ public class IndexerTest {
     private static SolrServer solrServer;
     private static Indexer indexer;
     private static FieldType liveTag;
+    private static FieldType previewTag;
+    private static FieldType lastTag;
     private static FieldType fieldType1;
     private static FieldType fieldType2;
     private static FieldType linkFieldType;
@@ -83,12 +85,31 @@ public class IndexerTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        indexer.stop();
+
         TEST_UTIL.shutdownMiniCluster();
         if (SOLR_TEST_UTIL != null)
             SOLR_TEST_UTIL.stop();
     }
 
     private static void setupSchema() throws Exception {
+        //
+        // Version tag fields
+        //
+        ValueType longValueType = typeManager.getValueType("LONG", false, false);
+
+        QName liveTagName = new QName(VersionTag.NS_VTAG, "live");
+        liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
+        liveTag = typeManager.createFieldType(liveTag);
+
+        QName previewTagName = new QName(VersionTag.NS_VTAG, "preview");
+        previewTag = typeManager.newFieldType(longValueType, previewTagName, Scope.NON_VERSIONED);
+        previewTag = typeManager.createFieldType(previewTag);
+
+        QName lastTagName = new QName(VersionTag.NS_VTAG, "last");
+        lastTag = typeManager.newFieldType(longValueType, lastTagName, Scope.NON_VERSIONED);
+        lastTag = typeManager.createFieldType(lastTag);
+
         //
         // Schema types for the versionless test
         //
@@ -106,11 +127,6 @@ public class IndexerTest {
         QName linkFieldName = new QName("org.lilycms.indexer.test", "linkfield");
         linkFieldType = typeManager.newFieldType(linkValueType, linkFieldName, Scope.NON_VERSIONED);
         linkFieldType = typeManager.createFieldType(linkFieldType);
-
-        ValueType longValueType = typeManager.getValueType("LONG", false, false);
-        QName liveTagName = new QName(VersionTag.NS_VTAG, "live");
-        liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
-        liveTag = typeManager.createFieldType(liveTag);
 
         RecordType recordType1 = typeManager.newRecordType("RecordType1");
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
@@ -132,6 +148,7 @@ public class IndexerTest {
         RecordType recordType = typeManager.newRecordType("RecordType2");
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(previewTag.getId(), false));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
         recordType = typeManager.createRecordType(recordType);
     }
@@ -355,16 +372,10 @@ public class IndexerTest {
             verifyResultCount("dereffield1:tomato", 0);
             verifyResultCount("field1:mushroom", 1);
         }
-
-
-        // The end
-        indexer.stop();
     }
 
     @Test
     public void testIndexerWithVersioning() throws Exception {
-
-
         //
         // Basic create-update-delete
         //
@@ -377,37 +388,60 @@ public class IndexerTest {
             record = repository.create(record);
 
             // Generate queue message
-            sendEvent(EVENT_RECORD_CREATED, record.getId(), fieldType1.getId(), liveTag.getId());
+            sendEvent(EVENT_RECORD_CREATED, record.getId(), 1L, null, fieldType1.getId(), liveTag.getId());
             solrServer.commit(true, true);
 
-            // TODO this runs when running this test method individually, but not when running the complete IndexTest
-//            // Verify the index was updated                                                                        `
-//            verifyResultCount("field2.1:apple", 1);
-//
-//            // Update the record, this will create a new version, but we leave the live version tag pointing to version 1
-//            record.setField(fieldType1Name, "pear");
-//            repository.update(record);
-//
-//            sendEvent(EVENT_RECORD_UPDATED, record.getId(), fieldType1.getId());
-//            solrServer.commit(true, true);
-//
-//            verifyResultCount("field2.1:pear", 0);
-//            verifyResultCount("field2.1:apple", 1);
-//
-//            // Now move the live version tag to point to version 2
-//            record.setField(liveTagName, new Long(2));
-//            record = repository.update(record);
-//            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
-//            solrServer.commit(true, true);
-//
-//            verifyResultCount("field2.1:pear", 1);
-//            verifyResultCount("field2.1:apple", 0);
+            // Verify the index was updated                                                                        `
+            verifyResultCount("field3:apple", 1);
+
+            // Update the record, this will create a new version, but we leave the live version tag pointing to version 1
+            record.setField(fieldType3.getName(), "pear");
+            repository.update(record);
+
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), 2L, null, fieldType1.getId());
+            solrServer.commit(true, true);
+
+            verifyResultCount("field3:pear", 0);
+            verifyResultCount("field3:apple", 1);
+
+            // Now move the live version tag to point to version 2
+            record.setField(liveTag.getName(), new Long(2));
+            record = repository.update(record);
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
+            solrServer.commit(true, true);
+
+            verifyResultCount("field3:pear", 1);
+            verifyResultCount("field3:apple", 0);
 
             // Now remove the live version tag
+            record.delete(liveTag.getName(), true);
+            record = repository.update(record);
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
+            solrServer.commit(true, true);
 
-            // Now add two version tags
+            verifyResultCount("field3:pear", 0);
+
+            // Now test with multiple version tags
+            record.setField(liveTag.getName(), new Long(1));
+            record.setField(previewTag.getName(), new Long(2));
+            record.setField(lastTag.getName(), new Long(2));
+            record = repository.update(record);
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId(), previewTag.getId(), lastTag.getId());
+            solrServer.commit(true, true);
+
+            verifyResultCount("field3:apple", 1);
+            verifyResultCount("field3:pear", 2);
+
+            verifyResultCount("+field3:pear +@@vtag:" + qesc(previewTag.getId()), 1);
+            verifyResultCount("+field3:pear +@@vtag:" + qesc(lastTag.getId()), 1);
+            verifyResultCount("+field3:pear +@@vtag:" + qesc(liveTag.getId()), 0);
+            verifyResultCount("+field3:apple +@@vtag:" + qesc(liveTag.getId()), 1);
 
         }
+    }
+
+    private static String qesc(String input) {
+        return ClientUtils.escapeQueryChars(input);
     }
 
     private void sendEvent(String type, RecordId recordId, String... updatedFields) {
@@ -421,6 +455,25 @@ public class IndexerTest {
         queue.broadCastMessage(message);
     }
     
+    private void sendEvent(String type, RecordId recordId, Long versionCreated, Long versionUpdated,
+            String... updatedFields) {
+
+        RecordEvent event = new RecordEvent();
+
+        for (String updatedField : updatedFields) {
+            event.addUpdatedField(updatedField);
+        }
+
+        if (versionCreated != null)
+            event.setVersionCreated(versionCreated);
+
+        if (versionUpdated != null)
+            event.setVersionUpdated(versionUpdated);
+
+        QueueMessage message = new TestQueueMessage(type, recordId, event.toJsonBytes());
+        queue.broadCastMessage(message);
+    }
+
     private void verifyResultCount(String query, int count) throws SolrServerException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);

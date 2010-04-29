@@ -3,7 +3,7 @@
 
   <cases>
     <case recordType="RecordType1" variant="*" vtags="live" indexVersionless="true"/>
-    <case recordType="RecordType2" variant="*" vtags="live" indexVersionless="true"/>
+    <case recordType="RecordType2" variant="*" vtags="live,preview,last" indexVersionless="true"/>
   </cases>
 
   <indexFields xmlns:ns="org.lilycms.indexer.test" xmlns:ns2="org.lilycms.indexer.test.2">
