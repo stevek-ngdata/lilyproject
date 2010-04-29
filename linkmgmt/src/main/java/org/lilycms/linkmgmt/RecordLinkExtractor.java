@@ -12,12 +12,11 @@ public class RecordLinkExtractor {
      * Extracts the links from a record. The provided Record object should
      * be "fully loaded" (= contain all fields).
      */
-    public static void extract(Record record, LinkCollector collector, TypeManager typeManager) throws RepositoryException {
-        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
-            // TODO once field type ID is available in record, use that to retrieve the field type instead of the name
+    public static void extract(IdRecord record, LinkCollector collector, TypeManager typeManager) throws RepositoryException {
+        for (Map.Entry<String, Object> field : record.getFieldsById().entrySet()) {
             FieldType fieldType;
             try {
-                fieldType = typeManager.getFieldTypeByName(field.getKey());
+                fieldType = typeManager.getFieldTypeById(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 // Can not do anything with a field if we cannot load its type
                 continue;

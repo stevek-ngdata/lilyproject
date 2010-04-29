@@ -6,9 +6,7 @@ import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.repository.api.*;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repository.api.exception.RecordNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 
@@ -151,9 +149,9 @@ public class LinkIndexUpdater {
     private Set<FieldedLink> extractLinks(RecordId recordId, Long version) {
         try {
             Set<FieldedLink> links;
-            Record versionRecord = null;
+            IdRecord versionRecord = null;
             try {
-                versionRecord = repository.read(recordId, version);
+                versionRecord = repository.readWithIds(recordId, version);
             } catch (RecordNotFoundException e) {
                 // vtag points to a non-existing record
             }
