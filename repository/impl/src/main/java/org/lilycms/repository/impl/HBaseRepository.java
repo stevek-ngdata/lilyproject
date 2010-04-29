@@ -34,19 +34,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.Blob;
-import org.lilycms.repository.api.BlobStoreAccess;
-import org.lilycms.repository.api.BlobStoreAccessFactory;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordId;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.exception.BlobNotFoundException;
 import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repository.api.exception.InvalidRecordException;
@@ -464,6 +452,26 @@ public class HBaseRepository implements Repository {
 
     public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
                     RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+        ReadContext readContext = new ReadContext(false);
+        return read(recordId, version, fieldNames, readContext);
+    }
+
+    public IdRecord readWithIds(RecordId recordId, Long version) throws RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+        ReadContext readContext = new ReadContext(true);
+        Record record = read(recordId, version, null, readContext);
+
+        Map<String, QName> idToQNameMapping = new HashMap<String, QName>();
+        for (FieldType fieldType : readContext.getFieldTypes().values()) {
+            idToQNameMapping.put(fieldType.getId(), fieldType.getName());
+        }
+
+        return new IdRecordImpl(record, idToQNameMapping);
+    }
+
+    private Record read(RecordId recordId, Long version, List<QName> fieldNames, ReadContext readContext)
+            throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
+            RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         Record record = newRecord();
         record.setId(recordId);
@@ -499,7 +507,7 @@ public class HBaseRepository implements Repository {
         }
 
         // Extract the actual fields from the retrieved data
-        if (extractFields(result, version, record)) {
+        if (extractFields(result, version, record, readContext)) {
             // Set the recordType explicitly in case only versioned fields were extracted
             Pair<String, Long> recordTypePair = extractRecordType(Scope.NON_VERSIONED, result, null, record);
             record.setRecordType(recordTypePair.getV1(), recordTypePair.getV2());
@@ -542,12 +550,12 @@ public class HBaseRepository implements Repository {
         return recordType;
     }
 
-    private List<Pair<QName, Object>> extractFields(NavigableMap<byte[], byte[]> familyMap)
+    private List<Pair<QName, Object>> extractFields(NavigableMap<byte[], byte[]> familyMap, ReadContext context)
                     throws FieldTypeNotFoundException, RepositoryException {
         List<Pair<QName, Object>> fields = new ArrayList<Pair<QName, Object>>();
         if (familyMap != null) {
             for (Entry<byte[], byte[]> entry : familyMap.entrySet()) {
-                Pair<QName, Object> field = extractField(entry.getKey(), entry.getValue());
+                Pair<QName, Object> field = extractField(entry.getKey(), entry.getValue(), context);
                 if (field != null) {
                     fields.add(field);
                 }
@@ -557,7 +565,7 @@ public class HBaseRepository implements Repository {
     }
 
     private List<Pair<QName, Object>> extractVersionFields(Long version,
-                    NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions)
+                    NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions, ReadContext context)
                     throws FieldTypeNotFoundException, RepositoryException {
         List<Pair<QName, Object>> fields = new ArrayList<Pair<QName, Object>>();
         if (mapWithVersions != null) {
@@ -565,7 +573,8 @@ public class HBaseRepository implements Repository {
                 NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
                 Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(version);
                 if (ceilingEntry != null) {
-                    Pair<QName, Object> field = extractField(columnWithAllVersions.getKey(), ceilingEntry.getValue());
+                    Pair<QName, Object> field = extractField(columnWithAllVersions.getKey(), ceilingEntry.getValue(),
+                            context);
                     if (field != null) {
                         fields.add(field);
                     }
@@ -575,13 +584,14 @@ public class HBaseRepository implements Repository {
         return fields;
     }
 
-    private Pair<QName, Object> extractField(byte[] key, byte[] prefixedValue) throws FieldTypeNotFoundException,
+    private Pair<QName, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context) throws FieldTypeNotFoundException,
                     RepositoryException {
         if (EncodingUtil.isDeletedField(prefixedValue)) {
             return null;
         }
         String fieldId = Bytes.toString(key);
         FieldType fieldType = typeManager.getFieldTypeById(fieldId);
+        context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
         Object value = valueType.fromBytes(EncodingUtil.stripPrefix(prefixedValue));
         return new Pair<QName, Object>(fieldType.getName(), value);
@@ -614,22 +624,23 @@ public class HBaseRepository implements Repository {
         get.addColumn(VERSIONED_SYSTEM_COLUMN_FAMILY, VERSIONED_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME);
     }
 
-    private boolean extractFields(Result result, Long version, Record record) throws RecordTypeNotFoundException,
+    private boolean extractFields(Result result, Long version, Record record, ReadContext context)
+            throws RecordTypeNotFoundException,
                     FieldTypeNotFoundException, RepositoryException {
-        boolean nvExtracted = extractFields(Scope.NON_VERSIONED, result, null, record);
-        boolean vExtracted = extractFields(Scope.VERSIONED, result, version, record);
-        boolean vmExtracted = extractFields(Scope.VERSIONED_MUTABLE, result, version, record);
+        boolean nvExtracted = extractFields(Scope.NON_VERSIONED, result, null, record, context);
+        boolean vExtracted = extractFields(Scope.VERSIONED, result, version, record, context);
+        boolean vmExtracted = extractFields(Scope.VERSIONED_MUTABLE, result, version, record, context);
         return nvExtracted || vExtracted || vmExtracted;
     }
 
-    private boolean extractFields(Scope scope, Result result, Long version, Record record)
+    private boolean extractFields(Scope scope, Result result, Long version, Record record, ReadContext context)
                     throws RecordTypeNotFoundException, RepositoryException, FieldTypeNotFoundException {
         boolean retrieved = false;
         List<Pair<QName, Object>> fields;
         if (version == null) {
-            fields = extractFields(result.getFamilyMap(columnFamilies.get(scope)));
+            fields = extractFields(result.getFamilyMap(columnFamilies.get(scope)), context);
         } else {
-            fields = extractVersionFields(version, result.getMap().get(columnFamilies.get(scope)));
+            fields = extractVersionFields(version, result.getMap().get(columnFamilies.get(scope)), context);
         }
         if (!fields.isEmpty()) {
             for (Pair<QName, Object> field : fields) {
@@ -694,5 +705,25 @@ public class HBaseRepository implements Repository {
         }
 
         return recordIds;
+    }
+
+    private static class ReadContext {
+        private Map<String, FieldType> fieldTypes;
+
+        public ReadContext(boolean collectFieldTypes) {
+            if (collectFieldTypes) {
+                this.fieldTypes = new HashMap<String, FieldType>();
+            }
+        }
+
+        public void addFieldType(FieldType fieldType) {
+            if (fieldTypes != null) {
+                this.fieldTypes.put(fieldType.getId(), fieldType);
+            }
+        }
+
+        public Map<String, FieldType> getFieldTypes() {
+            return fieldTypes;
+        }
     }
 }

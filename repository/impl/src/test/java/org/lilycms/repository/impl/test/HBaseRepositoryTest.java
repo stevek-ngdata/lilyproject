@@ -812,4 +812,26 @@ public class HBaseRepositoryTest {
         // Try to read the created version
         record = repository.read(record.getId(), 1L);
     }
+
+    @Test
+    public void testIdRecord() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getId(), recordType1.getVersion());
+        record.setField(fieldType1.getName(), "hello");
+        record.setField(fieldType2.getName(), new Integer(4));
+        record = repository.create(record);
+
+        IdRecord idRecord = repository.readWithIds(record.getId(), null);
+        assertEquals("hello", idRecord.getField(fieldType1.getId()));
+        assertTrue(idRecord.hasField(fieldType1.getId()));
+        assertEquals(new Integer(4), idRecord.getField(fieldType2.getId()));
+        assertTrue(idRecord.hasField(fieldType2.getId()));
+
+        Map<String, Object> fields = idRecord.getFieldsById();
+        assertEquals(2, fields.size());
+        assertEquals("hello", fields.get(fieldType1.getId()));
+        assertEquals(new Integer(4), fields.get(fieldType2.getId()));
+
+        assertEquals(record, idRecord.getRecord());
+    }
 }

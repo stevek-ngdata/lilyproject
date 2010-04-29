@@ -19,14 +19,20 @@ import org.lilycms.repository.api.QName;
 
 public class FieldNotFoundException extends RuntimeException {
 
-    private final QName fieldName;
+    private QName fieldName;
+    private String fieldId;
 
     public FieldNotFoundException(QName fieldName) {
         this.fieldName = fieldName;
     }
     
+    public FieldNotFoundException(String fieldId) {
+        this.fieldId = fieldId;
+    }
+
     @Override
     public String getMessage() {
-        return "Field <" + fieldName + "> could not be found.";
+        String id = fieldName != null ? fieldName.toString() : fieldId;
+        return "Field <" + id + "> could not be found.";
     }
 }

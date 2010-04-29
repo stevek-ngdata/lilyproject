@@ -121,6 +121,16 @@ public interface Repository {
             FieldTypeNotFoundException, RepositoryException;
 
     /**
+     * Reads a Record and also returns the mapping from QNames to IDs.
+     *
+     * <p>See {@IdRecord} for more information.
+     *
+     * @param version optional, can be null
+     */
+    IdRecord readWithIds(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RepositoryException;
+
+    /**
      * Delete a {@link Record} from the repository.
      *
      * @param recordId
