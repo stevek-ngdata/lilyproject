@@ -112,6 +112,14 @@ public class RecordImpl implements Record {
         return fields;
     }
 
+    public void delete(QName fieldName, boolean addToFieldsToDelete) {
+        fields.remove(fieldName);
+
+        if (addToFieldsToDelete) {
+            getFieldsToDelete().add(fieldName);
+        }
+    }
+
     public List<QName> getFieldsToDelete() {
         return fieldsToDelete;
     }

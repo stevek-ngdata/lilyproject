@@ -21,19 +21,24 @@ import java.util.Map;
 import org.lilycms.repository.api.exception.FieldNotFoundException;
 
 /**
- * An object to be used as input for {@link Repository#create} and
- * {@link Repository#update} operations, or as result of a {link
- * Repository#read} operation.
+ * A Record is the core entity managed by the {@link Repository}.
+ *
+ * A Record object is used as input for the {@link Repository#create} and {@link Repository#update} operations,
+ * or as result of a {@link Repository#read} operation.
+ *
+ * <p>A Record object is not necessarily a representation of a complete record. When {@link Repository#read reading}
+ * a record, you can specify to only read certain fields. Likewise, when {@link Repository#update updating}, you
+ * only need to put the fields in this object that you want to be updated. But it is not necessary to remove
+ * unchanged fields from this object, the repository will compare with the current situation and ignore
+ * unchanged fields.
+ *
+ * <p>Since for an update, this object only needs to contain the fields you want to update, fields that are
+ * not in this object will not be automatically removed from the record. Rather, you have to say explicitly which
+ * fields should be deleted by adding them to the {@link #getFieldsToDelete() fields-to-delete} list. If the
+ * fields-to-delete list contains field names that do not exist in the record, then these will be ignored upon
+ * update, rather than causing an exception.
  * 
- * <p>
- * The {@link RecordType} and its version define the schema of the record.
- * 
- * <p>
- * For an {@link Repository#update} only the fields to be changed need to be
- * given.
- * 
- * <p>
- * Fields to be deleted need to be added explicitly with their fieldId
+ * <p>The {@link RecordType} and its version define the schema of the record.
  * 
  */
 public interface Record {
@@ -62,6 +67,18 @@ public interface Record {
     Long getRecordTypeVersion(Scope scope);
     
     void setField(QName fieldName, Object value);
+
+    /**
+     * Deletes a field from this object and optionally adds it to the list of fields to delete upon save.
+     *
+     * <p>If the field is not present, this does not throw an exception. In this case, the field will still
+     * be added to the list of fields to delete. Use {@link #hasField} if you want to check if a field is
+     * present in this Record instance.
+     *
+     * @param addToFieldsToDelete if false, the field will only be removed from this value object, but not be added
+     *                            to the {@link #getFieldsToDelete}.
+     */
+    void delete(QName fieldName, boolean addToFieldsToDelete);
 
     /**
      *

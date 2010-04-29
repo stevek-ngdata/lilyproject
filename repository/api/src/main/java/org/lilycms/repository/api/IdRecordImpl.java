@@ -119,6 +119,10 @@ public class IdRecordImpl implements IdRecord {
         return record.getFieldsToDelete();
     }
 
+    public void delete(QName fieldName, boolean addToFieldsToDelete) {
+        record.delete(fieldName, addToFieldsToDelete);
+    }
+
     public Record clone() {
         throw new UnsupportedOperationException("IdRecordImpl does not support cloning.");
     }
