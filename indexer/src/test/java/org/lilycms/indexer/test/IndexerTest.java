@@ -98,15 +98,15 @@ public class IndexerTest {
         //
         ValueType longValueType = typeManager.getValueType("LONG", false, false);
 
-        QName liveTagName = new QName(VersionTag.NS_VTAG, "live");
+        QName liveTagName = new QName(VersionTag.NAMESPACE, "live");
         liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
         liveTag = typeManager.createFieldType(liveTag);
 
-        QName previewTagName = new QName(VersionTag.NS_VTAG, "preview");
+        QName previewTagName = new QName(VersionTag.NAMESPACE, "preview");
         previewTag = typeManager.newFieldType(longValueType, previewTagName, Scope.NON_VERSIONED);
         previewTag = typeManager.createFieldType(previewTag);
 
-        QName lastTagName = new QName(VersionTag.NS_VTAG, "last");
+        QName lastTagName = new QName(VersionTag.NAMESPACE, "last");
         lastTag = typeManager.newFieldType(longValueType, lastTagName, Scope.NON_VERSIONED);
         lastTag = typeManager.createFieldType(lastTag);
 

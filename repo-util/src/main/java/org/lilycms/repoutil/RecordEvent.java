@@ -47,11 +47,11 @@ public class RecordEvent {
         JsonNode msgData = new ObjectMapper().readValue(data, 0, data.length, JsonNode.class);
 
         if (msgData.get("versionCreated") != null) {
-            versionCreated = msgData.get("versionCreated").getIntValue();
+            versionCreated = msgData.get("versionCreated").getLongValue();
         }
 
         if (msgData.get("versionUpdated") != null) {
-            versionUpdated = msgData.get("versionUpdated").getIntValue();
+            versionUpdated = msgData.get("versionUpdated").getLongValue();
         }
 
         if (msgData.get("recordTypeChanged") != null) {

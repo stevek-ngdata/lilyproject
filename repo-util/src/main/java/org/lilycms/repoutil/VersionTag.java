@@ -14,7 +14,7 @@ public class VersionTag {
     /**
      * Namespace for field types that serve as version tags.
      */
-    public static final String NS_VTAG = "org.lilycms.vtag";
+    public static final String NAMESPACE = "org.lilycms.vtag";
 
     /**
      * A dummy tag used for documents which have no versions, and thus no tagged versions.
@@ -22,7 +22,7 @@ public class VersionTag {
     public static final String VERSIONLESS_TAG = "@@versionless";
 
     public static QName qname(String vtag) {
-        return new QName(NS_VTAG, vtag);
+        return new QName(NAMESPACE, vtag);
     }
 
     /**
@@ -110,7 +110,7 @@ public class VersionTag {
      * Returns true if the given FieldType is a version tag.
      */
     public static boolean isVersionTag(FieldType fieldType) {
-        return (fieldType.getName().getNamespace().equals(NS_VTAG)
+        return (fieldType.getName().getNamespace().equals(NAMESPACE)
                 && fieldType.getScope() == Scope.NON_VERSIONED
                 && fieldType.getValueType().isPrimitive()
                 && fieldType.getValueType().getPrimitive().getName().equals("LONG"));
@@ -167,7 +167,7 @@ public class VersionTag {
      *         or if the record fails to load.
      */
     public static Long getVersion(RecordId recordId, String vtag, Repository repository) {
-        QName vtagField = new QName(VersionTag.NS_VTAG, vtag);
+        QName vtagField = new QName(VersionTag.NAMESPACE, vtag);
 
         Record vtagRecord;
         try {
