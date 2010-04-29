@@ -9,14 +9,18 @@ public class IndexerConfException extends Exception {
     }
 
     public IndexerConfException(String message) {
-        super(message);
+        super(getMessage(message));
     }
 
     public IndexerConfException(String message, Throwable cause) {
-        super(message, cause);
+        super(getMessage(message), cause);
     }
 
     public IndexerConfException(Throwable cause) {
         super(cause);
+    }
+
+    private static String getMessage(String message) {
+        return "Indexer configuration: " + message;
     }
 }

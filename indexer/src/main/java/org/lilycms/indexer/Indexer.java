@@ -92,12 +92,12 @@ public class Indexer {
 
     private void handleRecordCreateUpdate(QueueMessage msg) throws Exception {
         RecordEvent event = new RecordEvent(msg.getType(), msg.getData());
-        Record record = repository.read(msg.getRecordId());
+        IdRecord record = repository.readWithIds(msg.getRecordId(), null);
 
         // Read the vtags of the record. Note that while this algorithm is running, the record can meanwhile
         // undergo changes. However, we continuously work with the snapshot of the vtags mappings read here.
         // The processing of later events will bring the index up to date with any new changes.
-        Map<String, Long> vtags = VersionTag.getTagsByName(record, typeManager);
+        Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
         Map<Long, Set<String>> vtagsByVersion = VersionTag.tagsByVersion(vtags);
 
         Map<Scope, Set<FieldType>> updatedFieldsByScope = getFieldTypeAndScope(event.getUpdatedFields());
@@ -174,7 +174,6 @@ public class Indexer {
                 //
                 // Handle changes to version vtag fields
                 //
-                // TODO the below does not work because the changed VTags are identified by ID and the rest by name
                 Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
                 // Remove the vtags which are going to be reindexed anyway
                 changedVTagFields.removeAll(vtagsToIndex);
@@ -223,9 +222,9 @@ public class Indexer {
         // rather than the vtags
         Map<Long, Set<String>> vtagsToIndexByVersion = getVtagsByVersion(vtagsToIndex, vtags);
         for (Map.Entry<Long, Set<String>> entry : vtagsToIndexByVersion.entrySet()) {
-            Record version = null;
+            IdRecord version = null;
             try {
-                version = repository.read(recordId, entry.getKey());
+                version = repository.readWithIds(recordId, entry.getKey());
             } catch (RecordNotFoundException e) {
                 // TODO handle this differently from version not found
             }
@@ -288,11 +287,14 @@ public class Indexer {
             DerefValue derefValue = (DerefValue)indexField.getValue();
             FieldType fieldType;
             try {
-                fieldType = typeManager.getFieldTypeByName(derefValue.getTargetField());
+                fieldType = typeManager.getFieldTypeById(derefValue.getTargetField());
             } catch (FieldTypeNotFoundException e) {
                 // Field type does not exist: this is an error in the config
                 log.error("The following field type, used in the indexer config, does not exist: " +
                         derefValue.getTargetField());
+                continue nextIndexField;
+            } catch (RepositoryException e) {
+                log.error("Problem loading field type: " + derefValue.getTargetField());
                 continue nextIndexField;
             }
 
@@ -367,14 +369,7 @@ public class Indexer {
                     Set<RecordId> newReferrers = new HashSet<RecordId>();
 
                     if (follow instanceof DerefValue.FieldFollow) {
-                        String fieldId;
-                        try {
-                            QName fieldName = ((DerefValue.FieldFollow)follow).getFieldName();
-                            fieldId = typeManager.getFieldTypeByName(fieldName).getId();
-                        } catch (FieldTypeNotFoundException e) {
-                            // An IndexField refers to a non-existing field: continue with the next indexfield
-                            continue nextIndexField;
-                        }
+                        String fieldId = ((DerefValue.FieldFollow)follow).getFieldId();
                         for (RecordId referrer : referrers) {
                             try {
                                 Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);
@@ -473,7 +468,7 @@ public class Indexer {
             RecordId referrer = entry.getKey();
             Set<String> vtagsToIndex = entry.getValue();
 
-            Record record = null;
+            IdRecord record = null;
             try {
                 // TODO make use of vtag:
                 //     - check if the @@versionless tag is present & if record is versionless
@@ -484,7 +479,7 @@ public class Indexer {
                 //     - For each tag: retrieve record + index
                 //           note that we don't know if the tags exist
                 // TODO optimize this: we are only interested to know the vtags and to know if the record has versions
-                record = repository.read(referrer);
+                record = repository.readWithIds(referrer, null);
             } catch (Exception e) {
                 // TODO handle this
                 e.printStackTrace();
@@ -516,7 +511,7 @@ public class Indexer {
 
     private void collectDerefIndexFields(Set<FieldType> fieldTypes, List<IndexField> indexFields) {
         for (FieldType fieldType : fieldTypes) {
-            indexFields.addAll(conf.getDerefIndexFields(fieldType.getName()));
+            indexFields.addAll(conf.getDerefIndexFields(fieldType.getId()));
         }
     }
 
@@ -525,7 +520,7 @@ public class Indexer {
      * @param record the correct version of the record, which has the versionTag applied to it
      * @param vtags the version tags under which to index
      */
-    private void index(Record record, Set<String> vtags) throws IOException, SolrServerException {
+    private void index(IdRecord record, Set<String> vtags) throws IOException, SolrServerException {
 
         // Note that it is important the the indexFields are evaluated in order, since multiple
         // indexFields can have the same name and the order of values for multivalue fields can be important.
@@ -578,7 +573,7 @@ public class Indexer {
 
     private boolean atLeastOneUsedInIndex(Set<FieldType> fieldTypes) {
         for (FieldType type : fieldTypes) {
-            if (conf.isIndexFieldDependency(type.getName())) {
+            if (conf.isIndexFieldDependency(type.getId())) {
                 return true;
             }
         }

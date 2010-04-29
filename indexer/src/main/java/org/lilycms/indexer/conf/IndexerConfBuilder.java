@@ -1,6 +1,10 @@
 package org.lilycms.indexer.conf;
 
 import org.lilycms.repository.api.QName;
+import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
+import org.lilycms.repoutil.VersionTag;
 import org.lilycms.util.location.LocationAttributes;
 import org.lilycms.util.xml.DocumentHelper;
 import org.lilycms.util.xml.LocalXPathExpression;
@@ -26,29 +30,34 @@ public class IndexerConfBuilder {
 
     private IndexerConf conf;
 
+    private Repository repository;
+    private TypeManager typeManager;
+
     private IndexerConfBuilder() {
         // prevents instantiation
     }
 
-    public static IndexerConf build(InputStream is) throws IndexerConfException {
+    public static IndexerConf build(InputStream is, Repository repository) throws IndexerConfException {
         Document doc;
         try {
             doc = DocumentHelper.parse(is);
         } catch (Exception e) {
-            throw new IndexerConfException("Error parsing supplied indexer configuration.", e);
+            throw new IndexerConfException("Error parsing supplied configuration.", e);
         }
-        return new IndexerConfBuilder().build(doc);
+        return new IndexerConfBuilder().build(doc, repository);
     }
 
-    private IndexerConf build(Document doc) throws IndexerConfException {
+    private IndexerConf build(Document doc, Repository repository) throws IndexerConfException {
         this.doc = doc;
+        this.repository = repository;
+        this.typeManager = repository.getTypeManager();
         this.conf = new IndexerConf();
 
         try {
             buildCases();
             buildIndexFields();
         } catch (Exception e) {
-            throw new IndexerConfException("Error in the indexer configuration.", e);
+            throw new IndexerConfException("Error in the configuration.", e);
         }
 
         return conf;
@@ -101,7 +110,7 @@ public class IndexerConfBuilder {
         return varPropsPattern;
     }
 
-    private Set<String> parseVersionTags(String vtagsSpec) {
+    private Set<String> parseVersionTags(String vtagsSpec) throws IndexerConfException {
         Set<String> vtags = new HashSet<String>();
 
         if (vtagsSpec == null)
@@ -110,8 +119,13 @@ public class IndexerConfBuilder {
         String[] tags = vtagsSpec.split(",");
         for (String tag : tags) {
             tag = tag.trim();
-            if (tag.length() > 0)
-                vtags.add(tag);
+            if (tag.length() > 0) {
+                try {
+                    vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
+                } catch (FieldTypeNotFoundException e) {
+                    throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
+                }
+            }
         }
 
         return vtags;
@@ -132,7 +146,7 @@ public class IndexerConfBuilder {
 
     private void validateName(String name) throws IndexerConfException {
         if (name.startsWith("@@")) {
-            throw new IndexerConfException("Indexer configuration: names starting with @@ are reserved for internal uses. Name: " + name);
+            throw new IndexerConfException("names starting with @@ are reserved for internal uses. Name: " + name);
         }
     }
 
@@ -140,8 +154,8 @@ public class IndexerConfBuilder {
         Element fieldEl = DocumentHelper.getElementChild(valueEl, "field", false);
 
         if (fieldEl != null) {
-            QName name = parseQName(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
-            return new FieldValue(name);
+            String fieldId = parseQNameGetId(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
+            return new FieldValue(fieldId);
         }
 
         Element derefEl = DocumentHelper.getElementChild(valueEl, "deref", false);
@@ -159,9 +173,9 @@ public class IndexerConfBuilder {
                 throw new IndexerConfException("A <deref> should contain one or more <follow> elements.");
             }
 
-            QName fieldName = parseQName(DocumentHelper.getAttribute(lastEl, "name", true), lastEl);
+            String fieldId = parseQNameGetId(DocumentHelper.getAttribute(lastEl, "name", true), lastEl);
 
-            DerefValue deref = new DerefValue(fieldName);
+            DerefValue deref = new DerefValue(fieldId);
 
             // Run over all children except the last
             for (int i = 0; i < children.length - 1; i++) {
@@ -170,8 +184,8 @@ public class IndexerConfBuilder {
                     String field = DocumentHelper.getAttribute(child, "field", false);
                     String variant = DocumentHelper.getAttribute(child, "variant", false);
                     if (field != null) {
-                        QName followFieldName = parseQName(DocumentHelper.getAttribute(child, "field", true), child);
-                        deref.addFieldFollow(followFieldName);
+                        String followFieldId = parseQNameGetId(DocumentHelper.getAttribute(child, "field", true), child);
+                        deref.addFieldFollow(followFieldId);
                     } else if (variant != null) {
                         if (variant.equals("master")) {
                             deref.addMasterFollow();
@@ -231,6 +245,16 @@ public class IndexerConfBuilder {
         }
 
         return new QName(uri, localName);
+    }
+
+    private String parseQNameGetId(String qname, Element contextEl) throws IndexerConfException {
+        QName parsedQName = parseQName(qname, contextEl);
+
+        try {
+            return typeManager.getFieldTypeByName(parsedQName).getId();
+        } catch (FieldTypeNotFoundException e) {
+            throw new IndexerConfException("unknown field type: " + parsedQName, e);
+        }
     }
 
 }

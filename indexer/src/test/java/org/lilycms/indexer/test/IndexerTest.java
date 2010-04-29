@@ -19,7 +19,6 @@ import org.lilycms.indexer.conf.IndexerConf;
 import org.lilycms.indexer.conf.IndexerConfBuilder;
 import org.lilycms.linkmgmt.LinkIndex;
 import org.lilycms.linkmgmt.LinkIndexUpdater;
-import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.queue.mock.TestLilyQueue;
 import org.lilycms.queue.mock.TestQueueMessage;
@@ -32,7 +31,6 @@ import org.lilycms.testfw.TestHelper;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 // To run this test from an IDE, set a property solr.war pointing to the SOLR war
 
@@ -46,10 +44,15 @@ public class IndexerTest {
     private static IdGenerator idGenerator;
     private static SolrServer solrServer;
     private static Indexer indexer;
+    private static FieldType liveTag;
+    private static FieldType fieldType1;
+    private static FieldType fieldType2;
+    private static FieldType linkFieldType;
+    private static FieldType fieldType3;
+    private static FieldType linkFieldType2;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream("org/lilycms/indexer/test/indexerconf1.xml"));
         SOLR_TEST_UTIL = new SolrTestingUtility("org/lilycms/indexer/test/schema1.xml");
 
         TestHelper.setupLogging();
@@ -71,6 +74,10 @@ public class IndexerTest {
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
         new LinkIndexUpdater(repository, typeManager, linkIndex, queue);
 
+        // Field types should exist before the indexer conf is loaded
+        setupSchema();
+
+        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream("org/lilycms/indexer/test/indexerconf1.xml"), repository);
         indexer = new Indexer(INDEXER_CONF, queue, repository, typeManager, solrServer, linkIndex);
     }
 
@@ -81,34 +88,56 @@ public class IndexerTest {
             SOLR_TEST_UTIL.stop();
     }
 
-    @Test
-    public void testIndexerVersionless() throws Exception {
-        // Create a record type
+    private static void setupSchema() throws Exception {
+        //
+        // Schema types for the versionless test
+        //
         ValueType stringValueType = typeManager.getValueType("STRING", false, false);
         ValueType linkValueType = typeManager.getValueType("LINK", false, false);
 
         QName fieldType1Name = new QName("org.lilycms.indexer.test", "field1");
-        FieldType fieldType1 = typeManager.newFieldType(stringValueType, fieldType1Name, Scope.NON_VERSIONED);
+        fieldType1 = typeManager.newFieldType(stringValueType, fieldType1Name, Scope.NON_VERSIONED);
         fieldType1 = typeManager.createFieldType(fieldType1);
 
         QName fieldType2Name = new QName("org.lilycms.indexer.test", "field2");
-        FieldType fieldType2 = typeManager.newFieldType(stringValueType, fieldType2Name, Scope.NON_VERSIONED);
+        fieldType2 = typeManager.newFieldType(stringValueType, fieldType2Name, Scope.NON_VERSIONED);
         fieldType2 = typeManager.createFieldType(fieldType2);
 
         QName linkFieldName = new QName("org.lilycms.indexer.test", "linkfield");
-        FieldType linkFieldType = typeManager.newFieldType(linkValueType, linkFieldName, Scope.NON_VERSIONED);
+        linkFieldType = typeManager.newFieldType(linkValueType, linkFieldName, Scope.NON_VERSIONED);
         linkFieldType = typeManager.createFieldType(linkFieldType);
 
         ValueType longValueType = typeManager.getValueType("LONG", false, false);
-        QName dummyTagName = new QName(VersionTag.NS_VTAG, "dummy");
-        FieldType dummyTag = typeManager.newFieldType(longValueType, dummyTagName, Scope.NON_VERSIONED);
-        dummyTag = typeManager.createFieldType(dummyTag);
+        QName liveTagName = new QName(VersionTag.NS_VTAG, "live");
+        liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
+        liveTag = typeManager.createFieldType(liveTag);
 
         RecordType recordType1 = typeManager.newRecordType("RecordType1");
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(dummyTag.getId(), false));
+        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
         recordType1 = typeManager.createRecordType(recordType1);
+
+        //
+        // Schema types for the versioned test
+        //
+        QName fieldType3Name = new QName("org.lilycms.indexer.test.2", "field3");
+        fieldType3 = typeManager.newFieldType(stringValueType, fieldType3Name, Scope.VERSIONED);
+        fieldType3 = typeManager.createFieldType(fieldType3);
+
+        QName linkField2Name = new QName("org.lilycms.indexer.test.2", "linkfield2");
+        linkFieldType2 = typeManager.newFieldType(linkValueType, linkField2Name, Scope.VERSIONED);
+        linkFieldType2 = typeManager.createFieldType(linkFieldType2);
+
+        RecordType recordType = typeManager.newRecordType("RecordType2");
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
+        recordType = typeManager.createRecordType(recordType);
+    }
+
+    @Test
+    public void testIndexerVersionless() throws Exception {
 
         //
         // Basic, versionless, create-update-delete
@@ -117,7 +146,7 @@ public class IndexerTest {
             // Create a record
             Record record = repository.newRecord();
             record.setRecordType("RecordType1", null);
-            record.setField(fieldType1Name, "apple");
+            record.setField(fieldType1.getName(), "apple");
             record = repository.create(record);
 
             // Generate queue message
@@ -129,7 +158,7 @@ public class IndexerTest {
             verifyResultCount("field1:apple", 1);
 
             // Update the record
-            record.setField(fieldType1Name, "pear");
+            record.setField(fieldType1.getName(), "pear");
             repository.update(record);
 
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), fieldType1.getId());
@@ -149,11 +178,11 @@ public class IndexerTest {
             verifyResultCount("field1:apple", 0);
 
             // Add a vtag field. For versionless records, this should have no effect
-            record.setField(dummyTagName, new Long(1));
+            // TODO test version number below should actually be 1, but currently versionless records do have a version 1 (see #1/#2)
+            record.setField(liveTag.getName(), new Long(5));
             repository.update(record);
 
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), dummyTag.getId());
-
+            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
             solrServer.commit(true, true);
 
             verifyResultCount("field1:pear", 1);
@@ -163,7 +192,6 @@ public class IndexerTest {
             repository.delete(record.getId());
 
             sendEvent(EVENT_RECORD_DELETED, record.getId());
-
             solrServer.commit(true, true);
 
             verifyResultCount("field1:pear", 0);
@@ -175,13 +203,13 @@ public class IndexerTest {
         {
             Record record = repository.newRecord();
             record.setRecordType("RecordType1", null);
-            record.setField(fieldType1Name, "pear");
+            record.setField(fieldType1.getName(), "pear");
             record = repository.create(record);
             // be lazy and don't send an event for this create
 
             Record record2 = repository.newRecord();
             record2.setRecordType("RecordType1", null);
-            record2.setField(linkFieldName, record.getId());
+            record2.setField(linkFieldType.getName(), record.getId());
             record2 = repository.create(record2);
 
             // Generate queue message
@@ -202,13 +230,13 @@ public class IndexerTest {
         {
             Record masterRecord = repository.newRecord();
             masterRecord.setRecordType("RecordType1", null);
-            masterRecord.setField(fieldType1Name, "yellow");
+            masterRecord.setField(fieldType1.getName(), "yellow");
             masterRecord = repository.create(masterRecord);
 
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
             Record var1Record = repository.newRecord(var1Id);
             var1Record.setRecordType("RecordType1", null);
-            var1Record.setField(fieldType1Name, "green");
+            var1Record.setField(fieldType1.getName(), "green");
             repository.create(var1Record);
 
             sendEvent(EVENT_RECORD_CREATED, var1Id, fieldType2.getId());
@@ -219,7 +247,7 @@ public class IndexerTest {
             RecordId var2Id = idGenerator.newRecordId(masterRecord.getId(), varProps);
             Record var2Record = repository.newRecord(var2Id);
             var2Record.setRecordType("RecordType1", null);
-            var2Record.setField(fieldType2Name, "blue");
+            var2Record.setField(fieldType2.getName(), "blue");
             repository.create(var2Record);
 
             sendEvent(EVENT_RECORD_CREATED, var2Id, fieldType2.getId());
@@ -238,15 +266,15 @@ public class IndexerTest {
         {
             Record record1 = repository.newRecord(idGenerator.newRecordId("boe"));
             record1.setRecordType("RecordType1", null);
-            record1.setField(fieldType1Name, "cumcumber");
+            record1.setField(fieldType1.getName(), "cumcumber");
             record1 = repository.create(record1);
             sendEvent(EVENT_RECORD_CREATED, record1.getId(), fieldType1.getId());
 
             // Create a record which will contain denormalized data through linking
             Record record2 = repository.newRecord();
             record2.setRecordType("RecordType1", null);
-            record2.setField(linkFieldName, record1.getId());
-            record2.setField(fieldType1Name, "mushroom");
+            record2.setField(linkFieldType.getName(), record1.getId());
+            record2.setField(fieldType1.getName(), "mushroom");
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), linkFieldType.getId(), fieldType1.getId());
 
@@ -254,7 +282,7 @@ public class IndexerTest {
             RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
             Record record3 = repository.newRecord(record3Id);
             record3.setRecordType("RecordType1", null);
-            record3.setField(fieldType1Name, "eggplant");
+            record3.setField(fieldType1.getName(), "eggplant");
             record3 = repository.create(record3);
             sendEvent(EVENT_RECORD_CREATED, record3.getId(), fieldType1.getId());
 
@@ -265,7 +293,7 @@ public class IndexerTest {
             RecordId record4Id = idGenerator.newRecordId(record1.getId(), varprops);
             Record record4 = repository.newRecord(record4Id);
             record4.setRecordType("RecordType1", null);
-            record4.setField(fieldType1Name, "broccoli");
+            record4.setField(fieldType1.getName(), "broccoli");
             record4 = repository.create(record4);
             sendEvent(EVENT_RECORD_CREATED, record4.getId(), fieldType1.getId());
             solrServer.commit(true, true);
@@ -275,7 +303,7 @@ public class IndexerTest {
             verifyResultCount("dereffield3:cumcumber", 2);
 
             // Update record1, check if index of the others is updated
-            record1.setField(fieldType1Name, "tomato");
+            record1.setField(fieldType1.getName(), "tomato");
             record1 = repository.update(record1);
 
             // Generate queue message
@@ -291,7 +319,7 @@ public class IndexerTest {
             verifyResultCount("dereffield4:eggplant", 1);
 
             // Update record3, index for record4 should be updated
-            record3.setField(fieldType1Name, "courgette");
+            record3.setField(fieldType1.getName(), "courgette");
             repository.update(record3);
             sendEvent(EVENT_RECORD_UPDATED, record3.getId(), fieldType1.getId());
             solrServer.commit(true, true);
@@ -335,28 +363,6 @@ public class IndexerTest {
 
     @Test
     public void testIndexerWithVersioning() throws Exception {
-        // Create a record type
-        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
-        ValueType linkValueType = typeManager.getValueType("LINK", false, false);
-
-        QName fieldType1Name = new QName("org.lilycms.indexer.test.2", "field1");
-        FieldType fieldType1 = typeManager.newFieldType(stringValueType, fieldType1Name, Scope.VERSIONED);
-        fieldType1 = typeManager.createFieldType(fieldType1);
-
-        QName linkFieldName = new QName("org.lilycms.indexer.test.2", "linkfield");
-        FieldType linkFieldType = typeManager.newFieldType(linkValueType, linkFieldName, Scope.VERSIONED);
-        linkFieldType = typeManager.createFieldType(linkFieldType);
-
-        ValueType longValueType = typeManager.getValueType("LONG", false, false);
-        QName liveTagName = new QName(VersionTag.NS_VTAG, "live");
-        FieldType liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
-        liveTag = typeManager.createFieldType(liveTag);
-
-        RecordType recordType = typeManager.newRecordType("RecordType2");
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
-        recordType = typeManager.createRecordType(recordType);
 
 
         //
@@ -366,8 +372,8 @@ public class IndexerTest {
             // Create a record
             Record record = repository.newRecord();
             record.setRecordType("RecordType2", null);
-            record.setField(fieldType1Name, "apple");
-            record.setField(liveTagName, new Long(1));
+            record.setField(fieldType3.getName(), "apple");
+            record.setField(liveTag.getName(), new Long(1));
             record = repository.create(record);
 
             // Generate queue message
@@ -375,7 +381,7 @@ public class IndexerTest {
             solrServer.commit(true, true);
 
             // TODO this runs when running this test method individually, but not when running the complete IndexTest
-//            // Verify the index was updated
+//            // Verify the index was updated                                                                        `
 //            verifyResultCount("field2.1:apple", 1);
 //
 //            // Update the record, this will create a new version, but we leave the live version tag pointing to version 1

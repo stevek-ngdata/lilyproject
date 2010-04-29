@@ -50,9 +50,9 @@
       </value>
     </indexField>
 
-    <indexField name="field2.1">
+    <indexField name="field3">
       <value>
-        <field name="ns2:field1"/>
+        <field name="ns2:field3"/>
       </value>
     </indexField>
 

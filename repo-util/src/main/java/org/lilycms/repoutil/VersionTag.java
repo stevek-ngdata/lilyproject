@@ -21,6 +21,10 @@ public class VersionTag {
      */
     public static final String VERSIONLESS_TAG = "@@versionless";
 
+    public static QName qname(String vtag) {
+        return new QName(NS_VTAG, vtag);
+    }
+
     /**
      * Returns the vtags of a record, the key in the map is the field type ID of the vtag field, not its name.
      *
@@ -36,6 +40,35 @@ public class VersionTag {
             } catch (FieldTypeNotFoundException e) {
                 // A field whose field type does not exist: skip it
                 // TODO would be better to do above retrieval based on ID?
+                continue;
+            }
+
+            if (isVersionTag(fieldType)) {
+                vtags.put(fieldType.getId(), (Long)field.getValue());
+            }
+        }
+
+        return vtags;
+    }
+
+    /**
+     * Returns the vtags of a record, the key in the map is the field type ID of the vtag field, not its name.
+     *
+     * <p>Note that version numbers do not necessarily correspond to existing versions.
+     */
+    public static Map<String, Long> getTagsById(IdRecord record, TypeManager typeManager) {
+        Map<String, Long> vtags = new HashMap<String, Long>();
+
+        for (Map.Entry<String, Object> field : record.getFieldsById().entrySet()) {
+            FieldType fieldType;
+            try {
+                fieldType = typeManager.getFieldTypeById(field.getKey());
+            } catch (FieldTypeNotFoundException e) {
+                // A field whose field type does not exist: skip it
+                continue;
+            } catch (Exception e) {
+                // Other problem loading field type: skip it
+                // TODO log this also as an error
                 continue;
             }
 
@@ -84,7 +117,8 @@ public class VersionTag {
     }
 
     /**
-     * Inverts a map containing version by tag to a map containing tags by version.
+     * Inverts a map containing version by tag to a map containing tags by version. It does not matter if the
+     * tags are identified by name or by ID.
      */
     public static Map<Long, Set<String>> tagsByVersion(Map<String, Long> vtags) {
         Map<Long, Set<String>> result = new HashMap<Long, Set<String>>();
@@ -188,5 +222,25 @@ public class VersionTag {
     public static Record getRecord(RecordId recordId, String vtag, Repository repository)
             throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
         return getRecord(recordId, vtag, repository, null);
+    }
+
+    public static IdRecord getIdRecord(RecordId recordId, String vtag, Repository repository)
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+        return getIdRecord(recordId, vtag, repository, null);
+    }
+
+    public static IdRecord getIdRecord(RecordId recordId, String vtag, Repository repository, List<String> fieldIds)
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+        if (vtag.equals(VersionTag.VERSIONLESS_TAG)) {
+            // TODO this should include an option to only read non-versioned-scoped data
+            return repository.readWithIds(recordId, null);
+        } else {
+            Long version = getVersion(recordId, vtag, repository);
+            if (version == null) {
+                return null;
+            }
+
+            return repository.readWithIds(recordId, version); // TODO , fieldIds);
+        }
     }
 }

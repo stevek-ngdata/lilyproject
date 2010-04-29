@@ -51,6 +51,9 @@ public class IndexCase {
         return true;
     }
 
+    /**
+     * Version tags identified by ID.
+     */
     public Set<String> getVersionTags() {
         return vtags;
     }

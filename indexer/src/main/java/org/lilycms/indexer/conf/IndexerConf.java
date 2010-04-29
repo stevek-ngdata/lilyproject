@@ -1,7 +1,5 @@
 package org.lilycms.indexer.conf;
 
-import org.lilycms.repository.api.QName;
-
 import java.util.*;
 
 // TODO for safety should consider making some of the returned lists immutable
@@ -9,13 +7,15 @@ import java.util.*;
 /**
  * The configuration for the indexer, describes how record types should be mapped
  * onto index documents.
+ *
+ * <p>Fields and vtags are identified by ID in this object model.
  */
 public class IndexerConf {
     private List<IndexCase> indexCases = new ArrayList<IndexCase>();
     private List<IndexField> indexFields = new ArrayList<IndexField>();
-    private Set<QName> repoFieldDependencies = new HashSet<QName>();
+    private Set<String> repoFieldDependencies = new HashSet<String>();
     private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
-    private Map<QName, List<IndexField>> derefIndexFieldsByField = new HashMap<QName, List<IndexField>>();
+    private Map<String, List<IndexField>> derefIndexFieldsByField = new HashMap<String, List<IndexField>>();
     private Set<String> vtags = new HashSet<String>();
 
     protected void addIndexCase(IndexCase indexCase) {
@@ -43,18 +43,18 @@ public class IndexerConf {
     protected void addIndexField(IndexField indexField) {
         indexFields.add(indexField);
 
-        QName fieldDep = indexField.getValue().getFieldDependency();
+        String fieldDep = indexField.getValue().getFieldDependency();
         if (fieldDep != null)
             repoFieldDependencies.add(fieldDep);
 
         if (indexField.getValue() instanceof DerefValue) {
             derefIndexFields.add(indexField);
 
-            QName fieldName = ((DerefValue)indexField.getValue()).getTargetField();
-            List<IndexField> fields = derefIndexFieldsByField.get(fieldName);
+            String fieldId = ((DerefValue)indexField.getValue()).getTargetField();
+            List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
             if (fields == null) {
                 fields = new ArrayList<IndexField>();
-                derefIndexFieldsByField.put(fieldName, fields);
+                derefIndexFieldsByField.put(fieldId, fields);
             }
             fields.add(indexField);
         }
@@ -63,8 +63,8 @@ public class IndexerConf {
     /**
      * Checks if the supplied field type is used by one of the indexField's.
      */
-    public boolean isIndexFieldDependency(QName fieldTypeName) {
-        return repoFieldDependencies.contains(fieldTypeName);
+    public boolean isIndexFieldDependency(String fieldTypeId) {
+        return repoFieldDependencies.contains(fieldTypeId);
     }
 
     /**
@@ -75,10 +75,10 @@ public class IndexerConf {
     }
 
     /**
-     * Returns all IndexFields which have a DerefValue pointing to the given field name, or null if there are none.
+     * Returns all IndexFields which have a DerefValue pointing to the given field id, or null if there are none.
      */
-    public List<IndexField> getDerefIndexFields(QName fieldName) {
-        List<IndexField> result = derefIndexFieldsByField.get(fieldName);
+    public List<IndexField> getDerefIndexFields(String fieldId) {
+        List<IndexField> result = derefIndexFieldsByField.get(fieldId);
         return result == null ? Collections.<IndexField>emptyList() : result;
     }
 

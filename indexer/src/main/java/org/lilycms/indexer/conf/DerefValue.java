@@ -7,14 +7,14 @@ import java.util.*;
 
 public class DerefValue implements Value {
     private List<Follow> follows = new ArrayList<Follow>();
-    private QName fieldName;
+    private String fieldId;
 
-    protected DerefValue(QName fieldName) {
-        this.fieldName = fieldName;
+    protected DerefValue(String fieldId) {
+        this.fieldId = fieldId;
     }
 
-    protected void addFieldFollow(QName fieldName) {
-        follows.add(new FieldFollow(fieldName));
+    protected void addFieldFollow(String fieldId) {
+        follows.add(new FieldFollow(fieldId));
     }
 
     protected void addMasterFollow() {
@@ -33,34 +33,34 @@ public class DerefValue implements Value {
      * Returns the field taken from the document to which the follow-expressions point, thus the last
      * field in the chain.
      */
-    public QName getTargetField() {
-        return fieldName;
+    public String getTargetField() {
+        return fieldId;
     }
 
     public static interface Follow {
-        List<Record> eval(Record record, Repository repository, String vtag);
+        List<IdRecord> eval(IdRecord record, Repository repository, String vtag);
     }
 
     public static class FieldFollow implements Follow {
-        QName fieldName;
+        String fieldId;
 
-        public FieldFollow(QName fieldName) {
-            this.fieldName = fieldName;
+        public FieldFollow(String fieldId) {
+            this.fieldId = fieldId;
         }
 
-        public List<Record> eval(Record record, Repository repository, String vtag) {
-            if (!record.hasField(fieldName))
+        public List<IdRecord> eval(IdRecord record, Repository repository, String vtag) {
+            if (!record.hasField(fieldId))
                 return null;
 
-            Object value = record.getField(fieldName);
+            Object value = record.getField(fieldId);
             if (value instanceof RecordId) {
-                Record linkedRecord = resolveRecordId((RecordId)value, vtag, repository);
+                IdRecord linkedRecord = resolveRecordId((RecordId)value, vtag, repository);
                 return linkedRecord == null ? null : Collections.singletonList(linkedRecord);
             } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof RecordId) {
                 List list = (List)value;
-                List<Record> result = new ArrayList<Record>(list.size());
+                List<IdRecord> result = new ArrayList<IdRecord>(list.size());
                 for (Object recordId : list) {
-                    Record linkedRecord = resolveRecordId((RecordId)recordId, vtag, repository);
+                    IdRecord linkedRecord = resolveRecordId((RecordId)recordId, vtag, repository);
                     if (linkedRecord != null) {
                         result.add(linkedRecord);
                     }
@@ -70,14 +70,14 @@ public class DerefValue implements Value {
             return null;
         }
 
-        public QName getFieldName() {
-            return fieldName;
+        public String getFieldId() {
+            return fieldId;
         }
 
-        private Record resolveRecordId(RecordId recordId, String vtag, Repository repository) {
+        private IdRecord resolveRecordId(RecordId recordId, String vtag, Repository repository) {
             try {
                 // TODO we could limit this to only load the field necessary for the next follow
-                return VersionTag.getRecord(recordId, vtag, repository);
+                return VersionTag.getIdRecord(recordId, vtag, repository);
             } catch (Exception e) {
                 return null;
             }
@@ -85,14 +85,14 @@ public class DerefValue implements Value {
     }
 
     public static class MasterFollow implements Follow {
-        public List<Record> eval(Record record, Repository repository, String vtag) {
+        public List<IdRecord> eval(IdRecord record, Repository repository, String vtag) {
             if (record.getId().isMaster())
                 return null;
 
             RecordId masterId = record.getId().getMaster();
 
             try {
-                Record master = VersionTag.getRecord(masterId, vtag, repository);
+                IdRecord master = VersionTag.getIdRecord(masterId, vtag, repository);
                 return master == null ? null : Collections.singletonList(master);
             } catch (Exception e) {
                 return null;
@@ -107,7 +107,7 @@ public class DerefValue implements Value {
             this.dimensions = dimensions;
         }
 
-        public List<Record> eval(Record record, Repository repository, String vtag) {
+        public List<IdRecord> eval(IdRecord record, Repository repository, String vtag) {
             RecordId recordId = record.getId();
 
             Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
@@ -122,7 +122,7 @@ public class DerefValue implements Value {
             RecordId resolvedRecordId = repository.getIdGenerator().newRecordId(recordId.getMaster(), varProps);
 
             try {
-                Record lessDimensionedRecord = VersionTag.getRecord(resolvedRecordId, vtag, repository);
+                IdRecord lessDimensionedRecord = VersionTag.getIdRecord(resolvedRecordId, vtag, repository);
                 return lessDimensionedRecord == null ? null : Collections.singletonList(lessDimensionedRecord);
             } catch (Exception e) {
                 return null;
@@ -134,15 +134,15 @@ public class DerefValue implements Value {
         }
     }
 
-    public List<String> eval(Record record, Repository repository, String vtag) {
-        List<Record> records = new ArrayList<Record>();
+    public List<String> eval(IdRecord record, Repository repository, String vtag) {
+        List<IdRecord> records = new ArrayList<IdRecord>();
         records.add(record);
 
         for (Follow follow : follows) {
-            List<Record> linkedRecords = new ArrayList<Record>();
+            List<IdRecord> linkedRecords = new ArrayList<IdRecord>();
 
-            for (Record item : records) {
-                List<Record> evalResult = follow.eval(item, repository, vtag);
+            for (IdRecord item : records) {
+                List<IdRecord> evalResult = follow.eval(item, repository, vtag);
                 if (evalResult != null) {
                     linkedRecords.addAll(evalResult);
                 }
@@ -155,9 +155,9 @@ public class DerefValue implements Value {
             return null;
 
         List<String> result = new ArrayList<String>();
-        for (Record item : records) {
-            if (item.hasField(fieldName)) {
-                Object value = item.getField(fieldName);
+        for (IdRecord item : records) {
+            if (item.hasField(fieldId)) {
+                Object value = item.getField(fieldId);
                 if (value != null) {
                     // TODO formatting of value
                     result.add(value.toString());
@@ -171,9 +171,9 @@ public class DerefValue implements Value {
         return result;
     }
 
-    public QName getFieldDependency() {
+    public String getFieldDependency() {
         if (follows.get(0) instanceof FieldFollow) {
-            return ((FieldFollow)follows.get(0)).fieldName;
+            return ((FieldFollow)follows.get(0)).fieldId;
         } else {
             // A follow-variant is like a link to another document, but the link can never change as the
             // identity of the document never changes. Therefore, there is no dependency on a field.
