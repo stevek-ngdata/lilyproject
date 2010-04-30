@@ -92,7 +92,7 @@ public class Indexer {
 
     private void handleRecordCreateUpdate(QueueMessage msg) throws Exception {
         RecordEvent event = new RecordEvent(msg.getType(), msg.getData());
-        IdRecord record = repository.readWithIds(msg.getRecordId(), null);
+        IdRecord record = repository.readWithIds(msg.getRecordId(), null, null);
 
         // Read the vtags of the record. Note that while this algorithm is running, the record can meanwhile
         // undergo changes. However, we continuously work with the snapshot of the vtags mappings read here.
@@ -224,7 +224,7 @@ public class Indexer {
         for (Map.Entry<Long, Set<String>> entry : vtagsToIndexByVersion.entrySet()) {
             IdRecord version = null;
             try {
-                version = repository.readWithIds(recordId, entry.getKey());
+                version = repository.readWithIds(recordId, entry.getKey(), null);
             } catch (RecordNotFoundException e) {
                 // TODO handle this differently from version not found
             }
@@ -460,6 +460,11 @@ public class Indexer {
         }
 
 
+        if (log.isDebugEnabled()) {
+            log.debug("Number of records (times vtags) for which to update denormalized data: " + referrersVTags.size());
+        }
+
+
         //
         // Now re-index all the found referrers
         //
@@ -479,7 +484,7 @@ public class Indexer {
                 //     - For each tag: retrieve record + index
                 //           note that we don't know if the tags exist
                 // TODO optimize this: we are only interested to know the vtags and to know if the record has versions
-                record = repository.readWithIds(referrer, null);
+                record = repository.readWithIds(referrer, null, null);
             } catch (Exception e) {
                 // TODO handle this
                 e.printStackTrace();

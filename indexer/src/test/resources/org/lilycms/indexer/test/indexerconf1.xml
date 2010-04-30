@@ -2,57 +2,99 @@
 <indexer>
 
   <cases>
-    <case recordType="RecordType1" variant="*" vtags="live" indexVersionless="true"/>
-    <case recordType="RecordType2" variant="*" vtags="live,preview,last" indexVersionless="true"/>
+    <case recordType="NVRecordType1" variant="*" vtags="live" indexVersionless="true"/>
+    <case recordType="VRecordType1" variant="*" vtags="live,preview,last" indexVersionless="true"/>
   </cases>
 
   <indexFields xmlns:ns="org.lilycms.indexer.test" xmlns:ns2="org.lilycms.indexer.test.2">
 
-    <indexField name="field1">
+    <!--
+       | These fields are about non-verioned things (nv_ prefix)
+       -->
+    <indexField name="nv_field1">
       <value>
-        <field name="ns:field1"/>
+        <field name="ns:nv_field1"/>
       </value>
     </indexField>
 
-    <indexField name="dereffield1">
+    <indexField name="nv_deref1">
       <value>
         <deref>
-          <follow field="ns:linkfield"/>
-          <field name="ns:field1"/>
+          <follow field="ns:nv_linkfield1"/>
+          <field name="ns:nv_field1"/>
         </deref>
       </value>
     </indexField>
 
-    <indexField name="dereffield2">
+    <indexField name="nv_deref2">
       <value>
         <deref>
           <follow variant="-lang,-branch"/>
-          <field name="ns:field1"/>
+          <field name="ns:nv_field1"/>
         </deref>
       </value>
     </indexField>
 
-    <indexField name="dereffield3">
+    <indexField name="nv_deref3">
       <value>
         <deref>
           <follow variant="master"/>
-          <field name="ns:field1"/>
+          <field name="ns:nv_field1"/>
         </deref>
       </value>
     </indexField>
 
-    <indexField name="dereffield4">
+    <indexField name="nv_deref4">
       <value>
         <deref>
           <follow variant="-branch"/>
-          <field name="ns:field1"/>
+          <field name="ns:nv_field1"/>
         </deref>
       </value>
     </indexField>
 
-    <indexField name="field3">
+    <!--
+       | These fields are about verioned things (v_ prefix)
+       -->
+    <indexField name="v_field1">
       <value>
-        <field name="ns2:field3"/>
+        <field name="ns2:v_field1"/>
+      </value>
+    </indexField>
+
+    <indexField name="v_deref1">
+      <value>
+        <deref>
+          <follow field="ns2:v_linkfield1"/>
+          <field name="ns2:v_field1"/>
+        </deref>
+      </value>
+    </indexField>
+
+    <indexField name="v_deref2">
+      <value>
+        <deref>
+          <follow variant="-lang,-branch"/>
+          <field name="ns2:v_field1"/>
+        </deref>
+      </value>
+    </indexField>
+
+    <indexField name="v_deref3">
+      <value>
+        <deref>
+          <follow variant="master"/>
+          <field name="ns2:v_field1"/>
+        </deref>
+      </value>
+    </indexField>
+
+    <indexField name="v_deref4">
+      <value>
+        <deref>
+          <follow variant="-branch"/>
+          <field name="ns2:v_field1"/>
+        </deref>
       </value>
     </indexField>
 

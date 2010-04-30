@@ -41,18 +41,22 @@
 
 
  <fields>
-   <field name="@@key" type="string" indexed="true" stored="true" required="true" />
-   <field name="@@id" type="string" indexed="true" stored="true" required="true" />
-   <field name="@@vtag" type="string" indexed="true" stored="true" required="true" />
-   <field name="@@versionless" type="string" indexed="true" stored="true" required="false" />
+   <field name="@@key" type="string" indexed="true" stored="true" required="true"/>
+   <field name="@@id" type="string" indexed="true" stored="true" required="true"/>
+   <field name="@@vtag" type="string" indexed="true" stored="true" required="true"/>
+   <field name="@@versionless" type="string" indexed="true" stored="true" required="false"/>
 
-   <field name="field1" type="text" indexed="true" stored="true" required="false" />
-   <field name="dereffield1" type="text" indexed="true" stored="true" required="false" />
-   <field name="dereffield2" type="text" indexed="true" stored="true" required="false" />
-   <field name="dereffield3" type="text" indexed="true" stored="true" required="false" />
-   <field name="dereffield4" type="text" indexed="true" stored="true" required="false" />
+   <field name="nv_field1" type="text" indexed="true" stored="true" required="false"/>
+   <field name="nv_deref1" type="text" indexed="true" stored="true" required="false"/>
+   <field name="nv_deref2" type="text" indexed="true" stored="true" required="false"/>
+   <field name="nv_deref3" type="text" indexed="true" stored="true" required="false"/>
+   <field name="nv_deref4" type="text" indexed="true" stored="true" required="false"/>
 
-   <field name="field3" type="text" indexed="true" stored="true" required="false" />
+   <field name="v_field1" type="text" indexed="true" stored="true" required="false"/>
+   <field name="v_deref1" type="text" indexed="true" stored="true" required="false"/>
+   <field name="v_deref2" type="text" indexed="true" stored="true" required="false"/>
+   <field name="v_deref3" type="text" indexed="true" stored="true" required="false"/>
+   <field name="v_deref4" type="text" indexed="true" stored="true" required="false"/>
  </fields>
 
  <!-- Field to use to determine and enforce document uniqueness.
@@ -61,7 +65,7 @@
  <uniqueKey>@@key</uniqueKey>
 
  <!-- field for the QueryParser to use when an explicit fieldname is absent -->
- <defaultSearchField>field1</defaultSearchField>
+ <defaultSearchField>nv_field1</defaultSearchField>
 
  <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
  <solrQueryParser defaultOperator="OR"/>

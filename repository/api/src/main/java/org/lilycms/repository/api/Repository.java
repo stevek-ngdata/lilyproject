@@ -125,10 +125,11 @@ public interface Repository {
      *
      * <p>See {@IdRecord} for more information.
      *
-     * @param version optional, can be null
+     * @param version version to load. Optional, can be null.
+     * @param fieldIds load only the fields with these ids. optional, can be null.
      */
-    IdRecord readWithIds(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException;
+    IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
     /**
      * Delete a {@link Record} from the repository.

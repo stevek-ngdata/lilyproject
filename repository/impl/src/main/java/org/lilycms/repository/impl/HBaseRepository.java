@@ -453,13 +453,31 @@ public class HBaseRepository implements Repository {
     public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
                     RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
         ReadContext readContext = new ReadContext(false);
-        return read(recordId, version, fieldNames, readContext);
+
+        List<FieldType> fields = null;
+        if (fieldNames != null) {
+            fields = new ArrayList<FieldType>();
+            for (QName fieldName : fieldNames) {
+                fields.add(typeManager.getFieldTypeByName(fieldName));
+            }
+        }
+
+        return read(recordId, version, fields, readContext);
     }
 
-    public IdRecord readWithIds(RecordId recordId, Long version) throws RecordNotFoundException,
+    public IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
         ReadContext readContext = new ReadContext(true);
-        Record record = read(recordId, version, null, readContext);
+
+        List<FieldType> fields = null;
+        if (fieldIds != null) {
+            fields = new ArrayList<FieldType>(fieldIds.size());
+            for (String fieldId : fieldIds) {
+                fields.add(typeManager.getFieldTypeById(fieldId));
+            }
+        }
+
+        Record record = read(recordId, version, fields, readContext);
 
         Map<String, QName> idToQNameMapping = new HashMap<String, QName>();
         for (FieldType fieldType : readContext.getFieldTypes().values()) {
@@ -469,7 +487,7 @@ public class HBaseRepository implements Repository {
         return new IdRecordImpl(record, idToQNameMapping);
     }
 
-    private Record read(RecordId recordId, Long version, List<QName> fieldNames, ReadContext readContext)
+    private Record read(RecordId recordId, Long version, List<FieldType> fields, ReadContext readContext)
             throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
             RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
@@ -481,7 +499,7 @@ public class HBaseRepository implements Repository {
             get.setMaxVersions();
         }
         // Add the columns for the fields to get
-        addFieldsToGet(get, fieldNames);
+        addFieldsToGet(get, fields);
         Result result;
         try {
             if (!recordTable.exists(get)) {
@@ -597,13 +615,12 @@ public class HBaseRepository implements Repository {
         return new Pair<QName, Object>(fieldType.getName(), value);
     }
 
-    private void addFieldsToGet(Get get, List<QName> fieldNames) throws RecordNotFoundException,
+    private void addFieldsToGet(Get get, List<FieldType> fields) throws RecordNotFoundException,
                     FieldTypeNotFoundException, RecordTypeNotFoundException, RepositoryException {
         boolean added = false;
-        if (fieldNames != null) {
-            for (QName fieldName : fieldNames) {
-                FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
-                get.addColumn(columnFamilies.get(fieldType.getScope()), Bytes.toBytes(fieldType.getId()));
+        if (fields != null) {
+            for (FieldType field : fields) {
+                get.addColumn(columnFamilies.get(field.getScope()), Bytes.toBytes(field.getId()));
             }
             added = true;
         }

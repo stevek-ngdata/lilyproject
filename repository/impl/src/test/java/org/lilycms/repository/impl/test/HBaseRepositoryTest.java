@@ -821,7 +821,7 @@ public class HBaseRepositoryTest {
         record.setField(fieldType2.getName(), new Integer(4));
         record = repository.create(record);
 
-        IdRecord idRecord = repository.readWithIds(record.getId(), null);
+        IdRecord idRecord = repository.readWithIds(record.getId(), null, null);
         assertEquals("hello", idRecord.getField(fieldType1.getId()));
         assertTrue(idRecord.hasField(fieldType1.getId()));
         assertEquals(new Integer(4), idRecord.getField(fieldType2.getId()));

@@ -151,7 +151,7 @@ public class LinkIndexUpdater {
             Set<FieldedLink> links;
             IdRecord versionRecord = null;
             try {
-                versionRecord = repository.readWithIds(recordId, version);
+                versionRecord = repository.readWithIds(recordId, version, null);
             } catch (RecordNotFoundException e) {
                 // vtag points to a non-existing record
             }

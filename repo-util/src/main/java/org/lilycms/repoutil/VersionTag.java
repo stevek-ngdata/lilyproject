@@ -166,21 +166,21 @@ public class VersionTag {
      * @return null if the vtag does not exist, if it is not a valid vtag field, if the record does not exist,
      *         or if the record fails to load.
      */
-    public static Long getVersion(RecordId recordId, String vtag, Repository repository) {
-        QName vtagField = new QName(VersionTag.NAMESPACE, vtag);
-
-        Record vtagRecord;
+    public static Long getVersion(RecordId recordId, String vtagId, Repository repository) {
+        IdRecord vtagRecord;
         try {
-            vtagRecord = repository.read(recordId, Collections.singletonList(vtagField));
+            vtagRecord = repository.readWithIds(recordId, null, Collections.singletonList(vtagId));
         } catch (Exception e) {
             return null;
         }
 
-        // TODO this check should be done based on the ID of the field loaded in the record, once that is available (see #7)
         FieldType fieldType;
         try {
-            fieldType = repository.getTypeManager().getFieldTypeByName(vtagField);
+            fieldType = repository.getTypeManager().getFieldTypeById(vtagId);
         } catch (FieldTypeNotFoundException e) {
+            return null;
+        } catch (RepositoryException e) {
+            // TODO log this? or throw it?
             return null;
         }
 
@@ -188,10 +188,10 @@ public class VersionTag {
             return null;
         }
 
-        if (!vtagRecord.hasField(vtagField))
+        if (!vtagRecord.hasField(vtagId))
             return null;
 
-        return (Long)vtagRecord.getField(vtagField);
+        return (Long)vtagRecord.getField(vtagId);
     }
 
     /**
@@ -201,13 +201,13 @@ public class VersionTag {
      *
      * <p>The @@versionless version tag is supported.
      */
-    public static Record getRecord(RecordId recordId, String vtag, Repository repository, List<QName> fieldNames)
+    public static Record getRecord(RecordId recordId, String vtagId, Repository repository, List<QName> fieldNames)
             throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
-        if (vtag.equals(VersionTag.VERSIONLESS_TAG)) {
+        if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
             // TODO this should include an option to only read non-versioned-scoped data
             return repository.read(recordId);
         } else {
-            Long version = getVersion(recordId, vtag, repository);
+            Long version = getVersion(recordId, vtagId, repository);
             if (version == null) {
                 return null;
             }
@@ -219,28 +219,28 @@ public class VersionTag {
     /**
      * See {@link #getRecord(org.lilycms.repository.api.RecordId, String, org.lilycms.repository.api.Repository, java.util.List)}.
      */
-    public static Record getRecord(RecordId recordId, String vtag, Repository repository)
+    public static Record getRecord(RecordId recordId, String vtagId, Repository repository)
             throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
-        return getRecord(recordId, vtag, repository, null);
+        return getRecord(recordId, vtagId, repository, null);
     }
 
-    public static IdRecord getIdRecord(RecordId recordId, String vtag, Repository repository)
+    public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository)
             throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
-        return getIdRecord(recordId, vtag, repository, null);
+        return getIdRecord(recordId, vtagId, repository, null);
     }
 
-    public static IdRecord getIdRecord(RecordId recordId, String vtag, Repository repository, List<String> fieldIds)
+    public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository, List<String> fieldIds)
             throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
-        if (vtag.equals(VersionTag.VERSIONLESS_TAG)) {
+        if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
             // TODO this should include an option to only read non-versioned-scoped data
-            return repository.readWithIds(recordId, null);
+            return repository.readWithIds(recordId, null, null);
         } else {
-            Long version = getVersion(recordId, vtag, repository);
+            Long version = getVersion(recordId, vtagId, repository);
             if (version == null) {
                 return null;
             }
 
-            return repository.readWithIds(recordId, version); // TODO , fieldIds);
+            return repository.readWithIds(recordId, version, fieldIds);
         }
     }
 }
