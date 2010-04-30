@@ -127,8 +127,8 @@ public class LinkIndexUpdater {
                                 // links corresponding to it
                                 linkIndex.deleteLinks(msg.getRecordId(), vtag);
                                 if (log.isDebugEnabled()) {
-                                    log.debug(String.format("Record %1$s, vtag %2$s (%3$s) : deleted extracted links",
-                                            record.getId(), vtag, safeLoadTagName(vtag)));
+                                    log.debug(String.format("Record %1$s, vtag %2$s : deleted extracted links",
+                                            record.getId(), safeLoadTagName(vtag)));
                                 }
                             } else {
                                 // Since one version might have multiple vtags, we keep a little cache to avoid
@@ -143,8 +143,8 @@ public class LinkIndexUpdater {
                                 }
                                 linkIndex.updateLinks(msg.getRecordId(), vtag, links);
                                 if (log.isDebugEnabled()) {
-                                    log.debug(String.format("Record %1$s, vtag %2$s (%3$s) : extracted links count : %4$s",
-                                            record.getId(), vtag, safeLoadTagName(vtag), links.size()));
+                                    log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
+                                            record.getId(), safeLoadTagName(vtag), links.size()));
                                 }
                             }
                         }
@@ -209,7 +209,15 @@ public class LinkIndexUpdater {
         return false;
     }
 
+    /**
+     * Lookup name of field type, for use in debug logs. Beware, this might be slow.
+     */
     private String safeLoadTagName(String fieldTypeId) {
+        if (fieldTypeId == null)
+            return "null";
+        if (fieldTypeId.equals(VersionTag.VERSIONLESS_TAG))
+            return fieldTypeId;
+
         try {
             return typeManager.getFieldTypeById(fieldTypeId).getName().getName();
         } catch (Throwable t) {

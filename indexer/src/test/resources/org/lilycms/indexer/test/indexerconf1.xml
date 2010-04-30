@@ -98,6 +98,15 @@
       </value>
     </indexField>
 
+    <indexField name="nv_v_deref">
+      <value>
+        <deref>
+          <follow field="ns:nv_linkfield2"/>
+          <field name="ns2:v_field1"/>
+        </deref>
+      </value>
+    </indexField>
+
   </indexFields>
 
 </indexer>

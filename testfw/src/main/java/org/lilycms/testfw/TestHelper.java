@@ -61,7 +61,7 @@ public class TestHelper {
         //
         // Add a console appender to show ERROR level errors on the console
         //
-        final String CONSOLE_LAYOUT = "%-5p [%-10.10t][%30.30c] - %m%n";
+        final String CONSOLE_LAYOUT = "[%-5p][%-10.10t][%30.30c] %m%n";
 
         ConsoleAppender consoleAppender = new ConsoleAppender();
         consoleAppender.setLayout(new PatternLayout(CONSOLE_LAYOUT));

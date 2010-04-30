@@ -3,6 +3,8 @@ package org.lilycms.indexer.test;
 import static org.junit.Assert.assertEquals;
 import static org.lilycms.repoutil.EventType.*;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -10,6 +12,7 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
+import org.apache.solr.common.SolrDocument;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,6 +31,7 @@ import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,9 +56,12 @@ public class IndexerTest {
     private static FieldType nvfield1;
     private static FieldType nvfield2;
     private static FieldType nvLinkField1;
+    private static FieldType nvLinkField2;
 
     private static FieldType vfield1;
     private static FieldType vLinkField1;
+
+    private Log log = LogFactory.getLog(getClass());
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -131,10 +138,17 @@ public class IndexerTest {
         nvLinkField1 = typeManager.newFieldType(linkValueType, linkField1Name, Scope.NON_VERSIONED);
         nvLinkField1 = typeManager.createFieldType(nvLinkField1);
 
+        QName linkField2Name = new QName("org.lilycms.indexer.test", "nv_linkfield2");
+        nvLinkField2 = typeManager.newFieldType(linkValueType, linkField2Name, Scope.NON_VERSIONED);
+        nvLinkField2 = typeManager.createFieldType(nvLinkField2);
+
         RecordType nvRecordType1 = typeManager.newRecordType("NVRecordType1");
         nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvfield1.getId(), false));
         nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
+        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(lastTag.getId(), false));
+        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(previewTag.getId(), false));
         nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvLinkField1.getId(), false));
+        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvLinkField2.getId(), false));
         nvRecordType1 = typeManager.createRecordType(nvRecordType1);
 
         //
@@ -149,10 +163,12 @@ public class IndexerTest {
         vLinkField1 = typeManager.createFieldType(vLinkField1);
 
         RecordType vRecordType1 = typeManager.newRecordType("VRecordType1");
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvfield1.getId(), false));
+        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(vfield1.getId(), false));
         vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
+        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(lastTag.getId(), false));
         vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(previewTag.getId(), false));
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvLinkField1.getId(), false));
+        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(vLinkField1.getId(), false));
+        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvLinkField2.getId(), false));
         vRecordType1 = typeManager.createRecordType(vRecordType1);
     }
 
@@ -171,7 +187,6 @@ public class IndexerTest {
 
             // Generate queue message
             sendEvent(EVENT_RECORD_CREATED, record.getId(), nvfield1.getId());
-            solrServer.commit(true, true);
 
             // Verify the index was updated
             verifyResultCount("nv_field1:apple", 1);
@@ -181,7 +196,6 @@ public class IndexerTest {
             repository.update(record);
 
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), nvfield1.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
@@ -189,7 +203,6 @@ public class IndexerTest {
             // Do as if field2 changed, while field2 is not present in the document.
             // Such situations can occur if the record is modified before earlier events are processed.
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), nvfield2.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
@@ -200,7 +213,6 @@ public class IndexerTest {
             repository.update(record);
 
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
@@ -209,7 +221,6 @@ public class IndexerTest {
             repository.delete(record.getId());
 
             sendEvent(EVENT_RECORD_DELETED, record.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_field1:pear", 0);
         }
@@ -229,8 +240,6 @@ public class IndexerTest {
             record2.setField(nvLinkField1.getName(), record1.getId());
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField1.getId());
-
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref1:pear", 1);
         }
@@ -262,8 +271,6 @@ public class IndexerTest {
             var2Record.setField(nvfield2.getName(), "blue");
             repository.create(var2Record);
             sendEvent(EVENT_RECORD_CREATED, var2Id, nvfield2.getId());
-
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref2:yellow", 1);
             verifyResultCount("nv_deref3:yellow", 2);
@@ -307,7 +314,6 @@ public class IndexerTest {
             record4.setField(nvfield1.getName(), "broccoli");
             record4 = repository.create(record4);
             sendEvent(EVENT_RECORD_CREATED, record4.getId(), nvfield1.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref1:cumcumber", 1);
             verifyResultCount("nv_deref2:cumcumber", 1);
@@ -319,7 +325,6 @@ public class IndexerTest {
 
             // Generate queue message
             sendEvent(EVENT_RECORD_UPDATED, record1.getId(), nvfield1.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref1:tomato", 1);
             verifyResultCount("nv_deref2:tomato", 1);
@@ -333,7 +338,6 @@ public class IndexerTest {
             record3.setField(nvfield1.getName(), "courgette");
             repository.update(record3);
             sendEvent(EVENT_RECORD_UPDATED, record3.getId(), nvfield1.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref4:courgette", 1);
             verifyResultCount("nv_deref4:eggplant", 0);
@@ -342,7 +346,6 @@ public class IndexerTest {
             verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 1);
             repository.delete(record3.getId());
             sendEvent(EVENT_RECORD_DELETED, record3.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref4:courgette", 0);
             verifyResultCount("nv_deref3:tomato", 1);
@@ -352,7 +355,6 @@ public class IndexerTest {
             // records while there are variants)
             repository.delete(record4.getId());
             sendEvent(EVENT_RECORD_DELETED, record4.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref3:tomato", 0);
             verifyResultCount("nv_field1:broccoli", 0);
@@ -361,7 +363,6 @@ public class IndexerTest {
             // Delete record 1: index of record 2 should be updated
             repository.delete(record1.getId());
             sendEvent(EVENT_RECORD_DELETED, record1.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("nv_deref1:tomato", 0);
             verifyResultCount("nv_field1:mushroom", 1);
@@ -374,6 +375,7 @@ public class IndexerTest {
         // Basic create-update-delete
         //
         {
+            log.debug("Begin test V1");
             // Create a record
             Record record = repository.newRecord();
             record.setRecordType("VRecordType1", null);
@@ -383,45 +385,44 @@ public class IndexerTest {
 
             // Generate queue message
             sendEvent(EVENT_RECORD_CREATED, record.getId(), 1L, null, nvfield1.getId(), liveTag.getId());
-            solrServer.commit(true, true);
 
             // Verify the index was updated                                                                        `
             verifyResultCount("v_field1:apple", 1);
 
             // Update the record, this will create a new version, but we leave the live version tag pointing to version 1
+            log.debug("Begin test V2");
             record.setField(vfield1.getName(), "pear");
             repository.update(record);
 
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), 2L, null, nvfield1.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("v_field1:pear", 0);
             verifyResultCount("v_field1:apple", 1);
 
             // Now move the live version tag to point to version 2
+            log.debug("Begin test V3");
             record.setField(liveTag.getName(), new Long(2));
             record = repository.update(record);
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("v_field1:pear", 1);
             verifyResultCount("v_field1:apple", 0);
 
             // Now remove the live version tag
+            log.debug("Begin test V4");
             record.delete(liveTag.getName(), true);
             record = repository.update(record);
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("v_field1:pear", 0);
 
             // Now test with multiple version tags
+            log.debug("Begin test V5");
             record.setField(liveTag.getName(), new Long(1));
             record.setField(previewTag.getName(), new Long(2));
             record.setField(lastTag.getName(), new Long(2));
             record = repository.update(record);
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId(), previewTag.getId(), lastTag.getId());
-            solrServer.commit(true, true);
 
             verifyResultCount("v_field1:apple", 1);
             verifyResultCount("v_field1:pear", 2);
@@ -436,9 +437,11 @@ public class IndexerTest {
         // Deref
         //
         {
+            // Create 4 records for the 4 kinds of dereferenced fields
+            log.debug("Begin test V6");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1", null);
-            record1.setField(vfield1.getName(), "pear");
+            record1.setField(vfield1.getName(), "fig");
             record1.setField(liveTag.getName(), Long.valueOf(1));
             record1 = repository.create(record1);
             sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
@@ -450,37 +453,185 @@ public class IndexerTest {
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
 
-            solrServer.commit(true, true);
+            verifyResultCount("v_deref1:fig", 1);
 
-            verifyResultCount("v_deref1:pear", 1);
+            log.debug("Begin test V6.1");
+            RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
+            Record record3 = repository.newRecord(record3Id);
+            record3.setRecordType("VRecordType1", null);
+            record3.setField(vfield1.getName(), "banana");
+            record3.setField(liveTag.getName(), Long.valueOf(1));
+            record3 = repository.create(record3);
+            sendEvent(EVENT_RECORD_CREATED, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
 
-            // remove the live tag from record
+            verifyResultCount("v_deref3:fig", 1);
+
+            log.debug("Begin test V6.2");
+            Map<String, String> varprops = new HashMap<String, String>();
+            varprops.put("lang", "en");
+            varprops.put("branch", "dev");
+            RecordId record4Id = idGenerator.newRecordId(record1.getId(), varprops);
+            Record record4 = repository.newRecord(record4Id);
+            record4.setRecordType("VRecordType1", null);
+            record4.setField(vfield1.getName(), "coconut");
+            record4.setField(liveTag.getName(), Long.valueOf(1));
+            record4 = repository.create(record4);
+            sendEvent(EVENT_RECORD_CREATED, record4.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+
+            verifyResultCount("v_deref3:fig", 2);
+            verifyResultCount("v_deref2:fig", 1);
+            verifyResultCount("v_deref4:banana", 1);
+
+            // remove the live tag from record1
+            log.debug("Begin test V7");
             record1.delete(liveTag.getName(), true);
             record1 = repository.update(record1);
             sendEvent(EVENT_RECORD_UPDATED, record1.getId(), liveTag.getId());
 
-            solrServer.commit(true, true);
-            verifyResultCount("v_deref1:pear", 0);
+            verifyResultCount("v_deref1:fig", 0);
+
+            // and add the live tag again record1
+            log.debug("Begin test V8");
+            record1.setField(liveTag.getName(), Long.valueOf(1));
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), liveTag.getId());
+
+            verifyResultCount("v_deref1:fig", 1);
+
+            // Make second version of record2, assign both versions different tags, and assign these tags also
+            // to version1 of record1.
+            log.debug("Begin test V9");
+            record1.setField(vfield1.getName(), "strawberries");
+            record1.setField(previewTag.getName(), Long.valueOf(2));
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
+
+            record2.setField(previewTag.getName(), Long.valueOf(1));
+            record2 = repository.update(record2);
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), previewTag.getId());
+
+            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
+            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(liveTag.getId()), 0);
+            verifyResultCount("+v_deref1:strawberries", 1);
+            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId()), 1);
+            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(previewTag.getId()), 0);
+            verifyResultCount("+v_deref1:fig", 1);
+
+            // Now do something similar with a 3th version, but first update record2 and then record1
+            log.debug("Begin test V10");
+            record2.setField(lastTag.getName(), Long.valueOf(1));
+            record2 = repository.update(record2);
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), lastTag.getId());
+
+            record1.setField(vfield1.getName(), "kiwi");
+            record1.setField(lastTag.getName(), Long.valueOf(3));
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
+
+            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(lastTag.getId()), 1);
+            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
+            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId()), 1);
+            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(liveTag.getId()), 0);
+            verifyResultCount("+v_field1:kiwi +@@vtag:" + qesc(lastTag.getId()), 1);
+            verifyResultCount("+v_field1:fig +@@vtag:" + qesc(liveTag.getId()), 1);
+
+            // Perform updates to record3 and check if denorm'ed data in record4 follows
+            log.debug("Begin test V11");
+            record3.delete(vfield1.getName(), true);
+            record3 = repository.update(record3);
+            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), 2L, null, vfield1.getId());
+
+            verifyResultCount("v_deref4:banana", 1); // live tag still points to version 1!
+
+            log.debug("Begin test V12");
+            repository.read(record3Id, Long.valueOf(2)); // check version 2 really exists
+            record3.setField(liveTag.getName(), Long.valueOf(2));
+            repository.update(record3);
+            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), liveTag.getId());
+
+            verifyResultCount("v_deref4:banana", 0);
+            verifyResultCount("v_field1:coconut", 1);
+
+            // Delete master
+            repository.delete(record1.getId());
+            sendEvent(EVENT_RECORD_DELETED, record1.getId());
+
+            verifyResultCount("v_deref1:fig", 0);
+            verifyResultCount("v_deref2:fig", 0);
+            verifyResultCount("v_deref3:fig", 0);
         }
+
+        //
+        // Test deref from non-versioned to versioned field
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vfield1.getName(), "bicycle");
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+
+            Record record2 = repository.newRecord();
+            record2.setRecordType("VRecordType1", null);
+            record2.setField(nvLinkField2.getName(), record1.getId());
+            record2 = repository.create(record2);
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField2.getId());
+
+            // A versionless record cannot contain derefed data from a versioned field, since it does
+            // not know at what version to look
+            // TODO this does not work because there currently is nothing that checks that no versioned
+            // fields are derefed from versionless records (note that dereffing from a non-versioned field
+            // of  a version-having record should work I think)
+//            verifyResultCount("nv_v_deref:bicycle", 0);
+//
+//            // Now give record2 a version and vtag
+//            record2.setField(vfield1.getName(), "boat");
+//            record2.setField(liveTag.getName(), 2L); // TODO should change to 1L when #2 is fixed
+//            record2 = repository.update(record2);
+//            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+//
+//            verifyResultCount("nv_v_deref:bicycle", 1);
+//
+//            // Give record1 some more versions with vtags
+//            record1.setField(vfield1.getName(), "train");
+//            record1.setField(previewTag.getName(), Long.valueOf(2));
+//            record1 = repository.update(record1);
+//            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
+//
+//            record1.setField(vfield1.getName(), "car");
+//            record1.setField(lastTag.getName(), Long.valueOf(3));
+//            record1 = repository.update(record1);
+//            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
+//
+//            verifyResultCount("nv_v_deref:bicycle", 1);
+//            verifyResultCount("nv_v_deref:train", 0);
+//            verifyResultCount("nv_v_deref:car", 0);
+//
+//            // Give record2 some more versions with vtags
+//            record2.setField(vfield1.getName(), "airplane");
+//            record2.setField(previewTag.getName(), 3L); // TODO should change to 2L when #2 is fixed
+//            record2 = repository.update(record2);
+//            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 3L, null, vfield1.getId(), previewTag.getId());
+//
+//            record2.setField(vfield1.getName(), "hovercraft");
+//            record2.setField(lastTag.getName(), 4L); // TODO should change to 3L when #2 is fixed
+//            record2 = repository.update(record2);
+//            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 4L, null, vfield1.getId(), lastTag.getId());
+        }
+
     }
 
     private static String qesc(String input) {
         return ClientUtils.escapeQueryChars(input);
     }
 
-    private void sendEvent(String type, RecordId recordId, String... updatedFields) {
-        RecordEvent event = new RecordEvent();
-
-        for (String updatedField : updatedFields) {
-            event.addUpdatedField(updatedField);
-        }
-
-        QueueMessage message = new TestQueueMessage(type, recordId, event.toJsonBytes());
-        queue.broadCastMessage(message);
+    private void sendEvent(String type, RecordId recordId, String... updatedFields) throws IOException, SolrServerException {
+        sendEvent(type, recordId, null, null, updatedFields);
     }
     
     private void sendEvent(String type, RecordId recordId, Long versionCreated, Long versionUpdated,
-            String... updatedFields) {
+            String... updatedFields) throws IOException, SolrServerException {
 
         RecordEvent event = new RecordEvent();
 
@@ -496,12 +647,21 @@ public class IndexerTest {
 
         QueueMessage message = new TestQueueMessage(type, recordId, event.toJsonBytes());
         queue.broadCastMessage(message);
+
+        solrServer.commit(true, true);
     }
 
     private void verifyResultCount(String query, int count) throws SolrServerException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
         QueryResponse response = SOLR_TEST_UTIL.getSolrServer().query(solrQuery);
+        if (count != response.getResults().size()) {
+            System.out.println("The query result contains too many documents, here is the result:");
+            for (int i = 0; i < response.getResults().size(); i++) {
+                SolrDocument result = response.getResults().get(i);
+                System.out.println(result.getFirstValue("@@key"));
+            }
+        }
         assertEquals(count, response.getResults().getNumFound());
     }
 

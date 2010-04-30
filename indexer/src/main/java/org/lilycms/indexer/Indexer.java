@@ -75,6 +75,11 @@ public class Indexer {
                     // an applicable index case, so we always send a delete to SOLR.
                     solrServer.deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(msg.getRecordId().toString()));
 
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("Record %1$s: deleted from index (if present) because of " +
+                                "delete record event", msg.getRecordId()));
+                    }
+
                     // After this we can go to update denormalized data
                     RecordEvent event = new RecordEvent(msg.getType(), msg.getData());
                     updateDenormalizedData(msg.getRecordId(), event, null, null);
@@ -127,6 +132,11 @@ public class Indexer {
                 // version tags were indexed, so we simply delete everything
                 solrServer.deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(record.getId().toString()));
 
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Record %1$s: deleted existing entries from index (if present) " +
+                            "because of record type change", record.getId()));
+                }
+
                 // Reindex all needed vtags
                 setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
 
@@ -139,6 +149,11 @@ public class Indexer {
                     // If the first version was created, but the record was not new, then there
                     // might already be an @@versionless index entry
                     solrServer.deleteById(getIndexId(record.getId(), VersionTag.VERSIONLESS_TAG));
+
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("Record %1$s: deleted versionless entry from index (if present) " +
+                                "because of creation first version", record.getId()));
+                    }
                 }
 
                 //
@@ -148,6 +163,10 @@ public class Indexer {
                     if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.NON_VERSIONED))) {
                         setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
                         // After this we go to the treatment of changed vtag fields
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
+                                    record.getId()));
+                        }
                     }
                 }
 
@@ -167,6 +186,12 @@ public class Indexer {
                             tmp.addAll(indexCase.getVersionTags());
                             tmp.retainAll(vtagsByVersion.get(version));
                             vtagsToIndex.addAll(tmp);
+
+                            if (log.isDebugEnabled()) {
+                                log.debug(String.format("Record %1$s: versioned(-mutable) fields changed, will " +
+                                        "index for all tags of modified version %2$s that require indexing: %3$s",
+                                        record.getId(), version, vtagSetToNameString(vtagsToIndex)));
+                            }
                         }
                     }
                 }
@@ -179,10 +204,18 @@ public class Indexer {
                 changedVTagFields.removeAll(vtagsToIndex);
                 for (String vtag : changedVTagFields) {
                     if (vtags.containsKey(vtag) && indexCase.getVersionTags().contains(vtag)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("Record %1$s: will index for created or updated vtag %2$s",
+                                    record.getId(), safeLoadTagName(vtag)));
+                        }
                         vtagsToIndex.add(vtag);
                     } else {
                         // The vtag does not exist anymore on the document: delete from index
                         solrServer.deleteById(getIndexId(record.getId(), vtag));
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("Record %1$s: deleted from index for deleted vtag %2$s",
+                                    record.getId(), safeLoadTagName(vtag)));
+                        }
                     }
                 }
             }
@@ -233,6 +266,11 @@ public class Indexer {
                 for (String vtag : entry.getValue()) {
                     solrServer.deleteById(getIndexId(recordId, vtag));
                 }
+
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Record %1$s, version %2$s: does not exist, deleted index" +
+                            " entries for vtags %3$s", recordId, entry.getKey(), vtagSetToNameString(entry.getValue())));
+                }
             } else {
                 index(version, entry.getValue());
             }
@@ -241,6 +279,10 @@ public class Indexer {
 
     private void updateDenormalizedData(RecordId recordId, RecordEvent event,
             Map<Scope, Set<FieldType>> updatedFieldsByScope, Map<Long, Set<String>> vtagsByVersion) {
+
+        // This algorithm is designed to first collect all the reindex-work, and then to perform it.
+        // Otherwise the same document would be indexed multiple times if it would become invalid
+        // because of different reasons (= different indexFields).
 
         //
         // Collect all the relevant IndexFields, and for each the relevant vtags
@@ -281,7 +323,9 @@ public class Indexer {
             }
         }
 
-        //
+        // For each indexField, determine the vtags of the referrer that we should consider.
+        // In the context of this algorithm, a referrer is each record whose index might contain
+        // denormalized data from the record of which we are now processing the change event.
         nextIndexField:
         for (IndexField indexField : indexFields) {
             DerefValue derefValue = (DerefValue)indexField.getValue();
@@ -462,7 +506,8 @@ public class Indexer {
 
 
         if (log.isDebugEnabled()) {
-            log.debug("Number of records (times vtags) for which to update denormalized data: " + referrersVTags.size());
+            log.debug(String.format("Record %1$s: found %2$s records (times vtags) to be updated because they " +
+                    "might contain outdated denormalized data.", recordId, referrersVTags.size()));
         }
 
 
@@ -553,8 +598,13 @@ public class Indexer {
                 // because with deref-expressions we are never sure) that we did.
 
                 // There can be a previous entry in the index which we should try to delete
-                solrServer.deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(record.getId().toString()));
+                solrServer.deleteById(getIndexId(record.getId(), vtag));
                 
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Record %1$s, vtag %2$s: no index fields produced output, " +
+                            "removed from index if present", record.getId(), safeLoadTagName(vtag)));
+                }
+
                 continue;
             }
 
@@ -568,6 +618,10 @@ public class Indexer {
             }
 
             solrServer.add(solrDoc);
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Record %1$s, vtag %2$s: indexed", record.getId(), safeLoadTagName(vtag)));
+            }
         }
     }
 
@@ -625,6 +679,11 @@ public class Indexer {
      *      should be removed once issue #1 is solved.
      */
     private boolean recordHasVersions(Record record) {
+        if (record.getVersion() > 1)
+            return true;
+
+        // the procedure below might not be accurate for versions > 1, since
+        // all fields might be deleted from later versions (therefore, the check above)
         for (QName fieldName : record.getFields().keySet()) {
             Scope scope;
             try {
@@ -655,4 +714,29 @@ public class Indexer {
         return recordId + "-" + vtag;
     }
 
+    /**
+     * Lookup name of field type, for use in debug logs. Beware, this might be slow.
+     */
+    private String safeLoadTagName(String fieldTypeId) {
+        if (fieldTypeId == null)
+            return "null";
+        if (fieldTypeId.equals(VersionTag.VERSIONLESS_TAG))
+            return fieldTypeId;
+
+        try {
+            return typeManager.getFieldTypeById(fieldTypeId).getName().getName();
+        } catch (Throwable t) {
+            return "failed to load name";
+        }
+    }
+
+    private String vtagSetToNameString(Set<String> vtags) {
+        StringBuilder builder = new StringBuilder();
+        for (String vtag : vtags) {
+            if (builder.length() > 0)
+                builder.append(", ");
+            builder.append(safeLoadTagName(vtag));
+        }
+        return builder.toString();
+    }
 }
