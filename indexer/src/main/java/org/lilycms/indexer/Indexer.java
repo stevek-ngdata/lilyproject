@@ -330,6 +330,7 @@ public class Indexer {
             //  - the new version to which the vtag points (if it is not a deleted vtag)
             // But rather than calculating all that (consider the need to retrieve the versions),
             // for now we simply consider all IndexFields.
+            // TODO could optimize this to exclude deref fields that use only non-versioned fields?
             for (IndexField indexField : conf.getDerefIndexFields()) {
                 indexFieldsVTags.get(indexField).addAll(changedVTagFields);
             }
@@ -475,14 +476,6 @@ public class Indexer {
 
             IdRecord record = null;
             try {
-                // TODO make use of vtag:
-                //     - check if the @@versionless tag is present & if record is versionless
-                //           if so index it
-                //     - Get the indexCase for the record, filter the vtags to those that need indexing
-                //     - Build versions to tags map
-                //           we don't know the vtags yet: retrieve them
-                //     - For each tag: retrieve record + index
-                //           note that we don't know if the tags exist
                 // TODO optimize this: we are only interested to know the vtags and to know if the record has versions
                 record = repository.readWithIds(referrer, null, null);
             } catch (Exception e) {
@@ -501,8 +494,10 @@ public class Indexer {
                         index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
                     }
                 } else {
-                    Map<String, Long> recordVTags = VersionTag.getTagsByName(record, typeManager);
+                    Map<String, Long> recordVTags = VersionTag.getTagsById(record, typeManager);
                     vtagsToIndex.retainAll(indexCase.getVersionTags());
+                    // Only keep vtags which exist on the record
+                    vtagsToIndex.retainAll(recordVTags.keySet());
                     indexRecord(record.getId(), vtagsToIndex, recordVTags);
                 }
             } catch (Exception e) {

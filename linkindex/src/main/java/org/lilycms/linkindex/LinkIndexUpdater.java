@@ -6,6 +6,7 @@ import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repository.api.exception.RecordNotFoundException;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
@@ -66,6 +67,9 @@ public class LinkIndexUpdater {
                 if (msg.getType().equals(EVENT_RECORD_DELETED)) {
                     // Delete everything from the link index for this record, thus for all vtags
                     linkIndex.deleteLinks(msg.getRecordId());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Record " + msg.getRecordId() + " : delete event : deleted extracted links.");
+                    }
                 } else if (msg.getType().equals(EVENT_RECORD_CREATED) || msg.getType().equals(EVENT_RECORD_UPDATED)) {
                     RecordEvent recordEvent = new RecordEvent(msg.getType(), msg.getData());
 
@@ -75,15 +79,18 @@ public class LinkIndexUpdater {
                         linkIndex.deleteLinks(msg.getRecordId(), VersionTag.VERSIONLESS_TAG);
                     }
 
-                    Record record;
+                    IdRecord record;
                     try {
-                        record = repository.read(msg.getRecordId());
+                        record = repository.readWithIds(msg.getRecordId(), null, null);
                     } catch (RecordNotFoundException e) {
                         // record not found: delete all links for all vtags
                         linkIndex.deleteLinks(msg.getRecordId());
+                        if (log.isDebugEnabled()) {
+                            log.debug("Record " + msg.getRecordId() + " : does not exist : deleted extracted links.");
+                        }
                         return;
                     }
-                    boolean hasVersions = record.getVersion() == null;
+                    boolean hasVersions = recordHasVersions(record); // TODO record.getVersion != null;
 
                     if (hasVersions) {
                         Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
@@ -119,6 +126,10 @@ public class LinkIndexUpdater {
                                 // The vtag is not defined on the document: it is a deleted vtag, delete the
                                 // links corresponding to it
                                 linkIndex.deleteLinks(msg.getRecordId(), vtag);
+                                if (log.isDebugEnabled()) {
+                                    log.debug(String.format("Record %1$s, vtag %2$s (%3$s) : deleted extracted links",
+                                            record.getId(), vtag, safeLoadTagName(vtag)));
+                                }
                             } else {
                                 // Since one version might have multiple vtags, we keep a little cache to avoid
                                 // extracting the links from the same version twice.
@@ -131,12 +142,20 @@ public class LinkIndexUpdater {
                                     cache.put(version, links);
                                 }
                                 linkIndex.updateLinks(msg.getRecordId(), vtag, links);
+                                if (log.isDebugEnabled()) {
+                                    log.debug(String.format("Record %1$s, vtag %2$s (%3$s) : extracted links count : %4$s",
+                                            record.getId(), vtag, safeLoadTagName(vtag), links.size()));
+                                }
                             }
                         }
                     } else {
                         // The record has no versions
                         Set<FieldedLink> links = extractLinks(msg.getRecordId(), null);
                         linkIndex.updateLinks(msg.getRecordId(), VersionTag.VERSIONLESS_TAG, links);
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
+                                    record.getId(), VersionTag.VERSIONLESS_TAG, links.size()));
+                        }
                     }
 
                 }
@@ -168,6 +187,34 @@ public class LinkIndexUpdater {
             log.error("Error extracting links from record " + recordId, t);
         }
         return Collections.emptySet();
+    }
+
+    /**
+     * TODO this method is a temporary solution to detect that a record has versions,
+     *      should be removed once issue #1 is solved.
+     */
+    private boolean recordHasVersions(Record record) {
+        for (QName fieldName : record.getFields().keySet()) {
+            Scope scope;
+            try {
+                scope = typeManager.getFieldTypeByName(fieldName).getScope();
+            } catch (FieldTypeNotFoundException e) {
+                // We assume this doesn't occur (this is a temporary method anyway)
+                throw new RuntimeException(e);
+            }
+            if (scope == Scope.VERSIONED || scope == Scope.VERSIONED_MUTABLE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String safeLoadTagName(String fieldTypeId) {
+        try {
+            return typeManager.getFieldTypeById(fieldTypeId).getName().getName();
+        } catch (Throwable t) {
+            return "failed to load name";
+        }
     }
 
 }

@@ -16,7 +16,8 @@
 package org.lilycms.testfw;
 
 import org.apache.log4j.*;
-import org.apache.log4j.varia.LevelRangeFilter;
+import org.apache.log4j.spi.Filter;
+import org.apache.log4j.spi.LoggingEvent;
 
 import java.io.IOException;
 
@@ -24,8 +25,13 @@ public class TestHelper {
     /**
      * Sets up logging such that errors are logged to the console, and info level
      * logging is sent to a file in target directory.
+     *
+     * <p>Additionally a set of categories can be specified that will be logged
+     * as debug output to the console when a system property -DlilyTestDebug is present.
      */
-    public static void setupLogging() throws IOException {
+    public static void setupLogging(final String... debugCategories) throws IOException {
+        JavaLoggingToLog4jRedirector.activate();
+
         final String LAYOUT = "[%t] %-5p %c - %m%n";
 
         Logger logger = Logger.getRootLogger();
@@ -55,16 +61,39 @@ public class TestHelper {
         //
         // Add a console appender to show ERROR level errors on the console
         //
+        final String CONSOLE_LAYOUT = "%-5p [%-10.10t][%30.30c] - %m%n";
+
         ConsoleAppender consoleAppender = new ConsoleAppender();
-        consoleAppender.setLayout(new PatternLayout(LAYOUT));
+        consoleAppender.setLayout(new PatternLayout(CONSOLE_LAYOUT));
 
-        LevelRangeFilter errorFilter = new LevelRangeFilter();
-        errorFilter.setAcceptOnMatch(true);
-        errorFilter.setLevelMin(Level.ERROR);
-        errorFilter.setLevelMax(Level.ERROR);
-        consoleAppender.addFilter(errorFilter);
+        final boolean debugLoggingEnabled = System.getProperty("lilyTestDebug") != null;
+
+        consoleAppender.addFilter(new Filter() {
+            @Override
+            public int decide(LoggingEvent loggingEvent) {
+                if (debugLoggingEnabled) {
+                    // This is slow, but it's only for when testcase debug output is enabled
+                    for (String debugCat : debugCategories) {
+                        if (loggingEvent.getLoggerName().startsWith(debugCat)) {
+                            return loggingEvent.getLevel().isGreaterOrEqual(Level.DEBUG) ? Filter.ACCEPT : Filter.DENY;
+                        }
+                    }
+                }
+
+                return loggingEvent.getLevel().isGreaterOrEqual(Level.ERROR) ? Filter.ACCEPT : Filter.DENY;
+            }
+        });
+
         consoleAppender.activateOptions();
-
         logger.addAppender(consoleAppender);
+
+
+        //
+        //
+        //
+        for (String debugCat : debugCategories) {
+            Logger.getLogger(debugCat).setLevel(Level.DEBUG);
+        }
+
     }
 }

@@ -46,4 +46,12 @@ mvn install
 
 or to run it faster (without the tests):
 
-mvn -Pfast install 
+mvn -Pfast install
+
+On running test
+===============
+
+Log output of testcases is by default sent to a target/log.txt, errors are however always logged to the
+console. Debug output to the console of selected log categories can be enabled by running tests as follows:
+
+mvn -DargLine=-DlilyTestDebug test

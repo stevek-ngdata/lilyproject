@@ -60,7 +60,7 @@ public class IndexerTest {
     public static void setUpBeforeClass() throws Exception {
         SOLR_TEST_UTIL = new SolrTestingUtility("org/lilycms/indexer/test/schema1.xml");
 
-        TestHelper.setupLogging();
+        TestHelper.setupLogging("org.lilycms.indexer", "org.lilycms.linkindex");
         TEST_UTIL.startMiniCluster(1);
         SOLR_TEST_UTIL.start();
 
@@ -88,7 +88,7 @@ public class IndexerTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        indexer.stop();
+        indexer.stop();        
 
         TEST_UTIL.shutdownMiniCluster();
         if (SOLR_TEST_UTIL != null)
@@ -453,6 +453,14 @@ public class IndexerTest {
             solrServer.commit(true, true);
 
             verifyResultCount("v_deref1:pear", 1);
+
+            // remove the live tag from record
+            record1.delete(liveTag.getName(), true);
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), liveTag.getId());
+
+            solrServer.commit(true, true);
+            verifyResultCount("v_deref1:pear", 0);
         }
     }
 
