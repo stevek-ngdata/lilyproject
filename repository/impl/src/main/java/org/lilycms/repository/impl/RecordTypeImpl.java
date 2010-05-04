@@ -22,6 +22,7 @@ import java.util.Map;
 import org.lilycms.repository.api.FieldTypeEntry;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.TypeManager;
+import org.lilycms.util.ArgumentValidator;
 
 public class RecordTypeImpl implements RecordType {
     
@@ -67,6 +68,8 @@ public class RecordTypeImpl implements RecordType {
     }
 
     public void addMixin(String recordTypeId, Long recordTypeVersion) {
+    	ArgumentValidator.notNull(recordTypeId, "recordTypeId");
+    	ArgumentValidator.notNull(recordTypeVersion, "recordTypeVersion");
         mixins.put(recordTypeId, recordTypeVersion);
     }
     

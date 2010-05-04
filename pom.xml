@@ -22,7 +22,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <hbase.version>0.21.0-r917988</hbase.version>
+    <hbase.version>0.21.0-r940338</hbase.version>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>

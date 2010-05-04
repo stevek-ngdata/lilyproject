@@ -16,6 +16,7 @@
 package org.lilycms.repository.impl;
 
 import org.lilycms.repository.api.FieldTypeEntry;
+import org.lilycms.util.ArgumentValidator;
 
 /**
  *
@@ -26,6 +27,7 @@ public class FieldTypeEntryImpl implements FieldTypeEntry {
     private boolean mandatory;
 
     public FieldTypeEntryImpl(String fieldTypeId, boolean mandatory) {
+    	ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
         this.fieldTypeId = fieldTypeId;
         this.mandatory = mandatory;
     }

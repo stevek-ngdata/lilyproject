@@ -52,7 +52,7 @@ public interface TypeManager {
      * @throws RecordTypeNotFoundException when the recordType does not exist
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType getRecordType(String recordTypeId, Long recordTypeVersion) throws RecordTypeNotFoundException, RepositoryException;
+    RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException, RepositoryException;
 
     /**
      * A new version of the {@link RecordType} is created. The new verion number

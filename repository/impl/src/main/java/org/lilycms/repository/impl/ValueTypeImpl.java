@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.HierarchyPath;
 import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.ValueType;
+import org.lilycms.util.ArgumentValidator;
 
 public class ValueTypeImpl implements ValueType {
 
@@ -30,6 +31,7 @@ public class ValueTypeImpl implements ValueType {
     private final boolean hierarchical;
 
     public ValueTypeImpl(PrimitiveValueType primitiveValueType, boolean multivalue, boolean hierarchical) {
+    	ArgumentValidator.notNull(primitiveValueType, "primitiveValueType");
         this.primitiveValueType = primitiveValueType;
         this.multiValue = multivalue;
         this.hierarchical = hierarchical;
@@ -150,7 +152,7 @@ public class ValueTypeImpl implements ValueType {
         return Bytes.toBytes(stringBuilder.toString());
     }
 
-    public static ValueType fromBytes(byte[] bytes, HBaseTypeManager typeManager) {
+    public static ValueType fromBytes(byte[] bytes, AbstractTypeManager typeManager) {
         String encodedString = Bytes.toString(bytes);
         int endOfPrimitiveValueTypeName = encodedString.indexOf(",");
         String primitiveValueTypeName = encodedString.substring(0, endOfPrimitiveValueTypeName);

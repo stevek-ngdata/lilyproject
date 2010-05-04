@@ -36,7 +36,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.FieldType;
 import org.lilycms.repository.api.FieldTypeEntry;
 import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Scope;
@@ -48,16 +47,9 @@ import org.lilycms.repository.api.exception.FieldTypeUpdateException;
 import org.lilycms.repository.api.exception.RecordTypeExistsException;
 import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
 import org.lilycms.repository.api.exception.RepositoryException;
-import org.lilycms.repository.impl.primitivevaluetype.BlobValueType;
-import org.lilycms.repository.impl.primitivevaluetype.BooleanValueType;
-import org.lilycms.repository.impl.primitivevaluetype.DateValueType;
-import org.lilycms.repository.impl.primitivevaluetype.IntegerValueType;
-import org.lilycms.repository.impl.primitivevaluetype.LinkValueType;
-import org.lilycms.repository.impl.primitivevaluetype.LongValueType;
-import org.lilycms.repository.impl.primitivevaluetype.StringValueType;
 import org.lilycms.util.ArgumentValidator;
 
-public class HBaseTypeManager implements TypeManager {
+public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
 
     private static final String TYPE_TABLE = "typeTable";
     private static final byte[] NON_VERSIONED_COLUMN_FAMILY = Bytes.toBytes("NVCF");
@@ -71,7 +63,6 @@ public class HBaseTypeManager implements TypeManager {
     private static final byte[] FIELDTPYE_SCOPE_COLUMN_NAME = Bytes.toBytes("$scope");
 
     private HTable typeTable;
-    private IdGenerator idGenerator;
     private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
 
     public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration) throws IOException {
@@ -89,12 +80,7 @@ public class HBaseTypeManager implements TypeManager {
             admin.createTable(tableDescriptor);
             typeTable = new HTable(configuration, TYPE_TABLE);
         }
-        registerDefaultValueTypes();
-    }
-
-    public RecordType newRecordType(String recordTypeId) {
-        ArgumentValidator.notNull(recordTypeId, "recordTypeId");
-        return new RecordTypeImpl(recordTypeId);
+        initialize();
     }
 
     public RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException,
@@ -228,28 +214,28 @@ public class HBaseTypeManager implements TypeManager {
         return changed;
     }
 
-    public RecordType getRecordType(String recordTypeId, Long version) throws RecordTypeNotFoundException,
+    public RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException,
                     RepositoryException {
-        ArgumentValidator.notNull(recordTypeId, "recordTypeId");
-        Get get = new Get(Bytes.toBytes(recordTypeId));
+        ArgumentValidator.notNull(id, "recordTypeId");
+        Get get = new Get(Bytes.toBytes(id));
         if (version != null) {
             get.setMaxVersions();
         }
         Result result;
         try {
             if (!typeTable.exists(get)) {
-                throw new RecordTypeNotFoundException(recordTypeId, null);
+                throw new RecordTypeNotFoundException(id, null);
             }
             result = typeTable.get(get);
         } catch (IOException e) {
-            throw new RepositoryException("Exception occured while retrieving recordType <" + recordTypeId
+            throw new RepositoryException("Exception occured while retrieving recordType <" + id
                             + "> from HBase table", e);
         }
-        RecordType recordType = newRecordType(recordTypeId);
+        RecordType recordType = newRecordType(id);
         Long currentVersion = Bytes.toLong(result.getValue(NON_VERSIONED_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME));
         if (version != null) {
             if (currentVersion < version) {
-                throw new RecordTypeNotFoundException(recordTypeId, version);
+                throw new RecordTypeNotFoundException(id, version);
             }
             recordType.setVersion(version);
         } else {
@@ -318,12 +304,6 @@ public class HBaseTypeManager implements TypeManager {
         }
     }
 
-    public FieldTypeEntry newFieldTypeEntry(String fieldTypeId, boolean mandatory) {
-        ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
-        ArgumentValidator.notNull(mandatory, "mandatory");
-        return new FieldTypeEntryImpl(fieldTypeId, mandatory);
-    }
-
     // TODO move to some encoder/decoder
     /**
      * Encoding the fields: FD-version, mandatory, alias
@@ -342,17 +322,6 @@ public class HBaseTypeManager implements TypeManager {
         byte[] encodedBytes = EncodingUtil.stripPrefix(bytes);
         boolean mandatory = Bytes.toBoolean(encodedBytes);
         return new FieldTypeEntryImpl(fieldTypeId, mandatory);
-    }
-
-    public FieldType newFieldType(ValueType valueType, QName name, Scope scope) {
-        return newFieldType(null, valueType, name, scope);
-    }
-
-    public FieldType newFieldType(String id, ValueType valueType, QName name, Scope scope) {
-        ArgumentValidator.notNull(valueType, "valueType");
-        ArgumentValidator.notNull(name, "name");
-        ArgumentValidator.notNull(scope, "scope");
-        return new FieldTypeImpl(id, valueType, name, scope);
     }
 
     public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, RepositoryException {
@@ -506,27 +475,7 @@ public class HBaseTypeManager implements TypeManager {
     
     // Value Types
 
-    // TODO move to a primitiveValueType registry
-    private Map<String, PrimitiveValueType> primitiveValueTypes = new HashMap<String, PrimitiveValueType>();
-
-    // TODO get this from some configuration file
-    private void registerDefaultValueTypes() {
-        registerPrimitiveValueType(new StringValueType());
-        registerPrimitiveValueType(new IntegerValueType());
-        registerPrimitiveValueType(new LongValueType());
-        registerPrimitiveValueType(new BooleanValueType());
-        registerPrimitiveValueType(new DateValueType());
-        registerPrimitiveValueType(new LinkValueType(idGenerator));
-        registerPrimitiveValueType(new BlobValueType());
-    }
-
-    public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {
-        primitiveValueTypes.put(primitiveValueType.getName(), primitiveValueType);
-    }
-
-    public ValueType getValueType(String primitiveValueTypeName, boolean multivalue, boolean hierarchy) {
-        return new ValueTypeImpl(primitiveValueTypes.get(primitiveValueTypeName), multivalue, hierarchy);
-    }
+    
 
     // TODO cache these things on the RecordType itself?
     // TODO Should not rely on the recordType ?

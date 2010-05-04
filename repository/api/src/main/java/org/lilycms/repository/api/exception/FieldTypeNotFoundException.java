@@ -28,6 +28,14 @@ public class FieldTypeNotFoundException extends Exception {
         this.version = version;
     }
     
+    public String getId() {
+		return id;
+	}
+    
+    public Long getVersion() {
+		return version;
+	}
+    
     @Override
     public String getMessage() {
         StringBuilder stringBuilder = new StringBuilder();

@@ -42,6 +42,7 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.exception.BlobNotFoundException;
 import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.impl.AbstractTypeManager;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
@@ -55,7 +56,7 @@ public class BlobStoreTest {
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
     private static IdGenerator idGenerator = new IdGeneratorImpl();
-    private static HBaseTypeManager typeManager;
+    private static AbstractTypeManager typeManager;
     private static HBaseRepository repository;
     
 

@@ -36,6 +36,7 @@ import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.impl.AbstractTypeManager;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
@@ -47,7 +48,7 @@ public class ValueTypeTest {
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
-    private HBaseTypeManager typeManager;
+    private AbstractTypeManager typeManager;
     private HBaseRepository repository;
 
     private IdGeneratorImpl idGenerator;
