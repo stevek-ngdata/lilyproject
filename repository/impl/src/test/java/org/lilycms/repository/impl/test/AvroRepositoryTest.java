@@ -25,6 +25,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.lilycms.repository.api.BlobStoreAccessFactory;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
@@ -80,5 +81,15 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
 
     @After
     public void tearDown() throws Exception {
+    }
+    
+    @Test
+	public void testCreateVariant() throws Exception {
+    	// TODO Avro side not implemented yet
+    }
+    
+    @Test
+	public void testIdRecord() throws Exception {
+    	// TODO Avro side not implemented yet
     }
 }
