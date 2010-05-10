@@ -67,6 +67,12 @@ public class RecordTypeImpl implements RecordType {
         fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
     }
 
+    public FieldTypeEntry addFieldTypeEntry(String fieldTypeId, boolean mandatory) {
+        FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl(fieldTypeId, mandatory);
+        addFieldTypeEntry(fieldTypeEntry);
+        return fieldTypeEntry;
+    }
+
     public void addMixin(String recordTypeId, Long recordTypeVersion) {
     	ArgumentValidator.notNull(recordTypeId, "recordTypeId");
     	ArgumentValidator.notNull(recordTypeVersion, "recordTypeVersion");

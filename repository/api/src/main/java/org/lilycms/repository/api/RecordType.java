@@ -41,6 +41,8 @@ public interface RecordType {
     
     void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry);
 
+    FieldTypeEntry addFieldTypeEntry(String fieldTypeId, boolean mandatory);
+
     FieldTypeEntry getFieldTypeEntry(String fieldTypeId);
     
     void removeFieldTypeEntry(String fieldTypeId);
