@@ -44,6 +44,7 @@
     <module>eventlog/queue-mock</module>
     <module>linkindex</module>
     <module>repo-util</module>
+    <module>repository-api-tutorial</module>
   </modules>
 
   <dependencyManagement>

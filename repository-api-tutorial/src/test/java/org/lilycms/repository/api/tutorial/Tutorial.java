@@ -1,0 +1,216 @@
+package org.lilycms.repository.api.tutorial;
+
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.lilycms.repository.api.*;
+import org.lilycms.repository.impl.*;
+import org.lilycms.repoutil.PrintUtil;
+import org.lilycms.testfw.TestHelper;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.Date;
+
+/**
+ * The code in this class is used in the repository API tutorial (390-OTC). If this
+ * code needs updating because of API changes, then the tutorial itself probably needs
+ * to be updated too.
+ */
+public class Tutorial {
+    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+
+    private static final String NS = "org.lilycms.tutorial";
+
+    private static TypeManager typeManager;
+    private static Repository repository;
+
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging();
+        TEST_UTIL.startMiniCluster(1);
+
+        IdGenerator idGenerator = new IdGeneratorImpl();
+        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
+    }
+
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+        TEST_UTIL.shutdownMiniCluster();
+    }
+
+    @Test
+    public void createRecordType() throws Exception {
+        // (1) Get a reference to the value type we want to use for our field
+        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
+
+        // (2) Create the field type object.
+        FieldType title = typeManager.newFieldType(stringValueType, new QName(NS, "title"), Scope.VERSIONED);
+
+        // (3) Create the field type.
+        title = typeManager.createFieldType(title);
+
+        // (4) Create the record type object
+        RecordType book = typeManager.newRecordType("Book");
+        book.addFieldType(title.getId(), true);
+
+        // (5) Create the record type
+        book = typeManager.createRecordType(book);
+
+        // (6)
+        PrintUtil.print(book, repository);
+    }
+
+    @Test
+    public void updateRecordType() throws Exception {
+        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
+        ValueType stringMvValueType = typeManager.getValueType("STRING", true, false);
+        ValueType longValueType = typeManager.getValueType("LONG", false, false);
+        ValueType dateValueType = typeManager.getValueType("DATE", false, false);
+        ValueType blobValueType = typeManager.getValueType("BLOB", false, false);
+
+        FieldType description = typeManager.newFieldType(blobValueType, new QName(NS, "description"), Scope.VERSIONED);
+        description = typeManager.createFieldType(description);
+
+        FieldType authors = typeManager.newFieldType(stringMvValueType, new QName(NS, "authors"), Scope.VERSIONED);
+        authors = typeManager.createFieldType(authors);
+
+        FieldType released = typeManager.newFieldType(dateValueType, new QName(NS, "released"), Scope.VERSIONED);
+        released = typeManager.createFieldType(released);
+
+        FieldType pages = typeManager.newFieldType(longValueType, new QName(NS, "pages"), Scope.VERSIONED);
+        pages = typeManager.createFieldType(pages);
+
+        FieldType manager = typeManager.newFieldType(stringValueType, new QName(NS, "manager"), Scope.NON_VERSIONED);
+        manager = typeManager.createFieldType(manager);
+
+        FieldType reviewStatus = typeManager.newFieldType(stringValueType, new QName(NS, "review_status"), Scope.VERSIONED_MUTABLE);
+        reviewStatus = typeManager.createFieldType(reviewStatus);
+
+        RecordType book = typeManager.getRecordType("Book", null);
+
+        // The order in which fields are added does not matter
+        book.addFieldType(description.getId(), false);
+        book.addFieldType(authors.getId(), false);
+        book.addFieldType(released.getId(), false);
+        book.addFieldType(pages.getId(), false);
+        book.addFieldType(manager.getId(), false);
+        book.addFieldType(reviewStatus.getId(), false);
+
+        // Now we call updateRecordType instead of createRecordType
+        book = typeManager.updateRecordType(book);
+
+        PrintUtil.print(book, repository);
+    }
+
+    @Test
+    public void createRecord() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType("Book", null);
+        record.setField(new QName(NS, "title"), "Lily, the definitive guide, 3rd edition");
+        record = repository.create(record);
+
+        PrintUtil.print(record, repository);
+    }
+
+    @Test
+    public void createRecordUserSpecifiedId() throws Exception {
+        RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
+        Record record = repository.newRecord(id);
+        record.setRecordType("Book", null);
+        record.setField(new QName(NS, "title"), "Lily, the definitive guide, 3rd edition");
+        record = repository.create(record);
+
+        PrintUtil.print(record, repository);
+    }
+
+    @Test
+    public void updateRecord() throws Exception {
+        RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
+        Record record = repository.newRecord(id);
+        record.setRecordType("Book", null); // TODO should not be necessary (r29)
+        record.setField(new QName(NS, "title"), "Lily, the definitive guide, third edition");
+        record.setField(new QName(NS, "pages"), Long.valueOf(912));
+        record.setField(new QName(NS, "manager"), "Manager M");
+        record = repository.update(record);
+
+        PrintUtil.print(record, repository);
+    }
+
+    @Test
+    public void updateRecordViaRead() throws Exception {
+        RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
+        Record record = repository.read(id);
+        record.setField(new QName(NS, "released"), new Date());
+        record.setField(new QName(NS, "authors"), Arrays.asList("Author A", "Author B"));
+        record.setField(new QName(NS, "reviewStatus"), "reviewed");
+        record = repository.update(record);
+
+        PrintUtil.print(record, repository);
+    }
+
+    @Test
+    public void readRecord() throws Exception {
+        RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
+
+        // (1)
+        Record record = repository.read(id);
+        System.out.println(record.getField(new QName(NS, "title")));
+
+        // (2)
+        record = repository.read(id, 1L);
+        System.out.println(record.getField(new QName(NS, "title")));
+
+        // (3)
+        record = repository.read(id, 1L, Arrays.asList(new QName(NS, "title")));
+        System.out.println(record.getField(new QName(NS, "title")));
+    }
+
+    @Test
+    public void blob() throws Exception {
+        // Write a blob
+        String description = "<html><body>This book gives thorough insight into Lily, ...</body></html>";
+        byte[] descriptionData = description.getBytes("UTF-8");
+
+        Blob blob = new Blob("text/html", (long)descriptionData.length, "description.xml");
+        OutputStream os = repository.getOutputStream(blob);
+        try {
+            os.write(descriptionData);
+        } finally {
+            os.close();
+        }
+
+        RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
+        Record record = repository.newRecord(id);
+        record.setRecordType("Book", null); // TODO should not be necessary (r29)
+        record.setField(new QName(NS, "description"), blob);
+        record = repository.update(record);
+
+        // Read a blob
+        InputStream is = null;
+        try {
+            is = repository.getInputStream((Blob)record.getField(new QName(NS, "description")));
+            System.out.println("Data read from blob is:");
+            Reader reader = new InputStreamReader(is, "UTF-8");
+            char[] buffer = new char[20];
+            int read;
+            while ((read = reader.read(buffer)) != -1) {
+                System.out.print(new String(buffer, 0, read));
+            }
+            System.out.println();
+        } finally {
+            if (is != null) is.close();
+        }        
+    }
+
+    //
+    // TODO: do also something around variants and link fields
+    //
+}
