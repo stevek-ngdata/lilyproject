@@ -36,9 +36,14 @@ public class Tutorial {
 
         IdGenerator idGenerator = new IdGeneratorImpl();
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
-        BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
+        blobStoreAccessFactory.addBlobStoreAccess(Long.MAX_VALUE, dfsBlobStoreAccess);
+
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, TEST_UTIL.getConfiguration());
+
+        repository.registerBlobStoreAccess(dfsBlobStoreAccess);
     }
 
     @AfterClass
@@ -48,20 +53,20 @@ public class Tutorial {
 
     @Test
     public void createRecordType() throws Exception {
-        // (1) Get a reference to the value type we want to use for our field
+        // (1)
         ValueType stringValueType = typeManager.getValueType("STRING", false, false);
 
-        // (2) Create the field type object.
+        // (2)
         FieldType title = typeManager.newFieldType(stringValueType, new QName(NS, "title"), Scope.VERSIONED);
 
-        // (3) Create the field type.
+        // (3)
         title = typeManager.createFieldType(title);
 
-        // (4) Create the record type object
+        // (4)
         RecordType book = typeManager.newRecordType("Book");
-        book.addFieldType(title.getId(), true);
+        book.addFieldTypeEntry(title.getId(), true);
 
-        // (5) Create the record type
+        // (5)
         book = typeManager.createRecordType(book);
 
         // (6)
@@ -97,12 +102,12 @@ public class Tutorial {
         RecordType book = typeManager.getRecordType("Book", null);
 
         // The order in which fields are added does not matter
-        book.addFieldType(description.getId(), false);
-        book.addFieldType(authors.getId(), false);
-        book.addFieldType(released.getId(), false);
-        book.addFieldType(pages.getId(), false);
-        book.addFieldType(manager.getId(), false);
-        book.addFieldType(reviewStatus.getId(), false);
+        book.addFieldTypeEntry(description.getId(), false);
+        book.addFieldTypeEntry(authors.getId(), false);
+        book.addFieldTypeEntry(released.getId(), false);
+        book.addFieldTypeEntry(pages.getId(), false);
+        book.addFieldTypeEntry(manager.getId(), false);
+        book.addFieldTypeEntry(reviewStatus.getId(), false);
 
         // Now we call updateRecordType instead of createRecordType
         book = typeManager.updateRecordType(book);
@@ -112,11 +117,19 @@ public class Tutorial {
 
     @Test
     public void createRecord() throws Exception {
+        // (1)
         Record record = repository.newRecord();
+
+        // (2)
         record.setRecordType("Book", null);
+
+        // (3)
         record.setField(new QName(NS, "title"), "Lily, the definitive guide, 3rd edition");
+
+        // (4)
         record = repository.create(record);
 
+        // (5)
         PrintUtil.print(record, repository);
     }
 
@@ -150,7 +163,7 @@ public class Tutorial {
         Record record = repository.read(id);
         record.setField(new QName(NS, "released"), new Date());
         record.setField(new QName(NS, "authors"), Arrays.asList("Author A", "Author B"));
-        record.setField(new QName(NS, "reviewStatus"), "reviewed");
+        record.setField(new QName(NS, "review_status"), "reviewed");
         record = repository.update(record);
 
         PrintUtil.print(record, repository);
@@ -175,10 +188,14 @@ public class Tutorial {
 
     @Test
     public void blob() throws Exception {
+        //
         // Write a blob
+        //
+
         String description = "<html><body>This book gives thorough insight into Lily, ...</body></html>";
         byte[] descriptionData = description.getBytes("UTF-8");
 
+        // (1)
         Blob blob = new Blob("text/html", (long)descriptionData.length, "description.xml");
         OutputStream os = repository.getOutputStream(blob);
         try {
@@ -187,13 +204,16 @@ public class Tutorial {
             os.close();
         }
 
+        // (2)
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
         record.setRecordType("Book", null); // TODO should not be necessary (r29)
         record.setField(new QName(NS, "description"), blob);
         record = repository.update(record);
 
+        //
         // Read a blob
+        //
         InputStream is = null;
         try {
             is = repository.getInputStream((Blob)record.getField(new QName(NS, "description")));
@@ -210,7 +230,13 @@ public class Tutorial {
         }        
     }
 
-    //
-    // TODO: do also something around variants and link fields
-    //
+    @Test
+    public void variantRecord() {
+        // TODO
+//        Map<String, String> variantProps = new HashMap<String, String>();
+//        variantProps.put("language", "en");
+//
+//        RecordId id = repository.getIdGenerator().newRecordId();
+    }
+
 }
