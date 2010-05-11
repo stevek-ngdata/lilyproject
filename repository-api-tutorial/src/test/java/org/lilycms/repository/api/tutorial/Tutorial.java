@@ -13,8 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 
 /**
  * The code in this class is used in the repository API tutorial (390-OTC). If this
@@ -80,6 +79,7 @@ public class Tutorial {
         ValueType longValueType = typeManager.getValueType("LONG", false, false);
         ValueType dateValueType = typeManager.getValueType("DATE", false, false);
         ValueType blobValueType = typeManager.getValueType("BLOB", false, false);
+        ValueType linkValueType = typeManager.getValueType("LINK", false, false);
 
         FieldType description = typeManager.newFieldType(blobValueType, new QName(NS, "description"), Scope.VERSIONED);
         description = typeManager.createFieldType(description);
@@ -92,6 +92,9 @@ public class Tutorial {
 
         FieldType pages = typeManager.newFieldType(longValueType, new QName(NS, "pages"), Scope.VERSIONED);
         pages = typeManager.createFieldType(pages);
+
+        FieldType sequelTo = typeManager.newFieldType(linkValueType, new QName(NS, "sequel_to"), Scope.VERSIONED);
+        sequelTo = typeManager.createFieldType(sequelTo);
 
         FieldType manager = typeManager.newFieldType(stringValueType, new QName(NS, "manager"), Scope.NON_VERSIONED);
         manager = typeManager.createFieldType(manager);
@@ -106,6 +109,7 @@ public class Tutorial {
         book.addFieldTypeEntry(authors.getId(), false);
         book.addFieldTypeEntry(released.getId(), false);
         book.addFieldTypeEntry(pages.getId(), false);
+        book.addFieldTypeEntry(sequelTo.getId(), false);
         book.addFieldTypeEntry(manager.getId(), false);
         book.addFieldTypeEntry(reviewStatus.getId(), false);
 
@@ -231,12 +235,47 @@ public class Tutorial {
     }
 
     @Test
-    public void variantRecord() {
+    public void variantRecord() throws Exception {
         // TODO
 //        Map<String, String> variantProps = new HashMap<String, String>();
 //        variantProps.put("language", "en");
 //
-//        RecordId id = repository.getIdGenerator().newRecordId();
+//        IdGenerator idGenerator = repository.getIdGenerator();
+//
+//        RecordId masterId = idGenerator.newRecordId();
+//
+//        RecordId enId = idGenerator.newRecordId(masterId, variantProps);
+//        Record enRecord = repository.newRecord(enId);
+//        enRecord.setRecordType("Book", null);
+//        enRecord.setField(new QName(NS, "title"), "Car maintenance");
+//        enRecord = repository.create(enRecord);
+//
+//        RecordId nlId = idGenerator.newRecordId(enRecord.getId().getMaster(), Collections.singletonMap("language", "nl"));
+//        Record nlRecord = repository.newRecord(enId);
+//        nlRecord.setRecordType("Book", null);
+//        nlRecord.setField(new QName(NS, "title"), "Wagen onderhoud");
+//        nlRecord = repository.create(enRecord);
+    }
+
+    @Test
+    public void linkField() throws Exception {
+        // (1)
+        Record record1 = repository.newRecord();
+        record1.setRecordType("Book", null);
+        record1.setField(new QName(NS, "title"), "Fishing 1");
+        record1 = repository.create(record1);
+
+        // (2)
+        Record record2 = repository.newRecord();
+        record2.setRecordType("Book", null);
+        record2.setField(new QName(NS, "title"), "Fishing 2");
+        record2.setField(new QName(NS, "sequel_to"), record1.getId());
+        record2 = repository.create(record2);
+
+        // (3)
+        RecordId sequelTo = (RecordId)record2.getField(new QName(NS, "sequel_to"));
+        Record linkedRecord = repository.read(sequelTo);
+        System.out.println(linkedRecord.getField(new QName(NS, "title")));
     }
 
 }
