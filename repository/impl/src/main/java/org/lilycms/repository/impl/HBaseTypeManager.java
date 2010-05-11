@@ -18,6 +18,7 @@ package org.lilycms.repository.impl;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.UUID;
@@ -32,6 +33,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.FieldType;
 import org.lilycms.repository.api.FieldTypeEntry;
@@ -65,7 +67,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     private HTable typeTable;
     private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
 
-    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration) throws IOException {
+    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration) throws IOException, FieldTypeNotFoundException, RepositoryException {
         this.idGenerator = idGenerator;
         try {
             typeTable = new HTable(configuration, TYPE_TABLE);
@@ -81,6 +83,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             typeTable = new HTable(configuration, TYPE_TABLE);
         }
         initialize();
+        initializeFieldTypeNameCache();
     }
 
     public RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException,
@@ -461,16 +464,27 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     // FieldType name cache
     private void updateFieldTypeNameCache(FieldType fieldType, QName oldName) {
-        fieldTypeNameCache .remove(oldName);
+        fieldTypeNameCache.remove(oldName);
         fieldTypeNameCache.put(fieldType.getName(), fieldType);
     }
     
     private FieldType getFieldTypeFromCache(QName name) {
         FieldType fieldType = fieldTypeNameCache.get(name);
         if (fieldType == null) {
-            // TODO retrieve from table
+            // TODO reinitialize the cache
         }
         return fieldType;
+    }
+    
+    private void initializeFieldTypeNameCache() throws IOException, FieldTypeNotFoundException, RepositoryException {
+    	fieldTypeNameCache.clear();
+    	ResultScanner scanner = typeTable.getScanner(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME);
+    	Iterator<Result> resultIterator = scanner.iterator();
+    	for (Result result : scanner) {
+    		FieldType fieldType = getFieldTypeById(fieldTypeIdFromBytes(result.getRow()));
+    		QName name = decodeName(result.getValue(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME));
+    		fieldTypeNameCache.put(name, fieldType);
+		}
     }
     
     // Value Types

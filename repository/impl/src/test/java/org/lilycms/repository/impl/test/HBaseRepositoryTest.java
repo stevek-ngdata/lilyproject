@@ -19,9 +19,12 @@ package org.lilycms.repository.impl.test;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.lilycms.repository.api.BlobStoreAccessFactory;
+import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
@@ -55,5 +58,10 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     public void tearDown() throws Exception {
     }
 
+    @Test
+    public void testFieldTypeCacheInitialization() throws Exception {
+    	TypeManager newTypeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+    	assertEquals(fieldType1, newTypeManager.getFieldTypeByName(fieldType1.getName()));
+    }
     
 }

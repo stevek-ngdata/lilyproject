@@ -34,7 +34,7 @@ public abstract class AbstractRepositoryTest {
 	protected static IdGenerator idGenerator = new IdGeneratorImpl();
 	protected static TypeManager typeManager;
 	protected static Repository repository;
-	private static FieldType fieldType1;
+	protected static FieldType fieldType1;
 	private static FieldType fieldType1B;
 	private static FieldType fieldType2;
 	private static FieldType fieldType3;
