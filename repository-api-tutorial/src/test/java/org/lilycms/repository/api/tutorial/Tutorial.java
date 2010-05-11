@@ -179,7 +179,8 @@ public class Tutorial {
 
         // (1)
         Record record = repository.read(id);
-        System.out.println(record.getField(new QName(NS, "title")));
+        String title = (String)record.getField(new QName(NS, "title")); 
+        System.out.println(title);
 
         // (2)
         record = repository.read(id, 1L);
