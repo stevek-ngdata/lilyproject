@@ -138,22 +138,6 @@ public class HBaseRepository implements Repository {
         if (recordId == null) {
             recordId = idGenerator.newRecordId();
             newRecord.setId(recordId);
-        } else {
-            // Check if the record is a variant, and if its master record exists
-            RecordId masterRecordId = recordId.getMaster();
-            if (!recordId.equals(masterRecordId)) {
-                Get get = new Get(masterRecordId.toBytes());
-                Result masterResult;
-                try {
-                    masterResult = recordTable.get(get);
-                } catch (IOException e) {
-                    throw new RepositoryException("Exception occured while checking existence of master record <"
-                                    + recordId + ">", e);
-                }
-                if (masterResult.isEmpty()) {
-                    throw new RecordNotFoundException(newRecord);
-                }
-            }
         }
 
         byte[] rowId = recordId.toBytes();
