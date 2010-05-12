@@ -237,25 +237,31 @@ public class Tutorial {
 
     @Test
     public void variantRecord() throws Exception {
-        // TODO
-//        Map<String, String> variantProps = new HashMap<String, String>();
-//        variantProps.put("language", "en");
-//
-//        IdGenerator idGenerator = repository.getIdGenerator();
-//
-//        RecordId masterId = idGenerator.newRecordId();
-//
-//        RecordId enId = idGenerator.newRecordId(masterId, variantProps);
-//        Record enRecord = repository.newRecord(enId);
-//        enRecord.setRecordType("Book", null);
-//        enRecord.setField(new QName(NS, "title"), "Car maintenance");
-//        enRecord = repository.create(enRecord);
-//
-//        RecordId nlId = idGenerator.newRecordId(enRecord.getId().getMaster(), Collections.singletonMap("language", "nl"));
-//        Record nlRecord = repository.newRecord(enId);
-//        nlRecord.setRecordType("Book", null);
-//        nlRecord.setField(new QName(NS, "title"), "Wagen onderhoud");
-//        nlRecord = repository.create(enRecord);
+        // (1)
+        IdGenerator idGenerator = repository.getIdGenerator();
+        RecordId masterId = idGenerator.newRecordId();
+
+        // (2)
+        Map<String, String> variantProps = new HashMap<String, String>();
+        variantProps.put("language", "en");
+
+        // (3)
+        RecordId enId = idGenerator.newRecordId(masterId, variantProps);
+
+        // (4)
+        Record enRecord = repository.newRecord(enId);
+        enRecord.setRecordType("Book", null);
+        enRecord.setField(new QName(NS, "title"), "Car maintenance");
+        enRecord = repository.create(enRecord);
+
+        // (5)
+        RecordId nlId = idGenerator.newRecordId(enRecord.getId().getMaster(), Collections.singletonMap("language", "nl"));
+        Record nlRecord = repository.newRecord(nlId);
+        nlRecord.setRecordType("Book", null);
+        nlRecord.setField(new QName(NS, "title"), "Wagen onderhoud");
+        nlRecord = repository.create(nlRecord);
+
+        PrintUtil.print(nlRecord, repository);
     }
 
     @Test
