@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.47 r22583"
-   sodipodi:docname="lily record versions.svg"
+   sodipodi:docname="lily_record_versions.svg"
    inkscape:export-filename="/home/bruno/werk/daisy3/lily record versions.png"
    inkscape:export-xdpi="66.139999"
    inkscape:export-ydpi="66.139999">
@@ -67,13 +67,6 @@
      id="layer1"
      transform="translate(0,-308.2677)">
     <rect
-       style="fill:#f2f2f2;fill-opacity:1"
-       y="441.70743"
-       x="91.705627"
-       height="39"
-       width="858"
-       id="rect3882" />
-    <rect
        id="rect3738"
        width="276"
        height="370"
@@ -94,19 +87,6 @@
        height="370"
        width="276"
        id="rect3610" />
-    <text
-       xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="111.70563"
-       y="467.70743"
-       id="text2816"><tspan
-         sodipodi:role="line"
-         id="tspan2818"
-         x="111.70563"
-         y="467.70743"
-         style="font-size:18px">ID <tspan
-   style="font-size:14px"
-   id="tspan3888">= MASTER ID + VARIANT PROPERTIES</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -696,12 +676,12 @@
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="313.70563"
-       y="422.70743"
+       y="476.70743"
        id="text3884"><tspan
          sodipodi:role="line"
          id="tspan3886"
          x="313.70563"
-         y="422.70743"
+         y="476.70743"
          style="font-size:28px">Structure of a record with versions</tspan></text>
     <text
        xml:space="preserve"
