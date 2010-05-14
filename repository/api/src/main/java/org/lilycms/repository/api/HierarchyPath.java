@@ -17,7 +17,11 @@ package org.lilycms.repository.api;
 
 import java.util.Arrays;
 
-// TODO move to another package
+/**
+ * A hierarchical path value. This kind of value specifies a hierarchical path consisting of path segments.
+ *
+ * <p>See {@link ValueType}.
+ */
 public class HierarchyPath {
 
     private final Object[] elements;
@@ -30,7 +34,7 @@ public class HierarchyPath {
         return elements;
     }
     
-    public int lenght() {
+    public int length() {
         return elements.length;
     }
 

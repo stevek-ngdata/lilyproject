@@ -20,10 +20,21 @@ import java.util.Arrays;
 import org.lilycms.util.ArgumentValidator;
 
 /**
- * A Blob is a primitive type that can be used to store binary data.
- * Storing and retrieving data to and from the blob should happen through {@link OutputStream} and {@link InputStream}.
- * These streams should be requested from the Repository through {@link Repository#getOutputStream(Blob)} and {@link Repository#getInputStream(Blob)}.
- * After the data has been written to the OutputStream and the stream has been closed see {@link OutputStream#close()}, the Blob is ready to be stored in a {@link Record}.
+ * A Blob is a {@link PrimitiveValueType primitive type} that can be used to store arbitrarily large binary data.
+ * Besides the binary data itself, a blob holds some metadata such as the mime-type and size.
+ *
+ * <p>Storing and retrieving data to and from the blob happens through {@link java.io.OutputStream} and
+ * {@link java.io.InputStream}.
+ *
+ * <p>These streams are available via the Repository through {@link Repository#getOutputStream(Blob)} and
+ * {@link Repository#getInputStream(Blob)}.
+ *
+ * <p><b>Important:</b> to add a blob to a record, you first need to upload the data via the OutputStream. Once
+ * finished, close the OutputStream using {@link java.io.OutputStream#close()}. This will trigger the update of
+ * the {@link #setValue value} of this blob object (which will usually be a pointer to the storage location
+ * of the blob, though for tiny blobs -- sorry for the oxymoron -- this might be the binary data itself).
+ * Once that's done, you can store the {@link Record} itself. Thus: first upload all blobs and close their
+ * OutputStreams, then save the record. It does not matter when the blob value is set on the record object itself.
  */
 public class Blob {
 
@@ -34,9 +45,11 @@ public class Blob {
 
     /**
      * This is the default constructor to create a Blob.
-     * @param mimetype the mimetype of the data represented by the blob
-     * @param size the size in number of bytes of the data that will be written. The size is a mandatory parameter
-     * @param name a name with no extra semantic meaning (e.g. a filename)
+     *
+     * @param mimetype the media type of the data represented by the blob.
+     * @param size the size in number of bytes of the data that will be written. The size is a mandatory parameter.
+     * @param name a name with no extra semantic meaning. Typically used to store a filename, e.g. for when a user
+     *             downloads this blob to her desktop. Optional, can be null.
      */
     public Blob(String mimetype, Long size, String name) {
         this(null, mimetype, size, name);
@@ -44,7 +57,9 @@ public class Blob {
 
     /**
      * This constructor should only be used internally.
-     * @param value the value will be generated after data has been written to the OutputStream and the stream has been closed. 
+     *
+     * @param value the value will be generated after data has been written to the OutputStream and the stream
+     *              has been closed.
      */
     public Blob(byte[] value, String mimetype, Long size, String name) {
         ArgumentValidator.notNull(size, "size");

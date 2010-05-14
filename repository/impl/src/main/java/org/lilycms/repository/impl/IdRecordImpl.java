@@ -1,5 +1,6 @@
-package org.lilycms.repository.api;
+package org.lilycms.repository.impl;
 
+import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.exception.FieldNotFoundException;
 
 import java.util.HashMap;

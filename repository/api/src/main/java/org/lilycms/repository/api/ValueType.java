@@ -16,29 +16,50 @@
 package org.lilycms.repository.api;
 
 /**
- * The {@link ValueType} represents the type of the actual values of a
- * {@link FieldType}. A {@link ValueType} encapsulates a
- * {@link PrimitiveValueType} to be used by the value or values of the
- * {@link Field} following this {@link ValueType}. The implementors of this
- * interface are responsible for the encoding and decoding of the values
- * represented by their type.
- * 
+ * A value type represents the type of the value of a {@link FieldType}.
+ *
+ * <p>It consists of:
+ * <ul>
+ *  <li>A {@link PrimitiveValueType}: this is a particular kind of value like a string, long, ... It could
+ *      also be a composite value, e.g. a coordinate with x and y values.
+ *  <li>a multi-value flag: to indicate if the value should be multi-value, in which case the value is a
+ *      java.util.List.
+ *  <li>a hierarchical flag: to indicate if the value should be a hierarchical path, in which case the value is
+ *      a {@link HierarchyPath}.
+ * </ul>
+ *
+ * <p>The reason for having the separate concept of a {@link PrimitiveValueType} is so that we could have a multi-value
+ * and/or hierarchical variant of any kind of value.
+ *
+ * <p>A field can be either multi-value or hierarchical, or both at the same time. In the last case, the value
+ * is a java.util.List of {@link HierarchyPath} objects, not the other way round.
+ *
+ * <p>So you can have a multi-valued string, a multi-valued date, a single-valued hierarchical string path,
+ * a multi-valued hierarchical string path, ...
+ *
+ * <p>It is the responsibility of a ValueType to convert the values to/from byte representation, as used for
+ * storage in the repository. This should delegate to the PrimitiveValueType for the conversion of a single value.
+ *
+ * <p>It is not necessary to create value types in the repository, they simply exist for any kind of primitive
+ * value type. You can get access to ValueType instances via {@link TypeManager#getValueType(String, boolean, boolean)}.
+ *
  */
 public interface ValueType {
 
     /**
-     * If this type represents a multi value field.
+     * Is this a multi-value value type.
      */
     boolean isMultiValue();
     
     /**
-     * If this type represents a {@link HierarchyPath}.
+     * Is this a hierarchical value type. See also {@link HierarchyPath}.
      */
     boolean isHierarchical();
 
     /**
-     * A ValueType is primitive if it is not hierarchical nor multivalue, thus
-     * if its values directly correspond to the {@link #getPrimitive PrimitiveValueType}.
+     * Is this a primitive value type. A value type is primitive if it is not hierarchical and not multi-value, thus
+     * if its values directly correspond to the {@link #getPrimitive PrimitiveValueType}. This is a shortcut method
+     * to avoid checking the other flags individually.
      */
     boolean isPrimitive();
 
@@ -53,17 +74,21 @@ public interface ValueType {
     byte[] toBytes(Object value);
 
     /**
-     * @return the {@link PrimitiveValueType}
+     * Gets the primitive value type.
      */
     PrimitiveValueType getPrimitive();
     
     /**
-     * @return the actual {@link Class} object represented by this {@link ValueType} (e.g. {@link String}). In case of multi value, this will be a {@link List}.
+     * Returns the Java {@link Class} object for the values of this value type.
+     *
+     * <p>For multi-value fields (including those which are hierarchical), this will be java.util.List.
+     * For single-valued hierarchical fields this is {@link HierarchyPath}. In all other cases, this is the same
+     * as {@link PrimitiveValueType#getType}.
      */
     Class getType();
 
     /**
-     * @return an encoded byte[] representing the {@link ValueType}
+     * Returns an encoded byte[] representing this value type.
      */
     byte[] toBytes();
     

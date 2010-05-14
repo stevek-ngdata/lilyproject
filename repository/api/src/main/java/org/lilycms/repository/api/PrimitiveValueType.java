@@ -16,37 +16,39 @@
 package org.lilycms.repository.api;
 
 /**
- * Represents the primitive type that can be used for the value of a field. It
- * should be embeded in a {@link ValueType} before using it in a
- * {@link FieldType} The implementors of this interface are responsible
- * for the encoding to and decoding from {@code byte[]} of the values of their
+ * Represents the primitive type that can be used for the value of a field. It should be embedded in a
+ * {@link ValueType} before using it in a {@link FieldType}.
+ *
+ * <p>A primitive value type is responsible for the encoding to and decoding from {@code byte[]} of the values of their
  * type.
- * 
- * When a new primitive type should made available, this interface needs to be
- * implemented and registered by calling
- * {@link TypeManager#registerPrimitiveValueType(PrimitiveValueType)}
+ *
+ * <p>PrimitiveValueType's are obtained as part of a value type via
+ * {@link TypeManager#getValueType(String, boolean, boolean) TypeManager.getValueType}.
+ *
+ * <p>There are a number of built-in primitive value types, they are listed at
+ * {@link TypeManager#getValueType(String, boolean, boolean) TypeManager.getValueType}.
+ *
+ * <p>When a new primitive type should be made available, this interface needs to be implemented and registered by calling
+ * {@link TypeManager#registerPrimitiveValueType(PrimitiveValueType) TypeManager.registerPrimitiveValueType}.
  */
 public interface PrimitiveValueType {
     /**
-     * @return a name which is unique over all {@link PrimitiveValueType}s
+     * The unique name of this primitive value type.
      */
     String getName();
 
     /**
-     * Decodes a byte[] to an object of the actual type of the
-     * {@link PrimitiveValueType}
+     * Decodes a byte[] to an object of the actual type of this primitive value type.
      */
     public Object fromBytes(byte[] bytes);
 
     /**
-     * Encodes an object of the actual type of the {@link PrimitiveValueType} to
-     * a byte[]
+     * Encodes an object of the actual type of this primitive value type to a byte[].
      */
     byte[] toBytes(Object value);
 
     /**
-     * @return the actual type (e.g. {@link String}) that is represented by this
-     *         {@link PrimitiveValueType}
+     * The Java type of the values of this primitive value type.
      */
     Class getType();
     

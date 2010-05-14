@@ -22,100 +22,164 @@ import org.lilycms.repository.api.exception.RecordTypeExistsException;
 import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
 import org.lilycms.repository.api.exception.RepositoryException;
 
-
-
-
 /**
- * Repository is the API for all CRUD operations on {@link RecordType}.
- * 
- * <p>
+ * TypeManager provides access to the repository schema. This is where {@link RecordType}s and {@link FieldType}s
+ * are managed.
+ *
+ * <p>For an in-depth description of the repository model, please see the Lily documentation.
  */
 public interface TypeManager {
     
-    // Record Types
     /**
-     * Creates a new {@link RecordType} object.
+     * Instantiates a new RecordType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
      */
     RecordType newRecordType(String recordTypeId);
 
     /**
-     * Creates a {@link RecordType} on the repository with the properties defined in the {@link RecordType} object.
+     * Creates a RecordType in the repository.
+     *
      * @throws RecordTypeExistsException when a recordType with the same id already exists on the repository 
      * @throws RecordTypeNotFoundException when a mixin of the recordType refers to a non-existing {@link RecordType} 
      * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
+    RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RepositoryException;
     
     /**
-     * Retrieves the latest version of a {@link RecordType} from the repository.
+     * Gets a RecordType from the repository.
+     *
+     * @param version the version of the record type to return, or null for the latest version.
+     *
      * @throws RecordTypeNotFoundException when the recordType does not exist
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException, RepositoryException;
 
     /**
-     * A new version of the {@link RecordType} is created. The new verion number
-     * is placed in the recordType object. If a {@link FieldType} should
-     * be deleted it should be left out of the {@link RecordType}'s list of
-     * {@link FieldType}s.
-     * @throws RecordTypeNotFoundException when the recordType to be updated does not exist 
+     * Updates an existing record type.
+     *
+     * <p>You can provide any RecordType object as argument, either retrieved via {@link #getRecordType(String, Long)} or
+     * newly instantiated via {@link #newRecordType(String)}.
+     *
+     * <p>The state of the record type will be updated to correspond to the given RecordType object. This also
+     * concerns the list of fields: any fields that were previously in the record type but are not present in
+     * the provided RecordType object will be removed. This is different from {@link Record}s, where field deletion
+     * is explicit.
+     *
+     * <p>Upon each update, a new version of the RecordType is created. The number of the created version is available
+     * from the returned RecordType object.
+     *
+     * @throws RecordTypeNotFoundException when the recordType to be updated does not exist
      * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType updateRecordType(RecordType recordType) throws  RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
-    
+    RecordType updateRecordType(RecordType recordType) throws  RecordTypeNotFoundException, FieldTypeNotFoundException,
+            RepositoryException;
+
+    /**
+     * Instantiates a new FieldTypeEntry object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
+     *
+     * <p>FieldTypeEntries can be added to {@link RecordType}s.
+     */
     FieldTypeEntry newFieldTypeEntry(String fieldTypeId, boolean mandatory);
     
-    // Field Types
     /**
-     * Creates a new {@link FieldType} object.
+     * Instantiates a new FieldType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
      */
     FieldType newFieldType(ValueType valueType, QName name, Scope scope);
     
+    /**
+     * Instantiates a new FieldType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
+     */
     FieldType newFieldType(String id, ValueType valueType, QName name, Scope scope);
     
     /**
-     * Creates a {@link FieldType} on the repository with the properties defined in the {@link FieldType} object.
-     * @return a {@link FieldType} 
+     * Creates a FieldType in the repository.
+     *
+     * <p>The ID of a field type is assigned by the system. If there is an ID present in the provided FieldType
+     * object, it will be ignored. The generated ID is available from the returned FieldType object.
+     *
+     * @return updated FieldType object
+     *
      * @throws RepositoryException when an unexpected exception occurs on the repository
      * @throws FieldTypeExistsException 
      */
     FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, RepositoryException;
 
     /**
-     * Updates a {@link FieldType} on the repository with the properties defined in the {@link FieldType} object.
-     * @return a {@link FieldType} 
+     * Updates an existing FieldType.
+     *
+     * <p>You can provide any FieldType object as argument, either retrieved via {@link #getFieldTypeByName} or
+     * newly instantiated via {@link #newFieldType}.
+     *
+     * <p>It is the ID of the field type which serves to identify the field type, so the ID must be present in the
+     * FieldType object. The QName of the field type can be changed.
+     *
+     * @return updated FieldType object
+     *
      * @throws FieldTypeNotFoundException when no fieldType with id and version exists
-     * @throws FieldTypeUpdateException an exception occured while updating the FieldType 
+     * @throws FieldTypeUpdateException an exception occurred while updating the FieldType 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException, RepositoryException; 
+    FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
+            RepositoryException;
     
     /**
-     * Gets a {@link FieldType} from the repository
-     * @return a {@link FieldType} object 
-     * @throws FieldTypeNotFoundException when no fieldType with id and version exists
+     * Gets a FieldType from the repository.
+     *
+     * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, RepositoryException;
 
-    FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException;
-    
-    // Value Types
-    
     /**
-     * A new {@link PrimitiveValueType} should be registered by calling this method before it can be used.
+     * Gets a FieldType from the repository.
+     *
+     * @throws FieldTypeNotFoundException when no fieldType with the given name exists
+     * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    void registerPrimitiveValueType(PrimitiveValueType primitiveValueType);
+    FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException;
 
     /**
-     * This method should be called to get a {@link ValueType} instance 
-     * @param primitiveValueTypeName the name of the {@link PrimitiveValueType} to be encapsulated by this {@link ValueType}
+     * Provides {@link ValueType} instances. These are used to set to value type of {@link FieldType}s.
+     *
+     * <p>The built-in available primitive value types are listed in the following table.
+     *
+     * <table>
+     * <tbody>
+     * <tr><th>Name</th>     <th>Class</th></tr>
+     * <tr><td>STRING</td>   <td>java.lang.String</td></tr>
+     * <tr><td>INTEGER</td>  <td>java.lang.Integer</td></tr>
+     * <tr><td>LONG</td>     <td>java.lang.Long</td></tr>
+     * <tr><td>BOOLEAN</td>  <td>java.lang.Boolean</td></tr>
+     * <tr><td>DATE</td>     <td>java.util.Date</td></tr>
+     * <tr><td>BLOB</td>     <td>org.lilycms.repository.api.Blob</td></tr>
+     * <tr><td>LINK</td>     <td>org.lilycms.repository.api.RecordId</td></tr>
+     * </tbody>
+     * </table>
+     *
+     * @param primitiveValueTypeName the name of the {@link PrimitiveValueType} to be encapsulated by this
+     *                               {@link ValueType}. See table above.
      * @param multiValue if this {@link ValueType} should represent a multi value field or not
      * @param hierarchical if this{@link ValueType} should represent a {@link HierarchyPath} field or not
      */
     ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical);
 
-   
+    /**
+     * Registers custom {@link PrimitiveValueType}s.
+     *
+     * <p><b>TODO:</b> Maybe this should rather move to an SPI interface? Can this replace a built-in primitive
+     * value type if the name corresponds? Does it make sense to allow registering at any time? Probably implies
+     * registering on all Lily nodes? This needs more thought.
+     */
+    void registerPrimitiveValueType(PrimitiveValueType primitiveValueType);
 }

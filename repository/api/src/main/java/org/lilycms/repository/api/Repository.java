@@ -15,7 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -30,30 +29,33 @@ import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
 import org.lilycms.repository.api.exception.RepositoryException;
 
 /**
- * Repository is the API for all CRUD operations on Records.
+ * Repository is the primary access point for accessing the functionality of the Lily repository.
+ *
+ * <p>Via Repository, you can perform all {@link Record}-related CRUD operations.
  */
 public interface Repository {
     /**
-     * Creates a new {@link Record} object.
+     * Instantiates a new Record object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
      */
     Record newRecord();
 
     /**
-     * Creates a new {@link Record} object with the {@link RecordId} already
-     * filled in.
+     * Instantiates a new Record object with the RecordId already filled in.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
      */
     Record newRecord(RecordId recordId);
 
     /**
-     * Creates a new record on the repository.
+     * Creates a new record in the repository.
      *
-     * <p>
-     * If a recordId is given in {@link Record}, that id is used. If not, a new
-     * recordId is generated and placed in {@link Record}.
+     * <p>A Record object can be instantiated via {@link #newRecord}.
      *
-     * @param record
-     *            contains the data of the record or variant record to be
-     *            created
+     * <p>If a recordId is given in {@link Record}, that id is used. If not, a new id is generated and available
+     * from the returned Record object.
+     *
      * @throws RecordExistsException
      *             if a record with the given recordId already exists
      * @throws RecordNotFoundException
@@ -61,31 +63,24 @@ public interface Repository {
      * @throws InvalidRecordException
      *             if an empty record is being created
      * @throws FieldTypeNotFoundException
-     * @throws FieldGroupNotFoundException
      * @throws RecordTypeNotFoundException
-     * @throws RepostioryException
-     *             TBD
      */
-    Record create(Record record) throws RecordExistsException,
-            RecordNotFoundException, InvalidRecordException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RepositoryException;
+    Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
     /**
-     * Updates an existing record on the repository.
+     * Updates an existing record in the repository.
      *
-     * <p>
-     * The {@link Record} is updated with the new version number.
-     * <p>
-     * Only {@link Field}s that are mentioned in the {@link Record} will be
-     * updated.
-     * <p>
-     * Fields to be deleted should be separately and explicitly listed in the
-     * {@link Record}.
+     * <p>The provided Record object can either be obtained by reading a record via {@link #read} or
+     * it can also be instantiated from scratch via {@link #newRecord}.
      *
-     * @param record
-     *            contains the data of the record or variant record to be
-     *            updated
+     * <p>The Record object only needs to contain fields that actually need to be updated (though it might also
+     * contain unchanged fields). Fields that are not present in the record will not be deleted, deleting fields
+     * needs to be done explicitly by adding them to the list of fields to delete, see {@link Record#getFieldsToDelete}.
+     *
+     * <p>If the record contains any changed versioned fields, a new version will be created. The number of this
+     * version will be available on the returned Record object.
+     *
      * @throws RecordNotFoundException
      *             if the record does not exist
      * @throws InvalidRecordException
@@ -93,37 +88,55 @@ public interface Repository {
      * @throws RepositoryException
      *             TBD
      * @throws FieldTypeNotFoundException
-     * @throws FieldGroupNotFoundException
      * @throws RecordTypeNotFoundException
      */
-    Record update(Record record) throws RecordNotFoundException,
-            InvalidRecordException, RecordTypeNotFoundException,
+    Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RepositoryException;
 
-    Record updateMutableFields(Record record) throws InvalidRecordException,
-            RecordNotFoundException, RecordTypeNotFoundException,
+    /**
+     * Updates the version-mutable fields of an existing version.
+     *
+     * <p><b>TODO</b>: this is being considered for redesign.
+     */
+    Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
+
+    /**
+     * Reads a record fully. All the fields of the record will be read.
+     *
+     * <p>If the record has versions, it is the latest version that will be read.
+     */
+    Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RepositoryException;
-
-    Record read(RecordId recordId, List<QName> fieldNames)
-            throws RecordNotFoundException, RecordTypeNotFoundException,
+    /**
+     * Reads a record limited to a subset of the fields. Only the fields specified in the fieldNames list will be
+     * included.
+     *
+     * <p>Versioned and versioned-mutable fields will be taken from the latest version.
+     *
+     * <p>It is not an error if the record would not have a particular field, though it is an error to specify
+     * a non-existing field name.
+     */
+    Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId, Long version)
-            throws RecordNotFoundException, RecordTypeNotFoundException,
+    /**
+     * Reads a specific version of a record.
+     */
+    Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RepositoryException;
 
-    Record read(RecordId recordId, Long version, List<QName> fieldNames)
-            throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException;
+    /**
+     * Reads a specific version of a record limited to a subset of the fields.
+     */
+    Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
     /**
      * Reads a Record and also returns the mapping from QNames to IDs.
      *
-     * <p>See {@IdRecord} for more information.
+     * <p>See {@link IdRecord} for more information.
      *
      * @param version version to load. Optional, can be null.
      * @param fieldIds load only the fields with these ids. optional, can be null.
@@ -136,16 +149,17 @@ public interface Repository {
      *
      * @param recordId
      *            id of the record to delete
-     * @throws RepositoryException
-     *             TBD
      */
     void delete(RecordId recordId) throws RepositoryException;
 
     /**
-     * @return the IdGenerator service
+     * Returns the IdGenerator service.
      */
     IdGenerator getIdGenerator();
 
+    /**
+     * Returns the TypeManager.
+     */
     TypeManager getTypeManager();
 
     /**

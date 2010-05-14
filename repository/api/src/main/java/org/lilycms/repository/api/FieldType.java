@@ -16,77 +16,60 @@
 package org.lilycms.repository.api;
 
 /**
- * A FieldType is a value object describing the properties of a field, and is
- * used in a RecordType to describe the fields a Record can consist of, see
- * {@link RecordType} and {@link FieldTypeEntry}
- * 
- * <p>
- * A FieldType has an immutable system-generated unique id and a unique but
- * mutable qualified name {@link QName}, both uniquely identifying the
- * FieldType.
- * <p>
- * An immutable {@link ValueType} describes the underlying primitive type of the
- * FieldType and if it is a multivalue field, or hierarchical.
- * <p>
- * The immutable {@link Scope} descibes to which Scope the field belongs.
- * 
- * <p>
- * A FieldType object should be instantiated through
- * {@link TypeManager#newFieldType(ValueType, QName, Scope)}.
- * <p>
- * A new FieldType can be created on the repository by calling
- * {@link TypeManager#createFieldType(FieldType)}. After creating a new
- * FieldType it will be assigned a system-generated unique id.
+ * A field type defines a field within a {@link Record}. Each field added to a record should be defined as a field
+ * type.
+ *
+ * <p>A field type exists on its own (separate from any RecordType), but is typically associated with one or
+ * more {@link RecordType}s.
+ *
+ * <p>Field types are managed via the {@link TypeManager}. To instantiate a field type use
+ * {@link TypeManager#newFieldType(ValueType, QName, Scope) TypeManager.newFieldType}. As all entities within this
+ * API, field types are dumb data objects.
+ *
+ * <p>A field type has two unique identifiers:
+ * <ul>
+ * <li>a system-generated id, immutable after creation of the field type
+ * <li>a name in the form of a {@link QName qualified (namespaced) name}, which is mutable after creation of the field
+ * type
+ * </ul>
+ *
+ * <p>Each field type has a scope, the fields of a field type are said to belong to that scope. Scopes are
+ * explained in detail in the Lily documentation.
+ *
+ * <p>In contrast with {@link RecordType}s, field types are not versioned. In fact, field types are almost immutable,
+ * only their name can be changed after creation.
  */
 public interface FieldType {
 
     /**
-     * Sets the id of the FieldType on the value object.
+     * Sets the id.
+     *
+     * <p>Even though IDs are system-generated, you might need to set them on the field type e.g. to construct
+     * a field type to pass to the {@link TypeManager#updateFieldType(FieldType)}.
      */
     void setId(String id);
 
     /**
      * The id is unique, immutable and system-generated.
-     *
-     * @return the id of the FieldType
      */
     String getId();
 
-    /**
-     * Sets the name of the FieldType on the value object.
-     * @param name the qualified name to be used, see {@link QName}
-     */
     void setName(QName name);
 
     /**
-     * The name is unique, user-provided and can be changed by calling {@link TypeManager#updateFieldType(FieldType)}.
-     * @return the name of the FieldType
+     * The name is unique, user-provided but can be changed after initial creation of the field type.
      */
     QName getName();
 
     /**
-     * Sets the valueType of the FieldType on the value object.
-     * @param valueType the valueType to be used, see {@link ValueType}
-     *
+     * Sets the value type. Value type instances can be obtained from {@link TypeManager#getValueType}.
      */
     void setValueType(ValueType valueType);
 
-    /**
-     * The valueType describes the primitive type and if it is multivalue or hierarchical, see {@link ValueType}
-     * @return the valueType of the FieldType
-     */
     ValueType getValueType();
 
-    /**
-     * Sets the scope of the FieldType on the value object.
-     * @param scope the scope to be used, see {@link Scope}
-     */
     void setScope(Scope scope);
 
-    /**
-     * The scope defines to which scope a FieldType (and related fields) belong (e.g. Non-Versioned, Versioned, Versioned-Mutable), see {@link Scope}
-     * @return the scope of the FieldType
-     */
     Scope getScope();
 
     boolean equals(Object obj);

@@ -18,9 +18,11 @@ package org.lilycms.repository.api;
 import java.util.SortedMap;
 
 /**
- * Represents the id of a {@link Record}
+ * The id of a {@link Record}. This uniquely identifies a record.
+ *
+ * <p>A record ID consists of two parts: a mater record ID, and optionally variant properties.
  * 
- * <p> A string or byte[] representation can be requested of the Id.
+ * <p>A string or byte[] representation can be requested of the Id.
  */
 public interface RecordId {
 

@@ -18,7 +18,11 @@ package org.lilycms.repository.api;
 import org.lilycms.util.ArgumentValidator;
 
 /**
+ * A qualified name. A qualified name consists of a namespace and a name.
  *
+ * <p>Qualifed names are used within the repository schema, see {@link FieldType}.
+ *
+ * <p>They allow to re-use existing vocabularies (e.g. dublin core) without name clashes.
  */
 public class QName {
 

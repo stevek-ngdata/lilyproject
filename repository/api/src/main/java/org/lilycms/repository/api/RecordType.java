@@ -18,19 +18,25 @@ package org.lilycms.repository.api;
 import java.util.Collection;
 import java.util.Map;
 
-
-
 /**
- * The RecordType describes the schema to be followed by a {@link Record}
- * 
- * <p>
- * Multiple versions of a RecordType can exist
- * 
- * <p>
- * A collection of {@link FieldType}s describe which fields can or must be
- * part of a {@link Record} of this {@link RecordType}. A
- * {@link FieldType} is always part of a {@link RecordType} and cannot
- * exist on its own.
+ * A record type describes the schema to be followed by a {@link Record}.
+ *
+ * <p>Record types are managed via the {@link TypeManager}. To instantiate a RecordType use
+ * {@link TypeManager#newRecordType(String) TypeManager.newRecordType}. As all entities within this API,
+ * record types are dumb data objects.
+ *
+ * <p>A record type consists of:
+ *
+ * <ul>
+ * <li>a list of field types, associated via {@link FieldTypeEntry} which defines properties specific to the use
+ * of a field type within this record type.
+ * <li>a list of mixins, these are references to other record types to be mixed in (imported within) this record
+ * type.
+ * </ul>
+ *
+ * <p>Record types are versioned: upon each update, a new version of the record type is created. Record store a
+ * pointer to the particular version of a record type that was used when creating/updating a record type. The references
+ * to the mixin record types are also to specific versions.
  */
 public interface RecordType {
     String getId();
@@ -38,9 +44,15 @@ public interface RecordType {
     void setVersion(Long version);
     
     Long getVersion();
-    
+
+    /**
+     * Adds a field type entry. A field type entry can be instantiated via {@link TypeManager#newFieldTypeEntry(String, boolean)}.
+     */
     void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry);
 
+    /**
+     * A shortcut for adding a field type entry without having to instantiate it yourself.
+     */
     FieldTypeEntry addFieldTypeEntry(String fieldTypeId, boolean mandatory);
 
     FieldTypeEntry getFieldTypeEntry(String fieldTypeId);

@@ -18,7 +18,7 @@ package org.lilycms.repository.api.exception;
 import org.lilycms.repository.api.FieldType;
 
 /**
- *
+ * Thrown when trying to create a field type with a QName which is already used by another field type.
  */
 public class FieldTypeExistsException extends Exception {
     private final FieldType fieldType;
@@ -35,7 +35,7 @@ public class FieldTypeExistsException extends Exception {
     public String getMessage() {
         StringBuilder message = new StringBuilder();
         message.append("FieldType <");
-        message.append(fieldType.getId());
+        message.append(fieldType.getName());
         message.append("> ");
         message.append("already exists");
         return message.toString();
