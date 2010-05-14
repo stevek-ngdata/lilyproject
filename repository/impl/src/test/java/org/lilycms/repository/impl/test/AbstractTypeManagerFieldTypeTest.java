@@ -5,13 +5,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.ValueType;
-import org.lilycms.repository.api.exception.FieldTypeExistsException;
-import org.lilycms.repository.api.exception.FieldTypeUpdateException;
+import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.FieldTypeExistsException;
+import org.lilycms.repository.api.FieldTypeUpdateException;
 
 public abstract class AbstractTypeManagerFieldTypeTest {
 

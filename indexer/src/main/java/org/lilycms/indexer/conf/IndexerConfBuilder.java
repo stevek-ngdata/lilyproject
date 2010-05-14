@@ -1,9 +1,9 @@
 package org.lilycms.indexer.conf;
 
+import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.util.location.LocationAttributes;
 import org.lilycms.util.xml.DocumentHelper;

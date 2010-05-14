@@ -13,28 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api.exception;
+package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.RecordType;
 
-public class InvalidRecordException extends Exception {
+/**
+ *
+ */
+public class RecordTypeExistsException extends Exception {
 
-    private final Record record;
-    private final String message;
+    private final RecordType recordType;
 
-    public InvalidRecordException(Record record, String message) {
-        this.record = record;
-        // TODO Auto-generated constructor stub
-        this.message = message;
+    public RecordTypeExistsException(RecordType recordType) {
+        this.recordType = recordType;
     }
-    
-    public Record getRecord() {
-        return record;
+
+    public RecordType getRecordType() {
+        return recordType;
     }
     
     @Override
     public String getMessage() {
-        return "Record <"+record.getId()+">: " + message;
+        StringBuilder message = new StringBuilder();
+        message.append("RecordType <");
+        message.append(recordType.getId());
+        message.append("> ");
+        message.append("already exists");
+        return message.toString();
     }
-
 }

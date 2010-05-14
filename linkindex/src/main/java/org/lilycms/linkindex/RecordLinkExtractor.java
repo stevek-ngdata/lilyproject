@@ -1,8 +1,8 @@
 package org.lilycms.linkindex;
 
 import org.lilycms.repository.api.*;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.RepositoryException;
 
 import java.util.List;
 import java.util.Map;

@@ -2,7 +2,6 @@ package org.lilycms.repoutil;
 
 import org.apache.commons.logging.LogFactory;
 import org.lilycms.repository.api.*;
-import org.lilycms.repository.api.exception.*;
 
 import java.util.*;
 

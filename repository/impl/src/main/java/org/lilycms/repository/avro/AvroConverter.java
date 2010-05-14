@@ -14,25 +14,16 @@ import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.util.Utf8;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.FieldTypeEntry;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordId;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.ValueType;
-import org.lilycms.repository.api.exception.FieldTypeExistsException;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.FieldTypeUpdateException;
-import org.lilycms.repository.api.exception.InvalidRecordException;
-import org.lilycms.repository.api.exception.RecordExistsException;
-import org.lilycms.repository.api.exception.RecordNotFoundException;
-import org.lilycms.repository.api.exception.RecordTypeExistsException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.FieldTypeExistsException;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.FieldTypeUpdateException;
+import org.lilycms.repository.api.InvalidRecordException;
+import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordNotFoundException;
+import org.lilycms.repository.api.RecordTypeExistsException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.RepositoryException;
 
 public class AvroConverter {
 

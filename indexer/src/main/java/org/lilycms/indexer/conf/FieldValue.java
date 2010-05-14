@@ -2,7 +2,7 @@ package org.lilycms.indexer.conf;
 
 import org.lilycms.repository.api.IdRecord;
 import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.exception.FieldNotFoundException;
+import org.lilycms.repository.api.FieldNotFoundException;
 
 import java.util.Collections;
 import java.util.List;

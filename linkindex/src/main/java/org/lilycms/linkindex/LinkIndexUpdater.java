@@ -6,8 +6,8 @@ import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.repository.api.*;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.RecordNotFoundException;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 

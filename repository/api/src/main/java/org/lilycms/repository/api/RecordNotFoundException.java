@@ -13,31 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api.exception;
+package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.FieldType;
+import org.lilycms.repository.api.Record;
 
-/**
- * Thrown when trying to create a field type with a QName which is already used by another field type.
- */
-public class FieldTypeExistsException extends Exception {
-    private final FieldType fieldType;
 
-    public FieldTypeExistsException(FieldType fieldType) {
-        this.fieldType = fieldType;
+public class RecordNotFoundException extends Exception {
+
+    private final Record record;
+
+    public RecordNotFoundException(Record record) {
+        this.record = record;
     }
-
-    public FieldType getFieldType() {
-        return fieldType;
+    
+    public Record getRecord() {
+        return record;
     }
     
     @Override
     public String getMessage() {
         StringBuilder message = new StringBuilder();
-        message.append("FieldType <");
-        message.append(fieldType.getName());
+        message.append("Record <");
+        message.append(record.getId());
         message.append("> ");
-        message.append("already exists");
+        Long version = record.getVersion();
+        if (version != null) {
+            message.append("<version:");
+            message.append(version);
+            message.append(">");
+        }
+        message.append("not found");
         return message.toString();
     }
 }

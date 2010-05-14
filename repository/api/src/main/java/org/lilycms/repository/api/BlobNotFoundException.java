@@ -1,4 +1,4 @@
-package org.lilycms.repository.api.exception;
+package org.lilycms.repository.api;
 
 import org.lilycms.repository.api.Blob;
 

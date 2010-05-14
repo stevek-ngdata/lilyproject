@@ -25,7 +25,7 @@ import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.exception.FieldNotFoundException;
+import org.lilycms.repository.api.FieldNotFoundException;
 
 public class RecordImpl implements Record {
     private RecordId id;

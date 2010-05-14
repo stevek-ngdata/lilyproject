@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilycms.repository.api.exception;
+package org.lilycms.repository.api;
 
 import org.lilycms.repository.api.Record;
 
-
-public class RecordNotFoundException extends Exception {
+public class InvalidRecordException extends Exception {
 
     private final Record record;
+    private final String message;
 
-    public RecordNotFoundException(Record record) {
+    public InvalidRecordException(Record record, String message) {
         this.record = record;
+        // TODO Auto-generated constructor stub
+        this.message = message;
     }
     
     public Record getRecord() {
@@ -32,17 +34,7 @@ public class RecordNotFoundException extends Exception {
     
     @Override
     public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        message.append("Record <");
-        message.append(record.getId());
-        message.append("> ");
-        Long version = record.getVersion();
-        if (version != null) {
-            message.append("<version:");
-            message.append(version);
-            message.append(">");
-        }
-        message.append("not found");
-        return message.toString();
+        return "Record <"+record.getId()+">: " + message;
     }
+
 }

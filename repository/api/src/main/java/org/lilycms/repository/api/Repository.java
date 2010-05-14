@@ -20,13 +20,13 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
-import org.lilycms.repository.api.exception.BlobNotFoundException;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.InvalidRecordException;
-import org.lilycms.repository.api.exception.RecordExistsException;
-import org.lilycms.repository.api.exception.RecordNotFoundException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.BlobNotFoundException;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.InvalidRecordException;
+import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordNotFoundException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.RepositoryException;
 
 /**
  * Repository is the primary access point for accessing the functionality of the Lily repository.

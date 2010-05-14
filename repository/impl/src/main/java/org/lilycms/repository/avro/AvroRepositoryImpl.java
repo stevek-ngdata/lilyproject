@@ -6,14 +6,13 @@ import java.util.List;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.util.Utf8;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.InvalidRecordException;
-import org.lilycms.repository.api.exception.RecordExistsException;
-import org.lilycms.repository.api.exception.RecordNotFoundException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.InvalidRecordException;
+import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordNotFoundException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.RepositoryException;
 
 public class AvroRepositoryImpl implements AvroRepository {
 

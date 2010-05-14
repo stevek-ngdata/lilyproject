@@ -13,8 +13,8 @@ import org.lilycms.repository.api.QName;
 import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
 
 public abstract class AbstractTypeManagerRecordTypeTest {
 

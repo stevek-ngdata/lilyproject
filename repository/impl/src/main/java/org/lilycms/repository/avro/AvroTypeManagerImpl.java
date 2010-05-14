@@ -1,13 +1,13 @@
 package org.lilycms.repository.avro;
 
 import org.apache.avro.util.Utf8;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.exception.FieldTypeExistsException;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.FieldTypeUpdateException;
-import org.lilycms.repository.api.exception.RecordTypeExistsException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.FieldTypeExistsException;
+import org.lilycms.repository.api.FieldTypeUpdateException;
+import org.lilycms.repository.api.RecordTypeExistsException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
 
 public class AvroTypeManagerImpl implements AvroTypeManager {
 

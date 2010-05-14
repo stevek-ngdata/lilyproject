@@ -18,7 +18,7 @@ package org.lilycms.repository.api;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.RepositoryException;
 
 /**
  * The BlobStoreAccess provides access to a specific underlying blob store. This blob store must be able to store

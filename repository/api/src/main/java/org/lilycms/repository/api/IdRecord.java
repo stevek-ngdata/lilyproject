@@ -1,6 +1,6 @@
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.exception.FieldNotFoundException;
+import org.lilycms.repository.api.FieldNotFoundException;
 
 import java.util.Map;
 

@@ -12,21 +12,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.IdRecord;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordId;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.exception.FieldNotFoundException;
-import org.lilycms.repository.api.exception.InvalidRecordException;
-import org.lilycms.repository.api.exception.RecordExistsException;
-import org.lilycms.repository.api.exception.RecordNotFoundException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
+import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.InvalidRecordException;
+import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordNotFoundException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 
 public abstract class AbstractRepositoryTest {

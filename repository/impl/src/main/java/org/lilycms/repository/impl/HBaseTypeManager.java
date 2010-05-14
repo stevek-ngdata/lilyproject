@@ -35,20 +35,13 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.FieldTypeEntry;
-import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.ValueType;
-import org.lilycms.repository.api.exception.FieldTypeExistsException;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.FieldTypeUpdateException;
-import org.lilycms.repository.api.exception.RecordTypeExistsException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.FieldTypeExistsException;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.FieldTypeUpdateException;
+import org.lilycms.repository.api.RecordTypeExistsException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.util.ArgumentValidator;
 
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
@@ -383,7 +376,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     public FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
-                    RepositoryException {
+            RepositoryException {
         FieldType latestFieldType = getFieldTypeById(fieldType.getId());
         if (!fieldType.getValueType().equals(latestFieldType.getValueType())) {
             throw new FieldTypeUpdateException("Changing the valueType of a fieldType <" + fieldType.getId()

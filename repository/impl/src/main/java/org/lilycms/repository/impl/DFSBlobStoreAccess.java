@@ -27,7 +27,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Blob;
 import org.lilycms.repository.api.BlobStoreAccess;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.RepositoryException;
 
 public class DFSBlobStoreAccess implements BlobStoreAccess {
 

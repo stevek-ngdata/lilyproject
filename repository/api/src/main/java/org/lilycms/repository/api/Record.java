@@ -18,7 +18,7 @@ package org.lilycms.repository.api;
 import java.util.List;
 import java.util.Map;
 
-import org.lilycms.repository.api.exception.FieldNotFoundException;
+import org.lilycms.repository.api.FieldNotFoundException;
 
 /**
  * A Record is the core entity managed by the {@link Repository}.

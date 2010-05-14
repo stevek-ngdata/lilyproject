@@ -15,12 +15,12 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.exception.FieldTypeExistsException;
-import org.lilycms.repository.api.exception.FieldTypeNotFoundException;
-import org.lilycms.repository.api.exception.FieldTypeUpdateException;
-import org.lilycms.repository.api.exception.RecordTypeExistsException;
-import org.lilycms.repository.api.exception.RecordTypeNotFoundException;
-import org.lilycms.repository.api.exception.RepositoryException;
+import org.lilycms.repository.api.FieldTypeExistsException;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.FieldTypeUpdateException;
+import org.lilycms.repository.api.RecordTypeExistsException;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.RepositoryException;
 
 /**
  * TypeManager provides access to the repository schema. This is where {@link RecordType}s and {@link FieldType}s
