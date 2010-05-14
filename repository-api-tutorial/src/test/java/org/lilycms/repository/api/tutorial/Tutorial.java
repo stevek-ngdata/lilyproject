@@ -261,7 +261,11 @@ public class Tutorial {
         nlRecord.setField(new QName(NS, "title"), "Wagen onderhoud");
         nlRecord = repository.create(nlRecord);
 
-        PrintUtil.print(nlRecord, repository);
+        // (6)
+        Set<RecordId> variants = repository.getVariants(masterId);
+        for (RecordId variant : variants) {
+            System.out.println(variant);
+        }
     }
 
     @Test
