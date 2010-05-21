@@ -15,15 +15,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.util.Utf8;
 import org.lilycms.repository.api.*;
-import org.lilycms.repository.api.FieldTypeExistsException;
-import org.lilycms.repository.api.FieldTypeNotFoundException;
-import org.lilycms.repository.api.FieldTypeUpdateException;
-import org.lilycms.repository.api.InvalidRecordException;
-import org.lilycms.repository.api.RecordExistsException;
-import org.lilycms.repository.api.RecordNotFoundException;
-import org.lilycms.repository.api.RecordTypeExistsException;
-import org.lilycms.repository.api.RecordTypeNotFoundException;
-import org.lilycms.repository.api.RepositoryException;
+import org.lilycms.wal.api.WalException;
 
 public class AvroConverter {
 
@@ -363,8 +355,8 @@ public class AvroConverter {
 	public AvroInvalidRecordException convert(InvalidRecordException invalidRecordException) throws AvroRepositoryException, AvroFieldTypeNotFoundException {
 		AvroInvalidRecordException avroInvalidRecordException = new AvroInvalidRecordException();
 		avroInvalidRecordException.record = convert(invalidRecordException.getRecord());
-		if (avroInvalidRecordException.getMessage() != null) {
-			avroInvalidRecordException.message = new Utf8(avroInvalidRecordException.getMessage());
+		if (invalidRecordException.getMessage() != null) {
+			avroInvalidRecordException.message = new Utf8(invalidRecordException.getMessage());
 		}
 		return avroInvalidRecordException;
     }
@@ -380,6 +372,18 @@ public class AvroConverter {
 	public InvalidRecordException convert(AvroInvalidRecordException invalidRecordException) throws RepositoryException, FieldTypeNotFoundException {
 		return new InvalidRecordException(convert(invalidRecordException.record), convert(invalidRecordException.message));
     }
+	
+	public WalException convert(AvroWalException avroWalException) {
+		return new WalException(convert(avroWalException.message));
+	}
+	
+	public AvroWalException convert(WalException walException) {
+		AvroWalException avroWalException = new AvroWalException();
+		if (walException.getMessage() != null) {
+			avroWalException.message = new Utf8(walException.getMessage());
+		}
+		return avroWalException;
+	}
 	
 	public String convert(Utf8 utf8) {
 		if (utf8 == null) return null;

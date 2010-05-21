@@ -58,6 +58,12 @@
           {"name": "id", "type": "string"},
           {"name": "version", "type": "long"}
       ]
+     },
+     
+     {"name": "AvroWalException", "type": "error",
+      "fields": [
+          {"name": "message", "type": "string"}
+      ]
      }  
  ],
 
@@ -65,18 +71,18 @@
      "create": {
          "request": [{"name": "record", "type": "AvroRecord"}],
          "response": "AvroRecord",
-         "errors": ["AvroRecordExistsException", "AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordExistsException", "AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException", "AvroWalException"]
      },
      
      "update": {
          "request": [{"name": "record", "type": "AvroRecord"}],
          "response": "AvroRecord",
-         "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException", "AvroWalException"]
      },
      "updateMutableFields": {
          "request": [{"name": "record", "type": "AvroRecord"}],
          "response": "AvroRecord",
-         "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException", "AvroWalException"]
      },
      "read": {
          "request": [{"name": "recordId", "type": "string"},

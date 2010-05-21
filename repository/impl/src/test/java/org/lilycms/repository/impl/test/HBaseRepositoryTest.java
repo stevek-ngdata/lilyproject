@@ -16,10 +16,11 @@
 package org.lilycms.repository.impl.test;
 
 
+import static org.junit.Assert.assertEquals;
+
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
 import org.junit.AfterClass;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -63,5 +64,4 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     	TypeManager newTypeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
     	assertEquals(fieldType1, newTypeManager.getFieldTypeByName(fieldType1.getName()));
     }
-    
 }

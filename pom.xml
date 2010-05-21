@@ -45,6 +45,7 @@
     <module>linkindex</module>
     <module>repo-util</module>
     <module>repository-api-tutorial</module>
+    <module>wal</module>
   </modules>
 
   <dependencyManagement>
@@ -94,6 +95,16 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-hbaseindex</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-wal-api</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-wal-impl</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>

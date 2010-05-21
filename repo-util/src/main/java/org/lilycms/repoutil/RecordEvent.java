@@ -97,6 +97,10 @@ public class RecordEvent {
     public Type getType() {
         return type;
     }
+    
+    public void setType(Type type) {
+    	this.type = type;
+    }
 
     /**
      * The fields which were updated (= added, deleted or changed), identified by their FieldType ID.
