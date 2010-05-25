@@ -11,14 +11,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.FieldType;
+import org.lilycms.repository.api.IdGenerator;
+import org.lilycms.repository.api.IdRecord;
 import org.lilycms.repository.api.InvalidRecordException;
+import org.lilycms.repository.api.QName;
+import org.lilycms.repository.api.Record;
 import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.RecordNotFoundException;
+import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
+import org.lilycms.wal.api.Wal;
+import org.lilycms.wal.impl.WalImpl;
 
 public abstract class AbstractRepositoryTest {
 
@@ -35,6 +48,14 @@ public abstract class AbstractRepositoryTest {
 	private static RecordType recordType1;
 	private static RecordType recordType1B;
 	private static RecordType recordType2;
+
+	@Before
+    public void setUp() throws Exception {
+    }
+
+	@After
+    public void tearDown() throws Exception {
+    }
 
 	protected static void setupTypes() throws Exception {
 		setupFieldTypes();
@@ -794,4 +815,7 @@ public abstract class AbstractRepositoryTest {
 
 		assertEquals(record, idRecord.getRecord());
 	}
+
+	
+	
 }

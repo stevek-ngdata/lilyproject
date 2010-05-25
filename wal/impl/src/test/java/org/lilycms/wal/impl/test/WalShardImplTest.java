@@ -15,18 +15,19 @@ import org.junit.Test;
 import org.lilycms.testfw.TestHelper;
 import org.lilycms.wal.api.WalEntry;
 import org.lilycms.wal.api.WalEntryId;
+import org.lilycms.wal.api.WalShard;
 import org.lilycms.wal.impl.WalShardImpl;
 
 public class WalShardImplTest {
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-	private static WalShardImpl walShard;
+	private static WalShard walShard;
     
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         TEST_UTIL.startMiniCluster(1);
-        walShard = new WalShardImpl("TestWalShard", TEST_UTIL.getConfiguration());
+        walShard = new WalShardImpl("TestWalShard", TEST_UTIL.getConfiguration(), new DummyWalEntryFactory());
     }
 
     @AfterClass
@@ -48,13 +49,18 @@ public class WalShardImplTest {
 		WalEntryId id = new WalEntryId(1L, Bytes.toBytes("sourceId"));
 		WalEntry entry = new DummyEntry(Bytes.toBytes("dummyBytes"));
 		walShard.putEntry(id, entry);
+		WalEntry actualEntry = walShard.getEntry(id);
+		assertEquals(entry, actualEntry);
 		walShard.entryFinished(id);
+		assertNull(walShard.getEntry(id));
 	}
 	
 	@Test
 	public void testFinishNonExistingEntry() throws Exception {
 		WalEntryId id = new WalEntryId(Long.MAX_VALUE, Bytes.toBytes("sourceId"));
+		assertNull(walShard.getEntry(id));
 		walShard.entryFinished(id);
+		assertNull(walShard.getEntry(id));
 	}
 	
 	@Test

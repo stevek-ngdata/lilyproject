@@ -19,9 +19,7 @@ package org.lilycms.repository.impl.test;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.BlobStoreAccessFactory;
@@ -42,6 +40,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
         BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
+        
         repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
         setupTypes();
     }
@@ -49,14 +48,6 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         TEST_UTIL.shutdownMiniCluster();
-    }
-
-    @Before
-    public void setUp() throws Exception {
-    }
-
-    @After
-    public void tearDown() throws Exception {
     }
 
     @Test

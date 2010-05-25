@@ -71,6 +71,7 @@ import org.lilycms.util.ArgumentValidator;
 import org.lilycms.util.Pair;
 import org.lilycms.util.io.Closer;
 import org.lilycms.wal.api.Wal;
+import org.lilycms.wal.api.WalEntryFactory;
 import org.lilycms.wal.api.WalEntryId;
 import org.lilycms.wal.api.WalException;
 import org.lilycms.wal.impl.WalImpl;
@@ -106,10 +107,13 @@ public class HBaseRepository implements Repository {
 	private BlobStoreAccessRegistry blobStoreAccessRegistry;
 	private Wal wal;
 	private SecondaryTaskHandler secondaryTaskHandler;
+	private final WalEntryFactory walEntryFactory;
 
 	public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, BlobStoreAccessFactory blobStoreOutputStreamFactory, Configuration configuration) throws IOException {
 		this.typeManager = typeManager;
 		this.idGenerator = idGenerator;
+		this.wal = new WalImpl();
+		this.walEntryFactory = new LilyWalEntryFactory();
 		blobStoreAccessRegistry = new BlobStoreAccessRegistry();
 		blobStoreAccessRegistry.setBlobStoreOutputStreamFactory(blobStoreOutputStreamFactory);
 		try {
@@ -147,8 +151,7 @@ public class HBaseRepository implements Repository {
 
 	private void initializeWal(Configuration configuration) throws IOException {
 		// Work with only one shard for now
-		WalShardImpl shard = new WalShardImpl("WS1", configuration);
-		wal = new WalImpl();
+		WalShardImpl shard = new WalShardImpl("WS1", configuration, walEntryFactory);
 		wal.registerShard(shard);
 	}
 

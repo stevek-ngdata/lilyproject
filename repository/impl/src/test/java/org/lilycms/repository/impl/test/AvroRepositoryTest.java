@@ -21,9 +21,7 @@ import java.net.InetSocketAddress;
 import org.apache.avro.ipc.SocketServer;
 import org.apache.avro.specific.SpecificResponder;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.api.BlobStoreAccessFactory;
@@ -75,14 +73,6 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
         TEST_UTIL.shutdownMiniCluster();
     }
 
-    @Before
-    public void setUp() throws Exception {
-    }
-
-    @After
-    public void tearDown() throws Exception {
-    }
-    
     @Test
 	public void testCreateVariant() throws Exception {
     	// TODO Avro side not implemented yet

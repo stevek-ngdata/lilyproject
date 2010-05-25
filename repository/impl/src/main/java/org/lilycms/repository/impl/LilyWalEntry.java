@@ -9,6 +9,10 @@ public class LilyWalEntry implements WalEntry {
 
 	private final Type eventType;
 
+	public static LilyWalEntry fromBytes(byte[] bytes) {
+		return new LilyWalEntry(Type.valueOf(Bytes.toString(bytes)));
+	}
+	
 	public LilyWalEntry(Type eventType) {
 		ArgumentValidator.notNull(eventType, "eventType");
 		this.eventType = eventType;

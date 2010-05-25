@@ -8,6 +8,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -16,19 +17,21 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.wal.api.WalEntry;
+import org.lilycms.wal.api.WalEntryFactory;
 import org.lilycms.wal.api.WalEntryId;
 import org.lilycms.wal.api.WalException;
 import org.lilycms.wal.api.WalShard;
-import org.lilycms.wal.impl.test.DummyEntry;
 
 public class WalShardImpl implements WalShard {
 
 	private static final byte[] ENTRY_COLUMN = Bytes.toBytes("entry");
 	private static final byte[] WALENTRIES_CF = Bytes.toBytes("WalEntriesCF");
 	private HTable shardTable;
+	private final WalEntryFactory walEntryFactory;
 
-	public WalShardImpl(String id, Configuration configuration) throws IOException {
-        try {
+	public WalShardImpl(String id, Configuration configuration, WalEntryFactory walEntryFactory) throws IOException {
+		this.walEntryFactory = walEntryFactory;
+		try {
             shardTable = new HTable(configuration, id);
         } catch (IOException e) {
             HBaseAdmin admin = new HBaseAdmin(configuration);
@@ -58,6 +61,21 @@ public class WalShardImpl implements WalShard {
 	        throw new WalException("Failed to add entry "+ id.toString() +"to WAL", e);
         }
 	}
+	
+	public WalEntry getEntry(WalEntryId id) throws WalException {
+		Get get = new Get(id.toBytes());
+		get.addColumn(WALENTRIES_CF, ENTRY_COLUMN);
+		Result result;
+		try {
+			result = shardTable.get(get);
+			if (result.isEmpty()) {
+				return null;
+			}
+			return walEntryFactory.fromBytes(result.getValue(WALENTRIES_CF, ENTRY_COLUMN));
+		} catch (IOException e) {
+			throw new WalException("Failed to get entry " + id.toString() + "from WAL", e);
+		}
+	}
 
 	public List<WalEntry> getEntries(long timestamp) throws WalException {
 		List<WalEntry> entries = new ArrayList<WalEntry>();
@@ -65,7 +83,7 @@ public class WalShardImpl implements WalShard {
 		try {
 	        ResultScanner scanner = shardTable.getScanner(scan);
 	        for (Result result : scanner) {
-	        	entries.add(new DummyEntry(result.getValue(WALENTRIES_CF, ENTRY_COLUMN)));
+	        	entries.add(walEntryFactory.fromBytes(result.getValue(WALENTRIES_CF, ENTRY_COLUMN)));
             }
         } catch (IOException e) {
         	throw new WalException("Failed to get entries for timestamp <" + timestamp + ">", e);
