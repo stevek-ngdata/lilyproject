@@ -69,9 +69,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             HTableDescriptor tableDescriptor = new HTableDescriptor(TYPE_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_COLUMN_FAMILY));
             tableDescriptor.addFamily(new HColumnDescriptor(FIELDTYPEENTRY_COLUMN_FAMILY, HConstants.ALL_VERSIONS,
-                            "none", false, true, HConstants.FOREVER, false));
+                            "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
             tableDescriptor.addFamily(new HColumnDescriptor(MIXIN_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none",
-                            false, true, HConstants.FOREVER, false));
+                            false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
             admin.createTable(tableDescriptor);
             typeTable = new HTable(configuration, TYPE_TABLE);
         }

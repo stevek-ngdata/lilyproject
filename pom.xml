@@ -22,7 +22,10 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <hbase.version>0.21.0-r940338</hbase.version>
+    <hbase.version>0.21.0-r948363</hbase.version>
+    <!-- When changing the hbase version, also change the hadoop version below to match
+         what is in HBase's pom.xml -->
+    <hadoop.version>0.20.2-with-200-826</hadoop.version>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>
@@ -109,7 +112,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-core</artifactId>
+        <artifactId>hbase</artifactId>
         <version>${hbase.version}</version>
         <!-- We use the log4j binding for slf4j instead of the simple one -->
         <exclusions>
@@ -121,7 +124,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-core</artifactId>
+        <artifactId>hbase</artifactId>
         <classifier>tests</classifier>
         <version>${hbase.version}</version>
         <scope>test</scope>

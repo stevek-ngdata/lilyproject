@@ -39,7 +39,7 @@
   <dependencies>
    <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-core</artifactId>
+      <artifactId>hbase</artifactId>
     </dependency>
   </dependencies>
 
