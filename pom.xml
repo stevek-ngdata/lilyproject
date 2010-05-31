@@ -217,6 +217,19 @@
       <name>JBoss Repository</name>
       <url>http://repository.jboss.org/maven2/</url>
     </repository>
+
+    <repository>
+      <!-- This repository is needed for the hadoop-test jar version 0.20.2-with-200-826. -->
+      <id>temp-hadoop</id>
+      <name>Hadoop 0.20.1/2 packaging, thrift, zk</name>
+      <url>http://people.apache.org/~rawson/repo/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
   </repositories>
 
   <pluginRepositories>
