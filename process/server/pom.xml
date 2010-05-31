@@ -53,6 +53,14 @@
         <enabled>false</enabled>
       </snapshots>
     </repository>
+
+    <repository>
+      <id>kauri-dev</id>
+      <url>http://kauriproject.org/maven/maven2/dev</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
   </repositories>
 
   <pluginRepositories>
@@ -61,6 +69,14 @@
       <url>http://kauriproject.org/maven/maven2/deploy</url>
       <snapshots>
         <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+
+    <pluginRepository>
+      <id>kauri-dev</id>
+      <url>http://kauriproject.org/maven/maven2/dev</url>
+      <snapshots>
+        <enabled>true</enabled>
       </snapshots>
     </pluginRepository>
   </pluginRepositories>
