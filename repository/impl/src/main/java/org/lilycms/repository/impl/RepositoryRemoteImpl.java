@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.Set;
 
@@ -42,13 +43,13 @@ public class RepositoryRemoteImpl implements Repository {
 	private IdGenerator idGenerator;
 	private final TypeManager typeManager;
 
-	public RepositoryRemoteImpl(int port, AvroConverter converter, TypeManagerRemoteImpl typeManager, IdGenerator idGenerator)
+	public RepositoryRemoteImpl(SocketAddress address, AvroConverter converter, TypeManagerRemoteImpl typeManager, IdGenerator idGenerator)
 			throws IOException {
 		this.converter = converter;
 		this.typeManager = typeManager;
 		//TODO idGenerator should not be available or used in the remote implementation
 		this.idGenerator = idGenerator;
-		SocketTransceiver client = new SocketTransceiver(new InetSocketAddress(port));
+		SocketTransceiver client = new SocketTransceiver(address);
 
 		repositoryProxy = (AvroRepository) SpecificRequestor.getClient(
 				AvroRepository.class, client);

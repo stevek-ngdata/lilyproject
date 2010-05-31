@@ -66,8 +66,10 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
         SocketServer typeManagerSocketServer = new SocketServer(new SpecificResponder(AvroTypeManager.class, new AvroTypeManagerImpl(serverTypeManager, serverConverter)),
 				new InetSocketAddress(0));
         AvroConverter remoteConverter = new AvroConverter();
-        typeManager = new TypeManagerRemoteImpl(typeManagerSocketServer.getPort(), remoteConverter, idGenerator);
-        Repository repository = new RepositoryRemoteImpl(repositorySocketServer.getPort(), remoteConverter, (TypeManagerRemoteImpl)typeManager, idGenerator);
+        typeManager = new TypeManagerRemoteImpl(new InetSocketAddress(typeManagerSocketServer.getPort()),
+                remoteConverter, idGenerator);
+        Repository repository = new RepositoryRemoteImpl(new InetSocketAddress(repositorySocketServer.getPort()),
+                remoteConverter, (TypeManagerRemoteImpl)typeManager, idGenerator);
         remoteConverter.setRepository(repository);
 
         setupFieldTypes();

@@ -1,7 +1,7 @@
 package org.lilycms.repository.impl;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.ipc.SocketTransceiver;
@@ -29,12 +29,12 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
 	private AvroTypeManager typeManagerProxy;
 	private AvroConverter converter;
 
-	public TypeManagerRemoteImpl(int port, AvroConverter converter, IdGenerator idGenerator)
+	public TypeManagerRemoteImpl(SocketAddress address, AvroConverter converter, IdGenerator idGenerator)
 			throws IOException {
 		this.converter = converter;
 		//TODO idGenerator should not be available or used in the remote implementation
 		this.idGenerator = idGenerator;
-		SocketTransceiver client = new SocketTransceiver(new InetSocketAddress(port));
+		SocketTransceiver client = new SocketTransceiver(address);
 
 		typeManagerProxy = (AvroTypeManager) SpecificRequestor.getClient(AvroTypeManager.class, client);
 		initialize();
