@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<repository>
+  <interface>default</interface>
+  <nameserver>default</nameserver>
+  <zookeeperConnectString>localhost:2181</zookeeperConnectString>
+
+  <!-- Port on which to bind the repository, 0 will bind to an ephemeral port. -->
+  <repositoryPort>0</repositoryPort>
+
+  <!-- Port on which to bind the type manager, 0 will bind to an ephemeral port. -->
+  <typeManagerPort>0</typeManagerPort>
+</repository>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<wiring>
+
+  <modules>
+
+    <artifact id="hbase" groupId="org.lilycms" artifactId="lily-hbase-module" version="0.1-dev">
+    </artifact>
+
+    <artifact id="repository" groupId="org.lilycms" artifactId="lily-repository-module" version="0.1-dev">
+    </artifact>
+
+  </modules>
+
+</wiring>

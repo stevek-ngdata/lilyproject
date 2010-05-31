@@ -49,6 +49,8 @@
     <module>repo-util</module>
     <module>repository-api-tutorial</module>
     <module>wal</module>
+    <module>process/server</module>
+    <module>process/client</module>
   </modules>
 
   <dependencyManagement>

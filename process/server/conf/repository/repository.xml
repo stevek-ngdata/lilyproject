@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<repository xmlns:conf="http://kauriproject.org/configuration"
+            conf:inherit="shallow">
+  <!--
+  <zookeeperConnectString>lat-kind:2181</zookeeperConnectString>
+  -->
+</repository>
