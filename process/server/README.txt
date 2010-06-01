@@ -6,23 +6,36 @@ Prerequisites
 
 You should have HBase running in order to run the Lily repository server.
 
+We assume you know how to obtain and run HBase (and Hadoop).
+
+The HBase and Hadoop versions to be used are defined in the following
+properties in Lily's root pom.xml:
+ - hbase.version
+ - hadoop.version
+
+For HBase, if it would be an SVN-revision based version, you can create the package
+equivalent to a binary download version as follows:
+
+svn export -rXXXX http://svn.apache.org/repos/asf/hadoop/hbase/trunk hbase-trunk
+cd hbase-trunk
+mvn -DskipTests=true package assembly:assembly
+
+You will find the .tar.gz file in the target directory.
+
 Install Kauri
 =============
 
-At this time we use an untagged Kauri trunk snapshot.
+Check the process/server/pom.xml for the Kauri version in use, see the property kauri.version.
+Currently this is an SVN snapshot, recognizable by the 'rXXXX' in the version.
 
-Checkout or export kauri trunk:
+You can obtain this Kauri as follows:
 
-svn co https://outerthought.repositoryhosting.com/svn/outerthought_kauri/trunk kauri-trunk
-
-Build it using:
-
-mvn install
-
-or faster, without tests:
-
+svn co -rXXXX https://outerthought.repositoryhosting.com/svn/outerthought_kauri/trunk kauri-trunk
+cd kauri-trunk
 mvn -P fast install
 
+After this, there is no package to build or extract, Kauri can be run immediately from its
+source tree.
 
 Configure
 =========

@@ -25,6 +25,21 @@
     <hbase.version>0.21.0-r948363</hbase.version>
     <!-- When changing the hbase version, also change the hadoop version below to match
          what is in HBase's pom.xml -->
+
+    <!-- About version 0.20.2-with-200-826:
+
+         (see also http://markmail.org/message/lkq5gmfc4xgubbsx)
+
+         You can obtain this as follows:
+           git clone git://github.com/ryanobjc/hadoop-common.git
+           cd hadoop-common
+           (next step is possibly not necessary)
+           git checkout hadoop-0.20.2-with-200-826
+
+         To build, first install apache forrest, and make sure you have a JDK 1.5 around.
+         Then build using:
+         ant -Djava5.home=/usr/lib/jdk1.5/ -Dforrest.home=/path/to/apache-forrest-0.8 tar
+    -->
     <hadoop.version>0.20.2-with-200-826</hadoop.version>
   </properties>
 
