@@ -15,7 +15,7 @@
    version="1.1"
    inkscape:version="0.47 r22583"
    sodipodi:docname="lily_distributed_architecture.svg"
-   inkscape:export-filename="/home/bruno/werk/daisy3/lily distributed architecture.png"
+   inkscape:export-filename="/home/bruno/tmp/lily distributed architecture.png"
    inkscape:export-xdpi="81.489998"
    inkscape:export-ydpi="81.489998">
   <defs
@@ -61,9 +61,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994949"
-     inkscape:cx="500.76353"
-     inkscape:cy="202.69969"
+     inkscape:zoom="0.7"
+     inkscape:cx="840.90788"
+     inkscape:cy="456.20609"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -82,7 +82,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -809,13 +809,13 @@
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="368.21429"
-       y="707.00507"
+       x="393.21429"
+       y="706.64795"
        id="text14844"><tspan
          sodipodi:role="line"
          id="tspan14846"
-         x="368.21429"
-         y="707.00507">blob access</tspan></text>
+         x="393.21429"
+         y="706.64795">blob access</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
        d="m 243.44676,272.85832 0,158.34141 39.90103,0"
@@ -825,6 +825,33 @@
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
        d="m 243.44676,353.16545 39.64849,0"
        id="path4254"
+       transform="translate(0,308.2677)" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 527.80471,146.58925 0,-7.11168 216.67772,0 0,7.11168"
+       id="path3745"
+       transform="translate(0,308.2677)"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="m 636.90118,146.58925 0,-23.23351"
+       id="path4531"
+       transform="translate(0,308.2677)" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="m 458.60926,401.14769 0,-181.90868 267.18535,0 0,-19.11168"
+       id="path4719"
+       transform="translate(0,308.2677)"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="m 611.64737,218.81516 0,-19.1929"
+       id="path4907"
+       transform="translate(0,308.2677)" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="m 501.54074,218.81516 0,-19.69798"
+       id="path5095"
        transform="translate(0,308.2677)" />
   </g>
 </svg>
