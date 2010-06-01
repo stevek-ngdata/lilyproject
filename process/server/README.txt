@@ -30,7 +30,7 @@ Currently this is an SVN snapshot, recognizable by the 'rXXXX' in the version.
 
 You can obtain this Kauri as follows:
 
-svn co -rXXXX https://outerthought.repositoryhosting.com/svn/outerthought_kauri/trunk kauri-trunk
+svn co -rXXXX https://dev.outerthought.org/svn/outerthought_kauri/trunk kauri-trunk
 cd kauri-trunk
 mvn -P fast install
 
