@@ -7,14 +7,14 @@ import java.util.*;
 
 public class DerefValue implements Value {
     private List<Follow> follows = new ArrayList<Follow>();
-    private String fieldId;
+    private FieldType fieldType;
 
-    protected DerefValue(String fieldId) {
-        this.fieldId = fieldId;
+    protected DerefValue(FieldType fieldType) {
+        this.fieldType = fieldType;
     }
 
-    protected void addFieldFollow(String fieldId) {
-        follows.add(new FieldFollow(fieldId));
+    protected void addFieldFollow(FieldType fieldType) {
+        follows.add(new FieldFollow(fieldType));
     }
 
     protected void addMasterFollow() {
@@ -33,8 +33,8 @@ public class DerefValue implements Value {
      * Returns the field taken from the document to which the follow-expressions point, thus the last
      * field in the chain.
      */
-    public String getTargetField() {
-        return fieldId;
+    public FieldType getTargetField() {
+        return fieldType;
     }
 
     public static interface Follow {
@@ -42,17 +42,26 @@ public class DerefValue implements Value {
     }
 
     public static class FieldFollow implements Follow {
-        String fieldId;
+        FieldType fieldType;
 
-        public FieldFollow(String fieldId) {
-            this.fieldId = fieldId;
+        public FieldFollow(FieldType fieldType) {
+            this.fieldType = fieldType;
         }
 
         public List<IdRecord> eval(IdRecord record, Repository repository, String vtag) {
-            if (!record.hasField(fieldId))
+            if (!record.hasField(fieldType.getId())) {
                 return null;
+            }
 
-            Object value = record.getField(fieldId);
+            if (vtag.equals(VersionTag.VERSIONLESS_TAG) && fieldType.getScope() != Scope.NON_VERSIONED) {
+                // From a versionless record, it is impossible to deref a versioned field.
+                // This explicit check could be removed if in case of the versionless vtag we only read
+                // the non-versioned fields of the record. However, it is not possible to do this right
+                // now with the repository API.
+                return null;
+            }
+
+            Object value = record.getField(fieldType.getId());
             if (value instanceof RecordId) {
                 IdRecord linkedRecord = resolveRecordId((RecordId)value, vtag, repository);
                 return linkedRecord == null ? null : Collections.singletonList(linkedRecord);
@@ -71,7 +80,11 @@ public class DerefValue implements Value {
         }
 
         public String getFieldId() {
-            return fieldId;
+            return fieldType.getId();
+        }
+
+        public FieldType getFieldType() {
+            return fieldType;
         }
 
         private IdRecord resolveRecordId(RecordId recordId, String vtag, Repository repository) {
@@ -135,6 +148,11 @@ public class DerefValue implements Value {
     }
 
     public List<String> eval(IdRecord record, Repository repository, String vtag) {
+        if (vtag.equals(VersionTag.VERSIONLESS_TAG) && fieldType.getScope() != Scope.NON_VERSIONED) {
+            // From a versionless record, it is impossible to deref a versioned field.
+            return null;
+        }
+
         List<IdRecord> records = new ArrayList<IdRecord>();
         records.add(record);
 
@@ -156,8 +174,8 @@ public class DerefValue implements Value {
 
         List<String> result = new ArrayList<String>();
         for (IdRecord item : records) {
-            if (item.hasField(fieldId)) {
-                Object value = item.getField(fieldId);
+            if (item.hasField(fieldType.getId())) {
+                Object value = item.getField(fieldType.getId());
                 if (value != null) {
                     // TODO formatting of value
                     result.add(value.toString());
@@ -173,7 +191,7 @@ public class DerefValue implements Value {
 
     public String getFieldDependency() {
         if (follows.get(0) instanceof FieldFollow) {
-            return ((FieldFollow)follows.get(0)).fieldId;
+            return ((FieldFollow)follows.get(0)).fieldType.getId();
         } else {
             // A follow-variant is like a link to another document, but the link can never change as the
             // identity of the document never changes. Therefore, there is no dependency on a field.

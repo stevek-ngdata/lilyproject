@@ -50,7 +50,7 @@ public class IndexerConf {
         if (indexField.getValue() instanceof DerefValue) {
             derefIndexFields.add(indexField);
 
-            String fieldId = ((DerefValue)indexField.getValue()).getTargetField();
+            String fieldId = ((DerefValue)indexField.getValue()).getTargetField().getId();
             List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
             if (fields == null) {
                 fields = new ArrayList<IndexField>();

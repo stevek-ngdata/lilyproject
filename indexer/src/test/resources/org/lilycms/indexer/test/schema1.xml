@@ -59,6 +59,7 @@
    <field name="v_deref4" type="text" indexed="true" stored="true" required="false"/>
 
    <field name="nv_v_deref" type="text" indexed="true" stored="true" required="false"/>
+   <field name="nv_v_nv_deref" type="text" indexed="true" stored="true" required="false"/>
  </fields>
 
  <!-- Field to use to determine and enforce document uniqueness.

@@ -1,9 +1,6 @@
 package org.lilycms.indexer.conf;
 
-import org.lilycms.repository.api.FieldTypeNotFoundException;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.*;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.util.location.LocationAttributes;
 import org.lilycms.util.xml.DocumentHelper;
@@ -154,7 +151,7 @@ public class IndexerConfBuilder {
         Element fieldEl = DocumentHelper.getElementChild(valueEl, "field", false);
 
         if (fieldEl != null) {
-            String fieldId = parseQNameGetId(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
+            String fieldId = getFieldTypeId(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
             return new FieldValue(fieldId);
         }
 
@@ -173,9 +170,9 @@ public class IndexerConfBuilder {
                 throw new IndexerConfException("A <deref> should contain one or more <follow> elements.");
             }
 
-            String fieldId = parseQNameGetId(DocumentHelper.getAttribute(lastEl, "name", true), lastEl);
+            FieldType fieldType = getFieldType(DocumentHelper.getAttribute(lastEl, "name", true), lastEl);
 
-            DerefValue deref = new DerefValue(fieldId);
+            DerefValue deref = new DerefValue(fieldType);
 
             // Run over all children except the last
             for (int i = 0; i < children.length - 1; i++) {
@@ -184,8 +181,8 @@ public class IndexerConfBuilder {
                     String field = DocumentHelper.getAttribute(child, "field", false);
                     String variant = DocumentHelper.getAttribute(child, "variant", false);
                     if (field != null) {
-                        String followFieldId = parseQNameGetId(DocumentHelper.getAttribute(child, "field", true), child);
-                        deref.addFieldFollow(followFieldId);
+                        FieldType followField = getFieldType(DocumentHelper.getAttribute(child, "field", true), child);
+                        deref.addFieldFollow(followField);
                     } else if (variant != null) {
                         if (variant.equals("master")) {
                             deref.addMasterFollow();
@@ -247,7 +244,7 @@ public class IndexerConfBuilder {
         return new QName(uri, localName);
     }
 
-    private String parseQNameGetId(String qname, Element contextEl) throws IndexerConfException {
+    private String getFieldTypeId(String qname, Element contextEl) throws IndexerConfException {
         QName parsedQName = parseQName(qname, contextEl);
 
         try {
@@ -257,4 +254,13 @@ public class IndexerConfBuilder {
         }
     }
 
+    private FieldType getFieldType(String qname, Element contextEl) throws IndexerConfException {
+        QName parsedQName = parseQName(qname, contextEl);
+
+        try {
+            return typeManager.getFieldTypeByName(parsedQName);
+        } catch (FieldTypeNotFoundException e) {
+            throw new IndexerConfException("unknown field type: " + parsedQName, e);
+        }
+    }
 }

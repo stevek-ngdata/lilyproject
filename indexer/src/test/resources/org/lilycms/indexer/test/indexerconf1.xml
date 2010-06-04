@@ -98,11 +98,25 @@
       </value>
     </indexField>
 
+    <!--
+       | Mixed versioned & non-versioned usage.
+       -->
+
     <indexField name="nv_v_deref">
       <value>
         <deref>
           <follow field="ns:nv_linkfield2"/>
           <field name="ns2:v_field1"/>
+        </deref>
+      </value>
+    </indexField>
+
+    <indexField name="nv_v_nv_deref">
+      <value>
+        <deref>
+          <follow field="ns:nv_linkfield2"/>
+          <follow field="ns2:v_linkfield1"/>
+          <field name="ns:nv_field1"/>
         </deref>
       </value>
     </indexField>

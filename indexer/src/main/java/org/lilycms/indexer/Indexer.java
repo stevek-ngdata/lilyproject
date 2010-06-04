@@ -329,18 +329,7 @@ public class Indexer {
         nextIndexField:
         for (IndexField indexField : indexFields) {
             DerefValue derefValue = (DerefValue)indexField.getValue();
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeById(derefValue.getTargetField());
-            } catch (FieldTypeNotFoundException e) {
-                // Field type does not exist: this is an error in the config
-                log.error("The following field type, used in the indexer config, does not exist: " +
-                        derefValue.getTargetField());
-                continue nextIndexField;
-            } catch (RepositoryException e) {
-                log.error("Problem loading field type: " + derefValue.getTargetField());
-                continue nextIndexField;
-            }
+            FieldType fieldType = derefValue.getTargetField();
 
             //
             // Determine the vtags of the referrer that we should consider

@@ -562,7 +562,7 @@ public class IndexerTest {
         }
 
         //
-        // Test deref from non-versioned to versioned field
+        // Test deref from a versionless record to versioned field
         //
         {
             Record record1 = repository.newRecord();
@@ -580,44 +580,86 @@ public class IndexerTest {
 
             // A versionless record cannot contain derefed data from a versioned field, since it does
             // not know at what version to look
-            // TODO this does not work because there currently is nothing that checks that no versioned
-            // fields are derefed from versionless records (note that dereffing from a non-versioned field
-            // of  a version-having record should work I think)
-//            verifyResultCount("nv_v_deref:bicycle", 0);
-//
-//            // Now give record2 a version and vtag
-//            record2.setField(vfield1.getName(), "boat");
-//            record2.setField(liveTag.getName(), 2L); // TODO should change to 1L when #2 is fixed
-//            record2 = repository.update(record2);
-//            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 2L, null, vfield1.getId(), liveTag.getId());
-//
-//            verifyResultCount("nv_v_deref:bicycle", 1);
-//
-//            // Give record1 some more versions with vtags
-//            record1.setField(vfield1.getName(), "train");
-//            record1.setField(previewTag.getName(), Long.valueOf(2));
-//            record1 = repository.update(record1);
-//            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
-//
-//            record1.setField(vfield1.getName(), "car");
-//            record1.setField(lastTag.getName(), Long.valueOf(3));
-//            record1 = repository.update(record1);
-//            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
-//
-//            verifyResultCount("nv_v_deref:bicycle", 1);
-//            verifyResultCount("nv_v_deref:train", 0);
-//            verifyResultCount("nv_v_deref:car", 0);
-//
-//            // Give record2 some more versions with vtags
-//            record2.setField(vfield1.getName(), "airplane");
-//            record2.setField(previewTag.getName(), 3L); // TODO should change to 2L when #2 is fixed
-//            record2 = repository.update(record2);
-//            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 3L, null, vfield1.getId(), previewTag.getId());
-//
-//            record2.setField(vfield1.getName(), "hovercraft");
-//            record2.setField(lastTag.getName(), 4L); // TODO should change to 3L when #2 is fixed
-//            record2 = repository.update(record2);
-//            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 4L, null, vfield1.getId(), lastTag.getId());
+            verifyResultCount("nv_v_deref:bicycle", 0);
+
+            // Now give record2 a version and vtag
+            record2.setField(vfield1.getName(), "boat");
+            record2.setField(liveTag.getName(), 2L); // TODO should change to 1L when #2 is fixed
+            record2 = repository.update(record2);
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+
+            verifyResultCount("nv_v_deref:bicycle", 1);
+
+            // Give record1 some more versions with vtags
+            record1.setField(vfield1.getName(), "train");
+            record1.setField(previewTag.getName(), Long.valueOf(2));
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
+
+            record1.setField(vfield1.getName(), "car");
+            record1.setField(lastTag.getName(), Long.valueOf(3));
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
+
+            verifyResultCount("nv_v_deref:bicycle", 1);
+            verifyResultCount("nv_v_deref:train", 0);
+            verifyResultCount("nv_v_deref:car", 0);
+
+            // Give record2 some more versions with vtags
+            record2.setField(vfield1.getName(), "airplane");
+            record2.setField(previewTag.getName(), 3L); // TODO should change to 2L when #2 is fixed
+            record2 = repository.update(record2);
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 3L, null, vfield1.getId(), previewTag.getId());
+
+            record2.setField(vfield1.getName(), "hovercraft");
+            record2.setField(lastTag.getName(), 4L); // TODO should change to 3L when #2 is fixed
+            record2 = repository.update(record2);
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 4L, null, vfield1.getId(), lastTag.getId());
+
+            verifyResultCount("nv_v_deref:bicycle", 1);
+            verifyResultCount("nv_v_deref:train", 1);
+            verifyResultCount("nv_v_deref:car", 1);
+        }
+
+        //
+        // Test deref from a versionless record via a versioned field to a non-versioned field.
+        // From the moment a versioned field is in the deref chain, when the vtag is versionless,
+        // the deref should evaluate to null.
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(nvfield1.getName(), "Brussels");
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), (Long)null, null, nvfield1.getId());
+
+            Record record2 = repository.newRecord();
+            record2.setRecordType("VRecordType1", null);
+            record2.setField(vLinkField1.getName(), record1.getId());
+            record2.setField(liveTag.getName(), 1L);
+            record2 = repository.create(record2);
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId());
+
+            Record record3 = repository.newRecord();
+            record3.setRecordType("VRecordType1", null);
+            record3.setField(nvLinkField2.getName(), record2.getId());
+            record3 = repository.create(record3);
+            sendEvent(EVENT_RECORD_CREATED, record3.getId(), (Long)null, null, nvLinkField2.getId());
+
+            verifyResultCount("nv_v_nv_deref:Brussels", 0);
+
+            // Give a version to the versionless records
+            record3.setField(vfield1.getName(), "Ghent");
+            record3.setField(liveTag.getName(), 2L);  // TODO should change to 1L when #2 is fixed
+            record3 = repository.update(record3);
+            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+
+            record1.setField(vfield1.getName(), "Antwerp");
+            record1.setField(liveTag.getName(), 2L);  // TODO should change to 1L when #2 is fixed
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId()); 
+
+            verifyResultCount("nv_v_nv_deref:Brussels", 1);
         }
 
     }
