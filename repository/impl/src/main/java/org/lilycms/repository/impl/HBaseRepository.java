@@ -28,12 +28,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -67,23 +63,21 @@ import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.RecordEvent.Type;
+import org.lilycms.rowlog.api.RowLog;
+import org.lilycms.rowlog.api.RowLogException;
+import org.lilycms.rowlog.api.RowLogMessage;
+import org.lilycms.rowlog.api.RowLogProcessor;
+import org.lilycms.rowlog.api.RowLogShard;
+import org.lilycms.rowlog.impl.RowLogImpl;
+import org.lilycms.rowlog.impl.RowLogMessageImpl;
+import org.lilycms.rowlog.impl.RowLogProcessorImpl;
+import org.lilycms.rowlog.impl.RowLogShardImpl;
 import org.lilycms.util.ArgumentValidator;
 import org.lilycms.util.Pair;
 import org.lilycms.util.io.Closer;
-import org.lilycms.wal.api.Wal;
-import org.lilycms.wal.api.WalEntryFactory;
-import org.lilycms.wal.api.WalEntryId;
-import org.lilycms.wal.api.WalException;
-import org.lilycms.wal.impl.WalImpl;
-import org.lilycms.wal.impl.WalShardImpl;
 
 public class HBaseRepository implements Repository {
 
-	private static final byte[] NON_VERSIONED_SYSTEM_COLUMN_FAMILY = Bytes.toBytes("NVSCF");
-	private static final byte[] VERSIONED_SYSTEM_COLUMN_FAMILY = Bytes.toBytes("VSCF");
-	private static final byte[] NON_VERSIONED_COLUMN_FAMILY = Bytes.toBytes("NVCF");
-	private static final byte[] VERSIONED_COLUMN_FAMILY = Bytes.toBytes("VCF");
-	private static final byte[] VERSIONED_MUTABLE_COLUMN_FAMILY = Bytes.toBytes("VMCF");
 	private static final byte[] CURRENT_VERSION_COLUMN_NAME = Bytes.toBytes("$CurrentVersion");
 	private static final byte[] NON_VERSIONED_RECORDTYPEID_COLUMN_NAME = Bytes.toBytes("$NonVersionableRecordTypeId");
 	private static final byte[] NON_VERSIONED_RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$NonVersionableRecordTypeVersion");
@@ -92,11 +86,6 @@ public class HBaseRepository implements Repository {
 	private static final byte[] VERSIONED_MUTABLE_RECORDTYPEID_COLUMN_NAME = Bytes.toBytes("$VersionableMutableRecordTypeId");
 	private static final byte[] VERSIONED_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes.toBytes("$VersionableMutableRecordTypeVersion");
 
-	private static final byte[] PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("PAYLOADCF");
-	private static final byte[] SEQ_NR = Bytes.toBytes("SeqNr");
-	private static final byte[] SECONDARY_TASKS_COLUMN_FAMILY = Bytes.toBytes("STCF");
-
-	private static final String RECORD_TABLE = "recordTable";
 	private HTable recordTable;
 	private final TypeManager typeManager;
 	private final IdGenerator idGenerator;
@@ -105,41 +94,24 @@ public class HBaseRepository implements Repository {
 	private Map<Scope, byte[]> recordTypeIdColumnNames = new HashMap<Scope, byte[]>();
 	private Map<Scope, byte[]> recordTypeVersionColumnNames = new HashMap<Scope, byte[]>();
 	private BlobStoreAccessRegistry blobStoreAccessRegistry;
-	private Wal wal;
-	private SecondaryTaskHandler secondaryTaskHandler;
-	private final WalEntryFactory walEntryFactory;
+	private RowLog wal;
+	private RowLog messageQueue;
+	private RowLogShard messageQueueShard;
+	private RowLogProcessor messageQueueProcessor;
 
 	public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, BlobStoreAccessFactory blobStoreOutputStreamFactory, Configuration configuration) throws IOException {
 		this.typeManager = typeManager;
 		this.idGenerator = idGenerator;
-		this.wal = new WalImpl();
-		this.walEntryFactory = new LilyWalEntryFactory();
 		blobStoreAccessRegistry = new BlobStoreAccessRegistry();
 		blobStoreAccessRegistry.setBlobStoreOutputStreamFactory(blobStoreOutputStreamFactory);
-		try {
-			recordTable = new HTable(configuration, RECORD_TABLE);
-		} catch (IOException e) {
-			HBaseAdmin admin = new HBaseAdmin(configuration);
-			HTableDescriptor tableDescriptor = new HTableDescriptor(RECORD_TABLE);
-			tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_SYSTEM_COLUMN_FAMILY));
-			tableDescriptor.addFamily(new HColumnDescriptor(VERSIONED_SYSTEM_COLUMN_FAMILY, HConstants.ALL_VERSIONS,
-                    "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-			tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_COLUMN_FAMILY));
-			tableDescriptor.addFamily(new HColumnDescriptor(VERSIONED_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none",
-                    false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-			tableDescriptor.addFamily(new HColumnDescriptor(VERSIONED_MUTABLE_COLUMN_FAMILY, HConstants.ALL_VERSIONS,
-                    "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-			tableDescriptor.addFamily(new HColumnDescriptor(PAYLOAD_COLUMN_FAMILY));
-			tableDescriptor.addFamily(new HColumnDescriptor(SECONDARY_TASKS_COLUMN_FAMILY));
-			admin.createTable(tableDescriptor);
-			recordTable = new HTable(configuration, RECORD_TABLE);
-		}
-		columnFamilies.put(Scope.NON_VERSIONED, NON_VERSIONED_COLUMN_FAMILY);
-		columnFamilies.put(Scope.VERSIONED, VERSIONED_COLUMN_FAMILY);
-		columnFamilies.put(Scope.VERSIONED_MUTABLE, VERSIONED_MUTABLE_COLUMN_FAMILY);
-		systemColumnFamilies.put(Scope.NON_VERSIONED, NON_VERSIONED_SYSTEM_COLUMN_FAMILY);
-		systemColumnFamilies.put(Scope.VERSIONED, VERSIONED_SYSTEM_COLUMN_FAMILY);
-		systemColumnFamilies.put(Scope.VERSIONED_MUTABLE, VERSIONED_SYSTEM_COLUMN_FAMILY);
+		recordTable = HBaseTableUtil.getRecordTable(configuration);
+
+		columnFamilies.put(Scope.NON_VERSIONED, HBaseTableUtil.NON_VERSIONED_COLUMN_FAMILY);
+		columnFamilies.put(Scope.VERSIONED, HBaseTableUtil.VERSIONED_COLUMN_FAMILY);
+		columnFamilies.put(Scope.VERSIONED_MUTABLE, HBaseTableUtil.VERSIONED_MUTABLE_COLUMN_FAMILY);
+		systemColumnFamilies.put(Scope.NON_VERSIONED, HBaseTableUtil.NON_VERSIONED_SYSTEM_COLUMN_FAMILY);
+		systemColumnFamilies.put(Scope.VERSIONED, HBaseTableUtil.VERSIONED_SYSTEM_COLUMN_FAMILY);
+		systemColumnFamilies.put(Scope.VERSIONED_MUTABLE, HBaseTableUtil.VERSIONED_SYSTEM_COLUMN_FAMILY);
 		recordTypeIdColumnNames.put(Scope.NON_VERSIONED, NON_VERSIONED_RECORDTYPEID_COLUMN_NAME);
 		recordTypeIdColumnNames.put(Scope.VERSIONED, VERSIONED_RECORDTYPEID_COLUMN_NAME);
 		recordTypeIdColumnNames.put(Scope.VERSIONED_MUTABLE, VERSIONED_MUTABLE_RECORDTYPEID_COLUMN_NAME);
@@ -147,15 +119,34 @@ public class HBaseRepository implements Repository {
 		recordTypeVersionColumnNames.put(Scope.VERSIONED, VERSIONED_RECORDTYPEVERSION_COLUMN_NAME);
 		recordTypeVersionColumnNames.put(Scope.VERSIONED_MUTABLE, VERSIONED_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME);
 
-		secondaryTaskHandler = new SecondaryTaskHandler(recordTable, SECONDARY_TASKS_COLUMN_FAMILY);
-		secondaryTaskHandler.registerSecondaryTask(new MessageQueueTask());
+		// Initialize Wal and Message Queue
+		initializeMessageQueue(configuration);
 		initializeWal(configuration);
+		
+		// Start Message Queue Processor
+		messageQueueProcessor = new RowLogProcessorImpl(messageQueue, messageQueueShard);
+		messageQueueProcessor.start();
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		messageQueueProcessor.stop();
+	    super.finalize();
 	}
 
+	private void initializeMessageQueue(Configuration configuration) throws IOException {
+		messageQueue = new RowLogImpl(recordTable, HBaseTableUtil.PAYLOAD_COLUMN_FAMILY, HBaseTableUtil.MQ_COLUMN_FAMILY);
+		messageQueueShard = new RowLogShardImpl("MQS1", messageQueue, configuration);
+		messageQueue.registerShard(messageQueueShard);
+		messageQueue.registerConsumer(new DevNull());
+	}
+	
 	private void initializeWal(Configuration configuration) throws IOException {
+		wal = new RowLogImpl(recordTable, HBaseTableUtil.PAYLOAD_COLUMN_FAMILY, HBaseTableUtil.WAL_COLUMN_FAMILY);
 		// Work with only one shard for now
-		WalShardImpl shard = new WalShardImpl("WS1", configuration, walEntryFactory);
-		wal.registerShard(shard);
+		RowLogShard walShard = new RowLogShardImpl("WS1", wal, configuration);
+		wal.registerShard(walShard);
+		wal.registerConsumer(new MessageQueueFeeder(messageQueue));
 	}
 
 	public IdGenerator getIdGenerator() {
@@ -176,7 +167,7 @@ public class HBaseRepository implements Repository {
 	}
 
 	public Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-	        RepositoryException, WalException {
+	        RepositoryException {
 
 		Record newRecord = record.clone();
 
@@ -209,21 +200,22 @@ public class HBaseRepository implements Repository {
 			// created record
 			recordEvent.setRecordTypeChanged(false);
 			
-			long seqnr = putRecordPayload(recordId, recordEvent, put, rowLock);
-			WalEntryId walEntryId = putEntryOnWal(recordId, seqnr, Type.CREATE);
-			secondaryTaskHandler.initializeSecondaryTasks(put, seqnr, walEntryId);
+			long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
+			RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
+			byte[] messageId = wal.putMessage(walMessage, put, rowLock);
 			recordTable.put(put);
-			if (secondaryTaskHandler.executeSecondaryTasks(recordId, seqnr, rowLock)) {
-				wal.entryFinished(walEntryId);
-			}
+			wal.processMessage(messageId, walMessage, rowLock);
 		} catch (IOException e) {
+			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table", e);
+		} catch (RowLogException e) {
 			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table", e);
 		} finally {
 			if (rowLock != null) {
 				try {
 					recordTable.unlockRow(rowLock);
 				} catch (IOException e) {
-					throw new RepositoryException("Exception occured while releasing lock for record <" + recordId + "> on HBase table", e);
+					// Ignore for now
+//					throw new RepositoryException("Exception occured while releasing lock for record <" + recordId + "> on HBase table", e);
 				}
 			}
 		}
@@ -232,13 +224,6 @@ public class HBaseRepository implements Repository {
 	}
 
 
-	private WalEntryId putEntryOnWal(RecordId recordId, long seqnr, Type type) throws WalException {
-	    byte[] sourceId = Bytes.toBytes(seqnr);
-	    sourceId = Bytes.add(sourceId, recordId.toBytes());
-	    LilyWalEntry walEntry = new LilyWalEntry(type);
-	    WalEntryId walEntryId = wal.putEntry(sourceId, walEntry);
-	    return walEntryId;
-    }
 
 	private void checkCreatePreconditions(Record record) throws InvalidRecordException {
 		ArgumentValidator.notNull(record, "record");
@@ -250,7 +235,7 @@ public class HBaseRepository implements Repository {
 		}
 	}
 
-	public Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, WalException {
+	public Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
 		Record newRecord = record.clone();
 
 		RecordId recordId = record.getId();
@@ -269,15 +254,14 @@ public class HBaseRepository implements Repository {
 			if (calculateRecordChanges(newRecord, originalRecord, originalRecord.getVersion() + 1, put, recordEvent)) {
 				recordEvent.setVersionUpdated(newRecord.getVersion());
 				try {
-					long seqnr = putRecordPayload(newRecord.getId(), recordEvent, put, rowLock);
-					
-					WalEntryId walEntryId = putEntryOnWal(recordId, seqnr, Type.UPDATE);
-					secondaryTaskHandler.initializeSecondaryTasks(put, seqnr, walEntryId);
+					long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
+					RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
+					byte[] messageId = wal.putMessage(walMessage, put, rowLock);
 					recordTable.put(put);
-					if (secondaryTaskHandler.executeSecondaryTasks(recordId, seqnr, rowLock)) {
-						wal.entryFinished(walEntryId);
-					}
+					wal.processMessage(messageId, walMessage, rowLock);
 				} catch (IOException e) {
+					throw new RepositoryException("Exception occured while putting updated record <" + recordId + "> on HBase table", e);
+				} catch (RowLogException e) {
 					throw new RepositoryException("Exception occured while putting updated record <" + recordId + "> on HBase table", e);
 				}
 			}
@@ -288,7 +272,8 @@ public class HBaseRepository implements Repository {
 				try {
 					recordTable.unlockRow(rowLock);
 				} catch (IOException e) {
-					throw new RepositoryException("Exception occured while releasing lock for record <" + recordId + "> on HBase table", e);
+					// Ignore for now
+//					throw new RepositoryException("Exception occured while releasing lock for record <" + recordId + "> on HBase table", e);
 				}
 			}
 		}
@@ -333,13 +318,13 @@ public class HBaseRepository implements Repository {
 			recordTypeVersion = recordType.getVersion();
 			if (!recordTypeId.equals(originalRecord.getRecordTypeId()) || !recordTypeVersion.equals(originalRecord.getRecordTypeVersion())) {
 				recordEvent.setRecordTypeChanged(true);
-				put.add(NON_VERSIONED_SYSTEM_COLUMN_FAMILY, NON_VERSIONED_RECORDTYPEID_COLUMN_NAME, Bytes.toBytes(recordTypeId));
-				put.add(NON_VERSIONED_SYSTEM_COLUMN_FAMILY, NON_VERSIONED_RECORDTYPEVERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
+				put.add(systemColumnFamilies.get(Scope.NON_VERSIONED), NON_VERSIONED_RECORDTYPEID_COLUMN_NAME, Bytes.toBytes(recordTypeId));
+				put.add(systemColumnFamilies.get(Scope.NON_VERSIONED), NON_VERSIONED_RECORDTYPEVERSION_COLUMN_NAME, Bytes.toBytes(recordTypeVersion));
 			}
 			// Always set the record type on the record since the requested
 			// record type could have been given without a version number
 			record.setRecordType(recordTypeId, recordTypeVersion);
-			put.add(NON_VERSIONED_SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
+			put.add(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
 
 		}
 		// Always set the version on the record. If no fields were changed this
@@ -432,7 +417,7 @@ public class HBaseRepository implements Repository {
 	}
 
 	public Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-	        RepositoryException, WalException {
+	        RepositoryException {
 		Record newRecord = record.clone();
 
 		RecordId recordId = record.getId();
@@ -481,15 +466,18 @@ public class HBaseRepository implements Repository {
 				put.add(systemColumnFamilies.get(scope), recordTypeIdColumnNames.get(scope), version, Bytes.toBytes(recordType.getId()));
 				put.add(systemColumnFamilies.get(scope), recordTypeVersionColumnNames.get(scope), version, Bytes.toBytes(recordType.getVersion()));
 
-				long seqnr = putRecordPayload(recordId, recordEvent, put, rowLock);
+				
+				
 				try {
-					WalEntryId walEntryId = putEntryOnWal(recordId, seqnr, Type.UPDATE);
-					secondaryTaskHandler.initializeSecondaryTasks(put, seqnr, walEntryId);
+					long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
+					RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
+					byte[] messageId = wal.putMessage(walMessage, put, rowLock);
 					recordTable.put(put);
-					if (secondaryTaskHandler.executeSecondaryTasks(recordId, seqnr, rowLock)) {
-						wal.entryFinished(walEntryId);
-					}
+					wal.processMessage(messageId, walMessage, rowLock);
+					
 				} catch (IOException e) {
+					throw new RepositoryException("Exception occured while putting updated record <" + record.getId() + "> on HBase table", e);
+				} catch (RowLogException e) {
 					throw new RepositoryException("Exception occured while putting updated record <" + record.getId() + "> on HBase table", e);
 				}
 				newRecord.setRecordType(scope, recordType.getId(), recordType.getVersion());
@@ -501,7 +489,8 @@ public class HBaseRepository implements Repository {
 				try {
 					recordTable.unlockRow(rowLock);
 				} catch (IOException e) {
-					throw new RepositoryException("Exception occured while releasing lock for record <" + recordId + "> on HBase table", e);
+					// Ignore for now
+//					throw new RepositoryException("Exception occured while releasing lock for record <" + recordId + "> on HBase table", e);
 				}
 			}
 		}
@@ -625,7 +614,7 @@ public class HBaseRepository implements Repository {
 		}
 
 		// Set retrieved version on the record
-		long currentVersion = Bytes.toLong(result.getValue(NON_VERSIONED_SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME));
+		long currentVersion = Bytes.toLong(result.getValue(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME));
 		if (version != null) {
 			if (currentVersion < version) {
 				throw new RecordNotFoundException(record);
@@ -735,13 +724,13 @@ public class HBaseRepository implements Repository {
 	}
 
 	private void addSystemColumnsToGet(Get get) {
-		get.addColumn(NON_VERSIONED_SYSTEM_COLUMN_FAMILY, CURRENT_VERSION_COLUMN_NAME);
-		get.addColumn(NON_VERSIONED_SYSTEM_COLUMN_FAMILY, NON_VERSIONED_RECORDTYPEID_COLUMN_NAME);
-		get.addColumn(NON_VERSIONED_SYSTEM_COLUMN_FAMILY, NON_VERSIONED_RECORDTYPEVERSION_COLUMN_NAME);
-		get.addColumn(VERSIONED_SYSTEM_COLUMN_FAMILY, VERSIONED_RECORDTYPEID_COLUMN_NAME);
-		get.addColumn(VERSIONED_SYSTEM_COLUMN_FAMILY, VERSIONED_RECORDTYPEVERSION_COLUMN_NAME);
-		get.addColumn(VERSIONED_SYSTEM_COLUMN_FAMILY, VERSIONED_MUTABLE_RECORDTYPEID_COLUMN_NAME);
-		get.addColumn(VERSIONED_SYSTEM_COLUMN_FAMILY, VERSIONED_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME);
+		get.addColumn(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME);
+		get.addColumn(systemColumnFamilies.get(Scope.NON_VERSIONED), NON_VERSIONED_RECORDTYPEID_COLUMN_NAME);
+		get.addColumn(systemColumnFamilies.get(Scope.NON_VERSIONED), NON_VERSIONED_RECORDTYPEVERSION_COLUMN_NAME);
+		get.addColumn(systemColumnFamilies.get(Scope.VERSIONED), VERSIONED_RECORDTYPEID_COLUMN_NAME);
+		get.addColumn(systemColumnFamilies.get(Scope.VERSIONED), VERSIONED_RECORDTYPEVERSION_COLUMN_NAME);
+		get.addColumn(systemColumnFamilies.get(Scope.VERSIONED), VERSIONED_MUTABLE_RECORDTYPEID_COLUMN_NAME);
+		get.addColumn(systemColumnFamilies.get(Scope.VERSIONED), VERSIONED_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME);
 	}
 
 	private boolean extractFields(Result result, Long version, Record record, ReadContext context) throws RecordTypeNotFoundException, FieldTypeNotFoundException,
@@ -843,25 +832,5 @@ public class HBaseRepository implements Repository {
 		public Map<String, FieldType> getFieldTypes() {
 			return fieldTypes;
 		}
-	}
-
-	// Payload
-	private long putRecordPayload(RecordId id, RecordEvent recordEvent, Put put, RowLock rowLock) throws RepositoryException {
-		Get get = new Get(id.toBytes(), rowLock);
-		get.addColumn(PAYLOAD_COLUMN_FAMILY, SEQ_NR);
-		Result result;
-		try {
-			result = recordTable.get(get);
-		} catch (IOException e) {
-			throw new RepositoryException("Failed to add payload", e);
-		}
-		byte[] value = result.getValue(PAYLOAD_COLUMN_FAMILY, SEQ_NR);
-		long seqnr = 0;
-		if (value != null) {
-			seqnr = Bytes.toLong(value);
-		}
-		seqnr++;
-		put.add(PAYLOAD_COLUMN_FAMILY, Bytes.toBytes(seqnr), recordEvent.toJsonBytes());
-		return seqnr;
 	}
 }

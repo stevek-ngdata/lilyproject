@@ -63,7 +63,7 @@
     <module>linkindex</module>
     <module>repo-util</module>
     <module>repository-api-tutorial</module>
-    <module>wal</module>
+    <module>rowlog</module>
     <module>process/server</module>
     <module>process/client</module>
   </modules>
@@ -125,6 +125,26 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-wal-impl</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-mq-api</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-mq-impl</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-rowlog-api</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-rowlog-impl</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>

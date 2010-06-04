@@ -1,5 +1,6 @@
 package org.lilycms.repository.impl.test;
 
+import static org.easymock.EasyMock.createControl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,8 +32,6 @@ import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
-import org.lilycms.wal.api.Wal;
-import org.lilycms.wal.impl.WalImpl;
 
 public abstract class AbstractRepositoryTest {
 
@@ -98,11 +98,14 @@ public abstract class AbstractRepositoryTest {
 
 	@Test
 	public void testRecordCreateWithoutRecordType() throws Exception {
+		IMocksControl control = createControl();
+		control.replay();
 		Record record = repository.newRecord(idGenerator.newRecordId());
 		try {
 			record = repository.create(record);
 		} catch (InvalidRecordException expected) {
 		}
+		control.verify();
 	}
 
 	@Test
@@ -128,6 +131,8 @@ public abstract class AbstractRepositoryTest {
 
 	@Test
 	public void testCreate() throws Exception {
+		IMocksControl control = createControl();
+		control.replay();
 		Record createdRecord = createDefaultRecord();
 
 		assertEquals(Long.valueOf(1), createdRecord.getVersion());
@@ -144,6 +149,7 @@ public abstract class AbstractRepositoryTest {
 		assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
 
 		assertEquals(createdRecord, repository.read(createdRecord.getId()));
+		control.verify();
 	}
 
 	private Record createDefaultRecord() throws Exception {

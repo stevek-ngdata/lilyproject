@@ -7,7 +7,6 @@ import org.apache.avro.generic.GenericArray;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.util.Utf8;
 import org.lilycms.repository.api.*;
-import org.lilycms.wal.api.WalException;
 
 public class AvroRepositoryImpl implements AvroRepository {
 
@@ -35,8 +34,6 @@ public class AvroRepositoryImpl implements AvroRepository {
         	throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
         	throw converter.convert(repositoryException);
-        } catch (WalException walException) {
-        	throw converter.convert(walException);
         }
 	}
 
@@ -89,8 +86,6 @@ public class AvroRepositoryImpl implements AvroRepository {
         	throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
         	throw converter.convert(repositoryException);
-        } catch (WalException walException) {
-        	throw converter.convert(walException);
         }
 	}
 
@@ -108,8 +103,6 @@ public class AvroRepositoryImpl implements AvroRepository {
         	throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
         	throw converter.convert(repositoryException);
-        } catch (WalException walException) {
-        	throw converter.convert(walException);
         }
 	}
 

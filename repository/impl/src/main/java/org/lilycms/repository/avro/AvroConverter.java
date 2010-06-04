@@ -15,7 +15,6 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.ipc.AvroRemoteException;
 import org.apache.avro.util.Utf8;
 import org.lilycms.repository.api.*;
-import org.lilycms.wal.api.WalException;
 
 public class AvroConverter {
 
@@ -372,18 +371,6 @@ public class AvroConverter {
 	public InvalidRecordException convert(AvroInvalidRecordException invalidRecordException) throws RepositoryException, FieldTypeNotFoundException {
 		return new InvalidRecordException(convert(invalidRecordException.record), convert(invalidRecordException.message));
     }
-	
-	public WalException convert(AvroWalException avroWalException) {
-		return new WalException(convert(avroWalException.message));
-	}
-	
-	public AvroWalException convert(WalException walException) {
-		AvroWalException avroWalException = new AvroWalException();
-		if (walException.getMessage() != null) {
-			avroWalException.message = new Utf8(walException.getMessage());
-		}
-		return avroWalException;
-	}
 	
 	public String convert(Utf8 utf8) {
 		if (utf8 == null) return null;

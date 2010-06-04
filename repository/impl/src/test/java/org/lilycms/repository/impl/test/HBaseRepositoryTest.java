@@ -33,7 +33,7 @@ import org.lilycms.testfw.TestHelper;
 public class HBaseRepositoryTest extends AbstractRepositoryTest {
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-    @BeforeClass
+	@BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         TEST_UTIL.startMiniCluster(1);

@@ -1,19 +1,38 @@
 package org.lilycms.repository.api.tutorial;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.lilycms.repository.api.*;
-import org.lilycms.repository.impl.*;
-import org.lilycms.repoutil.PrintUtil;
-import org.lilycms.testfw.TestHelper;
-
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.lilycms.repository.api.Blob;
+import org.lilycms.repository.api.FieldType;
+import org.lilycms.repository.api.IdGenerator;
+import org.lilycms.repository.api.QName;
+import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.RecordId;
+import org.lilycms.repository.api.RecordType;
+import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.impl.DFSBlobStoreAccess;
+import org.lilycms.repository.impl.HBaseRepository;
+import org.lilycms.repository.impl.HBaseTypeManager;
+import org.lilycms.repository.impl.IdGeneratorImpl;
+import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilycms.repoutil.PrintUtil;
+import org.lilycms.testfw.TestHelper;
 
 /**
  * The code in this class is used in the repository API tutorial (390-OTC). If this
@@ -39,7 +58,6 @@ public class Tutorial {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(Long.MAX_VALUE, dfsBlobStoreAccess);
-
         repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, TEST_UTIL.getConfiguration());
 
         repository.registerBlobStoreAccess(dfsBlobStoreAccess);

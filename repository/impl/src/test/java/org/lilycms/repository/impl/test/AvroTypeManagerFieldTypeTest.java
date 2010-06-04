@@ -54,7 +54,6 @@ public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTe
 		TypeManager serverTypeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
         BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        
         Repository serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
 		
         AvroConverter serverConverter = new AvroConverter();

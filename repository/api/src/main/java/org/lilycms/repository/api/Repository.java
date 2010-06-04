@@ -27,7 +27,6 @@ import org.lilycms.repository.api.RecordExistsException;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.wal.api.WalException;
 
 /**
  * Repository is the primary access point for accessing the functionality of the Lily repository.
@@ -65,10 +64,9 @@ public interface Repository {
      *             if an empty record is being created
      * @throws FieldTypeNotFoundException
      * @throws RecordTypeNotFoundException
-     * @throws WalException 
      */
     Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, WalException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
     /**
      * Updates an existing record in the repository.
@@ -91,19 +89,17 @@ public interface Repository {
      *             TBD
      * @throws FieldTypeNotFoundException
      * @throws RecordTypeNotFoundException
-     * @throws WalException 
      */
     Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException, WalException;
+            FieldTypeNotFoundException, RepositoryException;
 
     /**
      * Updates the version-mutable fields of an existing version.
      *
      * <p><b>TODO</b>: this is being considered for redesign.
-     * @throws WalException 
      */
     Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, WalException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
 
     /**
      * Reads a record fully. All the fields of the record will be read.
