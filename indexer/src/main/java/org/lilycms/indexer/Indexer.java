@@ -109,13 +109,13 @@ public class Indexer {
 
         // Determine the IndexCase:
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
-        //  This makes that the indexing behavior of all versions is equal, and can be changed (since
-        //  the record type of the versioned scope is immutable).
+        //  This makes that the indexing behavior of all versions is equal, and can be changed (the
+        //  record type of the versioned scope is immutable).
         IndexCase indexCase = conf.getIndexCase(record.getRecordTypeId(), record.getId().getVariantProperties());
 
         if (indexCase == null) {
             // The record should not be indexed
-            // But data from this record might be denormalized into other record entries
+            // But data from this record might be denormalized into other index entries
             // After this we go to update denormalized data
         } else {
             Set<String> vtagsToIndex = new HashSet<String>();
@@ -173,7 +173,7 @@ public class Indexer {
                 //
                 // Handle changes to versioned(-mutable) fields
                 //
-                // If there were non-versioned fields changed, then we all already reindex all versions
+                // If there were non-versioned fields changed, then we already reindex all versions
                 // so this can be skipped.
                 //
                 if (vtagsToIndex.isEmpty() && (event.getVersionCreated() != -1 || event.getVersionUpdated() != -1)) {
@@ -197,7 +197,7 @@ public class Indexer {
                 }
 
                 //
-                // Handle changes to version vtag fields
+                // Handle changes to vtag fields themselves
                 //
                 Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
                 // Remove the vtags which are going to be reindexed anyway
@@ -384,6 +384,8 @@ public class Indexer {
         // Now search the referrers, that is: for each link field, find out which records point to the current record
         // in a certain versioned view (= a certain vtag)
         //
+
+        // This map holds the referrer records to reindex, and for which versions (vtags) they need to be reindexed. 
         Map<RecordId, Set<String>> referrersVTags = new HashMap<RecordId, Set<String>>() {
             @Override
             public Set<String> get(Object key) {
@@ -561,6 +563,7 @@ public class Indexer {
     }
 
     /**
+     * The actual indexing: maps record fields to index fields, and send to SOLR.
      *
      * @param record the correct version of the record, which has the versionTag applied to it
      * @param vtags the version tags under which to index
@@ -568,7 +571,7 @@ public class Indexer {
     private void index(IdRecord record, Set<String> vtags) throws IOException, SolrServerException {
 
         // Note that it is important the the indexFields are evaluated in order, since multiple
-        // indexFields can have the same name and the order of values for multivalue fields can be important.
+        // indexFields can have the same name and the order of values for multi-value fields can be important.
         //
         // The value of the indexFields is re-evaluated for each vtag. It is only the value of
         // deref-values which can change from vtag to vtag, so we could optimize this by only
