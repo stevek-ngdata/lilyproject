@@ -36,6 +36,7 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 		stopRequested = true;
 		try {
 			if (processorThread != null) {
+                processorThread.interrupt();
 				processorThread.join();
 				processorThread = null;
 			}
@@ -60,6 +61,14 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 	private class ProcessorThread extends Thread {
 		public void run() {
 			while (!stopRequested) {
+                // TODO this is a temporary (but mostly senseless) fix to slow down the
+                //      amount of requests on HBase
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    // if we are interrupted, we stop working
+                    return;
+                }
 				for (RowLogMessageConsumer consumer : rowLog.getConsumers()) {
 					int consumerId = consumer.getId();
 					Pair<byte[], RowLogMessage> messagePair = null;

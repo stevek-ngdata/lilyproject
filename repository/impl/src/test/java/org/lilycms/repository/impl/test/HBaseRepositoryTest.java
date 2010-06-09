@@ -47,6 +47,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        ((HBaseRepository)repository).stop();
         TEST_UTIL.shutdownMiniCluster();
     }
 

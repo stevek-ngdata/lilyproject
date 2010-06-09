@@ -76,6 +76,11 @@ import org.lilycms.util.ArgumentValidator;
 import org.lilycms.util.Pair;
 import org.lilycms.util.io.Closer;
 
+/**
+ * Repository implementation.
+ *
+ * <p>After usage, the Repository should be stopped by calling the stop() method! 
+ */
 public class HBaseRepository implements Repository {
 
 	private static final byte[] CURRENT_VERSION_COLUMN_NAME = Bytes.toBytes("$CurrentVersion");
@@ -128,11 +133,9 @@ public class HBaseRepository implements Repository {
 		messageQueueProcessor.start();
 	}
 	
-	@Override
-	protected void finalize() throws Throwable {
-		messageQueueProcessor.stop();
-	    super.finalize();
-	}
+    public void stop() {
+        messageQueueProcessor.stop();
+    }
 
 	private void initializeMessageQueue(Configuration configuration) throws IOException {
 		messageQueue = new RowLogImpl(recordTable, HBaseTableUtil.PAYLOAD_COLUMN_FAMILY, HBaseTableUtil.MQ_COLUMN_FAMILY);

@@ -79,6 +79,7 @@ public class BlobStoreTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        repository.stop();
         TEST_UTIL.shutdownMiniCluster();
     }
 

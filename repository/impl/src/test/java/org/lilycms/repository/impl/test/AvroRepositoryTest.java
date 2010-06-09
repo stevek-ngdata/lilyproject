@@ -42,6 +42,7 @@ import org.lilycms.repository.impl.TypeManagerRemoteImpl;
 import org.lilycms.testfw.TestHelper;
 
 public class AvroRepositoryTest extends AbstractRepositoryTest {
+    private static HBaseRepository serverRepository;
 
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
     @BeforeClass
@@ -52,7 +53,7 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
 		TypeManager serverTypeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
         BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        Repository serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
+        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
 		
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
@@ -71,6 +72,7 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        serverRepository.stop();
         TEST_UTIL.shutdownMiniCluster();
     }
 

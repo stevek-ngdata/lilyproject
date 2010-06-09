@@ -19,6 +19,7 @@ import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.util.Pair;
+import org.lilycms.util.io.Closer;
 
 public class RowLogShardImpl implements RowLogShard {
 
@@ -74,17 +75,22 @@ public class RowLogShardImpl implements RowLogShard {
 	public Pair<byte[], RowLogMessage> next(int consumerId) throws IOException {
 		Scan scan = new Scan(Bytes.toBytes(consumerId));
 		scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
-        ResultScanner scanner = table.getScanner(scan);
-        Result next = scanner.next();
-        if (next == null) 
-        	return null;
-        byte[] rowKey = next.getRow();
-		int actualConsumerId = Bytes.toInt(rowKey);
-        if (consumerId != actualConsumerId)
-        	return null; // There were no messages for this consumer
-        byte[] value = next.getValue(MESSAGES_CF, MESSAGE_COLUMN);
-        byte[] messageId = Bytes.tail(rowKey, rowKey.length - Bytes.SIZEOF_INT);
-        return new Pair<byte[], RowLogMessage>(messageId, RowLogMessageImpl.fromBytes(value, rowLog));
+        ResultScanner scanner = null;
+        try {
+            scanner = table.getScanner(scan);
+            Result next = scanner.next();
+            if (next == null)
+                return null;
+            byte[] rowKey = next.getRow();
+            int actualConsumerId = Bytes.toInt(rowKey);
+            if (consumerId != actualConsumerId)
+                return null; // There were no messages for this consumer
+            byte[] value = next.getValue(MESSAGES_CF, MESSAGE_COLUMN);
+            byte[] messageId = Bytes.tail(rowKey, rowKey.length - Bytes.SIZEOF_INT);
+            return new Pair<byte[], RowLogMessage>(messageId, RowLogMessageImpl.fromBytes(value, rowLog));
+        } finally {
+            Closer.close(scanner);
+        }
 	}
 
 	private byte[] createRowKey(byte[] messageId, int consumerId) {
