@@ -21,12 +21,14 @@ import java.util.Arrays;
  * A hierarchical path value. This kind of value specifies a hierarchical path consisting of path segments.
  *
  * <p>See {@link ValueType}.
+ *
+ * <p>A HierarchyPath is mutable: the elements array is not cloned internally.
  */
 public class HierarchyPath {
 
     private final Object[] elements;
 
-    public HierarchyPath(Object[] elements) {
+    public HierarchyPath(Object... elements) {
         this.elements = elements;
     }
     
