@@ -28,6 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -64,7 +65,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         this.idGenerator = idGenerator;
         try {
             typeTable = new HTable(configuration, TYPE_TABLE);
-        } catch (IOException e) {
+        } catch (TableNotFoundException e) {
             HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(TYPE_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_COLUMN_FAMILY));

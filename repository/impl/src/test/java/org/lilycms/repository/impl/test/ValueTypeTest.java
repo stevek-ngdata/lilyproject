@@ -18,10 +18,11 @@ package org.lilycms.repository.impl.test;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
-import java.util.Date;
 
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -86,7 +87,7 @@ public class ValueTypeTest {
 //    public void testStringType() throws Exception {
 //        runValueTypeTests("stringRecordTypeId", "STRING", "foo", "bar", "pub");
 //    }
-//    
+//
 //    @Test
 //    public void testIntegerType() throws Exception {
 //        runValueTypeTests("integerRecordTypeId", "INTEGER", Integer.MIN_VALUE, 0, Integer.MAX_VALUE);
@@ -96,22 +97,27 @@ public class ValueTypeTest {
 //    public void testLongType() throws Exception {
 //        runValueTypeTests("longRecordTypeId", "LONG", Long.MIN_VALUE, Long.valueOf(0), Long.MAX_VALUE);
 //    }
-//    
+//
 //    @Test
 //    public void testBooleanType() throws Exception {
 //        runValueTypeTests("booleanRecordTypeId", "BOOLEAN", true, false, true);
 //    }
-//    
-//    @Test
-//    public void testDateType() throws Exception {
-//        runValueTypeTests("dateRecordTypeId", "DATE", new Date(), new Date(Long.MAX_VALUE), new Date(Long.MIN_VALUE));
-//    }
-//
+
+    @Test
+    public void testDateTimeType() throws Exception {
+        runValueTypeTests("dateTimeRecordTypeId", "DATETIME", new DateTime(), new DateTime(Long.MAX_VALUE), new DateTime(Long.MIN_VALUE));
+    }
+
+    @Test
+    public void testDateType() throws Exception {
+        runValueTypeTests("dateRecordTypeId", "DATE", new LocalDate(), new LocalDate(2900, 10, 14), new LocalDate(1300, 5, 4));
+    }
+
 //    @Test
 //    public void testLinkType() throws Exception {
 //        runValueTypeTests("linkRecordTypeId", "LINK", idGenerator.newRecordId(), idGenerator.newRecordId(), idGenerator.newRecordId());
 //    }
-//    
+//
 //    @Test
 //    public void testBlobType() throws Exception {
 //        Blob blob1 = new Blob(Bytes.toBytes("aKey"), "text/html", Long.MAX_VALUE, null);
@@ -119,7 +125,7 @@ public class ValueTypeTest {
 //        Blob blob3 = new Blob("text/plain", Long.valueOf(0), null);
 //        runValueTypeTests("blobTypeId", "BLOB", blob1, blob2, blob3);
 //    }
-//    
+//
 //    @Test
 //    public void testNewPrimitiveType() throws Exception {
 //        typeManager.registerPrimitiveValueType(new XYPrimitiveValueType());

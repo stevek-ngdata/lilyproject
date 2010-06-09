@@ -15,9 +15,9 @@
  */
 package org.lilycms.repository.impl.primitivevaluetype;
 
-import java.util.Date;
-
 import org.apache.hadoop.hbase.util.Bytes;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.lilycms.repository.api.PrimitiveValueType;
 
 public class DateValueType implements PrimitiveValueType {
@@ -28,23 +28,24 @@ public class DateValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public Date fromBytes(byte[] bytes) {
-        return new Date(Bytes.toLong(bytes));
+    public LocalDate fromBytes(byte[] bytes) {
+        return new LocalDate(Bytes.toLong(bytes), DateTimeZone.UTC);
     }
 
     public byte[] toBytes(Object value) {
-        return Bytes.toBytes(((Date)value).getTime());
+        // Currently we only store the millis, not the chronology.
+        return Bytes.toBytes(((LocalDate)value).toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis());
     }
 
     public Class getType() {
-        return Date.class;
+        return LocalDate.class;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+        result = prime * result + NAME.hashCode();
         return result;
     }
 
@@ -55,12 +56,6 @@ public class DateValueType implements PrimitiveValueType {
         if (obj == null)
             return false;
         if (getClass() != obj.getClass())
-            return false;
-        DateValueType other = (DateValueType) obj;
-        if (NAME == null) {
-            if (other.NAME != null)
-                return false;
-        } else if (!NAME.equals(other.NAME))
             return false;
         return true;
     }

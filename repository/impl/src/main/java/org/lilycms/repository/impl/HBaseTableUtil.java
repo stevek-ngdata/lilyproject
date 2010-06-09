@@ -6,6 +6,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -28,7 +29,7 @@ public class HBaseTableUtil {
 		HTable recordTable;
 		try {
 			recordTable = new HTable(configuration, RECORD_TABLE); 
-		} catch (IOException e) {
+		} catch (TableNotFoundException e) {
 			HBaseAdmin admin = new HBaseAdmin(configuration);
 			HTableDescriptor tableDescriptor = new HTableDescriptor(RECORD_TABLE);
 			tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_SYSTEM_COLUMN_FAMILY));

@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -30,7 +31,7 @@ public class RowLogShardImpl implements RowLogShard {
 		this.rowLog = rowLog;
 		try {
 			table = new HTable(configuration, id);
-        } catch (IOException e) {
+        } catch (TableNotFoundException e) {
             HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(id);
             tableDescriptor.addFamily(new HColumnDescriptor(MESSAGES_CF));

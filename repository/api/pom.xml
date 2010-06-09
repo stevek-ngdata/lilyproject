@@ -42,6 +42,13 @@
       <artifactId>lily-util</artifactId>
     </dependency>
     
+    <dependency>
+      <!-- Even though the API does not use jodatime directly, jodatime is used for the value objects
+           of the DATE and DATETIME primitive value types, which are built-in value types, so should
+           be available to all API users. -->
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

@@ -12,13 +12,7 @@ import org.lilycms.repository.api.RecordType;
 import org.lilycms.repository.api.Scope;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.api.ValueType;
-import org.lilycms.repository.impl.primitivevaluetype.BlobValueType;
-import org.lilycms.repository.impl.primitivevaluetype.BooleanValueType;
-import org.lilycms.repository.impl.primitivevaluetype.DateValueType;
-import org.lilycms.repository.impl.primitivevaluetype.IntegerValueType;
-import org.lilycms.repository.impl.primitivevaluetype.LinkValueType;
-import org.lilycms.repository.impl.primitivevaluetype.LongValueType;
-import org.lilycms.repository.impl.primitivevaluetype.StringValueType;
+import org.lilycms.repository.impl.primitivevaluetype.*;
 import org.lilycms.util.ArgumentValidator;
 
 public abstract class AbstractTypeManager implements TypeManager {
@@ -67,6 +61,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         registerPrimitiveValueType(new LongValueType());
         registerPrimitiveValueType(new BooleanValueType());
         registerPrimitiveValueType(new DateValueType());
+        registerPrimitiveValueType(new DateTimeValueType());
         registerPrimitiveValueType(new LinkValueType(idGenerator));
         registerPrimitiveValueType(new BlobValueType());
     }

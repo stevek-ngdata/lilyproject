@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -49,7 +50,7 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
     public HBaseBlobStoreAccess(Configuration configuration) throws IOException {
         try {
             table = new HTable(configuration, BLOB_TABLE);
-        } catch (IOException e) {
+        } catch (TableNotFoundException e) {
             HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(BLOB_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(BLOBS_COLUMN_FAMILY));
