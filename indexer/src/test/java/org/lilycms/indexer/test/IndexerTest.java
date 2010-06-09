@@ -13,6 +13,9 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,10 +34,11 @@ import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
 
 // To run this test from an IDE, set a property solr.war pointing to the SOLR war
 
@@ -61,6 +65,17 @@ public class IndexerTest {
     private static FieldType vfield1;
     private static FieldType vLinkField1;
 
+    private static FieldType vStringMvField;
+    private static FieldType vLongField;
+    private static FieldType vBlobField;
+    private static FieldType vBlobMvHierField;
+    private static FieldType vDateTimeField;
+    private static FieldType vDateField;
+    private static FieldType vIntHierField;
+
+    private static final String NS = "org.lilycms.indexer.test";
+    private static final String NS2 = "org.lilycms.indexer.test.2";
+
     private Log log = LogFactory.getLog(getClass());
 
     @BeforeClass
@@ -75,7 +90,10 @@ public class IndexerTest {
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
+        blobStoreAccessFactory.addBlobStoreAccess(Long.MAX_VALUE, dfsBlobStoreAccess);        
         repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, TEST_UTIL.getConfiguration());
+        repository.registerBlobStoreAccess(dfsBlobStoreAccess);
+
         solrServer = SOLR_TEST_UTIL.getSolrServer();
         queue = new TestLilyQueue();
 
@@ -103,10 +121,24 @@ public class IndexerTest {
     }
 
     private static void setupSchema() throws Exception {
+        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
+        ValueType stringMvValueType = typeManager.getValueType("STRING", true, false);
+
+        ValueType longValueType = typeManager.getValueType("LONG", false, false);
+
+        ValueType linkValueType = typeManager.getValueType("LINK", false, false);
+
+        ValueType blobValueType = typeManager.getValueType("BLOB", false, false);
+        ValueType blobMvHierValueType = typeManager.getValueType("BLOB", true, true);
+
+        ValueType dateTimeValueType = typeManager.getValueType("DATETIME", false, false);
+        ValueType dateValueType = typeManager.getValueType("DATE", false, false);
+
+        ValueType intHierValueType = typeManager.getValueType("INTEGER", false, true);
+
         //
         // Version tag fields
         //
-        ValueType longValueType = typeManager.getValueType("LONG", false, false);
 
         QName liveTagName = new QName(VersionTag.NAMESPACE, "live");
         liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
@@ -123,52 +155,85 @@ public class IndexerTest {
         //
         // Schema types for the versionless test
         //
-        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
-        ValueType linkValueType = typeManager.getValueType("LINK", false, false);
 
-        QName field1Name = new QName("org.lilycms.indexer.test", "nv_field1");
+        QName field1Name = new QName(NS, "nv_field1");
         nvfield1 = typeManager.newFieldType(stringValueType, field1Name, Scope.NON_VERSIONED);
         nvfield1 = typeManager.createFieldType(nvfield1);
 
-        QName field2Name = new QName("org.lilycms.indexer.test", "nv_field2");
+        QName field2Name = new QName(NS, "nv_field2");
         nvfield2 = typeManager.newFieldType(stringValueType, field2Name, Scope.NON_VERSIONED);
         nvfield2 = typeManager.createFieldType(nvfield2);
 
-        QName linkField1Name = new QName("org.lilycms.indexer.test", "nv_linkfield1");
+        QName linkField1Name = new QName(NS, "nv_linkfield1");
         nvLinkField1 = typeManager.newFieldType(linkValueType, linkField1Name, Scope.NON_VERSIONED);
         nvLinkField1 = typeManager.createFieldType(nvLinkField1);
 
-        QName linkField2Name = new QName("org.lilycms.indexer.test", "nv_linkfield2");
+        QName linkField2Name = new QName(NS, "nv_linkfield2");
         nvLinkField2 = typeManager.newFieldType(linkValueType, linkField2Name, Scope.NON_VERSIONED);
         nvLinkField2 = typeManager.createFieldType(nvLinkField2);
 
         RecordType nvRecordType1 = typeManager.newRecordType("NVRecordType1");
-        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvfield1.getId(), false));
-        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
-        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(lastTag.getId(), false));
-        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(previewTag.getId(), false));
-        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvLinkField1.getId(), false));
-        nvRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvLinkField2.getId(), false));
+        nvRecordType1.addFieldTypeEntry(nvfield1.getId(), false);
+        nvRecordType1.addFieldTypeEntry(liveTag.getId(), false);
+        nvRecordType1.addFieldTypeEntry(lastTag.getId(), false);
+        nvRecordType1.addFieldTypeEntry(previewTag.getId(), false);
+        nvRecordType1.addFieldTypeEntry(nvLinkField1.getId(), false);
+        nvRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
         nvRecordType1 = typeManager.createRecordType(nvRecordType1);
 
         //
         // Schema types for the versioned test
         //
-        QName vfield1Name = new QName("org.lilycms.indexer.test.2", "v_field1");
+        QName vfield1Name = new QName(NS2, "v_field1");
         vfield1 = typeManager.newFieldType(stringValueType, vfield1Name, Scope.VERSIONED);
         vfield1 = typeManager.createFieldType(vfield1);
 
-        QName vlinkField1Name = new QName("org.lilycms.indexer.test.2", "v_linkfield1");
+        QName vlinkField1Name = new QName(NS2, "v_linkfield1");
         vLinkField1 = typeManager.newFieldType(linkValueType, vlinkField1Name, Scope.VERSIONED);
         vLinkField1 = typeManager.createFieldType(vLinkField1);
 
+        QName vStringMvFieldName = new QName(NS2, "v_string_mv_field");
+        vStringMvField = typeManager.newFieldType(stringMvValueType, vStringMvFieldName, Scope.VERSIONED);
+        vStringMvField = typeManager.createFieldType(vStringMvField);
+
+        QName vLongFieldName = new QName(NS2, "v_long_field");
+        vLongField = typeManager.newFieldType(longValueType, vLongFieldName, Scope.VERSIONED);
+        vLongField = typeManager.createFieldType(vLongField);
+
+        QName vBlobFieldName = new QName(NS2, "v_blob_field");
+        vBlobField = typeManager.newFieldType(blobValueType, vBlobFieldName, Scope.VERSIONED);
+        vBlobField = typeManager.createFieldType(vBlobField);
+
+        QName vBlobMvHierFieldName = new QName(NS2, "v_blob_mv_hier_field");
+        vBlobMvHierField = typeManager.newFieldType(blobMvHierValueType, vBlobMvHierFieldName, Scope.VERSIONED);
+        vBlobMvHierField = typeManager.createFieldType(vBlobMvHierField);
+
+        QName vDateTimeFieldName = new QName(NS2, "v_datetime_field");
+        vDateTimeField = typeManager.newFieldType(dateTimeValueType, vDateTimeFieldName, Scope.VERSIONED);
+        vDateTimeField = typeManager.createFieldType(vDateTimeField);
+
+        QName vDateFieldName = new QName(NS2, "v_date_field");
+        vDateField = typeManager.newFieldType(dateValueType, vDateFieldName, Scope.VERSIONED);
+        vDateField = typeManager.createFieldType(vDateField);
+
+        QName vIntHierFieldName = new QName(NS2, "v_int_hier_field");
+        vIntHierField = typeManager.newFieldType(intHierValueType, vIntHierFieldName, Scope.VERSIONED);
+        vIntHierField = typeManager.createFieldType(vIntHierField);
+
         RecordType vRecordType1 = typeManager.newRecordType("VRecordType1");
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(vfield1.getId(), false));
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(liveTag.getId(), false));
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(lastTag.getId(), false));
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(previewTag.getId(), false));
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(vLinkField1.getId(), false));
-        vRecordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(nvLinkField2.getId(), false));
+        vRecordType1.addFieldTypeEntry(vfield1.getId(), false);
+        vRecordType1.addFieldTypeEntry(liveTag.getId(), false);
+        vRecordType1.addFieldTypeEntry(lastTag.getId(), false);
+        vRecordType1.addFieldTypeEntry(previewTag.getId(), false);
+        vRecordType1.addFieldTypeEntry(vLinkField1.getId(), false);
+        vRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
+        vRecordType1.addFieldTypeEntry(vStringMvField.getId(), false);
+        vRecordType1.addFieldTypeEntry(vLongField.getId(), false);
+        vRecordType1.addFieldTypeEntry(vBlobField.getId(), false);
+        vRecordType1.addFieldTypeEntry(vBlobMvHierField.getId(), false);
+        vRecordType1.addFieldTypeEntry(vDateTimeField.getId(), false);
+        vRecordType1.addFieldTypeEntry(vDateField.getId(), false);
+        vRecordType1.addFieldTypeEntry(vIntHierField.getId(), false);
         vRecordType1 = typeManager.createRecordType(vRecordType1);
     }
 
@@ -553,6 +618,7 @@ public class IndexerTest {
             verifyResultCount("v_field1:coconut", 1);
 
             // Delete master
+            log.debug("Begin test V13");
             repository.delete(record1.getId());
             sendEvent(EVENT_RECORD_DELETED, record1.getId());
 
@@ -565,6 +631,7 @@ public class IndexerTest {
         // Test deref from a versionless record to versioned field
         //
         {
+            log.debug("Begin test V14");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1", null);
             record1.setField(vfield1.getName(), "bicycle");
@@ -583,6 +650,7 @@ public class IndexerTest {
             verifyResultCount("nv_v_deref:bicycle", 0);
 
             // Now give record2 a version and vtag
+            log.debug("Begin test V15");
             record2.setField(vfield1.getName(), "boat");
             record2.setField(liveTag.getName(), 2L); // TODO should change to 1L when #2 is fixed
             record2 = repository.update(record2);
@@ -591,6 +659,7 @@ public class IndexerTest {
             verifyResultCount("nv_v_deref:bicycle", 1);
 
             // Give record1 some more versions with vtags
+            log.debug("Begin test V16");
             record1.setField(vfield1.getName(), "train");
             record1.setField(previewTag.getName(), Long.valueOf(2));
             record1 = repository.update(record1);
@@ -606,6 +675,7 @@ public class IndexerTest {
             verifyResultCount("nv_v_deref:car", 0);
 
             // Give record2 some more versions with vtags
+            log.debug("Begin test V17");
             record2.setField(vfield1.getName(), "airplane");
             record2.setField(previewTag.getName(), 3L); // TODO should change to 2L when #2 is fixed
             record2 = repository.update(record2);
@@ -627,6 +697,7 @@ public class IndexerTest {
         // the deref should evaluate to null.
         //
         {
+            log.debug("Begin test V18");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1", null);
             record1.setField(nvfield1.getName(), "Brussels");
@@ -649,6 +720,7 @@ public class IndexerTest {
             verifyResultCount("nv_v_nv_deref:Brussels", 0);
 
             // Give a version to the versionless records
+            log.debug("Begin test V19");
             record3.setField(vfield1.getName(), "Ghent");
             record3.setField(liveTag.getName(), 2L);  // TODO should change to 1L when #2 is fixed
             record3 = repository.update(record3);
@@ -662,6 +734,196 @@ public class IndexerTest {
             verifyResultCount("nv_v_nv_deref:Brussels", 1);
         }
 
+        //
+        // Multi-value field tests
+        //
+        {
+            // Test multi-value field
+            log.debug("Begin test V30");
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vStringMvField.getName(), Arrays.asList("Dog", "Cat"));
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vStringMvField.getId(), liveTag.getId());
+
+            verifyResultCount("v_string_mv:Dog", 1);
+            verifyResultCount("v_string_mv:Cat", 1);
+            verifyResultCount("v_string_mv:(Dog Cat)", 1);
+            verifyResultCount("v_string_mv:(\"Dog Cat\")", 0);
+
+            // Test multiple single-valued fields indexed into one MV field
+            // TODO
+
+            // Test single-value field turned into multivalue by formatter
+            // TODO
+
+            // Test multi-valued deref to single-valued field
+            // TODO
+        }
+
+        //
+        // Long type tests
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vLongField.getName(), 123L);
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vLongField.getId(), liveTag.getId());
+
+            verifyResultCount("v_long:123", 1);
+            verifyResultCount("v_long:[100 TO 150]", 1);
+        }
+
+        //
+        // Datetime type test
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+
+            verifyResultCount("v_datetime:\"2010-10-14T15:30:12.756Z\"", 1);
+            verifyResultCount("v_datetime:\"2010-10-14T15:30:12Z\"", 0);
+
+            // Test without milliseconds
+            Record record2 = repository.newRecord();
+            record2.setRecordType("VRecordType1", null);
+            record2.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 000, DateTimeZone.UTC));
+            record2.setField(liveTag.getName(), 1L);
+            record2 = repository.create(record2);
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+
+            verifyResultCount("v_datetime:\"2010-10-14T15:30:12Z\"", 1);
+            verifyResultCount("v_datetime:\"2010-10-14T15:30:12.000Z\"", 1);
+            verifyResultCount("v_datetime:\"2010-10-14T15:30:12.000Z/SECOND\"", 1);
+        }
+
+        //
+        // Date type test
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vDateField.getId(), liveTag.getId());
+
+            verifyResultCount("v_date:\"2020-01-30T00:00:00Z/DAY\"", 1);
+            verifyResultCount("v_date:\"2020-01-30T00:00:00.000Z\"", 1);
+            verifyResultCount("v_date:\"2020-01-30T00:00:00Z\"", 1);
+            verifyResultCount("v_date:\"2020-01-30T00:00:01Z\"", 0);
+
+            verifyResultCount("v_date:[2020-01-29T00:00:00Z/DAY TO 2020-01-31T00:00:00Z/DAY]", 1);
+
+            Record record2 = repository.newRecord();
+            record2.setRecordType("VRecordType1", null);
+            record2.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
+            record2.setField(liveTag.getName(), 1L);
+            record2 = repository.create(record2);
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vDateField.getId(), liveTag.getId());
+
+            verifyResultCount("v_date:\"2020-01-30T00:00:00Z/DAY\"", 2);
+        }
+
+        //
+        // Blob tests
+        //
+        {
+            Blob blob1 = createBlob("org/lilycms/indexer/test/blob1_msword.doc", "application/msword", "blob1_msword.doc");
+            Blob blob2 = createBlob("org/lilycms/indexer/test/blob2.pdf", "application/pdf", "blob2.pdf");
+            Blob blob3 = createBlob("org/lilycms/indexer/test/blob3_oowriter.odt", "application/vnd.oasis.opendocument.text", "blob3_oowriter.odt");
+            Blob blob4 = createBlob("org/lilycms/indexer/test/blob4_excel.xls", "application/excel", "blob4_excel.xls");
+
+            // Single-valued blob field
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vBlobField.getName(), blob1);
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vBlobField.getId(), liveTag.getId());
+
+            verifyResultCount("v_blob:sollicitudin", 1);
+            verifyResultCount("v_blob:\"Sed pretium pretium lorem\"", 1);
+            verifyResultCount("v_blob:lily", 0);
+
+            // Multi-value and hierarchical blob field
+            HierarchyPath path1 = new HierarchyPath(blob1, blob2);
+            HierarchyPath path2 = new HierarchyPath(blob3, blob4);
+            List blobs = Arrays.asList(path1, path2);
+
+            Record record2 = repository.newRecord();
+            record2.setRecordType("VRecordType1", null);
+            record2.setField(vBlobMvHierField.getName(), blobs);
+            record2.setField(liveTag.getName(), 1L);
+            record2 = repository.create(record2);
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vBlobMvHierField.getId(), liveTag.getId());
+
+            verifyResultCount("v_blob:blob1", 2);
+            verifyResultCount("v_blob:blob2", 1);
+            verifyResultCount("v_blob:blob3", 1);
+            verifyResultCount("+v_blob:blob4 +v_blob:\"Netherfield Park\"", 1);
+        }
+
+        //
+        // Test field with explicitly configured formatter
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vDateTimeField.getName(), new DateTime(2058, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+
+            verifyResultCount("year:2058", 1);
+        }
+
+        //
+        // Test field with auto-selected formatter
+        //
+        {
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1", null);
+            record1.setField(vIntHierField.getName(), new HierarchyPath(8, 16, 24, 32));
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vIntHierField.getId(), liveTag.getId());
+
+            verifyResultCount("inthierarchy:\"8_16_24_32\"", 1);
+        }
+    }
+
+    private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
+        byte[] mswordblob = readResource(resource);
+
+        Blob blob = new Blob(mediaType, (long)mswordblob.length, fileName);
+        OutputStream os = repository.getOutputStream(blob);
+        try {
+            os.write(mswordblob);
+        } finally {
+            os.close();
+        }
+
+        return blob;
+    }
+
+    private byte[] readResource(String path) throws IOException {
+        InputStream mswordblob = getClass().getClassLoader().getResourceAsStream(path);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = mswordblob.read(buffer)) != -1){
+            bos.write(buffer, 0, read);
+        }
+
+        return bos.toByteArray();
     }
 
     private static String qesc(String input) {
@@ -698,7 +960,7 @@ public class IndexerTest {
         solrQuery.set("q", query);
         QueryResponse response = SOLR_TEST_UTIL.getSolrServer().query(solrQuery);
         if (count != response.getResults().size()) {
-            System.out.println("The query result contains too many documents, here is the result:");
+            System.out.println("The query result contains a wrong number of documents, here is the result:");
             for (int i = 0; i < response.getResults().size(); i++) {
                 SolrDocument result = response.getResults().get(i);
                 System.out.println(result.getFirstValue("@@key"));

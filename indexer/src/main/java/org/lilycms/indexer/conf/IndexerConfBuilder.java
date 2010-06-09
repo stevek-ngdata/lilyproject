@@ -1,5 +1,6 @@
 package org.lilycms.indexer.conf;
 
+import org.lilycms.indexer.formatter.Formatter;
 import org.lilycms.repository.api.*;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.util.location.LocationAttributes;
@@ -8,7 +9,13 @@ import org.lilycms.util.xml.LocalXPathExpression;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 
 // TODO: add some validation of the XML?
@@ -19,6 +26,9 @@ import java.util.*;
 public class IndexerConfBuilder {
     private static LocalXPathExpression INDEX_CASES =
             new LocalXPathExpression("/indexer/cases/case");
+
+    private static LocalXPathExpression FORMATTERS =
+            new LocalXPathExpression("/indexer/formatters/formatter");
 
     private static LocalXPathExpression INDEX_FIELDS =
             new LocalXPathExpression("/indexer/indexFields/indexField");
@@ -45,6 +55,7 @@ public class IndexerConfBuilder {
     }
 
     private IndexerConf build(Document doc, Repository repository) throws IndexerConfException {
+        validate(doc);
         this.doc = doc;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
@@ -52,6 +63,7 @@ public class IndexerConfBuilder {
 
         try {
             buildCases();
+            buildFormatters();
             buildIndexFields();
         } catch (Exception e) {
             throw new IndexerConfException("Error in the configuration.", e);
@@ -74,6 +86,93 @@ public class IndexerConfBuilder {
             IndexCase indexCase = new IndexCase(recordType, varPropsPattern, vtags, indexVersionless);
             conf.addIndexCase(indexCase);
         }
+    }
+
+    private void buildFormatters() throws Exception {
+        List<Element> formatters = FORMATTERS.get().evalAsNativeElementList(doc);
+        for (Element formatterEl : formatters) {
+            String className = DocumentHelper.getAttribute(formatterEl, "class", true);
+            Formatter formatter = instantiateFormatter(className);
+
+            String name = DocumentHelper.getAttribute(formatterEl, "name", false);
+            String type = DocumentHelper.getAttribute(formatterEl, "type", false);
+
+            Set<String> types;
+            if (type == null) {
+                types = formatter.getSupportedPrimitiveValueTypes();
+            } else if (type.trim().equals("*")) {
+                types = Collections.emptySet();
+            } else {
+                // Check the specified types are a subset of those supported by the formatter
+                types = new HashSet<String>();
+                Set<String> supportedTypes = formatter.getSupportedPrimitiveValueTypes();
+                List<String> specifiedTypes = parseCSV(type);
+                for (String item : specifiedTypes) {
+                    if (supportedTypes.contains(item)) {
+                        types.add(item);
+                    } else {
+                        throw new IndexerConfException("Formatter definition error: primitive value type "
+                                + item + " is not supported by formatter " + className);
+                    }
+                }
+            }
+
+            boolean singleValue = DocumentHelper.getBooleanAttribute(formatterEl, "singleValue", formatter.supportsSingleValue());
+            boolean multiValue = DocumentHelper.getBooleanAttribute(formatterEl, "multiValue", formatter.supportsMultiValue());
+            boolean nonHierarchical = DocumentHelper.getBooleanAttribute(formatterEl, "nonHierarchical", formatter.supportsNonHierarchicalValue());
+            boolean hierarchical = DocumentHelper.getBooleanAttribute(formatterEl, "hierarchical", formatter.supportsHierarchicalValue());
+
+            String message = "Formatter does not support %1$s. Class " + className + " at " + LocationAttributes.getLocation(formatterEl);
+
+            if (singleValue && !formatter.supportsSingleValue())
+                throw new IndexerConfException(String.format(message, "singleValue"));
+            if (multiValue && !formatter.supportsMultiValue())
+                throw new IndexerConfException(String.format(message, "multiValue"));
+            if (hierarchical && !formatter.supportsHierarchicalValue())
+                throw new IndexerConfException(String.format(message, "hierarchical"));
+            if (nonHierarchical && !formatter.supportsNonHierarchicalValue())
+                throw new IndexerConfException(String.format(message, "nonHierarchical"));
+
+            if (name != null && conf.getFormatters().hasFormatter(name)) {
+                throw new IndexerConfException("Duplicate formatter name: " + name);
+            }
+
+            conf.getFormatters().addFormatter(formatter, name, types, singleValue, multiValue, nonHierarchical, hierarchical);
+        }
+    }
+
+    private Formatter instantiateFormatter(String className) throws IndexerConfException {
+        ClassLoader contextCL = Thread.currentThread().getContextClassLoader();
+        Class formatterClass;
+        try {
+            formatterClass = contextCL.loadClass(className);
+        } catch (ClassNotFoundException e) {
+            throw new IndexerConfException("Error loading formatter class " + className + " from context class loader.", e);
+        }
+
+        if (!Formatter.class.isAssignableFrom(formatterClass)) {
+            throw new IndexerConfException("Specified formatter class does not implement Formatter interface: " + className);
+        }
+
+        try {
+            return (Formatter)formatterClass.newInstance();
+        } catch (Exception e) {
+            throw new IndexerConfException("Error instantiating formatter class " + className, e);
+        }
+    }
+
+    private List<String> parseCSV(String csv) {
+        String[] parts = csv.split(",");
+
+        List<String> result = new ArrayList<String>(parts.length);
+
+        for (String part : parts) {
+            part = part.trim();
+            if (part.length() > 0)
+                result.add(part);
+        }
+
+        return result;
     }
 
     private Map<String, String> parseVariantPropertiesPattern(Element caseEl) throws Exception {
@@ -149,14 +248,22 @@ public class IndexerConfBuilder {
 
     private Value buildValue(Element valueEl) throws Exception {
         Element fieldEl = DocumentHelper.getElementChild(valueEl, "field", false);
+        Element derefEl = DocumentHelper.getElementChild(valueEl, "deref", false);
 
-        if (fieldEl != null) {
-            String fieldId = getFieldTypeId(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
-            return new FieldValue(fieldId);
+        FieldType fieldType;
+        Value value;
+
+        boolean extractContent = DocumentHelper.getBooleanAttribute(valueEl, "extractContent", false);
+        String formatter = DocumentHelper.getAttribute(valueEl, "formatter", false);
+        if (formatter != null && !conf.getFormatters().hasFormatter(formatter)) {
+            throw new IndexerConfException("Formatter does not exist: " + formatter + " at " +
+                    LocationAttributes.getLocationString(valueEl));
         }
 
-        Element derefEl = DocumentHelper.getElementChild(valueEl, "deref", false);
-        if (derefEl != null) {
+        if (fieldEl != null) {
+            fieldType = getFieldType(DocumentHelper.getAttribute(fieldEl, "name", true), fieldEl);
+            value = new FieldValue(fieldType, extractContent, formatter, conf.getFormatters());
+        } else if (derefEl != null) {
             Element[] children = DocumentHelper.getElementChildren(derefEl);
 
             Element lastEl = children[children.length - 1];
@@ -170,9 +277,9 @@ public class IndexerConfBuilder {
                 throw new IndexerConfException("A <deref> should contain one or more <follow> elements.");
             }
 
-            FieldType fieldType = getFieldType(DocumentHelper.getAttribute(lastEl, "name", true), lastEl);
+            fieldType = getFieldType(DocumentHelper.getAttribute(lastEl, "name", true), lastEl);
 
-            DerefValue deref = new DerefValue(fieldType);
+            DerefValue deref = new DerefValue(fieldType, extractContent, formatter, conf.getFormatters());
 
             // Run over all children except the last
             for (int i = 0; i < children.length - 1; i++) {
@@ -182,6 +289,14 @@ public class IndexerConfBuilder {
                     String variant = DocumentHelper.getAttribute(child, "variant", false);
                     if (field != null) {
                         FieldType followField = getFieldType(DocumentHelper.getAttribute(child, "field", true), child);
+                        if (!followField.getValueType().getPrimitive().getName().equals("LINK")) {
+                            throw new IndexerConfException("Follow-field is not a link field: " + followField.getName()
+                                    + " at " + LocationAttributes.getLocation(child));
+                        }
+                        if (followField.getValueType().isHierarchical()) {
+                            throw new IndexerConfException("Follow-field should not be a hierarchical link field: "
+                                    + followField.getName() + " at " + LocationAttributes.getLocation(child));
+                        }
                         deref.addFieldFollow(followField);
                     } else if (variant != null) {
                         if (variant.equals("master")) {
@@ -221,10 +336,19 @@ public class IndexerConfBuilder {
                 }
             }
 
-            return deref;
+            deref.init(typeManager);
+            value = deref;
+        } else {
+            throw new IndexerConfException("No value configured for index field at "
+                    + LocationAttributes.getLocation(valueEl));
         }
 
-        throw new RuntimeException("No value configured for index field at " + LocationAttributes.getLocation(valueEl));
+        if (extractContent && !fieldType.getValueType().getPrimitive().getName().equals("BLOB")) {
+            throw new IndexerConfException("extractContent is used for a non-blob value at "
+                    + LocationAttributes.getLocation(valueEl));
+        }
+
+        return value;
     }
 
     private QName parseQName(String qname, Element contextEl) throws IndexerConfException {
@@ -261,6 +385,18 @@ public class IndexerConfBuilder {
             return typeManager.getFieldTypeByName(parsedQName);
         } catch (FieldTypeNotFoundException e) {
             throw new IndexerConfException("unknown field type: " + parsedQName, e);
+        }
+    }
+
+    private void validate(Document document) throws IndexerConfException {
+        try {
+            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            URL url = getClass().getClassLoader().getResource("org/lilycms/indexer/conf/indexerconf.xsd");
+            Schema schema = factory.newSchema(url);
+            Validator validator = schema.newValidator();
+            validator.validate(new DOMSource(document));
+        } catch (Exception e) {
+            throw new IndexerConfException("Error validating indexer configuration against XML Schema.", e);
         }
     }
 }

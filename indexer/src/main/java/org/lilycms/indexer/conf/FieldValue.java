@@ -1,30 +1,39 @@
 package org.lilycms.indexer.conf;
 
-import org.lilycms.repository.api.IdRecord;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.FieldNotFoundException;
+import org.lilycms.repository.api.*;
 
 import java.util.Collections;
 import java.util.List;
 
-public class FieldValue implements Value {
-    private String fieldId;
+public class FieldValue extends BaseValue {
+    private FieldType fieldType;
 
-    protected FieldValue(String fieldId) {
-        this.fieldId = fieldId;
+    protected FieldValue(FieldType fieldType, boolean extractContent, String formatterName, Formatters formatters) {
+        super(extractContent, formatterName, formatters);
+        this.fieldType = fieldType;
     }
 
-    public List<String> eval(IdRecord record, Repository repository, String vtag) {
+    @Override
+    public Object evalInt(IdRecord record, Repository repository, String vtag) {
         try {
-            return Collections.singletonList((String)record.getField(fieldId));
+            return record.getField(fieldType.getId());
         } catch (FieldNotFoundException e) {
             // TODO
             return null;
         }
     }
 
-    public String getFieldDependency() {
-        return fieldId;
+    @Override
+    public ValueType getValueType() {
+        return fieldType.getValueType();
     }
 
+    public String getFieldDependency() {
+        return fieldType.getId();
+    }
+
+    @Override
+    public FieldType getTargetFieldType() {
+        return fieldType;
+    }
 }

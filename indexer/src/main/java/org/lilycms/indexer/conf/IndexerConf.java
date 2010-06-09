@@ -9,6 +9,10 @@ import java.util.*;
  * onto index documents.
  *
  * <p>Fields and vtags are identified by ID in this object model.
+ *
+ * <p>The IndexerConf is constructed by the {@link IndexerConfBuilder}. Some essential
+ * validation is done by that builder which would not be done in case of direct
+ * construction.
  */
 public class IndexerConf {
     private List<IndexCase> indexCases = new ArrayList<IndexCase>();
@@ -17,6 +21,7 @@ public class IndexerConf {
     private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
     private Map<String, List<IndexField>> derefIndexFieldsByField = new HashMap<String, List<IndexField>>();
     private Set<String> vtags = new HashSet<String>();
+    private Formatters formatters = new Formatters();
 
     protected void addIndexCase(IndexCase indexCase) {
         indexCases.add(indexCase);
@@ -87,5 +92,9 @@ public class IndexerConf {
      */
     public Set<String> getVtags() {
         return vtags;
+    }
+
+    public Formatters getFormatters() {
+        return formatters;
     }
 }

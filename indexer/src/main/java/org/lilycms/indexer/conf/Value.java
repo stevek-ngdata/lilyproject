@@ -6,6 +6,11 @@ import org.lilycms.repository.api.IdRecord;
 import org.lilycms.repository.api.Repository;
 
 public interface Value {
+    /**
+     * Evaluates this value for a given record & vtag.
+     *
+     * @return null if there is no value
+     */
     List<String> eval(IdRecord record, Repository repository, String vtag);
 
     /**

@@ -5,12 +5,41 @@ import org.lilycms.repoutil.VersionTag;
 
 import java.util.*;
 
-public class DerefValue implements Value {
+public class DerefValue extends BaseValue {
     private List<Follow> follows = new ArrayList<Follow>();
     private FieldType fieldType;
+    private ValueType valueType;
 
-    protected DerefValue(FieldType fieldType) {
+    protected DerefValue(FieldType fieldType, boolean extractContent, String formatterName, Formatters formatters) {
+        super(extractContent, formatterName, formatters);
         this.fieldType = fieldType;
+    }
+
+    /**
+     * This method should be called after all follow-expressions have been added.
+     */
+    protected void init(TypeManager typeManager) {
+        // In case the deref field itself is not multi-valued, but one of the follow-fields is multivalued,
+        // then the value type of this Value is adjusted to to be multi-valued.
+
+        if (fieldType.getValueType().isMultiValue()) {
+            this.valueType = fieldType.getValueType();
+            return;
+        }
+
+        boolean multiValue = false;
+        for (Follow follow : follows) {
+            if (follow.isMultiValue()) {
+                multiValue = true;
+                break;
+            }
+        }
+
+        if (multiValue) {
+            this.valueType = typeManager.getValueType(valueType.getPrimitive().getName(), true, valueType.isHierarchical());
+        } else {
+            this.valueType = fieldType.getValueType();
+        }
     }
 
     protected void addFieldFollow(FieldType fieldType) {
@@ -39,6 +68,8 @@ public class DerefValue implements Value {
 
     public static interface Follow {
         List<IdRecord> eval(IdRecord record, Repository repository, String vtag);
+
+        boolean isMultiValue();
     }
 
     public static class FieldFollow implements Follow {
@@ -46,6 +77,10 @@ public class DerefValue implements Value {
 
         public FieldFollow(FieldType fieldType) {
             this.fieldType = fieldType;
+        }
+
+        public boolean isMultiValue() {
+            return fieldType.getValueType().isMultiValue();
         }
 
         public List<IdRecord> eval(IdRecord record, Repository repository, String vtag) {
@@ -111,6 +146,10 @@ public class DerefValue implements Value {
                 return null;
             }
         }
+
+        public boolean isMultiValue() {
+            return false;
+        }
     }
 
     public static class VariantFollow implements Follow {
@@ -145,9 +184,14 @@ public class DerefValue implements Value {
         public Set<String> getDimensions() {
             return dimensions;
         }
+
+        public boolean isMultiValue() {
+            return false;
+        }
     }
 
-    public List<String> eval(IdRecord record, Repository repository, String vtag) {
+    @Override
+    public Object evalInt(IdRecord record, Repository repository, String vtag) {
         if (vtag.equals(VersionTag.VERSIONLESS_TAG) && fieldType.getScope() != Scope.NON_VERSIONED) {
             // From a versionless record, it is impossible to deref a versioned field.
             return null;
@@ -172,13 +216,12 @@ public class DerefValue implements Value {
         if (records.isEmpty())
             return null;
 
-        List<String> result = new ArrayList<String>();
+        List<Object> result = new ArrayList<Object>();
         for (IdRecord item : records) {
             if (item.hasField(fieldType.getId())) {
                 Object value = item.getField(fieldType.getId());
                 if (value != null) {
-                    // TODO formatting of value
-                    result.add(value.toString());
+                    result.add(value);
                 }
             }
         }
@@ -186,7 +229,15 @@ public class DerefValue implements Value {
         if (result.isEmpty())
             return null;
 
+        if (!valueType.isMultiValue())
+            return result.get(0);
+
         return result;
+    }
+
+    @Override
+    public ValueType getValueType() {
+        return valueType;
     }
 
     public String getFieldDependency() {
@@ -199,4 +250,8 @@ public class DerefValue implements Value {
         }
     }
 
+    @Override
+    public FieldType getTargetFieldType() {
+        return fieldType;
+    }
 }
