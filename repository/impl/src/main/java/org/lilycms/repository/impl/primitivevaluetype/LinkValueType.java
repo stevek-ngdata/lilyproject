@@ -16,6 +16,7 @@
 package org.lilycms.repository.impl.primitivevaluetype;
 
 import org.lilycms.repository.api.IdGenerator;
+import org.lilycms.repository.api.Link;
 import org.lilycms.repository.api.PrimitiveValueType;
 import org.lilycms.repository.api.RecordId;
 
@@ -36,12 +37,12 @@ public class LinkValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public RecordId fromBytes(byte[] bytes) {
-        return idGenerator.fromBytes(bytes);
+    public Link fromBytes(byte[] bytes) {
+        return Link.fromBytes(bytes, idGenerator);
     }
 
     public byte[] toBytes(Object value) {
-        return ((RecordId)value).toBytes();
+        return ((Link)value).toBytes();
     }
 
     public Class getType() {

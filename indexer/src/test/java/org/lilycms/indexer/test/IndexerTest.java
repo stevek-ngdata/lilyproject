@@ -47,7 +47,7 @@ public class IndexerTest {
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
     private static TestLilyQueue queue;
-    private static Repository repository;
+    private static HBaseRepository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
     private static SolrServer solrServer;
@@ -113,7 +113,8 @@ public class IndexerTest {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        indexer.stop();        
+        indexer.stop();
+        repository.stop();
 
         TEST_UTIL.shutdownMiniCluster();
         if (SOLR_TEST_UTIL != null)
@@ -302,7 +303,7 @@ public class IndexerTest {
 
             Record record2 = repository.newRecord();
             record2.setRecordType("NVRecordType1", null);
-            record2.setField(nvLinkField1.getName(), record1.getId());
+            record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField1.getId());
 
@@ -356,7 +357,7 @@ public class IndexerTest {
             // Create a record which will contain denormalized data through linking
             Record record2 = repository.newRecord();
             record2.setRecordType("NVRecordType1", null);
-            record2.setField(nvLinkField1.getName(), record1.getId());
+            record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvfield1.getName(), "mushroom");
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField1.getId(), nvfield1.getId());
@@ -513,7 +514,7 @@ public class IndexerTest {
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1", null);
-            record2.setField(vLinkField1.getName(), record1.getId());
+            record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), Long.valueOf(1));
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
@@ -641,7 +642,7 @@ public class IndexerTest {
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1", null);
-            record2.setField(nvLinkField2.getName(), record1.getId());
+            record2.setField(nvLinkField2.getName(), new Link(record1.getId()));
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField2.getId());
 
@@ -706,14 +707,14 @@ public class IndexerTest {
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1", null);
-            record2.setField(vLinkField1.getName(), record1.getId());
+            record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId());
 
             Record record3 = repository.newRecord();
             record3.setRecordType("VRecordType1", null);
-            record3.setField(nvLinkField2.getName(), record2.getId());
+            record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
             record3 = repository.create(record3);
             sendEvent(EVENT_RECORD_CREATED, record3.getId(), (Long)null, null, nvLinkField2.getId());
 

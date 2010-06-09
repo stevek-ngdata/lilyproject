@@ -56,6 +56,13 @@ public abstract class AbstractTypeManager implements TypeManager {
 	
 	// TODO get this from some configuration file
     protected void registerDefaultValueTypes() {
+        //
+        // Important:
+        //
+        // When adding a type below, please update the list of built-in
+        // types in the javadoc of the method TypeManager.getValueType.
+        //
+
         registerPrimitiveValueType(new StringValueType());
         registerPrimitiveValueType(new IntegerValueType());
         registerPrimitiveValueType(new LongValueType());

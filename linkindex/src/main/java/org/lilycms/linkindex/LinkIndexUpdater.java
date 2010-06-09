@@ -179,7 +179,7 @@ public class LinkIndexUpdater {
                 links = Collections.emptySet();
             } else {
                 LinkCollector collector = new LinkCollector();
-                RecordLinkExtractor.extract(versionRecord, collector, typeManager);
+                RecordLinkExtractor.extract(versionRecord, collector, repository);
                 links = collector.getLinks();
             }
             return links;

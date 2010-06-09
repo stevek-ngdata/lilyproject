@@ -28,15 +28,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilycms.repository.api.Blob;
-import org.lilycms.repository.api.BlobStoreAccessFactory;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.HierarchyPath;
-import org.lilycms.repository.api.PrimitiveValueType;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.AbstractTypeManager;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
@@ -116,7 +108,7 @@ public class ValueTypeTest {
 
     @Test
     public void testLinkType() throws Exception {
-        runValueTypeTests("linkRecordTypeId", "LINK", idGenerator.newRecordId(), idGenerator.newRecordId(), idGenerator.newRecordId());
+        runValueTypeTests("linkRecordTypeId", "LINK", new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()));
     }
 
     @Test

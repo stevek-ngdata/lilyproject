@@ -15,17 +15,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilycms.repository.api.Blob;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordId;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
@@ -298,11 +288,12 @@ public class Tutorial {
         Record record2 = repository.newRecord();
         record2.setRecordType("Book", null);
         record2.setField(new QName(NS, "title"), "Fishing 2");
-        record2.setField(new QName(NS, "sequel_to"), record1.getId());
+        record2.setField(new QName(NS, "sequel_to"), new Link(record1.getId()));
         record2 = repository.create(record2);
 
         // (3)
-        RecordId sequelTo = (RecordId)record2.getField(new QName(NS, "sequel_to"));
+        Link sequelToLink = (Link)record2.getField(new QName(NS, "sequel_to"));
+        RecordId sequelTo = sequelToLink.resolve(record2.getId(), repository.getIdGenerator());
         Record linkedRecord = repository.read(sequelTo);
         System.out.println(linkedRecord.getField(new QName(NS, "title")));
     }

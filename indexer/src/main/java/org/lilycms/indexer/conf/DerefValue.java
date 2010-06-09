@@ -97,14 +97,16 @@ public class DerefValue extends BaseValue {
             }
 
             Object value = record.getField(fieldType.getId());
-            if (value instanceof RecordId) {
-                IdRecord linkedRecord = resolveRecordId((RecordId)value, vtag, repository);
+            if (value instanceof Link) {
+                RecordId recordId = ((Link)value).resolve(record, repository.getIdGenerator());
+                IdRecord linkedRecord = resolveRecordId(recordId, vtag, repository);
                 return linkedRecord == null ? null : Collections.singletonList(linkedRecord);
-            } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof RecordId) {
+            } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Link) {
                 List list = (List)value;
                 List<IdRecord> result = new ArrayList<IdRecord>(list.size());
-                for (Object recordId : list) {
-                    IdRecord linkedRecord = resolveRecordId((RecordId)recordId, vtag, repository);
+                for (Object link : list) {
+                    RecordId recordId = ((Link)link).resolve(record, repository.getIdGenerator());
+                    IdRecord linkedRecord = resolveRecordId(recordId, vtag, repository);
                     if (linkedRecord != null) {
                         result.add(linkedRecord);
                     }

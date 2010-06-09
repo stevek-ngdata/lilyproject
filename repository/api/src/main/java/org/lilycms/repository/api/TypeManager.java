@@ -161,9 +161,10 @@ public interface TypeManager {
      * <tr><td>INTEGER</td>  <td>java.lang.Integer</td></tr>
      * <tr><td>LONG</td>     <td>java.lang.Long</td></tr>
      * <tr><td>BOOLEAN</td>  <td>java.lang.Boolean</td></tr>
-     * <tr><td>DATE</td>     <td>java.util.Date</td></tr>
+     * <tr><td>DATE</td>     <td>org.joda.time.LocalDate</td></tr>
+     * <tr><td>DATETIME</td> <td>org.joda.time.DateTime</td></tr>
      * <tr><td>BLOB</td>     <td>org.lilycms.repository.api.Blob</td></tr>
-     * <tr><td>LINK</td>     <td>org.lilycms.repository.api.RecordId</td></tr>
+     * <tr><td>LINK</td>     <td>org.lilycms.repository.api.Link</td></tr>
      * </tbody>
      * </table>
      *

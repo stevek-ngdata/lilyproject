@@ -140,7 +140,7 @@ public class LinkIndexTest {
         {
             Record record = repository.newRecord();
             record.setRecordType(recordType.getId(), null);
-            record.setField(nonVersionedFt.getName(), ids.newRecordId("foo1"));
+            record.setField(nonVersionedFt.getName(), new Link(ids.newRecordId("foo1")));
             record = repository.create(record);
 
             RecordEvent recordEvent = new RecordEvent();
@@ -156,7 +156,7 @@ public class LinkIndexTest {
             assertEquals(0, referrers.size());
 
             // Now perform an update so that there is a version
-            record.setField(versionedFt.getName(), Arrays.asList(ids.newRecordId("foo2"), ids.newRecordId("foo3")));
+            record.setField(versionedFt.getName(), Arrays.asList(new Link(ids.newRecordId("foo2")), new Link(ids.newRecordId("foo3"))));
             record = repository.update(record);
 
 //            recordEvent = new RecordEvent();
