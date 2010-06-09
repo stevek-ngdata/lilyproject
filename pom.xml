@@ -282,8 +282,8 @@
     </pluginRepository>
 
     <pluginRepository>
-      <id>lilycms</id>
-      <name>Apache snapshot plugin repository</name>
+      <id>lilycms-plugins</id>
+      <name>Lilycms snapshot plugin repository</name>
       <url>http://lilycms.org/maven/maven2/deploy</url>
     </pluginRepository>
   </pluginRepositories>
