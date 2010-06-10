@@ -351,6 +351,12 @@ public class AvroConverter {
 		return avroRecordNotFoundException;
     }
 
+    public AvroVersionNotFoundException convert(VersionNotFoundException exception) throws AvroRepositoryException, AvroFieldTypeNotFoundException {
+        AvroVersionNotFoundException avroException = new AvroVersionNotFoundException();
+        avroException.record = convert(exception.getRecord());
+        return avroException;
+    }
+
 	public AvroInvalidRecordException convert(InvalidRecordException invalidRecordException) throws AvroRepositoryException, AvroFieldTypeNotFoundException {
 		AvroInvalidRecordException avroInvalidRecordException = new AvroInvalidRecordException();
 		avroInvalidRecordException.record = convert(invalidRecordException.getRecord());
@@ -366,6 +372,10 @@ public class AvroConverter {
 
 	public RecordNotFoundException convert(AvroRecordNotFoundException recordNotFoundException) throws RepositoryException, FieldTypeNotFoundException {
 		return new RecordNotFoundException(convert(recordNotFoundException.record));
+    }
+
+    public VersionNotFoundException convert(AvroVersionNotFoundException exception) throws RepositoryException, FieldTypeNotFoundException {
+        return new VersionNotFoundException(convert(exception.record));
     }
 
 	public InvalidRecordException convert(AvroInvalidRecordException invalidRecordException) throws RepositoryException, FieldTypeNotFoundException {

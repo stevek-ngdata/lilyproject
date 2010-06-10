@@ -3,7 +3,6 @@ package org.lilycms.repository.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Set;
@@ -24,15 +23,7 @@ import org.lilycms.repository.api.RecordExistsException;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.repository.avro.AvroConverter;
-import org.lilycms.repository.avro.AvroFieldTypeNotFoundException;
-import org.lilycms.repository.avro.AvroInvalidRecordException;
-import org.lilycms.repository.avro.AvroQName;
-import org.lilycms.repository.avro.AvroRecordExistsException;
-import org.lilycms.repository.avro.AvroRecordNotFoundException;
-import org.lilycms.repository.avro.AvroRecordTypeNotFoundException;
-import org.lilycms.repository.avro.AvroRepository;
-import org.lilycms.repository.avro.AvroRepositoryException;
+import org.lilycms.repository.avro.*;
 import org.lilycms.util.ArgumentValidator;
 
 public class RepositoryRemoteImpl implements Repository {
@@ -102,20 +93,23 @@ public class RepositoryRemoteImpl implements Repository {
 
 	}
 
-	public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+	public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		return read(recordId, null, null);
 	}
 
-	public Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+	public Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		return read(recordId, null, fieldNames);
 	}
 
-	public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+	public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		return read(recordId, version, null);
 	}
 
-	public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-	        RepositoryException {
+	public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		try {
 			long avroVersion;
 			if (version == null) {
@@ -133,6 +127,8 @@ public class RepositoryRemoteImpl implements Repository {
 			return converter.convert(repositoryProxy.read(new Utf8(recordId.toString()), avroVersion, avroFieldNames));
         } catch (AvroRecordNotFoundException recordNotFoundException) {
         	throw converter.convert(recordNotFoundException);
+        } catch (AvroVersionNotFoundException e) {
+            throw converter.convert(e);
         } catch (AvroRecordTypeNotFoundException recordTypeNotFoundException) {
         	throw converter.convert(recordTypeNotFoundException);
         } catch (AvroFieldTypeNotFoundException fieldTypeNotFoundException) {

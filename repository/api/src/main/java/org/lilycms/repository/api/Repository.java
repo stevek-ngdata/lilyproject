@@ -91,7 +91,7 @@ public interface Repository {
      * @throws RecordTypeNotFoundException
      */
     Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException;
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
 
     /**
      * Updates the version-mutable fields of an existing version.
@@ -99,7 +99,7 @@ public interface Repository {
      * <p><b>TODO</b>: this is being considered for redesign.
      */
     Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
 
     /**
      * Reads a record fully. All the fields of the record will be read.
@@ -107,7 +107,7 @@ public interface Repository {
      * <p>If the record has versions, it is the latest version that will be read.
      */
     Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException;
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
 
     /**
      * Reads a record limited to a subset of the fields. Only the fields specified in the fieldNames list will be
@@ -119,19 +119,19 @@ public interface Repository {
      * a non-existing field name.
      */
     Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException;
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
 
     /**
      * Reads a specific version of a record.
      */
     Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException;
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
 
     /**
      * Reads a specific version of a record limited to a subset of the fields.
      */
     Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
 
     /**
      * Reads a Record and also returns the mapping from QNames to IDs.
@@ -142,7 +142,7 @@ public interface Repository {
      * @param fieldIds load only the fields with these ids. optional, can be null.
      */
     IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
 
     /**
      * Delete a {@link Record} from the repository.

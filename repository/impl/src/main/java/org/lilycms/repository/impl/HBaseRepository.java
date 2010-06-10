@@ -40,27 +40,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.Blob;
-import org.lilycms.repository.api.BlobNotFoundException;
-import org.lilycms.repository.api.BlobStoreAccess;
-import org.lilycms.repository.api.BlobStoreAccessFactory;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.FieldTypeNotFoundException;
-import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.IdRecord;
-import org.lilycms.repository.api.InvalidRecordException;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordExistsException;
-import org.lilycms.repository.api.RecordId;
-import org.lilycms.repository.api.RecordNotFoundException;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.RecordTypeNotFoundException;
-import org.lilycms.repository.api.Repository;
-import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.repository.api.Scope;
-import org.lilycms.repository.api.TypeManager;
-import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.*;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.RecordEvent.Type;
 import org.lilycms.rowlog.api.RowLog;
@@ -169,8 +149,8 @@ public class HBaseRepository implements Repository {
 		return new RecordImpl(recordId);
 	}
 
-	public Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-	        RepositoryException {
+	public Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
 
 		Record newRecord = record.clone();
 
@@ -238,7 +218,7 @@ public class HBaseRepository implements Repository {
 		}
 	}
 
-	public Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+	public Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		Record newRecord = record.clone();
 
 		RecordId recordId = record.getId();
@@ -420,7 +400,7 @@ public class HBaseRepository implements Repository {
 	}
 
 	public Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-	        RepositoryException {
+            RepositoryException, VersionNotFoundException {
 		Record newRecord = record.clone();
 
 		RecordId recordId = record.getId();
@@ -544,20 +524,24 @@ public class HBaseRepository implements Repository {
 		return changed;
 	}
 
-	public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+	public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		return read(recordId, null, null);
 	}
 
-	public Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+	public Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		return read(recordId, null, fieldNames);
 	}
 
-	public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+	public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		return read(recordId, version, null);
 	}
 
-	public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-	        RepositoryException {
+	public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException,
+            RepositoryException, VersionNotFoundException {
 		ReadContext readContext = new ReadContext(false);
 
 		List<FieldType> fields = null;
@@ -572,7 +556,7 @@ public class HBaseRepository implements Repository {
 	}
 
 	public IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-	        RepositoryException {
+            RepositoryException, VersionNotFoundException {
 		ReadContext readContext = new ReadContext(true);
 
 		List<FieldType> fields = null;
@@ -594,7 +578,7 @@ public class HBaseRepository implements Repository {
 	}
 
 	private Record read(RecordId recordId, Long version, List<FieldType> fields, ReadContext readContext, RowLock rowLock) throws RecordNotFoundException,
-	        RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		ArgumentValidator.notNull(recordId, "recordId");
 		Record record = newRecord();
 		record.setId(recordId);
@@ -619,10 +603,10 @@ public class HBaseRepository implements Repository {
 		// Set retrieved version on the record
 		long currentVersion = Bytes.toLong(result.getValue(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME));
 		if (version != null) {
+            record.setVersion(version);
 			if (currentVersion < version) {
-				throw new RecordNotFoundException(record);
+				throw new VersionNotFoundException(record);
 			}
-			record.setVersion(version);
 		} else {
 			record.setVersion(currentVersion);
 		}

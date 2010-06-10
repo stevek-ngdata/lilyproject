@@ -201,7 +201,8 @@ public class VersionTag {
      * <p>The @@versionless version tag is supported.
      */
     public static Record getRecord(RecordId recordId, String vtagId, Repository repository, List<QName> fieldNames)
-            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException,
+            RecordTypeNotFoundException, VersionNotFoundException {
         if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
             // TODO this should include an option to only read non-versioned-scoped data
             return repository.read(recordId);
@@ -219,17 +220,20 @@ public class VersionTag {
      * See {@link #getRecord(org.lilycms.repository.api.RecordId, String, org.lilycms.repository.api.Repository, java.util.List)}.
      */
     public static Record getRecord(RecordId recordId, String vtagId, Repository repository)
-            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException,
+            RecordTypeNotFoundException, VersionNotFoundException {
         return getRecord(recordId, vtagId, repository, null);
     }
 
     public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository)
-            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException,
+            RecordTypeNotFoundException, VersionNotFoundException {
         return getIdRecord(recordId, vtagId, repository, null);
     }
 
     public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository, List<String> fieldIds)
-            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException, RecordTypeNotFoundException {
+            throws FieldTypeNotFoundException, RepositoryException, RecordNotFoundException,
+            RecordTypeNotFoundException, VersionNotFoundException {
         if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
             // TODO this should include an option to only read non-versioned-scoped data
             return repository.readWithIds(recordId, null, null);

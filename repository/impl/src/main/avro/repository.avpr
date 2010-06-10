@@ -33,6 +33,12 @@
       ]
      },
      
+     {"name": "AvroVersionNotFoundException", "type": "error",
+      "fields": [
+          {"name": "record", "type": "AvroRecord"}
+      ]
+     },
+
      {"name": "AvroInvalidRecordException", "type": "error",
       "fields": [
           {"name": "record", "type": "AvroRecord"},
@@ -71,19 +77,19 @@
      "update": {
          "request": [{"name": "record", "type": "AvroRecord"}],
          "response": "AvroRecord",
-         "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroVersionNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
      },
      "updateMutableFields": {
          "request": [{"name": "record", "type": "AvroRecord"}],
          "response": "AvroRecord",
-         "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordNotFoundException", "AvroVersionNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
      },
      "read": {
          "request": [{"name": "recordId", "type": "string"},
                      {"name": "version", "type": "long"},
                      {"name": "fieldNames", "type": ["null", {"type": "array", "items": "AvroQName"}]}],
          "response": "AvroRecord",
-         "errors": ["AvroRecordNotFoundException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordNotFoundException", "AvroVersionNotFoundException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
      },
      "delete": {
          "request": [{"name": "recordId", "type": "string"}],

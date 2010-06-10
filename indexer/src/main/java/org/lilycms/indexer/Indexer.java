@@ -258,6 +258,8 @@ public class Indexer {
             IdRecord version = null;
             try {
                 version = repository.readWithIds(recordId, entry.getKey(), null);
+            } catch (VersionNotFoundException e) {
+                // TODO
             } catch (RecordNotFoundException e) {
                 // TODO handle this differently from version not found
             }

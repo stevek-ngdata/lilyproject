@@ -15,9 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.Record;
-
-
 public class RecordNotFoundException extends Exception {
 
     private final Record record;
@@ -36,12 +33,6 @@ public class RecordNotFoundException extends Exception {
         message.append("Record <");
         message.append(record.getId());
         message.append("> ");
-        Long version = record.getVersion();
-        if (version != null) {
-            message.append("<version:");
-            message.append(version);
-            message.append(">");
-        }
         message.append("not found");
         return message.toString();
     }

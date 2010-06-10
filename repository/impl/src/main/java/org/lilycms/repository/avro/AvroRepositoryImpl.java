@@ -69,8 +69,10 @@ public class AvroRepositoryImpl implements AvroRepository {
         	throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
         	throw converter.convert(repositoryException);
+        } catch (VersionNotFoundException e) {
+            throw converter.convert(e);
         }
-	}
+    }
 
 	public AvroRecord update(AvroRecord record) throws AvroRemoteException, AvroRecordNotFoundException, AvroInvalidRecordException, AvroRecordTypeNotFoundException,
 	        AvroFieldTypeNotFoundException, AvroRepositoryException {
@@ -86,8 +88,10 @@ public class AvroRepositoryImpl implements AvroRepository {
         	throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
         	throw converter.convert(repositoryException);
+        } catch (VersionNotFoundException e) {
+            throw converter.convert(e);
         }
-	}
+    }
 
 	public AvroRecord updateMutableFields(AvroRecord record) throws AvroRemoteException, AvroRecordNotFoundException, AvroInvalidRecordException, AvroRecordTypeNotFoundException,
 	        AvroFieldTypeNotFoundException, AvroRepositoryException {
@@ -103,7 +107,9 @@ public class AvroRepositoryImpl implements AvroRepository {
         	throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
         	throw converter.convert(repositoryException);
+        } catch (VersionNotFoundException e) {
+            throw converter.convert(e);
         }
-	}
+    }
 
 }
