@@ -9,7 +9,6 @@ import java.util.Set;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.hbaseindex.IndexManager;
@@ -29,10 +28,10 @@ import org.lilycms.testfw.TestHelper;
 public class LinkIndexTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
-    private TypeManager typeManager;
-    private Repository repository;
-    private IdGenerator ids;
-    private LinkIndex linkIndex;
+    private static TypeManager typeManager;
+    private static HBaseRepository repository;
+    private static IdGenerator ids;
+    private static LinkIndex linkIndex;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -40,15 +39,7 @@ public class LinkIndexTest {
         TEST_UTIL.startMiniCluster(1);
 
         IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
-    }
 
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-        TEST_UTIL.shutdownMiniCluster();
-    }
-
-    @Before
-    public void init() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
         typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
@@ -63,6 +54,12 @@ public class LinkIndexTest {
             // TODO better way to handle this?
         }
         linkIndex = new LinkIndex(indexManager, repository);
+    }
+
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+        repository.stop();
+        TEST_UTIL.shutdownMiniCluster();
     }
 
     @Test

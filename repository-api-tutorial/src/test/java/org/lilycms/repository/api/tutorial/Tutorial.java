@@ -35,7 +35,7 @@ public class Tutorial {
     private static final String NS = "org.lilycms.tutorial";
 
     private static TypeManager typeManager;
-    private static Repository repository;
+    private static HBaseRepository repository;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -55,6 +55,7 @@ public class Tutorial {
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        repository.stop();
         TEST_UTIL.shutdownMiniCluster();
     }
 
