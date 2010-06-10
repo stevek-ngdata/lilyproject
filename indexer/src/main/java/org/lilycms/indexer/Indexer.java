@@ -527,7 +527,7 @@ public class Indexer {
             }
 
             try {
-                if (!recordHasVersions(record)) {
+                if (record.getVersion() == null) {
                     if (indexCase.getIndexVersionless() && vtagsToIndex.contains(VersionTag.VERSIONLESS_TAG)) {
                         index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
                     }
@@ -668,33 +668,8 @@ public class Indexer {
         return result;
     }
 
-    /**
-     * TODO this method is a temporary solution to detect that a record has versions,
-     *      should be removed once issue #1 is solved.
-     */
-    private boolean recordHasVersions(Record record) {
-        if (record.getVersion() > 1)
-            return true;
-
-        // the procedure below might not be accurate for versions > 1, since
-        // all fields might be deleted from later versions (therefore, the check above)
-        for (QName fieldName : record.getFields().keySet()) {
-            Scope scope;
-            try {
-                scope = typeManager.getFieldTypeByName(fieldName).getScope();
-            } catch (FieldTypeNotFoundException e) {
-                // We assume this doesn't occur (this is a temporary method anyway)
-                throw new RuntimeException(e);
-            }
-            if (scope == Scope.VERSIONED || scope == Scope.VERSIONED_MUTABLE) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void setIndexAllVTags(Set<String> vtagsToIndex, Map<String, Long> vtags, IndexCase indexCase, Record record) {
-        if (recordHasVersions(record)) {
+        if (record.getVersion() != null) {
             Set<String> tmp = new HashSet<String>();
             tmp.addAll(indexCase.getVersionTags());
             tmp.retainAll(vtags.keySet()); // only keep the vtags which exist in the document

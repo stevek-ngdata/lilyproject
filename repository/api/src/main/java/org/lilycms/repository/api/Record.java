@@ -56,8 +56,11 @@ public interface Record {
     void setVersion(Long version);
 
     /**
-     * TODO what returns this method if the record has no versions? what does it return when the record has versions
-     *      but no versioned fields were read?
+     * Returns the version.
+     *
+     * <p>For a record without versions, this returns null. In all other cases, this returns the version number
+     * of the loaded version (= the latest one by default), even if none of the versioned fields would actually be
+     * loaded.
      */
     Long getVersion();
 

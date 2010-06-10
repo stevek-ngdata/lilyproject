@@ -808,6 +808,45 @@ public abstract class AbstractRepositoryTest {
 		assertEquals(record, idRecord.getRecord());
 	}
 
-	
+    @Test
+    public void testVersionNumbers() throws Exception {
+        // Create a record without versioned fields, the record will be without versions
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getId(), recordType1.getVersion());
+        record.setField(fieldType1.getName(), "hello");
+        record = repository.create(record);
+
+        // Check the version is null
+        assertEquals(null, record.getVersion());
+
+        // Check version number stays null after additional update
+        record.setField(fieldType1.getName(), "hello2");
+        repository.update(record);
+        record = repository.read(record.getId());
+        assertEquals(null, record.getVersion());
+
+        // add a versioned field to the record
+        record.setField(fieldType2.getName(), new Integer(4));
+        record = repository.update(record);
+        assertEquals(new Long(1), record.getVersion());
+
+        // Verify the last version number after a fresh record read
+        record = repository.read(record.getId());
+        assertEquals(new Long(1), record.getVersion());
+
+        // Read specific version
+        record = repository.read(record.getId(), 1L);
+        assertEquals(new Long(1), record.getVersion());
+        assertTrue(record.hasField(fieldType2.getName()));
+        assertEquals(2, record.getFields().size());
+
+        try {
+            record = repository.read(record.getId(), 2L);
+            fail("expected exception");
+        } catch (VersionNotFoundException e) {
+            // expected
+        }
+    }
+
 	
 }

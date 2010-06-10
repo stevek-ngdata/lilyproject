@@ -6,7 +6,6 @@ import org.lilycms.queue.api.LilyQueue;
 import org.lilycms.queue.api.QueueListener;
 import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.repository.api.*;
-import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
@@ -90,7 +89,7 @@ public class LinkIndexUpdater {
                         }
                         return;
                     }
-                    boolean hasVersions = recordHasVersions(record); // TODO record.getVersion != null;
+                    boolean hasVersions = record.getVersion() != null;
 
                     if (hasVersions) {
                         Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
@@ -187,26 +186,6 @@ public class LinkIndexUpdater {
             log.error("Error extracting links from record " + recordId, t);
         }
         return Collections.emptySet();
-    }
-
-    /**
-     * TODO this method is a temporary solution to detect that a record has versions,
-     *      should be removed once issue #1 is solved.
-     */
-    private boolean recordHasVersions(Record record) {
-        for (QName fieldName : record.getFields().keySet()) {
-            Scope scope;
-            try {
-                scope = typeManager.getFieldTypeByName(fieldName).getScope();
-            } catch (FieldTypeNotFoundException e) {
-                // We assume this doesn't occur (this is a temporary method anyway)
-                throw new RuntimeException(e);
-            }
-            if (scope == Scope.VERSIONED || scope == Scope.VERSIONED_MUTABLE) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

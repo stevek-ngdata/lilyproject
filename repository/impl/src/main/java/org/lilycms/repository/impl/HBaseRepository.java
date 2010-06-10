@@ -173,15 +173,15 @@ public class HBaseRepository implements Repository {
 			}
 
 			Record dummyOriginalRecord = newRecord();
-			dummyOriginalRecord.setVersion(Long.valueOf(1));
 			Put put = new Put(newRecord.getId().toBytes(), rowLock);
 			RecordEvent recordEvent = new RecordEvent();
 			recordEvent.setType(Type.CREATE);
-			recordEvent.setVersionCreated(1L);
 			calculateRecordChanges(newRecord, dummyOriginalRecord, 1L, put, recordEvent);
 			// Make sure the record type changed flag stays false for a newly
 			// created record
 			recordEvent.setRecordTypeChanged(false);
+            if (newRecord.getVersion() != null)
+                recordEvent.setVersionCreated(newRecord.getVersion());
 			
 			long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
 			RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
@@ -202,7 +202,7 @@ public class HBaseRepository implements Repository {
 				}
 			}
 		}
-		newRecord.setVersion(Long.valueOf(1));
+
 		return newRecord;
 	}
 
@@ -234,8 +234,11 @@ public class HBaseRepository implements Repository {
 			Put put = new Put(newRecord.getId().toBytes(), rowLock);
 			RecordEvent recordEvent = new RecordEvent();
 			recordEvent.setType(Type.UPDATE);
-			if (calculateRecordChanges(newRecord, originalRecord, originalRecord.getVersion() + 1, put, recordEvent)) {
-				recordEvent.setVersionUpdated(newRecord.getVersion());
+            long newVersion = originalRecord.getVersion() == null ? 1 : originalRecord.getVersion() + 1;
+			if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent)) {
+                if (newRecord.getVersion() != null) {
+				    recordEvent.setVersionUpdated(newRecord.getVersion());
+                }
 				try {
 					long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
 					RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
@@ -243,20 +246,20 @@ public class HBaseRepository implements Repository {
 					recordTable.put(put);
 					wal.processMessage(messageId, walMessage, rowLock);
 				} catch (IOException e) {
-					throw new RepositoryException("Exception occured while putting updated record <" + recordId + "> on HBase table", e);
+					throw new RepositoryException("Exception occurred while putting updated record <" + recordId + "> on HBase table", e);
 				} catch (RowLogException e) {
-					throw new RepositoryException("Exception occured while putting updated record <" + recordId + "> on HBase table", e);
+					throw new RepositoryException("Exception occurred while putting updated record <" + recordId + "> on HBase table", e);
 				}
 			}
 		} catch (IOException e) {
-			throw new RepositoryException("Exception occured while updating record <" + recordId + "> in HBase table", e);
+			throw new RepositoryException("Exception occurred while updating record <" + recordId + "> in HBase table", e);
 		} finally {
 			if (rowLock != null) {
 				try {
 					recordTable.unlockRow(rowLock);
 				} catch (IOException e) {
 					// Ignore for now
-//					throw new RepositoryException("Exception occured while releasing lock for record <" + recordId + "> on HBase table", e);
+//					throw new RepositoryException("Exception occurred while releasing lock for record <" + recordId + "> on HBase table", e);
 				}
 			}
 		}
@@ -307,7 +310,9 @@ public class HBaseRepository implements Repository {
 			// Always set the record type on the record since the requested
 			// record type could have been given without a version number
 			record.setRecordType(recordTypeId, recordTypeVersion);
-			put.add(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
+            if (version != null) {
+			    put.add(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME, Bytes.toBytes(version));
+            }
 
 		}
 		// Always set the version on the record. If no fields were changed this
@@ -577,14 +582,14 @@ public class HBaseRepository implements Repository {
 		return new IdRecordImpl(record, idToQNameMapping);
 	}
 
-	private Record read(RecordId recordId, Long version, List<FieldType> fields, ReadContext readContext, RowLock rowLock) throws RecordNotFoundException,
+	private Record read(RecordId recordId, Long requestedVersion, List<FieldType> fields, ReadContext readContext, RowLock rowLock) throws RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException {
 		ArgumentValidator.notNull(recordId, "recordId");
 		Record record = newRecord();
 		record.setId(recordId);
 
 		Get get = new Get(recordId.toBytes(), rowLock);
-		if (version != null) {
+		if (requestedVersion != null) {
 			get.setMaxVersions();
 		}
 		// Add the columns for the fields to get
@@ -601,18 +606,19 @@ public class HBaseRepository implements Repository {
 		}
 
 		// Set retrieved version on the record
-		long currentVersion = Bytes.toLong(result.getValue(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME));
-		if (version != null) {
-            record.setVersion(version);
-			if (currentVersion < version) {
+        byte[] latestVersionBytes = result.getValue(systemColumnFamilies.get(Scope.NON_VERSIONED), CURRENT_VERSION_COLUMN_NAME);
+		Long latestVersion = latestVersionBytes != null ? Bytes.toLong(latestVersionBytes) : null;
+		if (requestedVersion != null) {
+            record.setVersion(requestedVersion);
+			if (latestVersion == null || latestVersion < requestedVersion) {
 				throw new VersionNotFoundException(record);
 			}
 		} else {
-			record.setVersion(currentVersion);
+			record.setVersion(latestVersion);
 		}
 
 		// Extract the actual fields from the retrieved data
-		if (extractFields(result, version, record, readContext)) {
+		if (extractFields(result, record.getVersion(), record, readContext)) {
 			// Set the recordType explicitly in case only versioned fields were
 			// extracted
 			Pair<String, Long> recordTypePair = extractRecordType(Scope.NON_VERSIONED, result, null, record);
@@ -723,8 +729,12 @@ public class HBaseRepository implements Repository {
 	private boolean extractFields(Result result, Long version, Record record, ReadContext context) throws RecordTypeNotFoundException, FieldTypeNotFoundException,
 	        RepositoryException {
 		boolean nvExtracted = extractFields(Scope.NON_VERSIONED, result, null, record, context);
-		boolean vExtracted = extractFields(Scope.VERSIONED, result, version, record, context);
-		boolean vmExtracted = extractFields(Scope.VERSIONED_MUTABLE, result, version, record, context);
+        boolean vExtracted = false;
+        boolean vmExtracted = false;
+        if (version != null) {
+            vExtracted = extractFields(Scope.VERSIONED, result, version, record, context);
+            vmExtracted = extractFields(Scope.VERSIONED_MUTABLE, result, version, record, context);
+        }
 		return nvExtracted || vExtracted || vmExtracted;
 	}
 

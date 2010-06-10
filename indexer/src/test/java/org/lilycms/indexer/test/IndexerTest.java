@@ -274,8 +274,7 @@ public class IndexerTest {
             verifyResultCount("nv_field1:apple", 0);
 
             // Add a vtag field. For versionless records, this should have no effect
-            // TODO test version number below should actually be 1, but currently versionless records do have a version 1 (see #1/#2)
-            record.setField(liveTag.getName(), new Long(5));
+            record.setField(liveTag.getName(), new Long(1));
             repository.update(record);
 
             sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
@@ -653,9 +652,9 @@ public class IndexerTest {
             // Now give record2 a version and vtag
             log.debug("Begin test V15");
             record2.setField(vfield1.getName(), "boat");
-            record2.setField(liveTag.getName(), 2L); // TODO should change to 1L when #2 is fixed
+            record2.setField(liveTag.getName(), 1L);
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 1L, null, vfield1.getId(), liveTag.getId());
 
             verifyResultCount("nv_v_deref:bicycle", 1);
 
@@ -678,14 +677,14 @@ public class IndexerTest {
             // Give record2 some more versions with vtags
             log.debug("Begin test V17");
             record2.setField(vfield1.getName(), "airplane");
-            record2.setField(previewTag.getName(), 3L); // TODO should change to 2L when #2 is fixed
+            record2.setField(previewTag.getName(), 2L);
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 3L, null, vfield1.getId(), previewTag.getId());
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 2L, null, vfield1.getId(), previewTag.getId());
 
             record2.setField(vfield1.getName(), "hovercraft");
-            record2.setField(lastTag.getName(), 4L); // TODO should change to 3L when #2 is fixed
+            record2.setField(lastTag.getName(), 3L);
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 4L, null, vfield1.getId(), lastTag.getId());
+            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 3L, null, vfield1.getId(), lastTag.getId());
 
             verifyResultCount("nv_v_deref:bicycle", 1);
             verifyResultCount("nv_v_deref:train", 1);
@@ -723,14 +722,14 @@ public class IndexerTest {
             // Give a version to the versionless records
             log.debug("Begin test V19");
             record3.setField(vfield1.getName(), "Ghent");
-            record3.setField(liveTag.getName(), 2L);  // TODO should change to 1L when #2 is fixed
+            record3.setField(liveTag.getName(), 1L);
             record3 = repository.update(record3);
-            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
 
             record1.setField(vfield1.getName(), "Antwerp");
-            record1.setField(liveTag.getName(), 2L);  // TODO should change to 1L when #2 is fixed
+            record1.setField(liveTag.getName(), 1L);
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId()); 
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
 
             verifyResultCount("nv_v_nv_deref:Brussels", 1);
         }
