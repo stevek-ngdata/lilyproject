@@ -52,7 +52,11 @@ public interface IdGenerator {
     /**
      * Creates a RecordId based on the provided String.
      *
-     * @param recordIdString well-formed String representation of the {@link RecordId}, this should have been generated
+     * <p>The format of the string is described at {@link RecordId#toString}. The parsing is however a
+     * bit more lenient: it is not required that the variant properties are specified in lexicographic order,
+     * and whitespace around the individual components will be stripped.
+     *
+     * @param recordIdString well-formed String representation of the {@link RecordId}, as is generated
      *                       by calling {@link RecordId#toString()}
      */
     public RecordId fromString(String recordIdString);

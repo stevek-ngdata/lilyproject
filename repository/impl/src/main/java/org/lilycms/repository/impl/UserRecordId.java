@@ -40,6 +40,7 @@ public class UserRecordId implements RecordId {
     protected UserRecordId(byte[] recordId, IdGeneratorImpl idGenerator) {
         recordIdBytes = recordId;
         recordIdString = Bytes.toString(recordId);
+        IdGeneratorImpl.checkIdString(recordIdString, "record id");
         this.idGenerator = idGenerator;
     }
 

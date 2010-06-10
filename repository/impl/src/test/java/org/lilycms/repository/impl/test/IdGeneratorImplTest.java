@@ -50,7 +50,7 @@ public class IdGeneratorImplTest {
     @Test
     public void testIdGeneratorUUID() {
         IdGenerator idGenerator = new IdGeneratorImpl();
-        String uuidRecordIDString = "UUID:d27cdb6e-ae6d-11cf-96b8-444553540000";
+        String uuidRecordIDString = "UUID.d27cdb6e-ae6d-11cf-96b8-444553540000";
         
         assertEquals(uuidRecordIDString, idGenerator.fromString(uuidRecordIDString).toString());
         
@@ -65,7 +65,7 @@ public class IdGeneratorImplTest {
     public void testIdGeneratorUSER() {
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId newRecordId = idGenerator.newRecordId("aUserId");
-        String userRecordIDString = "USER:aUserId";
+        String userRecordIDString = "USER.aUserId";
         
         assertEquals(newRecordId, idGenerator.fromString(userRecordIDString));
         
@@ -84,7 +84,7 @@ public class IdGeneratorImplTest {
         variantProperties.put("dim1", "dimvalue1");
         RecordId variantRecordId = idGenerator.newRecordId(masterRecordId, variantProperties);
 
-        String variantRecordIdString = masterRecordId.toString()+"VARIANT:dim1,dimvalue1";
+        String variantRecordIdString = masterRecordId.toString() + ".dim1=dimvalue1";
         
         assertEquals(variantRecordId, idGenerator.fromString(variantRecordIdString));
         
@@ -103,7 +103,7 @@ public class IdGeneratorImplTest {
 
         RecordId variantRecordId = idGenerator.newRecordId(masterRecordId, variantProperties);
 
-        String variantRecordIdString = masterRecordId.toString()+"VARIANT:dim1,dimvalue1:dim2,dimvalue2";
+        String variantRecordIdString = masterRecordId.toString() + ".dim1=dimvalue1;dim2=dimvalue2";
         assertEquals(variantRecordId, idGenerator.fromString(variantRecordIdString));
         
         assertEquals(variantRecordIdString, idGenerator.fromString(variantRecordIdString).toString());

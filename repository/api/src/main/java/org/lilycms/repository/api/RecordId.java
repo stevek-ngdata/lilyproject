@@ -26,6 +26,23 @@ import java.util.SortedMap;
  */
 public interface RecordId {
 
+    /**
+     * Returns a string representation of this record id.
+     * 
+     * <p>The format for a master record id is as follows:
+     *
+     * <pre>{record id type}.{master record id}</pre>
+     *
+     * <p>Where the record id type is UUID or USER. For example:
+     *
+     * <pre>USER.2354236523</pre>
+     *
+     * <pre>A variant record id starts of the same, with the variant properties appended.
+     *
+     * <pre>{record id type}.{master record id}.varprop1=value1;varprop2=value2</pre>
+     *
+     * <p>The variant properties are sorted in lexicographic order.
+     */
     String toString();
 
     byte[] toBytes();

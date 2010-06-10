@@ -59,6 +59,10 @@ public class VariantRecordId implements RecordId {
             int dimensionValueLength = Bytes.toInt(variantRecordIdBytes, offset, Bytes.SIZEOF_INT);
             offset = offset + Bytes.SIZEOF_INT;
             String dimensionValue = Bytes.toString(variantRecordIdBytes, offset, dimensionValueLength);
+
+            IdGeneratorImpl.checkVariantPropertyNameValue(dimension);
+            IdGeneratorImpl.checkVariantPropertyNameValue(dimensionValue);
+
             varProps.put(dimension, dimensionValue);
             offset = offset + dimensionValueLength;
         }
@@ -69,31 +73,7 @@ public class VariantRecordId implements RecordId {
         // Make sure they are always sorted the same way
         return new TreeMap<String, String>();
     }
-    
-    /**
-     * In the variantPropertiesString the dimension an dimensionValue are divided by a ","
-     * Each set of dimension,dimensionValue is separated by a ":"
-     */
-    protected VariantRecordId(RecordId masterRecordId, String variantPropertiesString, IdGeneratorImpl idGenerator) {
-        this.idGenerator = idGenerator;
-        this.masterRecordId = masterRecordId;
-        SortedMap<String, String> varProps = createVariantPropertiesMap();
-        int offset = 0;
-        int index1 = variantPropertiesString.indexOf(",");
-        while (index1 != -1) {
-            String dimension = variantPropertiesString.substring(offset, index1);
-            int index2 = variantPropertiesString.indexOf(":", index1);
-            if (index2 == -1) {
-                index2 = variantPropertiesString.length();
-            }
-            String dimensionValue = variantPropertiesString.substring(index1+1, index2);
-            varProps.put(dimension, dimensionValue);
-            offset = index2 + 1;
-            index1 = variantPropertiesString.indexOf(",", index2);
-        }
-        this.variantProperties = Collections.unmodifiableSortedMap(varProps);
-    }
-    
+
     public String toString() {
         return idGenerator.toString(this);
     }
@@ -118,23 +98,6 @@ public class VariantRecordId implements RecordId {
         }
         variantPropertyBytes = Bytes.add(variantPropertyBytes, Bytes.toBytes(variantPropertyBytes.length));
         return Bytes.add(masterRecordIdBytes, variantPropertyBytes);
-    }
-    
-    protected String getVariantPropertiesString() {
-        StringBuilder variantStringBuilder;
-        variantStringBuilder = new StringBuilder();
-        Set<Entry<String, String>> variantPropertyEntrySet = variantProperties.entrySet();
-        boolean first = true;
-        for (Entry<String, String> variantPropertyEntry : variantPropertyEntrySet) {
-            if (!first) {
-                variantStringBuilder.append(":");
-            }
-            variantStringBuilder.append(variantPropertyEntry.getKey());
-            variantStringBuilder.append(",");
-            variantStringBuilder.append(variantPropertyEntry.getValue());
-            first = false;
-        }
-        return variantStringBuilder.toString();
     }
     
     public RecordId getMaster() {

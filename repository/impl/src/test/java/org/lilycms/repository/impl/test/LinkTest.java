@@ -24,11 +24,11 @@ public class LinkTest {
     public void testPlainRecordId() {
         RecordId recordId = idGenerator.newRecordId("123");
 
-        Link link = Link.newBuilder().recordId(recordId).copyAll(true).create();
+        Link link = Link.newBuilder().recordId(recordId).create();
         assertTrue(link.copyAll());
         assertEquals(recordId, link.getMasterRecordId());
 
-        assertEquals("USER:123?*", link.toString());
+        assertEquals("USER.123", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
 
         RecordId ctx = idGenerator.newRecordId("0");
@@ -55,9 +55,9 @@ public class LinkTest {
         RecordId masterRecordId = idGenerator.newRecordId("123");
         RecordId recordId = idGenerator.newRecordId(masterRecordId, varProps);
 
-        Link link = Link.newBuilder().recordId(recordId).create();
+        Link link = Link.newBuilder().recordId(recordId).copyAll(false).create();
         assertEquals(masterRecordId, link.getMasterRecordId());
-        assertEquals("USER:123?branch=dev&lang=en", link.toString());
+        assertEquals("USER.123.!*;branch=dev;lang=en", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
 
         assertEquals(2, link.getVariantProps().size());
@@ -82,8 +82,8 @@ public class LinkTest {
     public void testIndividualRemove() {
         RecordId recordId = idGenerator.newRecordId("123");
 
-        Link link = Link.newBuilder().recordId(recordId).copyAll(true).remove("lang").set("x", "1").create();
-        assertEquals("USER:123?*&-lang&x=1", link.toString());
+        Link link = Link.newBuilder().recordId(recordId).remove("lang").set("x", "1").create();
+        assertEquals("USER.123.-lang;x=1", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
 
         Map<String, String> ctxVarProps = new HashMap<String, String>();
@@ -103,8 +103,8 @@ public class LinkTest {
     public void testIndividualCopy() {
         RecordId recordId = idGenerator.newRecordId("123");
 
-        Link link = Link.newBuilder().recordId(recordId).copy("branch").set("x", "1").create();
-        assertEquals("USER:123?+branch&x=1", link.toString());
+        Link link = Link.newBuilder().recordId(recordId).copyAll(false).copy("branch").set("x", "1").create();
+        assertEquals("USER.123.!*;+branch;x=1", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
 
         Map<String, String> ctxVarProps = new HashMap<String, String>();
@@ -122,9 +122,9 @@ public class LinkTest {
 
     @Test
     public void testLinkToSelf() {
-        Link link = Link.newBuilder().copyAll(true).create();
+        Link link = Link.newBuilder().create();
         assertNull(link.getMasterRecordId());
-        assertEquals("?*", link.toString());
+        assertEquals(".", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
 
         Map<String, String> varProps = new HashMap<String, String>();
@@ -140,9 +140,9 @@ public class LinkTest {
 
     @Test
     public void testLinkToMaster() {
-        Link link = Link.newBuilder().create();
+        Link link = Link.newBuilder().copyAll(false).create();
         assertNull(link.getMasterRecordId());
-        assertEquals("?", link.toString());
+        assertEquals(".!*", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
 
         Map<String, String> varProps = new HashMap<String, String>();
@@ -165,7 +165,7 @@ public class LinkTest {
         RecordId masterRecordId = idGenerator.newRecordId("123");
         RecordId recordId = idGenerator.newRecordId(masterRecordId, varProps);
 
-        Link link = Link.newBuilder().recordId(recordId).create();
+        Link link = Link.newBuilder().recordId(recordId).copyAll(false).create();
 
         try {
             link.getVariantProps().put("z", null);

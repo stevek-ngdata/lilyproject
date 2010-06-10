@@ -43,7 +43,14 @@ import java.util.*;
  * <h2>Creating links</h2>
  *
  * <p>If you just want a link to point to an exact record id, use the constructor
+ * <tt>new Link(recordId, false)</tt>.
+ *
+ * <p>To have a link that copies variant properties from the context, use:
  * <tt>new Link(recordId)</tt>.
+ *
+ * <p>In such cases you might want to consider creating the link based only on the master record id
+ *
+ * <tt>new Link(recordId.getMaster())</tt>.
  *
  * <p>The Link class is immutable after construction. You have to either pass all properties
  * through constructor arguments, or use the LinkBuilder class obtained via {@link #newBuilder}.
@@ -52,7 +59,7 @@ import java.util.*;
  *
  * <pre>
  * RecordId recordId = ...;
- * Link link = Link.newBuilder().recordId(recordId).copyAll(true).remove("dev").set("foo", "bar").create();
+ * Link link = Link.newBuilder().recordId(recordId).copyAll(false).copy("dev").set("foo", "bar").create();
  * </pre>
  *
  * <h2>Resolving links to RecordId's</h2>
@@ -61,17 +68,17 @@ import java.util.*;
  */
 public class Link {
     private RecordId masterRecordId;
-    private boolean copyAll;
+    private boolean copyAll = true;
     private SortedMap<String, PropertyValue> variantProps;
 
     /**
-     * A link to the master.
+     * A link to self.
      */
     public Link() {
     }
 
     /**
-     * If copyAll is true, a link to self.
+     * If copyAll is true, a link to self, if copy all is false, a link to the master.
      */
     public Link(boolean copyAll) {
         this.copyAll = copyAll;
@@ -119,62 +126,74 @@ public class Link {
     /**
      * Parses a link in the syntax produced by {@link #toString()}.
      *
+     * <p>An empty string is interpreted as a link-to-self, thus the same as ".".
+     *
+     * <p>If the same variant property would be specified multiple times, it is its
+     * last occurrence which will count.
+     *
      * @throws IllegalArgumentException in case of syntax errors in the link.
      */
     public static Link fromString(String link, IdGenerator idGenerator) {
         ArgumentValidator.notNull(link, "link");
 
-        if (link.equals("") || link.equals("?")) {
+        // link to self
+        if (link.equals("") || link.equals(".")) {
             return new Link();
         }
 
-        int qpos = link.indexOf('?');
+        RecordId recordId;
+        String variantString;
 
-        String id;
-        String argString;
-
-        if (qpos == -1) {
-            id = link;
-            argString = "";
+        if (link.startsWith(".")) {
+            recordId = null;
+            variantString = link.substring(1);
         } else {
-            id = link.substring(0, qpos);
-            argString = link.substring(qpos + 1);
-        }
+            int firstDotPos = link.indexOf('.');
 
-        if (id.equals(""))
-            id = null;
-
-        RecordId recordId = id != null ? idGenerator.fromString(id) : null;
-        LinkBuilder builder = Link.newBuilder().recordId(recordId);
-
-        String[] args = argString.split("&");
-
-        for (String arg : args) {
-            arg = arg.trim();
-            if (arg.length() == 0)
-                continue;
-
-            if (arg.equals("*")) {
-                builder.copyAll(true);
-                continue;
+            if (firstDotPos == -1) {
+                throw new IllegalArgumentException("Invalid link, contains no dot: " + link);
             }
 
-            if (arg.length() == 1)
-                throw new IllegalArgumentException("Invalid link: " + link);
+            int secondDotPos = link.indexOf('.', firstDotPos + 1);
 
-            int epos = arg.indexOf('=');
-            if (epos == -1) {
-                if (arg.startsWith("+")) {
-                    builder.copy(arg.substring(1));
-                } else if (arg.startsWith("-")) {
-                    builder.remove(arg.substring(1));
+            String masterIdString;
+            if (secondDotPos == -1) {
+                masterIdString = link;
+                variantString = null;
+            } else {
+                masterIdString = link.substring(0, secondDotPos);
+                variantString = link.substring(secondDotPos + 1);
+            }
+
+            recordId = idGenerator.fromString(masterIdString);
+        }
+
+        if (variantString == null) {
+            return new Link(recordId, true);
+        }
+
+        LinkBuilder builder = Link.newBuilder().recordId(recordId);
+
+        String[] variantStringParts = variantString.split(";");
+        for (String part : variantStringParts) {
+            int eqPos = part.indexOf('=');
+            if (eqPos == -1) {
+                String thing = part.trim();
+                if (thing.equals("*")) {
+                    // this is the default, but if users want to make explicit, allow them
+                    builder.copyAll(true);
+                } else if (thing.equals("!*")) {
+                    builder.copyAll(false);
+                } else if (thing.startsWith("+") && thing.length() > 1) {
+                    builder.copy(thing.substring(1));
+                } else if  (thing.startsWith("-") && thing.length() > 1) {
+                    builder.remove(thing.substring(1));
                 } else {
                     throw new IllegalArgumentException("Invalid link: " + link);
                 }
             } else {
-                String name = arg.substring(0, epos);
-                // TODO decode special characters in the value
-                String value = arg.substring(epos + 1);
+                String name = part.substring(0, eqPos).trim();
+                String value = part.substring(eqPos + 1).trim();
                 if (name.length() == 0 || value.length() == 0) {
                     throw new IllegalArgumentException("Invalid link: " + link);
                 }
@@ -202,32 +221,33 @@ public class Link {
      *
      * <p>The syntax is:
      *
-     * <pre>{recordId}?*&amp;arg1=val1&amp;+arg2&amp;-arg3<pre>
+     * <pre>{recordId}.!*;arg1=val1;+arg2;-arg3<pre>
      *
-     * <p>The recordId is optional. Arguments, if any, following after the ? symbol and are separated by &amp;
-     * symbols, hence similar to URLs.
+     * <p>The recordId is optional. Arguments, if any, following after the . symbol and are separated by ';'
+     * symbols. Note that the {recordId} itself also contains a dot to separate the record id type and its
+     * actual content (e.g. USER.235523432).
      *
-     * <p>The '*' argument indicates copyAll.
+     * <p>The '!*' argument indicates 'not copyAll', copyAll is the default if not specified.
      *
      * <p><tt>arg1=val1</tt> is an example of specifying an exact value for a variant property.
      *
-     * <p><tt>+arg2</tt> is an explicit copy of the variant property 'arg2' from the context (does
-     * not make sense when using copyAll = *)
+     * <p><tt>+arg2</tt> is an explicit copy of the variant property 'arg2' from the context. Does
+     * only make sense when not using copyAll, thus when !* is in the link.
      *
      * <p><<tt>-arg3</tt> is a removal (exclusion) of a variant property copied by using copyAll.
      *
      * <p>The arguments will always be specified in alphabetical order, ignoring the + or - symbol.
-     * CopyAll (*) is always the first argument.
+     * "Not copyAll" (!*) is always the first argument.
      */
     @Override
     public String toString() {
         if (masterRecordId == null && variantProps == null) {
             if (copyAll) {
                 // link to self
-                return "?*";
+                return ".";
             } else {
                 // link to my master
-                return "?";
+                return ".!*";
             }
         }
 
@@ -237,13 +257,13 @@ public class Link {
             builder.append(masterRecordId.toString());
         }
 
-        if (copyAll || variantProps != null) {
-            builder.append("?");
+        if (!copyAll || variantProps != null) {
+            builder.append(".");
 
             boolean firstArg = true;
 
-            if (copyAll) {
-                builder.append("*");
+            if (!copyAll) {
+                builder.append("!*");
                 firstArg = false;
             }
 
@@ -252,10 +272,9 @@ public class Link {
                     if (firstArg) {
                         firstArg = false;
                     } else {
-                        builder.append("&");
+                        builder.append(";");
                     }
 
-                    // TODO escaping of special characters in the value
                     switch (entry.getValue().mode) {
                         case COPY:
                             builder.append('+').append(entry.getKey());
@@ -430,7 +449,7 @@ public class Link {
 
     public static class LinkBuilder {
         private RecordId masterRecordId;
-        private boolean copyAll;
+        private boolean copyAll = true;
         private Map<String, PropertyValue> variantProps;
 
         private LinkBuilder() {
