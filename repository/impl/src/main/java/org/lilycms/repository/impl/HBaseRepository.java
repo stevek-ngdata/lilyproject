@@ -162,6 +162,8 @@ public class HBaseRepository implements Repository {
 
 		byte[] rowId = recordId.toBytes();
 		RowLock rowLock = null;
+		byte[] messageId;
+		RowLogMessage walMessage;
 		try {
 			rowLock = recordTable.lockRow(rowId);
 
@@ -183,11 +185,10 @@ public class HBaseRepository implements Repository {
             if (newRecord.getVersion() != null)
                 recordEvent.setVersionCreated(newRecord.getVersion());
 			
-			long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
-			RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
-			byte[] messageId = wal.putMessage(walMessage, put, rowLock);
+			long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put);
+			walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
+			messageId = wal.putMessage(walMessage, put);
 			recordTable.put(put);
-			wal.processMessage(messageId, walMessage, rowLock);
 		} catch (IOException e) {
 			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table", e);
 		} catch (RowLogException e) {
@@ -202,7 +203,11 @@ public class HBaseRepository implements Repository {
 				}
 			}
 		}
-
+		try {
+	        wal.processMessage(messageId, walMessage);
+        } catch (IOException e) {
+			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table", e);
+        }
 		return newRecord;
 	}
 
@@ -224,6 +229,8 @@ public class HBaseRepository implements Repository {
 		RecordId recordId = record.getId();
 		byte[] rowId = recordId.toBytes();
 		RowLock rowLock = null;
+		byte[] messageId = null;
+		RowLogMessage walMessage = null;
 		try {
 			rowLock = recordTable.lockRow(rowId);
 
@@ -240,11 +247,10 @@ public class HBaseRepository implements Repository {
 				    recordEvent.setVersionUpdated(newRecord.getVersion());
                 }
 				try {
-					long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
-					RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
-					byte[] messageId = wal.putMessage(walMessage, put, rowLock);
+					long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put);
+					walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
+					messageId = wal.putMessage(walMessage, put);
 					recordTable.put(put);
-					wal.processMessage(messageId, walMessage, rowLock);
 				} catch (IOException e) {
 					throw new RepositoryException("Exception occurred while putting updated record <" + recordId + "> on HBase table", e);
 				} catch (RowLogException e) {
@@ -263,6 +269,13 @@ public class HBaseRepository implements Repository {
 				}
 			}
 		}
+		try {
+			if (walMessage != null) {
+				wal.processMessage(messageId, walMessage);
+			}
+        } catch (IOException e) {
+			throw new RepositoryException("Exception occured while updating record <" + recordId + "> in HBase table", e);
+        }
 		return newRecord;
 	}
 
@@ -411,6 +424,8 @@ public class HBaseRepository implements Repository {
 		RecordId recordId = record.getId();
 		byte[] rowId = recordId.toBytes();
 		RowLock rowLock = null;
+		byte[] messageId = null;
+		RowLogMessage walMessage = null;
 		try {
 			rowLock = recordTable.lockRow(rowId);
 
@@ -457,12 +472,10 @@ public class HBaseRepository implements Repository {
 				
 				
 				try {
-					long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put, rowLock);
-					RowLogMessage walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
-					byte[] messageId = wal.putMessage(walMessage, put, rowLock);
+					long seqnr = wal.putPayload(recordId.toBytes(), recordEvent.toJsonBytes(), put);
+					walMessage = new RowLogMessageImpl(recordId.toBytes(), seqnr, null, wal);
+					messageId = wal.putMessage(walMessage, put);
 					recordTable.put(put);
-					wal.processMessage(messageId, walMessage, rowLock);
-					
 				} catch (IOException e) {
 					throw new RepositoryException("Exception occured while putting updated record <" + record.getId() + "> on HBase table", e);
 				} catch (RowLogException e) {
@@ -482,6 +495,13 @@ public class HBaseRepository implements Repository {
 				}
 			}
 		}
+		try {
+			if (walMessage != null) {
+				wal.processMessage(messageId, walMessage);
+			}
+        } catch (IOException e) {
+	        throw new RepositoryException("Exception occured while updating record <" + recordId + "> in HBase table", e);
+        }
 		return newRecord;
 	}
 

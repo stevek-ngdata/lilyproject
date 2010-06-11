@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.RowLock;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -65,9 +64,9 @@ public class RowLogEndToEndTest {
 	public void testSingleMessage() throws Exception {
 		RowLogMessage message = new RowLogMessageImpl(Bytes.toBytes("row1"), 1L, null, rowLog);
 		consumer.expectMessage(message);
-		rowLog.putMessage(message, null, null);
+		rowLog.putMessage(message, null);
 		processor.start();
-		if (!consumer.waitUntilMessagesConsumed(10000)) {
+		if (!consumer.waitUntilMessagesConsumed(20000)) {
 			Assert.fail("Messages not consumed within timeout");
 		}
 		processor.stop();
@@ -79,10 +78,10 @@ public class RowLogEndToEndTest {
 		for (long seqnr = 0L; seqnr < 10; seqnr++) {
 			message = new RowLogMessageImpl(Bytes.toBytes("row2"), seqnr, null, rowLog);
 			consumer.expectMessage(message);
-			rowLog.putMessage(message, null, null);
+			rowLog.putMessage(message, null);
         }
 		processor.start();
-		if (!consumer.waitUntilMessagesConsumed(10000)) {
+		if (!consumer.waitUntilMessagesConsumed(120000)) {
 			Assert.fail("Messages not consumed within timeout");
 		}
 		processor.stop();
@@ -90,7 +89,6 @@ public class RowLogEndToEndTest {
 
 	@Test
 	public void testMultipleMessagesMultipleRows() throws Exception {
-		processor.start();
 		RowLogMessage message; 
 		consumer.expectMessages(100);
 		for (long seqnr = 0L; seqnr < 10; seqnr++) {
@@ -99,10 +97,11 @@ public class RowLogEndToEndTest {
 				data = Bytes.add(data, Bytes.toBytes(seqnr));
 				message = new RowLogMessageImpl(Bytes.toBytes("row"+rownr), seqnr, data, rowLog);
 				consumer.expectMessage(message);
-				rowLog.putMessage(message, null, null);
+				rowLog.putMessage(message, null);
 			}
         }
-		if (!consumer.waitUntilMessagesConsumed(10000)) { // TODO avoid flipping tests
+		processor.start();
+		if (!consumer.waitUntilMessagesConsumed(120000)) { // TODO avoid flipping tests
 			Assert.fail("Messages not consumed within timeout");
 		}
 		processor.stop();
@@ -110,7 +109,6 @@ public class RowLogEndToEndTest {
 	
 	@Test
 	public void testMultipleConsumers() throws Exception {
-		processor.start();
 		TestingMessageConsumer consumer2 = new TestingMessageConsumer(1);
 		rowLog.registerConsumer(consumer2);
 		consumer.expectMessages(100);
@@ -123,13 +121,14 @@ public class RowLogEndToEndTest {
 				message = new RowLogMessageImpl(Bytes.toBytes("row"+rownr), seqnr, data, rowLog);
 				consumer.expectMessage(message);
 				consumer2.expectMessage(message);
-				rowLog.putMessage(message, null, null);
+				rowLog.putMessage(message, null);
 			}
         }
-		if (!consumer.waitUntilMessagesConsumed(10000)) { // TODO avoid flipping tests
+		processor.start();
+		if (!consumer.waitUntilMessagesConsumed(120000)) { // TODO avoid flipping tests
 			Assert.fail("Messages not consumed within timeout");
 		}
-		if (!consumer2.waitUntilMessagesConsumed(10000)) { // TODO avoid flipping tests
+		if (!consumer2.waitUntilMessagesConsumed(120000)) { // TODO avoid flipping tests
 			Assert.fail("Messages not consumed within timeout");
 		}
 		processor.stop();
@@ -160,22 +159,18 @@ public class RowLogEndToEndTest {
 			return id;
 		}
 	
-		public boolean processMessage(RowLogMessage message, RowLock rowLock) {
-//			System.out.println("ID="+id+" [Processing message " + count + "]");
+		public boolean processMessage(RowLogMessage message) {
 			boolean removed;
 			if (removed = expectedMessages.remove(message)) {
 				count++;
-			} else {
-				System.out.println("ID="+id+" [Remove failed]");
-			}
+			} 
 			return removed;
 	    }
 	    
 	    public boolean waitUntilMessagesConsumed(long timeout) throws Exception {
 	    	long waitUntil = System.currentTimeMillis() + timeout;
 	    	while ((!expectedMessages.isEmpty() || (count < numberOfMessagesToBeExpected)) && System.currentTimeMillis() < waitUntil) {
-//	    		System.out.println("ExpectedMessages size: " + expectedMessages.size() + " messages to be processed: " +  (numberOfMessagesToBeExpected - count) + " isRunning: "+ processor.isRunning() + "]");
-	    		Thread.sleep(10);
+	    		Thread.sleep(100);
 	    	}
 	    	return expectedMessages.isEmpty();
 	    }

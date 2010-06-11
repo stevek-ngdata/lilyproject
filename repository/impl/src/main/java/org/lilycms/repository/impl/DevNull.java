@@ -1,6 +1,5 @@
 package org.lilycms.repository.impl;
 
-import org.apache.hadoop.hbase.client.RowLock;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogMessageConsumer;
 
@@ -15,7 +14,7 @@ public class DevNull implements RowLogMessageConsumer {
 		return ID;
 	}
 	
-	public boolean processMessage(RowLogMessage message, RowLock rowLock) {
+	public boolean processMessage(RowLogMessage message) {
 		return true;
     }
 }

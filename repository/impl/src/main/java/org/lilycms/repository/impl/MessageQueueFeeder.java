@@ -1,6 +1,5 @@
 package org.lilycms.repository.impl;
 
-import org.apache.hadoop.hbase.client.RowLock;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
@@ -19,9 +18,9 @@ public class MessageQueueFeeder implements RowLogMessageConsumer {
 		return ID;
 	}
 	
-	public boolean processMessage(RowLogMessage message, RowLock rowLock) {
+	public boolean processMessage(RowLogMessage message) {
 	    try {
-	        messageQueue.putMessage(new RowLogMessageImpl(message.getRowKey(), message.getSeqNr(), message.getData(), messageQueue), null, rowLock);
+	        messageQueue.putMessage(new RowLogMessageImpl(message.getRowKey(), message.getSeqNr(), message.getData(), messageQueue), null);
 	        return true;
         } catch (RowLogException e) {
 	        return false;

@@ -61,14 +61,6 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 	private class ProcessorThread extends Thread {
 		public void run() {
 			while (!stopRequested) {
-                // TODO this is a temporary (but mostly senseless) fix to slow down the
-                //      amount of requests on HBase
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    // if we are interrupted, we stop working
-                    return;
-                }
 				for (RowLogMessageConsumer consumer : rowLog.getConsumers()) {
 					int consumerId = consumer.getId();
 					Pair<byte[], RowLogMessage> messagePair = null;
@@ -76,8 +68,8 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 	                            messagePair = shard.next(consumerId);
 	                            if (stopRequested) break; // Stop fast
 	                            if (messagePair != null) {
-	                            	if (consumer.processMessage(messagePair.getV2(), null)) {
-	                            		rowLog.messageDone(messagePair.getV1(), messagePair.getV2(), consumerId, null);
+	                            	if (consumer.processMessage(messagePair.getV2())) {
+	                            		rowLog.messageDone(messagePair.getV1(), messagePair.getV2(), consumerId);
 	                            	}
 	                            }
                             } catch (IOException e) {
@@ -88,6 +80,14 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 	                            e.printStackTrace();
                             }
 	            }
+				// TODO this is a temporary (but mostly senseless) fix to slow down the
+				//      amount of requests on HBase
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// if we are interrupted, we stop working
+					return;
+				}
 			}
 		};
 	}

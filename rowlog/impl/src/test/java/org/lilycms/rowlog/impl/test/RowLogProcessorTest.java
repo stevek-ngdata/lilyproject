@@ -59,10 +59,10 @@ public class RowLogProcessorTest {
 		expectLastCall().andReturn(
 		        new Pair<byte[], RowLogMessage>(messageId, message)).anyTimes();
 		
-		consumer.processMessage(message, null);
+		consumer.processMessage(message);
 		expectLastCall().andReturn(Boolean.TRUE).anyTimes();
 		
-		rowLog.messageDone(messageId, message, consumerId, null);
+		rowLog.messageDone(messageId, message, consumerId);
 		expectLastCall().anyTimes();
 	}
 

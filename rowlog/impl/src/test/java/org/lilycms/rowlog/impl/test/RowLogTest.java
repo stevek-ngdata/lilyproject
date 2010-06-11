@@ -84,7 +84,7 @@ public class RowLogTest {
 		control.replay();
 		rowLog.registerConsumer(consumer);
 		rowLog.registerShard(shard);
-		rowLog.putMessage(message, null, null);
+		rowLog.putMessage(message, null);
 		control.verify();
 	}
 	
@@ -96,13 +96,13 @@ public class RowLogTest {
 
 		control.replay();
 		try {
-			rowLog.putMessage(message, null, null);
+			rowLog.putMessage(message, null);
 			fail("Expected a MessageQueueException since no shards are registered");
 		} catch (RowLogException expected) {
 		}
 		
 		try {
-			rowLog.messageDone(Bytes.toBytes("aMessageId"), message, 1, null);
+			rowLog.messageDone(Bytes.toBytes("aMessageId"), message, 1);
 			fail("Expected a MessageQueueException since no shards are registered");
 		} catch (RowLogException expected) {
 		}
@@ -127,7 +127,7 @@ public class RowLogTest {
 		control.replay();
 		rowLog.registerConsumer(consumer);
 		rowLog.registerShard(shard);
-		rowLog.messageDone(messageId, message, consumerId, null);
+		rowLog.messageDone(messageId, message, consumerId);
 		
 		control.verify();
 	}
