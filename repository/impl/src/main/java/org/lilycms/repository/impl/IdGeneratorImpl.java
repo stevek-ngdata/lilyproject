@@ -37,7 +37,7 @@ public class IdGeneratorImpl implements IdGenerator {
         public byte getIdentifierByte() {
             return identifierByte;
         }
-    };
+    }
     
     private static Map<Byte, IdIdentifier> identifierByteMap = new HashMap<Byte, IdIdentifier>();
     static {
@@ -50,7 +50,7 @@ public class IdGeneratorImpl implements IdGenerator {
     public RecordId newRecordId() {
         return new UUIDRecordId(this);
     }
-    
+
     public RecordId newRecordId(RecordId masterRecordId, Map<String, String> variantProperties) {
         ArgumentValidator.notNull(masterRecordId, "masterRecordId");
         ArgumentValidator.notNull(variantProperties, "variantProperties");
@@ -65,13 +65,21 @@ public class IdGeneratorImpl implements IdGenerator {
         
         return new VariantRecordId(masterRecordId, variantProperties, this);
     }
-    
+
+    public RecordId newRecordId(Map<String, String> variantProperties) {
+        return newRecordId(newRecordId(), variantProperties);
+    }
+
     public RecordId newRecordId(String userProvidedId) {
         ArgumentValidator.notNull(userProvidedId, "userProvidedId");
         checkIdString(userProvidedId, "record id");
         return new UserRecordId(userProvidedId, this);
     }
     
+    public RecordId newRecordId(String userProvidedId, Map<String, String> variantProperties) {
+        return newRecordId(newRecordId(userProvidedId), variantProperties);
+    }
+
     // Bytes
     // An identifier byte is put behind the bytes provided by the RecordId itself
     
