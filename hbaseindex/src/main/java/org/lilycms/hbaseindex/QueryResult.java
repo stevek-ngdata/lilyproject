@@ -15,27 +15,34 @@
  */
 package org.lilycms.hbaseindex;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * Result of executing a query.
  */
-public interface QueryResult {
+public interface QueryResult extends Closeable {
 
     /**
      * Move to and return the next result.
      *
      * @return the identifier of the next matching query result, or null if the end is reached.
      */
-    public byte[] next() throws IOException;
+    byte[] next() throws IOException;
 
     /**
      * Retrieves data that was stored as part of the {@link IndexEntry} from the current index
      * entry (corresponding to the last {@link #next} call).
      */
-    public byte[] getData(byte[] qualifier);
+    byte[] getData(byte[] qualifier);
 
-    public byte[] getData(String qualifier);
+    byte[] getData(String qualifier);
 
-    public String getDataAsString(String qualifier);
+    String getDataAsString(String qualifier);
+
+    /**
+     * Closes this query result and releases resources associated with it (e.g.
+     * underlying HBase scanner).
+     */
+    void close();
 }

@@ -80,4 +80,9 @@ public class Conjunction extends BaseQueryResult {
         currentQResult = result1;
         return key1;
     }
+
+    public void close() {
+        result1.close();
+        result2.close();
+    }
 }

@@ -43,4 +43,8 @@ public class StaticQueryResult implements QueryResult {
     public byte[] getData(String qualifier) {
         return null;
     }
+
+    public void close() {
+        // nothing to do
+    }
 }

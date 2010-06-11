@@ -78,4 +78,9 @@ public class Disjunction extends BaseQueryResult {
             return result;
         }
     }
+
+    public void close() {
+        result1.close();
+        result2.close();
+    }
 }

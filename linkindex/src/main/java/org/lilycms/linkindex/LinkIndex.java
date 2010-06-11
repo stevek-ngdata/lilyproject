@@ -5,6 +5,7 @@ import org.lilycms.repository.api.IdGenerator;
 import org.lilycms.repository.api.RecordId;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.util.Pair;
+import org.lilycms.util.io.Closer;
 
 import java.io.IOException;
 import java.util.*;
@@ -151,9 +152,13 @@ public class LinkIndex {
         Set<RecordId> result = new HashSet<RecordId>();
 
         QueryResult qr = BACKWARD_INDEX.get().performQuery(query);
-        byte[] id;
-        while ((id = qr.next()) != null) {
-            result.add(idGenerator.fromBytes(id));
+        try {
+            byte[] id;
+            while ((id = qr.next()) != null) {
+                result.add(idGenerator.fromBytes(id));
+            }
+        } finally {
+            Closer.close(qr);
         }
 
         return result;
@@ -168,10 +173,14 @@ public class LinkIndex {
         Set<FieldedLink> result = new HashSet<FieldedLink>();
 
         QueryResult qr = BACKWARD_INDEX.get().performQuery(query);
-        byte[] id;
-        while ((id = qr.next()) != null) {
-            String sourceField = qr.getDataAsString("sourcefield");
-            result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
+        try {
+            byte[] id;
+            while ((id = qr.next()) != null) {
+                String sourceField = qr.getDataAsString("sourcefield");
+                result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
+            }
+        } finally {
+            Closer.close(qr);
         }
 
         return result;
@@ -185,11 +194,15 @@ public class LinkIndex {
         Set<Pair<FieldedLink, String>> result = new HashSet<Pair<FieldedLink, String>>();
 
         QueryResult qr = FORWARD_INDEX.get().performQuery(query);
-        byte[] id;
-        while ((id = qr.next()) != null) {
-            String sourceField = qr.getDataAsString("sourcefield");
-            String vtag = qr.getDataAsString("vtag");
-            result.add(new Pair<FieldedLink, String>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
+        try {
+            byte[] id;
+            while ((id = qr.next()) != null) {
+                String sourceField = qr.getDataAsString("sourcefield");
+                String vtag = qr.getDataAsString("vtag");
+                result.add(new Pair<FieldedLink, String>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
+            }
+        } finally {
+            Closer.close(qr);
         }
 
         return result;
@@ -204,10 +217,14 @@ public class LinkIndex {
         Set<FieldedLink> result = new HashSet<FieldedLink>();
 
         QueryResult qr = FORWARD_INDEX.get().performQuery(query);
-        byte[] id;
-        while ((id = qr.next()) != null) {
-            String sourceField = qr.getDataAsString("sourcefield");
-            result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
+        try {
+            byte[] id;
+            while ((id = qr.next()) != null) {
+                String sourceField = qr.getDataAsString("sourcefield");
+                result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
+            }
+        } finally {
+            Closer.close(qr);
         }
 
         return result;

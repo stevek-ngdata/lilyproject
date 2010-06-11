@@ -30,6 +30,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+// Important: while not done in these testcases, it is recommended to call QueryResult.close()
+// when done using the QueryResult.
+
 public class IndexTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 

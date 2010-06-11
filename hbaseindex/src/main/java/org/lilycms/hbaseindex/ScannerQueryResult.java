@@ -15,9 +15,7 @@
  */
 package org.lilycms.hbaseindex;
 
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 
@@ -44,5 +42,9 @@ class ScannerQueryResult extends BaseQueryResult {
         byte[] identifier = IdentifierEncoding.decode(rowKey, invertIdentifier);
         
         return identifier;
+    }
+
+    public void close() {
+        scanner.close();
     }
 }
