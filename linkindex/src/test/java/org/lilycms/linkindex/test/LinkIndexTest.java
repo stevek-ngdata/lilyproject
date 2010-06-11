@@ -136,7 +136,7 @@ public class LinkIndexTest {
         //
         {
             Record record = repository.newRecord();
-            record.setRecordType(recordType.getId(), null);
+            record.setRecordType(recordType.getId());
             record.setField(nonVersionedFt.getName(), new Link(ids.newRecordId("foo1")));
             record = repository.create(record);
 

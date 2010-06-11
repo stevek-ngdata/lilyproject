@@ -72,6 +72,10 @@ public class IdRecordImpl implements IdRecord {
         record.setRecordType(id, version);
     }
 
+    public void setRecordType(String id) {
+        record.setRecordType(id);
+    }
+
     public String getRecordTypeId() {
         return record.getRecordTypeId();
     }

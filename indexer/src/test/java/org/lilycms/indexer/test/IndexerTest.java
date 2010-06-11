@@ -247,7 +247,7 @@ public class IndexerTest {
         {
             // Create a record
             Record record = repository.newRecord();
-            record.setRecordType("NVRecordType1", null);
+            record.setRecordType("NVRecordType1");
             record.setField(nvfield1.getName(), "apple");
             record = repository.create(record);
 
@@ -295,13 +295,13 @@ public class IndexerTest {
         //
         {
             Record record1 = repository.newRecord();
-            record1.setRecordType("NVRecordType1", null);
+            record1.setRecordType("NVRecordType1");
             record1.setField(nvfield1.getName(), "pear");
             record1 = repository.create(record1);
             sendEvent(EVENT_RECORD_CREATED, record1.getId(), nvfield1.getId());
 
             Record record2 = repository.newRecord();
-            record2.setRecordType("NVRecordType1", null);
+            record2.setRecordType("NVRecordType1");
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField1.getId());
@@ -315,14 +315,14 @@ public class IndexerTest {
         //
         {
             Record masterRecord = repository.newRecord();
-            masterRecord.setRecordType("NVRecordType1", null);
+            masterRecord.setRecordType("NVRecordType1");
             masterRecord.setField(nvfield1.getName(), "yellow");
             masterRecord = repository.create(masterRecord);
             sendEvent(EVENT_RECORD_CREATED, masterRecord.getId(), nvfield1.getId());
 
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
             Record var1Record = repository.newRecord(var1Id);
-            var1Record.setRecordType("NVRecordType1", null);
+            var1Record.setRecordType("NVRecordType1");
             var1Record.setField(nvfield1.getName(), "green");
             repository.create(var1Record);
             sendEvent(EVENT_RECORD_CREATED, var1Id, nvfield2.getId());
@@ -332,7 +332,7 @@ public class IndexerTest {
             varProps.put("branch", "dev");
             RecordId var2Id = idGenerator.newRecordId(masterRecord.getId(), varProps);
             Record var2Record = repository.newRecord(var2Id);
-            var2Record.setRecordType("NVRecordType1", null);
+            var2Record.setRecordType("NVRecordType1");
             var2Record.setField(nvfield2.getName(), "blue");
             repository.create(var2Record);
             sendEvent(EVENT_RECORD_CREATED, var2Id, nvfield2.getId());
@@ -348,14 +348,14 @@ public class IndexerTest {
         //
         {
             Record record1 = repository.newRecord(idGenerator.newRecordId("boe"));
-            record1.setRecordType("NVRecordType1", null);
+            record1.setRecordType("NVRecordType1");
             record1.setField(nvfield1.getName(), "cumcumber");
             record1 = repository.create(record1);
             sendEvent(EVENT_RECORD_CREATED, record1.getId(), nvfield1.getId());
 
             // Create a record which will contain denormalized data through linking
             Record record2 = repository.newRecord();
-            record2.setRecordType("NVRecordType1", null);
+            record2.setRecordType("NVRecordType1");
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvfield1.getName(), "mushroom");
             record2 = repository.create(record2);
@@ -364,7 +364,7 @@ public class IndexerTest {
             // Create a record which will contain denormalized data through master-dereferencing
             RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
             Record record3 = repository.newRecord(record3Id);
-            record3.setRecordType("NVRecordType1", null);
+            record3.setRecordType("NVRecordType1");
             record3.setField(nvfield1.getName(), "eggplant");
             record3 = repository.create(record3);
             sendEvent(EVENT_RECORD_CREATED, record3.getId(), nvfield1.getId());
@@ -375,7 +375,7 @@ public class IndexerTest {
             varprops.put("branch", "dev");
             RecordId record4Id = idGenerator.newRecordId(record1.getId(), varprops);
             Record record4 = repository.newRecord(record4Id);
-            record4.setRecordType("NVRecordType1", null);
+            record4.setRecordType("NVRecordType1");
             record4.setField(nvfield1.getName(), "broccoli");
             record4 = repository.create(record4);
             sendEvent(EVENT_RECORD_CREATED, record4.getId(), nvfield1.getId());
@@ -443,7 +443,7 @@ public class IndexerTest {
             log.debug("Begin test V1");
             // Create a record
             Record record = repository.newRecord();
-            record.setRecordType("VRecordType1", null);
+            record.setRecordType("VRecordType1");
             record.setField(vfield1.getName(), "apple");
             record.setField(liveTag.getName(), new Long(1));
             record = repository.create(record);
@@ -505,14 +505,14 @@ public class IndexerTest {
             // Create 4 records for the 4 kinds of dereferenced fields
             log.debug("Begin test V6");
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vfield1.getName(), "fig");
             record1.setField(liveTag.getName(), Long.valueOf(1));
             record1 = repository.create(record1);
             sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
 
             Record record2 = repository.newRecord();
-            record2.setRecordType("VRecordType1", null);
+            record2.setRecordType("VRecordType1");
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), Long.valueOf(1));
             record2 = repository.create(record2);
@@ -523,7 +523,7 @@ public class IndexerTest {
             log.debug("Begin test V6.1");
             RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
             Record record3 = repository.newRecord(record3Id);
-            record3.setRecordType("VRecordType1", null);
+            record3.setRecordType("VRecordType1");
             record3.setField(vfield1.getName(), "banana");
             record3.setField(liveTag.getName(), Long.valueOf(1));
             record3 = repository.create(record3);
@@ -537,7 +537,7 @@ public class IndexerTest {
             varprops.put("branch", "dev");
             RecordId record4Id = idGenerator.newRecordId(record1.getId(), varprops);
             Record record4 = repository.newRecord(record4Id);
-            record4.setRecordType("VRecordType1", null);
+            record4.setRecordType("VRecordType1");
             record4.setField(vfield1.getName(), "coconut");
             record4.setField(liveTag.getName(), Long.valueOf(1));
             record4 = repository.create(record4);
@@ -633,14 +633,14 @@ public class IndexerTest {
         {
             log.debug("Begin test V14");
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vfield1.getName(), "bicycle");
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
             sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
 
             Record record2 = repository.newRecord();
-            record2.setRecordType("VRecordType1", null);
+            record2.setRecordType("VRecordType1");
             record2.setField(nvLinkField2.getName(), new Link(record1.getId()));
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField2.getId());
@@ -699,20 +699,20 @@ public class IndexerTest {
         {
             log.debug("Begin test V18");
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(nvfield1.getName(), "Brussels");
             record1 = repository.create(record1);
             sendEvent(EVENT_RECORD_CREATED, record1.getId(), (Long)null, null, nvfield1.getId());
 
             Record record2 = repository.newRecord();
-            record2.setRecordType("VRecordType1", null);
+            record2.setRecordType("VRecordType1");
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
             sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId());
 
             Record record3 = repository.newRecord();
-            record3.setRecordType("VRecordType1", null);
+            record3.setRecordType("VRecordType1");
             record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
             record3 = repository.create(record3);
             sendEvent(EVENT_RECORD_CREATED, record3.getId(), (Long)null, null, nvLinkField2.getId());
@@ -741,7 +741,7 @@ public class IndexerTest {
             // Test multi-value field
             log.debug("Begin test V30");
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vStringMvField.getName(), Arrays.asList("Dog", "Cat"));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
@@ -767,7 +767,7 @@ public class IndexerTest {
         //
         {
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vLongField.getName(), 123L);
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
@@ -782,7 +782,7 @@ public class IndexerTest {
         //
         {
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
@@ -793,7 +793,7 @@ public class IndexerTest {
 
             // Test without milliseconds
             Record record2 = repository.newRecord();
-            record2.setRecordType("VRecordType1", null);
+            record2.setRecordType("VRecordType1");
             record2.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 000, DateTimeZone.UTC));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
@@ -809,7 +809,7 @@ public class IndexerTest {
         //
         {
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
@@ -823,7 +823,7 @@ public class IndexerTest {
             verifyResultCount("v_date:[2020-01-29T00:00:00Z/DAY TO 2020-01-31T00:00:00Z/DAY]", 1);
 
             Record record2 = repository.newRecord();
-            record2.setRecordType("VRecordType1", null);
+            record2.setRecordType("VRecordType1");
             record2.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
@@ -843,7 +843,7 @@ public class IndexerTest {
 
             // Single-valued blob field
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vBlobField.getName(), blob1);
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
@@ -859,7 +859,7 @@ public class IndexerTest {
             List blobs = Arrays.asList(path1, path2);
 
             Record record2 = repository.newRecord();
-            record2.setRecordType("VRecordType1", null);
+            record2.setRecordType("VRecordType1");
             record2.setField(vBlobMvHierField.getName(), blobs);
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
@@ -876,7 +876,7 @@ public class IndexerTest {
         //
         {
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vDateTimeField.getName(), new DateTime(2058, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
@@ -890,7 +890,7 @@ public class IndexerTest {
         //
         {
             Record record1 = repository.newRecord();
-            record1.setRecordType("VRecordType1", null);
+            record1.setRecordType("VRecordType1");
             record1.setField(vIntHierField.getName(), new HierarchyPath(8, 16, 24, 32));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);

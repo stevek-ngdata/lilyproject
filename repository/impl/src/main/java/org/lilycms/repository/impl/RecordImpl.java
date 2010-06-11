@@ -71,6 +71,10 @@ public class RecordImpl implements Record {
         setRecordType(Scope.NON_VERSIONED, id, version);
     }
 
+    public void setRecordType(String id) {
+        setRecordType(id, null);
+    }
+
     public String getRecordTypeId() {
         return getRecordTypeId(Scope.NON_VERSIONED);
     }
