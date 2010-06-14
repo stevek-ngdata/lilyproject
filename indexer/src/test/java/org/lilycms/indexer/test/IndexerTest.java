@@ -898,6 +898,71 @@ public class IndexerTest {
 
             verifyResultCount("inthierarchy:\"8_16_24_32\"", 1);
         }
+
+        //
+        // Test inheritance of variant properties for link fields
+        //
+        {
+            Map<String, String> varProps = new HashMap<String, String>();
+            varProps.put("lang", "nl");
+            varProps.put("user", "ali");
+
+            RecordId record1Id = repository.getIdGenerator().newRecordId(varProps);
+            Record record1 = repository.newRecord(record1Id);
+            record1.setRecordType("VRecordType1");
+            record1.setField(vfield1.getName(), "venus");
+            record1.setField(liveTag.getName(), 1L);
+            record1 = repository.create(record1);
+            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+
+            RecordId record2Id = repository.getIdGenerator().newRecordId(varProps);
+            Record record2 = repository.newRecord(record2Id);
+            record2.setRecordType("VRecordType1");
+            // Notice we make the link to the record without variant properties
+            record2.setField(vLinkField1.getName(), new Link(record1.getId().getMaster()));
+            record2.setField(liveTag.getName(), 1L);
+            record2 = repository.create(record2);
+            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+
+            verifyResultCount("v_deref1:venus", 1);
+
+            record1.setField(vfield1.getName(), "mars");
+            record1.setField(liveTag.getName(), 2L);
+            record1 = repository.update(record1);
+            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+
+            verifyResultCount("v_deref1:mars", 1);
+        }
+
+//        //
+//        // Test one-to-many dereferencing
+//        //
+//        {
+//            long before = System.currentTimeMillis();
+//            Record record1 = repository.newRecord();
+//            record1.setRecordType("VRecordType1");
+//            record1.setField(vfield1.getName(), "hyponiem");
+//            record1.setField(liveTag.getName(), 1L);
+//            record1 = repository.create(record1);
+//            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+//
+//            // Create multiple records
+//            for (int i = 0; i < 100; i++) {
+//                Record record2 = repository.newRecord();
+//                record2.setRecordType("VRecordType1");
+//                record2.setField(vLinkField1.getName(), new Link(record1.getId()));
+//                record2.setField(liveTag.getName(), 1L);
+//                record2 = repository.create(record2);
+//                sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+//            }
+//
+//            long after = System.currentTimeMillis();
+//            System.out.println("after-before = " +(after-before));
+//            verifyResultCount("v_deref1:hyponiem", 100);
+//
+//            record1.setField(vfield1.getName(), "hyperoniem");
+//            record1 = repository.update(record1);
+//        }
     }
 
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
@@ -958,6 +1023,7 @@ public class IndexerTest {
     private void verifyResultCount(String query, int count) throws SolrServerException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
+        solrQuery.set("rows", 5000);
         QueryResponse response = SOLR_TEST_UTIL.getSolrServer().query(solrQuery);
         if (count != response.getResults().size()) {
             System.out.println("The query result contains a wrong number of documents, here is the result:");
