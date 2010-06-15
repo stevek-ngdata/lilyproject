@@ -1,0 +1,117 @@
+package org.lilycms.repository.impl.lock.test;
+
+
+import java.io.IOException;
+
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
+import org.junit.AfterClass;
+import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.lilycms.repository.impl.lock.RowLock;
+import org.lilycms.repository.impl.lock.RowLocker;
+import org.lilycms.testfw.TestHelper;
+
+public class RowLockerTest {
+    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+	private final static byte[] family = Bytes.toBytes("RowLockerCF");
+	private final static byte[] qualifier = Bytes.toBytes("RowLockerQ");
+	private final static String tableName = "RowLockerTable";
+	private static HTable table;
+
+	@BeforeClass
+	public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging();
+        TEST_UTIL.startMiniCluster(1);
+		HBaseAdmin admin = new HBaseAdmin(TEST_UTIL.getConfiguration());
+		HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+		tableDescriptor.addFamily(new HColumnDescriptor(family));
+		admin.createTable(tableDescriptor);
+		table = new HTable(TEST_UTIL.getConfiguration(), tableName);
+
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		TEST_UTIL.shutdownMiniCluster();
+	}
+
+	@Before
+	public void setUp() throws Exception {
+	}
+
+	@After
+	public void tearDown() throws Exception {
+	}
+	
+	@Test
+	public void testLockUnlock() throws IOException {
+		RowLocker locker = new RowLocker(table, family, qualifier, 600000L);
+		byte[] rowKey = Bytes.toBytes("row1");
+		RowLock lock = locker.lockRow(rowKey);
+		assertFalse(lock == null);
+		assertTrue(locker.isLocked(rowKey));
+		locker.unlockRow(lock);
+		assertFalse(locker.isLocked(rowKey));
+	}
+
+	@Test
+	public void testLockTwice() throws IOException {
+		RowLocker locker = new RowLocker(table, family, qualifier, 600000L);
+		byte[] rowKey = Bytes.toBytes("row1");
+		RowLock lock = locker.lockRow(rowKey);
+		assertFalse(lock == null);
+		assertTrue(locker.isLocked(rowKey));
+		assertNull(locker.lockRow(rowKey));
+		locker.unlockRow(lock);
+		assertFalse(locker.isLocked(rowKey));
+	}
+	
+	@Test
+	public void testLockTimesOut() throws Exception {
+		RowLocker locker = new RowLocker(table, family, qualifier, 1L);
+		byte[] rowKey = Bytes.toBytes("row1");
+		RowLock lock = locker.lockRow(rowKey);
+		assertFalse(lock == null);
+		Thread.sleep(10);
+		assertFalse(locker.isLocked(rowKey));
+		// cleanup
+		locker.unlockRow(lock);
+	}
+
+	@Test
+	public void testPut() throws IOException {
+		RowLocker locker = new RowLocker(table, family, qualifier, 60000L);
+		byte[] rowKey = Bytes.toBytes("row1");
+		RowLock lock1 = locker.lockRow(rowKey);
+		locker.unlockRow(lock1);
+		RowLock lock2 = locker.lockRow(rowKey);
+		Put put = new Put(rowKey);
+		put.add(family, Bytes.toBytes("testQualifier"), Bytes.toBytes("testValue"));
+		assertTrue(locker.put(put, lock2));
+		assertFalse(locker.put(put, lock1));
+		locker.unlockRow(lock2);
+		assertFalse(locker.put(put, lock2));
+	}
+	
+	@Test
+	public void testPutLockOtherRow() throws IOException {
+		RowLocker locker = new RowLocker(table, family, qualifier, 60000L);
+		RowLock lock = locker.lockRow(Bytes.toBytes("row1"));
+		Put put = new Put(Bytes.toBytes("row2"));
+		put.add(family, Bytes.toBytes("testQualifier"), Bytes.toBytes("testValue"));
+		assertFalse(locker.put(put, lock));
+		
+		// Cleanup
+		locker.unlockRow(lock);
+	}
+
+}
