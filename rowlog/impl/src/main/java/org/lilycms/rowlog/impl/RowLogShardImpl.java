@@ -18,7 +18,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogShard;
-import org.lilycms.util.Pair;
 import org.lilycms.util.io.Closer;
 
 public class RowLogShardImpl implements RowLogShard {
@@ -41,14 +40,14 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
 	
-	public void putMessage(byte[] messageId, int consumerId, RowLogMessage message) throws IOException {
-		byte[] rowKey = createRowKey(messageId, consumerId);
+	public void putMessage(RowLogMessage message, int consumerId) throws IOException {
+		byte[] rowKey = createRowKey(message.getId(), consumerId);
 		
 		RowLock rowLock = null;
 		try {
 			rowLock = table.lockRow(rowKey);
 			Put put = new Put(rowKey, rowLock);
-			put.add(MESSAGES_CF, MESSAGE_COLUMN, message.toBytes());
+			put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
 			table.put(put);
 		} finally {
 			if (rowLock != null) {
@@ -56,9 +55,11 @@ public class RowLogShardImpl implements RowLogShard {
 			}
 		}
 	}
+	
+	
 
-	public void removeMessage(byte[] messageId, int consumerId) throws IOException {
-		byte[] rowKey = createRowKey(messageId, consumerId);
+	public void removeMessage(RowLogMessage message, int consumerId) throws IOException {
+		byte[] rowKey = createRowKey(message.getId(), consumerId);
 		
 		RowLock rowLock = null;
 		try {
@@ -72,7 +73,7 @@ public class RowLogShardImpl implements RowLogShard {
 		}
 	}
 
-	public Pair<byte[], RowLogMessage> next(int consumerId) throws IOException {
+	public RowLogMessage next(int consumerId) throws IOException {
 		Scan scan = new Scan(Bytes.toBytes(consumerId));
 		scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
         ResultScanner scanner = null;
@@ -87,7 +88,7 @@ public class RowLogShardImpl implements RowLogShard {
                 return null; // There were no messages for this consumer
             byte[] value = next.getValue(MESSAGES_CF, MESSAGE_COLUMN);
             byte[] messageId = Bytes.tail(rowKey, rowKey.length - Bytes.SIZEOF_INT);
-            return new Pair<byte[], RowLogMessage>(messageId, RowLogMessageImpl.fromBytes(value, rowLog));
+            return decodeMessage(messageId, value);
         } finally {
             Closer.close(scanner);
         }
@@ -97,6 +98,28 @@ public class RowLogShardImpl implements RowLogShard {
 		byte[] rowKey = Bytes.toBytes(consumerId);
 		rowKey = Bytes.add(rowKey, messageId);
 		return rowKey;
+	}
+	
+	private byte[] encodeMessage(RowLogMessage message) {
+		byte[] bytes = Bytes.toBytes(message.getSeqNr());
+		bytes = Bytes.add(bytes, Bytes.toBytes(message.getRowKey().length));
+		bytes = Bytes.add(bytes, message.getRowKey());
+		if (message.getData() != null) {
+			bytes = Bytes.add(bytes, message.getData());
+		}
+		return bytes;
+	}
+	
+	private RowLogMessage decodeMessage(byte[] messageId, byte[] bytes) {
+		long seqnr = Bytes.toLong(bytes);
+		int rowKeyLength = Bytes.toInt(bytes,Bytes.SIZEOF_LONG);
+		byte[] rowKey = Bytes.head(Bytes.tail(bytes, bytes.length-Bytes.SIZEOF_LONG-Bytes.SIZEOF_INT), rowKeyLength);
+		int dataLength = bytes.length - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT - rowKeyLength;
+		byte[] data = null;
+		if (dataLength > 0) {
+			data = Bytes.tail(bytes, dataLength);
+		}
+		return new RowLogMessageImpl(messageId, rowKey, seqnr, data, rowLog);
 	}
 
 }

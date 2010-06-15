@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -50,7 +49,7 @@ public class RowLogImpl implements RowLog {
 		this.shard = shard;
 	}
 	
-	public long putPayload(byte[] rowKey, byte[] data, Put put) throws IOException {
+	private long putPayload(byte[] rowKey, byte[] payload, Put put) throws IOException {
 		Get get = new Get(rowKey);
     	get.addColumn(payloadColumnFamily, SEQ_NR);
     	Result result = rowTable.get(get);
@@ -61,10 +60,10 @@ public class RowLogImpl implements RowLog {
     	}
     	seqnr++;
     	if (put != null) {
-    		put.add(payloadColumnFamily, Bytes.toBytes(seqnr), data);
+    		put.add(payloadColumnFamily, Bytes.toBytes(seqnr), payload);
     	} else {
     		put = new Put(rowKey);
-    		put.add(payloadColumnFamily, Bytes.toBytes(seqnr), data);
+    		put.add(payloadColumnFamily, Bytes.toBytes(seqnr), payload);
     		rowTable.put(put);
     	}
     	return seqnr;
@@ -77,37 +76,43 @@ public class RowLogImpl implements RowLog {
 		return result.getValue(payloadColumnFamily, Bytes.toBytes(seqnr));
 	}
 
-	public byte[] putMessage(RowLogMessage message, Put put) throws RowLogException {
+	public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws RowLogException {
 		RowLogShard shard = getShard(); // Fail fast if no shards are registered
-		byte[] messageId = Bytes.toBytes(System.currentTimeMillis()); 
-		messageId = Bytes.add(messageId, Bytes.toBytes(message.getSeqNr()));
-		messageId = Bytes.add(messageId, message.getRowKey());
+		
 		try {
+			long seqnr = putPayload(rowKey, payload, put);
+		
+			byte[] messageId = Bytes.toBytes(System.currentTimeMillis()); 
+			messageId = Bytes.add(messageId, Bytes.toBytes(seqnr));
+			messageId = Bytes.add(messageId, rowKey);
+			
+			RowLogMessage message = new RowLogMessageImpl(messageId, rowKey, seqnr, data, this);
+		
 			for (RowLogMessageConsumer consumer : consumers) {
-				shard.putMessage(messageId, consumer.getId(), message);
+				shard.putMessage(message, consumer.getId());
 			}
-			initializeConsumers(message.getRowKey(), message.getSeqNr(), messageId, put);
+			initializeConsumers(message, put);
+			return message;
 		} catch (IOException e) {
-			throw new RowLogException("Failed to put message <" + message.toString() + "> on row log", e);
+			throw new RowLogException("Failed to put message for row <" + rowKey + "> on row log", e);
 		}
-		return messageId;
 	}
 
-	private void initializeConsumers(byte[] rowKey, long seqnr, byte[] messageId, Put put) throws IOException {
-		RowLogMessageConsumerExecutionState executionState = new RowLogMessageConsumerExecutionState(messageId);
+	private void initializeConsumers(RowLogMessage message, Put put) throws IOException {
+		RowLogMessageConsumerExecutionState executionState = new RowLogMessageConsumerExecutionState(message.getId());
 		for (RowLogMessageConsumer consumer : consumers) {
 			executionState.setState(consumer.getId(), false);
 		}
 		if (put != null) {
-			put.add(rowLogColumnFamily, Bytes.toBytes(seqnr), executionState.toBytes());
+			put.add(rowLogColumnFamily, Bytes.toBytes(message.getSeqNr()), executionState.toBytes());
 		} else {
-			put = new Put(rowKey);
-			put.add(rowLogColumnFamily, Bytes.toBytes(seqnr), executionState.toBytes());
+			put = new Put(message.getRowKey());
+			put.add(rowLogColumnFamily, Bytes.toBytes(message.getSeqNr()), executionState.toBytes());
 			rowTable.put(put);
 		}
 	}
 
-	public void messageDone(byte[] id, RowLogMessage message, int consumerId) throws IOException, RowLogException {
+	public void messageDone(RowLogMessage message, int consumerId) throws IOException, RowLogException {
 		RowLogShard shard = getShard(); // Fail fast if no shards are registered
 		byte[] rowKey = message.getRowKey();
 		long seqnr = message.getSeqNr();
@@ -124,10 +129,10 @@ public class RowLogImpl implements RowLog {
 				updateExecutionState(rowKey, messageColumn, executionState);
 			}
 		}
-		shard.removeMessage(id, consumerId);
+		shard.removeMessage(message, consumerId);
 	}
 
-	public boolean processMessage(byte[] messageId, RowLogMessage message) throws IOException {
+	public boolean processMessage(RowLogMessage message) throws IOException {
 		byte[] rowKey = message.getRowKey();
 		long seqnr = message.getSeqNr();
 		byte[] messageColumn = Bytes.toBytes(seqnr);
@@ -136,7 +141,7 @@ public class RowLogImpl implements RowLog {
 			Result result = rowTable.get(get);
 			RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(result.getValue(rowLogColumnFamily, messageColumn));
 			
-			boolean allDone = processMessage(messageId, message, executionState);
+			boolean allDone = processMessage(message, executionState);
 			
 			if (allDone) {
 				removeExecutionState(rowKey, messageColumn);
@@ -146,7 +151,7 @@ public class RowLogImpl implements RowLog {
 			return allDone;
 	}
 
-	private boolean processMessage(byte[] messageId, RowLogMessage message, RowLogMessageConsumerExecutionState executionState) throws IOException {
+	private boolean processMessage(RowLogMessage message, RowLogMessageConsumerExecutionState executionState) throws IOException {
 		boolean allDone = true;
 		for (RowLogMessageConsumer consumer : consumers) {
 			int consumerId = consumer.getId();
@@ -162,7 +167,7 @@ public class RowLogImpl implements RowLog {
 				if (!done) {
 					allDone = false;
 				} else {
-					shard.removeMessage(messageId, consumerId);
+					shard.removeMessage(message, consumerId);
 				}
 			}
 		}
@@ -189,12 +194,4 @@ public class RowLogImpl implements RowLog {
 		}
 		return shard;
 	}
-
-	private byte[] newFlag() {
-		UUID uuid = UUID.randomUUID();
-		byte[] flag = Bytes.toBytes(System.currentTimeMillis());
-		flag = Bytes.add(flag, Bytes.toBytes(uuid.getMostSignificantBits()), Bytes.toBytes(uuid.getLeastSignificantBits()));
-		return flag;
-	}
-	
 }

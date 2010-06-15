@@ -21,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogException;
+import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.rowlog.impl.RowLogImpl;
@@ -76,15 +77,13 @@ public class RowLogTest {
 		consumer.getId();
 		expectLastCall().andReturn(0).anyTimes();
 
-		RowLogMessageImpl message = new RowLogMessageImpl(Bytes.toBytes("row1"), 0L, null, rowLog);
-
 		RowLogShard shard = control.createMock(RowLogShard.class);
-		shard.putMessage(isA(byte[].class), eq(0), eq(message));
+		shard.putMessage(isA(RowLogMessage.class), eq(0));
 		
 		control.replay();
 		rowLog.registerConsumer(consumer);
 		rowLog.registerShard(shard);
-		rowLog.putMessage(message, null);
+		rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
 		control.verify();
 	}
 	
@@ -92,17 +91,16 @@ public class RowLogTest {
 	@Test
 	public void testNoShardsRegistered() throws Exception {
 
-		RowLogMessageImpl message = new RowLogMessageImpl(Bytes.toBytes("row1"), 0L, null, rowLog);
-
 		control.replay();
 		try {
-			rowLog.putMessage(message, null);
+			rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
 			fail("Expected a MessageQueueException since no shards are registered");
 		} catch (RowLogException expected) {
 		}
 		
 		try {
-			rowLog.messageDone(Bytes.toBytes("aMessageId"), message, 1);
+			RowLogMessage message = new RowLogMessageImpl(Bytes.toBytes("id"), Bytes.toBytes("row1"), 0L, null, rowLog);
+			rowLog.messageDone(message , 1);
 			fail("Expected a MessageQueueException since no shards are registered");
 		} catch (RowLogException expected) {
 		}
@@ -116,18 +114,17 @@ public class RowLogTest {
 		consumer.getId();
 		expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
 		
-		byte[] messageId = Bytes.toBytes("aMessageId");
-		RowLogMessageImpl message = new RowLogMessageImpl(Bytes.toBytes("row1"), 0L, null, rowLog);
+		RowLogMessageImpl message = new RowLogMessageImpl(Bytes.toBytes("id1"), Bytes.toBytes("row1"), 0L, null, rowLog);
 
 		int consumerId = 1;
 		RowLogShard shard = control.createMock(RowLogShard.class);
 		
-		shard.removeMessage(messageId, consumerId);
+		shard.removeMessage(isA(RowLogMessage.class), eq(consumerId));
 		
 		control.replay();
 		rowLog.registerConsumer(consumer);
 		rowLog.registerShard(shard);
-		rowLog.messageDone(messageId, message, consumerId);
+		rowLog.messageDone(message, consumerId);
 		
 		control.verify();
 	}

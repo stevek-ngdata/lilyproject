@@ -9,7 +9,6 @@ import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.api.RowLogProcessor;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.util.ArgumentValidator;
-import org.lilycms.util.Pair;
 
 public class RowLogProcessorImpl implements RowLogProcessor {
 	private final RowLog rowLog;
@@ -63,13 +62,13 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 			while (!stopRequested) {
 				for (RowLogMessageConsumer consumer : rowLog.getConsumers()) {
 					int consumerId = consumer.getId();
-					Pair<byte[], RowLogMessage> messagePair = null;
+					RowLogMessage message = null;
 		                    try {
-	                            messagePair = shard.next(consumerId);
+	                            message = shard.next(consumerId);
 	                            if (stopRequested) break; // Stop fast
-	                            if (messagePair != null) {
-	                            	if (consumer.processMessage(messagePair.getV2())) {
-	                            		rowLog.messageDone(messagePair.getV1(), messagePair.getV2(), consumerId);
+	                            if (message != null) {
+	                            	if (consumer.processMessage(message)) {
+	                            		rowLog.messageDone(message, consumerId);
 	                            	}
 	                            }
                             } catch (IOException e) {

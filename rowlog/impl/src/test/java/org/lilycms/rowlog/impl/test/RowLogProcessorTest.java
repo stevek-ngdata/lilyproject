@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.junit.After;
@@ -21,7 +20,6 @@ import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.api.RowLogProcessor;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.rowlog.impl.RowLogProcessorImpl;
-import org.lilycms.util.Pair;
 
 
 public class RowLogProcessorTest {
@@ -54,15 +52,13 @@ public class RowLogProcessorTest {
 
 		rowLogShard = control.createMock(RowLogShard.class);
 		RowLogMessage message = control.createMock(RowLogMessage.class);
-		byte[] messageId = Bytes.toBytes("aMessageId");
 		rowLogShard.next(consumerId);
-		expectLastCall().andReturn(
-		        new Pair<byte[], RowLogMessage>(messageId, message)).anyTimes();
+		expectLastCall().andReturn(message).anyTimes();
 		
 		consumer.processMessage(message);
 		expectLastCall().andReturn(Boolean.TRUE).anyTimes();
 		
-		rowLog.messageDone(messageId, message, consumerId);
+		rowLog.messageDone(message, consumerId);
 		expectLastCall().anyTimes();
 	}
 

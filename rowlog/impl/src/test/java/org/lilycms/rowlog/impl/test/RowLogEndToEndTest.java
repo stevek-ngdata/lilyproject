@@ -20,7 +20,6 @@ import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.api.RowLogProcessor;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.rowlog.impl.RowLogImpl;
-import org.lilycms.rowlog.impl.RowLogMessageImpl;
 import org.lilycms.rowlog.impl.RowLogProcessorImpl;
 import org.lilycms.rowlog.impl.RowLogShardImpl;
 import org.lilycms.testfw.TestHelper;
@@ -62,9 +61,9 @@ public class RowLogEndToEndTest {
 	
 	@Test
 	public void testSingleMessage() throws Exception {
-		RowLogMessage message = new RowLogMessageImpl(Bytes.toBytes("row1"), 1L, null, rowLog);
+		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
 		consumer.expectMessage(message);
-		rowLog.putMessage(message, null);
+		consumer.expectMessages(1);
 		processor.start();
 		if (!consumer.waitUntilMessagesConsumed(20000)) {
 			Assert.fail("Messages not consumed within timeout");
@@ -75,10 +74,10 @@ public class RowLogEndToEndTest {
 	@Test
 	public void testMultipleMessagesSameRow() throws Exception {
 		RowLogMessage message; 
-		for (long seqnr = 0L; seqnr < 10; seqnr++) {
-			message = new RowLogMessageImpl(Bytes.toBytes("row2"), seqnr, null, rowLog);
+		for (int i = 0; i < 10; i++) {
+			byte[] rowKey = Bytes.toBytes("row2");
+			message = rowLog.putMessage(rowKey, null, null, null);
 			consumer.expectMessage(message);
-			rowLog.putMessage(message, null);
         }
 		processor.start();
 		if (!consumer.waitUntilMessagesConsumed(120000)) {
@@ -95,9 +94,8 @@ public class RowLogEndToEndTest {
 			for (int rownr = 0; rownr < 10; rownr++) {
 				byte[] data = Bytes.toBytes(rownr);
 				data = Bytes.add(data, Bytes.toBytes(seqnr));
-				message = new RowLogMessageImpl(Bytes.toBytes("row"+rownr), seqnr, data, rowLog);
+				message = rowLog.putMessage(Bytes.toBytes("row"+rownr), data, null, null);
 				consumer.expectMessage(message);
-				rowLog.putMessage(message, null);
 			}
         }
 		processor.start();
@@ -118,10 +116,9 @@ public class RowLogEndToEndTest {
 			for (int rownr = 0; rownr < 10; rownr++) {
 				byte[] data = Bytes.toBytes(rownr);
 				data = Bytes.add(data, Bytes.toBytes(seqnr));
-				message = new RowLogMessageImpl(Bytes.toBytes("row"+rownr), seqnr, data, rowLog);
+				message = rowLog.putMessage(Bytes.toBytes("row"+rownr), data, null, null);
 				consumer.expectMessage(message);
 				consumer2.expectMessage(message);
-				rowLog.putMessage(message, null);
 			}
         }
 		processor.start();
