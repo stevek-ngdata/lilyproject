@@ -58,8 +58,6 @@
     <module>util</module>
     <module>testfw</module>
     <module>indexer</module>
-    <module>eventlog/queue-api</module>
-    <module>eventlog/queue-mock</module>
     <module>linkindex</module>
     <module>repo-util</module>
     <module>repository-api-tutorial</module>
@@ -98,17 +96,6 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-testfw</artifactId>
-        <version>0.1-dev</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.lilycms</groupId>
-        <artifactId>lily-queue-api</artifactId>
-        <version>0.1-dev</version>
-      </dependency>
-      <dependency>
-        <groupId>org.lilycms</groupId>
-        <artifactId>lily-queue-mock</artifactId>
         <version>0.1-dev</version>
         <scope>test</scope>
       </dependency>

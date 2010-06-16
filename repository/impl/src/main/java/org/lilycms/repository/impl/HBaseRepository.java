@@ -173,7 +173,15 @@ public class HBaseRepository implements Repository {
 		return typeManager;
 	}
 
-	public Record newRecord() {
+    public RowLog getWal() {
+        return wal;
+    }
+
+    public RowLog getMessageQueue() {
+        return messageQueue;
+    }
+
+    public Record newRecord() {
 		return new RecordImpl();
 	}
 
@@ -387,6 +395,9 @@ public class HBaseRepository implements Repository {
 		// Always set the version on the record. If no fields were changed this
 		// will give the latest version in the repository
 		record.setVersion(version);
+        // Clear the list of deleted fields, as this is typically what the user will expect when using the
+        // record object for future updates. 
+        record.getFieldsToDelete().clear();
 		return fieldsHaveChanged;
 	}
 
@@ -871,7 +882,19 @@ public class HBaseRepository implements Repository {
 			        "Exception occured while deleting record <" + recordId + "> from HBase table", e);
 		}
 
-	}
+        // TODO bruno: I put this in here as a temp fix so that the Indexer would work
+        RecordEvent recordEvent = new RecordEvent();
+        recordEvent.setType(Type.DELETE);
+        try {
+            RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), null);
+            wal.processMessage(walMessage);
+            recordTable.delete(delete);
+        } catch (RowLogException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException("Temporarily introduced second delete of record row failed.", e);
+        }
+    }
 
 	public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
 		blobStoreAccessRegistry.register(blobStoreAccess);

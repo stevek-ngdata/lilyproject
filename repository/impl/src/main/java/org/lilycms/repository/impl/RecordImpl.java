@@ -98,6 +98,7 @@ public class RecordImpl implements Record {
     
     public void setField(QName name, Object value) {
         fields.put(name, value);
+        fieldsToDelete.remove(name);
     }
     
     public Object getField(QName name) throws FieldNotFoundException {

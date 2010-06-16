@@ -15,13 +15,8 @@ import org.lilycms.hbaseindex.IndexManager;
 import org.lilycms.linkindex.FieldedLink;
 import org.lilycms.linkindex.LinkIndex;
 import org.lilycms.linkindex.LinkIndexUpdater;
-import org.lilycms.queue.api.QueueMessage;
-import org.lilycms.queue.mock.TestLilyQueue;
-import org.lilycms.queue.mock.TestQueueMessage;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
-import org.lilycms.repoutil.EventType;
-import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
 
@@ -35,7 +30,7 @@ public class LinkIndexTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        TestHelper.setupLogging();
+        TestHelper.setupLogging("org.lilycms.linkindex");
         TEST_UTIL.startMiniCluster(1);
 
         IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
@@ -110,8 +105,7 @@ public class LinkIndexTest {
 
     @Test
     public void testLinkIndexUpdater() throws Exception {
-        TestLilyQueue queue = new TestLilyQueue();
-        LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, typeManager, linkIndex, queue);
+        LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, typeManager, linkIndex, repository.getWal());
 
         FieldType nonVersionedFt = typeManager.newFieldType(typeManager.getValueType("LINK", false, false),
                 new QName("ns", "link1"), Scope.NON_VERSIONED);
@@ -139,11 +133,6 @@ public class LinkIndexTest {
             record.setRecordType(recordType.getId());
             record.setField(nonVersionedFt.getName(), new Link(ids.newRecordId("foo1")));
             record = repository.create(record);
-
-            RecordEvent recordEvent = new RecordEvent();
-            recordEvent.addUpdatedField(nonVersionedFt.getId());
-            QueueMessage message = new TestQueueMessage(EventType.EVENT_RECORD_CREATED, record.getId(), recordEvent.toJsonBytes());
-            queue.broadCastMessage(message);
 
             Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), VersionTag.VERSIONLESS_TAG);
             assertEquals(1, referrers.size());

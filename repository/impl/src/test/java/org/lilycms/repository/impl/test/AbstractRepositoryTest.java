@@ -469,6 +469,34 @@ public abstract class AbstractRepositoryTest {
 		assertTrue(readRecord.getFields().isEmpty());
 	}
 
+    @Test
+    public void testDeleteFieldFollowedBySet() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getId(), recordType1.getVersion());
+        record.setField(fieldType1.getName(), "hello");
+        record = repository.create(record);
+
+        // Delete the field
+        record.delete(fieldType1.getName(), true);
+        record = repository.update(record);
+        assertFalse(record.getFieldsToDelete().contains(fieldType1.getName()));
+
+        // Set the field again
+        record.setField(fieldType1.getName(), "hello");
+        record = repository.update(record);
+        assertEquals("hello", record.getField(fieldType1.getName()));
+
+        // Check it also there after a fresh read
+        record = repository.read(record.getId());
+        assertEquals("hello", record.getField(fieldType1.getName()));
+
+        // Calling delete field followed by set field should remove it from the deleted fields
+        record.delete(fieldType1.getName(), true);
+        assertTrue(record.getFieldsToDelete().contains(fieldType1.getName()));
+        record.setField(fieldType1.getName(), "hello");
+        assertFalse(record.getFieldsToDelete().contains(fieldType1.getName()));
+    }
+
 	@Test
 	public void testDeleteFieldsNoLongerInRecordType() throws Exception {
 		Record record = createDefaultRecord();
@@ -848,5 +876,4 @@ public abstract class AbstractRepositoryTest {
         }
     }
 
-	
 }

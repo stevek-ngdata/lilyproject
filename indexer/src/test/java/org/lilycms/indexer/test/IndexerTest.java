@@ -1,7 +1,6 @@
 package org.lilycms.indexer.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.lilycms.repoutil.EventType.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,12 +24,8 @@ import org.lilycms.indexer.conf.IndexerConf;
 import org.lilycms.indexer.conf.IndexerConfBuilder;
 import org.lilycms.linkindex.LinkIndex;
 import org.lilycms.linkindex.LinkIndexUpdater;
-import org.lilycms.queue.api.QueueMessage;
-import org.lilycms.queue.mock.TestLilyQueue;
-import org.lilycms.queue.mock.TestQueueMessage;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
-import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
 
@@ -46,7 +41,6 @@ public class IndexerTest {
     private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
-    private static TestLilyQueue queue;
     private static HBaseRepository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
@@ -95,20 +89,19 @@ public class IndexerTest {
         repository.registerBlobStoreAccess(dfsBlobStoreAccess);
 
         solrServer = SOLR_TEST_UTIL.getSolrServer();
-        queue = new TestLilyQueue();
 
         IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
         IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
 
         try { LinkIndex.createIndexes(indexManager); } catch (TableExistsException e) { }
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
-        new LinkIndexUpdater(repository, typeManager, linkIndex, queue);
+        new LinkIndexUpdater(repository, typeManager, linkIndex, repository.getWal());
 
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream("org/lilycms/indexer/test/indexerconf1.xml"), repository);
-        indexer = new Indexer(INDEXER_CONF, queue, repository, typeManager, solrServer, linkIndex);
+        indexer = new Indexer(INDEXER_CONF, repository.getWal(), repository, typeManager, solrServer, linkIndex);
     }
 
     @AfterClass
@@ -252,7 +245,7 @@ public class IndexerTest {
             record = repository.create(record);
 
             // Generate queue message
-            sendEvent(EVENT_RECORD_CREATED, record.getId(), nvfield1.getId());
+            commitIndex();
 
             // Verify the index was updated
             verifyResultCount("nv_field1:apple", 1);
@@ -261,14 +254,14 @@ public class IndexerTest {
             record.setField(nvfield1.getName(), "pear");
             repository.update(record);
 
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), nvfield1.getId());
+            commitIndex();
 
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
 
             // Do as if field2 changed, while field2 is not present in the document.
             // Such situations can occur if the record is modified before earlier events are processed.
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), nvfield2.getId());
+            commitIndex();
 
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
@@ -277,15 +270,16 @@ public class IndexerTest {
             record.setField(liveTag.getName(), new Long(1));
             repository.update(record);
 
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
 
             // Delete the record
+            log.debug("Delete record");
             repository.delete(record.getId());
 
-            sendEvent(EVENT_RECORD_DELETED, record.getId());
+            commitIndex();
 
             verifyResultCount("nv_field1:pear", 0);
         }
@@ -298,13 +292,13 @@ public class IndexerTest {
             record1.setRecordType("NVRecordType1");
             record1.setField(nvfield1.getName(), "pear");
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), nvfield1.getId());
+            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("NVRecordType1");
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField1.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref1:pear", 1);
         }
@@ -318,14 +312,14 @@ public class IndexerTest {
             masterRecord.setRecordType("NVRecordType1");
             masterRecord.setField(nvfield1.getName(), "yellow");
             masterRecord = repository.create(masterRecord);
-            sendEvent(EVENT_RECORD_CREATED, masterRecord.getId(), nvfield1.getId());
+            commitIndex();
 
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
             Record var1Record = repository.newRecord(var1Id);
             var1Record.setRecordType("NVRecordType1");
             var1Record.setField(nvfield1.getName(), "green");
             repository.create(var1Record);
-            sendEvent(EVENT_RECORD_CREATED, var1Id, nvfield2.getId());
+            commitIndex();
 
             Map<String, String> varProps = new HashMap<String, String>();
             varProps.put("lang", "en");
@@ -335,7 +329,7 @@ public class IndexerTest {
             var2Record.setRecordType("NVRecordType1");
             var2Record.setField(nvfield2.getName(), "blue");
             repository.create(var2Record);
-            sendEvent(EVENT_RECORD_CREATED, var2Id, nvfield2.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref2:yellow", 1);
             verifyResultCount("nv_deref3:yellow", 2);
@@ -351,7 +345,7 @@ public class IndexerTest {
             record1.setRecordType("NVRecordType1");
             record1.setField(nvfield1.getName(), "cumcumber");
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), nvfield1.getId());
+            commitIndex();
 
             // Create a record which will contain denormalized data through linking
             Record record2 = repository.newRecord();
@@ -359,7 +353,7 @@ public class IndexerTest {
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvfield1.getName(), "mushroom");
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField1.getId(), nvfield1.getId());
+            commitIndex();
 
             // Create a record which will contain denormalized data through master-dereferencing
             RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
@@ -367,7 +361,7 @@ public class IndexerTest {
             record3.setRecordType("NVRecordType1");
             record3.setField(nvfield1.getName(), "eggplant");
             record3 = repository.create(record3);
-            sendEvent(EVENT_RECORD_CREATED, record3.getId(), nvfield1.getId());
+            commitIndex();
 
             // Create a record which will contain denormalized data through variant-dereferencing
             Map<String, String> varprops = new HashMap<String, String>();
@@ -378,7 +372,7 @@ public class IndexerTest {
             record4.setRecordType("NVRecordType1");
             record4.setField(nvfield1.getName(), "broccoli");
             record4 = repository.create(record4);
-            sendEvent(EVENT_RECORD_CREATED, record4.getId(), nvfield1.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref1:cumcumber", 1);
             verifyResultCount("nv_deref2:cumcumber", 1);
@@ -389,7 +383,7 @@ public class IndexerTest {
             record1 = repository.update(record1);
 
             // Generate queue message
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), nvfield1.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref1:tomato", 1);
             verifyResultCount("nv_deref2:tomato", 1);
@@ -402,7 +396,7 @@ public class IndexerTest {
             // Update record3, index for record4 should be updated
             record3.setField(nvfield1.getName(), "courgette");
             repository.update(record3);
-            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), nvfield1.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref4:courgette", 1);
             verifyResultCount("nv_deref4:eggplant", 0);
@@ -410,7 +404,7 @@ public class IndexerTest {
             // Delete record 3: index for record 4 should be updated
             verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 1);
             repository.delete(record3.getId());
-            sendEvent(EVENT_RECORD_DELETED, record3.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref4:courgette", 0);
             verifyResultCount("nv_deref3:tomato", 1);
@@ -419,7 +413,7 @@ public class IndexerTest {
             // Delete record 4 (at the time of this writing, because it is unsure if we will allow deleting master
             // records while there are variants)
             repository.delete(record4.getId());
-            sendEvent(EVENT_RECORD_DELETED, record4.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref3:tomato", 0);
             verifyResultCount("nv_field1:broccoli", 0);
@@ -427,7 +421,7 @@ public class IndexerTest {
 
             // Delete record 1: index of record 2 should be updated
             repository.delete(record1.getId());
-            sendEvent(EVENT_RECORD_DELETED, record1.getId());
+            commitIndex();
 
             verifyResultCount("nv_deref1:tomato", 0);
             verifyResultCount("nv_field1:mushroom", 1);
@@ -449,7 +443,7 @@ public class IndexerTest {
             record = repository.create(record);
 
             // Generate queue message
-            sendEvent(EVENT_RECORD_CREATED, record.getId(), 1L, null, nvfield1.getId(), liveTag.getId());
+            commitIndex();
 
             // Verify the index was updated                                                                        `
             verifyResultCount("v_field1:apple", 1);
@@ -459,7 +453,7 @@ public class IndexerTest {
             record.setField(vfield1.getName(), "pear");
             repository.update(record);
 
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), 2L, null, nvfield1.getId());
+            commitIndex();
 
             verifyResultCount("v_field1:pear", 0);
             verifyResultCount("v_field1:apple", 1);
@@ -468,7 +462,7 @@ public class IndexerTest {
             log.debug("Begin test V3");
             record.setField(liveTag.getName(), new Long(2));
             record = repository.update(record);
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_field1:pear", 1);
             verifyResultCount("v_field1:apple", 0);
@@ -477,7 +471,7 @@ public class IndexerTest {
             log.debug("Begin test V4");
             record.delete(liveTag.getName(), true);
             record = repository.update(record);
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_field1:pear", 0);
 
@@ -487,7 +481,7 @@ public class IndexerTest {
             record.setField(previewTag.getName(), new Long(2));
             record.setField(lastTag.getName(), new Long(2));
             record = repository.update(record);
-            sendEvent(EVENT_RECORD_UPDATED, record.getId(), liveTag.getId(), previewTag.getId(), lastTag.getId());
+            commitIndex();
 
             verifyResultCount("v_field1:apple", 1);
             verifyResultCount("v_field1:pear", 2);
@@ -509,14 +503,14 @@ public class IndexerTest {
             record1.setField(vfield1.getName(), "fig");
             record1.setField(liveTag.getName(), Long.valueOf(1));
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), Long.valueOf(1));
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref1:fig", 1);
 
@@ -527,7 +521,7 @@ public class IndexerTest {
             record3.setField(vfield1.getName(), "banana");
             record3.setField(liveTag.getName(), Long.valueOf(1));
             record3 = repository.create(record3);
-            sendEvent(EVENT_RECORD_CREATED, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref3:fig", 1);
 
@@ -541,7 +535,7 @@ public class IndexerTest {
             record4.setField(vfield1.getName(), "coconut");
             record4.setField(liveTag.getName(), Long.valueOf(1));
             record4 = repository.create(record4);
-            sendEvent(EVENT_RECORD_CREATED, record4.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref3:fig", 2);
             verifyResultCount("v_deref2:fig", 1);
@@ -551,7 +545,7 @@ public class IndexerTest {
             log.debug("Begin test V7");
             record1.delete(liveTag.getName(), true);
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref1:fig", 0);
 
@@ -559,21 +553,21 @@ public class IndexerTest {
             log.debug("Begin test V8");
             record1.setField(liveTag.getName(), Long.valueOf(1));
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref1:fig", 1);
 
-            // Make second version of record2, assign both versions different tags, and assign these tags also
-            // to version1 of record1.
+            // Make second version of record1, assign both versions different tags, and assign these tags also
+            // to version1 of record2.
             log.debug("Begin test V9");
             record1.setField(vfield1.getName(), "strawberries");
             record1.setField(previewTag.getName(), Long.valueOf(2));
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
+            commitIndex();
 
             record2.setField(previewTag.getName(), Long.valueOf(1));
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), previewTag.getId());
+            commitIndex();
 
             verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
             verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(liveTag.getId()), 0);
@@ -586,12 +580,12 @@ public class IndexerTest {
             log.debug("Begin test V10");
             record2.setField(lastTag.getName(), Long.valueOf(1));
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), lastTag.getId());
+            commitIndex();
 
             record1.setField(vfield1.getName(), "kiwi");
             record1.setField(lastTag.getName(), Long.valueOf(3));
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
+            commitIndex();
 
             verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(lastTag.getId()), 1);
             verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
@@ -604,7 +598,7 @@ public class IndexerTest {
             log.debug("Begin test V11");
             record3.delete(vfield1.getName(), true);
             record3 = repository.update(record3);
-            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), 2L, null, vfield1.getId());
+            commitIndex();
 
             verifyResultCount("v_deref4:banana", 1); // live tag still points to version 1!
 
@@ -612,7 +606,7 @@ public class IndexerTest {
             repository.read(record3Id, Long.valueOf(2)); // check version 2 really exists
             record3.setField(liveTag.getName(), Long.valueOf(2));
             repository.update(record3);
-            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref4:banana", 0);
             verifyResultCount("v_field1:coconut", 1);
@@ -620,7 +614,7 @@ public class IndexerTest {
             // Delete master
             log.debug("Begin test V13");
             repository.delete(record1.getId());
-            sendEvent(EVENT_RECORD_DELETED, record1.getId());
+            commitIndex();
 
             verifyResultCount("v_deref1:fig", 0);
             verifyResultCount("v_deref2:fig", 0);
@@ -637,13 +631,13 @@ public class IndexerTest {
             record1.setField(vfield1.getName(), "bicycle");
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(nvLinkField2.getName(), new Link(record1.getId()));
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), nvLinkField2.getId());
+            commitIndex();
 
             // A versionless record cannot contain derefed data from a versioned field, since it does
             // not know at what version to look
@@ -654,7 +648,7 @@ public class IndexerTest {
             record2.setField(vfield1.getName(), "boat");
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("nv_v_deref:bicycle", 1);
 
@@ -663,12 +657,12 @@ public class IndexerTest {
             record1.setField(vfield1.getName(), "train");
             record1.setField(previewTag.getName(), Long.valueOf(2));
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
+            commitIndex();
 
             record1.setField(vfield1.getName(), "car");
             record1.setField(lastTag.getName(), Long.valueOf(3));
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
+            commitIndex();
 
             verifyResultCount("nv_v_deref:bicycle", 1);
             verifyResultCount("nv_v_deref:train", 0);
@@ -679,12 +673,12 @@ public class IndexerTest {
             record2.setField(vfield1.getName(), "airplane");
             record2.setField(previewTag.getName(), 2L);
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 2L, null, vfield1.getId(), previewTag.getId());
+            commitIndex();
 
             record2.setField(vfield1.getName(), "hovercraft");
             record2.setField(lastTag.getName(), 3L);
             record2 = repository.update(record2);
-            sendEvent(EVENT_RECORD_UPDATED, record2.getId(), 3L, null, vfield1.getId(), lastTag.getId());
+            commitIndex();
 
             verifyResultCount("nv_v_deref:bicycle", 1);
             verifyResultCount("nv_v_deref:train", 1);
@@ -702,20 +696,20 @@ public class IndexerTest {
             record1.setRecordType("VRecordType1");
             record1.setField(nvfield1.getName(), "Brussels");
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), (Long)null, null, nvfield1.getId());
+            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId());
+            commitIndex();
 
             Record record3 = repository.newRecord();
             record3.setRecordType("VRecordType1");
             record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
             record3 = repository.create(record3);
-            sendEvent(EVENT_RECORD_CREATED, record3.getId(), (Long)null, null, nvLinkField2.getId());
+            commitIndex();
 
             verifyResultCount("nv_v_nv_deref:Brussels", 0);
 
@@ -724,12 +718,12 @@ public class IndexerTest {
             record3.setField(vfield1.getName(), "Ghent");
             record3.setField(liveTag.getName(), 1L);
             record3 = repository.update(record3);
-            sendEvent(EVENT_RECORD_UPDATED, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             record1.setField(vfield1.getName(), "Antwerp");
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("nv_v_nv_deref:Brussels", 1);
         }
@@ -745,7 +739,7 @@ public class IndexerTest {
             record1.setField(vStringMvField.getName(), Arrays.asList("Dog", "Cat"));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vStringMvField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_string_mv:Dog", 1);
             verifyResultCount("v_string_mv:Cat", 1);
@@ -771,7 +765,7 @@ public class IndexerTest {
             record1.setField(vLongField.getName(), 123L);
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vLongField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_long:123", 1);
             verifyResultCount("v_long:[100 TO 150]", 1);
@@ -786,7 +780,7 @@ public class IndexerTest {
             record1.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12.756Z\"", 1);
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12Z\"", 0);
@@ -797,7 +791,7 @@ public class IndexerTest {
             record2.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 000, DateTimeZone.UTC));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12Z\"", 1);
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12.000Z\"", 1);
@@ -813,7 +807,7 @@ public class IndexerTest {
             record1.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vDateField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_date:\"2020-01-30T00:00:00Z/DAY\"", 1);
             verifyResultCount("v_date:\"2020-01-30T00:00:00.000Z\"", 1);
@@ -827,7 +821,7 @@ public class IndexerTest {
             record2.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vDateField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_date:\"2020-01-30T00:00:00Z/DAY\"", 2);
         }
@@ -847,7 +841,7 @@ public class IndexerTest {
             record1.setField(vBlobField.getName(), blob1);
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vBlobField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_blob:sollicitudin", 1);
             verifyResultCount("v_blob:\"Sed pretium pretium lorem\"", 1);
@@ -863,7 +857,7 @@ public class IndexerTest {
             record2.setField(vBlobMvHierField.getName(), blobs);
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vBlobMvHierField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_blob:blob1", 2);
             verifyResultCount("v_blob:blob2", 1);
@@ -880,7 +874,7 @@ public class IndexerTest {
             record1.setField(vDateTimeField.getName(), new DateTime(2058, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("year:2058", 1);
         }
@@ -894,7 +888,7 @@ public class IndexerTest {
             record1.setField(vIntHierField.getName(), new HierarchyPath(8, 16, 24, 32));
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vIntHierField.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("inthierarchy:\"8_16_24_32\"", 1);
         }
@@ -913,7 +907,7 @@ public class IndexerTest {
             record1.setField(vfield1.getName(), "venus");
             record1.setField(liveTag.getName(), 1L);
             record1 = repository.create(record1);
-            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             RecordId record2Id = repository.getIdGenerator().newRecordId(varProps);
             Record record2 = repository.newRecord(record2Id);
@@ -922,14 +916,14 @@ public class IndexerTest {
             record2.setField(vLinkField1.getName(), new Link(record1.getId().getMaster()));
             record2.setField(liveTag.getName(), 1L);
             record2 = repository.create(record2);
-            sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref1:venus", 1);
 
             record1.setField(vfield1.getName(), "mars");
             record1.setField(liveTag.getName(), 2L);
             record1 = repository.update(record1);
-            sendEvent(EVENT_RECORD_UPDATED, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+            commitIndex();
 
             verifyResultCount("v_deref1:mars", 1);
         }
@@ -995,28 +989,7 @@ public class IndexerTest {
         return ClientUtils.escapeQueryChars(input);
     }
 
-    private void sendEvent(String type, RecordId recordId, String... updatedFields) throws IOException, SolrServerException {
-        sendEvent(type, recordId, null, null, updatedFields);
-    }
-    
-    private void sendEvent(String type, RecordId recordId, Long versionCreated, Long versionUpdated,
-            String... updatedFields) throws IOException, SolrServerException {
-
-        RecordEvent event = new RecordEvent();
-
-        for (String updatedField : updatedFields) {
-            event.addUpdatedField(updatedField);
-        }
-
-        if (versionCreated != null)
-            event.setVersionCreated(versionCreated);
-
-        if (versionUpdated != null)
-            event.setVersionUpdated(versionUpdated);
-
-        QueueMessage message = new TestQueueMessage(type, recordId, event.toJsonBytes());
-        queue.broadCastMessage(message);
-
+    private void commitIndex() throws IOException, SolrServerException {
         solrServer.commit(true, true);
     }
 

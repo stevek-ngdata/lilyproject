@@ -11,9 +11,6 @@ import org.lilycms.indexer.conf.IndexCase;
 import org.lilycms.indexer.conf.IndexField;
 import org.lilycms.indexer.conf.IndexerConf;
 import org.lilycms.linkindex.LinkIndex;
-import org.lilycms.queue.api.LilyQueue;
-import org.lilycms.queue.api.QueueListener;
-import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.RecordNotFoundException;
@@ -21,9 +18,12 @@ import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
+import org.lilycms.rowlog.api.RowLog;
+import org.lilycms.rowlog.api.RowLogMessage;
+import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.util.ObjectUtils;
 
-import static org.lilycms.repoutil.EventType.*;
+import static org.lilycms.repoutil.RecordEvent.Type.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class Indexer {
     private IndexerConf conf;
-    private LilyQueue queue;
+    private RowLog rowLog;
     private Repository repository;
     private TypeManager typeManager;
     private SolrServer solrServer;
@@ -42,49 +42,50 @@ public class Indexer {
 
     private Log log = LogFactory.getLog(getClass());
 
-    public Indexer(IndexerConf conf, LilyQueue queue, Repository repository, TypeManager typeManager,
+    public Indexer(IndexerConf conf, RowLog rowLog, Repository repository, TypeManager typeManager,
             SolrServer solrServer, LinkIndex linkIndex) {
         this.conf = conf;
-        this.queue = queue;
+        this.rowLog = rowLog;
         this.repository = repository;
         this.solrServer = solrServer;
         this.typeManager = typeManager;
         this.linkIndex = linkIndex;
 
-        queue.addListener("indexer", indexerListener);
+        rowLog.registerConsumer(indexerListener);
     }
 
     public void stop() {
-        queue.removeListener(indexerListener);
+        rowLog.unRegisterConsumer(indexerListener);
     }
 
-    private class IndexerListener implements QueueListener {
-        public void processMessage(String id) {
+    private class IndexerListener implements RowLogMessageConsumer {
+        public int getId() {
+            return 101;
+        }
+
+        public boolean processMessage(RowLogMessage msg) {
             try {
-                QueueMessage msg = queue.getMessage(id);
+                RecordEvent event = new RecordEvent(msg.getPayload());
+                RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
 
-                if (!msg.getType().equals(EVENT_RECORD_CREATED) &&
-                        !msg.getType().equals(EVENT_RECORD_UPDATED) &&
-                        !msg.getType().equals(EVENT_RECORD_DELETED)) {
-                    // It is not one of the kinds of events we are interested in
-                    return;
+                if (log.isDebugEnabled()) {
+                    log.debug("Received message: " + event.toJson());
                 }
-
-                if (msg.getType().equals(EVENT_RECORD_DELETED)) {
+                
+                if (event.getType().equals(DELETE)) {
                     // For deleted records, we cannot determine the record type, so we do not know if there was
                     // an applicable index case, so we always send a delete to SOLR.
-                    solrServer.deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(msg.getRecordId().toString()));
+                    solrServer.deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(recordId.toString()));
 
                     if (log.isDebugEnabled()) {
                         log.debug(String.format("Record %1$s: deleted from index (if present) because of " +
-                                "delete record event", msg.getRecordId()));
+                                "delete record event", recordId));
                     }
 
                     // After this we can go to update denormalized data
-                    RecordEvent event = new RecordEvent(msg.getType(), msg.getData());
-                    updateDenormalizedData(msg.getRecordId(), event, null, null);
+                    updateDenormalizedData(recordId, event, null, null);
                 } else {
-                    handleRecordCreateUpdate(msg);
+                    handleRecordCreateUpdate(recordId, event);
                 }
 
 
@@ -92,12 +93,12 @@ public class Indexer {
                 // TODO
                 e.printStackTrace();
             }
+            return true;
         }
     }
 
-    private void handleRecordCreateUpdate(QueueMessage msg) throws Exception {
-        RecordEvent event = new RecordEvent(msg.getType(), msg.getData());
-        IdRecord record = repository.readWithIds(msg.getRecordId(), null, null);
+    private void handleRecordCreateUpdate(RecordId recordId, RecordEvent event) throws Exception {
+        IdRecord record = repository.readWithIds(recordId, null, null);
 
         // Read the vtags of the record. Note that while this algorithm is running, the record can meanwhile
         // undergo changes. However, we continuously work with the snapshot of the vtags mappings read here.
@@ -120,7 +121,7 @@ public class Indexer {
         } else {
             Set<String> vtagsToIndex = new HashSet<String>();
 
-            if (msg.getType().equals(EVENT_RECORD_CREATED)) {
+            if (event.getType().equals(CREATE)) {
                 // New record: just index everything
                 setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
                 // After this we go to the indexing
@@ -144,7 +145,7 @@ public class Indexer {
             } else { // a normal update
 
                 if (event.getVersionCreated() == 1
-                        && msg.getType().equals(EVENT_RECORD_UPDATED)
+                        && event.getType().equals(UPDATE)
                         && indexCase.getIndexVersionless()) {
                     // If the first version was created, but the record was not new, then there
                     // might already be an @@versionless index entry
@@ -210,7 +211,7 @@ public class Indexer {
                         }
                         vtagsToIndex.add(vtag);
                     } else {
-                        // The vtag does not exist anymore on the document: delete from index
+                        // The vtag does not exist anymore on the document, or does not need to be indexed: delete from index
                         solrServer.deleteById(getIndexId(record.getId(), vtag));
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s: deleted from index for deleted vtag %2$s",
@@ -237,7 +238,7 @@ public class Indexer {
             }
         }
 
-        updateDenormalizedData(msg.getRecordId(), event, updatedFieldsByScope, vtagsByVersion);
+        updateDenormalizedData(recordId, event, updatedFieldsByScope, vtagsByVersion);
 
     }
 

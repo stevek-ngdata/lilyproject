@@ -25,7 +25,7 @@
   <groupId>org.lilycms</groupId>
   <artifactId>lily-linkindex</artifactId>
   <version>0.1-dev</version>
-  <name>Lily: Link Management</name>
+  <name>Lily: Link Index</name>
 
   <parent>
     <groupId>org.lilycms</groupId>
@@ -44,12 +44,7 @@
 
     <dependency>
       <groupId>org.lilycms</groupId>
-      <artifactId>lily-queue-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-queue-mock</artifactId>
+      <artifactId>lily-rowlog-api</artifactId>
     </dependency>
 
     <dependency>

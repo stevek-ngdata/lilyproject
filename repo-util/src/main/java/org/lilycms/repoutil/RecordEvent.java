@@ -1,7 +1,5 @@
 package org.lilycms.repoutil;
 
-import static org.lilycms.repoutil.EventType.*;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -25,7 +23,21 @@ public class RecordEvent {
     private Set<String> updatedFields = new HashSet<String>();
     private boolean recordTypeChanged = false;
 
-    public enum Type {CREATE, UPDATE, DELETE}
+    public enum Type {
+        CREATE("repo:record-created"),
+        UPDATE("repo:record-updated"),
+        DELETE("repo:record-deleted");
+
+        private String name;
+
+        private Type(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 
     public RecordEvent() {
     }
@@ -33,18 +45,19 @@ public class RecordEvent {
     /**
      * Creates a record event from the json data supplied as bytes.
      */
-    public RecordEvent(String messageType, byte[] data) throws IOException {
-        if (messageType.equals(EVENT_RECORD_CREATED)) {
+    public RecordEvent(byte[] data) throws IOException {
+        JsonNode msgData = new ObjectMapper().readValue(data, 0, data.length, JsonNode.class);
+
+        String messageType = msgData.get("type").getTextValue();
+        if (messageType.equals(Type.CREATE.getName())) {
             type = Type.CREATE;
-        } else if (messageType.equals(EVENT_RECORD_DELETED)) {
+        } else if (messageType.equals(Type.DELETE.getName())) {
             type = Type.DELETE;
-        } else if (messageType.equals(EVENT_RECORD_UPDATED)) {
+        } else if (messageType.equals(Type.UPDATE.getName())) {
             type = Type.UPDATE;
         } else {
             throw new RuntimeException("Unexpected kind of message type: " + messageType);
         }
-
-        JsonNode msgData = new ObjectMapper().readValue(data, 0, data.length, JsonNode.class);
 
         if (msgData.get("versionCreated") != null) {
             versionCreated = msgData.get("versionCreated").getLongValue();
@@ -118,6 +131,9 @@ public class RecordEvent {
     public ObjectNode toJson() {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode object = factory.objectNode();
+
+        if (type != null)
+            object.put("type", type.getName());
 
         ArrayNode updatedFieldsNode = object.putArray("updatedFields");
         for (String updatedField : updatedFields) {

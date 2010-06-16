@@ -2,17 +2,17 @@ package org.lilycms.linkindex;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilycms.queue.api.LilyQueue;
-import org.lilycms.queue.api.QueueListener;
-import org.lilycms.queue.api.QueueMessage;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.VersionTag;
+import org.lilycms.rowlog.api.RowLog;
+import org.lilycms.rowlog.api.RowLogMessage;
+import org.lilycms.rowlog.api.RowLogMessageConsumer;
 
 import java.util.*;
 
-import static org.lilycms.repoutil.EventType.*;
+import static org.lilycms.repoutil.RecordEvent.Type.*;
 
 // TODO think more about error processing:
 //      Some kinds of errors might be temporary in nature and be solved by retrying after some time.
@@ -26,26 +26,26 @@ import static org.lilycms.repoutil.EventType.*;
 public class LinkIndexUpdater {
     private Repository repository;
     private TypeManager typeManager;
-    private LilyQueue queue;
+    private RowLog rowLog;
     private LinkIndex linkIndex;
     private MyListener listener = new MyListener();
 
     private Log log = LogFactory.getLog(getClass());
 
-    public LinkIndexUpdater(Repository repository, TypeManager typeManager, LinkIndex linkIndex, LilyQueue queue) {
+    public LinkIndexUpdater(Repository repository, TypeManager typeManager, LinkIndex linkIndex, RowLog rowLog) {
         this.repository = repository;
         this.typeManager = typeManager;
         this.linkIndex = linkIndex;
-        this.queue = queue;
+        this.rowLog = rowLog;
 
-        queue.addListener("LinkIndexUpdater", listener);
+        rowLog.registerConsumer(listener);
     }
 
     public void stop() {
-        queue.removeListener(listener);
+        rowLog.unRegisterConsumer(listener);
     }
 
-    private class  MyListener implements QueueListener {
+    private class  MyListener implements RowLogMessageConsumer {
         // This is the algorithm for updating the LinkIndex when a record changes.
         //
         // The LinkIndex contains:
@@ -59,35 +59,40 @@ public class LinkIndexUpdater {
         //  * the content of (non-vtag) fields is changed
         //  * the vtags change: existing vtag now points to another version, a new vtag is added, or a vtag is removed
         //
-        public void processMessage(String id) {
-            try {
-                QueueMessage msg = queue.getMessage(id);
 
-                if (msg.getType().equals(EVENT_RECORD_DELETED)) {
+        public int getId() {
+            return 102;
+        }
+
+        public boolean processMessage(RowLogMessage msg) {
+            try {
+                RecordEvent recordEvent = new RecordEvent(msg.getPayload());
+                RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
+
+                if (recordEvent.getType().equals(DELETE)) {
                     // Delete everything from the link index for this record, thus for all vtags
-                    linkIndex.deleteLinks(msg.getRecordId());
+                    linkIndex.deleteLinks(recordId);
                     if (log.isDebugEnabled()) {
-                        log.debug("Record " + msg.getRecordId() + " : delete event : deleted extracted links.");
+                        log.debug("Record " + recordId + " : delete event : deleted extracted links.");
                     }
-                } else if (msg.getType().equals(EVENT_RECORD_CREATED) || msg.getType().equals(EVENT_RECORD_UPDATED)) {
-                    RecordEvent recordEvent = new RecordEvent(msg.getType(), msg.getData());
+                } else if (recordEvent.getType().equals(CREATE) || recordEvent.getType().equals(UPDATE)) {
 
                     // If the record is not new but its first version was created now, there might be existing
                     // entries for the @@versionless vtag
                     if (recordEvent.getType() == RecordEvent.Type.UPDATE && recordEvent.getVersionCreated() == 1) {
-                        linkIndex.deleteLinks(msg.getRecordId(), VersionTag.VERSIONLESS_TAG);
+                        linkIndex.deleteLinks(recordId, VersionTag.VERSIONLESS_TAG);
                     }
 
                     IdRecord record;
                     try {
-                        record = repository.readWithIds(msg.getRecordId(), null, null);
+                        record = repository.readWithIds(recordId, null, null);
                     } catch (RecordNotFoundException e) {
                         // record not found: delete all links for all vtags
-                        linkIndex.deleteLinks(msg.getRecordId());
+                        linkIndex.deleteLinks(recordId);
                         if (log.isDebugEnabled()) {
-                            log.debug("Record " + msg.getRecordId() + " : does not exist : deleted extracted links.");
+                            log.debug("Record " + recordId + " : does not exist : deleted extracted links.");
                         }
-                        return;
+                        return true;
                     }
                     boolean hasVersions = record.getVersion() != null;
 
@@ -124,7 +129,7 @@ public class LinkIndexUpdater {
                             if (!vtags.containsKey(vtag)) {
                                 // The vtag is not defined on the document: it is a deleted vtag, delete the
                                 // links corresponding to it
-                                linkIndex.deleteLinks(msg.getRecordId(), vtag);
+                                linkIndex.deleteLinks(recordId, vtag);
                                 if (log.isDebugEnabled()) {
                                     log.debug(String.format("Record %1$s, vtag %2$s : deleted extracted links",
                                             record.getId(), safeLoadTagName(vtag)));
@@ -137,10 +142,10 @@ public class LinkIndexUpdater {
                                 if (cache.containsKey(version)) {
                                     links = cache.get(version);
                                 } else {
-                                    links = extractLinks(msg.getRecordId(), version);
+                                    links = extractLinks(recordId, version);
                                     cache.put(version, links);
                                 }
-                                linkIndex.updateLinks(msg.getRecordId(), vtag, links);
+                                linkIndex.updateLinks(recordId, vtag, links);
                                 if (log.isDebugEnabled()) {
                                     log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
                                             record.getId(), safeLoadTagName(vtag), links.size()));
@@ -149,8 +154,8 @@ public class LinkIndexUpdater {
                         }
                     } else {
                         // The record has no versions
-                        Set<FieldedLink> links = extractLinks(msg.getRecordId(), null);
-                        linkIndex.updateLinks(msg.getRecordId(), VersionTag.VERSIONLESS_TAG, links);
+                        Set<FieldedLink> links = extractLinks(recordId, null);
+                        linkIndex.updateLinks(recordId, VersionTag.VERSIONLESS_TAG, links);
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
                                     record.getId(), VersionTag.VERSIONLESS_TAG, links.size()));
@@ -161,6 +166,7 @@ public class LinkIndexUpdater {
             } catch (Exception e) {
                 log.error("Error processing event in LinkIndexUpdater", e);
             }
+            return true;
         }
     }
 
