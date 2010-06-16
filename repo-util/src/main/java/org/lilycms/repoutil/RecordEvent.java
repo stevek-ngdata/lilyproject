@@ -166,6 +166,34 @@ public class RecordEvent {
         }
         return os.toByteArray();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RecordEvent other = (RecordEvent)obj;
+
+        if (other.type != this.type)
+            return false;
+
+        if (other.recordTypeChanged != this.recordTypeChanged)
+            return false;
+
+        if (other.versionCreated != this.versionCreated)
+            return false;
+
+        if (other.versionUpdated != this.versionUpdated)
+            return false;
+
+        if (!other.updatedFields.equals(this.updatedFields))
+            return false;
+
+        return true;
+    }
 }
 
 

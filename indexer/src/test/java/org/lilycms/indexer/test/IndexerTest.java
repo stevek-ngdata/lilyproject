@@ -2,6 +2,10 @@ package org.lilycms.indexer.test;
 
 import static org.junit.Assert.assertEquals;
 
+import org.lilycms.repoutil.RecordEvent;
+import org.lilycms.rowlog.api.RowLogMessage;
+import org.lilycms.rowlog.api.RowLogMessageConsumer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -28,6 +32,7 @@ import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
 import org.lilycms.repoutil.VersionTag;
 import org.lilycms.testfw.TestHelper;
+import static org.lilycms.repoutil.RecordEvent.Type.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -70,7 +75,9 @@ public class IndexerTest {
     private static final String NS = "org.lilycms.indexer.test";
     private static final String NS2 = "org.lilycms.indexer.test.2";
 
-    private Log log = LogFactory.getLog(getClass());
+    private static Log log = LogFactory.getLog(IndexerTest.class);
+
+    private static MessageVerifier messageVerifier = new MessageVerifier();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -102,6 +109,8 @@ public class IndexerTest {
 
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream("org/lilycms/indexer/test/indexerconf1.xml"), repository);
         indexer = new Indexer(INDEXER_CONF, repository.getWal(), repository, typeManager, solrServer, linkIndex);
+
+        repository.getWal().registerConsumer(messageVerifier);
     }
 
     @AfterClass
@@ -233,54 +242,58 @@ public class IndexerTest {
 
     @Test
     public void testIndexerVersionless() throws Exception {
+        messageVerifier.init();
 
         //
         // Basic, versionless, create-update-delete
         //
         {
             // Create a record
+            log.debug("Begin test NV1");
             Record record = repository.newRecord();
             record.setRecordType("NVRecordType1");
             record.setField(nvfield1.getName(), "apple");
+            expectEvent(CREATE, record.getId(), nvfield1.getId());
             record = repository.create(record);
 
-            // Generate queue message
             commitIndex();
-
-            // Verify the index was updated
             verifyResultCount("nv_field1:apple", 1);
 
             // Update the record
+            log.debug("Begin test NV2");
             record.setField(nvfield1.getName(), "pear");
+            expectEvent(UPDATE, record.getId(), nvfield1.getId());
             repository.update(record);
 
             commitIndex();
-
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
 
             // Do as if field2 changed, while field2 is not present in the document.
             // Such situations can occur if the record is modified before earlier events are processed.
-            commitIndex();
+            log.debug("Begin test NV3");
+            // TODO send event directly to the Indexer
+            // sendEvent(EVENT_RECORD_UPDATED, record.getId(), nvfield2.getId());
 
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
 
             // Add a vtag field. For versionless records, this should have no effect
+            log.debug("Begin test NV4");
             record.setField(liveTag.getName(), new Long(1));
+            expectEvent(UPDATE, record.getId(), liveTag.getId());
             repository.update(record);
 
             commitIndex();
-
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
 
             // Delete the record
-            log.debug("Delete record");
+            log.debug("Begin test NV5");
+            expectEvent(DELETE, record.getId());
             repository.delete(record.getId());
 
             commitIndex();
-
             verifyResultCount("nv_field1:pear", 0);
         }
 
@@ -288,18 +301,20 @@ public class IndexerTest {
         // Deref
         //
         {
+            log.debug("Begin test NV6");
             Record record1 = repository.newRecord();
             record1.setRecordType("NVRecordType1");
             record1.setField(nvfield1.getName(), "pear");
+            expectEvent(CREATE, record1.getId(), nvfield1.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("NVRecordType1");
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
+            expectEvent(CREATE, record2.getId(), nvLinkField1.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_deref1:pear", 1);
         }
 
@@ -308,18 +323,19 @@ public class IndexerTest {
         // Variant deref
         //
         {
+            log.debug("Begin test NV7");
             Record masterRecord = repository.newRecord();
             masterRecord.setRecordType("NVRecordType1");
             masterRecord.setField(nvfield1.getName(), "yellow");
+            expectEvent(CREATE, masterRecord.getId(), nvfield1.getId());
             masterRecord = repository.create(masterRecord);
-            commitIndex();
 
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
             Record var1Record = repository.newRecord(var1Id);
             var1Record.setRecordType("NVRecordType1");
             var1Record.setField(nvfield1.getName(), "green");
+            expectEvent(CREATE, var1Id, nvfield1.getId());
             repository.create(var1Record);
-            commitIndex();
 
             Map<String, String> varProps = new HashMap<String, String>();
             varProps.put("lang", "en");
@@ -328,9 +344,10 @@ public class IndexerTest {
             Record var2Record = repository.newRecord(var2Id);
             var2Record.setRecordType("NVRecordType1");
             var2Record.setField(nvfield2.getName(), "blue");
+            expectEvent(CREATE, var2Id, nvfield2.getId());
             repository.create(var2Record);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_deref2:yellow", 1);
             verifyResultCount("nv_deref3:yellow", 2);
             verifyResultCount("nv_deref4:green", 1);
@@ -341,27 +358,28 @@ public class IndexerTest {
         // Update denormalized data
         //
         {
+            log.debug("Begin test NV8");
             Record record1 = repository.newRecord(idGenerator.newRecordId("boe"));
             record1.setRecordType("NVRecordType1");
             record1.setField(nvfield1.getName(), "cumcumber");
+            expectEvent(CREATE, record1.getId(), nvfield1.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
             // Create a record which will contain denormalized data through linking
             Record record2 = repository.newRecord();
             record2.setRecordType("NVRecordType1");
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvfield1.getName(), "mushroom");
+            expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvfield1.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
             // Create a record which will contain denormalized data through master-dereferencing
             RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
             Record record3 = repository.newRecord(record3Id);
             record3.setRecordType("NVRecordType1");
             record3.setField(nvfield1.getName(), "eggplant");
+            expectEvent(CREATE, record3.getId(), nvfield1.getId());
             record3 = repository.create(record3);
-            commitIndex();
 
             // Create a record which will contain denormalized data through variant-dereferencing
             Map<String, String> varprops = new HashMap<String, String>();
@@ -371,20 +389,21 @@ public class IndexerTest {
             Record record4 = repository.newRecord(record4Id);
             record4.setRecordType("NVRecordType1");
             record4.setField(nvfield1.getName(), "broccoli");
+            expectEvent(CREATE, record4.getId(), nvfield1.getId());
             record4 = repository.create(record4);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_deref1:cumcumber", 1);
             verifyResultCount("nv_deref2:cumcumber", 1);
             verifyResultCount("nv_deref3:cumcumber", 2);
 
             // Update record1, check if index of the others is updated
+            log.debug("Begin test NV9");
             record1.setField(nvfield1.getName(), "tomato");
+            expectEvent(UPDATE, record1.getId(), nvfield1.getId());
             record1 = repository.update(record1);
 
-            // Generate queue message
             commitIndex();
-
             verifyResultCount("nv_deref1:tomato", 1);
             verifyResultCount("nv_deref2:tomato", 1);
             verifyResultCount("nv_deref3:tomato", 2);
@@ -394,42 +413,54 @@ public class IndexerTest {
             verifyResultCount("nv_deref4:eggplant", 1);
 
             // Update record3, index for record4 should be updated
+            log.debug("Begin test NV10");
             record3.setField(nvfield1.getName(), "courgette");
+            expectEvent(UPDATE, record3.getId(), nvfield1.getId());
             repository.update(record3);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_deref4:courgette", 1);
             verifyResultCount("nv_deref4:eggplant", 0);
 
             // Delete record 3: index for record 4 should be updated
+            log.debug("Begin test NV11");
             verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 1);
+            expectEvent(DELETE, record3.getId());
             repository.delete(record3.getId());
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_deref4:courgette", 0);
             verifyResultCount("nv_deref3:tomato", 1);
             verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 0);
 
             // Delete record 4 (at the time of this writing, because it is unsure if we will allow deleting master
             // records while there are variants)
+            log.debug("Begin test NV12");
+            expectEvent(DELETE, record4.getId());
             repository.delete(record4.getId());
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_deref3:tomato", 0);
             verifyResultCount("nv_field1:broccoli", 0);
             verifyResultCount("@@id:" + ClientUtils.escapeQueryChars(record4.getId().toString()), 0);
 
             // Delete record 1: index of record 2 should be updated
+            log.debug("Begin test NV13");
+            expectEvent(DELETE, record1.getId());
             repository.delete(record1.getId());
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_deref1:tomato", 0);
             verifyResultCount("nv_field1:mushroom", 1);
         }
+
+        assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }
 
     @Test
     public void testIndexerWithVersioning() throws Exception {
+        messageVerifier.init();
+
         //
         // Basic create-update-delete
         //
@@ -440,39 +471,39 @@ public class IndexerTest {
             record.setRecordType("VRecordType1");
             record.setField(vfield1.getName(), "apple");
             record.setField(liveTag.getName(), new Long(1));
+            expectEvent(CREATE, record.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record = repository.create(record);
 
-            // Generate queue message
             commitIndex();
-
-            // Verify the index was updated                                                                        `
             verifyResultCount("v_field1:apple", 1);
 
             // Update the record, this will create a new version, but we leave the live version tag pointing to version 1
             log.debug("Begin test V2");
             record.setField(vfield1.getName(), "pear");
+            expectEvent(UPDATE, record.getId(), 2L, null, vfield1.getId());
             repository.update(record);
 
             commitIndex();
-
             verifyResultCount("v_field1:pear", 0);
             verifyResultCount("v_field1:apple", 1);
 
             // Now move the live version tag to point to version 2
             log.debug("Begin test V3");
             record.setField(liveTag.getName(), new Long(2));
+            expectEvent(UPDATE, record.getId(), liveTag.getId());
             record = repository.update(record);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_field1:pear", 1);
             verifyResultCount("v_field1:apple", 0);
 
             // Now remove the live version tag
             log.debug("Begin test V4");
             record.delete(liveTag.getName(), true);
+            expectEvent(UPDATE, record.getId(), liveTag.getId());
             record = repository.update(record);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_field1:pear", 0);
 
             // Now test with multiple version tags
@@ -480,9 +511,10 @@ public class IndexerTest {
             record.setField(liveTag.getName(), new Long(1));
             record.setField(previewTag.getName(), new Long(2));
             record.setField(lastTag.getName(), new Long(2));
+            expectEvent(UPDATE, record.getId(), liveTag.getId(), previewTag.getId(), lastTag.getId());
             record = repository.update(record);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_field1:apple", 1);
             verifyResultCount("v_field1:pear", 2);
 
@@ -502,16 +534,17 @@ public class IndexerTest {
             record1.setRecordType("VRecordType1");
             record1.setField(vfield1.getName(), "fig");
             record1.setField(liveTag.getName(), Long.valueOf(1));
+            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), Long.valueOf(1));
+            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref1:fig", 1);
 
             log.debug("Begin test V6.1");
@@ -520,9 +553,10 @@ public class IndexerTest {
             record3.setRecordType("VRecordType1");
             record3.setField(vfield1.getName(), "banana");
             record3.setField(liveTag.getName(), Long.valueOf(1));
+            expectEvent(CREATE, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record3 = repository.create(record3);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref3:fig", 1);
 
             log.debug("Begin test V6.2");
@@ -534,9 +568,10 @@ public class IndexerTest {
             record4.setRecordType("VRecordType1");
             record4.setField(vfield1.getName(), "coconut");
             record4.setField(liveTag.getName(), Long.valueOf(1));
+            expectEvent(CREATE, record4.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record4 = repository.create(record4);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref3:fig", 2);
             verifyResultCount("v_deref2:fig", 1);
             verifyResultCount("v_deref4:banana", 1);
@@ -544,17 +579,19 @@ public class IndexerTest {
             // remove the live tag from record1
             log.debug("Begin test V7");
             record1.delete(liveTag.getName(), true);
+            expectEvent(UPDATE, record1.getId(), liveTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref1:fig", 0);
 
             // and add the live tag again record1
             log.debug("Begin test V8");
             record1.setField(liveTag.getName(), Long.valueOf(1));
+            expectEvent(UPDATE, record1.getId(), liveTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref1:fig", 1);
 
             // Make second version of record1, assign both versions different tags, and assign these tags also
@@ -562,13 +599,14 @@ public class IndexerTest {
             log.debug("Begin test V9");
             record1.setField(vfield1.getName(), "strawberries");
             record1.setField(previewTag.getName(), Long.valueOf(2));
+            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
             record2.setField(previewTag.getName(), Long.valueOf(1));
+            expectEvent(UPDATE, record2.getId(), previewTag.getId());
             record2 = repository.update(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
             verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(liveTag.getId()), 0);
             verifyResultCount("+v_deref1:strawberries", 1);
@@ -579,14 +617,15 @@ public class IndexerTest {
             // Now do something similar with a 3th version, but first update record2 and then record1
             log.debug("Begin test V10");
             record2.setField(lastTag.getName(), Long.valueOf(1));
+            expectEvent(UPDATE, record2.getId(), lastTag.getId());
             record2 = repository.update(record2);
-            commitIndex();
 
             record1.setField(vfield1.getName(), "kiwi");
             record1.setField(lastTag.getName(), Long.valueOf(3));
+            expectEvent(UPDATE, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(lastTag.getId()), 1);
             verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
             verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId()), 1);
@@ -597,25 +636,28 @@ public class IndexerTest {
             // Perform updates to record3 and check if denorm'ed data in record4 follows
             log.debug("Begin test V11");
             record3.delete(vfield1.getName(), true);
+            expectEvent(UPDATE, record3.getId(), 2L, null, vfield1.getId());
             record3 = repository.update(record3);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref4:banana", 1); // live tag still points to version 1!
 
             log.debug("Begin test V12");
             repository.read(record3Id, Long.valueOf(2)); // check version 2 really exists
             record3.setField(liveTag.getName(), Long.valueOf(2));
+            expectEvent(UPDATE, record3.getId(), liveTag.getId());
             repository.update(record3);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref4:banana", 0);
             verifyResultCount("v_field1:coconut", 1);
 
             // Delete master
             log.debug("Begin test V13");
+            expectEvent(DELETE, record1.getId());
             repository.delete(record1.getId());
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref1:fig", 0);
             verifyResultCount("v_deref2:fig", 0);
             verifyResultCount("v_deref3:fig", 0);
@@ -630,40 +672,43 @@ public class IndexerTest {
             record1.setRecordType("VRecordType1");
             record1.setField(vfield1.getName(), "bicycle");
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(nvLinkField2.getName(), new Link(record1.getId()));
+            expectEvent(CREATE, record2.getId(), nvLinkField2.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
             // A versionless record cannot contain derefed data from a versioned field, since it does
             // not know at what version to look
+            commitIndex();
             verifyResultCount("nv_v_deref:bicycle", 0);
 
             // Now give record2 a version and vtag
             log.debug("Begin test V15");
             record2.setField(vfield1.getName(), "boat");
             record2.setField(liveTag.getName(), 1L);
+            expectEvent(UPDATE, record2.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record2 = repository.update(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_v_deref:bicycle", 1);
 
             // Give record1 some more versions with vtags
             log.debug("Begin test V16");
             record1.setField(vfield1.getName(), "train");
             record1.setField(previewTag.getName(), Long.valueOf(2));
+            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
             record1.setField(vfield1.getName(), "car");
             record1.setField(lastTag.getName(), Long.valueOf(3));
+            expectEvent(UPDATE, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_v_deref:bicycle", 1);
             verifyResultCount("nv_v_deref:train", 0);
             verifyResultCount("nv_v_deref:car", 0);
@@ -672,14 +717,15 @@ public class IndexerTest {
             log.debug("Begin test V17");
             record2.setField(vfield1.getName(), "airplane");
             record2.setField(previewTag.getName(), 2L);
+            expectEvent(UPDATE, record2.getId(), 2L, null, vfield1.getId(), previewTag.getId());
             record2 = repository.update(record2);
-            commitIndex();
 
             record2.setField(vfield1.getName(), "hovercraft");
             record2.setField(lastTag.getName(), 3L);
+            expectEvent(UPDATE, record2.getId(), 3L, null, vfield1.getId(), lastTag.getId());
             record2 = repository.update(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_v_deref:bicycle", 1);
             verifyResultCount("nv_v_deref:train", 1);
             verifyResultCount("nv_v_deref:car", 1);
@@ -695,36 +741,38 @@ public class IndexerTest {
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1");
             record1.setField(nvfield1.getName(), "Brussels");
+            expectEvent(CREATE, record1.getId(), (Long)null, null, nvfield1.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
             record2.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
             Record record3 = repository.newRecord();
             record3.setRecordType("VRecordType1");
             record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
+            expectEvent(CREATE, record3.getId(), (Long)null, null, nvLinkField2.getId());
             record3 = repository.create(record3);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_v_nv_deref:Brussels", 0);
 
             // Give a version to the versionless records
             log.debug("Begin test V19");
             record3.setField(vfield1.getName(), "Ghent");
             record3.setField(liveTag.getName(), 1L);
+            expectEvent(UPDATE, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record3 = repository.update(record3);
-            commitIndex();
 
             record1.setField(vfield1.getName(), "Antwerp");
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("nv_v_nv_deref:Brussels", 1);
         }
 
@@ -738,9 +786,10 @@ public class IndexerTest {
             record1.setRecordType("VRecordType1");
             record1.setField(vStringMvField.getName(), Arrays.asList("Dog", "Cat"));
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vStringMvField.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_string_mv:Dog", 1);
             verifyResultCount("v_string_mv:Cat", 1);
             verifyResultCount("v_string_mv:(Dog Cat)", 1);
@@ -760,13 +809,15 @@ public class IndexerTest {
         // Long type tests
         //
         {
+            log.debug("Begin test V40");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1");
             record1.setField(vLongField.getName(), 123L);
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vLongField.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_long:123", 1);
             verifyResultCount("v_long:[100 TO 150]", 1);
         }
@@ -775,24 +826,28 @@ public class IndexerTest {
         // Datetime type test
         //
         {
+            log.debug("Begin test V50");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1");
             record1.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12.756Z\"", 1);
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12Z\"", 0);
 
             // Test without milliseconds
+            log.debug("Begin test V51");
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(vDateTimeField.getName(), new DateTime(2010, 10, 14, 15, 30, 12, 000, DateTimeZone.UTC));
             record2.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record2.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12Z\"", 1);
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12.000Z\"", 1);
             verifyResultCount("v_datetime:\"2010-10-14T15:30:12.000Z/SECOND\"", 1);
@@ -802,13 +857,15 @@ public class IndexerTest {
         // Date type test
         //
         {
+            log.debug("Begin test V60");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1");
             record1.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vDateField.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_date:\"2020-01-30T00:00:00Z/DAY\"", 1);
             verifyResultCount("v_date:\"2020-01-30T00:00:00.000Z\"", 1);
             verifyResultCount("v_date:\"2020-01-30T00:00:00Z\"", 1);
@@ -816,13 +873,15 @@ public class IndexerTest {
 
             verifyResultCount("v_date:[2020-01-29T00:00:00Z/DAY TO 2020-01-31T00:00:00Z/DAY]", 1);
 
+            log.debug("Begin test V61");
             Record record2 = repository.newRecord();
             record2.setRecordType("VRecordType1");
             record2.setField(vDateField.getName(), new LocalDate(2020, 1, 30));
             record2.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record2.getId(), 1L, null, vDateField.getId(), liveTag.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_date:\"2020-01-30T00:00:00Z/DAY\"", 2);
         }
 
@@ -830,6 +889,7 @@ public class IndexerTest {
         // Blob tests
         //
         {
+            log.debug("Begin test V70");
             Blob blob1 = createBlob("org/lilycms/indexer/test/blob1_msword.doc", "application/msword", "blob1_msword.doc");
             Blob blob2 = createBlob("org/lilycms/indexer/test/blob2.pdf", "application/pdf", "blob2.pdf");
             Blob blob3 = createBlob("org/lilycms/indexer/test/blob3_oowriter.odt", "application/vnd.oasis.opendocument.text", "blob3_oowriter.odt");
@@ -840,14 +900,16 @@ public class IndexerTest {
             record1.setRecordType("VRecordType1");
             record1.setField(vBlobField.getName(), blob1);
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vBlobField.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_blob:sollicitudin", 1);
             verifyResultCount("v_blob:\"Sed pretium pretium lorem\"", 1);
             verifyResultCount("v_blob:lily", 0);
 
             // Multi-value and hierarchical blob field
+            log.debug("Begin test V71");
             HierarchyPath path1 = new HierarchyPath(blob1, blob2);
             HierarchyPath path2 = new HierarchyPath(blob3, blob4);
             List blobs = Arrays.asList(path1, path2);
@@ -856,9 +918,10 @@ public class IndexerTest {
             record2.setRecordType("VRecordType1");
             record2.setField(vBlobMvHierField.getName(), blobs);
             record2.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record2.getId(), 1L, null, vBlobMvHierField.getId(), liveTag.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_blob:blob1", 2);
             verifyResultCount("v_blob:blob2", 1);
             verifyResultCount("v_blob:blob3", 1);
@@ -869,13 +932,15 @@ public class IndexerTest {
         // Test field with explicitly configured formatter
         //
         {
+            log.debug("Begin test V80");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1");
             record1.setField(vDateTimeField.getName(), new DateTime(2058, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("year:2058", 1);
         }
 
@@ -883,13 +948,15 @@ public class IndexerTest {
         // Test field with auto-selected formatter
         //
         {
+            log.debug("Begin test V90");
             Record record1 = repository.newRecord();
             record1.setRecordType("VRecordType1");
             record1.setField(vIntHierField.getName(), new HierarchyPath(8, 16, 24, 32));
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vIntHierField.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("inthierarchy:\"8_16_24_32\"", 1);
         }
 
@@ -897,6 +964,7 @@ public class IndexerTest {
         // Test inheritance of variant properties for link fields
         //
         {
+            log.debug("Begin test V100");
             Map<String, String> varProps = new HashMap<String, String>();
             varProps.put("lang", "nl");
             varProps.put("user", "ali");
@@ -906,8 +974,8 @@ public class IndexerTest {
             record1.setRecordType("VRecordType1");
             record1.setField(vfield1.getName(), "venus");
             record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.create(record1);
-            commitIndex();
 
             RecordId record2Id = repository.getIdGenerator().newRecordId(varProps);
             Record record2 = repository.newRecord(record2Id);
@@ -915,16 +983,19 @@ public class IndexerTest {
             // Notice we make the link to the record without variant properties
             record2.setField(vLinkField1.getName(), new Link(record1.getId().getMaster()));
             record2.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
             record2 = repository.create(record2);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref1:venus", 1);
 
+            log.debug("Begin test V101");
             record1.setField(vfield1.getName(), "mars");
             record1.setField(liveTag.getName(), 2L);
+            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
             record1 = repository.update(record1);
-            commitIndex();
 
+            commitIndex();
             verifyResultCount("v_deref1:mars", 1);
         }
 
@@ -957,6 +1028,8 @@ public class IndexerTest {
 //            record1.setField(vfield1.getName(), "hyperoniem");
 //            record1 = repository.update(record1);
 //        }
+
+        assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }
 
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
@@ -1006,6 +1079,99 @@ public class IndexerTest {
             }
         }
         assertEquals(count, response.getResults().getNumFound());
+    }
+
+    private void expectEvent(RecordEvent.Type type, RecordId recordId, String... updatedFields) {
+        expectEvent(type, recordId, null, null, updatedFields);
+    }
+
+    private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
+            String... updatedFields) {
+
+        RecordEvent event = new RecordEvent();
+
+        event.setType(type);
+
+        for (String updatedField : updatedFields) {
+            event.addUpdatedField(updatedField);
+        }
+
+        if (versionCreated != null)
+            event.setVersionCreated(versionCreated);
+
+        if (versionUpdated != null)
+            event.setVersionUpdated(versionUpdated);
+
+        messageVerifier.setExpectedEvent(recordId, event);
+    }
+
+    private static class MessageVerifier implements RowLogMessageConsumer {
+        private RecordId expectedId;
+        private RecordEvent expectedEvent;
+        private int failures = 0;
+
+        public int getFailures() {
+            return failures;
+        }
+
+        public int getId() {
+            return 201;
+        }
+
+        public void init() {
+            this.expectedId = null;
+            this.expectedEvent = null;
+            this.failures = 0;
+        }
+
+        public void setExpectedEvent(RecordId recordId, RecordEvent recordEvent) {
+            this.expectedId = recordId;
+            this.expectedEvent = recordEvent;
+        }
+
+        public boolean processMessage(RowLogMessage message) {
+            // In case of failures we print out "load" messages, the main junit thread is expected to
+            // test that the failures variable is 0.
+            
+            RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
+            try {
+                RecordEvent event = new RecordEvent(message.getPayload());
+                if (expectedEvent == null) {
+                    failures++;
+                    printSomethingLoad();
+                    System.err.println("Did not expect a message, but got:");
+                    System.err.println(recordId);
+                    System.err.println(event.toJson());
+                } else {
+                    if (!event.equals(expectedEvent) ||
+                            !(recordId.equals(expectedId) || (expectedId == null && expectedEvent.getType() == CREATE))) {
+                        failures++;
+                        printSomethingLoad();
+                        System.err.println("Expected message:");
+                        System.err.println(expectedId);
+                        System.err.println(expectedEvent.toJson());
+                        System.err.println("Received message:");
+                        System.err.println(recordId);
+                        System.err.println(event.toJson());
+                    } else {
+                        log.debug("Received message ok.");
+                    }
+                }
+            } catch (IOException e) {
+                failures++;
+                e.printStackTrace();
+            } finally {
+                expectedId = null;
+                expectedEvent = null;
+            }
+            return true;
+        }
+
+        private void printSomethingLoad() {
+            for (int i = 0; i < 10; i++) {
+                System.err.println("!!");
+            }
+        }
     }
 
 }

@@ -303,9 +303,6 @@ public class HBaseRepository implements Repository {
 			recordEvent.setType(Type.UPDATE);
 			long newVersion = originalRecord.getVersion() == null ? 1 : originalRecord.getVersion() + 1;
 			if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent)) {
-				if (newRecord.getVersion() != null) {
-					recordEvent.setVersionUpdated(newRecord.getVersion());
-				}
 				walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
 				if (!rowLocker.put(put, rowLock)) {
 					throw new RepositoryException("Exception occurred while putting updated record <" + recordId
@@ -395,6 +392,11 @@ public class HBaseRepository implements Repository {
 		// Always set the version on the record. If no fields were changed this
 		// will give the latest version in the repository
 		record.setVersion(version);
+
+        if (versionedFieldsHaveChanged) {
+            recordEvent.setVersionCreated(version);
+        }
+        
         // Clear the list of deleted fields, as this is typically what the user will expect when using the
         // record object for future updates. 
         record.getFieldsToDelete().clear();
@@ -555,6 +557,8 @@ public class HBaseRepository implements Repository {
 				        .toBytes(recordType.getId()));
 				put.add(systemColumnFamilies.get(scope), recordTypeVersionColumnNames.get(scope), version, Bytes
 				        .toBytes(recordType.getVersion()));
+
+			    recordEvent.setVersionUpdated(version);
 
 				walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
 				if (!rowLocker.put(put, rowLock)) {
