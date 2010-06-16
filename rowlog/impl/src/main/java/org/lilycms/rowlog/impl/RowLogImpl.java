@@ -26,11 +26,13 @@ public class RowLogImpl implements RowLog {
 	private final byte[] rowLogColumnFamily;
 	
 	private List<RowLogMessageConsumer> consumers = Collections.synchronizedList(new ArrayList<RowLogMessageConsumer>());
+	private final long lockTimeout;
 	
-	public RowLogImpl(HTable rowTable, byte[] payloadColumnFamily, byte[] rowLogColumnFamily) {
+	public RowLogImpl(HTable rowTable, byte[] payloadColumnFamily, byte[] rowLogColumnFamily, long lockTimeout) {
 		this.rowTable = rowTable;
 		this.payloadColumnFamily = payloadColumnFamily;
 		this.rowLogColumnFamily = rowLogColumnFamily;
+		this.lockTimeout = lockTimeout;
     }
 	
 	public void registerConsumer(RowLogMessageConsumer rowLogMessageConsumer) {
@@ -112,41 +114,24 @@ public class RowLogImpl implements RowLog {
 		}
 	}
 
-	public void messageDone(RowLogMessage message, int consumerId) throws IOException, RowLogException {
-		RowLogShard shard = getShard(); // Fail fast if no shards are registered
-		byte[] rowKey = message.getRowKey();
-		long seqnr = message.getSeqNr();
-		byte[] messageColumn = Bytes.toBytes(seqnr);
-		Get get = new Get(rowKey);
-		get.addColumn(rowLogColumnFamily, messageColumn);
-		Result result = rowTable.get(get);
-		if (!result.isEmpty()) {
-			RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(result.getValue(rowLogColumnFamily, messageColumn));
-			executionState.setState(consumerId, true);
-			if (executionState.allDone()) {
-				removeExecutionState(rowKey, messageColumn);
-			} else {
-				updateExecutionState(rowKey, messageColumn, executionState);
-			}
-		}
-		shard.removeMessage(message, consumerId);
-	}
+	
 
 	public boolean processMessage(RowLogMessage message) throws IOException {
 		byte[] rowKey = message.getRowKey();
 		long seqnr = message.getSeqNr();
-		byte[] messageColumn = Bytes.toBytes(seqnr);
+		byte[] qualifier = Bytes.toBytes(seqnr);
 			Get get = new Get(rowKey);
-			get.addColumn(rowLogColumnFamily, messageColumn);
+			get.addColumn(rowLogColumnFamily, qualifier);
 			Result result = rowTable.get(get);
-			RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(result.getValue(rowLogColumnFamily, messageColumn));
+			byte[] previousValue = result.getValue(rowLogColumnFamily, qualifier);
+			RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(previousValue);
 			
 			boolean allDone = processMessage(message, executionState);
 			
 			if (allDone) {
-				removeExecutionState(rowKey, messageColumn);
+				removeExecutionStateAndPayload(rowKey, qualifier);
 			} else {
-				updateExecutionState(rowKey, messageColumn, executionState);
+				updateExecutionState(rowKey, qualifier, executionState, previousValue);
 			}
 			return allDone;
 	}
@@ -173,16 +158,133 @@ public class RowLogImpl implements RowLog {
 		}
 		return allDone;
 	}
+	
+	public byte[] lock(RowLogMessage message, int consumerId) throws IOException {
+		return lockMessage(message, consumerId, 0);
+	}
+	
+	private byte[] lockMessage(RowLogMessage message, int consumerId, int count) throws IOException {
+		if (count >= 10) {
+			return null;
+		}
+		byte[] rowKey = message.getRowKey();
+		long seqnr = message.getSeqNr();
+		byte[] qualifier = Bytes.toBytes(seqnr);
+		Get get = new Get(rowKey);
+		get.addColumn(rowLogColumnFamily, qualifier);
+		Result result = rowTable.get(get);
+		if (result.isEmpty()) return null;
+		byte[] previousValue = result.getValue(rowLogColumnFamily, qualifier);
+		RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(previousValue);
+		byte[] previousLock = executionState.getLock(consumerId);
+		long now = System.currentTimeMillis();
+		if (previousLock == null) {
+			return putLock(message, consumerId, rowKey, qualifier, previousValue, executionState, now, count);
+		} else {
+			long previousTimestamp = Bytes.toLong(previousLock);
+			if (previousTimestamp + lockTimeout < now) {
+				return putLock(message, consumerId, rowKey, qualifier, previousValue, executionState, now, count);
+			} else {
+				return null;
+			}
+		}
+	}
 
-	private void updateExecutionState(byte[] rowKey, byte[] messageColumn, RowLogMessageConsumerExecutionState executionState) throws IOException {
+	private byte[] putLock(RowLogMessage message, int consumerId, byte[] rowKey, byte[] qualifier, byte[] previousValue,
+            RowLogMessageConsumerExecutionState executionState, long now, int count) throws IOException {
+	    byte[] lock = Bytes.toBytes(now);
+		executionState.setLock(consumerId, lock);
 	    Put put = new Put(rowKey);
-	    put.add(rowLogColumnFamily, messageColumn, executionState.toBytes());
-	    rowTable.put(put);
+	    put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
+	    if (!rowTable.checkAndPut(rowKey, rowLogColumnFamily, qualifier, previousValue, put)) {
+	    	return lockMessage(message, consumerId, count+1); // Retry
+	    } else {
+	    	return lock;
+	    }
+    }
+	
+	public boolean unLock(RowLogMessage message, int consumerId, byte[] lock) throws IOException {
+		byte[] rowKey = message.getRowKey();
+		long seqnr = message.getSeqNr();
+		byte[] qualifier = Bytes.toBytes(seqnr);
+		Get get = new Get(rowKey);
+		get.addColumn(rowLogColumnFamily, qualifier);
+		Result result = rowTable.get(get);
+		if (result.isEmpty()) return false; // The execution state does not exist anymore, thus no lock to unlock
+		
+		byte[] previousValue = result.getValue(rowLogColumnFamily, qualifier);
+		RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(previousValue);
+		byte[] previousLock = executionState.getLock(consumerId);
+		if (!Bytes.equals(lock, previousLock)) return false; // The lock was lost  
+		
+		executionState.setLock(consumerId, null);
+		Put put = new Put(rowKey);
+		put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
+		return rowTable.checkAndPut(rowKey, rowLogColumnFamily, qualifier, previousValue, put); 
+	}
+	
+	public boolean isLocked(RowLogMessage message, int consumerId) throws IOException {
+		byte[] rowKey = message.getRowKey();
+		long seqnr = message.getSeqNr();
+		byte[] qualifier = Bytes.toBytes(seqnr);
+		Get get = new Get(rowKey);
+		get.addColumn(rowLogColumnFamily, qualifier);
+		Result result = rowTable.get(get);
+		if (result.isEmpty()) return false;
+		
+		RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(result.getValue(rowLogColumnFamily, qualifier));
+		byte[] lock = executionState.getLock(consumerId);
+		if (lock == null) return false;
+	
+		return (Bytes.toLong(lock) + lockTimeout > System.currentTimeMillis());
+	}
+	
+	public boolean messageDone(RowLogMessage message, int consumerId, byte[] lock) throws IOException, RowLogException {
+		return messageDone(message, consumerId, lock, 0);
+	}
+	
+	private boolean messageDone(RowLogMessage message, int consumerId, byte[] lock, int count) throws IOException, RowLogException {
+		if (count >= 10) {
+			return false;
+		}
+		RowLogShard shard = getShard(); // Fail fast if no shards are registered
+		byte[] rowKey = message.getRowKey();
+		long seqnr = message.getSeqNr();
+		byte[] qualifier = Bytes.toBytes(seqnr);
+		Get get = new Get(rowKey);
+		get.addColumn(rowLogColumnFamily, qualifier);
+		Result result = rowTable.get(get);
+		if (!result.isEmpty()) {
+			byte[] previousValue = result.getValue(rowLogColumnFamily, qualifier);
+			RowLogMessageConsumerExecutionState executionState = RowLogMessageConsumerExecutionState.fromBytes(previousValue);
+			if (!Bytes.equals(lock,executionState.getLock(consumerId))) {
+				return false; // Not owning the lock
+			}
+			executionState.setState(consumerId, true);
+			executionState.setLock(consumerId, null);
+			if (executionState.allDone()) {
+				removeExecutionStateAndPayload(rowKey, qualifier);
+			} else {
+				if (!updateExecutionState(rowKey, qualifier, executionState, previousValue)) {
+					return messageDone(message, consumerId, lock, count+1);
+				}
+			}
+		}
+		shard.removeMessage(message, consumerId);
+		return true;
+	}
+
+	private boolean updateExecutionState(byte[] rowKey, byte[] qualifier, RowLogMessageConsumerExecutionState executionState, byte[] previousValue) throws IOException {
+	    Put put = new Put(rowKey);
+	    put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
+	    return rowTable.checkAndPut(rowKey, rowLogColumnFamily, qualifier, previousValue, put);
     }
 
-	private void removeExecutionState(byte[] rowKey, byte[] messageColumn) throws IOException {
+	private void removeExecutionStateAndPayload(byte[] rowKey, byte[] qualifier) throws IOException {
+		// TODO use checkAndDelete
 	    Delete delete = new Delete(rowKey); 
-	    delete.deleteColumn(rowLogColumnFamily, messageColumn);
+	    delete.deleteColumn(rowLogColumnFamily, qualifier);
+	    delete.deleteColumn(payloadColumnFamily, qualifier);
 	    rowTable.delete(delete);
     }
 

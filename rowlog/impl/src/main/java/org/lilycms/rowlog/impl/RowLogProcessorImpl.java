@@ -67,8 +67,13 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 	                            message = shard.next(consumerId);
 	                            if (stopRequested) break; // Stop fast
 	                            if (message != null) {
-	                            	if (consumer.processMessage(message)) {
-	                            		rowLog.messageDone(message, consumerId);
+	                            	byte[] lock = rowLog.lock(message, consumerId);
+	                            	if (lock != null) {
+	                            		if (consumer.processMessage(message)) {
+	                            			rowLog.messageDone(message, consumerId, lock);
+	                            		} else {
+	                            			rowLog.unLock(message, consumerId, lock);
+	                            		}
 	                            	}
 	                            }
                             } catch (IOException e) {

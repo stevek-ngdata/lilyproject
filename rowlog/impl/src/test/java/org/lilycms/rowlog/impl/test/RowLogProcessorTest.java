@@ -1,13 +1,12 @@
 package org.lilycms.rowlog.impl.test;
 
-import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -37,7 +36,7 @@ public class RowLogProcessorTest {
 
 	@Before
 	public void setUp() throws Exception {
-		control = EasyMock.createControl();
+		control = createControl();
 
 		int consumerId = 1;
 		RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
@@ -57,9 +56,8 @@ public class RowLogProcessorTest {
 		
 		consumer.processMessage(message);
 		expectLastCall().andReturn(Boolean.TRUE).anyTimes();
-		
-		rowLog.messageDone(message, consumerId);
-		expectLastCall().anyTimes();
+		rowLog.messageDone(eq(message), eq(consumerId), isA(byte[].class));
+		expectLastCall().andReturn(Boolean.TRUE).anyTimes();
 	}
 
 	@After

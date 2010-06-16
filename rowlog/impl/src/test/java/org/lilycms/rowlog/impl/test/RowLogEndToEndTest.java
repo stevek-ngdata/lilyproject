@@ -28,7 +28,7 @@ import org.lilycms.testfw.TestHelper;
 public class RowLogEndToEndTest {
 	private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 	private static RowLog rowLog;
-	private static TestingMessageConsumer consumer;
+	private static TestMessageConsumer consumer;
 	private static RowLogShard shard;
 	private static RowLogProcessor processor;
 
@@ -38,9 +38,9 @@ public class RowLogEndToEndTest {
         TEST_UTIL.startMiniCluster(1);
         Configuration configuration = TEST_UTIL.getConfiguration();
 		HTable rowTable = RowLogTableUtil.getRowTable(configuration);
-        rowLog = new RowLogImpl(rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.ROWLOG_COLUMN_FAMILY);
+        rowLog = new RowLogImpl(rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.ROWLOG_COLUMN_FAMILY, 60000L);
         shard = new RowLogShardImpl("EndToEndShard", rowLog, configuration);
-        consumer = new TestingMessageConsumer(0);
+        consumer = new TestMessageConsumer(0);
         processor = new RowLogProcessorImpl(rowLog, shard);
         rowLog.registerConsumer(consumer);
         rowLog.registerShard(shard);
@@ -89,9 +89,9 @@ public class RowLogEndToEndTest {
 	@Test
 	public void testMultipleMessagesMultipleRows() throws Exception {
 		RowLogMessage message; 
-		consumer.expectMessages(100);
-		for (long seqnr = 0L; seqnr < 10; seqnr++) {
-			for (int rownr = 0; rownr < 10; rownr++) {
+		consumer.expectMessages(25);
+		for (long seqnr = 0L; seqnr < 5; seqnr++) {
+			for (int rownr = 0; rownr < 5; rownr++) {
 				byte[] data = Bytes.toBytes(rownr);
 				data = Bytes.add(data, Bytes.toBytes(seqnr));
 				message = rowLog.putMessage(Bytes.toBytes("row"+rownr), data, null, null);
@@ -107,13 +107,13 @@ public class RowLogEndToEndTest {
 	
 	@Test
 	public void testMultipleConsumers() throws Exception {
-		TestingMessageConsumer consumer2 = new TestingMessageConsumer(1);
+		TestMessageConsumer consumer2 = new TestMessageConsumer(1);
 		rowLog.registerConsumer(consumer2);
-		consumer.expectMessages(100);
-		consumer2.expectMessages(100);
+		consumer.expectMessages(10);
+		consumer2.expectMessages(10);
 		RowLogMessage message; 
-		for (long seqnr = 0L; seqnr < 10; seqnr++) {
-			for (int rownr = 0; rownr < 10; rownr++) {
+		for (long seqnr = 0L; seqnr < 2; seqnr++) {
+			for (int rownr = 0; rownr < 5; rownr++) {
 				byte[] data = Bytes.toBytes(rownr);
 				data = Bytes.add(data, Bytes.toBytes(seqnr));
 				message = rowLog.putMessage(Bytes.toBytes("row"+rownr), data, null, null);
@@ -132,14 +132,14 @@ public class RowLogEndToEndTest {
 	}
 
 	
-	private static class TestingMessageConsumer implements RowLogMessageConsumer {
+	private static class TestMessageConsumer implements RowLogMessageConsumer {
 		
 		private List<RowLogMessage> expectedMessages = Collections.synchronizedList(new ArrayList<RowLogMessage>());
 		private int count = 0;
 		private int numberOfMessagesToBeExpected = 0;
 		private final int id;
 		
-		public TestingMessageConsumer(int id) {
+		public TestMessageConsumer(int id) {
 			this.id = id;
         }
 		

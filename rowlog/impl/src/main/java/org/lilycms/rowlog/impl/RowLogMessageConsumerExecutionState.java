@@ -32,8 +32,8 @@ public class RowLogMessageConsumerExecutionState {
 		return state;
 	}
 	
-	public void setLock(int consumerId, byte[] flag) {
-		locks.put(consumerId, flag);
+	public void setLock(int consumerId, byte[] lock) {
+		locks.put(consumerId, lock);
 	}
 	
 	public byte[] getLock(int consumerId) {

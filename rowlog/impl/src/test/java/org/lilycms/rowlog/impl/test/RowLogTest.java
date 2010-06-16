@@ -4,9 +4,7 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.classextension.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -51,7 +49,7 @@ public class RowLogTest {
 
 	@Before
 	public void setUp() throws Exception {
-		rowLog = new RowLogImpl(rowTable, payloadColumnFamily, rowLogColumnFamily);
+		rowLog = new RowLogImpl(rowTable, payloadColumnFamily, rowLogColumnFamily, 60000L);
 	}
 
 	@After
@@ -98,12 +96,13 @@ public class RowLogTest {
 		} catch (RowLogException expected) {
 		}
 		
+		RowLogMessage message = new RowLogMessageImpl(Bytes.toBytes("id"), Bytes.toBytes("row1"), 0L, null, rowLog);
 		try {
-			RowLogMessage message = new RowLogMessageImpl(Bytes.toBytes("id"), Bytes.toBytes("row1"), 0L, null, rowLog);
-			rowLog.messageDone(message , 1);
+			rowLog.messageDone(message , 1, null);
 			fail("Expected a MessageQueueException since no shards are registered");
 		} catch (RowLogException expected) {
 		}
+		// Cleanup
 		
 		control.verify();
 	}
@@ -114,18 +113,135 @@ public class RowLogTest {
 		consumer.getId();
 		expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
 		
-		RowLogMessageImpl message = new RowLogMessageImpl(Bytes.toBytes("id1"), Bytes.toBytes("row1"), 0L, null, rowLog);
 
 		int consumerId = 1;
 		RowLogShard shard = control.createMock(RowLogShard.class);
+		shard.putMessage(isA(RowLogMessage.class), eq(1));
 		
 		shard.removeMessage(isA(RowLogMessage.class), eq(consumerId));
 		
 		control.replay();
 		rowLog.registerConsumer(consumer);
 		rowLog.registerShard(shard);
-		rowLog.messageDone(message, consumerId);
+		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
+
+		byte[] lock = rowLog.lock(message, consumerId);
+		rowLog.messageDone(message, consumerId, lock);
+		assertFalse(rowLog.isLocked(message, consumerId));
+		control.verify();
+	}
+	
+	@Test
+	public void testLockMessage() throws Exception {
+		RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
+		consumer.getId();
+		expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
+		RowLogShard shard = control.createMock(RowLogShard.class);
+		shard.putMessage(isA(RowLogMessage.class), eq(1));
+		
+		int consumerId = 1;
+		
+		control.replay();
+		rowLog.registerConsumer(consumer);
+		rowLog.registerShard(shard);
+		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
+		
+		assertNotNull(rowLog.lock(message, consumerId));
+		assertTrue(rowLog.isLocked(message, consumerId));
+		assertNull(rowLog.lock(message, consumerId));
+		control.verify();
+	}
+	
+	@Test
+	public void testUnlockMessage() throws Exception {
+		RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
+		consumer.getId();
+		expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
+		RowLogShard shard = control.createMock(RowLogShard.class);
+		shard.putMessage(isA(RowLogMessage.class), eq(1));
+		
+		int consumerId = 1;
+		
+		control.replay();
+		rowLog.registerConsumer(consumer);
+		rowLog.registerShard(shard);
+		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
+		
+		byte[] lock = rowLog.lock(message, consumerId);
+		assertNotNull(lock);
+		assertTrue(rowLog.unLock(message, consumerId, lock));
+		assertFalse(rowLog.isLocked(message, consumerId));
+		byte[] lock2 = rowLog.lock(message, consumerId);
+		assertNotNull(lock2);
+		control.verify();
+		//Cleanup 
+		rowLog.unLock(message, consumerId, lock2);
+	}
+	
+	@Test
+	public void testLockTimeout() throws Exception {
+		rowLog = new RowLogImpl(rowTable, payloadColumnFamily, rowLogColumnFamily, 1L);
+		
+		RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
+		consumer.getId();
+		expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
+		RowLogShard shard = control.createMock(RowLogShard.class);
+		shard.putMessage(isA(RowLogMessage.class), eq(1));
+		
+		int consumerId = 1;
+		
+		control.replay();
+		rowLog.registerConsumer(consumer);
+		rowLog.registerShard(shard);
+		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
+		
+		byte[] lock = rowLog.lock(message, consumerId);
+		assertNotNull(lock);
+		Thread.sleep(10L);
+		assertFalse(rowLog.isLocked(message, consumerId));
+		byte[] lock2 = rowLog.lock(message, consumerId);
+		assertNotNull(lock2);
+		
+		assertFalse(rowLog.unLock(message, consumerId, lock));
+		control.verify();
+		//Cleanup
+		rowLog.unLock(message, consumerId, lock2);
+	}
+	
+	@Test
+	public void testLockingMultipleConsumers() throws Exception {
+		RowLogMessageConsumer consumer1 = control.createMock(RowLogMessageConsumer.class);
+		consumer1.getId();
+		expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
+		RowLogMessageConsumer consumer2 = control.createMock(RowLogMessageConsumer.class);
+		consumer2.getId();
+		expectLastCall().andReturn(Integer.valueOf(2)).anyTimes();
+
+		RowLogShard shard = control.createMock(RowLogShard.class);
+		shard.putMessage(isA(RowLogMessage.class), eq(1));
+		shard.putMessage(isA(RowLogMessage.class), eq(2));
+		shard.removeMessage(isA(RowLogMessage.class), eq(2));
+		
+		
+		control.replay();
+		rowLog.registerConsumer(consumer1);
+		rowLog.registerConsumer(consumer2);
+		rowLog.registerShard(shard);
+		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
+		
+		byte[] lock = rowLog.lock(message, 1);
+		assertNotNull(lock);
+		assertFalse(rowLog.isLocked(message, 2));
+		assertTrue(rowLog.unLock(message, 1, lock));
+		assertFalse(rowLog.isLocked(message, 1));
+		
+		byte[] lock2 = rowLog.lock(message, 2);
+		assertNotNull(lock2);
+		rowLog.messageDone(message, 2, lock2);
+		assertFalse(rowLog.isLocked(message, 2));
 		
 		control.verify();
+		//Cleanup 
+		rowLog.unLock(message, 1, lock2);
 	}
 }

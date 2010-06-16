@@ -21,8 +21,9 @@ public class HBaseTableUtil {
 	public static final byte[] VERSIONED_COLUMN_FAMILY = Bytes.toBytes("VCF");
 	public static final byte[] VERSIONED_MUTABLE_COLUMN_FAMILY = Bytes.toBytes("VMCF");
 
-	public static final byte[] PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("PAYLOADCF");
+	public static final byte[] WAL_PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("WPLCF");
 	public static final byte[] WAL_COLUMN_FAMILY = Bytes.toBytes("WALCF");
+	public static final byte[] MQ_PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("MQPLCF");
 	public static final byte[] MQ_COLUMN_FAMILY = Bytes.toBytes("MQCF");
 
 	public static HTable getRecordTable(Configuration configuration) throws IOException {
@@ -37,8 +38,9 @@ public class HBaseTableUtil {
 			tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_COLUMN_FAMILY));
 			tableDescriptor.addFamily(new HColumnDescriptor(VERSIONED_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
 			tableDescriptor.addFamily(new HColumnDescriptor(VERSIONED_MUTABLE_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-			tableDescriptor.addFamily(new HColumnDescriptor(PAYLOAD_COLUMN_FAMILY));
+			tableDescriptor.addFamily(new HColumnDescriptor(WAL_PAYLOAD_COLUMN_FAMILY));
 			tableDescriptor.addFamily(new HColumnDescriptor(WAL_COLUMN_FAMILY));
+			tableDescriptor.addFamily(new HColumnDescriptor(MQ_PAYLOAD_COLUMN_FAMILY));
 			tableDescriptor.addFamily(new HColumnDescriptor(MQ_COLUMN_FAMILY));
 			admin.createTable(tableDescriptor);
 			recordTable = new HTable(configuration, RECORD_TABLE);
