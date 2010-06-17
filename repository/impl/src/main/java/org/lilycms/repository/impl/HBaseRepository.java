@@ -152,7 +152,7 @@ public class HBaseRepository implements Repository {
 	private void initializeMessageQueue(Configuration configuration) throws IOException {
 		messageQueue = new RowLogImpl(recordTable, HBaseTableUtil.MQ_PAYLOAD_COLUMN_FAMILY,
 		        HBaseTableUtil.MQ_COLUMN_FAMILY, 10000L); 
-		messageQueueShard = new RowLogShardImpl("MQS1", messageQueue, configuration);
+		messageQueueShard = new RowLogShardImpl("MQS1", configuration, messageQueue);
 		messageQueue.registerShard(messageQueueShard);
 		messageQueue.registerConsumer(new DevNull());
 	}
@@ -160,7 +160,7 @@ public class HBaseRepository implements Repository {
 	private void initializeWal(Configuration configuration) throws IOException {
 		wal = new RowLogImpl(recordTable, HBaseTableUtil.WAL_PAYLOAD_COLUMN_FAMILY, HBaseTableUtil.WAL_COLUMN_FAMILY, 10000L);
 		// Work with only one shard for now
-		RowLogShard walShard = new RowLogShardImpl("WS1", wal, configuration);
+		RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal);
 		wal.registerShard(walShard);
 		wal.registerConsumer(new MessageQueueFeeder(messageQueue));
 	}
@@ -252,7 +252,11 @@ public class HBaseRepository implements Repository {
 		try {
 			customRowLock = rowLocker.lockRow(rowId);
 			if (customRowLock != null) {
-				wal.processMessage(walMessage);
+				try {
+	                wal.processMessage(walMessage);
+                } catch (RowLogException e) {
+	                // Processing the message failed, it will be retried later
+                }
 			}
 		} catch (IOException e) {
 			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table",
@@ -310,7 +314,11 @@ public class HBaseRepository implements Repository {
 				}
 
 				if (walMessage != null) {
-					wal.processMessage(walMessage);
+					try {
+						wal.processMessage(walMessage);
+					} catch (RowLogException e) {
+						// Processing the message failed, it will be retried later.
+					}
 				}
 			}
 		} catch (RowLogException e) {
@@ -567,7 +575,11 @@ public class HBaseRepository implements Repository {
 				}
 				newRecord.setRecordType(scope, recordType.getId(), recordType.getVersion());
 				if (walMessage != null) {
-					wal.processMessage(walMessage);
+					try {
+						wal.processMessage(walMessage);
+					} catch (RowLogException e) {
+						// Processing the message failed, it will be retried later
+					}
 				}
 			}
 		} catch (RowLogException e) {

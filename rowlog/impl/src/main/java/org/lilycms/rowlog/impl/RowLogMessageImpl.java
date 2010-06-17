@@ -1,9 +1,9 @@
 package org.lilycms.rowlog.impl;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import org.lilycms.rowlog.api.RowLog;
+import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
 
 public class RowLogMessageImpl implements RowLogMessage {
@@ -11,15 +11,15 @@ public class RowLogMessageImpl implements RowLogMessage {
 	private final byte[] rowKey;
 	private final long seqnr;
 	private final byte[] data;
-	private final RowLog rowLog;
 	private final byte[] id;
+    private final RowLog rowLog;
 
 	public RowLogMessageImpl(byte[] id, byte[] rowKey, long seqnr, byte[] data, RowLog rowLog) {
 		this.id = id;
 		this.rowKey = rowKey;
 		this.seqnr = seqnr;
 		this.data = data;
-		this.rowLog = rowLog;
+        this.rowLog = rowLog;
     }
 	
 	public byte[] getId() {
@@ -30,7 +30,7 @@ public class RowLogMessageImpl implements RowLogMessage {
 	    return data;
     }
 
-	public byte[] getPayload() throws IOException {
+	public byte[] getPayload() throws RowLogException {
 		return rowLog.getPayload(rowKey, seqnr);
     }
 

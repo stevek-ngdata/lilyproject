@@ -39,7 +39,7 @@ public class RowLogEndToEndTest {
         Configuration configuration = TEST_UTIL.getConfiguration();
 		HTable rowTable = RowLogTableUtil.getRowTable(configuration);
         rowLog = new RowLogImpl(rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.ROWLOG_COLUMN_FAMILY, 60000L);
-        shard = new RowLogShardImpl("EndToEndShard", rowLog, configuration);
+        shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog);
         consumer = new TestMessageConsumer(0);
         processor = new RowLogProcessorImpl(rowLog, shard);
         rowLog.registerConsumer(consumer);

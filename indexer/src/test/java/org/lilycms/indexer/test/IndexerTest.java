@@ -3,6 +3,7 @@ package org.lilycms.indexer.test;
 import static org.junit.Assert.assertEquals;
 
 import org.lilycms.repoutil.RecordEvent;
+import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogMessageConsumer;
 
@@ -1157,6 +1158,9 @@ public class IndexerTest {
                         log.debug("Received message ok.");
                     }
                 }
+            } catch (RowLogException e) {
+                failures++;
+                e.printStackTrace();
             } catch (IOException e) {
                 failures++;
                 e.printStackTrace();

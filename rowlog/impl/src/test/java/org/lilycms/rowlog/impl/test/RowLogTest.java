@@ -125,9 +125,9 @@ public class RowLogTest {
 		rowLog.registerShard(shard);
 		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
 
-		byte[] lock = rowLog.lock(message, consumerId);
+		byte[] lock = rowLog.lockMessage(message, consumerId);
 		rowLog.messageDone(message, consumerId, lock);
-		assertFalse(rowLog.isLocked(message, consumerId));
+		assertFalse(rowLog.isMessageLocked(message, consumerId));
 		control.verify();
 	}
 	
@@ -146,9 +146,9 @@ public class RowLogTest {
 		rowLog.registerShard(shard);
 		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
 		
-		assertNotNull(rowLog.lock(message, consumerId));
-		assertTrue(rowLog.isLocked(message, consumerId));
-		assertNull(rowLog.lock(message, consumerId));
+		assertNotNull(rowLog.lockMessage(message, consumerId));
+		assertTrue(rowLog.isMessageLocked(message, consumerId));
+		assertNull(rowLog.lockMessage(message, consumerId));
 		control.verify();
 	}
 	
@@ -167,15 +167,15 @@ public class RowLogTest {
 		rowLog.registerShard(shard);
 		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
 		
-		byte[] lock = rowLog.lock(message, consumerId);
+		byte[] lock = rowLog.lockMessage(message, consumerId);
 		assertNotNull(lock);
-		assertTrue(rowLog.unLock(message, consumerId, lock));
-		assertFalse(rowLog.isLocked(message, consumerId));
-		byte[] lock2 = rowLog.lock(message, consumerId);
+		assertTrue(rowLog.unlockMessage(message, consumerId, lock));
+		assertFalse(rowLog.isMessageLocked(message, consumerId));
+		byte[] lock2 = rowLog.lockMessage(message, consumerId);
 		assertNotNull(lock2);
 		control.verify();
 		//Cleanup 
-		rowLog.unLock(message, consumerId, lock2);
+		rowLog.unlockMessage(message, consumerId, lock2);
 	}
 	
 	@Test
@@ -195,17 +195,17 @@ public class RowLogTest {
 		rowLog.registerShard(shard);
 		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
 		
-		byte[] lock = rowLog.lock(message, consumerId);
+		byte[] lock = rowLog.lockMessage(message, consumerId);
 		assertNotNull(lock);
 		Thread.sleep(10L);
-		assertFalse(rowLog.isLocked(message, consumerId));
-		byte[] lock2 = rowLog.lock(message, consumerId);
+		assertFalse(rowLog.isMessageLocked(message, consumerId));
+		byte[] lock2 = rowLog.lockMessage(message, consumerId);
 		assertNotNull(lock2);
 		
-		assertFalse(rowLog.unLock(message, consumerId, lock));
+		assertFalse(rowLog.unlockMessage(message, consumerId, lock));
 		control.verify();
 		//Cleanup
-		rowLog.unLock(message, consumerId, lock2);
+		rowLog.unlockMessage(message, consumerId, lock2);
 	}
 	
 	@Test
@@ -229,19 +229,19 @@ public class RowLogTest {
 		rowLog.registerShard(shard);
 		RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
 		
-		byte[] lock = rowLog.lock(message, 1);
+		byte[] lock = rowLog.lockMessage(message, 1);
 		assertNotNull(lock);
-		assertFalse(rowLog.isLocked(message, 2));
-		assertTrue(rowLog.unLock(message, 1, lock));
-		assertFalse(rowLog.isLocked(message, 1));
+		assertFalse(rowLog.isMessageLocked(message, 2));
+		assertTrue(rowLog.unlockMessage(message, 1, lock));
+		assertFalse(rowLog.isMessageLocked(message, 1));
 		
-		byte[] lock2 = rowLog.lock(message, 2);
+		byte[] lock2 = rowLog.lockMessage(message, 2);
 		assertNotNull(lock2);
 		rowLog.messageDone(message, 2, lock2);
-		assertFalse(rowLog.isLocked(message, 2));
+		assertFalse(rowLog.isMessageLocked(message, 2));
 		
 		control.verify();
 		//Cleanup 
-		rowLog.unLock(message, 1, lock2);
+		rowLog.unlockMessage(message, 1, lock2);
 	}
 }

@@ -24,7 +24,7 @@ public class RowLogShardTest {
 	private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 	private static RowLogShardImpl shard;
 	private static IMocksControl control;
-	private static RowLog rowLog;
+    private static RowLog rowLog;
     
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -32,7 +32,7 @@ public class RowLogShardTest {
 		TEST_UTIL.startMiniCluster(1);
 		control = createControl();
 		rowLog = control.createMock(RowLog.class);
-		shard = new RowLogShardImpl("TestShard", rowLog, TEST_UTIL.getConfiguration());
+		shard = new RowLogShardImpl("TestShard", TEST_UTIL.getConfiguration(), rowLog);
 	}
 
 	@AfterClass

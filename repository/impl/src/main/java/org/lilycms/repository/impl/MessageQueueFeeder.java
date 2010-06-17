@@ -1,7 +1,5 @@
 package org.lilycms.repository.impl;
 
-import java.io.IOException;
-
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
@@ -23,8 +21,6 @@ public class MessageQueueFeeder implements RowLogMessageConsumer {
 	    try {
 	        messageQueue.putMessage(message.getRowKey(), message.getData(), message.getPayload(), null);
 	        return true;
-	    } catch (IOException e) {
-	    	return false; //TODO exception handling
         } catch (RowLogException e) {
 	        return false;
         }

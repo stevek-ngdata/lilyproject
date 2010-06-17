@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.client.RowLock;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.rowlog.api.RowLog;
+import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.util.io.Closer;
@@ -25,11 +26,11 @@ public class RowLogShardImpl implements RowLogShard {
 	private static final byte[] MESSAGES_CF = Bytes.toBytes("MESSAGES");
 	private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("MESSAGE");
 	private HTable table;
-	private final RowLog rowLog;
+    private final RowLog rowLog;
 
-	public RowLogShardImpl(String id, RowLog rowLog, Configuration configuration) throws IOException {
+	public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog) throws IOException {
 		this.rowLog = rowLog;
-		try {
+        try {
 			table = new HTable(configuration, id);
         } catch (TableNotFoundException e) {
             HBaseAdmin admin = new HBaseAdmin(configuration);
@@ -40,7 +41,7 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
 	
-	public void putMessage(RowLogMessage message, int consumerId) throws IOException {
+	public void putMessage(RowLogMessage message, int consumerId) throws RowLogException {
 		byte[] rowKey = createRowKey(message.getId(), consumerId);
 		
 		RowLock rowLock = null;
@@ -49,16 +50,22 @@ public class RowLogShardImpl implements RowLogShard {
 			Put put = new Put(rowKey, rowLock);
 			put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
 			table.put(put);
+		} catch (IOException e) {
+			throw new RowLogException("Failed to put message on RowLogShard", e);
 		} finally {
 			if (rowLock != null) {
-				table.unlockRow(rowLock);
+				try {
+					table.unlockRow(rowLock);
+				} catch (IOException e) {
+					// Ignore, the lock will timeout eventually
+				}
 			}
 		}
 	}
 	
 	
 
-	public void removeMessage(RowLogMessage message, int consumerId) throws IOException {
+	public void removeMessage(RowLogMessage message, int consumerId) throws RowLogException {
 		byte[] rowKey = createRowKey(message.getId(), consumerId);
 		
 		RowLock rowLock = null;
@@ -66,14 +73,20 @@ public class RowLogShardImpl implements RowLogShard {
 			rowLock = table.lockRow(rowKey);
 			Delete delete = new Delete(rowKey, Long.MAX_VALUE, rowLock);
 			table.delete(delete);
+		} catch (IOException e) {
+			throw new RowLogException("Failed to remove message from RowLogShard", e);
 		} finally {
 			if (rowLock != null) {
-				table.unlockRow(rowLock);
+				try {
+					table.unlockRow(rowLock);
+				} catch (IOException e) {
+					// Ignore, the lock will timeout eventually
+				}
 			}
 		}
 	}
 
-	public RowLogMessage next(int consumerId) throws IOException {
+	public RowLogMessage next(int consumerId) throws RowLogException {
 		Scan scan = new Scan(Bytes.toBytes(consumerId));
 		scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
         ResultScanner scanner = null;
@@ -89,6 +102,8 @@ public class RowLogShardImpl implements RowLogShard {
             byte[] value = next.getValue(MESSAGES_CF, MESSAGE_COLUMN);
             byte[] messageId = Bytes.tail(rowKey, rowKey.length - Bytes.SIZEOF_INT);
             return decodeMessage(messageId, value);
+        } catch (IOException e) {
+        	throw new RowLogException("Failed to fetch next message from RowLogShard", e);
         } finally {
             Closer.close(scanner);
         }

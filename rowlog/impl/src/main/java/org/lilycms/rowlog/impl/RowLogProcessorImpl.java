@@ -1,7 +1,5 @@
 package org.lilycms.rowlog.impl;
 
-import java.io.IOException;
-
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
@@ -67,21 +65,17 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 	                            message = shard.next(consumerId);
 	                            if (stopRequested) break; // Stop fast
 	                            if (message != null) {
-	                            	byte[] lock = rowLog.lock(message, consumerId);
+	                            	byte[] lock = rowLog.lockMessage(message, consumerId);
 	                            	if (lock != null) {
 	                            		if (consumer.processMessage(message)) {
 	                            			rowLog.messageDone(message, consumerId, lock);
 	                            		} else {
-	                            			rowLog.unLock(message, consumerId, lock);
+	                            			rowLog.unlockMessage(message, consumerId, lock);
 	                            		}
 	                            	}
 	                            }
-                            } catch (IOException e) {
-	                            // TODO Auto-generated catch block
-	                            e.printStackTrace();
                             } catch (RowLogException e) {
-	                            // TODO Auto-generated catch block
-	                            e.printStackTrace();
+	                            // The message will be retried later
                             }
 	            }
 				// TODO this is a temporary (but mostly senseless) fix to slow down the
