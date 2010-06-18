@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -34,7 +35,11 @@ public class RowLockerTest {
 		HBaseAdmin admin = new HBaseAdmin(HBASE_PROXY.getConf());
 		HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
 		tableDescriptor.addFamily(new HColumnDescriptor(family));
-		admin.createTable(tableDescriptor);
+        try {
+		    admin.createTable(tableDescriptor);
+        } catch (TableExistsException e) {
+            // ok, from previous testcase run against external HBase
+        }
 		table = new HTable(HBASE_PROXY.getConf(), tableName);
 
 	}
