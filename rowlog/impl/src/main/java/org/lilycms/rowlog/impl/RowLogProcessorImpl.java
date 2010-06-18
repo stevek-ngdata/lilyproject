@@ -96,7 +96,7 @@ public class RowLogProcessorImpl implements RowLogProcessor {
 				// TODO this is a temporary (but mostly senseless) fix to slow down the
 				//      amount of requests on HBase
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(50);
 				} catch (InterruptedException e) {
 					// if we are interrupted, we stop working
 					return;
