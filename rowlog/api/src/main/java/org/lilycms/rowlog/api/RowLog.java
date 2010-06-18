@@ -71,7 +71,9 @@ public interface RowLog {
 	 */
 	void unRegisterConsumer(RowLogMessageConsumer rowLogMessageConsumer);
 	/**
-	 * Retrieves the payload of a {@link RowLogMessage} from the RowLog
+	 * Retrieves the payload of a {@link RowLogMessage} from the RowLog.
+	 * The preferred way to get the payload for a message is to request this through the message itself 
+	 * with the call {@link RowLogMessage#getPayload()} .
 	 * @param message a {link RowLogMessage}
 	 * @return the payload of the message
 	 * @throws RowLogException

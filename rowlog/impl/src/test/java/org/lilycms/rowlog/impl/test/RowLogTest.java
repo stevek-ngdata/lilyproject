@@ -46,7 +46,7 @@ public class RowLogTest {
 	private static IMocksControl control;
 	private static RowLog rowLog;
 	private static byte[] payloadColumnFamily = RowLogTableUtil.PAYLOAD_COLUMN_FAMILY;
-	private static byte[] rowLogColumnFamily = RowLogTableUtil.ROWLOG_COLUMN_FAMILY;
+	private static byte[] rowLogColumnFamily = RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY;
 	private static HTable rowTable;
 
 	@BeforeClass

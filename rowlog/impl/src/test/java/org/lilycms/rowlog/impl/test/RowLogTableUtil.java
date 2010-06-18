@@ -30,7 +30,7 @@ public class RowLogTableUtil {
 	private static final String ROW_TABLE = "rowTable";
 	
 	public static final byte[] PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("PAYLOADCF");
-	public static final byte[] ROWLOG_COLUMN_FAMILY = Bytes.toBytes("ROWLOGCF");
+	public static final byte[] EXECUTIONSTATE_COLUMN_FAMILY = Bytes.toBytes("ESLOGCF");
 
 	public static HTable getRowTable(Configuration configuration) throws IOException {
 		HTable rowTable;
@@ -40,7 +40,7 @@ public class RowLogTableUtil {
 			HBaseAdmin admin = new HBaseAdmin(configuration);
 			HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
 			tableDescriptor.addFamily(new HColumnDescriptor(PAYLOAD_COLUMN_FAMILY));
-			tableDescriptor.addFamily(new HColumnDescriptor(ROWLOG_COLUMN_FAMILY));
+			tableDescriptor.addFamily(new HColumnDescriptor(EXECUTIONSTATE_COLUMN_FAMILY));
 			admin.createTable(tableDescriptor);
 			rowTable = new HTable(configuration, ROW_TABLE);
 		}

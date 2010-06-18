@@ -53,7 +53,7 @@ public class RowLogEndToEndTest {
         HBASE_PROXY.start();
         Configuration configuration = HBASE_PROXY.getConf();
 		HTable rowTable = RowLogTableUtil.getRowTable(configuration);
-        rowLog = new RowLogImpl(rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.ROWLOG_COLUMN_FAMILY, 60000L);
+        rowLog = new RowLogImpl(rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY, 60000L);
         shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog);
         consumer = new TestMessageConsumer(0);
         processor = new RowLogProcessorImpl(rowLog, shard);
