@@ -25,7 +25,7 @@
   <groupId>org.lilycms</groupId>
   <artifactId>lily-rowlog-api</artifactId>
   <version>0.1-dev</version>
-  <name>Lily: ROW LOG API</name>
+  <name>Lily: Row Log API</name>
 
   <parent>
     <groupId>org.lilycms</groupId>

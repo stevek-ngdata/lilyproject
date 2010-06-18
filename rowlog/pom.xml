@@ -26,7 +26,7 @@
   <artifactId>lily-rowlog</artifactId>
   <packaging>pom</packaging>
   <version>0.1-dev</version>
-  <name>Lily: Repository</name>
+  <name>Lily: Row Log</name>
 
   <parent>
     <groupId>org.lilycms</groupId>
