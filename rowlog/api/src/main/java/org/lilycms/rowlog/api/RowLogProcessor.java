@@ -17,7 +17,7 @@ package org.lilycms.rowlog.api;
 
 /**
  * A RowLogProcessor is responsible for monitoring the {@link RowLog} for incoming messages 
- * and hand them over for processing to the {@link RowLogConsumers} that are registered with the {@link RowLog} 
+ * and hand them over for processing to the {@link RowLogMessageConsumer}s that are registered with the {@link RowLog} 
  *
  * <p> More specifically, a RowLogProcessor is responsible for the messages of one {@link RowLogShard}.
  * So, one RowLogProcessor should be started for each registered {@link RowLogShard}.

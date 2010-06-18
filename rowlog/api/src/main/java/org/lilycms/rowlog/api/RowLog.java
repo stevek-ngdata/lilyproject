@@ -20,14 +20,15 @@ import java.util.List;
 import org.apache.hadoop.hbase.client.Put;
 
 /**
- * The RowLog provides message queue behavior on top of HBase.
+ * The RowLog helps managing the execution of synchronous and asynchronous actions in response to
+ * updates happening to the rows of an HBase table.
  * 
  * <p> It has been introduced as a basis to build a distributed persistent Write Ahead Log (WAL) and Message Queue (MQ) 
  * on top of HBase for the Lily CMS. More information about the design and rationale behind it can be found 
- * on {@link http://lilycms.org/}
- * 
+ * on <a href="http://lilycms.org/">http://lilycms.org/</a>
+ *
  * <p> The RowLog accepts and stores {@link RowLogMessage}s. The context of these messages is always related to a specific 
- * row in a HBase table, hence the name 'RowLog'. {@link RowLogConsumer}s are responsible for processing the messages and
+ * row in a HBase table, hence the name 'RowLog'. {@link RowLogMessageConsumer}s are responsible for processing the messages and
  * should be registered with the RowLog. 
  * 
  * <p> The messages are stored on, and distributed randomly over several {@link RowLogShard}s. 
@@ -48,7 +49,7 @@ import org.apache.hadoop.hbase.client.Put;
  * 
  * <p> All messages related to a certain row are given a sequence number in the order in which they are put on the RowLog.
  * This sequence number is used when storing the payload and execution state on the HBase row. 
- * This enables a {@link RowLogMessageConsumer} to check if the message the consumer it is requested to process is the oldest
+ * This enables a {@link RowLogMessageConsumer} to check if the message it is requested to process is the oldest
  * message to be processed for the row or if there are other messages to be processed for the row. It can then choose
  * to, for instance, process an older message first or even bundle the processing of multiple messages together.
  * (Note: utility methods to enable this behavior are still to be implemented on the RowLog.)    
