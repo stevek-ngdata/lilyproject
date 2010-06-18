@@ -20,11 +20,7 @@ import java.net.InetSocketAddress;
 
 import org.apache.avro.ipc.SocketServer;
 import org.apache.avro.specific.SpecificResponder;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.*;
 import org.lilycms.repository.api.BlobStoreAccessFactory;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
@@ -40,6 +36,7 @@ import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.RepositoryRemoteImpl;
 import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilycms.repository.impl.TypeManagerRemoteImpl;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 /**
@@ -47,19 +44,19 @@ import org.lilycms.testfw.TestHelper;
  */
 public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordTypeTest {
 
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 
     private static HBaseRepository serverRepository;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
+        HBASE_PROXY.start();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-		TypeManager serverTypeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
-        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+		TypeManager serverTypeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
+        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS());
         BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
+        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreOutputStreamFactory , HBASE_PROXY.getConf());
 		
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
@@ -80,7 +77,7 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         serverRepository.stop();
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
     }
  
 

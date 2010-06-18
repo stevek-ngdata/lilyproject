@@ -15,48 +15,46 @@
  */
 package org.lilycms.hbaseindex.test;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.lilycms.hbaseindex.*;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.*;
 
 // Important: while not done in these testcases, it is recommended to call QueryResult.close()
 // when done using the QueryResult.
 
 public class IndexTest {
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
+        HBASE_PROXY.start();
 
-        IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
+        IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
     }
 
     @Test
     public void testSingleStringFieldIndex() throws Exception {
         final String INDEX_NAME = "singleStringField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         // Create a few index entries, inserting them in non-sorted order
@@ -77,12 +75,12 @@ public class IndexTest {
     @Test
     public void testSingleByteFieldIndex() throws Exception {
         final String INDEX_NAME = "singleByteField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         ByteIndexFieldDefinition fieldDef = indexDef.addByteField("field1");
         fieldDef.setLength(3);
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         // Create a few index entries, inserting them in non-sorted order
@@ -103,11 +101,11 @@ public class IndexTest {
     @Test
     public void testSingleIntFieldIndex() throws Exception {
         final String INDEX_NAME = "singleIntField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         final int COUNT = 1000;
@@ -140,11 +138,11 @@ public class IndexTest {
     @Test
     public void testSingleLongFieldIndex() throws Exception {
         final String INDEX_NAME = "singleLongField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addLongField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         long values[] = {Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE};
@@ -168,11 +166,11 @@ public class IndexTest {
     @Test
     public void testSingleFloatFieldIndex() throws Exception {
         final String INDEX_NAME = "singleFloatField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addFloatField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         float[] values = {55.45f, 63.88f, 55.46f, 55.47f, -0.3f};
@@ -192,12 +190,12 @@ public class IndexTest {
     @Test
     public void testSingleDateTimeFieldIndex() throws Exception {
         final String INDEX_NAME = "singleDateTimeField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         DateTimeIndexFieldDefinition fieldDef = indexDef.addDateTimeField("field1");
         fieldDef.setPrecision(DateTimeIndexFieldDefinition.Precision.DATETIME_NOMILLIS);
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -224,11 +222,11 @@ public class IndexTest {
     @Test
     public void testSingleDecimalFieldIndex() throws Exception {
         final String INDEX_NAME = "singleDecimalField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addDecimalField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         String[] values = {"33.66", "-1", "-3.00007E77"};
@@ -257,12 +255,12 @@ public class IndexTest {
     @Test
     public void testDuplicateValuesIndex() throws Exception {
         final String INDEX_NAME = "duplicateValues";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -285,13 +283,13 @@ public class IndexTest {
     @Test
     public void testMultiFieldIndex() throws Exception {
         final String INDEX_NAME = "multiField";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
         indexDef.addStringField("field2");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -323,12 +321,12 @@ public class IndexTest {
     @Test
     public void testDeleteFromIndex() throws Exception {
         final String INDEX_NAME = "deleteFromIndex";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -358,13 +356,13 @@ public class IndexTest {
     @Test
     public void testNullIndex() throws Exception {
         final String INDEX_NAME = "nullIndex";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
         indexDef.addStringField("field2");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -401,7 +399,7 @@ public class IndexTest {
     @Test
     public void testNotExistingIndex() throws Exception {
         final String INDEX_NAME = "notExisting";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         try {
             indexManager.getIndex(INDEX_NAME);
@@ -414,11 +412,11 @@ public class IndexTest {
     @Test
     public void testDeleteIndex() throws Exception {
         final String INDEX_NAME = "deleteIndex";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("foo");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         indexManager.getIndex(INDEX_NAME);
 
@@ -435,13 +433,13 @@ public class IndexTest {
     @Test
     public void testIndexEntryVerificationIndex() throws Exception {
         final String INDEX_NAME = "indexEntryVerification";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("stringfield");
         indexDef.addFloatField("floatfield");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -479,12 +477,12 @@ public class IndexTest {
     @Test
     public void testStringPrefixQuery() throws Exception {
         final String INDEX_NAME = "stringPrefixQuery";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -508,14 +506,14 @@ public class IndexTest {
     @Test
     public void testPartialQuery() throws Exception {
         final String INDEX_NAME = "partialQuery";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
         indexDef.addIntegerField("field2");
         indexDef.addStringField("field3");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -609,13 +607,13 @@ public class IndexTest {
     @Test
     public void testDataTypeChecks() throws Exception {
         final String INDEX_NAME = "dataTypeChecks";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
         indexDef.addIntegerField("field2");
 
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -661,11 +659,11 @@ public class IndexTest {
     @Test
     public void testEmptyDefinition() throws Exception {
         final String INDEX_NAME = "emptyDef";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         try {
-            indexManager.createIndex(indexDef);
+            indexManager.createIndexIfNotExists(indexDef);
             fail("Exception expected.");
         } catch (IllegalArgumentException e) {}
     }    
@@ -673,11 +671,11 @@ public class IndexTest {
     @Test
     public void testExclusiveRanges() throws Exception {
         final String INDEX_NAME = "exclusiveRanges";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         int[] values = {1, 2, 3, 4};
@@ -719,11 +717,11 @@ public class IndexTest {
     @Test
     public void testMinMaxRanges() throws Exception {
         final String INDEX_NAME = "minmaxranges";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         Integer[] values = {Integer.MIN_VALUE, 1, 2, Integer.MAX_VALUE, null};
@@ -758,13 +756,13 @@ public class IndexTest {
     @Test
     public void testDescendingIntIndex() throws Exception {
         final String INDEX_NAME = "descendingIntIndex";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.setIdentifierOrder(Order.DESCENDING);
         IntegerIndexFieldDefinition fieldDef = indexDef.addIntegerField("field1");
         fieldDef.setOrder(Order.DESCENDING);
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         Integer[] values = {1, 2, 2, 3, null};
@@ -792,12 +790,12 @@ public class IndexTest {
     @Test
     public void testDescendingIntAscendingKeyIndex() throws Exception {
         final String INDEX_NAME = "descendingIntAscendingKey";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         IntegerIndexFieldDefinition fieldDef = indexDef.addIntegerField("field1");
         fieldDef.setOrder(Order.DESCENDING);
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         Integer[] values = {1, 1, 2, 2};
@@ -818,13 +816,13 @@ public class IndexTest {
     @Test
     public void testDescendingStringIndex() throws Exception {
         final String INDEX_NAME = "descendingStringIndex";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.setIdentifierOrder(Order.DESCENDING);
         StringIndexFieldDefinition fieldDef = indexDef.addStringField("field1");
         fieldDef.setOrder(Order.DESCENDING);
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         String[] values = {"a", "ab", "abc", "b"};
@@ -859,11 +857,11 @@ public class IndexTest {
     @Test
     public void testData() throws Exception {
         final String INDEX_NAME = "dataIndex";
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
-        indexManager.createIndex(indexDef);
+        indexManager.createIndexIfNotExists(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         String[] values = new String[] {"foo", "bar"};

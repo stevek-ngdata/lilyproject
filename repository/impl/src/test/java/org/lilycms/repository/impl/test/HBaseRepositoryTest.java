@@ -18,7 +18,6 @@ package org.lilycms.repository.impl.test;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,32 +27,33 @@ import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest extends AbstractRepositoryTest {
 
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 	@BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
-        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
-        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+        HBASE_PROXY.start();
+        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
+        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS());
         BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreOutputStreamFactory , HBASE_PROXY.getConf());
         setupTypes();
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         ((HBaseRepository)repository).stop();
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
     }
 
     @Test
     public void testFieldTypeCacheInitialization() throws Exception {
-    	TypeManager newTypeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+    	TypeManager newTypeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
     	assertEquals(fieldType1, newTypeManager.getFieldTypeByName(fieldType1.getName()));
     }
 }

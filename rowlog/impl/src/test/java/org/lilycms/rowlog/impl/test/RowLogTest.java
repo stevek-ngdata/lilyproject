@@ -23,7 +23,6 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.classextension.IMocksControl;
@@ -39,10 +38,11 @@ import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.rowlog.impl.RowLogImpl;
 import org.lilycms.rowlog.impl.RowLogMessageImpl;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class RowLogTest {
-	private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+	private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 	private static IMocksControl control;
 	private static RowLog rowLog;
 	private static byte[] payloadColumnFamily = RowLogTableUtil.PAYLOAD_COLUMN_FAMILY;
@@ -52,14 +52,14 @@ public class RowLogTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		TestHelper.setupLogging();
-		TEST_UTIL.startMiniCluster(1);
+        HBASE_PROXY.start();
 		control = createControl();
-		rowTable = RowLogTableUtil.getRowTable(TEST_UTIL.getConfiguration());
+		rowTable = RowLogTableUtil.getRowTable(HBASE_PROXY.getConf());
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
 	}
 
 	@Before

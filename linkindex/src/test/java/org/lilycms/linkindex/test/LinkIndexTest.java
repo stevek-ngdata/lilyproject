@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,10 +16,11 @@ import org.lilycms.linkindex.LinkIndexUpdater;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
 import org.lilycms.repoutil.VersionTag;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class LinkIndexTest {
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 
     private static TypeManager typeManager;
     private static HBaseRepository repository;
@@ -31,30 +30,27 @@ public class LinkIndexTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging("org.lilycms.linkindex");
-        TEST_UTIL.startMiniCluster(1);
 
-        IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
+        HBASE_PROXY.start();
+
+        IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
 
         IdGenerator idGenerator = new IdGeneratorImpl();
-        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
-        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
+        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, HBASE_PROXY.getConf());
         ids = repository.getIdGenerator();
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
-        try {
-            LinkIndex.createIndexes(indexManager);
-        } catch (TableExistsException e) {
-            // TODO better way to handle this?
-        }
+        LinkIndex.createIndexes(indexManager);
         linkIndex = new LinkIndex(indexManager, repository);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         repository.stop();
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
     }
 
     @Test

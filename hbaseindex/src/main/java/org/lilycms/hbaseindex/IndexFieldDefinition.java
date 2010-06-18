@@ -92,4 +92,27 @@ public abstract class IndexFieldDefinition {
         object.put("order", this.order.toString());
         return object;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+
+        IndexFieldDefinition other = (IndexFieldDefinition)obj;
+
+        if (!name.equals(other.name))
+            return false;
+
+        if (order != other.order)
+            return false;
+
+        if (type != other.type)
+            return false;
+
+        return true;
+    }
 }

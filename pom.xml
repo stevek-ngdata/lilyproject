@@ -315,6 +315,9 @@
         <version>2.5</version>
           <configuration>
             <argLine>-Xmx256m</argLine>
+            <systemPropertyVariables>
+              <lily.test.hbase>${lily.test.hbase}</lily.test.hbase>
+            </systemPropertyVariables>
           </configuration>
       </plugin>
       </plugins>
@@ -326,6 +329,12 @@
       <id>fast</id>
       <properties>
         <maven.test.skip>true</maven.test.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>connect</id>
+      <properties>
+        <lily.test.hbase>connect</lily.test.hbase>
       </properties>
     </profile>
   </profiles>

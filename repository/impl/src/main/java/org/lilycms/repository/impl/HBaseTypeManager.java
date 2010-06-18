@@ -18,7 +18,6 @@ package org.lilycms.repository.impl;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.UUID;
@@ -44,6 +43,7 @@ import org.lilycms.repository.api.RecordTypeExistsException;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.util.ArgumentValidator;
+import org.lilycms.util.io.Closer;
 
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
 
@@ -473,12 +473,15 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     private void initializeFieldTypeNameCache() throws IOException, FieldTypeNotFoundException, RepositoryException {
     	fieldTypeNameCache.clear();
     	ResultScanner scanner = typeTable.getScanner(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME);
-    	Iterator<Result> resultIterator = scanner.iterator();
-    	for (Result result : scanner) {
-    		FieldType fieldType = getFieldTypeById(fieldTypeIdFromBytes(result.getRow()));
-    		QName name = decodeName(result.getValue(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME));
-    		fieldTypeNameCache.put(name, fieldType);
-		}
+        try {
+            for (Result result : scanner) {
+                FieldType fieldType = getFieldTypeById(fieldTypeIdFromBytes(result.getRow()));
+                QName name = decodeName(result.getValue(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME));
+                fieldTypeNameCache.put(name, fieldType);
+            }
+        } finally {
+            Closer.close(scanner);
+        }
     }
     
     // Value Types

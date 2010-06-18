@@ -32,11 +32,12 @@ import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.impl.RowLogMessageImpl;
 import org.lilycms.rowlog.impl.RowLogShardImpl;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class RowLogShardTest {
 
-	private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+	private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 	private static RowLogShardImpl shard;
 	private static IMocksControl control;
     private static RowLog rowLog;
@@ -44,15 +45,15 @@ public class RowLogShardTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		TestHelper.setupLogging();
-		TEST_UTIL.startMiniCluster(1);
+        HBASE_PROXY.start();
 		control = createControl();
 		rowLog = control.createMock(RowLog.class);
-		shard = new RowLogShardImpl("TestShard", TEST_UTIL.getConfiguration(), rowLog);
+		shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog);
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
 	}
 
 

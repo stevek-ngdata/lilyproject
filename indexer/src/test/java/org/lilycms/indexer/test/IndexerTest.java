@@ -9,7 +9,6 @@ import org.lilycms.rowlog.api.RowLogMessageConsumer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -32,6 +31,7 @@ import org.lilycms.linkindex.LinkIndexUpdater;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
 import org.lilycms.repoutil.VersionTag;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 import static org.lilycms.repoutil.RecordEvent.Type.*;
 
@@ -44,7 +44,7 @@ import java.util.*;
 // To run this test from an IDE, set a property solr.war pointing to the SOLR war
 
 public class IndexerTest {
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
     private static HBaseRepository repository;
@@ -85,21 +85,21 @@ public class IndexerTest {
         SOLR_TEST_UTIL = new SolrTestingUtility("org/lilycms/indexer/test/schema1.xml");
 
         TestHelper.setupLogging("org.lilycms.indexer", "org.lilycms.linkindex");
-        TEST_UTIL.startMiniCluster(1);
+        HBASE_PROXY.start();
         SOLR_TEST_UTIL.start();
 
         idGenerator = new IdGeneratorImpl();
-        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
-        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
+        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(Long.MAX_VALUE, dfsBlobStoreAccess);        
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, HBASE_PROXY.getConf());
         repository.registerBlobStoreAccess(dfsBlobStoreAccess);
 
         solrServer = SOLR_TEST_UTIL.getSolrServer();
 
-        IndexManager.createIndexMetaTable(TEST_UTIL.getConfiguration());
-        IndexManager indexManager = new IndexManager(TEST_UTIL.getConfiguration());
+        IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         try { LinkIndex.createIndexes(indexManager); } catch (TableExistsException e) { }
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
@@ -119,7 +119,8 @@ public class IndexerTest {
         indexer.stop();
         repository.stop();
 
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
+
         if (SOLR_TEST_UTIL != null)
             SOLR_TEST_UTIL.stop();
     }

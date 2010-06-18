@@ -161,4 +161,26 @@ public class IndexDefinition {
         return object;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+
+        IndexDefinition other = (IndexDefinition)obj;
+        
+        if (!name.equals(other.name))
+            return false;
+
+        if (identifierOrder != other.identifierOrder)
+            return false;
+
+        if (!fields.equals(other.fields))
+            return false;
+
+        return true;
+    }
 }

@@ -56,6 +56,10 @@ public class Index {
         this.definition = definition;
     }
 
+    protected IndexDefinition getDefinition() {
+        return definition;
+    }
+
     /**
      * Adds an entry to this index. See {@link IndexEntry} for more information.
      *

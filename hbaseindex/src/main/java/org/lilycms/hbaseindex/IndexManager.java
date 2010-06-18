@@ -18,6 +18,7 @@ package org.lilycms.hbaseindex;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -86,6 +87,20 @@ public class IndexManager {
         metaTable.put(put);
     }
 
+    public synchronized void createIndexIfNotExists(IndexDefinition indexDef) throws IOException {
+        Get get = new Get(Bytes.toBytes(indexDef.getName()));
+        Result result = metaTable.get(get);
+
+        if (result.isEmpty()) {
+            createIndex(indexDef);
+        } else {
+            Index index = instantiateIndex(indexDef.getName(), result);
+            if (!index.getDefinition().equals(indexDef)) {
+                throw new RuntimeException("Index " + indexDef.getName() + " exists but its definition does not match the supplied definition.");
+            }
+        }
+    }
+
     private byte[] serialize(IndexDefinition indexDef) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ObjectMapper mapper = new ObjectMapper();
@@ -110,6 +125,10 @@ public class IndexManager {
         if (result.isEmpty())
             throw new IndexNotFoundException(name);
 
+        return instantiateIndex(name, result);
+    }
+
+    private Index instantiateIndex(String name, Result result) throws IOException {
         byte[] jsonData = result.getValue(Bytes.toBytes("meta"), Bytes.toBytes("conf"));
         IndexDefinition indexDef = deserialize(name, jsonData);
 
@@ -160,5 +179,13 @@ public class IndexManager {
         HColumnDescriptor family = new HColumnDescriptor("meta");
         table.addFamily(family);
         hbaseAdmin.createTable(table);
+    }
+
+    public static void createIndexMetaTableIfNotExists(Configuration hbaseConf) throws IOException {
+        try {
+            createIndexMetaTable(hbaseConf);
+        } catch (TableExistsException e) {
+            // ignore
+        }
     }
 }

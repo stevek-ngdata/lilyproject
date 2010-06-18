@@ -16,29 +16,29 @@
 package org.lilycms.repository.impl.test;
 
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class TypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTest {
 
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-    
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
-        typeManager = new HBaseTypeManager(new IdGeneratorImpl(), TEST_UTIL.getConfiguration());
+        HBASE_PROXY.start();
+        typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf());
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
     }
 
     @Before

@@ -34,6 +34,15 @@
   </parent>
 
   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>org.lilycms.testfw.HBaseRunner</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <dependencies>
@@ -53,6 +62,11 @@
       <artifactId>slf4j-log4j12</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+    </dependency>
+
     <!-- Temporary solution to collect all HBase test dependencies -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
@@ -67,7 +81,12 @@
       <version>${hadoop.version}</version>
       <scope>compile</scope>
     </dependency>
-    
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 
 </project>

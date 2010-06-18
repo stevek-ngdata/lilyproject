@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Random;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -50,11 +49,12 @@ import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.InlineBlobStoreAccess;
 import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class BlobStoreTest {
 
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     private static IdGenerator idGenerator = new IdGeneratorImpl();
     private static AbstractTypeManager typeManager;
     private static HBaseRepository repository;
@@ -63,15 +63,15 @@ public class BlobStoreTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
-        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
-        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
-        BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(TEST_UTIL.getConfiguration()); 
+        HBASE_PROXY.start();
+        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
+        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS());
+        BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(HBASE_PROXY.getConf());
         BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess(); 
         SizeBasedBlobStoreAccessFactory factory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         factory.addBlobStoreAccess(50, inlineBlobStoreAccess);
         factory.addBlobStoreAccess(1024, hbaseBlobStoreAccess);
-        repository = new HBaseRepository(typeManager, idGenerator, factory, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, factory, HBASE_PROXY.getConf());
         repository.registerBlobStoreAccess(dfsBlobStoreAccess);
         repository.registerBlobStoreAccess(hbaseBlobStoreAccess);
         repository.registerBlobStoreAccess(inlineBlobStoreAccess);
@@ -80,7 +80,7 @@ public class BlobStoreTest {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         repository.stop();
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
     }
 
     @Before

@@ -3,7 +3,6 @@ package org.lilycms.repository.impl.lock.test;
 
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -18,10 +17,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.repository.impl.lock.RowLock;
 import org.lilycms.repository.impl.lock.RowLocker;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class RowLockerTest {
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 	private final static byte[] family = Bytes.toBytes("RowLockerCF");
 	private final static byte[] qualifier = Bytes.toBytes("RowLockerQ");
 	private final static String tableName = "RowLockerTable";
@@ -30,18 +30,18 @@ public class RowLockerTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
-		HBaseAdmin admin = new HBaseAdmin(TEST_UTIL.getConfiguration());
+        HBASE_PROXY.start();
+		HBaseAdmin admin = new HBaseAdmin(HBASE_PROXY.getConf());
 		HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
 		tableDescriptor.addFamily(new HColumnDescriptor(family));
 		admin.createTable(tableDescriptor);
-		table = new HTable(TEST_UTIL.getConfiguration(), tableName);
+		table = new HTable(HBASE_PROXY.getConf(), tableName);
 
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
 	}
 
 	@Before

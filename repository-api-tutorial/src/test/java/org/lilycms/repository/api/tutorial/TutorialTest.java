@@ -6,12 +6,11 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,6 +21,7 @@ import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilycms.repoutil.PrintUtil;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 /**
@@ -29,8 +29,8 @@ import org.lilycms.testfw.TestHelper;
  * code needs updating because of API changes, then the tutorial itself probably needs
  * to be updated too.
  */
-public class Tutorial {
-    private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+public class TutorialTest {
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 
     private static final String NS = "org.lilycms.tutorial";
 
@@ -40,15 +40,15 @@ public class Tutorial {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
+        HBASE_PROXY.start();
 
         IdGenerator idGenerator = new IdGeneratorImpl();
-        typeManager = new HBaseTypeManager(idGenerator, TEST_UTIL.getConfiguration());
+        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
 
-        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(TEST_UTIL.getDFSCluster().getFileSystem());
+        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(Long.MAX_VALUE, dfsBlobStoreAccess);
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, TEST_UTIL.getConfiguration());
+        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, HBASE_PROXY.getConf());
 
         repository.registerBlobStoreAccess(dfsBlobStoreAccess);
     }
@@ -56,7 +56,7 @@ public class Tutorial {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         repository.stop();
-        TEST_UTIL.shutdownMiniCluster();
+        HBASE_PROXY.stop();
     }
 
     @Test
@@ -174,7 +174,7 @@ public class Tutorial {
     public void updateRecordViaRead() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.read(id);
-        record.setField(new QName(NS, "released"), new Date());
+        record.setField(new QName(NS, "released"), new LocalDate());
         record.setField(new QName(NS, "authors"), Arrays.asList("Author A", "Author B"));
         record.setField(new QName(NS, "review_status"), "reviewed");
         record = repository.update(record);
@@ -185,6 +185,7 @@ public class Tutorial {
     @Test
     public void readRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
+
 
         // (1)
         Record record = repository.read(id);

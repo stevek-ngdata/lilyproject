@@ -266,7 +266,7 @@ public class LinkIndex {
             indexDef.addStringField("targetvariant");
             indexDef.addStringField("vtag");
             indexDef.addStringField("sourcefield");
-            indexManager.createIndex(indexDef);
+            indexManager.createIndexIfNotExists(indexDef);
         }
 
         {
@@ -275,7 +275,7 @@ public class LinkIndex {
             indexDef.addStringField("sourcevariant");
             indexDef.addStringField("vtag");
             indexDef.addStringField("sourcefield");
-            indexManager.createIndex(indexDef);
+            indexManager.createIndexIfNotExists(indexDef);
         }
     }
 }

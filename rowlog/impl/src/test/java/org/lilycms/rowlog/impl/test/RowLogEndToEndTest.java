@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
@@ -37,11 +36,12 @@ import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.rowlog.impl.RowLogImpl;
 import org.lilycms.rowlog.impl.RowLogProcessorImpl;
 import org.lilycms.rowlog.impl.RowLogShardImpl;
+import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 
 public class RowLogEndToEndTest {
-	private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+	private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 	private static RowLog rowLog;
 	private static TestMessageConsumer consumer;
 	private static RowLogShard shard;
@@ -50,8 +50,8 @@ public class RowLogEndToEndTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        TEST_UTIL.startMiniCluster(1);
-        Configuration configuration = TEST_UTIL.getConfiguration();
+        HBASE_PROXY.start();
+        Configuration configuration = HBASE_PROXY.getConf();
 		HTable rowTable = RowLogTableUtil.getRowTable(configuration);
         rowLog = new RowLogImpl(rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.ROWLOG_COLUMN_FAMILY, 60000L);
         shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog);
@@ -63,7 +63,7 @@ public class RowLogEndToEndTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		TEST_UTIL.shutdownMiniCluster();
+		HBASE_PROXY.stop();
 	}
 
 	@Before
