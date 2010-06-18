@@ -6,14 +6,12 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Provides access to HBase, either by starting an embedded HBase or by connecting to a running HBase.
@@ -22,10 +20,6 @@ import java.util.Set;
  *
  * <p><b>VERY VERY IMPORTANT</b>: when connecting to an existing HBase, this class will DELETE ALL ROWS
  * FROM ALL TABLES!
- *
- * <p>For Lily, the mode where we connect to an external HBase currently does not work very well,
- * especially those parts that make use of versioned column families with sequence-number timestamps,
- * since the deletes performed on those table mask the new inserts. See also http://search-hadoop.com/m/rNnhN15Xecu
  */
 public class HBaseProxy {
     private static Mode MODE;
@@ -38,6 +32,20 @@ public class HBaseProxy {
     private static Set<String> RETAIN_TABLES = new HashSet<String>();
     static {
         RETAIN_TABLES.add("indexmeta");
+    }
+
+    // For some tables, we exploit the timestamp dimension by using custom timestamps, which
+    // for certain tests (where the same row key and timestamp is reused) cause problems, due
+    // to the use of non-increasing timestamps, see also http://markmail.org/message/xskvbzhrvkv7skxz
+    // or http://search-hadoop.com/m/rNnhN15Xecu
+    // For these tables, we need to flush and compact them, and wait for this to complete,
+    // before continuing.
+    // This map contains as key the name of the table and as value the name of the/a column family where versions
+    // are used in this way.
+    private static Map<String, byte[]> EXPLOIT_TIMESTAMP_TABLES = new HashMap<String, byte[]>();
+    static {
+        EXPLOIT_TIMESTAMP_TABLES.put("recordTable", Bytes.toBytes("VCF"));
+        EXPLOIT_TIMESTAMP_TABLES.put("typeTable", Bytes.toBytes("FTECF"));
     }
 
     public void start() throws Exception {
@@ -100,6 +108,8 @@ public class HBaseProxy {
         HTableDescriptor[] tables = admin.listTables();
         System.out.println("Found tables: " + tables.length);
 
+        Set<String> exploitTimestampTables = new HashSet<String>();
+
         for (HTableDescriptor table : tables) {
             if (RETAIN_TABLES.contains(table.getNameAsString())) {
                 if (retainReport.length() > 0)
@@ -109,6 +119,11 @@ public class HBaseProxy {
             }
 
             HTable htable = new HTable(getConf(), table.getName());
+
+            if (EXPLOIT_TIMESTAMP_TABLES.containsKey(table.getNameAsString())) {
+                insertTimestampTableTestRecord(table.getNameAsString(), htable);
+                exploitTimestampTables.add(table.getNameAsString());
+            }
 
             Scan scan = new Scan();
             ResultScanner scanner = htable.getScanner(scan);
@@ -130,6 +145,11 @@ public class HBaseProxy {
 
             scanner.close();
             htable.close();
+
+            if (EXPLOIT_TIMESTAMP_TABLES.containsKey(table.getNameAsString())) {
+                admin.flush(table.getName());
+                admin.majorCompact(table.getName());
+            }
         }
 
         truncateReport.insert(0, "Truncated the following tables: ");
@@ -138,7 +158,47 @@ public class HBaseProxy {
         System.out.println(truncateReport);
         System.out.println(retainReport);
 
+        waitForTimestampTables(exploitTimestampTables);
+
         System.out.println("==============================================================================");
 
     }
+
+    private void insertTimestampTableTestRecord(String tableName, HTable htable) throws IOException {
+        byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
+        byte[] CF = EXPLOIT_TIMESTAMP_TABLES.get(tableName);
+        byte[] COL = Bytes.toBytes("DummyColumn");
+        Put put = new Put(tmpRowKey);
+        // put a value with a fixed timestamp
+        put.add(CF, COL, 1, new byte[] { 0 });
+
+        htable.put(put);
+    }
+
+    private void waitForTimestampTables(Set<String> tables) throws IOException, InterruptedException {
+        for (String tableName : tables) {
+
+            HTable htable = new HTable(CONF, tableName);
+
+            byte[] value = null;
+            while (value == null) {
+                byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
+                byte[] CF = EXPLOIT_TIMESTAMP_TABLES.get(tableName);
+                byte[] COL = Bytes.toBytes("DummyColumn");
+                Put put = new Put(tmpRowKey);
+                put.add(CF, COL, 1, new byte[] { 0 });
+                htable.put(put);
+
+                Get get = new Get(tmpRowKey);
+                Result result = htable.get(get);
+                value = result.getValue(CF, COL);
+                if (value == null) {
+                    // If the value is null, it is because the delete marker has not yet been flushed/compacted away
+                    System.out.println("Waiting for flush/compact of " + tableName + " to complete");
+                }
+                Thread.sleep(100);
+            }
+        }
+    }
+
 }

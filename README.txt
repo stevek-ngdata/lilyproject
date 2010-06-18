@@ -59,9 +59,6 @@ mvn -DargLine=-DlilyTestDebug test
 Running tests faster
 --------------------
 
-THIS DOES CURRENTLY NOT WORK, JUST LEFT IN HERE IN THE HOPE IT MIGHT IN THE FUTURE
-See also description of the problem in the javadoc of class HBaseProxy.
-
 Test run rather slow because HBase-based tests launch a mini Hadoop/ZooKeeper/HBase-cluster as part of the
 testcase. While this takes some time in itself, it is especially the creation of tables in HBase which
 takes time.
