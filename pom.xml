@@ -234,7 +234,7 @@
 
     <repository>
       <id>lilycms</id>
-      <name>Apache snapshot repository</name>
+      <name>Lily Maven repository</name>
       <url>http://lilycms.org/maven/maven2/deploy</url>
     </repository>
 
