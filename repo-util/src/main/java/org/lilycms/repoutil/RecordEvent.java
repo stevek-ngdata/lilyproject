@@ -112,7 +112,7 @@ public class RecordEvent {
     }
     
     public void setType(Type type) {
-    	this.type = type;
+        this.type = type;
     }
 
     /**

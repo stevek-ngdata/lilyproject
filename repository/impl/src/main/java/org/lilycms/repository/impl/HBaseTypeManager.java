@@ -471,8 +471,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
     
     private void initializeFieldTypeNameCache() throws IOException, FieldTypeNotFoundException, RepositoryException {
-    	fieldTypeNameCache.clear();
-    	ResultScanner scanner = typeTable.getScanner(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME);
+        fieldTypeNameCache.clear();
+        ResultScanner scanner = typeTable.getScanner(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME);
         try {
             for (Result result : scanner) {
                 FieldType fieldType = getFieldTypeById(fieldTypeIdFromBytes(result.getRow()));

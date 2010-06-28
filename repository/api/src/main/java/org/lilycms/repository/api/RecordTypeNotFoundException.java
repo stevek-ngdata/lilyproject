@@ -29,12 +29,12 @@ public class RecordTypeNotFoundException extends Exception {
     }
     
     public String getId() {
-		return id;
-	}
+        return id;
+    }
     
     public Long getVersion() {
-		return version;
-	}
+        return version;
+    }
     
     @Override
     public String getMessage() {

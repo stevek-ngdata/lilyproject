@@ -37,121 +37,121 @@ import org.lilycms.testfw.TestHelper;
 
 public class RowLogShardTest {
 
-	private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
-	private static RowLogShardImpl shard;
-	private static IMocksControl control;
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static RowLogShardImpl shard;
+    private static IMocksControl control;
     private static RowLog rowLog;
     
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-		TestHelper.setupLogging();
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        TestHelper.setupLogging();
         HBASE_PROXY.start();
-		control = createControl();
-		rowLog = control.createMock(RowLog.class);
-		shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog);
-	}
+        control = createControl();
+        rowLog = control.createMock(RowLog.class);
+        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog);
+    }
 
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
         HBASE_PROXY.stop();
-	}
+    }
 
 
-	@Before
-	public void setUp() throws Exception {
-	}
+    @Before
+    public void setUp() throws Exception {
+    }
 
-	@After
-	public void tearDown() throws Exception {
-		control.reset();
-	}
-	
-	@Test
-	public void testSingleMessage() throws Exception {
-		control.replay();
-		int consumerId = 1;
-		byte[] messageId1 = Bytes.toBytes("messageId1");
-		RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 0L, null, rowLog);
-		shard.putMessage(message1, consumerId);
-		
-		RowLogMessage next = shard.next(consumerId);
-		assertEquals(message1, next);
-		
-		shard.removeMessage(message1, consumerId);
-		assertNull(shard.next(consumerId));
-		control.verify();
-	}
-	
-	@Test
-	public void testMultipleMessages() throws Exception {
-		IMocksControl control = createControl();
-		
-		control.replay();
-		int consumerId = 1;
-		byte[] messageId1 = Bytes.toBytes("messageId1");
-		RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 0L, null, rowLog);
-		byte[] messageId2 = Bytes.toBytes("messageId2");
-		RowLogMessageImpl message2 = new RowLogMessageImpl(messageId2, Bytes.toBytes("row2"), 0L, null, rowLog);
+    @After
+    public void tearDown() throws Exception {
+        control.reset();
+    }
+    
+    @Test
+    public void testSingleMessage() throws Exception {
+        control.replay();
+        int consumerId = 1;
+        byte[] messageId1 = Bytes.toBytes("messageId1");
+        RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 0L, null, rowLog);
+        shard.putMessage(message1, consumerId);
+        
+        RowLogMessage next = shard.next(consumerId);
+        assertEquals(message1, next);
+        
+        shard.removeMessage(message1, consumerId);
+        assertNull(shard.next(consumerId));
+        control.verify();
+    }
+    
+    @Test
+    public void testMultipleMessages() throws Exception {
+        IMocksControl control = createControl();
+        
+        control.replay();
+        int consumerId = 1;
+        byte[] messageId1 = Bytes.toBytes("messageId1");
+        RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 0L, null, rowLog);
+        byte[] messageId2 = Bytes.toBytes("messageId2");
+        RowLogMessageImpl message2 = new RowLogMessageImpl(messageId2, Bytes.toBytes("row2"), 0L, null, rowLog);
 
-		shard.putMessage(message1, consumerId);
-		shard.putMessage(message2, consumerId);
+        shard.putMessage(message1, consumerId);
+        shard.putMessage(message2, consumerId);
 
-		RowLogMessage next = shard.next(consumerId);
-		assertEquals(message1, next);
+        RowLogMessage next = shard.next(consumerId);
+        assertEquals(message1, next);
 
-		shard.removeMessage(message1, consumerId);
-		next = shard.next(consumerId);
-		assertEquals(message2, next);
-		
-		shard.removeMessage(message2, consumerId);
-		assertNull(shard.next(consumerId));
-		control.verify();
-	}
-	
-	
-	@Test
-	public void testMultipleConsumers() throws Exception {
-		
-		control.replay();
-		byte[] messageId1 = Bytes.toBytes("messageId1");
-		RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 1L, null, rowLog);
-		byte[] messageId2 = Bytes.toBytes("messageId2");
-		RowLogMessageImpl message2 = new RowLogMessageImpl(messageId2, Bytes.toBytes("row2"), 1L, null, rowLog);
-		
-		int consumerId1 = 1;
-		int consumerId2 = 2;
-		shard.putMessage(message1, consumerId1);
-		shard.putMessage(message2, consumerId2);
-		RowLogMessage next = shard.next(consumerId1);
-		assertEquals(message1, next);
-		
-		next = shard.next(consumerId2);
-		assertEquals(message2, next);
-		shard.removeMessage(message1, consumerId1);
-		shard.removeMessage(message2, consumerId2);
-		assertNull(shard.next(consumerId1));
-		assertNull(shard.next(consumerId2));
-		control.verify();
-	}
-	
-	@Test
-	public void testMessageDoesNotExistForConsumer() throws Exception {
-		
-		control.replay();
-		byte[] messageId1 = Bytes.toBytes("messageId1");
-		RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 1L, null, rowLog);
+        shard.removeMessage(message1, consumerId);
+        next = shard.next(consumerId);
+        assertEquals(message2, next);
+        
+        shard.removeMessage(message2, consumerId);
+        assertNull(shard.next(consumerId));
+        control.verify();
+    }
+    
+    
+    @Test
+    public void testMultipleConsumers() throws Exception {
+        
+        control.replay();
+        byte[] messageId1 = Bytes.toBytes("messageId1");
+        RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 1L, null, rowLog);
+        byte[] messageId2 = Bytes.toBytes("messageId2");
+        RowLogMessageImpl message2 = new RowLogMessageImpl(messageId2, Bytes.toBytes("row2"), 1L, null, rowLog);
+        
+        int consumerId1 = 1;
+        int consumerId2 = 2;
+        shard.putMessage(message1, consumerId1);
+        shard.putMessage(message2, consumerId2);
+        RowLogMessage next = shard.next(consumerId1);
+        assertEquals(message1, next);
+        
+        next = shard.next(consumerId2);
+        assertEquals(message2, next);
+        shard.removeMessage(message1, consumerId1);
+        shard.removeMessage(message2, consumerId2);
+        assertNull(shard.next(consumerId1));
+        assertNull(shard.next(consumerId2));
+        control.verify();
+    }
+    
+    @Test
+    public void testMessageDoesNotExistForConsumer() throws Exception {
+        
+        control.replay();
+        byte[] messageId1 = Bytes.toBytes("messageId1");
+        RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 1L, null, rowLog);
 
-		int consumerId1 = 1;
-		int consumerId2 = 2;
-		shard.putMessage(message1, consumerId1);
-		assertNull(shard.next(consumerId2));
-		shard.removeMessage(message1, consumerId2);
-		// Cleanup
-		RowLogMessage next = shard.next(consumerId1);
-		assertEquals(message1, next);
-		shard.removeMessage(message1, consumerId1);
-		assertNull(shard.next(consumerId1));
-		control.verify();
-	}
+        int consumerId1 = 1;
+        int consumerId2 = 2;
+        shard.putMessage(message1, consumerId1);
+        assertNull(shard.next(consumerId2));
+        shard.removeMessage(message1, consumerId2);
+        // Cleanup
+        RowLogMessage next = shard.next(consumerId1);
+        assertEquals(message1, next);
+        shard.removeMessage(message1, consumerId1);
+        assertNull(shard.next(consumerId1));
+        control.verify();
+    }
 
 }

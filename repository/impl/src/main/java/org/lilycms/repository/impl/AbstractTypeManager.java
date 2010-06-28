@@ -16,45 +16,45 @@ import org.lilycms.repository.impl.primitivevaluetype.*;
 import org.lilycms.util.ArgumentValidator;
 
 public abstract class AbstractTypeManager implements TypeManager {
-	protected Map<String, PrimitiveValueType> primitiveValueTypes = new HashMap<String, PrimitiveValueType>();
-	protected IdGenerator idGenerator;
+    protected Map<String, PrimitiveValueType> primitiveValueTypes = new HashMap<String, PrimitiveValueType>();
+    protected IdGenerator idGenerator;
 
-	public RecordType newRecordType(String recordTypeId) {
-	    ArgumentValidator.notNull(recordTypeId, "recordTypeId");
-	    return new RecordTypeImpl(recordTypeId);
-	}
+    public RecordType newRecordType(String recordTypeId) {
+        ArgumentValidator.notNull(recordTypeId, "recordTypeId");
+        return new RecordTypeImpl(recordTypeId);
+    }
 
-	public FieldTypeEntry newFieldTypeEntry(String fieldTypeId, boolean mandatory) {
-	    ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
-	    ArgumentValidator.notNull(mandatory, "mandatory");
-	    return new FieldTypeEntryImpl(fieldTypeId, mandatory);
-	}
+    public FieldTypeEntry newFieldTypeEntry(String fieldTypeId, boolean mandatory) {
+        ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
+        ArgumentValidator.notNull(mandatory, "mandatory");
+        return new FieldTypeEntryImpl(fieldTypeId, mandatory);
+    }
 
-	public FieldType newFieldType(ValueType valueType, QName name, Scope scope) {
-	    return newFieldType(null, valueType, name, scope);
-	}
+    public FieldType newFieldType(ValueType valueType, QName name, Scope scope) {
+        return newFieldType(null, valueType, name, scope);
+    }
 
-	public FieldType newFieldType(String id, ValueType valueType, QName name,
-			Scope scope) {
-			    ArgumentValidator.notNull(valueType, "valueType");
-			    ArgumentValidator.notNull(name, "name");
-			    ArgumentValidator.notNull(scope, "scope");
-			    return new FieldTypeImpl(id, valueType, name, scope);
-			}
+    public FieldType newFieldType(String id, ValueType valueType, QName name,
+            Scope scope) {
+                ArgumentValidator.notNull(valueType, "valueType");
+                ArgumentValidator.notNull(name, "name");
+                ArgumentValidator.notNull(scope, "scope");
+                return new FieldTypeImpl(id, valueType, name, scope);
+            }
 
-	public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {
-	    primitiveValueTypes.put(primitiveValueType.getName(), primitiveValueType);
-	}
+    public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {
+        primitiveValueTypes.put(primitiveValueType.getName(), primitiveValueType);
+    }
 
-	public ValueType getValueType(String primitiveValueTypeName, boolean multivalue, boolean hierarchy) {
-	    return new ValueTypeImpl(primitiveValueTypes.get(primitiveValueTypeName), multivalue, hierarchy);
-	}
-	
-	protected void initialize() {
-		registerDefaultValueTypes();
-	}
-	
-	// TODO get this from some configuration file
+    public ValueType getValueType(String primitiveValueTypeName, boolean multivalue, boolean hierarchy) {
+        return new ValueTypeImpl(primitiveValueTypes.get(primitiveValueTypeName), multivalue, hierarchy);
+    }
+    
+    protected void initialize() {
+        registerDefaultValueTypes();
+    }
+    
+    // TODO get this from some configuration file
     protected void registerDefaultValueTypes() {
         //
         // Important:

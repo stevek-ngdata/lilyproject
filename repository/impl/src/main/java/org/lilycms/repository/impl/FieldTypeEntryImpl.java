@@ -27,7 +27,7 @@ public class FieldTypeEntryImpl implements FieldTypeEntry {
     private boolean mandatory;
 
     public FieldTypeEntryImpl(String fieldTypeId, boolean mandatory) {
-    	ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
+        ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
         this.fieldTypeId = fieldTypeId;
         this.mandatory = mandatory;
     }

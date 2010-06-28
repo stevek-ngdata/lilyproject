@@ -26,16 +26,16 @@ public interface RowLogProcessor {
     /**
      * Starts the RowLogProcessor. The execution should start in a separate thread, and the start call should return immediately. 
      */
-	void start();
-	
-	/**
-	 * Indicate that the RowLogProcessor should stop executing as soon as possible.
-	 */
-	void stop();
-	
-	/**
-	 * Check is the RowLogProcessor is executing
-	 * @return true if the RowLogProcessor is executing
-	 */
-	boolean isRunning();
+    void start();
+    
+    /**
+     * Indicate that the RowLogProcessor should stop executing as soon as possible.
+     */
+    void stop();
+    
+    /**
+     * Check is the RowLogProcessor is executing
+     * @return true if the RowLogProcessor is executing
+     */
+    boolean isRunning();
 }

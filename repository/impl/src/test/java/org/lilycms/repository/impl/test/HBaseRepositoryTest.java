@@ -33,7 +33,7 @@ import org.lilycms.testfw.TestHelper;
 public class HBaseRepositoryTest extends AbstractRepositoryTest {
 
     private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
-	@BeforeClass
+    @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         HBASE_PROXY.start();
@@ -53,7 +53,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     public void testFieldTypeCacheInitialization() throws Exception {
-    	TypeManager newTypeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
-    	assertEquals(fieldType1, newTypeManager.getFieldTypeByName(fieldType1.getName()));
+        TypeManager newTypeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
+        assertEquals(fieldType1, newTypeManager.getFieldTypeByName(fieldType1.getName()));
     }
 }

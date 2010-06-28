@@ -53,17 +53,17 @@ public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTe
         TestHelper.setupLogging();
         HBASE_PROXY.start();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-		TypeManager serverTypeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
+        TypeManager serverTypeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf());
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS());
         BlobStoreAccessFactory blobStoreOutputStreamFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreOutputStreamFactory , HBASE_PROXY.getConf());
-		
+        
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
         SocketServer repositorySocketServer = new SocketServer(new SpecificResponder(AvroRepository.class, new AvroRepositoryImpl(serverRepository, serverConverter)),
-        		new InetSocketAddress(0)); 
+                new InetSocketAddress(0)); 
         SocketServer typeManagerSocketServer = new SocketServer(new SpecificResponder(AvroTypeManager.class, new AvroTypeManagerImpl(serverTypeManager, serverConverter)),
-				new InetSocketAddress(0));
+                new InetSocketAddress(0));
         AvroConverter remoteConverter = new AvroConverter();
         typeManager = new TypeManagerRemoteImpl(new InetSocketAddress(typeManagerSocketServer.getPort()),
                 remoteConverter, idGenerator);

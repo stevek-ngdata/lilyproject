@@ -31,31 +31,31 @@ public interface RowLogMessage {
      * An id uniquely identifying the message. 
      * This id will be assigned to the message by the {@link RowLog} when it is put on the {@link RowLog}.
      */
-	byte[] getId();
-	
-	/**
-	 * Identifies the row to which the message is related. 
-	 * @return the HBase row key
-	 */
-	byte[] getRowKey();
-	
-	/**
-	 * A sequence number used to identify the position of the message in order of the messages that were created (events) for the related row.
-	 * @return a sequence number , unique within the context of a row
-	 */
-	long getSeqNr();
-	
-	/**
-	 * The data field can be used to put extra informative information on the message. 
-	 * This data will be stored in the message table and should be kept small.
-	 * @return the data
-	 */
-	byte[] getData();
-	
-	/**
-	 * The payload contains all information about a message for a {@link RowLogMessageConsumer} to be able to process a message.
-	 * @return the payload
-	 * @throws RowLogException 
-	 */
-	byte[] getPayload() throws RowLogException;
+    byte[] getId();
+    
+    /**
+     * Identifies the row to which the message is related. 
+     * @return the HBase row key
+     */
+    byte[] getRowKey();
+    
+    /**
+     * A sequence number used to identify the position of the message in order of the messages that were created (events) for the related row.
+     * @return a sequence number , unique within the context of a row
+     */
+    long getSeqNr();
+    
+    /**
+     * The data field can be used to put extra informative information on the message. 
+     * This data will be stored in the message table and should be kept small.
+     * @return the data
+     */
+    byte[] getData();
+    
+    /**
+     * The payload contains all information about a message for a {@link RowLogMessageConsumer} to be able to process a message.
+     * @return the payload
+     * @throws RowLogException 
+     */
+    byte[] getPayload() throws RowLogException;
 }

@@ -14,15 +14,15 @@
           {"name": "primitiveValueType", "type": "string"},
           {"name": "multivalue", "type": "boolean"},
           {"name": "hierarchical", "type": "boolean"}
-	  ]
-	 },
-	 
-	 {"name": "AvroFieldTypeEntry", "type": "record",
-	  "fields": [
-	      {"name": "id", "type": "string"},
-	      {"name": "mandatory", "type": "boolean"}
-	  ]
-	 },
+      ]
+     },
+     
+     {"name": "AvroFieldTypeEntry", "type": "record",
+      "fields": [
+          {"name": "id", "type": "string"},
+          {"name": "mandatory", "type": "boolean"}
+      ]
+     },
      
      {"name": "AvroFieldType", "type": "record",
       "fields": [

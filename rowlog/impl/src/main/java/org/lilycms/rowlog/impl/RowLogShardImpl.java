@@ -38,15 +38,15 @@ import org.lilycms.util.io.Closer;
 
 public class RowLogShardImpl implements RowLogShard {
 
-	private static final byte[] MESSAGES_CF = Bytes.toBytes("MESSAGES");
-	private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("MESSAGE");
-	private HTable table;
+    private static final byte[] MESSAGES_CF = Bytes.toBytes("MESSAGES");
+    private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("MESSAGE");
+    private HTable table;
     private final RowLog rowLog;
 
-	public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog) throws IOException {
-		this.rowLog = rowLog;
+    public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog) throws IOException {
+        this.rowLog = rowLog;
         try {
-			table = new HTable(configuration, id);
+            table = new HTable(configuration, id);
         } catch (TableNotFoundException e) {
             HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(id);
@@ -55,55 +55,55 @@ public class RowLogShardImpl implements RowLogShard {
             table = new HTable(configuration, id);
         }
     }
-	
-	public void putMessage(RowLogMessage message, int consumerId) throws RowLogException {
-		byte[] rowKey = createRowKey(message.getId(), consumerId);
-		
-		RowLock rowLock = null;
-		try {
-			rowLock = table.lockRow(rowKey);
-			Put put = new Put(rowKey, rowLock);
-			put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
-			table.put(put);
-		} catch (IOException e) {
-			throw new RowLogException("Failed to put message on RowLogShard", e);
-		} finally {
-			if (rowLock != null) {
-				try {
-					table.unlockRow(rowLock);
-				} catch (IOException e) {
-					// Ignore, the lock will timeout eventually
-				}
-			}
-		}
-	}
-	
-	
+    
+    public void putMessage(RowLogMessage message, int consumerId) throws RowLogException {
+        byte[] rowKey = createRowKey(message.getId(), consumerId);
+        
+        RowLock rowLock = null;
+        try {
+            rowLock = table.lockRow(rowKey);
+            Put put = new Put(rowKey, rowLock);
+            put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
+            table.put(put);
+        } catch (IOException e) {
+            throw new RowLogException("Failed to put message on RowLogShard", e);
+        } finally {
+            if (rowLock != null) {
+                try {
+                    table.unlockRow(rowLock);
+                } catch (IOException e) {
+                    // Ignore, the lock will timeout eventually
+                }
+            }
+        }
+    }
+    
+    
 
-	public void removeMessage(RowLogMessage message, int consumerId) throws RowLogException {
-		byte[] rowKey = createRowKey(message.getId(), consumerId);
-		
-		RowLock rowLock = null;
-		try {
-			rowLock = table.lockRow(rowKey);
-			Delete delete = new Delete(rowKey, Long.MAX_VALUE, rowLock);
-			table.delete(delete);
-		} catch (IOException e) {
-			throw new RowLogException("Failed to remove message from RowLogShard", e);
-		} finally {
-			if (rowLock != null) {
-				try {
-					table.unlockRow(rowLock);
-				} catch (IOException e) {
-					// Ignore, the lock will timeout eventually
-				}
-			}
-		}
-	}
+    public void removeMessage(RowLogMessage message, int consumerId) throws RowLogException {
+        byte[] rowKey = createRowKey(message.getId(), consumerId);
+        
+        RowLock rowLock = null;
+        try {
+            rowLock = table.lockRow(rowKey);
+            Delete delete = new Delete(rowKey, Long.MAX_VALUE, rowLock);
+            table.delete(delete);
+        } catch (IOException e) {
+            throw new RowLogException("Failed to remove message from RowLogShard", e);
+        } finally {
+            if (rowLock != null) {
+                try {
+                    table.unlockRow(rowLock);
+                } catch (IOException e) {
+                    // Ignore, the lock will timeout eventually
+                }
+            }
+        }
+    }
 
-	public RowLogMessage next(int consumerId) throws RowLogException {
-		Scan scan = new Scan(Bytes.toBytes(consumerId));
-		scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
+    public RowLogMessage next(int consumerId) throws RowLogException {
+        Scan scan = new Scan(Bytes.toBytes(consumerId));
+        scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
         ResultScanner scanner = null;
         try {
             scanner = table.getScanner(scan);
@@ -118,38 +118,38 @@ public class RowLogShardImpl implements RowLogShard {
             byte[] messageId = Bytes.tail(rowKey, rowKey.length - Bytes.SIZEOF_INT);
             return decodeMessage(messageId, value);
         } catch (IOException e) {
-        	throw new RowLogException("Failed to fetch next message from RowLogShard", e);
+            throw new RowLogException("Failed to fetch next message from RowLogShard", e);
         } finally {
             Closer.close(scanner);
         }
-	}
+    }
 
-	private byte[] createRowKey(byte[] messageId, int consumerId) {
-		byte[] rowKey = Bytes.toBytes(consumerId);
-		rowKey = Bytes.add(rowKey, messageId);
-		return rowKey;
-	}
-	
-	private byte[] encodeMessage(RowLogMessage message) {
-		byte[] bytes = Bytes.toBytes(message.getSeqNr());
-		bytes = Bytes.add(bytes, Bytes.toBytes(message.getRowKey().length));
-		bytes = Bytes.add(bytes, message.getRowKey());
-		if (message.getData() != null) {
-			bytes = Bytes.add(bytes, message.getData());
-		}
-		return bytes;
-	}
-	
-	private RowLogMessage decodeMessage(byte[] messageId, byte[] bytes) {
-		long seqnr = Bytes.toLong(bytes);
-		int rowKeyLength = Bytes.toInt(bytes,Bytes.SIZEOF_LONG);
-		byte[] rowKey = Bytes.head(Bytes.tail(bytes, bytes.length-Bytes.SIZEOF_LONG-Bytes.SIZEOF_INT), rowKeyLength);
-		int dataLength = bytes.length - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT - rowKeyLength;
-		byte[] data = null;
-		if (dataLength > 0) {
-			data = Bytes.tail(bytes, dataLength);
-		}
-		return new RowLogMessageImpl(messageId, rowKey, seqnr, data, rowLog);
-	}
+    private byte[] createRowKey(byte[] messageId, int consumerId) {
+        byte[] rowKey = Bytes.toBytes(consumerId);
+        rowKey = Bytes.add(rowKey, messageId);
+        return rowKey;
+    }
+    
+    private byte[] encodeMessage(RowLogMessage message) {
+        byte[] bytes = Bytes.toBytes(message.getSeqNr());
+        bytes = Bytes.add(bytes, Bytes.toBytes(message.getRowKey().length));
+        bytes = Bytes.add(bytes, message.getRowKey());
+        if (message.getData() != null) {
+            bytes = Bytes.add(bytes, message.getData());
+        }
+        return bytes;
+    }
+    
+    private RowLogMessage decodeMessage(byte[] messageId, byte[] bytes) {
+        long seqnr = Bytes.toLong(bytes);
+        int rowKeyLength = Bytes.toInt(bytes,Bytes.SIZEOF_LONG);
+        byte[] rowKey = Bytes.head(Bytes.tail(bytes, bytes.length-Bytes.SIZEOF_LONG-Bytes.SIZEOF_INT), rowKeyLength);
+        int dataLength = bytes.length - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT - rowKeyLength;
+        byte[] data = null;
+        if (dataLength > 0) {
+            data = Bytes.tail(bytes, dataLength);
+        }
+        return new RowLogMessageImpl(messageId, rowKey, seqnr, data, rowLog);
+    }
 
 }

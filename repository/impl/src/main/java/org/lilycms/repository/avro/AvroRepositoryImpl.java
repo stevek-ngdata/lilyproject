@@ -10,103 +10,103 @@ import org.lilycms.repository.api.*;
 
 public class AvroRepositoryImpl implements AvroRepository {
 
-	private final Repository repository;
-	private AvroConverter converter;
+    private final Repository repository;
+    private AvroConverter converter;
 
-	public AvroRepositoryImpl(Repository repository, AvroConverter converter) {
-		this.repository = repository;
-		this.converter = converter;
+    public AvroRepositoryImpl(Repository repository, AvroConverter converter) {
+        this.repository = repository;
+        this.converter = converter;
     }
-	
-	public AvroRecord create(AvroRecord record) throws AvroRemoteException, AvroRecordExistsException, AvroRecordNotFoundException, AvroInvalidRecordException,
-	        AvroRecordTypeNotFoundException, AvroFieldTypeNotFoundException, AvroRepositoryException {
-		try {
-	        return converter.convert(repository.create(converter.convert(record)));
+    
+    public AvroRecord create(AvroRecord record) throws AvroRemoteException, AvroRecordExistsException, AvroRecordNotFoundException, AvroInvalidRecordException,
+            AvroRecordTypeNotFoundException, AvroFieldTypeNotFoundException, AvroRepositoryException {
+        try {
+            return converter.convert(repository.create(converter.convert(record)));
         } catch (RecordExistsException recordExistsException) {
-        	throw converter.convert(recordExistsException);
+            throw converter.convert(recordExistsException);
         } catch (RecordNotFoundException recordNotFoundException) {
-        	throw converter.convert(recordNotFoundException);
+            throw converter.convert(recordNotFoundException);
         } catch (InvalidRecordException invalidRecordException) {
-        	throw converter.convert(invalidRecordException);
+            throw converter.convert(invalidRecordException);
         } catch (RecordTypeNotFoundException recordTypeNotFoundException) {
-        	throw converter.convert(recordTypeNotFoundException);
+            throw converter.convert(recordTypeNotFoundException);
         } catch (FieldTypeNotFoundException fieldTypeNotFoundException) {
-        	throw converter.convert(fieldTypeNotFoundException);
+            throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
-        	throw converter.convert(repositoryException);
+            throw converter.convert(repositoryException);
         }
-	}
+    }
 
-	public Void delete(Utf8 recordId) throws AvroRemoteException {
-		try {
-	        repository.delete(repository.getIdGenerator().fromString(recordId.toString()));
+    public Void delete(Utf8 recordId) throws AvroRemoteException {
+        try {
+            repository.delete(repository.getIdGenerator().fromString(recordId.toString()));
         } catch (RepositoryException repositoryException) {
-        	throw converter.convert(repositoryException);
+            throw converter.convert(repositoryException);
         }
         return null;
-	}
+    }
 
-	public AvroRecord read(Utf8 recordId, long avroVersion, GenericArray<AvroQName> avroFieldNames) throws AvroRemoteException, AvroRecordNotFoundException,
-	        AvroRecordTypeNotFoundException, AvroFieldTypeNotFoundException, AvroRepositoryException {
-		List<QName> fieldNames = null;
-		if (avroFieldNames != null) {
-			fieldNames = new ArrayList<QName>();
-			for (AvroQName avroQName : avroFieldNames) {
-		        fieldNames.add(converter.convert(avroQName));
-	        }
-		}
-		try {
-			Long version = null;
-			if (avroVersion != -1) {
-				version = avroVersion;
-			}
-	        return converter.convert(repository.read(repository.getIdGenerator().fromString(recordId.toString()), version, fieldNames));
+    public AvroRecord read(Utf8 recordId, long avroVersion, GenericArray<AvroQName> avroFieldNames) throws AvroRemoteException, AvroRecordNotFoundException,
+            AvroRecordTypeNotFoundException, AvroFieldTypeNotFoundException, AvroRepositoryException {
+        List<QName> fieldNames = null;
+        if (avroFieldNames != null) {
+            fieldNames = new ArrayList<QName>();
+            for (AvroQName avroQName : avroFieldNames) {
+                fieldNames.add(converter.convert(avroQName));
+            }
+        }
+        try {
+            Long version = null;
+            if (avroVersion != -1) {
+                version = avroVersion;
+            }
+            return converter.convert(repository.read(repository.getIdGenerator().fromString(recordId.toString()), version, fieldNames));
         } catch (RecordNotFoundException recordNotFoundException) {
-        	throw converter.convert(recordNotFoundException);
+            throw converter.convert(recordNotFoundException);
         } catch (RecordTypeNotFoundException recordTypeNotFoundException) {
-        	throw converter.convert(recordTypeNotFoundException);
+            throw converter.convert(recordTypeNotFoundException);
         } catch (FieldTypeNotFoundException fieldTypeNotFoundException) {
-        	throw converter.convert(fieldTypeNotFoundException);
+            throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
-        	throw converter.convert(repositoryException);
+            throw converter.convert(repositoryException);
         } catch (VersionNotFoundException e) {
             throw converter.convert(e);
         }
     }
 
-	public AvroRecord update(AvroRecord record) throws AvroRemoteException, AvroRecordNotFoundException, AvroInvalidRecordException, AvroRecordTypeNotFoundException,
-	        AvroFieldTypeNotFoundException, AvroRepositoryException {
-		try {
-	        return converter.convert(repository.update(converter.convert(record)));
+    public AvroRecord update(AvroRecord record) throws AvroRemoteException, AvroRecordNotFoundException, AvroInvalidRecordException, AvroRecordTypeNotFoundException,
+            AvroFieldTypeNotFoundException, AvroRepositoryException {
+        try {
+            return converter.convert(repository.update(converter.convert(record)));
         } catch (RecordNotFoundException recordNotFoundException) {
-        	throw converter.convert(recordNotFoundException);
+            throw converter.convert(recordNotFoundException);
         } catch (InvalidRecordException invalidRecordException) {
-        	throw converter.convert(invalidRecordException);
+            throw converter.convert(invalidRecordException);
         } catch (RecordTypeNotFoundException recordTypeNotFoundException) {
-        	throw converter.convert(recordTypeNotFoundException);
+            throw converter.convert(recordTypeNotFoundException);
         } catch (FieldTypeNotFoundException fieldTypeNotFoundException) {
-        	throw converter.convert(fieldTypeNotFoundException);
+            throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
-        	throw converter.convert(repositoryException);
+            throw converter.convert(repositoryException);
         } catch (VersionNotFoundException e) {
             throw converter.convert(e);
         }
     }
 
-	public AvroRecord updateMutableFields(AvroRecord record) throws AvroRemoteException, AvroRecordNotFoundException, AvroInvalidRecordException, AvroRecordTypeNotFoundException,
-	        AvroFieldTypeNotFoundException, AvroRepositoryException {
-		try {
-	        return converter.convert(repository.updateMutableFields(converter.convert(record)));
+    public AvroRecord updateMutableFields(AvroRecord record) throws AvroRemoteException, AvroRecordNotFoundException, AvroInvalidRecordException, AvroRecordTypeNotFoundException,
+            AvroFieldTypeNotFoundException, AvroRepositoryException {
+        try {
+            return converter.convert(repository.updateMutableFields(converter.convert(record)));
         } catch (InvalidRecordException invalidRecordException) {
-        	throw converter.convert(invalidRecordException);
+            throw converter.convert(invalidRecordException);
         } catch (RecordNotFoundException recordNotFoundException) {
-        	throw converter.convert(recordNotFoundException);
+            throw converter.convert(recordNotFoundException);
         } catch (RecordTypeNotFoundException recordTypeNotFoundException) {
-        	throw converter.convert(recordTypeNotFoundException);
+            throw converter.convert(recordTypeNotFoundException);
         } catch (FieldTypeNotFoundException fieldTypeNotFoundException) {
-        	throw converter.convert(fieldTypeNotFoundException);
+            throw converter.convert(fieldTypeNotFoundException);
         } catch (RepositoryException repositoryException) {
-        	throw converter.convert(repositoryException);
+            throw converter.convert(repositoryException);
         } catch (VersionNotFoundException e) {
             throw converter.convert(e);
         }

@@ -30,13 +30,13 @@ public interface RowLogMessageConsumer {
     /**
      * An id which should be unique across all registered consumers on the {@link RowLog} 
      */
-	int getId();
+    int getId();
 
-	/**
-	 * Request a consumer to process a {@link RowLogMessage}. 
-	 * @param message the {@link RowLogMessage} to process
-	 * @return true if the consumer could successfully process the {@link RowLogMessage}
-	 */
-	boolean processMessage(RowLogMessage message);
+    /**
+     * Request a consumer to process a {@link RowLogMessage}. 
+     * @param message the {@link RowLogMessage} to process
+     * @return true if the consumer could successfully process the {@link RowLogMessage}
+     */
+    boolean processMessage(RowLogMessage message);
 
 }

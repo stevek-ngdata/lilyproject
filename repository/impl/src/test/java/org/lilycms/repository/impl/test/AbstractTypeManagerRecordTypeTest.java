@@ -18,18 +18,18 @@ import org.lilycms.repository.api.RecordTypeNotFoundException;
 
 public abstract class AbstractTypeManagerRecordTypeTest {
 
-	protected static TypeManager typeManager;
-	private static FieldType fieldType1;
-	private static FieldType fieldType2;
-	private static FieldType fieldType3;
+    protected static TypeManager typeManager;
+    private static FieldType fieldType1;
+    private static FieldType fieldType2;
+    private static FieldType fieldType3;
 
-	protected static void setupFieldTypes() throws Exception {
+    protected static void setupFieldTypes() throws Exception {
         fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName("ns1", "field1"), Scope.NON_VERSIONED));
         fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(null, "field2"), Scope.VERSIONED));
         fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName("ns1", "field3"), Scope.VERSIONED_MUTABLE));
     }
 
-	@Test
+    @Test
     public void testCreateEmpty() throws Exception {
         String id = "testCreateEmpty";
         RecordType recordType = typeManager.newRecordType(id);
@@ -37,10 +37,10 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         
         recordType.setVersion(Long.valueOf(1));
         RecordType recordType2 = typeManager.getRecordType(id, null);
-		assertEquals(recordType, recordType2);
+        assertEquals(recordType, recordType2);
     }
 
-	@Test
+    @Test
     public void testCreate() throws Exception {
         String id = "testCreate";
         RecordType recordType = typeManager.newRecordType(id);
@@ -53,7 +53,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(recordType, typeManager.getRecordType(id, null));
     }
 
-	@Test
+    @Test
     public void testUpdate() throws Exception {
         String id = "testUpdate";
         RecordType recordType = typeManager.newRecordType(id);
@@ -86,7 +86,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(recordTypeV4, typeManager.getRecordType(id,Long.valueOf(4)));
     }
 
-	@Test
+    @Test
     public void testReadNonExistingRecordTypeFails() throws Exception {
         String id = "testReadNonExistingRecordTypeFails";
         try {
@@ -103,7 +103,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         }
     }
 
-	@Test
+    @Test
     public void testUpdateNonExistingRecordTypeFails() throws Exception {
         String id = "testUpdateNonExistingRecordTypeFails";
         RecordType recordType = typeManager.newRecordType(id);
@@ -114,7 +114,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         }
     }
 
-	@Test
+    @Test
     public void testFieldTypeExistsOnCreate() throws Exception {
         String id = "testUpdateNonExistingRecordTypeFails";
         RecordType recordType = typeManager.newRecordType(id);
@@ -126,7 +126,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         }
     }
 
-	@Test
+    @Test
     public void testFieldGroupExistsOnUpdate() throws Exception {
         String id = "testFieldGroupExistsOnUpdate";
         RecordType recordType = typeManager.newRecordType(id);
@@ -140,7 +140,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         }
     }
 
-	@Test
+    @Test
     public void testRemove() throws Exception {
         String id = "testRemove";
         RecordType recordType = typeManager.newRecordType(id);
@@ -158,7 +158,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertTrue(readRecordType.getFieldTypeEntries().isEmpty());
     }
 
-	@Test
+    @Test
     public void testRemoveLeavesOlderVersionsUntouched() throws Exception {
         String id = "testRemoveLeavesOlderVersionsUntouched";
         RecordType recordType = typeManager.newRecordType(id);
@@ -176,7 +176,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(3, readRecordType.getFieldTypeEntries().size());
     }
 
-	@Test
+    @Test
     public void testMixin() throws Exception {
         String id = "testMixin";
         RecordType mixinType = typeManager.newRecordType(id+"MIX");
@@ -192,7 +192,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(recordType, typeManager.getRecordType(recordType.getId(), null));
     }
 
-	@Test
+    @Test
     public void testMixinUpdate() throws Exception {
         String id = "testMixinUpdate";
         RecordType mixinType1 = typeManager.newRecordType(id+"MIX");
@@ -216,7 +216,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(recordType, typeManager.getRecordType(recordType.getId(), null));
     }
 
-	@Test
+    @Test
     public void testMixinRemove() throws Exception {
         String id = "testMixinRemove";
         RecordType mixinType1 = typeManager.newRecordType(id+"MIX");

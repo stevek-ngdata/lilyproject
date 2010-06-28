@@ -31,7 +31,7 @@ public class ValueTypeImpl implements ValueType {
     private final boolean hierarchical;
 
     public ValueTypeImpl(PrimitiveValueType primitiveValueType, boolean multivalue, boolean hierarchical) {
-    	ArgumentValidator.notNull(primitiveValueType, "primitiveValueType");
+        ArgumentValidator.notNull(primitiveValueType, "primitiveValueType");
         this.primitiveValueType = primitiveValueType;
         this.multiValue = multivalue;
         this.hierarchical = hierarchical;

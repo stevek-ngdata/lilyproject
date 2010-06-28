@@ -73,7 +73,7 @@ public class ValueTypeTest {
     
     @Test
     public void testDummy() {
-    	
+        
     }
 
     @Test

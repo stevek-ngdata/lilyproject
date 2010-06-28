@@ -59,102 +59,102 @@ public interface RowLog {
      * Registers a shard on the RowLog. (Note: the current implementation only allows for one shard to be registered.)
      * @param shard a {@link RowLogShard} 
      */
-	void registerShard(RowLogShard shard);
-	/**
-	 * Registers a consumer on the RowLog.
-	 * @param rowLogMessageConsumer a {@link RowLogMessageConsumer}
-	 */
-	void registerConsumer(RowLogMessageConsumer rowLogMessageConsumer);
-	/**
-	 * Unregisters a consumer from the RowLog
-	 * @param rowLogMessageConsumer a {@link RowLogMessageConsumer}
-	 */
-	void unRegisterConsumer(RowLogMessageConsumer rowLogMessageConsumer);
-	/**
-	 * Retrieves the payload of a {@link RowLogMessage} from the RowLog.
-	 * The preferred way to get the payload for a message is to request this through the message itself 
-	 * with the call {@link RowLogMessage#getPayload()} .
-	 * @param message a {link RowLogMessage}
-	 * @return the payload of the message
-	 * @throws RowLogException
-	 */
-	byte[] getPayload(RowLogMessage message) throws RowLogException;
-	/**
-	 * Puts a new message on the RowLog. This will add a new message on a {@link RowLogShard} 
-	 * and put the payload and an execution state on the HBase row this message is about.
-	 * @param rowKey the HBase row the message is related to
-	 * @param data some informative data to be put on the message
-	 * @param payload the information needed by a {@link RowLogMessageConsumer} to be able to process the message
-	 * @param put a HBase {@link Put} object that, when given, will be used by the RowLog to put the payload and 
-	 * execution state information on the HBase row. This enables the combination of the actual row data and the payload
-	 * and execution state to be put on the HBase row with a single, atomic, put call. 
-	 * @return a new {@link RowLogMessage} with a unique id and a sequence number indicating its position in the list of
-	 * messages of the row.
-	 * @throws RowLogException
-	 */
-	RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws RowLogException;
-	/**
-	 * Request each registered {@link RowLogMessageConsumer} to process a {@link RowLogMessage} explicitly. 
-	 * This method can be called independently from a {@link RowLogProcessor} and can be used for instance when a message
-	 * needs to be processed immediately after it has been put on the RowLog instead of waiting for a {@link RowLogProcessor}
-	 * to pick it up and process it. 
-	 * @param message a {@link RowLogMessage} to be processed
-	 * @return true if all consumers have processed the {@link RowLogMessage} successfully
-	 * @throws RowLogException
-	 */
-	boolean processMessage(RowLogMessage message) throws RowLogException;
-	
-	/**
-	 * Locks a {@link RowLogMessage} for a certain {@link RowLogMessageConsumer}. This lock can be used if a consumer wants
-	 * to indicate that it is busy processing a message. 
-	 * The lock can be released either by calling {@link #unlockMessage(RowLogMessage, int, byte[])}, 
-	 * {@link #messageDone(RowLogMessage, int, byte[])}, or when the lock's timeout expires.
-	 * This lock only locks the message for a certain consumer, other consumers can still process the message in parallel.  
-	 * @param message the {@link RowLogMessage} for which to take the lock
-	 * @param consumerId the id of the {@link RowLogMessageConsumer} for which to lock the message
-	 * @return a lock when the message was successfully locked or null when locking the message failed for instance when
-	 * it was locked by another instance of the same consumer
-	 * @throws RowLogException
-	 */
-	byte[] lockMessage(RowLogMessage message, int consumerId) throws RowLogException;
+    void registerShard(RowLogShard shard);
+    /**
+     * Registers a consumer on the RowLog.
+     * @param rowLogMessageConsumer a {@link RowLogMessageConsumer}
+     */
+    void registerConsumer(RowLogMessageConsumer rowLogMessageConsumer);
+    /**
+     * Unregisters a consumer from the RowLog
+     * @param rowLogMessageConsumer a {@link RowLogMessageConsumer}
+     */
+    void unRegisterConsumer(RowLogMessageConsumer rowLogMessageConsumer);
+    /**
+     * Retrieves the payload of a {@link RowLogMessage} from the RowLog.
+     * The preferred way to get the payload for a message is to request this through the message itself 
+     * with the call {@link RowLogMessage#getPayload()} .
+     * @param message a {link RowLogMessage}
+     * @return the payload of the message
+     * @throws RowLogException
+     */
+    byte[] getPayload(RowLogMessage message) throws RowLogException;
+    /**
+     * Puts a new message on the RowLog. This will add a new message on a {@link RowLogShard} 
+     * and put the payload and an execution state on the HBase row this message is about.
+     * @param rowKey the HBase row the message is related to
+     * @param data some informative data to be put on the message
+     * @param payload the information needed by a {@link RowLogMessageConsumer} to be able to process the message
+     * @param put a HBase {@link Put} object that, when given, will be used by the RowLog to put the payload and 
+     * execution state information on the HBase row. This enables the combination of the actual row data and the payload
+     * and execution state to be put on the HBase row with a single, atomic, put call. 
+     * @return a new {@link RowLogMessage} with a unique id and a sequence number indicating its position in the list of
+     * messages of the row.
+     * @throws RowLogException
+     */
+    RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws RowLogException;
+    /**
+     * Request each registered {@link RowLogMessageConsumer} to process a {@link RowLogMessage} explicitly. 
+     * This method can be called independently from a {@link RowLogProcessor} and can be used for instance when a message
+     * needs to be processed immediately after it has been put on the RowLog instead of waiting for a {@link RowLogProcessor}
+     * to pick it up and process it. 
+     * @param message a {@link RowLogMessage} to be processed
+     * @return true if all consumers have processed the {@link RowLogMessage} successfully
+     * @throws RowLogException
+     */
+    boolean processMessage(RowLogMessage message) throws RowLogException;
+    
+    /**
+     * Locks a {@link RowLogMessage} for a certain {@link RowLogMessageConsumer}. This lock can be used if a consumer wants
+     * to indicate that it is busy processing a message. 
+     * The lock can be released either by calling {@link #unlockMessage(RowLogMessage, int, byte[])}, 
+     * {@link #messageDone(RowLogMessage, int, byte[])}, or when the lock's timeout expires.
+     * This lock only locks the message for a certain consumer, other consumers can still process the message in parallel.  
+     * @param message the {@link RowLogMessage} for which to take the lock
+     * @param consumerId the id of the {@link RowLogMessageConsumer} for which to lock the message
+     * @return a lock when the message was successfully locked or null when locking the message failed for instance when
+     * it was locked by another instance of the same consumer
+     * @throws RowLogException
+     */
+    byte[] lockMessage(RowLogMessage message, int consumerId) throws RowLogException;
 
-	/**
-	 * Unlocks a {@link RowLogMessage} for a certain {@link RowLogMessageConsumer} 
-	 * @param message the {@link RowLogMessage} for which to release the lock
-	 * @param consumerId the id of the {@link RowLogMessageConsumer} for which to release the lock
-	 * @param lock the lock that was received when calling {@link #lockMessage(RowLogMessage, int)}
-	 * @return true if releasing the lock was successful. False if releasing the lock failed, for instance because the
-	 * given lock does not match the lock that is currently on the message 
-	 * @throws RowLogException
-	 */
-	boolean unlockMessage(RowLogMessage message, int consumerId, byte[] lock) throws RowLogException;
-	
-	/**
-	 * Checks if a {@link RowLogMessage} is locked for a certain {@link RowLogMessageConsumer}
-	 * @param message the {@link RowLogMessage} for which to check if there is a lock present
-	 * @param consumerId the id of the {@link RowLogMessageConsumer} for which to check if there is a lock present
-	 * @return true if a lock is present on the message
-	 * @throws RowLogException
-	 */
-	boolean isMessageLocked(RowLogMessage message, int consumerId) throws RowLogException;
-	
-	/**
-	 * Indicates that a {@link RowLogMessage} is done for a certain {@link RowLogMessageConsumer} 
-	 * and should not be processed anymore. This will remove the message for a certain consumer from the {@link RowLogShard} 
-	 * and update the execution state of this message on the row. When the execution state for all consumers is put to
-	 * done, the payload and execution state will be removed from the row.
-	 * A message can only be put to done when the given lock matches the lock that is present on the message, this lock
-	 * will then also be released.  
-	 * @param message the {@link RowLogMessage} to be put to done for a certain {@link RowLogMessageConsumer}
-	 * @param consumerId the id of the {@link RowLogMessageConsumer} for which to put the message to done
-	 * @param lock the lock that should match the lock that is present on the message, before it can be put to done
-	 * @return true if the message has been successfully put to done
-	 * @throws RowLogException
-	 */
-	boolean messageDone(RowLogMessage message, int consumerId, byte[] lock) throws RowLogException;
-	
-	/**
-	 * @return a list of the {@link RowLogMessageConsumer}s that are registered on the RowLog
-	 */
-	List<RowLogMessageConsumer> getConsumers();
+    /**
+     * Unlocks a {@link RowLogMessage} for a certain {@link RowLogMessageConsumer} 
+     * @param message the {@link RowLogMessage} for which to release the lock
+     * @param consumerId the id of the {@link RowLogMessageConsumer} for which to release the lock
+     * @param lock the lock that was received when calling {@link #lockMessage(RowLogMessage, int)}
+     * @return true if releasing the lock was successful. False if releasing the lock failed, for instance because the
+     * given lock does not match the lock that is currently on the message 
+     * @throws RowLogException
+     */
+    boolean unlockMessage(RowLogMessage message, int consumerId, byte[] lock) throws RowLogException;
+    
+    /**
+     * Checks if a {@link RowLogMessage} is locked for a certain {@link RowLogMessageConsumer}
+     * @param message the {@link RowLogMessage} for which to check if there is a lock present
+     * @param consumerId the id of the {@link RowLogMessageConsumer} for which to check if there is a lock present
+     * @return true if a lock is present on the message
+     * @throws RowLogException
+     */
+    boolean isMessageLocked(RowLogMessage message, int consumerId) throws RowLogException;
+    
+    /**
+     * Indicates that a {@link RowLogMessage} is done for a certain {@link RowLogMessageConsumer} 
+     * and should not be processed anymore. This will remove the message for a certain consumer from the {@link RowLogShard} 
+     * and update the execution state of this message on the row. When the execution state for all consumers is put to
+     * done, the payload and execution state will be removed from the row.
+     * A message can only be put to done when the given lock matches the lock that is present on the message, this lock
+     * will then also be released.  
+     * @param message the {@link RowLogMessage} to be put to done for a certain {@link RowLogMessageConsumer}
+     * @param consumerId the id of the {@link RowLogMessageConsumer} for which to put the message to done
+     * @param lock the lock that should match the lock that is present on the message, before it can be put to done
+     * @return true if the message has been successfully put to done
+     * @throws RowLogException
+     */
+    boolean messageDone(RowLogMessage message, int consumerId, byte[] lock) throws RowLogException;
+    
+    /**
+     * @return a list of the {@link RowLogMessageConsumer}s that are registered on the RowLog
+     */
+    List<RowLogMessageConsumer> getConsumers();
 }
