@@ -1031,6 +1031,66 @@ public class IndexerTest {
 //            record1 = repository.update(record1);
 //        }
 
+
+        // Test that when a record moves from versionless to having versions, its versionless index entry gets removed.
+        // This would fail if the 'versionCreated' is not in the record event.
+        {
+            log.debug("Begin test V110");
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1");
+            record1.setField(nvfield1.getName(), "road");
+            expectEvent(CREATE, record1.getId(), nvfield1.getId());
+            record1 = repository.create(record1);
+
+            commitIndex();
+            verifyResultCount("+nv_field1:road +@@versionless:true", 1);
+
+            record1.setField(vfield1.getName(), "cloud");
+            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId());
+            record1 = repository.update(record1);
+
+            commitIndex();
+            verifyResultCount("+nv_field1:road +@@versionless:true", 0);
+
+        }
+
+        // Test that the index is updated when a version is created, in absence of changes to the vtag fields.
+        // This would fail if the 'versionCreated' is not in the record event.
+        {
+            log.debug("Begin test V120");
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1");
+            record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), liveTag.getId());
+            record1 = repository.create(record1);
+
+            record1.setField(vfield1.getName(), "stool");
+            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId());
+            record1 = repository.update(record1);
+
+            commitIndex();
+            verifyResultCount("v_field1:stool", 1);
+        }
+
+        // Test that the index is updated when a version is updated, in absence of changes to the vtag fields.
+        // This would fail if the 'versionCreated' is not in the record event.
+        {
+            log.debug("Begin test V130");
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1");
+            record1.setField(liveTag.getName(), 2L);
+            record1.setField(vfield1.getName(), "wall");
+            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            record1 = repository.create(record1);
+
+            record1.setField(vfield1.getName(), "floor");
+            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId());
+            record1 = repository.update(record1);
+
+            commitIndex();
+            verifyResultCount("v_field1:floor", 1);
+        }
+
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }
 

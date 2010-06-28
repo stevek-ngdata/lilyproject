@@ -177,6 +177,10 @@ public class Indexer {
                 // If there were non-versioned fields changed, then we already reindex all versions
                 // so this can be skipped.
                 //
+                // In the case of newly created versions that should be indexed: this will often be
+                // accompanied by corresponding changes to vtag fields, which are handled next, and in which case
+                // it would work as well if this code would not be here.
+                //
                 if (vtagsToIndex.isEmpty() && (event.getVersionCreated() != -1 || event.getVersionUpdated() != -1)) {
                     if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED))
                             || atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE))) {
