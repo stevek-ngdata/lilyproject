@@ -56,7 +56,7 @@ public interface BlobStoreAccess {
      * @param key a unique key identifying the written bytes on the blobstore, see {@link #getOutputStream(Blob)}
      * 
      * @return an InputStream from whih a stream of bytes can be read
-     * @throws RepositoryException when an unexpected exception occured (e.g. an IOException of the underlying blobstore)
+     * @throws RepositoryException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
      */
     InputStream getInputStream(byte[] key) throws RepositoryException;
 
@@ -65,7 +65,7 @@ public interface BlobStoreAccess {
      *
      * @param key a unique key identifying the written bytes on the blobstore, see {@link #getOutputStream(Blob)}
      *
-     * @throws RepositoryException when an unexpected exception occured (e.g. an IOException of the underlying blobstore)
+     * @throws RepositoryException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
      */
     void delete(byte[] key) throws RepositoryException;
 }

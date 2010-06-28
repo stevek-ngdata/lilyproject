@@ -271,7 +271,7 @@ public class AvroConverter {
 
 	// TODO how to cope with these kinds of errors
 	public RepositoryException convert(AvroRemoteException remoteException) {
-		return new RepositoryException("A remoteException occured", remoteException);
+		return new RepositoryException("A remoteException occurred", remoteException);
 	}
 
 	public AvroFieldTypeExistsException convert(FieldTypeExistsException fieldTypeExistsException) {

@@ -232,10 +232,10 @@ public class HBaseRepository implements Repository {
 			walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
 			recordTable.put(put);
 		} catch (IOException e) {
-			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table",
+			throw new RepositoryException("Exception occurred while creating record <" + recordId + "> in HBase table",
 			        e);
 		} catch (RowLogException e) {
-			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table",
+			throw new RepositoryException("Exception occurred while creating record <" + recordId + "> in HBase table",
 			        e);
 		} finally {
 			if (rowLock != null) {
@@ -259,7 +259,7 @@ public class HBaseRepository implements Repository {
                 }
 			}
 		} catch (IOException e) {
-			throw new RepositoryException("Exception occured while creating record <" + recordId + "> in HBase table",
+			throw new RepositoryException("Exception occurred while creating record <" + recordId + "> in HBase table",
 			        e);
 		} finally {
 			if (customRowLock != null) {
@@ -352,7 +352,7 @@ public class HBaseRepository implements Repository {
 				throw new RecordNotFoundException(record);
 			}
 		} catch (IOException e) {
-			throw new RepositoryException("Exception occured while retrieving original record <" + record.getId()
+			throw new RepositoryException("Exception occurred while retrieving original record <" + record.getId()
 			        + "> from HBase table", e);
 		}
 	}
@@ -583,10 +583,10 @@ public class HBaseRepository implements Repository {
 				}
 			}
 		} catch (RowLogException e) {
-			throw new RepositoryException("Exception occured while putting updated record <" + record.getId()
+			throw new RepositoryException("Exception occurred while putting updated record <" + record.getId()
 			        + "> on HBase table", e);
 		} catch (IOException e) {
-			throw new RepositoryException("Exception occured while updating record <" + recordId + "> in HBase table",
+			throw new RepositoryException("Exception occurred while updating record <" + recordId + "> in HBase table",
 			        e);
 		} finally {
 			if (rowLock != null) {
@@ -721,7 +721,7 @@ public class HBaseRepository implements Repository {
 			// Retrieve the data from the repository
 			result = recordTable.get(get);
 		} catch (IOException e) {
-			throw new RepositoryException("Exception occured while retrieving record <" + recordId
+			throw new RepositoryException("Exception occurred while retrieving record <" + recordId
 			        + "> from HBase table", e);
 		}
 
@@ -895,7 +895,7 @@ public class HBaseRepository implements Repository {
 			recordTable.delete(delete);
 		} catch (IOException e) {
 			throw new RepositoryException(
-			        "Exception occured while deleting record <" + recordId + "> from HBase table", e);
+			        "Exception occurred while deleting record <" + recordId + "> from HBase table", e);
 		}
 
         // TODO bruno: I put this in here as a temp fix so that the Indexer would work
