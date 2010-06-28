@@ -99,8 +99,8 @@ public class HBaseProxy {
     }
 
     private void cleanTables() throws Exception {
-        System.out.println("=========================== Resetting HBase tables ===========================");
-
+        System.out.println("------------------------ Resetting HBase tables ------------------------");
+        
         StringBuilder truncateReport = new StringBuilder();
         StringBuilder retainReport = new StringBuilder();
 
@@ -160,7 +160,7 @@ public class HBaseProxy {
 
         waitForTimestampTables(exploitTimestampTables);
 
-        System.out.println("==============================================================================");
+        System.out.println("------------------------------------------------------------------------");
 
     }
 

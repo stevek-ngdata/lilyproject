@@ -23,20 +23,20 @@ public class SolrTestingUtility {
         solrHomeDir = createSolrHome();
         System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
         System.setProperty("solr.data.dir", new File(solrHomeDir, "data").getAbsolutePath());
-        System.out.println("====================================================================");
+        System.out.println("------------------------------------------------------------------------");
         System.out.println("Created temporary SOLR home directory at:");
         System.out.println(solrHomeDir.getAbsolutePath());
-        System.out.println("====================================================================");
+        System.out.println("------------------------------------------------------------------------");
 
         // Launch SOLR
         String solrWar = System.getProperty("solr.war");
         if (solrWar == null || !new File(solrWar).exists()) {
             System.out.println();
-            System.out.println("====================================================================");
+            System.out.println("------------------------------------------------------------------------");
             System.out.println("SOLR not found at");
             System.out.println(solrWar);
             System.out.println("Verify setting of <solr.war> property in settings.xml");
-            System.out.println("====================================================================");
+            System.out.println("------------------------------------------------------------------------");
             System.out.println();
             throw new Exception("SOLR war not found at " + solrWar);
         }
