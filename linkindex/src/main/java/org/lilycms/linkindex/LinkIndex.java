@@ -13,6 +13,9 @@ import java.util.*;
 /**
  * The index of links that exist between documents.
  */
+// IMPORTANT implementation note: the order in which changes are applied, first to the forward or first to
+// the backward table, is not arbitrary. It is such that if the process would fail in between, there would
+// never be left any state in the backward table which would not be found via the forward index.
 public class LinkIndex {
     private IdGenerator idGenerator;
     private static ThreadLocal<Index> FORWARD_INDEX;
@@ -90,22 +93,36 @@ public class LinkIndex {
      * @param links if this set is empty, then calling this method is equivalent to calling deleteLinks
      */
     public void updateLinks(RecordId sourceRecord, String vtag, Set<FieldedLink> links) throws IOException {
-        deleteLinks(sourceRecord, vtag);
-
-        // TODO take care of the put after delete problem: http://search-hadoop.com/m/rNnhN15Xecu
-
+        // We could simply delete all the old entries using deleteLinks() and then add
+        // all new entries, but instead we find out what actually needs adding or removing and only
+        // perform that. This is to avoid running into problems due to http://search-hadoop.com/m/rNnhN15Xecu
+        // (= delete and put within the same millisecond).
         byte[] sourceAsBytes = sourceRecord.toBytes();
 
-        // Store links in the forwards table
-        for (FieldedLink link : links) {
-            IndexEntry entry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
-            FORWARD_INDEX.get().addEntry(entry, link.getRecordId().toBytes());
+        Set<FieldedLink> oldLinks = getForwardLinks(sourceRecord, vtag);
+
+        // Find out what changed
+        Set<FieldedLink> removedLinks = new HashSet<FieldedLink>(oldLinks);
+        removedLinks.removeAll(links);
+        Set<FieldedLink> addedLinks = new HashSet<FieldedLink>(links);
+        addedLinks.removeAll(oldLinks);
+
+        // Apply added links
+        for (FieldedLink link : addedLinks) {
+            IndexEntry fwdEntry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
+            FORWARD_INDEX.get().addEntry(fwdEntry, link.getRecordId().toBytes());
+
+            IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
+            BACKWARD_INDEX.get().addEntry(bkwdEntry, sourceAsBytes);
         }
 
-        // Store links in the backwards table
-        for (FieldedLink link : links) {
-            IndexEntry entry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
-            BACKWARD_INDEX.get().addEntry(entry, sourceAsBytes);
+        // Apply removed links
+        for (FieldedLink link : removedLinks) {
+            IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
+            BACKWARD_INDEX.get().removeEntry(bkwdEntry, sourceAsBytes);
+
+            IndexEntry fwdEntry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
+            FORWARD_INDEX.get().removeEntry(fwdEntry, link.getRecordId().toBytes());
         }
     }
 
