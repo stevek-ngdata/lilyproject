@@ -188,6 +188,9 @@ public class LinkIndexUpdater {
                 links = collector.getLinks();
             }
             return links;
+        } catch (VersionNotFoundException e) {
+            // A vtag pointing to a non-existing version, nothing unusual.
+            return Collections.emptySet();
         } catch (Throwable t) {
             log.error("Error extracting links from record " + recordId, t);
         }
