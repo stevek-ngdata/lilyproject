@@ -392,6 +392,8 @@ public class Indexer {
             }
         };
 
+        int searchedFollowCount = 0;
+
         // Run over the IndexFields
         nextIndexField:
         for (Map.Entry<IndexField, Set<String>> entry : indexFieldsVTags.entrySet()) {
@@ -407,6 +409,7 @@ public class Indexer {
                 referrers.add(recordId);
 
                 for (int i = follows.size() - 1; i >= 0; i--) {
+                    searchedFollowCount++;
                     DerefValue.Follow follow = follows.get(i);
 
                     Set<RecordId> newReferrers = new HashSet<RecordId>();
@@ -505,7 +508,7 @@ public class Indexer {
 
         if (log.isDebugEnabled()) {
             log.debug(String.format("Record %1$s: found %2$s records (times vtags) to be updated because they " +
-                    "might contain outdated denormalized data.", recordId, referrersVTags.size()));
+                    "might contain outdated denormalized data. Checked %3$s follow instances.", recordId, referrersVTags.size(), searchedFollowCount));
         }
 
 

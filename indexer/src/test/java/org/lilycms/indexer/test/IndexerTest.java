@@ -779,6 +779,44 @@ public class IndexerTest {
         }
 
         //
+        // Test many-to-one dereferencing (= deref where there's actually more than one record pointing to another
+        // record)
+        // (Besides correctness, this test was also added to check/evaluate the processing time)
+        //
+        {
+            log.debug("Begin test V19.1");
+
+            final int COUNT = 5;
+
+            Record record1 = repository.newRecord();
+            record1.setRecordType("VRecordType1");
+            record1.setField(vfield1.getName(), "hyponiem");
+            record1.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            record1 = repository.create(record1);
+
+            // Create multiple records
+            for (int i = 0; i < COUNT; i++) {
+                Record record2 = repository.newRecord();
+                record2.setRecordType("VRecordType1");
+                record2.setField(vLinkField1.getName(), new Link(record1.getId()));
+                record2.setField(liveTag.getName(), 1L);
+                expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+                record2 = repository.create(record2);
+            }
+
+            commitIndex();
+            verifyResultCount("v_deref1:hyponiem", COUNT);
+
+            record1.setField(vfield1.getName(), "hyperoniem");
+            record1.setField(liveTag.getName(), 2L);
+            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), liveTag.getId());
+            record1 = repository.update(record1);
+            commitIndex();
+            verifyResultCount("v_deref1:hyperoniem", COUNT);
+        }
+
+        //
         // Multi-value field tests
         //
         {
@@ -1000,37 +1038,6 @@ public class IndexerTest {
             commitIndex();
             verifyResultCount("v_deref1:mars", 1);
         }
-
-//        //
-//        // Test one-to-many dereferencing
-//        //
-//        {
-//            long before = System.currentTimeMillis();
-//            Record record1 = repository.newRecord();
-//            record1.setRecordType("VRecordType1");
-//            record1.setField(vfield1.getName(), "hyponiem");
-//            record1.setField(liveTag.getName(), 1L);
-//            record1 = repository.create(record1);
-//            sendEvent(EVENT_RECORD_CREATED, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
-//
-//            // Create multiple records
-//            for (int i = 0; i < 100; i++) {
-//                Record record2 = repository.newRecord();
-//                record2.setRecordType("VRecordType1");
-//                record2.setField(vLinkField1.getName(), new Link(record1.getId()));
-//                record2.setField(liveTag.getName(), 1L);
-//                record2 = repository.create(record2);
-//                sendEvent(EVENT_RECORD_CREATED, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
-//            }
-//
-//            long after = System.currentTimeMillis();
-//            System.out.println("after-before = " +(after-before));
-//            verifyResultCount("v_deref1:hyponiem", 100);
-//
-//            record1.setField(vfield1.getName(), "hyperoniem");
-//            record1 = repository.update(record1);
-//        }
-
 
         // Test that when a record moves from versionless to having versions, its versionless index entry gets removed.
         // This would fail if the 'versionCreated' is not in the record event.
