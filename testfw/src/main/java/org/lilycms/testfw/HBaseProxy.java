@@ -60,22 +60,55 @@ public class HBaseProxy {
 
         System.out.println("HBase usage mode: " + MODE);
 
+        CONF = HBaseConfiguration.create();
+
         switch (MODE) {
             case EMBED:
-                // TODO use optimized hbase config
-                TEST_UTIL = new HBaseTestingUtility();
+                addHBaseTestProps(CONF);
+                addUserProps(CONF);
+                TEST_UTIL = new HBaseTestingUtility(CONF);
                 TEST_UTIL.startMiniCluster(1);
                 CONF = TEST_UTIL.getConfiguration();
                 break;
             case CONNECT:
-                CONF = HBaseConfiguration.create();
                 CONF.set("hbase.zookeeper.quorum", "localhost");
                 CONF.set("hbase.zookeeper.property.clientPort", "21812"); // matches HBaseRunner
+                addUserProps(CONF);
                 cleanTables();
                 break;
             default:
                 throw new RuntimeException("Unexpected mode: " + MODE);
         }
+    }
+
+    /**
+     * Adds all system property prefixed with "lily.test.hbase." to the HBase configuration.
+     */
+    private void addUserProps(Configuration conf) {
+        Properties sysProps = System.getProperties();
+        for (Map.Entry<Object, Object> entry : sysProps.entrySet()) {
+            String name = entry.getKey().toString();
+            if (name.startsWith("lily.test.hbase.")) {
+                String hbasePropName = name.substring("lily.test.".length());
+                conf.set(hbasePropName, entry.getValue().toString());
+            }
+        }
+    }
+
+    protected static void addHBaseTestProps(Configuration conf) {
+        // The following properties are from HBase's src/test/resources/hbase-site.xml
+        conf.set("hbase.regionserver.msginterval", "1000");
+        conf.set("hbase.client.pause", "5000");
+        conf.set("hbase.client.retries.number", "4");
+        conf.set("hbase.master.meta.thread.rescanfrequency", "10000");
+        conf.set("hbase.server.thread.wakefrequency", "1000");
+        conf.set("hbase.regionserver.handler.count", "5");
+        conf.set("hbase.master.info.port", "-1");
+        conf.set("hbase.regionserver.info.port", "-1");
+        conf.set("hbase.regionserver.info.port.auto", "true");
+        conf.set("hbase.master.lease.thread.wakefrequency", "3000");
+        conf.set("hbase.regionserver.optionalcacheflushinterval", "1000");
+        conf.set("hbase.regionserver.safemode", "false");
     }
 
     public void stop() throws Exception {
@@ -180,11 +213,12 @@ public class HBaseProxy {
 
             HTable htable = new HTable(CONF, tableName);
 
+            byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
+            byte[] CF = EXPLOIT_TIMESTAMP_TABLES.get(tableName);
+            byte[] COL = Bytes.toBytes("DummyColumn");
+
             byte[] value = null;
             while (value == null) {
-                byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
-                byte[] CF = EXPLOIT_TIMESTAMP_TABLES.get(tableName);
-                byte[] COL = Bytes.toBytes("DummyColumn");
                 Put put = new Put(tmpRowKey);
                 put.add(CF, COL, 1, new byte[] { 0 });
                 htable.put(put);
@@ -198,6 +232,9 @@ public class HBaseProxy {
                 }
                 Thread.sleep(100);
             }
+
+            // Delete our dummy row again
+            htable.delete(new Delete(tmpRowKey));
         }
     }
 
