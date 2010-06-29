@@ -317,6 +317,7 @@
             <argLine>-Xmx256m</argLine>
             <systemPropertyVariables>
               <lily.test.hbase>${lily.test.hbase}</lily.test.hbase>
+              <lily.test.log>${lily.test.log}</lily.test.log>
             </systemPropertyVariables>
           </configuration>
       </plugin>
@@ -335,6 +336,12 @@
       <id>connect</id>
       <properties>
         <lily.test.hbase>connect</lily.test.hbase>
+      </properties>
+    </profile>
+    <profile>
+      <id>log</id>
+      <properties>
+        <lily.test.log>true</lily.test.log>
       </properties>
     </profile>
   </profiles>

@@ -54,7 +54,9 @@ On running test
 Log output of testcases is by default sent to a target/log.txt, errors are however always logged to the
 console. Debug output to the console of selected log categories can be enabled by running tests as follows:
 
-mvn -DargLine=-DlilyTestDebug test
+mvn -Plog test
+
+This is mostly useful when working on individual subprojects/tests.
 
 Running tests faster
 --------------------
@@ -81,3 +83,11 @@ mvn -Pconnect test
 
 The first time this will still take more time (though already quite a bit less than before), since the
 tables still need to be created. Subsequent runs should be way faster.
+
+Note that profiles can be combined, for example:
+
+mvn -Pconnect -Plog test
+
+or, if you prefer, like this:
+
+mvn -Pconnect,log test

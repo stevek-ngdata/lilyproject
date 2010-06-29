@@ -27,7 +27,7 @@ public class TestHelper {
      * logging is sent to a file in target directory.
      *
      * <p>Additionally a set of categories can be specified that will be logged
-     * as debug output to the console when a system property -DlilyTestDebug is present.
+     * as debug output to the console when a system property -Dlily.test.log is present.
      */
     public static void setupLogging(final String... debugCategories) throws IOException {
         JavaLoggingToLog4jRedirector.activate();
@@ -66,7 +66,7 @@ public class TestHelper {
         ConsoleAppender consoleAppender = new ConsoleAppender();
         consoleAppender.setLayout(new PatternLayout(CONSOLE_LAYOUT));
 
-        final boolean debugLoggingEnabled = System.getProperty("lilyTestDebug") != null;
+        final boolean debugLoggingEnabled = System.getProperty("lily.test.log") != null;
 
         consoleAppender.addFilter(new Filter() {
             @Override
