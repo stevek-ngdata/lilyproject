@@ -2,6 +2,7 @@ package org.lilycms.indexer.test;
 
 import static org.junit.Assert.assertEquals;
 
+import org.lilycms.indexer.IndexUpdater;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
@@ -51,7 +52,7 @@ public class IndexerTest {
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
     private static SolrServer solrServer;
-    private static Indexer indexer;
+    private static IndexUpdater indexUpdater;
 
     private static FieldType liveTag;
     private static FieldType previewTag;
@@ -109,14 +110,15 @@ public class IndexerTest {
         setupSchema();
 
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream("org/lilycms/indexer/test/indexerconf1.xml"), repository);
-        indexer = new Indexer(INDEXER_CONF, repository.getWal(), repository, typeManager, solrServer, linkIndex);
+        Indexer indexer = new Indexer(INDEXER_CONF, repository, solrServer);
+        indexUpdater = new IndexUpdater(indexer, repository.getWal(), repository, linkIndex);
 
         repository.getWal().registerConsumer(messageVerifier);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        indexer.stop();
+        indexUpdater.stop();
         repository.stop();
 
         HBASE_PROXY.stop();
