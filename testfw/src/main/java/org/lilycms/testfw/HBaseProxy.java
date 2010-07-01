@@ -127,7 +127,13 @@ public class HBaseProxy {
         if (MODE == Mode.EMBED) {
             return TEST_UTIL.getDFSCluster().getFileSystem();
         } else {
-            return FileSystem.get(new URI("hdfs://localhost:9000"), getConf());
+            String dfsUri = System.getProperty("lily.test.dfs");
+
+            if (dfsUri == null) {
+                dfsUri = "hdfs://localhost:9000";
+            }
+
+            return FileSystem.get(new URI(dfsUri), getConf());
         }
     }
 

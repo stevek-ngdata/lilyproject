@@ -22,7 +22,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <hbase.version>0.21.0-r948363</hbase.version>
+    <hbase.version>0.21.0-r959305</hbase.version>
     <!-- When changing the hbase version, also change the hadoop version below to match
          what is in HBase's pom.xml -->
 
@@ -40,7 +40,7 @@
          Then build using:
          ant -Djava5.home=/usr/lib/jdk1.5/ -Dforrest.home=/path/to/apache-forrest-0.8 tar
     -->
-    <hadoop.version>0.20.2-with-200-826</hadoop.version>
+    <hadoop.version>0.20.3-append-r956776+1240</hadoop.version>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>
