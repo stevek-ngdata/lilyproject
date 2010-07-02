@@ -10,7 +10,6 @@ import org.lilycms.rowlog.api.RowLogMessageConsumer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -28,7 +27,6 @@ import org.lilycms.indexer.Indexer;
 import org.lilycms.indexer.conf.IndexerConf;
 import org.lilycms.indexer.conf.IndexerConfBuilder;
 import org.lilycms.linkindex.LinkIndex;
-import org.lilycms.linkindex.LinkIndexUpdater;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
 import org.lilycms.repoutil.VersionTag;
@@ -102,9 +100,8 @@ public class IndexerTest {
         IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
         IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
-        try { LinkIndex.createIndexes(indexManager); } catch (TableExistsException e) { }
+        LinkIndex.createIndexes(indexManager);
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
-        new LinkIndexUpdater(repository, typeManager, linkIndex, repository.getWal());
 
         // Field types should exist before the indexer conf is loaded
         setupSchema();

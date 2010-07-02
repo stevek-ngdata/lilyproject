@@ -6,6 +6,7 @@ import org.lilycms.indexer.conf.DerefValue;
 import org.lilycms.indexer.conf.IndexCase;
 import org.lilycms.indexer.conf.IndexField;
 import org.lilycms.linkindex.LinkIndex;
+import org.lilycms.linkindex.LinkIndexUpdater;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
@@ -31,6 +32,7 @@ public class IndexUpdater {
     private LinkIndex linkIndex;
     private IndexerListener indexerListener = new IndexerListener();
     private Indexer indexer;
+    private LinkIndexUpdater linkIndexUpdater;
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -40,6 +42,7 @@ public class IndexUpdater {
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
         this.linkIndex = linkIndex;
+        this.linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex);
 
         rowLog.registerConsumer(indexerListener);
     }
@@ -57,6 +60,12 @@ public class IndexUpdater {
             try {
                 RecordEvent event = new RecordEvent(msg.getPayload());
                 RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
+
+                // First, bring the link index up to date.
+                // We always make sure the link index is up to date with the current record state, before updating
+                // the index entry of the record. This way, from the moment the index entry is inserted, any
+                // denormalized data contained in it will be correctly updated.
+                linkIndexUpdater.update(recordId, event);
 
                 if (log.isDebugEnabled()) {
                     log.debug("Received message: " + event.toJson());

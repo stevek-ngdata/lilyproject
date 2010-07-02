@@ -32,13 +32,27 @@ public class LinkIndexUpdater {
 
     private Log log = LogFactory.getLog(getClass());
 
-    public LinkIndexUpdater(Repository repository, TypeManager typeManager, LinkIndex linkIndex, RowLog rowLog) {
+    public LinkIndexUpdater(Repository repository, LinkIndex linkIndex) {
         this.repository = repository;
-        this.typeManager = typeManager;
+        this.typeManager = repository.getTypeManager();
         this.linkIndex = linkIndex;
-        this.rowLog = rowLog;
+    }
 
-        rowLog.registerConsumer(listener);
+    /**
+     * This constructor registers a listener with the rowlog.
+     *
+     * <b>IMPORTANT: this should not be used, the link index update is now triggered as part
+     * of the indexer.</b>
+     */
+    public LinkIndexUpdater(Repository repository, LinkIndex linkIndex, RowLog rowLog) {
+        this.repository = repository;
+        this.typeManager = repository.getTypeManager();
+        this.linkIndex = linkIndex;
+
+        if (rowLog != null) {
+            this.rowLog = rowLog;
+            rowLog.registerConsumer(listener);
+        }
     }
 
     public void stop() {
@@ -46,6 +60,24 @@ public class LinkIndexUpdater {
     }
 
     private class  MyListener implements RowLogMessageConsumer {
+
+        public int getId() {
+            return 102;
+        }
+
+        public boolean processMessage(RowLogMessage msg) {
+            try {
+                RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
+                RecordEvent recordEvent = new RecordEvent(msg.getPayload());
+                update(recordId, recordEvent);
+            } catch (Exception e) {
+                log.error("Error processing event in LinkIndexUpdater", e);
+            }
+            return true;
+        }
+    }
+
+    public void update(RecordId recordId, RecordEvent recordEvent) {
         // This is the algorithm for updating the LinkIndex when a record changes.
         //
         // The LinkIndex contains:
@@ -60,113 +92,102 @@ public class LinkIndexUpdater {
         //  * the vtags change: existing vtag now points to another version, a new vtag is added, or a vtag is removed
         //
 
-        public int getId() {
-            return 102;
-        }
+        try {
+            if (recordEvent.getType().equals(DELETE)) {
+                // Delete everything from the link index for this record, thus for all vtags
+                linkIndex.deleteLinks(recordId);
+                if (log.isDebugEnabled()) {
+                    log.debug("Record " + recordId + " : delete event : deleted extracted links.");
+                }
+            } else if (recordEvent.getType().equals(CREATE) || recordEvent.getType().equals(UPDATE)) {
 
-        public boolean processMessage(RowLogMessage msg) {
-            try {
-                RecordEvent recordEvent = new RecordEvent(msg.getPayload());
-                RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
+                // If the record is not new but its first version was created now, there might be existing
+                // entries for the @@versionless vtag
+                if (recordEvent.getType() == RecordEvent.Type.UPDATE && recordEvent.getVersionCreated() == 1) {
+                    linkIndex.deleteLinks(recordId, VersionTag.VERSIONLESS_TAG);
+                }
 
-                if (recordEvent.getType().equals(DELETE)) {
-                    // Delete everything from the link index for this record, thus for all vtags
+                IdRecord record;
+                try {
+                    record = repository.readWithIds(recordId, null, null);
+                } catch (RecordNotFoundException e) {
+                    // record not found: delete all links for all vtags
                     linkIndex.deleteLinks(recordId);
                     if (log.isDebugEnabled()) {
-                        log.debug("Record " + recordId + " : delete event : deleted extracted links.");
+                        log.debug("Record " + recordId + " : does not exist : deleted extracted links.");
                     }
-                } else if (recordEvent.getType().equals(CREATE) || recordEvent.getType().equals(UPDATE)) {
+                    return;
+                }
+                boolean hasVersions = record.getVersion() != null;
 
-                    // If the record is not new but its first version was created now, there might be existing
-                    // entries for the @@versionless vtag
-                    if (recordEvent.getType() == RecordEvent.Type.UPDATE && recordEvent.getVersionCreated() == 1) {
-                        linkIndex.deleteLinks(recordId, VersionTag.VERSIONLESS_TAG);
+                if (hasVersions) {
+                    Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
+                    Map<Long, Set<String>> tagsByVersion = VersionTag.tagsByVersion(vtags);
+
+                    //
+                    // First find out for what vtags we need to re-perform the link extraction
+                    //
+                    Set<String> vtagsToProcess = new HashSet<String>();
+
+                    // Modified vtag fields
+                    Set<String> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), typeManager);
+                    vtagsToProcess.addAll(changedVTags);
+
+                    // The vtags of the created/modified version, if any
+                    Set<String> vtagsOfChangedVersion = null;
+                    if (recordEvent.getVersionCreated() != -1) {
+                        vtagsOfChangedVersion = tagsByVersion.get(recordEvent.getVersionCreated());
+                    } else if (recordEvent.getVersionUpdated() != -1) {
+                        vtagsOfChangedVersion = tagsByVersion.get(recordEvent.getVersionUpdated());
                     }
 
-                    IdRecord record;
-                    try {
-                        record = repository.readWithIds(recordId, null, null);
-                    } catch (RecordNotFoundException e) {
-                        // record not found: delete all links for all vtags
-                        linkIndex.deleteLinks(recordId);
-                        if (log.isDebugEnabled()) {
-                            log.debug("Record " + recordId + " : does not exist : deleted extracted links.");
-                        }
-                        return true;
+                    if (vtagsOfChangedVersion != null) {
+                        vtagsToProcess.addAll(vtagsOfChangedVersion);
                     }
-                    boolean hasVersions = record.getVersion() != null;
 
-                    if (hasVersions) {
-                        Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
-                        Map<Long, Set<String>> tagsByVersion = VersionTag.tagsByVersion(vtags);
-
-                        //
-                        // First find out for what vtags we need to re-perform the link extraction
-                        //
-                        Set<String> vtagsToProcess = new HashSet<String>();
-
-                        // Modified vtag fields
-                        Set<String> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), typeManager);
-                        vtagsToProcess.addAll(changedVTags);
-
-                        // The vtags of the created/modified version, if any
-                        Set<String> vtagsOfChangedVersion = null;
-                        if (recordEvent.getVersionCreated() != -1) {
-                            vtagsOfChangedVersion = tagsByVersion.get(recordEvent.getVersionCreated());
-                        } else if (recordEvent.getVersionUpdated() != -1) {
-                            vtagsOfChangedVersion = tagsByVersion.get(recordEvent.getVersionUpdated());
-                        }
-
-                        if (vtagsOfChangedVersion != null) {
-                            vtagsToProcess.addAll(vtagsOfChangedVersion);
-                        }
-
-                        //
-                        // For each of the vtags, perform the link extraction
-                        //
-                        Map<Long, Set<FieldedLink>> cache = new HashMap<Long, Set<FieldedLink>>();
-                        for (String vtag : vtagsToProcess) {
-                            if (!vtags.containsKey(vtag)) {
-                                // The vtag is not defined on the document: it is a deleted vtag, delete the
-                                // links corresponding to it
-                                linkIndex.deleteLinks(recordId, vtag);
-                                if (log.isDebugEnabled()) {
-                                    log.debug(String.format("Record %1$s, vtag %2$s : deleted extracted links",
-                                            record.getId(), safeLoadTagName(vtag)));
-                                }
+                    //
+                    // For each of the vtags, perform the link extraction
+                    //
+                    Map<Long, Set<FieldedLink>> cache = new HashMap<Long, Set<FieldedLink>>();
+                    for (String vtag : vtagsToProcess) {
+                        if (!vtags.containsKey(vtag)) {
+                            // The vtag is not defined on the document: it is a deleted vtag, delete the
+                            // links corresponding to it
+                            linkIndex.deleteLinks(recordId, vtag);
+                            if (log.isDebugEnabled()) {
+                                log.debug(String.format("Record %1$s, vtag %2$s : deleted extracted links",
+                                        record.getId(), safeLoadTagName(vtag)));
+                            }
+                        } else {
+                            // Since one version might have multiple vtags, we keep a little cache to avoid
+                            // extracting the links from the same version twice.
+                            long version = vtags.get(vtag);
+                            Set<FieldedLink> links;
+                            if (cache.containsKey(version)) {
+                                links = cache.get(version);
                             } else {
-                                // Since one version might have multiple vtags, we keep a little cache to avoid
-                                // extracting the links from the same version twice.
-                                long version = vtags.get(vtag);
-                                Set<FieldedLink> links;
-                                if (cache.containsKey(version)) {
-                                    links = cache.get(version);
-                                } else {
-                                    links = extractLinks(recordId, version);
-                                    cache.put(version, links);
-                                }
-                                linkIndex.updateLinks(recordId, vtag, links);
-                                if (log.isDebugEnabled()) {
-                                    log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
-                                            record.getId(), safeLoadTagName(vtag), links.size()));
-                                }
+                                links = extractLinks(recordId, version);
+                                cache.put(version, links);
+                            }
+                            linkIndex.updateLinks(recordId, vtag, links);
+                            if (log.isDebugEnabled()) {
+                                log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
+                                        record.getId(), safeLoadTagName(vtag), links.size()));
                             }
                         }
-                    } else {
-                        // The record has no versions
-                        Set<FieldedLink> links = extractLinks(recordId, null);
-                        linkIndex.updateLinks(recordId, VersionTag.VERSIONLESS_TAG, links);
-                        if (log.isDebugEnabled()) {
-                            log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
-                                    record.getId(), VersionTag.VERSIONLESS_TAG, links.size()));
-                        }
                     }
-
+                } else {
+                    // The record has no versions
+                    Set<FieldedLink> links = extractLinks(recordId, null);
+                    linkIndex.updateLinks(recordId, VersionTag.VERSIONLESS_TAG, links);
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
+                                record.getId(), VersionTag.VERSIONLESS_TAG, links.size()));
+                    }
                 }
-            } catch (Exception e) {
-                log.error("Error processing event in LinkIndexUpdater", e);
             }
-            return true;
+        } catch (Exception e) {
+            log.error("Error processing event in LinkIndexUpdater", e);
         }
     }
 

@@ -101,7 +101,7 @@ public class LinkIndexTest {
 
     @Test
     public void testLinkIndexUpdater() throws Exception {
-        LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, typeManager, linkIndex, repository.getWal());
+        LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex, repository.getWal());
 
         FieldType nonVersionedFt = typeManager.newFieldType(typeManager.getValueType("LINK", false, false),
                 new QName("ns", "link1"), Scope.NON_VERSIONED);
