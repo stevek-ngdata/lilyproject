@@ -27,6 +27,7 @@ public class HBaseRunner {
     private MiniHBaseCluster hbaseCluster = null;
     private File clusterTestBuildDir = null;
     private Configuration conf;
+    private int zkPort = 21812;
 
     public static final String TEST_DIRECTORY_KEY = "test.build.data";
     public static final String DEFAULT_TEST_DIRECTORY = "target/build/data";
@@ -75,8 +76,18 @@ public class HBaseRunner {
         HTable t = new HTable(this.conf, HConstants.META_TABLE_NAME);
         ResultScanner s = t.getScanner(new Scan());
         while (s.next() != null) continue;
+
         System.out.println("-------------------------");
         System.out.println("Minicluster is up");
+        System.out.println();
+        System.out.println("To connect to this HBase, use the following properties:");
+        System.out.println("hbase.zookeeper.quorum=localhost");
+        System.out.println("hbase.zookeeper.property.clientPort=" + zkPort);
+        System.out.println();
+        System.out.println("In Java code, create the HBase configuration like this:");
+        System.out.println("Configuration conf = HBaseConfiguration.create();");
+        System.out.println("conf.set(\"hbase.zookeeper.quorum\", \"localhost\");");
+        System.out.println("conf.set(\"hbase.zookeeper.property.clientPort\", \"" + zkPort + "\");");
         System.out.println("-------------------------");
         return this.hbaseCluster;
     }
@@ -104,7 +115,7 @@ public class HBaseRunner {
             throw new IOException("Cluster already running at " + dir);
         }
         this.zkCluster = new MiniZooKeeperCluster();
-        zkCluster.setClientPort(21812);
+        zkCluster.setClientPort(zkPort);
         int clientPort = this.zkCluster.startup(dir);
         this.conf.set("hbase.zookeeper.property.clientPort", Integer.toString(clientPort));
         return this.zkCluster;
