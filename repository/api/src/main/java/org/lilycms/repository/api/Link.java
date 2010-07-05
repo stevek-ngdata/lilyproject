@@ -174,7 +174,13 @@ public class Link {
 
         LinkBuilder builder = Link.newBuilder().recordId(recordId);
 
-        String[] variantStringParts = variantString.split(";");
+        argsFromString(variantString, builder, link);
+
+        return builder.create();
+    }
+
+    private static void argsFromString(String args, LinkBuilder builder, String link) {
+        String[] variantStringParts = args.split(";");
         for (String part : variantStringParts) {
             int eqPos = part.indexOf('=');
             if (eqPos == -1) {
@@ -200,8 +206,6 @@ public class Link {
                 builder.set(name, value);
             }
         }
-
-        return builder.create();
     }
 
     public RecordId getMasterRecordId() {
@@ -223,7 +227,7 @@ public class Link {
      *
      * <pre>{recordId}.!*;arg1=val1;+arg2;-arg3<pre>
      *
-     * <p>The recordId is optional. Arguments, if any, following after the . symbol and are separated by ';'
+     * <p>The recordId is optional. Arguments, if any, follow after the . symbol and are separated by ';'
      * symbols. Note that the {recordId} itself also contains a dot to separate the record id type and its
      * actual content (e.g. USER.235523432).
      *
@@ -257,6 +261,12 @@ public class Link {
             builder.append(masterRecordId.toString());
         }
 
+        argstoString(builder);
+
+        return builder.toString();
+    }
+
+    private void argstoString(StringBuilder builder) {
         if (!copyAll || variantProps != null) {
             builder.append(".");
 
@@ -289,26 +299,84 @@ public class Link {
                 }
             }
         }
-
-        return builder.toString();
     }
 
     public byte[] toBytes() {
-        // TODO more efficient byte representation?
+        // The bytes format is as follows:
+        // [byte representation of master record id, if not null][args: bytes of the string representation][length of args as a short]
+
+        byte[] recordIdBytes = masterRecordId == null ? new byte[0] : masterRecordId.toBytes();
+
+        StringBuilder argsBuilder = new StringBuilder();
+        argstoString(argsBuilder);
+        byte[] argsBytes;
         try {
-            return toString().getBytes("UTF-8");
+            argsBytes = argsBuilder.toString().getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+
+
+        if (argsBytes.length > Short.MAX_VALUE) {
+            throw new RuntimeException("Unexpected: unreasonably long link arguments: size does not fit in a short: " +
+                    argsBytes.length);
+        }
+        short argsLength = (short)argsBytes.length;
+
+
+        // Construct the resulting bytes
+        byte[] result = new byte[recordIdBytes.length + argsLength + 2];
+        int pos = 0;
+
+        // Put in the record id (could be zero-length)
+        System.arraycopy(recordIdBytes, 0, result, pos, recordIdBytes.length);
+        pos += recordIdBytes.length;
+
+        // Put in the args (could be zero-length)
+        System.arraycopy(argsBytes, 0, result, pos, argsBytes.length);
+        pos += argsBytes.length;
+
+        // Put in the length of the args
+        byte[] argsLengthBytes = new byte[2];
+        argsLengthBytes[1] = (byte) argsLength;
+        argsLength >>= 8;
+        argsLengthBytes[0] = (byte) argsLength;
+
+        System.arraycopy(argsLengthBytes, 0, result, pos, argsLengthBytes.length);
+
+        return result;
     }
 
     public static Link fromBytes(byte[] bytes, IdGenerator idGenerator) {
-        try {
-            String linkString = new String(bytes, "UTF-8");
-            return Link.fromString(linkString, idGenerator);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+        // Format: see toBytes.
+
+        // Read length of the args
+        short argsLength = 0;
+        argsLength ^= bytes[bytes.length - 2] & 0xFF;
+        argsLength <<= 8;
+        argsLength ^= bytes[bytes.length - 1] & 0xFF;
+
+        int recordIdLength = bytes.length - 2 - argsLength;
+
+        if (recordIdLength == 0 && argsLength == 0) {
+            return new Link();
         }
+
+        LinkBuilder builder = Link.newBuilder();
+
+        if (recordIdLength > 0) {
+            byte[] recordIdBytes = new byte[recordIdLength];
+            System.arraycopy(bytes, 0, recordIdBytes, 0, recordIdLength);
+            RecordId id = idGenerator.fromBytes(recordIdBytes);
+            builder.recordId(id);
+        }
+
+        if (argsLength > 0) {
+            String args = new String(bytes, recordIdLength, argsLength);
+            argsFromString(args, builder, args /* does not matter, should never be invalid */);
+        }
+
+        return builder.create();
     }
 
     /**
