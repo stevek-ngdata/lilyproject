@@ -24,6 +24,8 @@
       <artifactId>lily-indexer</artifactId>
       <exclusions>
         <exclusion>
+          <!-- Excluding Avro here so that it would only be in the classpath of the repository module.
+               Otherwise Avro can't find the repository implementation classes in the Kauri Runtime. -->
           <groupId>org.apache.hadoop</groupId>
           <artifactId>avro</artifactId>
         </exclusion>

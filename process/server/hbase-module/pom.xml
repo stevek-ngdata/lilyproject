@@ -28,20 +28,10 @@
       <artifactId>hbase</artifactId>
       <exclusions>
         <exclusion>
+          <!-- Excluding Avro here so that it would only be in the classpath of the repository module.
+               Otherwise Avro can't find the repository implementation classes in the Kauri Runtime. -->
           <groupId>org.apache.hadoop</groupId>
           <artifactId>avro</artifactId>
-        </exclusion>
-        <exclusion>
-          <!-- also used by solr, but there with a different version of commons-codec, causing
-               commons-httpclient to be in Kauri's common classloader but commons-codec not -->
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-        </exclusion>
-        <exclusion>
-          <!-- also used by solr, but there with a different version of commons-codec, causing
-               commons-httpclient to be in Kauri's common classloader but commons-codec not -->
-          <groupId>commons-codec</groupId>
-          <artifactId>commons-codec</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

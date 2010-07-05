@@ -60,13 +60,10 @@ Run
 From within the same directory as this README.txt, execute:
 
 With standard configuration:
-/path/to/kauri-trunk/kauri.sh run -l warn
-
-The '-l warn' argument makes that all warn-level logging is displayed on the console, which is useful
-for local test usage.
+/path/to/kauri-trunk/kauri.sh run
 
 With custom configuration:
-/path/to/kauri-trunk/kauri.sh run -l warn -c myconf:conf
+/path/to/kauri-trunk/kauri.sh run -c myconf:conf
 
 You can start as many of these processes as you want. By default the server sockets
 are bound to ephemeral ports, so there will be no conflicts.
