@@ -15,10 +15,8 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.Record;
 
-
-public class RecordExistsException extends Exception {
+public class RecordExistsException extends RepositoryException {
     private final Record record;
 
     public RecordExistsException(Record record) {

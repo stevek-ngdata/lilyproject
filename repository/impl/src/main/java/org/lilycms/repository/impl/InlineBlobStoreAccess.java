@@ -22,8 +22,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.lilycms.repository.api.Blob;
+import org.lilycms.repository.api.BlobException;
 import org.lilycms.repository.api.BlobStoreAccess;
-import org.lilycms.repository.api.RepositoryException;
 
 public class InlineBlobStoreAccess implements BlobStoreAccess {
 
@@ -37,11 +37,11 @@ public class InlineBlobStoreAccess implements BlobStoreAccess {
         return ID;
     }
         
-    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
+    public OutputStream getOutputStream(Blob blob) throws BlobException {
         return new InlineBlobOutputStream(blob);
     }
 
-    public InputStream getInputStream(byte[] blobKey) throws RepositoryException {
+    public InputStream getInputStream(byte[] blobKey) throws BlobException {
         return new ByteArrayInputStream(blobKey);
     }
     

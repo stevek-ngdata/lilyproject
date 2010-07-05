@@ -97,7 +97,7 @@ public class ImportTool {
         namespaces.put(getString(node, "prefix"), getString(node, "uri"));
     }
 
-    private void loadFieldType(JsonNode node) throws FieldTypeExistsException, RepositoryException {
+    private void loadFieldType(JsonNode node) throws RepositoryException {
         QName name = getQName(node, "name");
 
         JsonNode vtype = getNode(node, "valueType");
@@ -140,7 +140,7 @@ public class ImportTool {
         System.out.println("Field type created: " + name);
     }
 
-    private void loadRecordType(JsonNode node) throws RepositoryException, FieldTypeNotFoundException, RecordTypeExistsException, RecordTypeNotFoundException {
+    private void loadRecordType(JsonNode node) throws RepositoryException {
         String name = getString(node, "name");
 
         JsonNode fields = getNode(node, "fields");
@@ -199,8 +199,7 @@ public class ImportTool {
         }
     }
 
-    private void loadRecord(JsonNode node) throws FieldTypeNotFoundException, RepositoryException,
-            RecordExistsException, RecordNotFoundException, RecordTypeNotFoundException, InvalidRecordException {
+    private void loadRecord(JsonNode node) throws RepositoryException {
         Record record = repository.newRecord();
 
         String type = getString(node, "type");

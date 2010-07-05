@@ -20,9 +20,19 @@ package org.lilycms.repository.api;
  * These exceptions should not occur under normal operation of the repository.
  */
 public class RepositoryException extends Exception {
-
-    public RepositoryException(String message, Throwable throwable) {
-        super(message, throwable);
+    public RepositoryException() {
+        super();
     }
 
+    public RepositoryException(String message) {
+        super(message);
+    }
+
+    public RepositoryException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public RepositoryException(Throwable cause) {
+        super(cause);
+    }
 }

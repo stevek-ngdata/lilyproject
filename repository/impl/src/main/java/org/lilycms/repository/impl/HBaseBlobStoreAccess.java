@@ -34,8 +34,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Blob;
+import org.lilycms.repository.api.BlobException;
 import org.lilycms.repository.api.BlobStoreAccess;
-import org.lilycms.repository.api.RepositoryException;
 
 public class HBaseBlobStoreAccess implements BlobStoreAccess {
 
@@ -63,32 +63,32 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         return ID;
     }
         
-    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
+    public OutputStream getOutputStream(Blob blob) throws BlobException {
         UUID uuid = UUID.randomUUID();
         byte[] blobKey = Bytes.toBytes(uuid.getMostSignificantBits());
         blobKey = Bytes.add(blobKey, Bytes.toBytes(uuid.getLeastSignificantBits()));
         return new HBaseBlobOutputStream(table, blobKey, blob);
     }
 
-    public InputStream getInputStream(byte[] blobKey) throws RepositoryException {
+    public InputStream getInputStream(byte[] blobKey) throws BlobException {
         Get get = new Get(blobKey);
         get.addColumn(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
         Result result;
         try {
             result = table.get(get);
         } catch (IOException e) {
-            throw new RepositoryException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the HBASE blobstore", e);
+            throw new BlobException("Failed to open an inputstream for blobkey <" + blobKey + "> on the HBASE blobstore", e);
         }
         byte[] value = result.getValue(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
         return new ByteArrayInputStream(value);
     }
     
-    public void delete(byte[] blobKey) throws RepositoryException {
+    public void delete(byte[] blobKey) throws BlobException {
         Delete delete = new Delete(blobKey);
         try {
             table.delete(delete);
         } catch (IOException e) {
-            throw new RepositoryException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
+            throw new BlobException("Failed to delete blob with key <" + blobKey + "> from the DFS blobstore", e);
         }
     }
 

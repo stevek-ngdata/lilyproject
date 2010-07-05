@@ -1,6 +1,6 @@
 package org.lilycms.repository.api;
 
-public class VersionNotFoundException extends Exception {
+public class VersionNotFoundException extends RepositoryException {
 
     private final Record record;
 

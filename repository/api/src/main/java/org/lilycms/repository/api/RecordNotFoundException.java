@@ -15,7 +15,7 @@
  */
 package org.lilycms.repository.api;
 
-public class RecordNotFoundException extends Exception {
+public class RecordNotFoundException extends RepositoryException {
 
     private final Record record;
 

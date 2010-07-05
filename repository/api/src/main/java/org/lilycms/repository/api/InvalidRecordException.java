@@ -15,9 +15,7 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.Record;
-
-public class InvalidRecordException extends Exception {
+public class InvalidRecordException extends RepositoryException {
 
     private final Record record;
     private final String message;

@@ -15,9 +15,7 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.QName;
-
-public class FieldNotFoundException extends RuntimeException {
+public class FieldNotFoundException extends RepositoryRuntimeException {
 
     private QName fieldName;
     private String fieldId;

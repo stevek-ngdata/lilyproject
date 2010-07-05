@@ -18,8 +18,6 @@ package org.lilycms.repository.api;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.lilycms.repository.api.RepositoryException;
-
 /**
  * The BlobStoreAccess provides access to a specific underlying blob store. This blob store must be able to store
  * a stream of bytes and be able to read or delete them again based on a key provided by the blob store itself.
@@ -46,9 +44,9 @@ public interface BlobStoreAccess {
      *             should be written.
      * @return an OutputStream to which a stream of bytes can be written
      *
-     * @throws RepositoryException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
+     * @throws BlobException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
      */
-    OutputStream getOutputStream(Blob blob) throws RepositoryException;
+    OutputStream getOutputStream(Blob blob) throws BlobException;
 
     /**
      * Get an {@link InputStream} based to read a stream of bytes from the blobstore for the given key.
@@ -56,16 +54,16 @@ public interface BlobStoreAccess {
      * @param key a unique key identifying the written bytes on the blobstore, see {@link #getOutputStream(Blob)}
      * 
      * @return an InputStream from whih a stream of bytes can be read
-     * @throws RepositoryException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
+     * @throws BlobException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
      */
-    InputStream getInputStream(byte[] key) throws RepositoryException;
+    InputStream getInputStream(byte[] key) throws BlobException;
 
     /**
      * Delete the bytes identified by the key from the blobstore
      *
      * @param key a unique key identifying the written bytes on the blobstore, see {@link #getOutputStream(Blob)}
      *
-     * @throws RepositoryException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
+     * @throws BlobException when an unexpected exception occurred (e.g. an IOException of the underlying blobstore)
      */
-    void delete(byte[] key) throws RepositoryException;
+    void delete(byte[] key) throws BlobException;
 }

@@ -15,12 +15,10 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.FieldType;
-
 /**
  * Thrown when trying to create a field type with a QName which is already used by another field type.
  */
-public class FieldTypeExistsException extends Exception {
+public class FieldTypeExistsException extends RepositoryException {
     private final FieldType fieldType;
 
     public FieldTypeExistsException(FieldType fieldType) {

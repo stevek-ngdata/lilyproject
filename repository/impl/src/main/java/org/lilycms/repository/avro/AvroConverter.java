@@ -29,7 +29,7 @@ public class AvroConverter {
         this.typeManager = repository.getTypeManager();
     }
     
-    public Record convert(AvroRecord avroRecord) throws RepositoryException, FieldTypeNotFoundException {
+    public Record convert(AvroRecord avroRecord) throws FieldTypeNotFoundException, TypeException {
         Record record = repository.newRecord();
         // Id
         if (avroRecord.id != null) {
@@ -74,7 +74,7 @@ public class AvroConverter {
         return record;
     }
     
-    public AvroRecord convert(Record record) throws AvroFieldTypeNotFoundException, AvroRepositoryException {
+    public AvroRecord convert(Record record) throws AvroFieldTypeNotFoundException, AvroTypeException {
         AvroRecord avroRecord = new AvroRecord();
         // Id
         RecordId id = record.getId();
@@ -110,8 +110,10 @@ public class AvroConverter {
             FieldType fieldType;
             try {
                 fieldType = typeManager.getFieldTypeByName(name);
-            } catch (FieldTypeNotFoundException fieldTypeNotFoundExeption) {
-                throw convert(fieldTypeNotFoundExeption);
+            } catch (FieldTypeNotFoundException e) {
+                throw convert(e);
+            } catch (TypeException e) {
+                throw convert(e);
             }
             byte[] value = fieldType.getValueType().toBytes(field.getValue());
             ByteBuffer byteBuffer = ByteBuffer.allocate(value.length);
@@ -260,126 +262,148 @@ public class AvroConverter {
         return avroFieldTypeEntry;
     }
 
-
-    public AvroRepositoryException convert(RepositoryException repositoryException) {
-        AvroRepositoryException avroRepositoryException = new AvroRepositoryException();
-        if (repositoryException.getMessage() != null) {
-            avroRepositoryException.message = new Utf8(repositoryException.getMessage());
-        }
-        return avroRepositoryException;
+    public RemoteException convert(AvroRemoteException exception) {
+        return new RemoteException(exception.getMessage(), exception);
     }
 
-    // TODO how to cope with these kinds of errors
-    public RepositoryException convert(AvroRemoteException remoteException) {
-        return new RepositoryException("A remoteException occurred", remoteException);
+    public AvroRecordException convert(RecordException exception) {
+        AvroRecordException avroException = new AvroRecordException();
+        avroException.message = new Utf8(exception.getMessage());
+        return avroException;
     }
 
-    public AvroFieldTypeExistsException convert(FieldTypeExistsException fieldTypeExistsException) {
+    public AvroTypeException convert(TypeException exception) {
+        AvroTypeException avroException = new AvroTypeException();
+        avroException.message = new Utf8(exception.getMessage());
+        return avroException;
+    }
+
+    public AvroFieldTypeExistsException convert(FieldTypeExistsException exception) {
         AvroFieldTypeExistsException avroFieldTypeExistsException = new AvroFieldTypeExistsException();
-        avroFieldTypeExistsException.fieldType = convert(fieldTypeExistsException.getFieldType());
+        avroFieldTypeExistsException.fieldType = convert(exception.getFieldType());
         return avroFieldTypeExistsException;
     }
 
-    public RepositoryException convert(AvroRepositoryException repositoryException) {
-        return new RepositoryException(convert(repositoryException.message), null);
+    public FieldTypeExistsException convert(AvroFieldTypeExistsException exception) {
+        return new FieldTypeExistsException(convert(exception.fieldType));
     }
 
-    public FieldTypeExistsException convert(AvroFieldTypeExistsException fieldTypeExistsException) {
-        return new FieldTypeExistsException(convert(fieldTypeExistsException.fieldType));
+    public AvroRecordTypeExistsException convert(RecordTypeExistsException exception) {
+        AvroRecordTypeExistsException avroException = new AvroRecordTypeExistsException();
+        avroException.recordType = convert(exception.getRecordType());
+        return avroException;
     }
 
-    public AvroRecordTypeExistsException convert(RecordTypeExistsException recordTypeExistsException) {
-        AvroRecordTypeExistsException avroRecordTypeExistsException = new AvroRecordTypeExistsException();
-        avroRecordTypeExistsException.recordType = convert(recordTypeExistsException.getRecordType());
-        return avroRecordTypeExistsException;
-    }
-
-    public AvroRecordTypeNotFoundException convert(RecordTypeNotFoundException recordTypeNotFoundException) {
-        AvroRecordTypeNotFoundException avroRecordTypeNotFoundException = new AvroRecordTypeNotFoundException();
-        avroRecordTypeNotFoundException.id = new Utf8(recordTypeNotFoundException.getId());
-        Long version = recordTypeNotFoundException.getVersion();
+    public AvroRecordTypeNotFoundException convert(RecordTypeNotFoundException exception) {
+        AvroRecordTypeNotFoundException avroException = new AvroRecordTypeNotFoundException();
+        avroException.id = new Utf8(exception.getId());
+        Long version = exception.getVersion();
         if (version != null) {
-            avroRecordTypeNotFoundException.version = version;
+            avroException.version = version;
         }
-        return avroRecordTypeNotFoundException;
+        return avroException;
     }
 
-    public AvroFieldTypeNotFoundException convert(FieldTypeNotFoundException fieldTypeNotFoundException) {
-        AvroFieldTypeNotFoundException avroFieldTypeNotFoundException = new AvroFieldTypeNotFoundException();
-        avroFieldTypeNotFoundException.id = new Utf8(fieldTypeNotFoundException.getId());
-        Long version = fieldTypeNotFoundException.getVersion();
+    public AvroFieldTypeNotFoundException convert(FieldTypeNotFoundException exception) {
+        AvroFieldTypeNotFoundException avroException = new AvroFieldTypeNotFoundException();
+        avroException.id = new Utf8(exception.getId());
+        Long version = exception.getVersion();
         if (version != null) {
-            avroFieldTypeNotFoundException.version = version;
+            avroException.version = version;
         }
-        return avroFieldTypeNotFoundException;
+        return avroException;
     }
 
-    public RecordTypeExistsException convert(AvroRecordTypeExistsException avroRecordTypeExistsException) {
-        return new RecordTypeExistsException(convert(avroRecordTypeExistsException.recordType));
+    public RecordException convert(AvroRecordException exception) {
+        return new RecordException(convert(exception.message));
     }
 
-    public RecordTypeNotFoundException convert(AvroRecordTypeNotFoundException avroRecordTypeNotFoundException) {
-        return new RecordTypeNotFoundException(convert(avroRecordTypeNotFoundException.id), avroRecordTypeNotFoundException.version);
+    public TypeException convert(AvroTypeException exception) {
+        return new TypeException(convert(exception.message));
     }
 
-    public FieldTypeNotFoundException convert(AvroFieldTypeNotFoundException avroFieldTypeNotFoundException) {
-        return new FieldTypeNotFoundException(convert(avroFieldTypeNotFoundException.id), avroFieldTypeNotFoundException.version);
+    public RecordTypeExistsException convert(AvroRecordTypeExistsException exception) {
+        return new RecordTypeExistsException(convert(exception.recordType));
     }
 
-    public FieldTypeUpdateException convert(AvroFieldTypeUpdateException fieldTypeUpdateException) {
-        return new FieldTypeUpdateException(convert(fieldTypeUpdateException.message));
+    public RecordTypeNotFoundException convert(AvroRecordTypeNotFoundException exception) {
+        return new RecordTypeNotFoundException(convert(exception.id), exception.version);
     }
 
-    public AvroFieldTypeUpdateException convert(FieldTypeUpdateException fieldTypeUpdateException) {
-        AvroFieldTypeUpdateException avroFieldTypeUpdateException = new AvroFieldTypeUpdateException();
-        if (fieldTypeUpdateException.getMessage() != null) {
-            avroFieldTypeUpdateException.message = new Utf8(fieldTypeUpdateException.getMessage());
+    public FieldTypeNotFoundException convert(AvroFieldTypeNotFoundException exception) {
+        return new FieldTypeNotFoundException(convert(exception.id), exception.version);
+    }
+
+    public FieldTypeUpdateException convert(AvroFieldTypeUpdateException exception) {
+        return new FieldTypeUpdateException(convert(exception.message));
+    }
+
+    public AvroFieldTypeUpdateException convert(FieldTypeUpdateException exception) {
+        AvroFieldTypeUpdateException avroException = new AvroFieldTypeUpdateException();
+        if (exception.getMessage() != null) {
+            avroException.message = new Utf8(exception.getMessage());
         }
-        return avroFieldTypeUpdateException;
+        return avroException;
     }
 
-    public AvroRecordExistsException convert(RecordExistsException recordExistsException) throws AvroRepositoryException, AvroFieldTypeNotFoundException {
-        AvroRecordExistsException avroRecordExistsException = new AvroRecordExistsException();
-        avroRecordExistsException.record = convert(recordExistsException.getRecord());
-        return avroRecordExistsException;
+    public AvroRecordExistsException convert(RecordExistsException exception)
+            throws AvroFieldTypeNotFoundException, AvroTypeException {
+
+        AvroRecordExistsException avroException = new AvroRecordExistsException();
+        avroException.record = convert(exception.getRecord());
+        return avroException;
         
     }
 
-    public AvroRecordNotFoundException convert(RecordNotFoundException recordNotFoundException) throws AvroRepositoryException, AvroFieldTypeNotFoundException {
-        AvroRecordNotFoundException avroRecordNotFoundException = new AvroRecordNotFoundException();
-        avroRecordNotFoundException.record = convert(recordNotFoundException.getRecord());
-        return avroRecordNotFoundException;
+    public AvroRecordNotFoundException convert(RecordNotFoundException exception)
+            throws AvroFieldTypeNotFoundException, AvroTypeException {
+
+        AvroRecordNotFoundException avroException = new AvroRecordNotFoundException();
+        avroException.record = convert(exception.getRecord());
+        return avroException;
     }
 
-    public AvroVersionNotFoundException convert(VersionNotFoundException exception) throws AvroRepositoryException, AvroFieldTypeNotFoundException {
+    public AvroVersionNotFoundException convert(VersionNotFoundException exception)
+            throws AvroFieldTypeNotFoundException, AvroTypeException {
+
         AvroVersionNotFoundException avroException = new AvroVersionNotFoundException();
         avroException.record = convert(exception.getRecord());
         return avroException;
     }
 
-    public AvroInvalidRecordException convert(InvalidRecordException invalidRecordException) throws AvroRepositoryException, AvroFieldTypeNotFoundException {
-        AvroInvalidRecordException avroInvalidRecordException = new AvroInvalidRecordException();
-        avroInvalidRecordException.record = convert(invalidRecordException.getRecord());
-        if (invalidRecordException.getMessage() != null) {
-            avroInvalidRecordException.message = new Utf8(invalidRecordException.getMessage());
+    public AvroInvalidRecordException convert(InvalidRecordException exception)
+            throws AvroFieldTypeNotFoundException, AvroTypeException {
+
+        AvroInvalidRecordException avroException = new AvroInvalidRecordException();
+        avroException.record = convert(exception.getRecord());
+        if (exception.getMessage() != null) {
+            avroException.message = new Utf8(exception.getMessage());
         }
-        return avroInvalidRecordException;
+        return avroException;
     }
 
-    public RecordExistsException convert(AvroRecordExistsException recordExistsException) throws RepositoryException, FieldTypeNotFoundException {
-        return new RecordExistsException(convert(recordExistsException.record));
+    public RecordExistsException convert(AvroRecordExistsException exception)
+            throws FieldTypeNotFoundException, TypeException {
+
+        return new RecordExistsException(convert(exception.record));
     }
 
-    public RecordNotFoundException convert(AvroRecordNotFoundException recordNotFoundException) throws RepositoryException, FieldTypeNotFoundException {
-        return new RecordNotFoundException(convert(recordNotFoundException.record));
+    public RecordNotFoundException convert(AvroRecordNotFoundException exception)
+            throws FieldTypeNotFoundException, TypeException {
+
+        return new RecordNotFoundException(convert(exception.record));
     }
 
-    public VersionNotFoundException convert(AvroVersionNotFoundException exception) throws RepositoryException, FieldTypeNotFoundException {
+    public VersionNotFoundException convert(AvroVersionNotFoundException exception)
+            throws FieldTypeNotFoundException, TypeException {
+
         return new VersionNotFoundException(convert(exception.record));
     }
 
-    public InvalidRecordException convert(AvroInvalidRecordException invalidRecordException) throws RepositoryException, FieldTypeNotFoundException {
-        return new InvalidRecordException(convert(invalidRecordException.record), convert(invalidRecordException.message));
+    public InvalidRecordException convert(AvroInvalidRecordException exception)
+            throws FieldTypeNotFoundException, TypeException {
+        
+        return new InvalidRecordException(convert(exception.record), convert(exception.message));
     }
     
     public String convert(Utf8 utf8) {

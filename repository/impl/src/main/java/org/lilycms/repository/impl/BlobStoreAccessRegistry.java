@@ -43,19 +43,18 @@ public class BlobStoreAccessRegistry {
         this.blobStoreAccessFactory = blobStoreAccessFactory;
     }
 
-    public OutputStream getOutputStream(Blob blob) throws RepositoryException {
+    public OutputStream getOutputStream(Blob blob) throws BlobException {
         BlobStoreAccess blobStoreAccess = blobStoreAccessFactory.getBlobStoreAccess(blob);
         return new BlobOutputStream(blobStoreAccess.getOutputStream(blob), blobStoreAccess.getId(), blob);
     }
 
-    public InputStream getInputStream(Blob blob) throws BlobNotFoundException, RepositoryException {
+    public InputStream getInputStream(Blob blob) throws BlobNotFoundException, BlobException {
         Pair<String, byte[]> decodedKey = decodeKey(blob);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
         return blobStoreAccess.getInputStream(decodedKey.getV2());
     }
 
-    private Pair<String, byte[]> decodeKey(Blob blob)
-            throws BlobNotFoundException, RepositoryException {
+    private Pair<String, byte[]> decodeKey(Blob blob) throws BlobNotFoundException, BlobException {
         if (blob.getValue() == null) {
             throw new BlobNotFoundException(blob);
         }
@@ -63,13 +62,13 @@ public class BlobStoreAccessRegistry {
         try {
             decodedKey = decode(blob.getValue());
         } catch (Exception e) {
-            throw new RepositoryException("Failed to decode the blobkey of the blob <"+blob+">", e);
+            throw new BlobException("Failed to decode the blobkey of the blob <" + blob + ">", e);
         }
         return decodedKey;
     }
 
     
-    public void delete(Blob blob) throws BlobNotFoundException, RepositoryException {
+    public void delete(Blob blob) throws BlobNotFoundException, BlobException {
         Pair<String, byte[]> decodedKey = decodeKey(blob);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
         blobStoreAccess.delete(decodedKey.getV2());

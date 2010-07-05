@@ -40,6 +40,9 @@ public class VersionTag {
                 // A field whose field type does not exist: skip it
                 // TODO would be better to do above retrieval based on ID?
                 continue;
+            } catch (TypeException e) {
+                // TODO maybe this should rather be thrown?
+                continue;
             }
 
             if (isVersionTag(fieldType)) {
@@ -94,6 +97,9 @@ public class VersionTag {
             } catch (FieldTypeNotFoundException e) {
                 // A field whose field type does not exist: skip it
                 // TODO would be better to do above retrieval based on ID?
+                continue;
+            } catch (TypeException e) {
+                // TODO maybe this should rather be thrown?
                 continue;
             }
 
@@ -178,7 +184,7 @@ public class VersionTag {
             fieldType = repository.getTypeManager().getFieldTypeById(vtagId);
         } catch (FieldTypeNotFoundException e) {
             return null;
-        } catch (RepositoryException e) {
+        } catch (TypeException e) {
             // TODO log this? or throw it?
             return null;
         }

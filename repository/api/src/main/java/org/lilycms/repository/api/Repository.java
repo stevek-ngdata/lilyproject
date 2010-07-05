@@ -20,14 +20,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
-import org.lilycms.repository.api.BlobNotFoundException;
-import org.lilycms.repository.api.FieldTypeNotFoundException;
-import org.lilycms.repository.api.InvalidRecordException;
-import org.lilycms.repository.api.RecordExistsException;
-import org.lilycms.repository.api.RecordNotFoundException;
-import org.lilycms.repository.api.RecordTypeNotFoundException;
-import org.lilycms.repository.api.RepositoryException;
-
 /**
  * Repository is the primary access point for accessing the functionality of the Lily repository.
  *
@@ -66,7 +58,7 @@ public interface Repository {
      * @throws RecordTypeNotFoundException
      */
     Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, TypeException;
 
     /**
      * Updates an existing record in the repository.
@@ -91,7 +83,7 @@ public interface Repository {
      * @throws RecordTypeNotFoundException
      */
     Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Updates the version-mutable fields of an existing version.
@@ -99,7 +91,7 @@ public interface Repository {
      * <p><b>TODO</b>: this is being considered for redesign.
      */
     Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Reads a record fully. All the fields of the record will be read.
@@ -107,7 +99,7 @@ public interface Repository {
      * <p>If the record has versions, it is the latest version that will be read.
      */
     Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Reads a record limited to a subset of the fields. Only the fields specified in the fieldNames list will be
@@ -119,19 +111,19 @@ public interface Repository {
      * a non-existing field name.
      */
     Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Reads a specific version of a record.
      */
     Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Reads a specific version of a record limited to a subset of the fields.
      */
     Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Reads a Record and also returns the mapping from QNames to IDs.
@@ -142,7 +134,7 @@ public interface Repository {
      * @param fieldIds load only the fields with these ids. optional, can be null.
      */
     IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException, VersionNotFoundException;
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Delete a {@link Record} from the repository.
@@ -150,7 +142,7 @@ public interface Repository {
      * @param recordId
      *            id of the record to delete
      */
-    void delete(RecordId recordId) throws RepositoryException;
+    void delete(RecordId recordId) throws RecordException;
 
     /**
      * Returns the IdGenerator service.
@@ -188,7 +180,7 @@ public interface Repository {
      * @return an OutputStream
      * @throws RepositoryException when an unexpected exception occurs
      */
-    OutputStream getOutputStream(Blob blob) throws RepositoryException;
+    OutputStream getOutputStream(Blob blob) throws BlobException;
 
     /**
      * Returns an {@link InputStream} from which the binary data of a blob can
@@ -200,8 +192,7 @@ public interface Repository {
      * @throws BlobNotFoundException when the blob does not contain a valid key in its value
      * @throws RepositoryException when an unexpected exception occurs
      */
-    InputStream getInputStream(Blob blob) throws BlobNotFoundException,
-            RepositoryException;
+    InputStream getInputStream(Blob blob) throws BlobNotFoundException, BlobException;
 
     /**
      * Deletes the data identified by a blob from the underlying blobstore. See {@link #getOutputStream(Blob)} and {@link #getInputStream(Blob)}.
@@ -209,7 +200,7 @@ public interface Repository {
      * @throws BlobNotFoundException when the blob does not contain a valid key in its value
      * @throws RepositoryException when an unexpected exception occurs
      */
-    void delete(Blob blob) throws BlobNotFoundException, RepositoryException;
+    void delete(Blob blob) throws BlobNotFoundException, BlobException;
 
     /**
      * Get all the variants that exist for the given recordId.

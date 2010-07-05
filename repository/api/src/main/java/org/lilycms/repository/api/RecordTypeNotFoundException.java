@@ -18,7 +18,7 @@ package org.lilycms.repository.api;
 /**
  *
  */
-public class RecordTypeNotFoundException extends Exception {
+public class RecordTypeNotFoundException extends RepositoryException {
 
     private final String id;
     private final Long version;

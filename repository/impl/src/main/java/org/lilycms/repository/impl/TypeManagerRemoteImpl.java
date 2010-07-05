@@ -14,16 +14,7 @@ import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.FieldTypeUpdateException;
 import org.lilycms.repository.api.RecordTypeExistsException;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
-import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.repository.avro.AvroConverter;
-import org.lilycms.repository.avro.AvroFieldType;
-import org.lilycms.repository.avro.AvroFieldTypeExistsException;
-import org.lilycms.repository.avro.AvroFieldTypeNotFoundException;
-import org.lilycms.repository.avro.AvroFieldTypeUpdateException;
-import org.lilycms.repository.avro.AvroRecordTypeExistsException;
-import org.lilycms.repository.avro.AvroRecordTypeNotFoundException;
-import org.lilycms.repository.avro.AvroRepositoryException;
-import org.lilycms.repository.avro.AvroTypeManager;
+import org.lilycms.repository.avro.*;
 
 public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeManager {
 
@@ -41,26 +32,25 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
         initialize();
     }
     
-    public RecordType createRecordType(RecordType recordType)
-            throws RecordTypeExistsException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException {
+    public RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, TypeException {
+
         try {
             return converter.convert(typeManagerProxy.createRecordType(converter.convert(recordType)));
-        } catch (AvroRepositoryException repositoryException) {
-            throw converter.convert(repositoryException);
-        } catch (AvroRecordTypeExistsException recordTypeExistsException) {
-            throw converter.convert(recordTypeExistsException);
-        } catch (AvroRecordTypeNotFoundException recordTypeNotFoundException) {
-            throw converter.convert(recordTypeNotFoundException);
-        } catch (AvroFieldTypeNotFoundException fieldTypeNotFoundException) {
-            throw converter.convert(fieldTypeNotFoundException);
-        } catch (AvroRemoteException remoteException) {
-            throw converter.convert(remoteException);
+        } catch (AvroRecordTypeExistsException e) {
+            throw converter.convert(e);
+        } catch (AvroRecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroFieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
         }
     }
 
-    public RecordType getRecordType(String id, Long version)
-            throws RecordTypeNotFoundException, RepositoryException {
+    public RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException, TypeException {
         try {
             long avroVersion;
             if (version == null) {
@@ -69,84 +59,83 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
                 avroVersion = version;
             }
             return converter.convert(typeManagerProxy.getRecordType(new Utf8(id), avroVersion));
-        } catch (AvroRecordTypeNotFoundException recordTypeNotFoundException) {
-            throw converter.convert(recordTypeNotFoundException);
-        } catch (AvroRepositoryException repositoryException) {
-            throw converter.convert(repositoryException);
-        } catch (AvroRemoteException remoteException) {
-            throw converter.convert(remoteException);
+        } catch (AvroRecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
         }
     }
 
-    public RecordType updateRecordType(RecordType recordType)
-            throws RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RepositoryException {
+    public RecordType updateRecordType(RecordType recordType) throws RecordTypeNotFoundException,
+            FieldTypeNotFoundException, TypeException {
+
         try {
-            return converter.convert(typeManagerProxy
-                    .updateRecordType(converter.convert(recordType)));
-        } catch (AvroRecordTypeNotFoundException recordTypeNotFoundException) {
-            throw converter.convert(recordTypeNotFoundException);
-        } catch (AvroFieldTypeNotFoundException fieldTypeNotFoundExeption) {
-            throw converter.convert(fieldTypeNotFoundExeption);
-        } catch (AvroRepositoryException repositoryException) {
-            throw converter.convert(repositoryException);
-        } catch (AvroRemoteException remoteException) {
-            throw converter.convert(remoteException);
+            return converter.convert(typeManagerProxy.updateRecordType(converter.convert(recordType)));
+        } catch (AvroRecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroFieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
         }
     }
 
-    public FieldType createFieldType(FieldType fieldType)
-            throws FieldTypeExistsException, RepositoryException {
+    public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException {
         try {
             AvroFieldType avroFieldType = converter.convert(fieldType);
             AvroFieldType createFieldType = typeManagerProxy.createFieldType(avroFieldType);
             FieldType resultFieldType = converter.convert(createFieldType);
             return resultFieldType;
-        } catch (AvroRepositoryException repositoryException) {
-            throw converter.convert(repositoryException);
-        } catch (AvroFieldTypeExistsException fieldTypeExistsException) {
-            throw converter.convert(fieldTypeExistsException);
-        } catch (AvroRemoteException remoteException) {
-            throw converter.convert(remoteException);
+        } catch (AvroFieldTypeExistsException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
         }
     }
 
-    public FieldType updateFieldType(FieldType fieldType)
-            throws FieldTypeNotFoundException, FieldTypeUpdateException,
-            RepositoryException {
+    public FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
+            TypeException {
+
         try {
             return converter.convert(typeManagerProxy.updateFieldType(converter.convert(fieldType)));
-        } catch (AvroFieldTypeNotFoundException fieldTypeNotFoundException) {
-            throw converter.convert(fieldTypeNotFoundException);
-        } catch (AvroFieldTypeUpdateException fieldTypeUpdateException) {
-            throw converter.convert(fieldTypeUpdateException);
-        } catch (AvroRepositoryException repositoryException) {
-            throw converter.convert(repositoryException);
-        } catch (AvroRemoteException remoteException) {
-            throw converter.convert(remoteException);
+        } catch (AvroFieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroFieldTypeUpdateException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
         }
     }
 
-    public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, RepositoryException {
+    public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException {
         try {
             return converter.convert(typeManagerProxy.getFieldTypeById(new Utf8(id)));
-        } catch (AvroFieldTypeNotFoundException fieldTypeNotFoundException) {
-            throw converter.convert(fieldTypeNotFoundException);
-        } catch (AvroRepositoryException repositoryException) {
-            throw converter.convert(repositoryException);
-        } catch (AvroRemoteException remoteException) {
-            throw converter.convert(remoteException);
+        } catch (AvroFieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
         }
     }
 
-    public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException, TypeException {
         try {
             return converter.convert(typeManagerProxy.getFieldTypeByName(converter.convert(name)));
-        } catch (AvroFieldTypeNotFoundException fieldTypeNotFoundException) {
-            throw converter.convert(fieldTypeNotFoundException);
-        } catch (AvroRemoteException remoteException) {
-            // TODO define what we do here
-            throw new FieldTypeNotFoundException(null, null);
+        } catch (AvroFieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
         }
     }
 

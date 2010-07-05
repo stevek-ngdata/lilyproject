@@ -18,7 +18,7 @@ package org.lilycms.repository.api;
 /**
  *
  */
-public class FieldTypeUpdateException extends Exception {
+public class FieldTypeUpdateException extends RepositoryException {
 
     public FieldTypeUpdateException(String message) {
         super(message);

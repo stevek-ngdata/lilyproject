@@ -41,7 +41,6 @@ import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.FieldTypeUpdateException;
 import org.lilycms.repository.api.RecordTypeExistsException;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
-import org.lilycms.repository.api.RepositoryException;
 import org.lilycms.util.ArgumentValidator;
 import org.lilycms.util.io.Closer;
 
@@ -61,7 +60,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     private HTable typeTable;
     private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
 
-    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration) throws IOException, FieldTypeNotFoundException, RepositoryException {
+    public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration) throws IOException,
+            FieldTypeNotFoundException, TypeException {
         this.idGenerator = idGenerator;
         try {
             typeTable = new HTable(configuration, TYPE_TABLE);
@@ -81,7 +81,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     public RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException,
-                    RecordTypeNotFoundException, FieldTypeNotFoundException, RepositoryException {
+                    RecordTypeNotFoundException, FieldTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
         RecordType newRecordType = recordType.clone();
         Long recordTypeVersion = Long.valueOf(1);
@@ -107,7 +107,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             typeTable.put(put);
         } catch (IOException e) {
-            throw new RepositoryException("Exception occurred while creating recordType <" + recordType.getId()
+            throw new TypeException("Exception occurred while creating recordType <" + recordType.getId()
                             + "> on HBase", e);
         }
         newRecordType.setVersion(recordTypeVersion);
@@ -115,7 +115,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     public RecordType updateRecordType(RecordType recordType) throws RecordTypeNotFoundException,
-                    FieldTypeNotFoundException, RepositoryException {
+                    FieldTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
         RecordType newRecordType = recordType.clone();
         String id = recordType.getId();
@@ -135,7 +135,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             try {
                 typeTable.put(put);
             } catch (IOException e) {
-                throw new RepositoryException("Exception occurred while updating recordType <" + recordType.getId()
+                throw new TypeException("Exception occurred while updating recordType <" + recordType.getId()
                                 + "> on HBase", e);
             }
             newRecordType.setVersion(newRecordTypeVersion);
@@ -146,14 +146,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     private Long putMixinOnRecordType(Long recordTypeVersion, Put put, String mixinId, Long mixinVersion)
-                    throws RecordTypeNotFoundException, RepositoryException {
+                    throws RecordTypeNotFoundException, TypeException {
         Long newMixinVersion = getRecordType(mixinId, mixinVersion).getVersion();
         put.add(MIXIN_COLUMN_FAMILY, Bytes.toBytes(mixinId), recordTypeVersion, Bytes.toBytes(newMixinVersion));
         return newMixinVersion;
     }
 
     private boolean updateFieldTypeEntries(Put put, Long newRecordTypeVersion, RecordType recordType,
-                    RecordType latestRecordType) throws FieldTypeNotFoundException, RepositoryException {
+                    RecordType latestRecordType) throws FieldTypeNotFoundException, TypeException {
         boolean changed = false;
         Collection<FieldTypeEntry> latestFieldTypeEntries = latestRecordType.getFieldTypeEntries();
         // Update FieldTypeEntries
@@ -175,7 +175,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     private void putFieldTypeEntry(Long version, Put put, FieldTypeEntry fieldTypeEntry)
-                    throws FieldTypeNotFoundException, RepositoryException {
+                    throws FieldTypeNotFoundException, TypeException {
         byte[] idBytes = fieldTypeIdToBytes(fieldTypeEntry.getFieldTypeId());
         Get get = new Get(idBytes);
         try {
@@ -183,7 +183,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 throw new FieldTypeNotFoundException(fieldTypeEntry.getFieldTypeId(), null);
             }
         } catch (IOException e) {
-            throw new RepositoryException("Exception occurred while checking existance of FieldTypeEntry <"
+            throw new TypeException("Exception occurred while checking existance of FieldTypeEntry <"
                             + fieldTypeEntry.getFieldTypeId() + "> on HBase", e);
         }
         put.add(FIELDTYPEENTRY_COLUMN_FAMILY, idBytes, version, encodeFieldTypeEntry(fieldTypeEntry));
@@ -211,8 +211,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return changed;
     }
 
-    public RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException,
-                    RepositoryException {
+    public RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(id, "recordTypeId");
         Get get = new Get(Bytes.toBytes(id));
         if (version != null) {
@@ -225,7 +224,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
             result = typeTable.get(get);
         } catch (IOException e) {
-            throw new RepositoryException("Exception occurred while retrieving recordType <" + id
+            throw new TypeException("Exception occurred while retrieving recordType <" + id
                             + "> from HBase table", e);
         }
         RecordType recordType = newRecordType(id);
@@ -321,7 +320,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return new FieldTypeEntryImpl(fieldTypeId, mandatory);
     }
 
-    public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, RepositoryException {
+    public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException {
         ArgumentValidator.notNull(fieldType, "fieldType");
 
         try {
@@ -345,7 +344,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             put.add(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME, version, encodeName(fieldType.getName()));
             typeTable.put(put);
         } catch (IOException e) {
-            throw new RepositoryException("Exception occurred while creating fieldType <" + fieldType.getId()
+            throw new TypeException("Exception occurred while creating fieldType <" + fieldType.getId()
                             + "> version: <" + version + "> on HBase", e);
         }
         newFieldType = fieldType.clone();
@@ -377,7 +376,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     public FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
-            RepositoryException {
+            TypeException {
         FieldType latestFieldType = getFieldTypeById(fieldType.getId());
         if (!fieldType.getValueType().equals(latestFieldType.getValueType())) {
             throw new FieldTypeUpdateException("Changing the valueType of a fieldType <" + fieldType.getId()
@@ -395,7 +394,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             try {
                 typeTable.put(put);
             } catch (IOException e) {
-                throw new RepositoryException("Exception occurred while updating fieldType <" + fieldType.getId()
+                throw new TypeException("Exception occurred while updating fieldType <" + fieldType.getId()
                                 + "> on HBase", e);
             }
         }
@@ -403,7 +402,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return fieldType.clone();
     }
 
-    public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, RepositoryException {
+    public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(id, "id");
         Result result;
         Get get = new Get(fieldTypeIdToBytes(id));
@@ -413,7 +412,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
             result = typeTable.get(get);
         } catch (IOException e) {
-            throw new RepositoryException("Exception occurred while retrieving fieldType <" + id + "> from HBase", e);
+            throw new TypeException("Exception occurred while retrieving fieldType <" + id + "> from HBase", e);
         }
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(NON_VERSIONED_COLUMN_FAMILY);
         QName name;
@@ -470,7 +469,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return fieldType;
     }
     
-    private void initializeFieldTypeNameCache() throws IOException, FieldTypeNotFoundException, RepositoryException {
+    private void initializeFieldTypeNameCache() throws IOException, FieldTypeNotFoundException, TypeException {
         fieldTypeNameCache.clear();
         ResultScanner scanner = typeTable.getScanner(NON_VERSIONED_COLUMN_FAMILY, FIELDTYPE_NAME_COLUMN_NAME);
         try {

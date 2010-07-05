@@ -18,7 +18,7 @@ package org.lilycms.repository.api;
 /**
  *
  */
-public class FieldTypeNotFoundException extends Exception {
+public class FieldTypeNotFoundException extends RepositoryException {
 
     private final String id;
     private final Long version;

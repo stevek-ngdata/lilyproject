@@ -15,12 +15,11 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.RecordType;
 
 /**
  *
  */
-public class RecordTypeExistsException extends Exception {
+public class RecordTypeExistsException extends RepositoryException {
 
     private final RecordType recordType;
 

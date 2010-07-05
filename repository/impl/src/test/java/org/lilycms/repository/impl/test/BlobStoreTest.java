@@ -30,17 +30,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilycms.repository.api.Blob;
-import org.lilycms.repository.api.BlobNotFoundException;
-import org.lilycms.repository.api.BlobStoreAccess;
-import org.lilycms.repository.api.FieldType;
-import org.lilycms.repository.api.FieldTypeEntry;
-import org.lilycms.repository.api.IdGenerator;
-import org.lilycms.repository.api.QName;
-import org.lilycms.repository.api.Record;
-import org.lilycms.repository.api.RecordType;
-import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.AbstractTypeManager;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseBlobStoreAccess;
@@ -191,7 +181,7 @@ public class BlobStoreTest {
         try {
             repository.getInputStream(blob);
             fail();
-        } catch (RepositoryException expected) {
+        } catch (BlobException expected) {
         }
     }
     
@@ -219,12 +209,12 @@ public class BlobStoreTest {
         repository.delete(mediumBlob);
         try {
             repository.getInputStream(smallBlob);
-        } catch (RepositoryException expected) {
+        } catch (BlobException expected) {
         }
         repository.delete(largeBlob);
         try {
             repository.getInputStream(smallBlob);
-        } catch (RepositoryException expected) {
+        } catch (BlobException expected) {
         }
     }
 }

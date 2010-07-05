@@ -220,6 +220,8 @@ public class IndexerConfBuilder {
                     vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
                 } catch (FieldTypeNotFoundException e) {
                     throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
+                } catch (TypeException e) {
+                    throw new IndexerConfException("error loading field type for vtag: " + tag, e);
                 }
             }
         }
@@ -375,6 +377,8 @@ public class IndexerConfBuilder {
             return typeManager.getFieldTypeByName(parsedQName).getId();
         } catch (FieldTypeNotFoundException e) {
             throw new IndexerConfException("unknown field type: " + parsedQName, e);
+        } catch (TypeException e) {
+            throw new IndexerConfException("error loading field type: " + parsedQName, e);
         }
     }
 
@@ -385,6 +389,8 @@ public class IndexerConfBuilder {
             return typeManager.getFieldTypeByName(parsedQName);
         } catch (FieldTypeNotFoundException e) {
             throw new IndexerConfException("unknown field type: " + parsedQName, e);
+        } catch (TypeException e) {
+            throw new IndexerConfException("error loading field type: " + parsedQName, e);
         }
     }
 

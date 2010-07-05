@@ -1,8 +1,6 @@
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.Blob;
-
-public class BlobNotFoundException extends Exception {
+public class BlobNotFoundException extends RepositoryException {
     private final Blob blob;
     private final Exception exception;
 

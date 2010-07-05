@@ -15,13 +15,6 @@
  */
 package org.lilycms.repository.api;
 
-import org.lilycms.repository.api.FieldTypeExistsException;
-import org.lilycms.repository.api.FieldTypeNotFoundException;
-import org.lilycms.repository.api.FieldTypeUpdateException;
-import org.lilycms.repository.api.RecordTypeExistsException;
-import org.lilycms.repository.api.RecordTypeNotFoundException;
-import org.lilycms.repository.api.RepositoryException;
-
 /**
  * TypeManager provides access to the repository schema. This is where {@link RecordType}s and {@link FieldType}s
  * are managed.
@@ -46,7 +39,7 @@ public interface TypeManager {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RepositoryException;
+            FieldTypeNotFoundException, TypeException;
     
     /**
      * Gets a RecordType from the repository.
@@ -56,7 +49,7 @@ public interface TypeManager {
      * @throws RecordTypeNotFoundException when the recordType does not exist
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException, RepositoryException;
+    RecordType getRecordType(String id, Long version) throws RecordTypeNotFoundException, TypeException;
 
     /**
      * Updates an existing record type.
@@ -77,7 +70,7 @@ public interface TypeManager {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     RecordType updateRecordType(RecordType recordType) throws  RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RepositoryException;
+            TypeException;
 
     /**
      * Instantiates a new FieldTypeEntry object.
@@ -113,7 +106,7 @@ public interface TypeManager {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      * @throws FieldTypeExistsException 
      */
-    FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, RepositoryException;
+    FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException;
 
     /**
      * Updates an existing FieldType.
@@ -131,7 +124,7 @@ public interface TypeManager {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
-            RepositoryException;
+            TypeException;
     
     /**
      * Gets a FieldType from the repository.
@@ -139,7 +132,7 @@ public interface TypeManager {
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, RepositoryException;
+    FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException;
 
     /**
      * Gets a FieldType from the repository.
@@ -147,7 +140,7 @@ public interface TypeManager {
      * @throws FieldTypeNotFoundException when no fieldType with the given name exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException;
+    FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException, TypeException;
 
     /**
      * Provides {@link ValueType} instances. These are used to set to value type of {@link FieldType}s.

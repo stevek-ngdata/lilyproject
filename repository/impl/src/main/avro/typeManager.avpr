@@ -49,12 +49,12 @@
       ]
      },
      
-     {"name": "AvroRepositoryException", "type": "error",
+     {"name": "AvroTypeException", "type": "error",
       "fields": [
           {"name": "message", "type": "string"}
       ]
      },
-     
+
      {"name": "AvroFieldTypeExistsException", "type": "error",
       "fields": [
           {"name": "fieldType", "type": "AvroFieldType"}
@@ -92,38 +92,38 @@
      "createRecordType": {
          "request": [{"name": "recordType", "type": "AvroRecordType"}],
          "response": "AvroRecordType",
-         "errors": ["AvroRecordTypeExistsException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordTypeExistsException", "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroTypeException"]
      },
      "getRecordType": {
          "request": [{"name": "id", "type": "string"},
                      {"name": "version", "type": "long"}],
          "response": "AvroRecordType",
-         "errors": ["AvroRecordTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordTypeNotFoundException", "AvroTypeException"]
      },
      "updateRecordType": {
          "request": [{"name": "recordType", "type": "AvroRecordType"}],
          "response": "AvroRecordType",
-         "errors": ["AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroTypeException"]
      },
      "createFieldType": {
          "request": [{"name": "fieldType", "type": "AvroFieldType"}],
          "response": "AvroFieldType",
-         "errors": ["AvroFieldTypeExistsException", "AvroRepositoryException"]
+         "errors": ["AvroFieldTypeExistsException", "AvroTypeException"]
      },
      "updateFieldType": {
          "request": [{"name": "fieldType", "type": "AvroFieldType"}],
          "response": "AvroFieldType",
-         "errors": ["AvroFieldTypeNotFoundException", "AvroFieldTypeUpdateException", "AvroRepositoryException"]
+         "errors": ["AvroFieldTypeNotFoundException", "AvroFieldTypeUpdateException", "AvroTypeException"]
      },
      "getFieldTypeById": {
          "request": [{"name": "id", "type": "string"}],
          "response": "AvroFieldType",
-         "errors": ["AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroFieldTypeNotFoundException", "AvroTypeException"]
      },
      "getFieldTypeByName": {
          "request": [{"name": "name", "type": "AvroQName"}],
          "response": "AvroFieldType",
-         "errors": ["AvroFieldTypeNotFoundException", "AvroRepositoryException"]
+         "errors": ["AvroFieldTypeNotFoundException", "AvroTypeException"]
      }
  }
 }
