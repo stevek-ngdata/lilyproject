@@ -22,6 +22,14 @@
       id="hbaseConfFactory"
       service="org.lilycms.server.modules.hbase.HBaseConfigurationFactory"/>
 
+  <kauri:export-service
+      ref="repository"
+      service="org.lilycms.repository.api.Repository"/>
+
+  <kauri:export-service
+      ref="messageQueue"
+      service="org.lilycms.rowlog.api.RowLog"/>
+
   <bean id="hbaseConf"
       factory-bean="hbaseConfFactory"
       factory-method="get"/>
@@ -40,7 +48,7 @@
           factory-method="get">
         <constructor-arg>
           <bean class="java.net.URI">
-            <constructor-arg value="hdfs://lat-kind:9000"/>
+            <constructor-arg value="${repository:blobFileSystem}"/>
           </bean>
         </constructor-arg>
         <constructor-arg ref="hbaseConf"/>
@@ -58,6 +66,8 @@
     <constructor-arg ref="blobStoreAccessFactory"/>
     <constructor-arg ref="hbaseConf"/>
   </bean>
+
+  <bean id="messageQueue" factory-bean="repository" factory-method="getMessageQueue"/>
 
   <bean id="address" class="org.lilycms.server.modules.repository.AddressResolver">
     <constructor-arg value="${repository:interface}"/>

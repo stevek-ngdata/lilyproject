@@ -14,7 +14,6 @@ import org.lilycms.repository.impl.RepositoryRemoteImpl;
 import org.lilycms.repository.impl.TypeManagerRemoteImpl;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
@@ -59,15 +58,15 @@ public class Client {
     private void constructRepository(ServerNode server) throws IOException {
         AvroConverter remoteConverter = new AvroConverter();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-        TypeManager typeManager = new TypeManagerRemoteImpl(parseAddressAndPort(server.repoAddressAndPort),
+        TypeManager typeManager = new TypeManagerRemoteImpl(parseAddressAndPort(server.typeManagerAddressAndPort),
                 remoteConverter, idGenerator);
-        Repository repository = new RepositoryRemoteImpl(parseAddressAndPort(server.typeManagerAddressAndPort),
+        Repository repository = new RepositoryRemoteImpl(parseAddressAndPort(server.repoAddressAndPort),
                 remoteConverter, (TypeManagerRemoteImpl)typeManager, idGenerator);
         remoteConverter.setRepository(repository);
         server.repository = repository;
     }
 
-    private SocketAddress parseAddressAndPort(String addressAndPort) {
+    private InetSocketAddress parseAddressAndPort(String addressAndPort) {
         int colonPos = addressAndPort.indexOf(":");
         if (colonPos == -1) {
             // since these are produced by the server nodes, this should never occur

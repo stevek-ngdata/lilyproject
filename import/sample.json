@@ -1,0 +1,30 @@
+{
+  "namespaces": [
+    { "prefix": "sample", "uri": "org.lilycms.tools.import_.sample"}
+  ],
+  "fieldTypes": [
+    {
+      "name": "sample:field1",
+      "valueType": { "primitive": "STRING" },
+      "scope": "versioned"
+    },
+    {
+      "name": "sample:field2",
+      "valueType": { "primitive": "STRING" },
+      "scope": "non_versioned"
+    }
+  ],
+  "recordTypes": [
+    {
+      "name": "Book",
+      "fields": [
+        {"name": "sample:field1", "mandatory": false },
+        {"name": "sample:field2", "mandatory": false }
+      ]
+    }
+  ],
+  "records": [
+    {"type": "Book", "sample:field1": "My first document."},
+    {"type": "Book", "sample:field1": "My second document.", "sample:field2": "some more data"}
+  ]
+}

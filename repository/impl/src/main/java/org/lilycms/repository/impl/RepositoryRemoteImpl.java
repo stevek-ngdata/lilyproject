@@ -3,7 +3,8 @@ package org.lilycms.repository.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -11,7 +12,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.ipc.AvroRemoteException;
-import org.apache.avro.ipc.SocketTransceiver;
+import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.specific.SpecificRequestor;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.NotImplementedException;
@@ -34,13 +35,13 @@ public class RepositoryRemoteImpl implements Repository {
     private IdGenerator idGenerator;
     private final TypeManager typeManager;
 
-    public RepositoryRemoteImpl(SocketAddress address, AvroConverter converter, TypeManagerRemoteImpl typeManager, IdGenerator idGenerator)
+    public RepositoryRemoteImpl(InetSocketAddress address, AvroConverter converter, TypeManagerRemoteImpl typeManager, IdGenerator idGenerator)
             throws IOException {
         this.converter = converter;
         this.typeManager = typeManager;
         //TODO idGenerator should not be available or used in the remote implementation
         this.idGenerator = idGenerator;
-        SocketTransceiver client = new SocketTransceiver(address);
+        HttpTransceiver client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
 
         repositoryProxy = (AvroRepository) SpecificRequestor.getClient(
                 AvroRepository.class, client);

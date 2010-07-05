@@ -5,7 +5,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilycms</groupId>
-  <artifactId>lily-repository-module</artifactId>
+  <artifactId>lily-indexer-module</artifactId>
   <version>0.1-dev</version>
   <packaging>jar</packaging>
 
@@ -16,25 +16,17 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Lily: Kauri: repository module</name>
+  <name>Lily: Kauri: indexer module</name>
 
   <dependencies>
     <dependency>
       <groupId>org.lilycms</groupId>
-      <artifactId>lily-repository-impl</artifactId>
+      <artifactId>lily-indexer</artifactId>
       <exclusions>
         <exclusion>
-          <!-- also used by solr, but there with a different version of commons-codec, causing
-               commons-httpclient to be in Kauri's common classloader but commons-codec not -->
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>avro</artifactId>
         </exclusion>
-        <exclusion>
-          <!-- also used by solr, but there with a different version of commons-codec, causing
-               commons-httpclient to be in Kauri's common classloader but commons-codec not -->
-          <groupId>commons-codec</groupId>
-          <artifactId>commons-codec</artifactId>
-        </exclusion>        
       </exclusions>
     </dependency>
 

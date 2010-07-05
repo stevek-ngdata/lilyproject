@@ -1,7 +1,7 @@
 package org.lilycms.server.modules.repository;
 
+import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.Responder;
-import org.apache.avro.ipc.SocketServer;
 import org.apache.avro.specific.SpecificResponder;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.avro.*;
@@ -9,7 +9,6 @@ import org.lilycms.repository.avro.*;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
 public class AvroServer {
     private String bindAddress;
@@ -17,8 +16,8 @@ public class AvroServer {
     private int repositoryPort;
     private int typeManagerPort;
 
-    private SocketServer repositoryServer;
-    private SocketServer typeManagerServer;
+    private HttpServer repositoryServer;
+    private HttpServer typeManagerServer;
 
     public AvroServer(String bindAddress, Repository repository, int repositoryPort, int typeManagerPort) {
         this.bindAddress = bindAddress;
@@ -34,11 +33,11 @@ public class AvroServer {
 
         AvroRepositoryImpl avroRepository = new AvroRepositoryImpl(repository, avroConverter);
         Responder repoResponder = new SpecificResponder(AvroRepository.class, avroRepository);
-        repositoryServer = new SocketServer(repoResponder, new InetSocketAddress(bindAddress, repositoryPort));
+        repositoryServer = new HttpServer(repoResponder, repositoryPort);
 
         AvroTypeManagerImpl avroTypeManager = new AvroTypeManagerImpl(repository.getTypeManager(), avroConverter);
         Responder typeMgrResponder = new SpecificResponder(AvroTypeManager.class, avroTypeManager);
-        typeManagerServer = new SocketServer(typeMgrResponder, new InetSocketAddress(bindAddress, typeManagerPort));
+        typeManagerServer = new HttpServer(typeMgrResponder, typeManagerPort);
     }
     
     @PreDestroy

@@ -19,7 +19,7 @@ package org.lilycms.repository.impl.test;
 
 import java.net.InetSocketAddress;
 
-import org.apache.avro.ipc.SocketServer;
+import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.specific.SpecificResponder;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -60,14 +60,16 @@ public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTe
         
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
-        SocketServer repositorySocketServer = new SocketServer(new SpecificResponder(AvroRepository.class, new AvroRepositoryImpl(serverRepository, serverConverter)),
-                new InetSocketAddress(0)); 
-        SocketServer typeManagerSocketServer = new SocketServer(new SpecificResponder(AvroTypeManager.class, new AvroTypeManagerImpl(serverTypeManager, serverConverter)),
-                new InetSocketAddress(0));
+        HttpServer repositoryServer = new HttpServer(
+                new SpecificResponder(AvroRepository.class, new AvroRepositoryImpl(serverRepository, serverConverter)),
+                0);
+        HttpServer typeManagerServer = new HttpServer(
+                new SpecificResponder(AvroTypeManager.class, new AvroTypeManagerImpl(serverTypeManager, serverConverter)),
+                0);
         AvroConverter remoteConverter = new AvroConverter();
-        typeManager = new TypeManagerRemoteImpl(new InetSocketAddress(typeManagerSocketServer.getPort()),
+        typeManager = new TypeManagerRemoteImpl(new InetSocketAddress(typeManagerServer.getPort()),
                 remoteConverter, idGenerator);
-        Repository repository = new RepositoryRemoteImpl(new InetSocketAddress(repositorySocketServer.getPort()),
+        Repository repository = new RepositoryRemoteImpl(new InetSocketAddress(repositoryServer.getPort()),
                 remoteConverter, (TypeManagerRemoteImpl)typeManager, idGenerator);
         remoteConverter.setRepository(repository);
 

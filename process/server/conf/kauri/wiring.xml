@@ -9,6 +9,9 @@
     <artifact id="repository" groupId="org.lilycms" artifactId="lily-repository-module" version="0.1-dev">
     </artifact>
 
+    <artifact id="indexer" groupId="org.lilycms" artifactId="lily-indexer-module" version="0.1-dev">
+    </artifact>
+
   </modules>
 
 </wiring>

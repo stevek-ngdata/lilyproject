@@ -25,6 +25,7 @@
   <modules>
     <module>hbase-module</module>
     <module>repository-module</module>
+    <module>indexer-module</module>
   </modules>
 
   <repositories>

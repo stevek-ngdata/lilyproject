@@ -1,10 +1,11 @@
 package org.lilycms.repository.impl;
 
 import java.io.IOException;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
+import java.net.URL;
 
 import org.apache.avro.ipc.AvroRemoteException;
-import org.apache.avro.ipc.SocketTransceiver;
+import org.apache.avro.ipc.HttpTransceiver;
 import org.apache.avro.specific.SpecificRequestor;
 import org.apache.avro.util.Utf8;
 import org.lilycms.repository.api.*;
@@ -29,12 +30,12 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
     private AvroTypeManager typeManagerProxy;
     private AvroConverter converter;
 
-    public TypeManagerRemoteImpl(SocketAddress address, AvroConverter converter, IdGenerator idGenerator)
+    public TypeManagerRemoteImpl(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator)
             throws IOException {
         this.converter = converter;
         //TODO idGenerator should not be available or used in the remote implementation
         this.idGenerator = idGenerator;
-        SocketTransceiver client = new SocketTransceiver(address);
+        HttpTransceiver client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
 
         typeManagerProxy = (AvroTypeManager) SpecificRequestor.getClient(AvroTypeManager.class, client);
         initialize();
@@ -141,6 +142,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
         try {
             return converter.convert(typeManagerProxy.getFieldTypeByName(converter.convert(name)));
+        } catch (AvroFieldTypeNotFoundException fieldTypeNotFoundException) {
+            throw converter.convert(fieldTypeNotFoundException);
         } catch (AvroRemoteException remoteException) {
             // TODO define what we do here
             throw new FieldTypeNotFoundException(null, null);
