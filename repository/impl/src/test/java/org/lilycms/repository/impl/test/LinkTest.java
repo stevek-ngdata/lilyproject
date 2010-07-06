@@ -30,6 +30,7 @@ public class LinkTest {
 
         assertEquals("USER.123", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
+        assertEquals(link, Link.fromBytes(link.toBytes(), idGenerator));
 
         RecordId ctx = idGenerator.newRecordId("0");
         RecordId resolved = link.resolve(ctx, idGenerator);
@@ -59,6 +60,7 @@ public class LinkTest {
         assertEquals(masterRecordId, link.getMasterRecordId());
         assertEquals("USER.123.!*;branch=dev;lang=en", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
+        assertEquals(link, Link.fromBytes(link.toBytes(), idGenerator));
 
         assertEquals(2, link.getVariantProps().size());
         assertEquals(Link.PropertyMode.SET, link.getVariantProps().get("lang").getMode());
@@ -85,6 +87,7 @@ public class LinkTest {
         Link link = Link.newBuilder().recordId(recordId).remove("lang").set("x", "1").create();
         assertEquals("USER.123.-lang;x=1", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
+        assertEquals(link, Link.fromBytes(link.toBytes(), idGenerator));
 
         Map<String, String> ctxVarProps = new HashMap<String, String>();
         ctxVarProps.put("lang", "en");
@@ -106,6 +109,7 @@ public class LinkTest {
         Link link = Link.newBuilder().recordId(recordId).copyAll(false).copy("branch").set("x", "1").create();
         assertEquals("USER.123.!*;+branch;x=1", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
+        assertEquals(link, Link.fromBytes(link.toBytes(), idGenerator));
 
         Map<String, String> ctxVarProps = new HashMap<String, String>();
         ctxVarProps.put("lang", "en");
@@ -126,6 +130,7 @@ public class LinkTest {
         assertNull(link.getMasterRecordId());
         assertEquals(".", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
+        assertEquals(link, Link.fromBytes(link.toBytes(), idGenerator));
 
         Map<String, String> varProps = new HashMap<String, String>();
         varProps.put("lang", "en");
@@ -144,6 +149,7 @@ public class LinkTest {
         assertNull(link.getMasterRecordId());
         assertEquals(".!*", link.toString());
         assertEquals(link, Link.fromString(link.toString(), idGenerator));
+        assertEquals(link, Link.fromBytes(link.toBytes(), idGenerator));
 
         Map<String, String> varProps = new HashMap<String, String>();
         varProps.put("lang", "en");

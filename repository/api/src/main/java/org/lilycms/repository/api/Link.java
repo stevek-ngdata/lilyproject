@@ -261,41 +261,40 @@ public class Link {
             builder.append(masterRecordId.toString());
         }
 
-        argstoString(builder);
+        if (!copyAll || variantProps != null) {
+            builder.append(".");
+            argstoString(builder);
+        }
 
         return builder.toString();
     }
 
     private void argstoString(StringBuilder builder) {
-        if (!copyAll || variantProps != null) {
-            builder.append(".");
+        boolean firstArg = true;
 
-            boolean firstArg = true;
+        if (!copyAll) {
+            builder.append("!*");
+            firstArg = false;
+        }
 
-            if (!copyAll) {
-                builder.append("!*");
-                firstArg = false;
-            }
+        if (variantProps != null) {
+            for (Map.Entry<String, PropertyValue> entry : variantProps.entrySet()) {
+                if (firstArg) {
+                    firstArg = false;
+                } else {
+                    builder.append(";");
+                }
 
-            if (variantProps != null) {
-                for (Map.Entry<String, PropertyValue> entry : variantProps.entrySet()) {
-                    if (firstArg) {
-                        firstArg = false;
-                    } else {
-                        builder.append(";");
-                    }
-
-                    switch (entry.getValue().mode) {
-                        case COPY:
-                            builder.append('+').append(entry.getKey());
-                            break;
-                        case REMOVE:
-                            builder.append('-').append(entry.getKey());
-                            break;
-                        case SET:
-                            builder.append(entry.getKey()).append('=').append(entry.getValue().value);
-                            break;
-                    }
+                switch (entry.getValue().mode) {
+                    case COPY:
+                        builder.append('+').append(entry.getKey());
+                        break;
+                    case REMOVE:
+                        builder.append('-').append(entry.getKey());
+                        break;
+                    case SET:
+                        builder.append(entry.getKey()).append('=').append(entry.getValue().value);
+                        break;
                 }
             }
         }
