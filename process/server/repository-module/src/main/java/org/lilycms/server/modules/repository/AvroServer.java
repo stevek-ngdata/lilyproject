@@ -31,13 +31,9 @@ public class AvroServer {
         AvroConverter avroConverter = new AvroConverter();
         avroConverter.setRepository(repository);
 
-        AvroRepositoryImpl avroRepository = new AvroRepositoryImpl(repository, avroConverter);
-        Responder repoResponder = new SpecificResponder(AvroRepository.class, avroRepository);
+        AvroLilyImpl avroLily = new AvroLilyImpl(repository, avroConverter);
+        Responder repoResponder = new SpecificResponder(AvroLily.class, avroLily);
         repositoryServer = new HttpServer(repoResponder, repositoryPort);
-
-        AvroTypeManagerImpl avroTypeManager = new AvroTypeManagerImpl(repository.getTypeManager(), avroConverter);
-        Responder typeMgrResponder = new SpecificResponder(AvroTypeManager.class, avroTypeManager);
-        typeManagerServer = new HttpServer(typeMgrResponder, typeManagerPort);
     }
     
     @PreDestroy

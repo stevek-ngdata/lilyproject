@@ -410,4 +410,44 @@ public class AvroConverter {
         if (utf8 == null) return null;
         return utf8.toString();
     }
+
+    private GenericArray<AvroExceptionCause> buildCauses(Throwable throwable) {
+        List<AvroExceptionCause> causes = new ArrayList<AvroExceptionCause>();
+
+        Throwable cause = throwable;
+
+        while (cause != null) {
+            causes.add(convertCause(cause));
+            cause = cause.getCause();
+        }
+
+        return new GenericData.Array<AvroExceptionCause>(causes.size(), AvroExceptionCause.SCHEMA$);
+    }
+
+    private AvroExceptionCause convertCause(Throwable throwable) {
+        AvroExceptionCause cause = new AvroExceptionCause();
+        cause.className = new Utf8(throwable.getClass().getName());
+        cause.message = new Utf8(throwable.getMessage());
+
+        StackTraceElement[] stackTrace = throwable.getStackTrace();
+
+        cause.stackTrace = new GenericData.Array<AvroStackTraceElement>(stackTrace.length, AvroStackTraceElement.SCHEMA$);
+
+        for (StackTraceElement el : stackTrace) {
+            cause.stackTrace.add(convert(el));
+        }
+
+        return cause;
+    }
+
+    private AvroStackTraceElement convert(StackTraceElement el) {
+        AvroStackTraceElement result = new AvroStackTraceElement();
+        result.className = new Utf8(el.getClassName());
+        result.methodName = new Utf8(el.getMethodName());
+        result.nativeMethod = el.isNativeMethod();
+        result.fileName = new Utf8(el.getFileName());
+        result.lineNumber = el.getLineNumber();
+        return result;
+    }
+
 }

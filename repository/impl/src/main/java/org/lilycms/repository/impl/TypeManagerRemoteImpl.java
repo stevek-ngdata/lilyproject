@@ -18,7 +18,7 @@ import org.lilycms.repository.avro.*;
 
 public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeManager {
 
-    private AvroTypeManager typeManagerProxy;
+    private AvroLily lilyProxy;
     private AvroConverter converter;
 
     public TypeManagerRemoteImpl(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator)
@@ -28,7 +28,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
         this.idGenerator = idGenerator;
         HttpTransceiver client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
 
-        typeManagerProxy = (AvroTypeManager) SpecificRequestor.getClient(AvroTypeManager.class, client);
+        lilyProxy = (AvroLily) SpecificRequestor.getClient(AvroLily.class, client);
         initialize();
     }
     
@@ -36,7 +36,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             RecordTypeNotFoundException, FieldTypeNotFoundException, TypeException {
 
         try {
-            return converter.convert(typeManagerProxy.createRecordType(converter.convert(recordType)));
+            return converter.convert(lilyProxy.createRecordType(converter.convert(recordType)));
         } catch (AvroRecordTypeExistsException e) {
             throw converter.convert(e);
         } catch (AvroRecordTypeNotFoundException e) {
@@ -58,7 +58,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             } else {
                 avroVersion = version;
             }
-            return converter.convert(typeManagerProxy.getRecordType(new Utf8(id), avroVersion));
+            return converter.convert(lilyProxy.getRecordType(new Utf8(id), avroVersion));
         } catch (AvroRecordTypeNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroTypeException e) {
@@ -72,7 +72,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             FieldTypeNotFoundException, TypeException {
 
         try {
-            return converter.convert(typeManagerProxy.updateRecordType(converter.convert(recordType)));
+            return converter.convert(lilyProxy.updateRecordType(converter.convert(recordType)));
         } catch (AvroRecordTypeNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroFieldTypeNotFoundException e) {
@@ -87,7 +87,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
     public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException {
         try {
             AvroFieldType avroFieldType = converter.convert(fieldType);
-            AvroFieldType createFieldType = typeManagerProxy.createFieldType(avroFieldType);
+            AvroFieldType createFieldType = lilyProxy.createFieldType(avroFieldType);
             FieldType resultFieldType = converter.convert(createFieldType);
             return resultFieldType;
         } catch (AvroFieldTypeExistsException e) {
@@ -103,7 +103,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             TypeException {
 
         try {
-            return converter.convert(typeManagerProxy.updateFieldType(converter.convert(fieldType)));
+            return converter.convert(lilyProxy.updateFieldType(converter.convert(fieldType)));
         } catch (AvroFieldTypeNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroFieldTypeUpdateException e) {
@@ -117,7 +117,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
 
     public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException {
         try {
-            return converter.convert(typeManagerProxy.getFieldTypeById(new Utf8(id)));
+            return converter.convert(lilyProxy.getFieldTypeById(new Utf8(id)));
         } catch (AvroFieldTypeNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroTypeException e) {
@@ -129,7 +129,7 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
 
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException, TypeException {
         try {
-            return converter.convert(typeManagerProxy.getFieldTypeByName(converter.convert(name)));
+            return converter.convert(lilyProxy.getFieldTypeByName(converter.convert(name)));
         } catch (AvroFieldTypeNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroTypeException e) {

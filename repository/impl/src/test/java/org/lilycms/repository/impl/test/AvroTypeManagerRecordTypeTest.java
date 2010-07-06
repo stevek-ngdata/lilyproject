@@ -25,10 +25,8 @@ import org.lilycms.repository.api.BlobStoreAccessFactory;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.avro.AvroConverter;
-import org.lilycms.repository.avro.AvroRepository;
-import org.lilycms.repository.avro.AvroRepositoryImpl;
-import org.lilycms.repository.avro.AvroTypeManager;
-import org.lilycms.repository.avro.AvroTypeManagerImpl;
+import org.lilycms.repository.avro.AvroLily;
+import org.lilycms.repository.avro.AvroLilyImpl;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
@@ -60,16 +58,13 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
         
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
-        HttpServer repositoryServer = new HttpServer(
-                new SpecificResponder(AvroRepository.class, new AvroRepositoryImpl(serverRepository, serverConverter)),
-                0);
-        HttpServer typeManagerServer = new HttpServer(
-                new SpecificResponder(AvroTypeManager.class, new AvroTypeManagerImpl(serverTypeManager, serverConverter)),
+        HttpServer lilyServer = new HttpServer(
+                new SpecificResponder(AvroLily.class, new AvroLilyImpl(serverRepository, serverConverter)),
                 0);
         AvroConverter remoteConverter = new AvroConverter();
-        typeManager = new TypeManagerRemoteImpl(new InetSocketAddress(typeManagerServer.getPort()),
+        typeManager = new TypeManagerRemoteImpl(new InetSocketAddress(lilyServer.getPort()),
                 remoteConverter, idGenerator);
-        Repository repository = new RepositoryRemoteImpl(new InetSocketAddress(repositoryServer.getPort()),
+        Repository repository = new RepositoryRemoteImpl(new InetSocketAddress(lilyServer.getPort()),
                 remoteConverter, (TypeManagerRemoteImpl)typeManager, idGenerator);
         remoteConverter.setRepository(repository);
 

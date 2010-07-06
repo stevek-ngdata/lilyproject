@@ -28,7 +28,7 @@ import org.lilycms.repository.avro.*;
 import org.lilycms.util.ArgumentValidator;
 
 public class RepositoryRemoteImpl implements Repository {
-    private AvroRepository repositoryProxy;
+    private AvroLily lilyProxy;
     private final AvroConverter converter;
     private IdGenerator idGenerator;
     private final TypeManager typeManager;
@@ -41,8 +41,7 @@ public class RepositoryRemoteImpl implements Repository {
         this.idGenerator = idGenerator;
         HttpTransceiver client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
 
-        repositoryProxy = (AvroRepository) SpecificRequestor.getClient(
-                AvroRepository.class, client);
+        lilyProxy = (AvroLily) SpecificRequestor.getClient(AvroLily.class, client);
     }
     
     public TypeManager getTypeManager() {
@@ -65,7 +64,7 @@ public class RepositoryRemoteImpl implements Repository {
     public Record create(Record record) throws RecordExistsException, RecordNotFoundException, InvalidRecordException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, TypeException {
         try {
-            return converter.convert(repositoryProxy.create(converter.convert(record)));
+            return converter.convert(lilyProxy.create(converter.convert(record)));
         } catch (AvroRecordExistsException e) {
             throw converter.convert(e);
         } catch (AvroRecordNotFoundException e) {
@@ -87,7 +86,7 @@ public class RepositoryRemoteImpl implements Repository {
 
     public void delete(RecordId recordId) throws RecordException {
         try {
-            repositoryProxy.delete(new Utf8(recordId.toString()));
+            lilyProxy.delete(new Utf8(recordId.toString()));
         } catch (AvroRecordException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
@@ -128,7 +127,7 @@ public class RepositoryRemoteImpl implements Repository {
                     avroFieldNames.add(converter.convert(fieldName));
                 }
             }
-            return converter.convert(repositoryProxy.read(new Utf8(recordId.toString()), avroVersion, avroFieldNames));
+            return converter.convert(lilyProxy.read(new Utf8(recordId.toString()), avroVersion, avroFieldNames));
         } catch (AvroRecordNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroVersionNotFoundException e) {
@@ -149,7 +148,7 @@ public class RepositoryRemoteImpl implements Repository {
     public Record update(Record record) throws RecordNotFoundException, InvalidRecordException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, TypeException, VersionNotFoundException {
         try {
-            return converter.convert(repositoryProxy.update(converter.convert(record)));
+            return converter.convert(lilyProxy.update(converter.convert(record)));
         } catch (AvroRecordNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroInvalidRecordException e) {
@@ -172,7 +171,7 @@ public class RepositoryRemoteImpl implements Repository {
     public Record updateMutableFields(Record record) throws InvalidRecordException, RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, TypeException, RecordException, VersionNotFoundException {
         try {
-            return converter.convert(repositoryProxy.updateMutableFields(converter.convert(record)));
+            return converter.convert(lilyProxy.updateMutableFields(converter.convert(record)));
         } catch (AvroRecordNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroInvalidRecordException e) {
