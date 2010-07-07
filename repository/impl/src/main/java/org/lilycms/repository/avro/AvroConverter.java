@@ -269,29 +269,34 @@ public class AvroConverter {
     public AvroRecordException convert(RecordException exception) {
         AvroRecordException avroException = new AvroRecordException();
         avroException.message = new Utf8(exception.getMessage());
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
     public AvroTypeException convert(TypeException exception) {
         AvroTypeException avroException = new AvroTypeException();
         avroException.message = new Utf8(exception.getMessage());
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
     public AvroFieldTypeExistsException convert(FieldTypeExistsException exception) {
         AvroFieldTypeExistsException avroFieldTypeExistsException = new AvroFieldTypeExistsException();
         avroFieldTypeExistsException.fieldType = convert(exception.getFieldType());
+        avroFieldTypeExistsException.remoteCauses = buildCauses(exception);
         return avroFieldTypeExistsException;
     }
 
-    public FieldTypeExistsException convert(AvroFieldTypeExistsException exception) {
-        return new FieldTypeExistsException(convert(exception.fieldType));
+    public FieldTypeExistsException convert(AvroFieldTypeExistsException avroException) {
+        FieldTypeExistsException exception = new FieldTypeExistsException(convert(avroException.fieldType));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
     public AvroRecordTypeExistsException convert(RecordTypeExistsException exception) {
         AvroRecordTypeExistsException avroException = new AvroRecordTypeExistsException();
         avroException.recordType = convert(exception.getRecordType());
-//        avroException.remoteCauses = buildCauses(exception);
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
@@ -302,7 +307,7 @@ public class AvroConverter {
         if (version != null) {
             avroException.version = version;
         }
-//        avroException.remoteCauses = buildCauses(exception);
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
@@ -313,35 +318,44 @@ public class AvroConverter {
         if (version != null) {
             avroException.version = version;
         }
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
-    public RecordException convert(AvroRecordException exception) {
-        return new RecordException(convert(exception.message));
+    public RecordException convert(AvroRecordException avroException) {
+        RecordException exception = new RecordException(convert(avroException.message));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public TypeException convert(AvroTypeException exception) {
-        return new TypeException(convert(exception.message));
+    public TypeException convert(AvroTypeException avroException) {
+        TypeException exception = new TypeException(convert(avroException.message));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public RecordTypeExistsException convert(AvroRecordTypeExistsException exception) {
-        RecordTypeExistsException result = new RecordTypeExistsException(convert(exception.recordType));
-//        restoreCauses(exception.remoteCauses, result);
-        return result;
+    public RecordTypeExistsException convert(AvroRecordTypeExistsException avroException) {
+        RecordTypeExistsException exception = new RecordTypeExistsException(convert(avroException.recordType));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public RecordTypeNotFoundException convert(AvroRecordTypeNotFoundException exception) {
-        RecordTypeNotFoundException result = new RecordTypeNotFoundException(convert(exception.id), exception.version);
-//        restoreCauses(exception.remoteCauses, result);
-        return result;
+    public RecordTypeNotFoundException convert(AvroRecordTypeNotFoundException avroException) {
+        RecordTypeNotFoundException exception = new RecordTypeNotFoundException(convert(avroException.id), avroException.version);
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public FieldTypeNotFoundException convert(AvroFieldTypeNotFoundException exception) {
-        return new FieldTypeNotFoundException(convert(exception.id), exception.version);
+    public FieldTypeNotFoundException convert(AvroFieldTypeNotFoundException avroException) {
+        FieldTypeNotFoundException exception = new FieldTypeNotFoundException(convert(avroException.id), avroException.version);
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public FieldTypeUpdateException convert(AvroFieldTypeUpdateException exception) {
-        return new FieldTypeUpdateException(convert(exception.message));
+    public FieldTypeUpdateException convert(AvroFieldTypeUpdateException avroException) {
+        FieldTypeUpdateException exception = new FieldTypeUpdateException(convert(avroException.message));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
     public AvroFieldTypeUpdateException convert(FieldTypeUpdateException exception) {
@@ -349,6 +363,7 @@ public class AvroConverter {
         if (exception.getMessage() != null) {
             avroException.message = new Utf8(exception.getMessage());
         }
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
@@ -357,6 +372,7 @@ public class AvroConverter {
 
         AvroRecordExistsException avroException = new AvroRecordExistsException();
         avroException.record = convert(exception.getRecord());
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
         
     }
@@ -366,6 +382,7 @@ public class AvroConverter {
 
         AvroRecordNotFoundException avroException = new AvroRecordNotFoundException();
         avroException.record = convert(exception.getRecord());
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
@@ -374,6 +391,7 @@ public class AvroConverter {
 
         AvroVersionNotFoundException avroException = new AvroVersionNotFoundException();
         avroException.record = convert(exception.getRecord());
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
@@ -385,31 +403,40 @@ public class AvroConverter {
         if (exception.getMessage() != null) {
             avroException.message = new Utf8(exception.getMessage());
         }
+        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
-    public RecordExistsException convert(AvroRecordExistsException exception)
+    public RecordExistsException convert(AvroRecordExistsException avroException)
             throws FieldTypeNotFoundException, TypeException {
 
-        return new RecordExistsException(convert(exception.record));
+        RecordExistsException exception = new RecordExistsException(convert(avroException.record));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public RecordNotFoundException convert(AvroRecordNotFoundException exception)
+    public RecordNotFoundException convert(AvroRecordNotFoundException avroException)
             throws FieldTypeNotFoundException, TypeException {
 
-        return new RecordNotFoundException(convert(exception.record));
+        RecordNotFoundException exception = new RecordNotFoundException(convert(avroException.record));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public VersionNotFoundException convert(AvroVersionNotFoundException exception)
+    public VersionNotFoundException convert(AvroVersionNotFoundException avroException)
             throws FieldTypeNotFoundException, TypeException {
 
-        return new VersionNotFoundException(convert(exception.record));
+        VersionNotFoundException exception = new VersionNotFoundException(convert(avroException.record));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
-    public InvalidRecordException convert(AvroInvalidRecordException exception)
+    public InvalidRecordException convert(AvroInvalidRecordException avroException)
             throws FieldTypeNotFoundException, TypeException {
         
-        return new InvalidRecordException(convert(exception.record), convert(exception.message));
+        InvalidRecordException exception = new InvalidRecordException(convert(avroException.record), convert(avroException.message));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
     
     public String convert(Utf8 utf8) {
@@ -417,8 +444,13 @@ public class AvroConverter {
         return utf8.toString();
     }
 
+    public Utf8 convert(String string) {
+        if (string == null) return null;
+        return new Utf8(string);
+    }
+
     private GenericArray<AvroExceptionCause> buildCauses(Throwable throwable) {
-        List<AvroExceptionCause> causes = new ArrayList<AvroExceptionCause>();
+        GenericData.Array<AvroExceptionCause> causes = new GenericData.Array<AvroExceptionCause>(3, Schema.createArray(AvroExceptionCause.SCHEMA$));
 
         Throwable cause = throwable;
 
@@ -427,17 +459,17 @@ public class AvroConverter {
             cause = cause.getCause();
         }
 
-        return new GenericData.Array<AvroExceptionCause>(causes.size(), AvroExceptionCause.SCHEMA$);
+        return causes;
     }
 
     private AvroExceptionCause convertCause(Throwable throwable) {
         AvroExceptionCause cause = new AvroExceptionCause();
-        cause.className = new Utf8(throwable.getClass().getName());
-        cause.message = new Utf8(throwable.getMessage());
+        cause.className = convert(throwable.getClass().getName());
+        cause.message = convert(throwable.getMessage());
 
         StackTraceElement[] stackTrace = throwable.getStackTrace();
 
-        cause.stackTrace = new GenericData.Array<AvroStackTraceElement>(stackTrace.length, AvroStackTraceElement.SCHEMA$);
+        cause.stackTrace = new GenericData.Array<AvroStackTraceElement>(stackTrace.length, Schema.createArray(AvroStackTraceElement.SCHEMA$));
 
         for (StackTraceElement el : stackTrace) {
             cause.stackTrace.add(convert(el));
@@ -448,10 +480,9 @@ public class AvroConverter {
 
     private AvroStackTraceElement convert(StackTraceElement el) {
         AvroStackTraceElement result = new AvroStackTraceElement();
-        result.className = new Utf8(el.getClassName());
-        result.methodName = new Utf8(el.getMethodName());
-        result.nativeMethod = el.isNativeMethod();
-        result.fileName = new Utf8(el.getFileName());
+        result.className = convert(el.getClassName());
+        result.methodName = convert(el.getMethodName());
+        result.fileName = convert(el.getFileName());
         result.lineNumber = el.getLineNumber();
         return result;
     }
@@ -467,11 +498,11 @@ public class AvroConverter {
         Throwable result = null;
 
         for (AvroExceptionCause remoteCause : remoteCauses) {
-            List<RestoredStackTraceElement> stackTrace = new ArrayList<RestoredStackTraceElement>((int)remoteCause.stackTrace.size());
+            List<StackTraceElement> stackTrace = new ArrayList<StackTraceElement>((int)remoteCause.stackTrace.size());
 
             for (AvroStackTraceElement el : remoteCause.stackTrace) {
-                stackTrace.add(new RestoredStackTraceElement(convert(el.className), convert(el.fileName),
-                        el.lineNumber, convert(el.methodName), el.nativeMethod));
+                stackTrace.add(new StackTraceElement(convert(el.className), convert(el.methodName),
+                        convert(el.fileName), el.lineNumber));
             }
 
             RestoredException cause = new RestoredException(convert(remoteCause.message),
