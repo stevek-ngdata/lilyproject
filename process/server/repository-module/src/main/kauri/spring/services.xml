@@ -79,8 +79,7 @@
       <bean factory-bean="address" factory-method="getHostAddress"/>
     </constructor-arg>
     <constructor-arg ref="repository"/>
-    <constructor-arg value="${repository:repositoryPort}"/>
-    <constructor-arg value="${repository:typeManagerPort}"/>
+    <constructor-arg value="${repository:port}"/>
   </bean>
 
   <bean class="org.lilycms.server.modules.repository.ZKPublisher">
@@ -89,10 +88,7 @@
       <bean factory-bean="address" factory-method="getHostAddress"/>
     </constructor-arg>
     <constructor-arg>
-      <bean factory-bean="avroServer" factory-method="getRepositoryPort"/>
-    </constructor-arg>
-    <constructor-arg>
-      <bean factory-bean="avroServer" factory-method="getTypeManagerPort"/>
+      <bean factory-bean="avroServer" factory-method="getPort"/>
     </constructor-arg>
   </bean>
 

@@ -15,17 +15,15 @@ import java.io.IOException;
 public class ZKPublisher {
     private String zkConnectString;
     private String hostAddress;
-    private int repositoryPort;
-    private int typeManagerPort;
+    private int port;
     private ZooKeeper zk;
     private String lilyPath = "/lily";
     private String nodesPath = lilyPath + "/repositoryNodes";
 
-    public ZKPublisher(String zkConnectString, String hostAddress, int repositoryPort, int typeManagerPort) {
+    public ZKPublisher(String zkConnectString, String hostAddress, int port) {
         this.zkConnectString = zkConnectString;
         this.hostAddress = hostAddress;
-        this.repositoryPort = repositoryPort;
-        this.typeManagerPort = typeManagerPort;
+        this.port = port;
     }
 
     @PostConstruct
@@ -43,13 +41,9 @@ public class ZKPublisher {
             // ignore
         }
 
-        String repoAddressAndPort = hostAddress + ":" + repositoryPort;
-        String typeMgrAddressAndPort = hostAddress + ":" + typeManagerPort;
+        String repoAddressAndPort = hostAddress + ":" + port;
 
-        // TODO consider making the data into a json payload or something likewise
-        byte[] data = typeMgrAddressAndPort.getBytes("UTF-8");
-
-        zk.create(nodesPath + "/" + repoAddressAndPort, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        zk.create(nodesPath + "/" + repoAddressAndPort, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
     }
 
     @PreDestroy

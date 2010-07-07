@@ -15,7 +15,6 @@ import org.lilycms.repository.impl.TypeManagerRemoteImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.*;
 
 /**
@@ -58,9 +57,9 @@ public class Client {
     private void constructRepository(ServerNode server) throws IOException {
         AvroConverter remoteConverter = new AvroConverter();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-        TypeManager typeManager = new TypeManagerRemoteImpl(parseAddressAndPort(server.typeManagerAddressAndPort),
+        TypeManager typeManager = new TypeManagerRemoteImpl(parseAddressAndPort(server.lilyAddressAndPort),
                 remoteConverter, idGenerator);
-        Repository repository = new RepositoryRemoteImpl(parseAddressAndPort(server.repoAddressAndPort),
+        Repository repository = new RepositoryRemoteImpl(parseAddressAndPort(server.lilyAddressAndPort),
                 remoteConverter, (TypeManagerRemoteImpl)typeManager, idGenerator);
         remoteConverter.setRepository(repository);
         server.repository = repository;
@@ -80,13 +79,11 @@ public class Client {
     }
 
     private class ServerNode {
-        private String repoAddressAndPort;
-        private String typeManagerAddressAndPort;
+        private String lilyAddressAndPort;
         private Repository repository;
 
-        public ServerNode(String repoAddressAndPort, String typeManagerAddressAndPort) {
-            this.repoAddressAndPort = repoAddressAndPort;
-            this.typeManagerAddressAndPort = typeManagerAddressAndPort;
+        public ServerNode(String lilyAddressAndPort) {
+            this.lilyAddressAndPort = lilyAddressAndPort;
         }
     }
 
@@ -116,7 +113,7 @@ public class Client {
         Iterator<ServerNode> serverIt = servers.iterator();
         while (serverIt.hasNext()) {
             ServerNode server = serverIt.next();
-            if (removedServers.contains(server.repoAddressAndPort)) {
+            if (removedServers.contains(server.lilyAddressAndPort)) {
                 serverIt.remove();
             }
         }
@@ -124,17 +121,8 @@ public class Client {
 
         // Add new servers
         for (String server : newServers) {
-            String typeManagerAddressAndPort = null;
-            try {
-                byte[] data = zk.getData(nodesPath + "/" + server, null, null);
-                typeManagerAddressAndPort = new String(data, "UTF-8");
-            } catch (Exception e) {
-                // ignore
-            }
-            if (typeManagerAddressAndPort != null) {
-                servers.add(new ServerNode(server, typeManagerAddressAndPort));
-                serverAddresses.add(server);
-            }
+            servers.add(new ServerNode(server));
+            serverAddresses.add(server);
         }
     }
 

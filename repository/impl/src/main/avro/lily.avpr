@@ -40,8 +40,6 @@
       ]
      },
 
-     {"name": "AvroExceptionCauses", "type": "array", "items": "AvroExceptionCause"},
-
      {"name": "AvroRecordException", "type": "error",
       "fields": [
           {"name": "message", "type": "string"}
@@ -134,14 +132,16 @@
 
      {"name": "AvroRecordTypeExistsException", "type": "error",
       "fields": [
-          {"name": "recordType", "type": "AvroRecordType"}
+          {"name": "recordType", "type": "AvroRecordType"},
+          {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
      },
 
      {"name": "AvroRecordTypeNotFoundException", "type": "error",
       "fields": [
           {"name": "id", "type": "string"},
-          {"name": "version", "type": "long"}
+          {"name": "version", "type": "long"},
+          {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
      },
 

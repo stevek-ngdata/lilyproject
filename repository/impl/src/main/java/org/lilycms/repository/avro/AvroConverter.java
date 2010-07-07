@@ -291,6 +291,7 @@ public class AvroConverter {
     public AvroRecordTypeExistsException convert(RecordTypeExistsException exception) {
         AvroRecordTypeExistsException avroException = new AvroRecordTypeExistsException();
         avroException.recordType = convert(exception.getRecordType());
+//        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
@@ -301,6 +302,7 @@ public class AvroConverter {
         if (version != null) {
             avroException.version = version;
         }
+//        avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
 
@@ -323,11 +325,15 @@ public class AvroConverter {
     }
 
     public RecordTypeExistsException convert(AvroRecordTypeExistsException exception) {
-        return new RecordTypeExistsException(convert(exception.recordType));
+        RecordTypeExistsException result = new RecordTypeExistsException(convert(exception.recordType));
+//        restoreCauses(exception.remoteCauses, result);
+        return result;
     }
 
     public RecordTypeNotFoundException convert(AvroRecordTypeNotFoundException exception) {
-        return new RecordTypeNotFoundException(convert(exception.id), exception.version);
+        RecordTypeNotFoundException result = new RecordTypeNotFoundException(convert(exception.id), exception.version);
+//        restoreCauses(exception.remoteCauses, result);
+        return result;
     }
 
     public FieldTypeNotFoundException convert(AvroFieldTypeNotFoundException exception) {
@@ -447,6 +453,37 @@ public class AvroConverter {
         result.nativeMethod = el.isNativeMethod();
         result.fileName = new Utf8(el.getFileName());
         result.lineNumber = el.getLineNumber();
+        return result;
+    }
+
+    private void restoreCauses(GenericArray<AvroExceptionCause> remoteCauses, Throwable throwable) {
+        Throwable causes = restoreCauses(remoteCauses);
+        if (causes != null) {
+            throwable.initCause(causes);
+        }
+    }
+
+    private Throwable restoreCauses(GenericArray<AvroExceptionCause> remoteCauses) {
+        Throwable result = null;
+
+        for (AvroExceptionCause remoteCause : remoteCauses) {
+            List<RestoredStackTraceElement> stackTrace = new ArrayList<RestoredStackTraceElement>((int)remoteCause.stackTrace.size());
+
+            for (AvroStackTraceElement el : remoteCause.stackTrace) {
+                stackTrace.add(new RestoredStackTraceElement(convert(el.className), convert(el.fileName),
+                        el.lineNumber, convert(el.methodName), el.nativeMethod));
+            }
+
+            RestoredException cause = new RestoredException(convert(remoteCause.message),
+                    convert(remoteCause.className), stackTrace);
+
+            if (result == null) {
+                result = cause;
+            } else {
+                result.initCause(cause);
+            }
+        }
+
         return result;
     }
 

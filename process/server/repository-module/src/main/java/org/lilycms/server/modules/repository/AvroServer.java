@@ -13,17 +13,14 @@ import java.io.IOException;
 public class AvroServer {
     private String bindAddress;
     private Repository repository;
-    private int repositoryPort;
-    private int typeManagerPort;
+    private int port;
 
-    private HttpServer repositoryServer;
-    private HttpServer typeManagerServer;
+    private HttpServer server;
 
-    public AvroServer(String bindAddress, Repository repository, int repositoryPort, int typeManagerPort) {
+    public AvroServer(String bindAddress, Repository repository, int port) {
         this.bindAddress = bindAddress;
         this.repository = repository;
-        this.repositoryPort = repositoryPort;
-        this.typeManagerPort = typeManagerPort;
+        this.port = port;
     }
 
     @PostConstruct
@@ -32,21 +29,16 @@ public class AvroServer {
         avroConverter.setRepository(repository);
 
         AvroLilyImpl avroLily = new AvroLilyImpl(repository, avroConverter);
-        Responder repoResponder = new SpecificResponder(AvroLily.class, avroLily);
-        repositoryServer = new HttpServer(repoResponder, repositoryPort);
+        Responder responder = new SpecificResponder(AvroLily.class, avroLily);
+        server = new HttpServer(responder, port);
     }
     
     @PreDestroy
     public void stop() {
-        repositoryServer.close();
-        typeManagerServer.close();
+        server.close();
     }
 
-    public int getRepositoryPort() {
-        return repositoryServer.getPort();
-    }
-
-    public int getTypeManagerPort() {
-        return typeManagerServer.getPort();
+    public int getPort() {
+        return server.getPort();
     }
 }
