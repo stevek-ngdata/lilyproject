@@ -345,7 +345,10 @@ public class AvroConverterTest {
         expectLastCall().andReturn(fieldType).anyTimes();
         fieldType.getValueType();
         expectLastCall().andReturn(valueType).anyTimes();
+        typeManager.getValueType("STRING", false, false);
+        expectLastCall().andReturn(valueType).anyTimes();
         control.replay();
+
         converter = new AvroConverter();
         converter.setRepository(repository);
         Record record = new RecordImpl();

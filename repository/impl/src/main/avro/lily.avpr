@@ -13,6 +13,18 @@
     },
 
     {
+      "name": "AvroField",
+      "type": "record",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "primitiveType", "type": "string"},
+        {"name": "multiValue", "type": "boolean"},
+        {"name": "hierarchical", "type": "boolean"},
+        {"name": "value", "type": "bytes"}
+      ]
+    },
+
+    {
       "name": "AvroRecord",
       "type": "record",
       "fields": [
@@ -22,7 +34,7 @@
         {"name": "recordTypeVersion", "type": ["long", "null"]},
         {"name": "scopeRecordTypeIds", "type": {"type": "map", "values": "string"}},
         {"name": "scopeRecordTypeVersions", "type": {"type": "map", "values": "long"}},
-        {"name": "fields", "type": {"type": "map", "values": "bytes"}},
+        {"name": "fields", "type": {"type": "array", "items": "AvroField"}},
         {"name": "fieldsToDelete", "type": {"type": "array", "items": "string"}}
       ]
     },

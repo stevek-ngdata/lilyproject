@@ -53,15 +53,17 @@ public class AvroConverter {
                 }
             }
         }
+
         // Fields
-        Map<Utf8, ByteBuffer> fields = avroRecord.fields;
-        if (fields != null) {
-            for (Entry<Utf8, ByteBuffer> field : fields.entrySet()) {
-                QName name = decodeQName(convert(field.getKey()));
-                Object value = typeManager.getFieldTypeByName(name).getValueType().fromBytes(field.getValue().array());
+        if (avroRecord.fields != null) {
+            for (AvroField field : avroRecord.fields) {
+                QName name = decodeQName(convert(field.name));
+                ValueType valueType = typeManager.getValueType(convert(field.primitiveType), field.multiValue, field.hierarchical);
+                Object value = valueType.fromBytes(field.value.array());
                 record.setField(name, value);
             }
         }
+
         // FieldsToDelete
         GenericArray<Utf8> avroFieldsToDelete = avroRecord.fieldsToDelete;
         if (avroFieldsToDelete != null) {
@@ -103,25 +105,37 @@ public class AvroConverter {
                 }
             }
         }
+
         // Fields
-        avroRecord.fields = new HashMap<Utf8, ByteBuffer>();
+        avroRecord.fields = new GenericData.Array<AvroField>(record.getFields().size(), Schema.createArray(AvroField.SCHEMA$));
         for (Entry<QName, Object> field : record.getFields().entrySet()) {
-            QName name = field.getKey();
+            AvroField avroField = new AvroField();
+            avroField.name = convert(encodeQName(field.getKey()));
+
             FieldType fieldType;
             try {
-                fieldType = typeManager.getFieldTypeByName(name);
+                fieldType = typeManager.getFieldTypeByName(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 throw convert(e);
             } catch (TypeException e) {
                 throw convert(e);
             }
+
+            avroField.primitiveType = convert(fieldType.getValueType().getPrimitive().getName());
+            avroField.multiValue = fieldType.getValueType().isMultiValue();
+            avroField.hierarchical = fieldType.getValueType().isHierarchical();
+
             byte[] value = fieldType.getValueType().toBytes(field.getValue());
             ByteBuffer byteBuffer = ByteBuffer.allocate(value.length);
             byteBuffer.mark();
             byteBuffer.put(value);
             byteBuffer.reset();
-            avroRecord.fields.put(new Utf8(encodeQName(name)), byteBuffer);
+
+            avroField.value = byteBuffer;
+
+            avroRecord.fields.add(avroField);
         }
+
         // FieldsToDelete
         List<QName> fieldsToDelete = record.getFieldsToDelete();
         avroRecord.fieldsToDelete = new GenericData.Array<Utf8>(fieldsToDelete.size(), Schema.createArray(Schema.create(Schema.Type.STRING)));
