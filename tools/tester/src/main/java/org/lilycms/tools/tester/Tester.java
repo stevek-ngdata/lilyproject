@@ -50,8 +50,8 @@ public class Tester {
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException,
             RepositoryException, ImportConflictException, ServerUnavailableException, ImportException {
-        if (args.length < 1) {
-            System.out.println("Specify config location as argument.");
+        if (args.length != 1) {
+            System.out.println("Specify one argument: config location");
             System.exit(1);
         }
         new Tester().run(args[0]);
