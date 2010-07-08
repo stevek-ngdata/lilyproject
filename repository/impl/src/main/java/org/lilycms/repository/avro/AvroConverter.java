@@ -29,7 +29,7 @@ public class AvroConverter {
         this.typeManager = repository.getTypeManager();
     }
     
-    public Record convert(AvroRecord avroRecord) throws FieldTypeNotFoundException, TypeException {
+    public Record convert(AvroRecord avroRecord) {
         Record record = repository.newRecord();
         // Id
         if (avroRecord.id != null) {
@@ -421,33 +421,25 @@ public class AvroConverter {
         return avroException;
     }
 
-    public RecordExistsException convert(AvroRecordExistsException avroException)
-            throws FieldTypeNotFoundException, TypeException {
-
+    public RecordExistsException convert(AvroRecordExistsException avroException) {
         RecordExistsException exception = new RecordExistsException(convert(avroException.record));
         restoreCauses(avroException.remoteCauses, exception);
         return exception;
     }
 
-    public RecordNotFoundException convert(AvroRecordNotFoundException avroException)
-            throws FieldTypeNotFoundException, TypeException {
-
+    public RecordNotFoundException convert(AvroRecordNotFoundException avroException) {
         RecordNotFoundException exception = new RecordNotFoundException(convert(avroException.record));
         restoreCauses(avroException.remoteCauses, exception);
         return exception;
     }
 
-    public VersionNotFoundException convert(AvroVersionNotFoundException avroException)
-            throws FieldTypeNotFoundException, TypeException {
-
+    public VersionNotFoundException convert(AvroVersionNotFoundException avroException) {
         VersionNotFoundException exception = new VersionNotFoundException(convert(avroException.record));
         restoreCauses(avroException.remoteCauses, exception);
         return exception;
     }
 
-    public InvalidRecordException convert(AvroInvalidRecordException avroException)
-            throws FieldTypeNotFoundException, TypeException {
-        
+    public InvalidRecordException convert(AvroInvalidRecordException avroException) {
         InvalidRecordException exception = new InvalidRecordException(convert(avroException.record), convert(avroException.message));
         restoreCauses(avroException.remoteCauses, exception);
         return exception;
