@@ -64,7 +64,7 @@
     <module>rowlog</module>
     <module>process/server</module>
     <module>process/client</module>
-    <module>import</module>
+    <module>tools/import</module>
     <module>tools/tester</module>
   </modules>
 
