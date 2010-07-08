@@ -20,9 +20,15 @@ public class JsonImportTool {
     private TypeManager typeManager;
 
     public static void main(String[] args) throws Exception {
-        String fileName = args[0];
+        if (args.length != 2) {
+            System.out.println("Specify two arguments: file to import, zookeeper connect string");
+            System.exit(1);
+        }
 
-        Client client = new Client("localhost:21812");
+        String fileName = args[0];
+        String zookeeperConnectString = args[1];
+
+        Client client = new Client(zookeeperConnectString);
 
         InputStream is = new FileInputStream(fileName);
         load(client.getRepository(), is);

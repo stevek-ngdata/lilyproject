@@ -41,7 +41,7 @@
         <configuration>
           <mainClass>org.lilycms.tools.import_.JsonImportTool</mainClass>
           <classpathScope>runtime</classpathScope>
-          <commandlineArgs>sample.json</commandlineArgs>
+          <commandlineArgs>sample.json localhost:21812</commandlineArgs>
         </configuration>
       </plugin>
     </plugins>
