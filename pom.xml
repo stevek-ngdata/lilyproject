@@ -65,6 +65,7 @@
     <module>process/server</module>
     <module>process/client</module>
     <module>import</module>
+    <module>tools/tester</module>
   </modules>
 
   <dependencyManagement>
@@ -123,6 +124,11 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-client</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-import</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>

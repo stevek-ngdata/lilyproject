@@ -23,9 +23,9 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilycms</groupId>
-  <artifactId>lily-import</artifactId>
+  <artifactId>lily-tester</artifactId>
   <version>0.1-dev</version>
-  <name>Lily: import tool</name>
+  <name>Lily: tester tool</name>
 
   <parent>
     <groupId>org.lilycms</groupId>
@@ -39,9 +39,9 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <mainClass>org.lilycms.tools.import_.JsonImportTool</mainClass>
+          <mainClass>org.lilycms.tools.tester.Tester</mainClass>
           <classpathScope>runtime</classpathScope>
-          <commandlineArgs>sample.json</commandlineArgs>
+          <commandlineArgs>config.json</commandlineArgs>
         </configuration>
       </plugin>
     </plugins>
@@ -51,6 +51,17 @@
     <dependency>
       <groupId>org.lilycms</groupId>
       <artifactId>lily-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilycms</groupId>
+      <artifactId>lily-import</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>de.sven-jacobs</groupId>
+      <artifactId>loremipsum</artifactId>
+      <version>1.0</version>
     </dependency>
   </dependencies>
 
