@@ -91,7 +91,7 @@ public class RowLogTest {
         expectLastCall().andReturn(0).anyTimes();
 
         RowLogShard shard = control.createMock(RowLogShard.class);
-        shard.putMessage(isA(RowLogMessage.class), eq(0));
+        shard.putMessage(isA(RowLogMessage.class));
         
         control.replay();
         rowLog.registerConsumer(consumer);
@@ -131,7 +131,7 @@ public class RowLogTest {
 
         int consumerId = 1;
         RowLogShard shard = control.createMock(RowLogShard.class);
-        shard.putMessage(isA(RowLogMessage.class), eq(1));
+        shard.putMessage(isA(RowLogMessage.class));
         
         shard.removeMessage(isA(RowLogMessage.class), eq(consumerId));
         
@@ -152,7 +152,7 @@ public class RowLogTest {
         consumer.getId();
         expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
         RowLogShard shard = control.createMock(RowLogShard.class);
-        shard.putMessage(isA(RowLogMessage.class), eq(1));
+        shard.putMessage(isA(RowLogMessage.class));
         
         int consumerId = 1;
         
@@ -173,7 +173,7 @@ public class RowLogTest {
         consumer.getId();
         expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
         RowLogShard shard = control.createMock(RowLogShard.class);
-        shard.putMessage(isA(RowLogMessage.class), eq(1));
+        shard.putMessage(isA(RowLogMessage.class));
         
         int consumerId = 1;
         
@@ -201,7 +201,7 @@ public class RowLogTest {
         consumer.getId();
         expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
         RowLogShard shard = control.createMock(RowLogShard.class);
-        shard.putMessage(isA(RowLogMessage.class), eq(1));
+        shard.putMessage(isA(RowLogMessage.class));
         
         int consumerId = 1;
         
@@ -233,8 +233,7 @@ public class RowLogTest {
         expectLastCall().andReturn(Integer.valueOf(2)).anyTimes();
 
         RowLogShard shard = control.createMock(RowLogShard.class);
-        shard.putMessage(isA(RowLogMessage.class), eq(1));
-        shard.putMessage(isA(RowLogMessage.class), eq(2));
+        shard.putMessage(isA(RowLogMessage.class));
         shard.removeMessage(isA(RowLogMessage.class), eq(2));
         
         

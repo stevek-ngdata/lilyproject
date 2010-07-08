@@ -23,13 +23,12 @@ package org.lilycms.rowlog.api;
 public interface RowLogShard {
 
     /**
-     * Puts a RowLogMessage onto the table for a specific consumer.
+     * Puts a RowLogMessage onto the table.
      * 
      * @param message the {@link RowLogMessage} to be put on the table
-     * @param consumerId the id of a {@link RowLogConsumer} for which the message is intended.
      * @throws RowLogException when an unexpected exception occurs
      */
-    void putMessage(RowLogMessage message, int consumerId) throws RowLogException;
+    void putMessage(RowLogMessage message) throws RowLogException;
     
     /**
      * Removes the RowLogMessage from the table for the indicated consumer.

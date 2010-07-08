@@ -124,9 +124,7 @@ public class RowLogImpl implements RowLog {
             
             RowLogMessage message = new RowLogMessageImpl(messageId, rowKey, seqnr, data, this);
         
-            for (RowLogMessageConsumer consumer : consumers) {
-                shard.putMessage(message, consumer.getId());
-            }
+            shard.putMessage(message);
             initializeConsumers(message, put);
             return message;
         } catch (IOException e) {

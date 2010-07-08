@@ -17,10 +17,11 @@ package org.lilycms.rowlog.impl.test;
 
 
 import static org.easymock.classextension.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
+import static org.easymock.EasyMock.*;
 
-import org.apache.hadoop.hbase.HBaseTestingUtility;
+import java.util.Arrays;
+
 import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.classextension.IMocksControl;
 import org.junit.After;
@@ -30,6 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogMessage;
+import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.impl.RowLogMessageImpl;
 import org.lilycms.rowlog.impl.RowLogShardImpl;
 import org.lilycms.testfw.HBaseProxy;
@@ -68,11 +70,19 @@ public class RowLogShardTest {
     
     @Test
     public void testSingleMessage() throws Exception {
-        control.replay();
         int consumerId = 1;
+
+        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
+        consumer.getId();
+        expectLastCall().andReturn(new Integer(consumerId));
+        
+        rowLog.getConsumers();
+        expectLastCall().andReturn(Arrays.asList(new RowLogMessageConsumer[]{consumer}));
+        
+        control.replay();
         byte[] messageId1 = Bytes.toBytes("messageId1");
         RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 0L, null, rowLog);
-        shard.putMessage(message1, consumerId);
+        shard.putMessage(message1);
         
         RowLogMessage next = shard.next(consumerId);
         assertEquals(message1, next);
@@ -84,17 +94,23 @@ public class RowLogShardTest {
     
     @Test
     public void testMultipleMessages() throws Exception {
-        IMocksControl control = createControl();
+        int consumerId = 1;
+        
+        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
+        consumer.getId();
+        expectLastCall().andReturn(new Integer(consumerId)).anyTimes();
+        
+        rowLog.getConsumers();
+        expectLastCall().andReturn(Arrays.asList(new RowLogMessageConsumer[]{consumer})).anyTimes();
         
         control.replay();
-        int consumerId = 1;
         byte[] messageId1 = Bytes.toBytes("messageId1");
         RowLogMessageImpl message1 = new RowLogMessageImpl(messageId1, Bytes.toBytes("row1"), 0L, null, rowLog);
         byte[] messageId2 = Bytes.toBytes("messageId2");
         RowLogMessageImpl message2 = new RowLogMessageImpl(messageId2, Bytes.toBytes("row2"), 0L, null, rowLog);
 
-        shard.putMessage(message1, consumerId);
-        shard.putMessage(message2, consumerId);
+        shard.putMessage(message1);
+        shard.putMessage(message2);
 
         RowLogMessage next = shard.next(consumerId);
         assertEquals(message1, next);
@@ -111,6 +127,19 @@ public class RowLogShardTest {
     
     @Test
     public void testMultipleConsumers() throws Exception {
+        int consumerId1 = 1;
+        int consumerId2 = 2;
+
+        RowLogMessageConsumer consumer1 = control.createMock(RowLogMessageConsumer.class);
+        consumer1.getId();
+        expectLastCall().andReturn(new Integer(consumerId1)).anyTimes();
+
+        RowLogMessageConsumer consumer2 = control.createMock(RowLogMessageConsumer.class);
+        consumer2.getId();
+        expectLastCall().andReturn(new Integer(consumerId2)).anyTimes();
+        
+        rowLog.getConsumers();
+        expectLastCall().andReturn(Arrays.asList(new RowLogMessageConsumer[]{consumer1, consumer2})).anyTimes();
         
         control.replay();
         byte[] messageId1 = Bytes.toBytes("messageId1");
@@ -118,17 +147,22 @@ public class RowLogShardTest {
         byte[] messageId2 = Bytes.toBytes("messageId2");
         RowLogMessageImpl message2 = new RowLogMessageImpl(messageId2, Bytes.toBytes("row2"), 1L, null, rowLog);
         
-        int consumerId1 = 1;
-        int consumerId2 = 2;
-        shard.putMessage(message1, consumerId1);
-        shard.putMessage(message2, consumerId2);
+        shard.putMessage(message1);
+        shard.putMessage(message2);
         RowLogMessage next = shard.next(consumerId1);
         assertEquals(message1, next);
+        shard.removeMessage(message1, consumerId1);
+        next = shard.next(consumerId1);
+        assertEquals(message2, next);
+        shard.removeMessage(message2, consumerId1);
         
         next = shard.next(consumerId2);
+        assertEquals(message1, next);
+        shard.removeMessage(message1, consumerId2);
+        next = shard.next(consumerId2);
         assertEquals(message2, next);
-        shard.removeMessage(message1, consumerId1);
         shard.removeMessage(message2, consumerId2);
+        
         assertNull(shard.next(consumerId1));
         assertNull(shard.next(consumerId2));
         control.verify();
@@ -136,6 +170,14 @@ public class RowLogShardTest {
     
     @Test
     public void testMessageDoesNotExistForConsumer() throws Exception {
+        int consumerId = 1;
+        
+        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
+        consumer.getId();
+        expectLastCall().andReturn(new Integer(consumerId)).anyTimes();
+        
+        rowLog.getConsumers();
+        expectLastCall().andReturn(Arrays.asList(new RowLogMessageConsumer[]{consumer})).anyTimes();
         
         control.replay();
         byte[] messageId1 = Bytes.toBytes("messageId1");
@@ -143,12 +185,13 @@ public class RowLogShardTest {
 
         int consumerId1 = 1;
         int consumerId2 = 2;
-        shard.putMessage(message1, consumerId1);
+        shard.putMessage(message1);
         assertNull(shard.next(consumerId2));
+
         shard.removeMessage(message1, consumerId2);
-        // Cleanup
         RowLogMessage next = shard.next(consumerId1);
         assertEquals(message1, next);
+        // Cleanup
         shard.removeMessage(message1, consumerId1);
         assertNull(shard.next(consumerId1));
         control.verify();

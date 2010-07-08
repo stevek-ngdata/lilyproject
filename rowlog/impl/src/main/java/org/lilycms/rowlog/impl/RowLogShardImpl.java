@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
+import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.api.RowLogShard;
 import org.lilycms.util.io.Closer;
 
@@ -56,30 +57,23 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
     
-    public void putMessage(RowLogMessage message, int consumerId) throws RowLogException {
-        byte[] rowKey = createRowKey(message.getId(), consumerId);
-        
-        RowLock rowLock = null;
-        try {
-            rowLock = table.lockRow(rowKey);
-            Put put = new Put(rowKey, rowLock);
-            put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
-            table.put(put);
-        } catch (IOException e) {
-            throw new RowLogException("Failed to put message on RowLogShard", e);
-        } finally {
-            if (rowLock != null) {
-                try {
-                    table.unlockRow(rowLock);
-                } catch (IOException e) {
-                    // Ignore, the lock will timeout eventually
-                }
-            }
+    public void putMessage(RowLogMessage message) throws RowLogException {
+        for (RowLogMessageConsumer consumer : rowLog.getConsumers()) {
+            putMessage(message, consumer.getId());
         }
     }
     
+    private void putMessage(RowLogMessage message, int consumerId) throws RowLogException {
+        byte[] rowKey = createRowKey(message.getId(), consumerId);
+        Put put = new Put(rowKey);
+        put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
+        try {
+            table.put(put);
+        } catch (IOException e) {
+            throw new RowLogException("Failed to put message on RowLogShard", e);
+        }
+    }
     
-
     public void removeMessage(RowLogMessage message, int consumerId) throws RowLogException {
         byte[] rowKey = createRowKey(message.getId(), consumerId);
         
