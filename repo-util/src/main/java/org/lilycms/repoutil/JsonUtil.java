@@ -40,6 +40,16 @@ public class JsonUtil {
         return node.get(prop).getBooleanValue();
     }
 
+    public static boolean getBoolean(JsonNode node, String prop) throws JsonFormatException {
+        if (node.get(prop) == null) {
+            throw new JsonFormatException("Missing required property: " + prop);
+        }
+        if (!node.get(prop).isBoolean()) {
+            throw new JsonFormatException("Not a string property: " + prop);
+        }
+        return node.get(prop).getBooleanValue();
+    }
+
     public static int getInt(JsonNode node, String prop, int defaultValue) throws JsonFormatException {
         if (node.get(prop) == null) {
             return defaultValue;

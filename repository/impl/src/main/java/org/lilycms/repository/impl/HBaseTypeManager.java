@@ -494,7 +494,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         FieldType fieldType = getFieldTypeFromCache(name);
         // TODO the below is a temporary fix, should probably be fixed in getFieldTypeFromCache
         if (fieldType == null) {
-            throw new FieldTypeNotFoundException("todo", 1L);
+            throw new FieldTypeNotFoundException(name, 1L);
         }
         return fieldType;
     }

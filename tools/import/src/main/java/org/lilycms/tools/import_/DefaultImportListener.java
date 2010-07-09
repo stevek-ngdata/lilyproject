@@ -19,16 +19,28 @@ public class DefaultImportListener implements ImportListener {
                 toText(entityType), entityName, propName, oldValue, newValue));
     }
 
-    public void existsAndEqual(EntityType entityType, String entityName) {
-        out.println(String.format("%1$s already exists and is equal: %2$s", toText(entityType), entityName));
+    public void existsAndEqual(EntityType entityType, String entityName, String entityId) {
+        out.println(String.format("%1$s already exists and is equal: %2$s", toText(entityType), id(entityName, entityId)));
     }
 
-    public void updated(EntityType entityType, String entityName, String entityId) {
-        out.println(String.format("%1$s updated: %2$s", toText(entityType), entityName));
+    public void updated(EntityType entityType, String entityName, String entityId, long version) {
+        if (entityType == EntityType.RECORD || entityType == EntityType.RECORD_TYPE) {
+            out.println(String.format("%1$s updated: %2$s (version %3$s)", toText(entityType), id(entityName, entityId), version));
+        } else {
+            out.println(String.format("%1$s updated: %2$s", toText(entityType), id(entityName, entityId)));
+        }
     }
 
     public void created(EntityType entityType, String entityName, String entityId) {
-        out.println(String.format("%1$s created: %2$s", toText(entityType), entityName));                        
+        out.println(String.format("%1$s created: %2$s", toText(entityType), id(entityName, entityId)));
+    }
+
+    private String id(String entityName, String entityId) {
+        if (entityName != null) {
+            return entityName;
+        } else {
+            return entityId;
+        }
     }
 
     private String toText(EntityType entityType) {
@@ -39,6 +51,9 @@ public class DefaultImportListener implements ImportListener {
                 break;
             case RECORD_TYPE:
                 entityTypeName = "Record type";
+                break;
+            case RECORD:
+                entityTypeName = "Record";
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityType);

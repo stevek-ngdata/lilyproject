@@ -5,6 +5,8 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.MappingJsonFactory;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.lilycms.client.Client;
 import org.lilycms.repository.api.*;
 import static org.lilycms.repoutil.JsonUtil.*;
@@ -60,8 +62,10 @@ public class JsonImportTool {
 
         namespaces.clear();
 
-        JsonFactory f = new MappingJsonFactory();
-        JsonParser jp = f.createJsonParser(is);
+        JsonFactory jsonFactory = new MappingJsonFactory();
+        jsonFactory.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        jsonFactory.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        JsonParser jp = jsonFactory.createJsonParser(is);
 
         JsonToken current;
         current = jp.nextToken();
@@ -165,6 +169,11 @@ public class JsonImportTool {
     private void importRecord(JsonNode node) throws RepositoryException, ImportException {
         Record record = repository.newRecord();
 
+        String id = getString(node, "id", null);
+        if (id != null) {
+            record.setId(repository.getIdGenerator().newRecordId(id));
+        }
+
         String type = getString(node, "type");
         record.setRecordType(type);
 
@@ -173,13 +182,90 @@ public class JsonImportTool {
             String name = it.next();
             if (name.contains(":")) {
                 QName qname = parseQName(name);
-                String value = getString(node, name);
+                ValueType valueType = typeManager.getFieldTypeByName(qname).getValueType();
+                Object value = readMultiValue(getNode(node, name), valueType, name);
                 record.setField(qname, value);
             }
         }
 
-        record = repository.create(record);
-        System.out.println("Created record " + record.getId());
+        importTool.importRecord(record);
+    }
+
+    private Object readMultiValue(JsonNode node, ValueType valueType, String prop) throws ImportException {
+        if (valueType.isMultiValue()) {
+            if (!node.isArray()) {
+                throw new ImportException("Multi-value value should be specified as array in " + prop);
+            }
+
+            List<Object> value = new ArrayList<Object>();
+            for (int i = 0; i < node.size(); i++) {
+                value.add(readHierarchical(node.get(i), valueType, prop));
+            }
+
+            return value;
+        } else {
+            return readHierarchical(node, valueType, prop);
+        }
+    }
+
+    private Object readHierarchical(JsonNode node, ValueType valueType, String prop) throws ImportException {
+        if (valueType.isHierarchical()) {
+            if (!node.isArray()) {
+                throw new ImportException("Hierarchical value should be specified as an array in " + prop);
+            }
+
+            Object[] elements = new Object[node.size()];
+            for (int i = 0; i < node.size(); i++) {
+                elements[i] = readPrimitive(node.get(i), valueType, prop);
+            }
+
+            return new HierarchyPath(elements);
+        } else {
+            return readPrimitive(node, valueType, prop);
+        }
+    }
+
+    private Object readPrimitive(JsonNode node, ValueType valueType, String prop) throws ImportException {
+        String primitive = valueType.getPrimitive().getName();
+
+        if (primitive.equals("STRING")) {
+            if (!node.isTextual())
+                throw new ImportException("Expected text value for " + prop);
+
+            return node.getTextValue();
+        } else if (primitive.equals("INTEGER")) {
+            if (!node.isIntegralNumber())
+                throw new ImportException("Expected int value for " + prop);
+
+            return node.getIntValue();
+        } else if (primitive.equals("LONG")) {
+            if (!node.isIntegralNumber())
+                throw new ImportException("Expected long value for " + prop);
+
+            return node.getLongValue();
+        } else if (primitive.equals("BOOLEAN")) {
+            if (!node.isBoolean())
+                throw new ImportException("Expected boolean value for " + prop);
+
+            return node.getBooleanValue();
+        } else if (primitive.equals("LINK")) {
+            if (!node.isTextual())
+                throw new ImportException("Expected text value for " + prop);
+            
+            return Link.fromString(node.getTextValue(), repository.getIdGenerator());
+        } else if (primitive.equals("DATE")) {
+            if (!node.isTextual())
+                throw new ImportException("Expected text value for " + prop);
+
+            return new LocalDate(node.getTextValue());
+        } else if (primitive.equals("DATETIME")) {
+            if (!node.isTextual())
+                throw new ImportException("Expected text value for " + prop);
+
+            return new DateTime(node.getTextValue());
+        } else {
+            throw new ImportException("Primitive value type not supported by import tool: " + primitive);
+        }
     }
 
     private QName getQName(JsonNode node, String prop) throws ImportException {

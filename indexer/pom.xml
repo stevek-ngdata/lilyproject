@@ -76,13 +76,13 @@
     <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-solrj</artifactId>
-      <version>1.4.0</version>
+      <version>1.4.1</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-core</artifactId>
-      <version>1.4.0</version>
+      <version>1.4.1</version>
       <scope>test</scope>
       <exclusions>
         <!-- Woodstox is also a dependency of solr-solrj, but there it has the correct groupId

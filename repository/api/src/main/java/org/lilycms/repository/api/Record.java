@@ -160,4 +160,18 @@ public interface Record {
     Record clone();
     
     boolean equals(Object obj);
+
+    /**
+     * Compares the two records, ignoring some aspects. This method is intended to compare
+     * a record loaded from the repository with a newly instantiated one in which some things
+     * are typically not supplied.
+     *
+     * <p>The aspects which are ignored are:
+     * <ul>
+     *   <li>the version
+     *   <li>the record types: only the name of the non-versioned record type is compared, if
+     *       it is not null in both. The version of the record type is not compared.
+     * </ul>
+     */
+    boolean softEquals(Object obj);
 }

@@ -42,7 +42,7 @@ public class ImportTool {
             checkEquals(oldScope, newScope, EntityType.FIELD_TYPE, "scope", newFieldType.getName().toString());
 
             // everything equal, skip it
-            importListener.existsAndEqual(EntityType.FIELD_TYPE, newFieldType.getName().toString());
+            importListener.existsAndEqual(EntityType.FIELD_TYPE, newFieldType.getName().toString(), null);
             return oldFieldType;
         }
 
@@ -84,15 +84,47 @@ public class ImportTool {
 
             if (updated) {
                 oldRecordType = typeManager.updateRecordType(oldRecordType);
-                importListener.updated(EntityType.RECORD_TYPE, oldRecordType.getId(), null);
+                importListener.updated(EntityType.RECORD_TYPE, null, oldRecordType.getId(), oldRecordType.getVersion());
             } else {
-                importListener.existsAndEqual(EntityType.RECORD_TYPE, oldRecordType.getId());
+                importListener.existsAndEqual(EntityType.RECORD_TYPE, null, oldRecordType.getId());
             }
             return oldRecordType;
         } else {
             RecordType createdRecordType = typeManager.createRecordType(newRecordType);
-            importListener.created(EntityType.RECORD_TYPE, createdRecordType.getId(), null);
+            importListener.created(EntityType.RECORD_TYPE, null, createdRecordType.getId());
             return createdRecordType;
+        }
+    }
+
+    public Record importRecord(Record newRecord) throws RepositoryException {
+        Record oldRecord = null;
+        if (newRecord.getId() != null) {
+            try {
+                oldRecord = repository.read(newRecord.getId());
+            } catch (RecordNotFoundException e) {
+                // ok
+            }
+        }
+
+        if (oldRecord != null) {
+            if (newRecord.softEquals(oldRecord)) {
+                importListener.existsAndEqual(EntityType.RECORD, null, newRecord.getId().toString());
+                return oldRecord;
+            } else {
+                // Delete fields which are not present in the new record anymore
+                for (Map.Entry<QName, Object> field : oldRecord.getFields().entrySet()) {
+                    if (!newRecord.hasField(field.getKey())) {
+                        newRecord.delete(field.getKey(), true);
+                    }
+                }
+                Record updatedRecord = repository.update(newRecord);
+                importListener.updated(EntityType.RECORD, null, updatedRecord.getId().toString(), updatedRecord.getVersion());
+                return updatedRecord;
+            }
+        } else {
+            Record createdRecord = repository.create(newRecord);
+            importListener.created(EntityType.RECORD, null, createdRecord.getId().toString());
+            return createdRecord;
         }
     }
 

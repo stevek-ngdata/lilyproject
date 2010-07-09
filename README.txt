@@ -13,7 +13,7 @@ From http://maven.apache.org
 Download Solr
 -------------
 
-Download Solr 1.4.0 from http://lucene.apache.org/solr/ and extract it somewhere.
+Download Solr 1.4.1 from http://lucene.apache.org/solr/ and extract it somewhere.
 
 Configuring settings.xml
 ------------------------
@@ -29,7 +29,7 @@ Open or create ~/.m2/settings.xml and add the following profile to it:
       </activation>
 
       <properties>
-        <solr.war>/home/bruno/projects/lily-trunk/deps/apache-solr-1.4.0/dist/apache-solr-1.4.0.war</solr.war>
+        <solr.war>/path/to/apache-solr-1.4.1/dist/apache-solr-1.4.1.war</solr.war>
       </properties>
     </profile>
   </profiles>

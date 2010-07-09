@@ -163,6 +163,36 @@ public class RecordImpl implements Record {
 
     @Override
     public boolean equals(Object obj) {
+        if (!softEquals(obj))
+            return false;
+
+        RecordImpl other = (RecordImpl) obj;
+
+        if (recordTypeIds == null) {
+            if (other.recordTypeIds != null)
+                return false;
+        } else if (!recordTypeIds.equals(other.recordTypeIds)) {
+            return false;
+        }
+
+        if (recordTypeVersions == null) {
+            if (other.recordTypeVersions != null)
+                return false;
+        } else if (!recordTypeVersions.equals(other.recordTypeVersions)) {
+            return false;
+        }
+
+        if (version == null) {
+            if (other.version != null)
+                return false;
+        } else if (!version.equals(other.version)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean softEquals(Object obj) {
         if (this == obj)
             return true;
         if (obj == null)
@@ -170,36 +200,35 @@ public class RecordImpl implements Record {
         if (getClass() != obj.getClass())
             return false;
         RecordImpl other = (RecordImpl) obj;
+
         if (fields == null) {
             if (other.fields != null)
                 return false;
-        } else if (!fields.equals(other.fields))
+        } else if (!fields.equals(other.fields)) {
             return false;
+        }
+
         if (fieldsToDelete == null) {
             if (other.fieldsToDelete != null)
                 return false;
-        } else if (!fieldsToDelete.equals(other.fieldsToDelete))
+        } else if (!fieldsToDelete.equals(other.fieldsToDelete)) {
             return false;
+        }
+
         if (id == null) {
             if (other.id != null)
                 return false;
-        } else if (!id.equals(other.id))
+        } else if (!id.equals(other.id)) {
             return false;
-        if (recordTypeIds == null) {
-            if (other.recordTypeIds != null)
-                return false;
-        } else if (!recordTypeIds.equals(other.recordTypeIds))
+        }
+
+        String nonVersionedRT1 = recordTypeIds.get(Scope.NON_VERSIONED);
+        String nonVersionedRT2 = other.recordTypeIds.get(Scope.NON_VERSIONED);
+
+        if (nonVersionedRT1 != null && nonVersionedRT2 != null && !nonVersionedRT1.equals(nonVersionedRT2)) {
             return false;
-        if (recordTypeVersions == null) {
-            if (other.recordTypeVersions != null)
-                return false;
-        } else if (!recordTypeVersions.equals(other.recordTypeVersions))
-            return false;
-        if (version == null) {
-            if (other.version != null)
-                return false;
-        } else if (!version.equals(other.version))
-            return false;
+        }
+
         return true;
     }
 
