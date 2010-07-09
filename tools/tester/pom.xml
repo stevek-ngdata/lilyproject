@@ -41,7 +41,6 @@
         <configuration>
           <mainClass>org.lilycms.tools.tester.Tester</mainClass>
           <classpathScope>runtime</classpathScope>
-          <commandlineArgs>config.json</commandlineArgs>
         </configuration>
       </plugin>
     </plugins>

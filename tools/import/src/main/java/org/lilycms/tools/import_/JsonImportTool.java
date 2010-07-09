@@ -9,6 +9,8 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.lilycms.client.Client;
 import org.lilycms.repository.api.*;
+import org.lilycms.repoutil.VersionTag;
+
 import static org.lilycms.repoutil.JsonUtil.*;
 
 import java.io.FileInputStream;
@@ -140,6 +142,21 @@ public class JsonImportTool {
         ValueType valueType = typeManager.getValueType(primitive, multiValue, hierarchical);
         FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
 
+        // Some sanity checks for version tag fields
+        if (fieldType.getName().getNamespace().equals(VersionTag.NAMESPACE)) {
+            if (fieldType.getScope() != Scope.NON_VERSIONED)
+                throw new ImportException("vtag fields should be in the non-versioned scope");
+
+            if (!fieldType.getValueType().getPrimitive().getName().equals("LONG"))
+                throw new ImportException("vtag fields should be of type LONG");
+
+            if (fieldType.getValueType().isMultiValue())
+                throw new ImportException("vtag fields should not be multi-valued");
+
+            if (fieldType.getValueType().isHierarchical())
+                throw new ImportException("vtag fields should not be hierarchical");
+        }
+        
         return importTool.importFieldType(fieldType);
     }
 
@@ -182,8 +199,8 @@ public class JsonImportTool {
             String name = it.next();
             if (name.contains(":")) {
                 QName qname = parseQName(name);
-                ValueType valueType = typeManager.getFieldTypeByName(qname).getValueType();
-                Object value = readMultiValue(getNode(node, name), valueType, name);
+                FieldType fieldType = typeManager.getFieldTypeByName(qname);
+                Object value = readMultiValue(getNode(node, name), fieldType, name);
                 record.setField(qname, value);
             }
         }
@@ -191,42 +208,42 @@ public class JsonImportTool {
         importTool.importRecord(record);
     }
 
-    private Object readMultiValue(JsonNode node, ValueType valueType, String prop) throws ImportException {
-        if (valueType.isMultiValue()) {
+    private Object readMultiValue(JsonNode node, FieldType fieldType, String prop) throws ImportException {
+        if (fieldType.getValueType().isMultiValue()) {
             if (!node.isArray()) {
                 throw new ImportException("Multi-value value should be specified as array in " + prop);
             }
 
             List<Object> value = new ArrayList<Object>();
             for (int i = 0; i < node.size(); i++) {
-                value.add(readHierarchical(node.get(i), valueType, prop));
+                value.add(readHierarchical(node.get(i), fieldType, prop));
             }
 
             return value;
         } else {
-            return readHierarchical(node, valueType, prop);
+            return readHierarchical(node, fieldType, prop);
         }
     }
 
-    private Object readHierarchical(JsonNode node, ValueType valueType, String prop) throws ImportException {
-        if (valueType.isHierarchical()) {
+    private Object readHierarchical(JsonNode node, FieldType fieldType, String prop) throws ImportException {
+        if (fieldType.getValueType().isHierarchical()) {
             if (!node.isArray()) {
                 throw new ImportException("Hierarchical value should be specified as an array in " + prop);
             }
 
             Object[] elements = new Object[node.size()];
             for (int i = 0; i < node.size(); i++) {
-                elements[i] = readPrimitive(node.get(i), valueType, prop);
+                elements[i] = readPrimitive(node.get(i), fieldType, prop);
             }
 
             return new HierarchyPath(elements);
         } else {
-            return readPrimitive(node, valueType, prop);
+            return readPrimitive(node, fieldType, prop);
         }
     }
 
-    private Object readPrimitive(JsonNode node, ValueType valueType, String prop) throws ImportException {
-        String primitive = valueType.getPrimitive().getName();
+    private Object readPrimitive(JsonNode node, FieldType fieldType, String prop) throws ImportException {
+        String primitive = fieldType.getValueType().getPrimitive().getName();
 
         if (primitive.equals("STRING")) {
             if (!node.isTextual())
@@ -239,6 +256,25 @@ public class JsonImportTool {
 
             return node.getIntValue();
         } else if (primitive.equals("LONG")) {
+            // Special handling for version tag fields
+            if (fieldType.getName().getNamespace().equals(VersionTag.NAMESPACE)) {
+                if (node.isTextual()) {
+                    if (node.getTextValue().equals("last")) {
+                        return -1L;
+                    } else {
+                        throw new ImportException("Version tag fields can only have 'last' as string value. Field " +
+                                prop + ", value " + node.getTextValue());
+                    }
+                } else if (node.isIntegralNumber()) {
+                    if (node.getLongValue() < 0) {
+                        throw new ImportException("Version tag fields should be larger than 0. Field " + prop +
+                                ", value " + node.getLongValue());
+                    }
+                } else {
+                    throw new ImportException("Expected long value or \"last\" for " + prop);
+                }
+            }
+
             if (!node.isIntegralNumber())
                 throw new ImportException("Expected long value for " + prop);
 

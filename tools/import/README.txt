@@ -12,4 +12,4 @@ TODO: describe the json format
 
 In a source setting, you can run this tool with maven:
 
-mvn exec:java
+mvn exec:java -Dexec.args="sample.json localhost:2181"

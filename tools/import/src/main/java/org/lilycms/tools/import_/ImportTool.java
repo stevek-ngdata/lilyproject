@@ -1,6 +1,7 @@
 package org.lilycms.tools.import_;
 
 import org.lilycms.repository.api.*;
+import org.lilycms.repoutil.VersionTag;
 
 import java.util.*;
 
@@ -107,6 +108,20 @@ public class ImportTool {
         }
 
         if (oldRecord != null) {
+            // Collect the set of vtag fields that should be automatically set to the last version.
+            // These are by contract those that have the value -1.
+            Set<QName> vtagFieldsToBeSetToLastVersion = new HashSet<QName>();
+            for (Map.Entry<QName, Object> field : newRecord.getFields().entrySet()) {
+                if (field.getKey().getNamespace().equals(VersionTag.NAMESPACE) && field.getValue().equals(-1L)) {
+                    vtagFieldsToBeSetToLastVersion.add(field.getKey());
+                }
+            }
+
+            // Before comparing with the previous state, set the vtag fields to the currently last version
+            for (QName vtag : vtagFieldsToBeSetToLastVersion) {
+                newRecord.setField(vtag, oldRecord.getVersion());
+            }
+
             if (newRecord.softEquals(oldRecord)) {
                 importListener.existsAndEqual(EntityType.RECORD, null, newRecord.getId().toString());
                 return oldRecord;
@@ -117,11 +132,41 @@ public class ImportTool {
                         newRecord.delete(field.getKey(), true);
                     }
                 }
+
+                // Exclude vtag fields to-be-set-to-last-version from the update, will set those afterwards
+                for (QName vtag : vtagFieldsToBeSetToLastVersion) {
+                    newRecord.delete(vtag, false);
+                }
+
+                // Update the record
                 Record updatedRecord = repository.update(newRecord);
+
+                // Now do a second update to set the vtags to version created
+                if (updatedRecord.getVersion() != null && !vtagFieldsToBeSetToLastVersion.isEmpty()) {
+                    Record vtagsUpdate = repository.newRecord(newRecord.getId());
+                    for (QName vtag : vtagFieldsToBeSetToLastVersion) {
+                        if (!(oldRecord.hasField(vtag) && oldRecord.getField(vtag).equals(updatedRecord.getVersion()))) {
+                            vtagsUpdate.setField(vtag, updatedRecord.getVersion());
+                        }
+                    }
+
+                    if (!vtagsUpdate.getFields().isEmpty()) {
+                        vtagsUpdate.setRecordType(updatedRecord.getRecordTypeId(), updatedRecord.getRecordTypeVersion());
+                        updatedRecord = repository.update(vtagsUpdate);
+                    }
+                }
+
                 importListener.updated(EntityType.RECORD, null, updatedRecord.getId().toString(), updatedRecord.getVersion());
                 return updatedRecord;
             }
         } else {
+            // For new records, let the vtag fields which should point to the last version point to 1
+            // TODO: this should check if there are actually any versioned fields.
+            for (Map.Entry<QName, Object> field : newRecord.getFields().entrySet()) {
+                if (field.getKey().getNamespace().equals(VersionTag.NAMESPACE) && field.getValue().equals(-1L)) {
+                    newRecord.setField(field.getKey(), 1L);
+                }
+            }
             Record createdRecord = repository.create(newRecord);
             importListener.created(EntityType.RECORD, null, createdRecord.getId().toString());
             return createdRecord;

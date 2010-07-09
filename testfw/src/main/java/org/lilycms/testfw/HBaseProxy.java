@@ -72,7 +72,7 @@ public class HBaseProxy {
                 break;
             case CONNECT:
                 CONF.set("hbase.zookeeper.quorum", "localhost");
-                CONF.set("hbase.zookeeper.property.clientPort", "21812"); // matches HBaseRunner
+                CONF.set("hbase.zookeeper.property.clientPort", "2181"); // matches HBaseRunner
                 addUserProps(CONF);
                 cleanTables();
                 break;

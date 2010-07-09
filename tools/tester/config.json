@@ -1,5 +1,5 @@
 {
-  "zookeeper": "localhost:21812",
+  "zookeeper": "localhost:2181",
 
   "reportFile": "testreport.csv",
 

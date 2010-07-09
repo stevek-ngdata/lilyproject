@@ -27,7 +27,7 @@ public class HBaseRunner {
     private MiniHBaseCluster hbaseCluster = null;
     private File clusterTestBuildDir = null;
     private Configuration conf;
-    private int zkPort = 21812;
+    private int zkPort = 2181;
 
     public static final String TEST_DIRECTORY_KEY = "test.build.data";
     public static final String DEFAULT_TEST_DIRECTORY = "target/build/data";
