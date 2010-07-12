@@ -36,7 +36,8 @@ public class DerefValue extends BaseValue {
         }
 
         if (multiValue) {
-            this.valueType = typeManager.getValueType(valueType.getPrimitive().getName(), true, valueType.isHierarchical());
+            this.valueType = typeManager.getValueType(fieldType.getValueType().getPrimitive().getName(), true,
+                    fieldType.getValueType().isHierarchical());
         } else {
             this.valueType = fieldType.getValueType();
         }
