@@ -694,7 +694,7 @@ public class HBaseRepository implements Repository {
         addFieldsToGet(get, fields);
         Result result;
         try {
-            if (!recordTable.exists(get)) {
+            if (!recordTable.exists(new Get(recordId.toBytes()))) {
                 throw new RecordNotFoundException(record);
             }
             // Retrieve the data from the repository
