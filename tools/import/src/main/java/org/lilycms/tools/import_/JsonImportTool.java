@@ -1,5 +1,6 @@
 package org.lilycms.tools.import_;
 
+import org.apache.commons.cli.*;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
@@ -10,6 +11,7 @@ import org.joda.time.LocalDate;
 import org.lilycms.client.Client;
 import org.lilycms.repository.api.*;
 import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.io.Closer;
 
 import static org.lilycms.repoutil.JsonUtil.*;
 
@@ -23,27 +25,84 @@ public class JsonImportTool {
     private Repository repository;
     private TypeManager typeManager;
 
+    private static final String DEFAULT_ZK_CONNECT = "localhost:2181";
+
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Specify two arguments: file to import, zookeeper connect string");
+        Options cliOptions = new Options();
+
+        Option zkOption = OptionBuilder
+                .withArgName("quorum")
+                .hasArg()
+                .withDescription("Zookeeper quorum: hostname1:port,hostname2:port,...")
+                .withLongOpt("zookeeper")
+                .create("z");
+        cliOptions.addOption(zkOption);
+
+        Option schemaOnlyOption = OptionBuilder
+                .withDescription("Only import the field types and record types, not the records.")
+                .withLongOpt("schema-only")
+                .create("s");
+        cliOptions.addOption(schemaOnlyOption);
+
+        Option helpOption = new Option("h", "help", false, "Shows help");
+        cliOptions.addOption(helpOption);
+
+        CommandLineParser parser = new PosixParser();
+        CommandLine cmd = null;
+        boolean showHelp = false;
+        try {
+            cmd = parser.parse(cliOptions, args);
+        } catch (ParseException e) {
+            showHelp = true;
+        }
+
+        if (showHelp || cmd.hasOption(helpOption.getOpt())) {
+            printHelp(cliOptions);
             System.exit(1);
         }
 
-        String fileName = args[0];
-        String zookeeperConnectString = args[1];
+        if (cmd.getArgList().size() < 1) {
+            System.out.println("No import file specified!");
+            System.exit(1);
+        }
+
+        String zookeeperConnectString;
+        if (!cmd.hasOption(zkOption.getOpt())) {
+            System.out.println("Zookeeper quorum not specified, using default: " + DEFAULT_ZK_CONNECT);
+            zookeeperConnectString = DEFAULT_ZK_CONNECT;
+        } else {
+            zookeeperConnectString = cmd.getOptionValue(zkOption.getOpt());
+        }
+
+        boolean schemaOnly = cmd.hasOption(schemaOnlyOption.getOpt());
 
         Client client = new Client(zookeeperConnectString);
 
-        InputStream is = new FileInputStream(fileName);
-        load(client.getRepository(), is);
+        for (String arg : (List<String>)cmd.getArgList()) {
+            System.out.println("----------------------------------------------------------------------");
+            System.out.println("Importing " + arg);
+            InputStream is = new FileInputStream(arg);
+            try {
+                load(client.getRepository(), is, schemaOnly);
+            } finally {
+                Closer.close(is);
+            }
+        }
     }
 
-    public static void load(Repository repository, InputStream is) throws Exception {
-        load(repository, new DefaultImportListener(), is);
+    private static void printHelp(Options cliOptions) {
+        HelpFormatter help = new HelpFormatter();
+        help.setArgName("[import file]");
+        help.printHelp("lily-import", cliOptions, true);
     }
 
-    public static void load(Repository repository, ImportListener importListener, InputStream is) throws Exception {
-        new JsonImportTool(repository, importListener).load(is);
+    public static void load(Repository repository, InputStream is, boolean schemaOnly) throws Exception {
+        load(repository, new DefaultImportListener(), is, schemaOnly);
+    }
+
+    public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly)
+            throws Exception {
+        new JsonImportTool(repository, importListener).load(is, schemaOnly);
     }
 
     public JsonImportTool(Repository repository, ImportListener importListener) {
@@ -56,7 +115,7 @@ public class JsonImportTool {
         return importTool;
     }
 
-    public void load(InputStream is) throws Exception {
+    public void load(InputStream is, boolean schemaOnly) throws Exception {
         // A combination of the Jackson streaming and tree APIs is used: we move streaming through the
         // whole of the file, but use the tree API to load individual items (field types, records, ...).
         // This way things should still work fast and within little memory if anyone would use this to
@@ -108,13 +167,17 @@ public class JsonImportTool {
                     jp.skipChildren();
                 }
             } else if (fieldName.equals("records")) {
-                if (current == JsonToken.START_ARRAY) {
-                    while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        importRecord(jp.readValueAsTree());
+                if (!schemaOnly) {
+                    if (current == JsonToken.START_ARRAY) {
+                        while (jp.nextToken() != JsonToken.END_ARRAY) {
+                            importRecord(jp.readValueAsTree());
+                        }
+                    } else {
+                        System.out.println("Error: records property should be an array. Skipping.");
+                        jp.skipChildren();
                     }
                 } else {
-                    System.out.println("Error: records property should be an array. Skipping.");
-                    jp.skipChildren();
+                    jp.skipChildren();                    
                 }
             }
         }
