@@ -10,6 +10,15 @@
         <field name="b:title"/>
       </value>
     </indexField>
+
+    <indexField name="authors">
+      <value>
+        <deref>
+          <follow field="b:authors"/>
+          <field name="b:name"/>
+        </deref>
+      </value>
+    </indexField>
   </indexFields>
 
 </indexer>

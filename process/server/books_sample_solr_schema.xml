@@ -92,12 +92,15 @@
 
 
  <fields>
+   <!-- Fields which are required by Lily -->
    <field name="@@key" type="string" indexed="true" stored="true" required="true"/>
    <field name="@@id" type="string" indexed="true" stored="true" required="true"/>
    <field name="@@vtag" type="string" indexed="true" stored="true" required="true"/>
    <field name="@@versionless" type="string" indexed="true" stored="true" required="false"/>
 
+   <!-- Your own fields -->
    <field name="title" type="text" indexed="true" stored="true" required="false"/>
+   <field name="authors" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
  </fields>
 
  <!-- Field to use to determine and enforce document uniqueness.
