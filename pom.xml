@@ -240,9 +240,21 @@
       <url>http://lilycms.org/maven/maven2/deploy</url>
     </repository>
 
-    <!-- The JBoss repository serves for Junit and Netty -->
+    <!-- At the time of this writing, the JBoss repository served for junit -->
     <repository>
-       <id>repository.jboss.org</id>
+      <id>repository.jboss.org</id>
+      <name>JBoss Repository</name>
+      <url>http://repository.jboss.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+
+    <!-- The JBoss Nexus repository serves Netty -->
+    <repository>
+       <id>nexus-repository.jboss.org</id>
+       <name>JBoss Nexus Repository</name> 
        <url>http://repository.jboss.org/nexus/content/groups/public/</url>
        <snapshots>
          <enabled>false</enabled>
