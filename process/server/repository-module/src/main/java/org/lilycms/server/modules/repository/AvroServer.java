@@ -2,7 +2,6 @@ package org.lilycms.server.modules.repository;
 
 import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.Responder;
-import org.apache.avro.specific.SpecificResponder;
 import org.lilycms.repository.api.Repository;
 import org.lilycms.repository.avro.*;
 
@@ -29,7 +28,7 @@ public class AvroServer {
         avroConverter.setRepository(repository);
 
         AvroLilyImpl avroLily = new AvroLilyImpl(repository, avroConverter);
-        Responder responder = new SpecificResponder(AvroLily.class, avroLily);
+        Responder responder = new LilySpecificResponder(AvroLily.class, avroLily, avroConverter);
         server = new HttpServer(responder, port);
     }
     

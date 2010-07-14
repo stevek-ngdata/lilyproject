@@ -20,7 +20,6 @@ package org.lilycms.repository.impl.test;
 import java.net.InetSocketAddress;
 
 import org.apache.avro.ipc.HttpServer;
-import org.apache.avro.specific.SpecificResponder;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -31,6 +30,7 @@ import org.lilycms.repository.api.TypeManager;
 import org.lilycms.repository.avro.AvroConverter;
 import org.lilycms.repository.avro.AvroLily;
 import org.lilycms.repository.avro.AvroLilyImpl;
+import org.lilycms.repository.avro.LilySpecificResponder;
 import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
@@ -59,8 +59,8 @@ public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTe
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
         HttpServer lilyServer = new HttpServer(
-                new SpecificResponder(AvroLily.class, new AvroLilyImpl(serverRepository, serverConverter)),
-                0);
+                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(serverRepository, serverConverter),
+                        serverConverter), 0);
         AvroConverter remoteConverter = new AvroConverter();
         typeManager = new TypeManagerRemoteImpl(new InetSocketAddress(lilyServer.getPort()),
                 remoteConverter, idGenerator);

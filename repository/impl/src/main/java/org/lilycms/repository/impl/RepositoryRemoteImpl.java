@@ -79,6 +79,8 @@ public class RepositoryRemoteImpl implements Repository {
             throw converter.convert(e);
         } catch (AvroTypeException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -88,6 +90,8 @@ public class RepositoryRemoteImpl implements Repository {
         try {
             lilyProxy.delete(new Utf8(recordId.toString()));
         } catch (AvroRecordException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
@@ -140,6 +144,8 @@ public class RepositoryRemoteImpl implements Repository {
             throw converter.convert(e);
         } catch (AvroTypeException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -163,6 +169,8 @@ public class RepositoryRemoteImpl implements Repository {
             throw converter.convert(e);
         } catch (AvroVersionNotFoundException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -185,6 +193,8 @@ public class RepositoryRemoteImpl implements Repository {
         } catch (AvroTypeException e) {
             throw converter.convert(e);
         } catch (AvroVersionNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);

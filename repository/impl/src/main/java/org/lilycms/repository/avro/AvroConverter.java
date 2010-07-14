@@ -279,6 +279,18 @@ public class AvroConverter {
         return avroFieldTypeEntry;
     }
 
+    public RuntimeException convert(AvroGenericException avroException) {
+        RuntimeException exception = new RuntimeException();
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
+    }
+
+    public AvroGenericException convertOtherException(Throwable throwable) {
+        AvroGenericException avroException = new AvroGenericException();
+        avroException.remoteCauses = buildCauses(throwable);
+        return avroException;
+    }
+
     public RemoteException convert(AvroRemoteException exception) {
         return new RemoteException(exception.getMessage(), exception);
     }

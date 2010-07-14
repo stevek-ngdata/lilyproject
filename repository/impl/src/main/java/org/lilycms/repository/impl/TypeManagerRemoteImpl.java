@@ -45,6 +45,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             throw converter.convert(e);
         } catch (AvroTypeException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -63,6 +65,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             throw converter.convert(e);
         } catch (AvroTypeException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -79,6 +83,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             throw converter.convert(e);
         } catch (AvroTypeException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -93,6 +99,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
         } catch (AvroFieldTypeExistsException e) {
             throw converter.convert(e);
         } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
@@ -110,6 +118,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             throw converter.convert(e);
         } catch (AvroTypeException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -122,6 +132,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
             throw converter.convert(e);
         } catch (AvroTypeException e) {
             throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
         }
@@ -133,6 +145,8 @@ public class TypeManagerRemoteImpl extends AbstractTypeManager implements TypeMa
         } catch (AvroFieldTypeNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
             throw converter.convert(e);
