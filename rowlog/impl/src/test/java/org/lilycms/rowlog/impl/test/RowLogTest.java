@@ -48,6 +48,9 @@ public class RowLogTest {
     private static byte[] payloadColumnFamily = RowLogTableUtil.PAYLOAD_COLUMN_FAMILY;
     private static byte[] rowLogColumnFamily = RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY;
     private static HTable rowTable;
+    private RowLogMessageConsumer consumer;
+    private int consumerId = 0;
+    private RowLogShard shard;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -64,7 +67,14 @@ public class RowLogTest {
 
     @Before
     public void setUp() throws Exception {
-        rowLog = new RowLogImpl(rowTable, payloadColumnFamily, rowLogColumnFamily, 60000L);
+        rowLog = new RowLogImpl("RowLogTest", rowTable, payloadColumnFamily, rowLogColumnFamily, 60000L, null);
+        consumer = control.createMock(RowLogMessageConsumer.class);
+        consumer.getId();
+        expectLastCall().andReturn(consumerId).anyTimes();
+        
+        shard = control.createMock(RowLogShard.class);
+        shard.getId();
+        expectLastCall().andReturn("ShardId").anyTimes();
     }
 
     @After
@@ -74,7 +84,6 @@ public class RowLogTest {
     
     @Test
     public void testRegisterConsumer() throws Exception {
-        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
 
         control.replay();
         rowLog.registerConsumer(consumer);
@@ -86,11 +95,7 @@ public class RowLogTest {
     
     @Test
     public void testPutMessage() throws Exception {
-        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
-        consumer.getId();
-        expectLastCall().andReturn(0).anyTimes();
 
-        RowLogShard shard = control.createMock(RowLogShard.class);
         shard.putMessage(isA(RowLogMessage.class));
         
         control.replay();
@@ -124,15 +129,8 @@ public class RowLogTest {
     
     @Test
     public void testMessageConsumed() throws Exception {
-        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
-        consumer.getId();
-        expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
-        
 
-        int consumerId = 1;
-        RowLogShard shard = control.createMock(RowLogShard.class);
         shard.putMessage(isA(RowLogMessage.class));
-        
         shard.removeMessage(isA(RowLogMessage.class), eq(consumerId));
         
         control.replay();
@@ -148,13 +146,7 @@ public class RowLogTest {
     
     @Test
     public void testLockMessage() throws Exception {
-        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
-        consumer.getId();
-        expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
-        RowLogShard shard = control.createMock(RowLogShard.class);
         shard.putMessage(isA(RowLogMessage.class));
-        
-        int consumerId = 1;
         
         control.replay();
         rowLog.registerConsumer(consumer);
@@ -169,13 +161,7 @@ public class RowLogTest {
     
     @Test
     public void testUnlockMessage() throws Exception {
-        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
-        consumer.getId();
-        expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
-        RowLogShard shard = control.createMock(RowLogShard.class);
         shard.putMessage(isA(RowLogMessage.class));
-        
-        int consumerId = 1;
         
         control.replay();
         rowLog.registerConsumer(consumer);
@@ -195,32 +181,26 @@ public class RowLogTest {
     
     @Test
     public void testLockTimeout() throws Exception {
-        rowLog = new RowLogImpl(rowTable, payloadColumnFamily, rowLogColumnFamily, 1L);
+        rowLog = new RowLogImpl("RowLogTest", rowTable, payloadColumnFamily, rowLogColumnFamily, 1L, null);
         
-        RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
-        consumer.getId();
-        expectLastCall().andReturn(Integer.valueOf(1)).anyTimes();
-        RowLogShard shard = control.createMock(RowLogShard.class);
         shard.putMessage(isA(RowLogMessage.class));
-        
-        int consumerId = 1;
         
         control.replay();
         rowLog.registerConsumer(consumer);
         rowLog.registerShard(shard);
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
         
-        byte[] lock = rowLog.lockMessage(message, consumerId);
+        byte[] lock = rowLog.lockMessage(message, consumerId );
         assertNotNull(lock);
         Thread.sleep(10L);
-        assertFalse(rowLog.isMessageLocked(message, consumerId));
-        byte[] lock2 = rowLog.lockMessage(message, consumerId);
+        assertFalse(rowLog.isMessageLocked(message, consumerId ));
+        byte[] lock2 = rowLog.lockMessage(message, consumerId );
         assertNotNull(lock2);
         
-        assertFalse(rowLog.unlockMessage(message, consumerId, lock));
+        assertFalse(rowLog.unlockMessage(message, consumerId , lock));
         control.verify();
         //Cleanup
-        rowLog.unlockMessage(message, consumerId, lock2);
+        rowLog.unlockMessage(message, consumerId , lock2);
     }
     
     @Test
@@ -232,10 +212,8 @@ public class RowLogTest {
         consumer2.getId();
         expectLastCall().andReturn(Integer.valueOf(2)).anyTimes();
 
-        RowLogShard shard = control.createMock(RowLogShard.class);
         shard.putMessage(isA(RowLogMessage.class));
         shard.removeMessage(isA(RowLogMessage.class), eq(2));
-        
         
         control.replay();
         rowLog.registerConsumer(consumer1);

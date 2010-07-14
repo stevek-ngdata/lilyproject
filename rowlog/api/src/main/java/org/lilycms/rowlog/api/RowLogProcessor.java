@@ -37,5 +37,5 @@ public interface RowLogProcessor {
      * Check is the RowLogProcessor is executing
      * @return true if the RowLogProcessor is executing
      */
-    boolean isRunning();
+    boolean isRunning(int consumerId);
 }

@@ -43,8 +43,10 @@ public class RowLogShardImpl implements RowLogShard {
     private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("MESSAGE");
     private HTable table;
     private final RowLog rowLog;
+    private final String id;
 
     public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog) throws IOException {
+        this.id = id;
         this.rowLog = rowLog;
         try {
             table = new HTable(configuration, id);
@@ -55,6 +57,10 @@ public class RowLogShardImpl implements RowLogShard {
             admin.createTable(tableDescriptor);
             table = new HTable(configuration, id);
         }
+    }
+    
+    public String getId() {
+        return id;
     }
     
     public void putMessage(RowLogMessage message) throws RowLogException {

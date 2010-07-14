@@ -55,6 +55,12 @@ import org.apache.hadoop.hbase.client.Put;
  * (Note: utility methods to enable this behavior are still to be implemented on the RowLog.)    
  */
 public interface RowLog {
+    
+    /**
+     * The id of a RowLog uniquely identifies the rowlog amongst all rowlog instances.
+     */
+    String getId();
+    
     /**
      * Registers a shard on the RowLog. (Note: the current implementation only allows for one shard to be registered.)
      * @param shard a {@link RowLogShard} 

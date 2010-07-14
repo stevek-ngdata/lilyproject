@@ -81,6 +81,10 @@ public class HBaseProxy {
         }
     }
 
+    public String getZkConnectString() {
+        return CONF.get("hbase.zookeeper.quorum") + ":" + CONF.get("hbase.zookeeper.property.clientPort");
+    }
+    
     /**
      * Adds all system property prefixed with "lily.test.hbase." to the HBase configuration.
      */

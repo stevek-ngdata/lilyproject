@@ -40,7 +40,31 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilycms.repository.api.*;
+import org.lilycms.repository.api.Blob;
+import org.lilycms.repository.api.BlobException;
+import org.lilycms.repository.api.BlobNotFoundException;
+import org.lilycms.repository.api.BlobStoreAccess;
+import org.lilycms.repository.api.BlobStoreAccessFactory;
+import org.lilycms.repository.api.FieldType;
+import org.lilycms.repository.api.FieldTypeNotFoundException;
+import org.lilycms.repository.api.IdGenerator;
+import org.lilycms.repository.api.IdRecord;
+import org.lilycms.repository.api.InvalidRecordException;
+import org.lilycms.repository.api.QName;
+import org.lilycms.repository.api.Record;
+import org.lilycms.repository.api.RecordException;
+import org.lilycms.repository.api.RecordExistsException;
+import org.lilycms.repository.api.RecordId;
+import org.lilycms.repository.api.RecordNotFoundException;
+import org.lilycms.repository.api.RecordType;
+import org.lilycms.repository.api.RecordTypeNotFoundException;
+import org.lilycms.repository.api.Repository;
+import org.lilycms.repository.api.RepositoryException;
+import org.lilycms.repository.api.Scope;
+import org.lilycms.repository.api.TypeException;
+import org.lilycms.repository.api.TypeManager;
+import org.lilycms.repository.api.ValueType;
+import org.lilycms.repository.api.VersionNotFoundException;
 import org.lilycms.repository.impl.lock.RowLocker;
 import org.lilycms.repoutil.RecordEvent;
 import org.lilycms.repoutil.RecordEvent.Type;
@@ -90,6 +114,7 @@ public class HBaseRepository implements Repository {
     private RowLogShard messageQueueShard;
     private RowLogProcessor messageQueueProcessor;
     private RowLocker rowLocker;
+    private String zkConnectString;
 
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator,
             BlobStoreAccessFactory blobStoreOutputStreamFactory, Configuration configuration) throws IOException {
@@ -117,7 +142,8 @@ public class HBaseRepository implements Repository {
         initializeWal(configuration);
 
         // Start Message Queue Processor
-        messageQueueProcessor = new RowLogProcessorImpl(messageQueue, messageQueueShard);
+        zkConnectString = configuration.get("hbase.zookeeper.quorum") + ":" + configuration.get("hbase.zookeeper.property.clientPort");
+        messageQueueProcessor = new RowLogProcessorImpl(messageQueue, messageQueueShard, zkConnectString);
         messageQueueProcessor.start();
 
         rowLocker = new RowLocker(recordTable, HBaseTableUtil.NON_VERSIONED_SYSTEM_COLUMN_FAMILY, LOCK_COLUMN_NAME,
@@ -129,15 +155,15 @@ public class HBaseRepository implements Repository {
     }
 
     private void initializeMessageQueue(Configuration configuration) throws IOException {
-        messageQueue = new RowLogImpl(recordTable, HBaseTableUtil.MQ_PAYLOAD_COLUMN_FAMILY,
-                HBaseTableUtil.MQ_COLUMN_FAMILY, 10000L); 
+        messageQueue = new RowLogImpl("MQ", recordTable, HBaseTableUtil.MQ_PAYLOAD_COLUMN_FAMILY,
+                HBaseTableUtil.MQ_COLUMN_FAMILY, 10000L, zkConnectString); 
         messageQueueShard = new RowLogShardImpl("MQS1", configuration, messageQueue);
         messageQueue.registerShard(messageQueueShard);
         messageQueue.registerConsumer(new DevNull());
     }
 
     private void initializeWal(Configuration configuration) throws IOException {
-        wal = new RowLogImpl(recordTable, HBaseTableUtil.WAL_PAYLOAD_COLUMN_FAMILY, HBaseTableUtil.WAL_COLUMN_FAMILY, 10000L);
+        wal = new RowLogImpl("WAL", recordTable, HBaseTableUtil.WAL_PAYLOAD_COLUMN_FAMILY, HBaseTableUtil.WAL_COLUMN_FAMILY, 10000L, zkConnectString);
         // Work with only one shard for now
         RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal);
         wal.registerShard(walShard);

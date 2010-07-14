@@ -15,7 +15,10 @@
  */
 package org.lilycms.rowlog.impl.test;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createControl;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -40,6 +43,7 @@ public class RowLogProcessorTest {
     private IMocksControl control;
     private RowLog rowLog;
     private RowLogShard rowLogShard;
+    private int consumerId;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -53,18 +57,24 @@ public class RowLogProcessorTest {
     public void setUp() throws Exception {
         control = createControl();
 
-        int consumerId = 1;
+        consumerId = 1;
         RowLogMessageConsumer consumer = control.createMock(RowLogMessageConsumer.class);
         consumer.getId();
         expectLastCall().andReturn(consumerId).anyTimes();
 
         rowLog = control.createMock(RowLog.class);
+        rowLog.getId();
+        expectLastCall().andReturn("TestRowLog").anyTimes();
+        
         List<RowLogMessageConsumer> consumers = new ArrayList<RowLogMessageConsumer>();
         consumers.add(consumer);
         rowLog.getConsumers();
         expectLastCall().andReturn(consumers).anyTimes();
-
+        
         rowLogShard = control.createMock(RowLogShard.class);
+        rowLogShard.getId();
+        expectLastCall().andReturn("TestShard").anyTimes();
+        
         RowLogMessage message = control.createMock(RowLogMessage.class);
         rowLogShard.next(consumerId);
         expectLastCall().andReturn(message).anyTimes();
@@ -73,6 +83,10 @@ public class RowLogProcessorTest {
         expectLastCall().andReturn(Boolean.TRUE).anyTimes();
         rowLog.messageDone(eq(message), eq(consumerId), isA(byte[].class));
         expectLastCall().andReturn(Boolean.TRUE).anyTimes();
+        
+        rowLog.lockMessage(message, consumerId);
+        byte[] someBytes = new byte[]{1,2,3};
+        expectLastCall().andReturn(someBytes).anyTimes();
     }
 
     @After
@@ -82,41 +96,41 @@ public class RowLogProcessorTest {
     @Test
     public void testProcessor() throws Exception {
         control.replay();
-        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, rowLogShard);
-        assertFalse(processor.isRunning());
+        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, rowLogShard, null);
+        assertFalse(processor.isRunning(consumerId));
         processor.start();
-        assertTrue(processor.isRunning());
+        assertTrue(processor.isRunning(consumerId));
         processor.stop();
-        assertFalse(processor.isRunning());
+        assertFalse(processor.isRunning(consumerId));
         control.verify();
     }
     
     @Test
     public void testProcessorMultipleStartStop() throws Exception {
         control.replay();
-        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, rowLogShard);
-        assertFalse(processor.isRunning());
+        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, rowLogShard, null);
+        assertFalse(processor.isRunning(consumerId));
         processor.start();
-        assertTrue(processor.isRunning());
+        assertTrue(processor.isRunning(consumerId));
         processor.stop();
-        assertFalse(processor.isRunning());
+        assertFalse(processor.isRunning(consumerId));
         processor.start();
         processor.start();
-        assertTrue(processor.isRunning());
+        assertTrue(processor.isRunning(consumerId));
         processor.stop();
         processor.stop();
-        assertFalse(processor.isRunning());
+        assertFalse(processor.isRunning(consumerId));
         control.verify();
     }
     
     @Test
     public void testProcessorStopWihtoutStart() throws Exception {
         control.replay();
-        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, rowLogShard);
+        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, rowLogShard, null);
         processor.stop();
-        assertFalse(processor.isRunning());
+        assertFalse(processor.isRunning(consumerId));
         processor.start();
-        assertTrue(processor.isRunning());
+        assertTrue(processor.isRunning(consumerId));
         processor.stop();
     }
 }

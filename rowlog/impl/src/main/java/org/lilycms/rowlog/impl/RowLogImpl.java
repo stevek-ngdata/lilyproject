@@ -16,9 +16,11 @@
 package org.lilycms.rowlog.impl;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -26,6 +28,23 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
@@ -45,6 +64,10 @@ public class RowLogImpl implements RowLog {
     
     private List<RowLogMessageConsumer> consumers = Collections.synchronizedList(new ArrayList<RowLogMessageConsumer>());
     private final long lockTimeout;
+    private Channel channel;
+    private ChannelFactory channelFactory;
+    private final String zkConnectString;
+    private final String id;
     
     /**
      * The RowLog should be instantiated with information about the table that contains the rows the messages are 
@@ -55,11 +78,23 @@ public class RowLogImpl implements RowLog {
      * @param executionStateColumnFamily the column family in which the execution state of the messages can be stored
      * @param lockTimeout the timeout to be used for the locks that are put on the messages
      */
-    public RowLogImpl(HTable rowTable, byte[] payloadColumnFamily, byte[] executionStateColumnFamily, long lockTimeout) {
+    public RowLogImpl(String id, HTable rowTable, byte[] payloadColumnFamily, byte[] executionStateColumnFamily, long lockTimeout, String zkConnectString) {
+        this.id = id;
         this.rowTable = rowTable;
         this.payloadColumnFamily = payloadColumnFamily;
         this.executionStateColumnFamily = executionStateColumnFamily;
         this.lockTimeout = lockTimeout;
+        this.zkConnectString = zkConnectString;
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        cleanupProcessorConnection();
+        super.finalize();
+    }
+    
+    public String getId() {
+        return id;
     }
     
     public void registerConsumer(RowLogMessageConsumer rowLogMessageConsumer) {
@@ -126,12 +161,81 @@ public class RowLogImpl implements RowLog {
         
             shard.putMessage(message);
             initializeConsumers(message, put);
+            notifyProcessor(shard.getId());
             return message;
         } catch (IOException e) {
             throw new RowLogException("Failed to put message on RowLog", e);
         }
     }
 
+    private synchronized void notifyProcessor(String shardId) {
+        if (channel == null || (!channel.isConnected())) {
+            openProcessorChannel(shardId);
+        }
+        if ((channel != null) && (channel.isConnected())) { 
+            ChannelBuffer channelBuffer = ChannelBuffers.buffer(1);
+            channelBuffer.writeByte(1);
+            ChannelFuture writeFuture = channel.write(channelBuffer);
+            writeFuture.addListener(new ChannelFutureListener() {
+                public void operationComplete(ChannelFuture future) {
+                    Channel channel = future.getChannel();
+                    ChannelFuture closeFuture = channel.close();
+                    closeFuture.awaitUninterruptibly();
+                }
+            });
+        }
+    }
+    
+    private synchronized void openProcessorChannel(String shardId) {
+        if (zkConnectString == null) return;
+        
+        if (channelFactory == null) {
+            channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
+        }
+        ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
+        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+            public ChannelPipeline getPipeline() {
+                return Channels.pipeline(new SimpleChannelHandler());
+            }
+        });
+        bootstrap.setOption("tcpNoDelay", true);
+        bootstrap.setOption("keepAlive", true);
+        ZooKeeper zk = null;
+        try {
+            zk = new ZooKeeper(zkConnectString, 5000, new Watcher() {
+                public void process(WatchedEvent event) {
+                }
+            });
+        } catch (IOException e) {
+        }
+        String shardIdPath = "/lily/rowLog/" + id + "/" + shardId; 
+        String data = null;
+        try {
+            data = Bytes.toString(zk.getData(shardIdPath, false, new Stat()));
+        } catch (KeeperException e) {
+        } catch (InterruptedException e) {
+        }
+
+        if (data != null) {
+        String[] hostAndPort = data.split(":");
+            ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(hostAndPort[0], Integer.valueOf(hostAndPort[1])));
+            connectFuture.awaitUninterruptibly();
+            if (connectFuture.isSuccess()) {
+                channel = connectFuture.getChannel();
+            }
+        }
+    }
+    
+    private synchronized void cleanupProcessorConnection() {
+        if (channel != null) {
+            ChannelFuture closeFuture = channel.close();
+            closeFuture.awaitUninterruptibly();
+        }
+        if (channelFactory != null) {
+            channelFactory.releaseExternalResources();
+        }
+    }
+    
     private void initializeConsumers(RowLogMessage message, Put put) throws IOException {
         RowLogMessageConsumerExecutionState executionState = new RowLogMessageConsumerExecutionState(message.getId());
         for (RowLogMessageConsumer consumer : consumers) {

@@ -23,6 +23,11 @@ package org.lilycms.rowlog.api;
 public interface RowLogShard {
 
     /**
+     * The id of a RowLogShard uniquely identifies a shard in the context of a {@link RowLog}
+     */
+    String getId();
+    
+    /**
      * Puts a RowLogMessage onto the table.
      * 
      * @param message the {@link RowLogMessage} to be put on the table

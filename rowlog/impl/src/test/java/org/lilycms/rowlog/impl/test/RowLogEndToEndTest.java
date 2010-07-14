@@ -22,9 +22,14 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,10 +58,11 @@ public class RowLogEndToEndTest {
         HBASE_PROXY.start();
         Configuration configuration = HBASE_PROXY.getConf();
         HTable rowTable = RowLogTableUtil.getRowTable(configuration);
-        rowLog = new RowLogImpl(rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY, 60000L);
+        String zkConnectString = HBASE_PROXY.getZkConnectString();
+        rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY, 60000L, zkConnectString);
         shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog);
         consumer = new TestMessageConsumer(0);
-        processor = new RowLogProcessorImpl(rowLog, shard);
+        processor = new RowLogProcessorImpl(rowLog, shard, zkConnectString);
         rowLog.registerConsumer(consumer);
         rowLog.registerShard(shard);
     }
@@ -81,7 +87,39 @@ public class RowLogEndToEndTest {
         consumer.expectMessages(1);
         processor.start();
         if (!consumer.waitUntilMessagesConsumed(20000)) {
-            Assert.fail("Messages not consumed within timeout");
+            fail("Messages not consumed within timeout");
+        }
+        processor.stop();
+    }
+    
+    @Test
+    public void testProcessorPublishesHost() throws Exception {
+        processor.start();
+        ZooKeeper zk = new ZooKeeper(HBASE_PROXY.getZkConnectString(), 50000, new Watcher() {
+            
+            public void process(WatchedEvent event) {
+                // TODO Auto-generated method stub
+                
+            }
+        });
+        byte[] data = zk.getData("/lily/rowLog/EndToEndRowLog/EndToEndShard", false, new Stat());
+        assertNotNull(data);
+        processor.stop();
+        try {
+            zk.getData("/lily/rowLog/EndToEndRowLog/EndToEndShard", false, new Stat());
+            fail("The host in Zookeeper should have been deleted");
+        } catch (KeeperException expected) {
+        }
+    }
+    
+    @Test
+    public void testSingleMessageProcessorStartsFirst() throws Exception {
+        processor.start();
+        RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
+        consumer.expectMessage(message);
+        consumer.expectMessages(1);
+        if (!consumer.waitUntilMessagesConsumed(20000)) {
+            fail("Messages not consumed within timeout");
         }
         processor.stop();
     }
@@ -96,7 +134,7 @@ public class RowLogEndToEndTest {
         }
         processor.start();
         if (!consumer.waitUntilMessagesConsumed(120000)) {
-            Assert.fail("Messages not consumed within timeout");
+            fail("Messages not consumed within timeout");
         }
         processor.stop();
     }
@@ -115,7 +153,7 @@ public class RowLogEndToEndTest {
         }
         processor.start();
         if (!consumer.waitUntilMessagesConsumed(120000)) { // TODO avoid flipping tests
-            Assert.fail("Messages not consumed within timeout");
+            fail("Messages not consumed within timeout");
         }
         processor.stop();
     }
@@ -138,10 +176,10 @@ public class RowLogEndToEndTest {
         }
         processor.start();
         if (!consumer.waitUntilMessagesConsumed(120000)) { // TODO avoid flipping tests
-            Assert.fail("Messages not consumed within timeout");
+            fail("Messages not consumed within timeout");
         }
         if (!consumer2.waitUntilMessagesConsumed(120000)) { // TODO avoid flipping tests
-            Assert.fail("Messages not consumed within timeout");
+            fail("Messages not consumed within timeout");
         }
         processor.stop();
     }
@@ -150,6 +188,7 @@ public class RowLogEndToEndTest {
     private static class TestMessageConsumer implements RowLogMessageConsumer {
         
         private List<RowLogMessage> expectedMessages = Collections.synchronizedList(new ArrayList<RowLogMessage>());
+        private List<RowLogMessage> earlyMessages = Collections.synchronizedList(new ArrayList<RowLogMessage>());
         private int count = 0;
         private int numberOfMessagesToBeExpected = 0;
         private final int id;
@@ -159,11 +198,15 @@ public class RowLogEndToEndTest {
         }
         
         public void expectMessage(RowLogMessage message) {
-            expectedMessages.add(message);
+            if (earlyMessages.contains(message)) {
+                earlyMessages.remove(message);
+                count++;
+            } else {
+                expectedMessages.add(message);
+            }
         }
         
         public void expectMessages(int i) {
-            count = 0;
             this.numberOfMessagesToBeExpected = i;
         }
 
@@ -172,11 +215,16 @@ public class RowLogEndToEndTest {
         }
     
         public boolean processMessage(RowLogMessage message) {
-            boolean removed;
-            if (removed = expectedMessages.remove(message)) {
-                count++;
-            } 
-            return removed;
+            if (!expectedMessages.contains(message)) {
+                earlyMessages.add(message);
+                return true;
+            } else {
+                boolean removed;
+                if (removed = expectedMessages.remove(message)) {
+                    count++;
+                } 
+                return removed;
+            }
         }
         
         public boolean waitUntilMessagesConsumed(long timeout) throws Exception {
