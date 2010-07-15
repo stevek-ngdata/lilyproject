@@ -184,6 +184,9 @@ public class Tester {
             for (int i = 0; i < readCount; i++) {
                 TestRecord testRecord = getNonDeletedRecord();
 
+                if (testRecord == null)
+                    continue;
+
                 long before = System.currentTimeMillis();
                 try {
                     Record readRecord = repository.read(testRecord.record.getId());
@@ -204,6 +207,9 @@ public class Tester {
 
             for (int i = 0; i < updateCount; i++) {
                 TestRecord testRecord = getNonDeletedRecord();
+
+                if (testRecord == null)
+                    continue;
 
                 int selectedField = (int)Math.floor(Math.random() * fields.size());
                 Field field = fields.get(selectedField);
@@ -229,6 +235,9 @@ public class Tester {
 
             for (int i = 0; i < deleteCount; i++) {
                 TestRecord testRecord = getNonDeletedRecord();
+
+                if (testRecord == null)
+                    continue;
 
                 long before = System.currentTimeMillis();
                 try {
@@ -268,6 +277,10 @@ public class Tester {
     }
 
     private TestRecord getNonDeletedRecord() {
+        if (records.size() == 0) {
+            return null;
+        }
+
         TestRecord testRecord;
         int loopCnt = 0;
         do {
