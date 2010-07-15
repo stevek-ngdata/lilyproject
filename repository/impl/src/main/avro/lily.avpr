@@ -262,7 +262,7 @@
     "delete": {
       "request": [{"name": "recordId", "type": "string"}],
       "response": "null",
-      "errors": ["AvroRecordException"]
+      "errors": ["AvroRecordException", "AvroGenericException"]
     },
 
     "createRecordType": {
