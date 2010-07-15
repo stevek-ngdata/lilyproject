@@ -1,7 +1,7 @@
 package org.lilycms.tools.import_;
 
 import org.lilycms.repository.api.*;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.VersionTag;
 
 import java.util.*;
 

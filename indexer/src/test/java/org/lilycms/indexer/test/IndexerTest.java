@@ -3,7 +3,7 @@ package org.lilycms.indexer.test;
 import static org.junit.Assert.assertEquals;
 
 import org.lilycms.indexer.IndexUpdater;
-import org.lilycms.repoutil.RecordEvent;
+import org.lilycms.util.repo.RecordEvent;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogMessageConsumer;
@@ -29,10 +29,11 @@ import org.lilycms.indexer.conf.IndexerConfBuilder;
 import org.lilycms.linkindex.LinkIndex;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.VersionTag;
 import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
-import static org.lilycms.repoutil.RecordEvent.Type.*;
+
+import static org.lilycms.util.repo.RecordEvent.Type.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

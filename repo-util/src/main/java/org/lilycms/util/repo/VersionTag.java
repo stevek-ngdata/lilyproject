@@ -1,4 +1,4 @@
-package org.lilycms.repoutil;
+package org.lilycms.util.repo;
 
 import org.apache.commons.logging.LogFactory;
 import org.lilycms.repository.api.*;

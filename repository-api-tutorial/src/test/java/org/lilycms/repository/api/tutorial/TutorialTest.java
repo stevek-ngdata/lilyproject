@@ -20,7 +20,7 @@ import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
-import org.lilycms.repoutil.PrintUtil;
+import org.lilycms.util.repo.PrintUtil;
 import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 

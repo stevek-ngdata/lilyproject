@@ -10,10 +10,10 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.lilycms.client.Client;
 import org.lilycms.repository.api.*;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.VersionTag;
 import org.lilycms.util.io.Closer;
 
-import static org.lilycms.repoutil.JsonUtil.*;
+import static org.lilycms.util.repo.JsonUtil.*;
 
 import java.io.FileInputStream;
 import java.io.InputStream;

@@ -10,14 +10,14 @@ import org.lilycms.linkindex.LinkIndexUpdater;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.repoutil.RecordEvent;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.RecordEvent;
+import org.lilycms.util.repo.VersionTag;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.util.ObjectUtils;
 
-import static org.lilycms.repoutil.RecordEvent.Type.*;
+import static org.lilycms.util.repo.RecordEvent.Type.*;
 
 import java.io.IOException;
 import java.util.*;

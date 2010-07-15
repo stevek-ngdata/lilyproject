@@ -11,7 +11,7 @@ import org.lilycms.client.Client;
 import org.lilycms.client.ServerUnavailableException;
 import org.lilycms.repository.api.*;
 import org.lilycms.tools.import_.*;
-import org.lilycms.repoutil.JsonUtil;
+import org.lilycms.util.repo.JsonUtil;
 import org.lilycms.util.exception.StackTracePrinter;
 import org.lilycms.util.io.Closer;
 

@@ -14,7 +14,7 @@ import org.lilycms.repository.api.FieldTypeNotFoundException;
 import org.lilycms.repository.api.RecordNotFoundException;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.repository.api.RepositoryException;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.VersionTag;
 
 import java.io.IOException;
 import java.util.*;

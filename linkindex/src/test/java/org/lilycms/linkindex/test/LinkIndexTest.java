@@ -15,7 +15,7 @@ import org.lilycms.linkindex.LinkIndex;
 import org.lilycms.linkindex.LinkIndexUpdater;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.*;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.VersionTag;
 import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 

@@ -4,15 +4,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.RecordNotFoundException;
-import org.lilycms.repoutil.RecordEvent;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.RecordEvent;
+import org.lilycms.util.repo.VersionTag;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogMessageConsumer;
 
 import java.util.*;
 
-import static org.lilycms.repoutil.RecordEvent.Type.*;
+import static org.lilycms.util.repo.RecordEvent.Type.*;
 
 // TODO think more about error processing:
 //      Some kinds of errors might be temporary in nature and be solved by retrying after some time.

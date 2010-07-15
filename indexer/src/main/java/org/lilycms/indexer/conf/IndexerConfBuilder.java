@@ -2,7 +2,7 @@ package org.lilycms.indexer.conf;
 
 import org.lilycms.indexer.formatter.Formatter;
 import org.lilycms.repository.api.*;
-import org.lilycms.repoutil.VersionTag;
+import org.lilycms.util.repo.VersionTag;
 import org.lilycms.util.location.LocationAttributes;
 import org.lilycms.util.xml.DocumentHelper;
 import org.lilycms.util.xml.LocalXPathExpression;
