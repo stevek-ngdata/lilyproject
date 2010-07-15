@@ -11,7 +11,6 @@ public class RowLocker {
     private final byte[] family;
     private final byte[] qualifier;
     private final long timeout;
-    private org.apache.hadoop.hbase.client.RowLock hbaseRowLock;
 
     public RowLocker(HTableInterface table, byte[] family, byte[] qualifier, long timeout) {
         this.table = table;
@@ -26,7 +25,7 @@ public class RowLocker {
         get.addColumn(family, qualifier);
 
         if (!table.exists(get)) {
-            hbaseRowLock = table.lockRow(rowKey);
+            org.apache.hadoop.hbase.client.RowLock hbaseRowLock = table.lockRow(rowKey);
             if (hbaseRowLock == null) return null;
             try {
                 Put put = new Put(rowKey, hbaseRowLock);
