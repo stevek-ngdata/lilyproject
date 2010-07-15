@@ -21,42 +21,38 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.RowLock;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.rowlog.api.RowLog;
 import org.lilycms.rowlog.api.RowLogException;
 import org.lilycms.rowlog.api.RowLogMessage;
 import org.lilycms.rowlog.api.RowLogMessageConsumer;
 import org.lilycms.rowlog.api.RowLogShard;
+import org.lilycms.util.hbase.LocalHTable;
 import org.lilycms.util.io.Closer;
 
 public class RowLogShardImpl implements RowLogShard {
 
     private static final byte[] MESSAGES_CF = Bytes.toBytes("MESSAGES");
     private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("MESSAGE");
-    private HTable table;
+    private HTableInterface table;
     private final RowLog rowLog;
     private final String id;
 
     public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog) throws IOException {
         this.id = id;
         this.rowLog = rowLog;
+
+        HBaseAdmin admin = new HBaseAdmin(configuration);
         try {
-            table = new HTable(configuration, id);
+            admin.getTableDescriptor(Bytes.toBytes(id));
         } catch (TableNotFoundException e) {
-            HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(id);
             tableDescriptor.addFamily(new HColumnDescriptor(MESSAGES_CF));
             admin.createTable(tableDescriptor);
-            table = new HTable(configuration, id);
         }
+
+        table = new LocalHTable(configuration, id);
     }
     
     public String getId() {

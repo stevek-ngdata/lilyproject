@@ -15,10 +15,7 @@
  */
 package org.lilycms.hbaseindex;
 
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -34,12 +31,9 @@ import java.util.Map;
  *
  * <p>An Index instance can be obtained from {@link IndexManager#getIndex}.
  *
- * <p>The Index class <b>is not thread safe</b> for writes, because the underlying
- * HBase HTable is not thread safe for writes.
- *
  */
 public class Index {
-    private HTable htable;
+    private HTableInterface htable;
     private IndexDefinition definition;
 
     protected static final byte[] DATA_FAMILY = Bytes.toBytes("data");
@@ -51,7 +45,7 @@ public class Index {
 
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-    protected Index(HTable htable, IndexDefinition definition) {
+    protected Index(HTableInterface htable, IndexDefinition definition) {
         this.htable = htable;
         this.definition = definition;
     }

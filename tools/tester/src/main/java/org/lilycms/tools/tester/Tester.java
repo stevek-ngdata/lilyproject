@@ -12,6 +12,7 @@ import org.lilycms.client.ServerUnavailableException;
 import org.lilycms.repository.api.*;
 import org.lilycms.tools.import_.*;
 import org.lilycms.repoutil.JsonUtil;
+import org.lilycms.util.exception.StackTracePrinter;
 import org.lilycms.util.io.Closer;
 
 import java.io.File;
@@ -288,7 +289,7 @@ public class Tester {
     private void reportError(String message, Throwable throwable) {
         failureCount++;
         errorStream.println("[" + new DateTime() + "] " + message);
-        throwable.printStackTrace(errorStream);
+        StackTracePrinter.printStackTrace(throwable, errorStream);
         errorStream.println("---------------------------------------------------------------------------");        
     }
 
@@ -350,17 +351,36 @@ public class Tester {
                 int day = (int)Math.ceil(Math.random() * 25);
                 return new LocalDate(year, month, day);
             } else if (primitive.equals("DATETIME")) {
+                return generateDateTime();
+            } else if (primitive.equals("LINK")) {
+                return new Link(repository.getIdGenerator().newRecordId());
+            } else {
+                throw new RuntimeException("Unsupported primitive value type: " + primitive);
+            }
+        }
+
+        private DateTime generateDateTime() {
+            int fail = 0;
+            while (true) {
                 int year = 1950 + (int)(Math.random() * 100);
                 int month = (int)Math.ceil(Math.random() * 12);
                 int day = (int)Math.ceil(Math.random() * 25);
                 int hour = (int)Math.floor(Math.random() * 24);
                 int minute = (int)Math.floor(Math.random() * 60);
                 int second = (int)Math.floor(Math.random() * 60);
-                return new DateTime(year, month, day, hour, minute, second, 0);
-            } else if (primitive.equals("LINK")) {
-                return new Link(repository.getIdGenerator().newRecordId());
-            } else {
-                throw new RuntimeException("Unsupported primitive value type: " + primitive);
+                try {
+                    return new DateTime(year, month, day, hour, minute, second, 0);
+                } catch (IllegalArgumentException e) {
+                    // We can get exceptions here of the kind:
+                    //  "Illegal instant due to time zone offset transition"
+                    // This can occur if we happen to generate a time which falls in daylight
+                    // saving.
+                    if (fail > 10) {
+                        throw new RuntimeException("Strange: did not succeed to generate a valid date after "
+                                + fail + " tries.", e);
+                    }
+                    fail++;
+                }
             }
         }
     }

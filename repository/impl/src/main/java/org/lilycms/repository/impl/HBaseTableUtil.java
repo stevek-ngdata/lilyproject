@@ -8,12 +8,13 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilycms.util.hbase.LocalHTable;
 
 public class HBaseTableUtil {
     
-    private static final String RECORD_TABLE = "recordTable";
+    private static final byte[] RECORD_TABLE = Bytes.toBytes("recordTable");
     
     public static final byte[] NON_VERSIONED_SYSTEM_COLUMN_FAMILY = Bytes.toBytes("NVSCF");
     public static final byte[] VERSIONED_SYSTEM_COLUMN_FAMILY = Bytes.toBytes("VSCF");
@@ -26,12 +27,11 @@ public class HBaseTableUtil {
     public static final byte[] MQ_PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("MQPLCF");
     public static final byte[] MQ_COLUMN_FAMILY = Bytes.toBytes("MQCF");
 
-    public static HTable getRecordTable(Configuration configuration) throws IOException {
-        HTable recordTable;
+    public static HTableInterface getRecordTable(Configuration configuration) throws IOException {
+        HBaseAdmin admin = new HBaseAdmin(configuration);
         try {
-            recordTable = new HTable(configuration, RECORD_TABLE); 
+            admin.getTableDescriptor(RECORD_TABLE);
         } catch (TableNotFoundException e) {
-            HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(RECORD_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_SYSTEM_COLUMN_FAMILY));
             tableDescriptor.addFamily(new HColumnDescriptor(VERSIONED_SYSTEM_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
@@ -43,8 +43,8 @@ public class HBaseTableUtil {
             tableDescriptor.addFamily(new HColumnDescriptor(MQ_PAYLOAD_COLUMN_FAMILY));
             tableDescriptor.addFamily(new HColumnDescriptor(MQ_COLUMN_FAMILY));
             admin.createTable(tableDescriptor);
-            recordTable = new HTable(configuration, RECORD_TABLE);
         }
-        return recordTable;
+
+        return new LocalHTable(configuration, RECORD_TABLE);
     }
 }

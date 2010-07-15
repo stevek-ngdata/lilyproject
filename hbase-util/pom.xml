@@ -23,9 +23,9 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilycms</groupId>
-  <artifactId>lily-hbaseindex</artifactId>
+  <artifactId>lily-hbase-util</artifactId>
   <version>0.1-dev</version>
-  <name>Lily: HBase Index</name>
+  <name>Lily: HBase related utility classes</name>
 
   <parent>
     <groupId>org.lilycms</groupId>
@@ -37,41 +37,12 @@
   </build>
 
   <dependencies>
+    <!-- Please keep the dependencies of this project to a minimum! -->
+
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
     </dependency>
-    
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-core-asl</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-hbase-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilycms</groupId>
-      <artifactId>lily-testfw</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-
   </dependencies>
 
 </project>

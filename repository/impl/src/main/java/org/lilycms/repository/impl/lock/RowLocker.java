@@ -2,21 +2,18 @@ package org.lilycms.repository.impl.lock;
 
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class RowLocker {
 
-    private final HTable table;
+    private final HTableInterface table;
     private final byte[] family;
     private final byte[] qualifier;
     private final long timeout;
     private org.apache.hadoop.hbase.client.RowLock hbaseRowLock;
 
-    public RowLocker(HTable table, byte[] family, byte[] qualifier, long timeout) {
+    public RowLocker(HTableInterface table, byte[] family, byte[] qualifier, long timeout) {
         this.table = table;
         this.family = family;
         this.qualifier = qualifier;

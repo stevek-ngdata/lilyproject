@@ -22,11 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -58,7 +54,7 @@ public class RowLogImpl implements RowLog {
 
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
     private RowLogShard shard;
-    private final HTable rowTable;
+    private final HTableInterface rowTable;
     private final byte[] payloadColumnFamily;
     private final byte[] executionStateColumnFamily;
     
@@ -78,7 +74,7 @@ public class RowLogImpl implements RowLog {
      * @param executionStateColumnFamily the column family in which the execution state of the messages can be stored
      * @param lockTimeout the timeout to be used for the locks that are put on the messages
      */
-    public RowLogImpl(String id, HTable rowTable, byte[] payloadColumnFamily, byte[] executionStateColumnFamily, long lockTimeout, String zkConnectString) {
+    public RowLogImpl(String id, HTableInterface rowTable, byte[] payloadColumnFamily, byte[] executionStateColumnFamily, long lockTimeout, String zkConnectString) {
         this.id = id;
         this.rowTable = rowTable;
         this.payloadColumnFamily = payloadColumnFamily;

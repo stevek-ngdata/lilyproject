@@ -28,14 +28,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.RowLock;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
@@ -101,7 +94,7 @@ public class HBaseRepository implements Repository {
     private static final byte[] VERSIONED_MUTABLE_RECORDTYPEVERSION_COLUMN_NAME = Bytes
             .toBytes("$VersionableMutableRecordTypeVersion");
 
-    private HTable recordTable;
+    private HTableInterface recordTable;
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
     private Map<Scope, byte[]> columnFamilies = new HashMap<Scope, byte[]>();

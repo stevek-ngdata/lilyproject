@@ -60,6 +60,7 @@
     <module>indexer</module>
     <module>linkindex</module>
     <module>repo-util</module>
+    <module>hbase-util</module>
     <module>repository-api-tutorial</module>
     <module>rowlog</module>
     <module>process/server</module>
@@ -78,6 +79,11 @@
       <dependency>
         <groupId>org.lilycms</groupId>
         <artifactId>lily-repo-util</artifactId>
+        <version>0.1-dev</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilycms</groupId>
+        <artifactId>lily-hbase-util</artifactId>
         <version>0.1-dev</version>
       </dependency>
       <dependency>

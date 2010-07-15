@@ -28,12 +28,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.api.FieldTypeExistsException;
@@ -42,11 +37,12 @@ import org.lilycms.repository.api.FieldTypeUpdateException;
 import org.lilycms.repository.api.RecordTypeExistsException;
 import org.lilycms.repository.api.RecordTypeNotFoundException;
 import org.lilycms.util.ArgumentValidator;
+import org.lilycms.util.hbase.LocalHTable;
 import org.lilycms.util.io.Closer;
 
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
 
-    private static final String TYPE_TABLE = "typeTable";
+    private static final byte[] TYPE_TABLE = Bytes.toBytes("typeTable");
     private static final byte[] NON_VERSIONED_COLUMN_FAMILY = Bytes.toBytes("NVCF");
     private static final byte[] FIELDTYPEENTRY_COLUMN_FAMILY = Bytes.toBytes("FTECF");
     private static final byte[] MIXIN_COLUMN_FAMILY = Bytes.toBytes("MCF");
@@ -57,16 +53,17 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     private static final byte[] FIELDTYPE_VALUETYPE_COLUMN_NAME = Bytes.toBytes("$valueType");
     private static final byte[] FIELDTPYE_SCOPE_COLUMN_NAME = Bytes.toBytes("$scope");
 
-    private HTable typeTable;
+    private HTableInterface typeTable;
     private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
 
     public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration) throws IOException,
             FieldTypeNotFoundException, TypeException {
         this.idGenerator = idGenerator;
+
+        HBaseAdmin admin = new HBaseAdmin(configuration);
         try {
-            typeTable = new HTable(configuration, TYPE_TABLE);
+            admin.getTableDescriptor(TYPE_TABLE);
         } catch (TableNotFoundException e) {
-            HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(TYPE_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(NON_VERSIONED_COLUMN_FAMILY));
             tableDescriptor.addFamily(new HColumnDescriptor(FIELDTYPEENTRY_COLUMN_FAMILY, HConstants.ALL_VERSIONS,
@@ -74,8 +71,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             tableDescriptor.addFamily(new HColumnDescriptor(MIXIN_COLUMN_FAMILY, HConstants.ALL_VERSIONS, "none",
                             false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
             admin.createTable(tableDescriptor);
-            typeTable = new HTable(configuration, TYPE_TABLE);
         }
+
+        this.typeTable = new LocalHTable(configuration, TYPE_TABLE);
+        
         initialize();
         initializeFieldTypeNameCache();
     }

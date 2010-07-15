@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilycms.util.hbase.LocalHTable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,7 +38,7 @@ import java.io.IOException;
 public class IndexManager {
     private Configuration hbaseConf;
     private HBaseAdmin hbaseAdmin;
-    private HTable metaTable;
+    private HTableInterface metaTable;
 
     public static final String DEFAULT_META_TABLE = "indexmeta";
 
@@ -61,7 +62,7 @@ public class IndexManager {
     public IndexManager(Configuration hbaseConf, String metaTableName) throws IOException {
         this.hbaseConf = hbaseConf;
         hbaseAdmin = new HBaseAdmin(hbaseConf);
-        metaTable = new HTable(hbaseConf, metaTableName);
+        metaTable = new LocalHTable(hbaseConf, metaTableName);
     }
 
     /**
@@ -132,7 +133,7 @@ public class IndexManager {
         byte[] jsonData = result.getValue(Bytes.toBytes("meta"), Bytes.toBytes("conf"));
         IndexDefinition indexDef = deserialize(name, jsonData);
 
-        HTable htable = new HTable(hbaseConf, name);
+        HTableInterface htable = new LocalHTable(hbaseConf, name);
         Index index = new Index(htable, indexDef);
         return index;
     }

@@ -26,37 +26,33 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilycms.repository.api.Blob;
 import org.lilycms.repository.api.BlobException;
 import org.lilycms.repository.api.BlobStoreAccess;
+import org.lilycms.util.hbase.LocalHTable;
 
 public class HBaseBlobStoreAccess implements BlobStoreAccess {
 
-    private static final String BLOB_TABLE = "blobTable";
+    private static final byte[] BLOB_TABLE = Bytes.toBytes("blobTable");
     private static final String ID = "HBASE";
     private static final String BLOBS_COLUMN_FAMILY = "BFC";
     private static final byte[] BLOBS_COLUMN_FAMILY_BYTES = Bytes.toBytes(BLOBS_COLUMN_FAMILY);
     private static final byte[] BLOB_COLUMN = Bytes.toBytes("$blob");
-    private HTable table;
+    private HTableInterface table;
     
 
     public HBaseBlobStoreAccess(Configuration configuration) throws IOException {
+        HBaseAdmin admin = new HBaseAdmin(configuration);
         try {
-            table = new HTable(configuration, BLOB_TABLE);
+            admin.getTableDescriptor(BLOB_TABLE);
         } catch (TableNotFoundException e) {
-            HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(BLOB_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(BLOBS_COLUMN_FAMILY));
             admin.createTable(tableDescriptor);
-            table = new HTable(configuration, BLOB_TABLE);
         }
+        table = new LocalHTable(configuration, BLOB_TABLE);
     }
     
     public String getId() {
@@ -94,10 +90,10 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
 
     private class HBaseBlobOutputStream extends ByteArrayOutputStream {
         
-        private final HTable blobTable;
+        private final HTableInterface blobTable;
         private final byte[] blobKey;
         private final Blob blob;
-        public HBaseBlobOutputStream(HTable table, byte[] blobKey, Blob blob) {
+        public HBaseBlobOutputStream(HTableInterface table, byte[] blobKey, Blob blob) {
             super();
             blobTable = table;
             this.blobKey = blobKey;

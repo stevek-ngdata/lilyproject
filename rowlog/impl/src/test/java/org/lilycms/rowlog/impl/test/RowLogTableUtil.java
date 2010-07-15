@@ -22,28 +22,27 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilycms.util.hbase.LocalHTable;
 
 public class RowLogTableUtil {
     
-    private static final String ROW_TABLE = "rowTable";
+    private static final byte[] ROW_TABLE = Bytes.toBytes("rowTable");
     
     public static final byte[] PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("PAYLOADCF");
     public static final byte[] EXECUTIONSTATE_COLUMN_FAMILY = Bytes.toBytes("ESLOGCF");
 
-    public static HTable getRowTable(Configuration configuration) throws IOException {
-        HTable rowTable;
+    public static HTableInterface getRowTable(Configuration configuration) throws IOException {
+        HBaseAdmin admin = new HBaseAdmin(configuration);
         try {
-            rowTable = new HTable(configuration, ROW_TABLE); 
+            admin.getTableDescriptor(ROW_TABLE);
         } catch (TableNotFoundException e) {
-            HBaseAdmin admin = new HBaseAdmin(configuration);
             HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(PAYLOAD_COLUMN_FAMILY));
             tableDescriptor.addFamily(new HColumnDescriptor(EXECUTIONSTATE_COLUMN_FAMILY));
             admin.createTable(tableDescriptor);
-            rowTable = new HTable(configuration, ROW_TABLE);
         }
-        return rowTable;
+        return new LocalHTable(configuration, ROW_TABLE);
     }
 }
