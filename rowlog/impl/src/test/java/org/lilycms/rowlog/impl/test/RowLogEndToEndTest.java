@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -57,7 +57,7 @@ public class RowLogEndToEndTest {
         TestHelper.setupLogging();
         HBASE_PROXY.start();
         Configuration configuration = HBASE_PROXY.getConf();
-        HTable rowTable = RowLogTableUtil.getRowTable(configuration);
+        HTableInterface rowTable = RowLogTableUtil.getRowTable(configuration);
         String zkConnectString = HBASE_PROXY.getZkConnectString();
         rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY, RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY, 60000L, zkConnectString);
         shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog);

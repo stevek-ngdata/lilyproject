@@ -24,6 +24,7 @@ import static org.junit.Assert.*;
 import java.util.List;
 
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.classextension.IMocksControl;
 import org.junit.After;
@@ -47,7 +48,7 @@ public class RowLogTest {
     private static RowLog rowLog;
     private static byte[] payloadColumnFamily = RowLogTableUtil.PAYLOAD_COLUMN_FAMILY;
     private static byte[] rowLogColumnFamily = RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY;
-    private static HTable rowTable;
+    private static HTableInterface rowTable;
     private RowLogMessageConsumer consumer;
     private int consumerId = 0;
     private RowLogShard shard;
