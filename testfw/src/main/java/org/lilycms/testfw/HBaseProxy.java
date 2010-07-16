@@ -223,29 +223,62 @@ public class HBaseProxy {
 
             HTable htable = new HTable(CONF, tableName);
 
-            byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
             byte[] CF = EXPLOIT_TIMESTAMP_TABLES.get(tableName);
-            byte[] COL = Bytes.toBytes("DummyColumn");
-
-            byte[] value = null;
-            while (value == null) {
-                Put put = new Put(tmpRowKey);
-                put.add(CF, COL, 1, new byte[] { 0 });
-                htable.put(put);
-
-                Get get = new Get(tmpRowKey);
-                Result result = htable.get(get);
-                value = result.getValue(CF, COL);
-                if (value == null) {
-                    // If the value is null, it is because the delete marker has not yet been flushed/compacted away
-                    System.out.println("Waiting for flush/compact of " + tableName + " to complete");
-                }
-                Thread.sleep(100);
-            }
+            byte[] tmpRowKey = waitForCompact(tableName, CF);
 
             // Delete our dummy row again
             htable.delete(new Delete(tmpRowKey));
         }
     }
 
+    private byte[] waitForCompact(String tableName, byte[] CF) throws IOException, InterruptedException {
+        byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
+        byte[] COL = Bytes.toBytes("DummyColumn");
+        HTable htable = new HTable(CONF, tableName);
+
+        byte[] value = null;
+        while (value == null) {
+            Put put = new Put(tmpRowKey);
+            put.add(CF, COL, 1, new byte[] { 0 });
+            htable.put(put);
+
+            Get get = new Get(tmpRowKey);
+            Result result = htable.get(get);
+            value = result.getValue(CF, COL);
+            if (value == null) {
+                // If the value is null, it is because the delete marker has not yet been flushed/compacted away
+                System.out.println("Waiting for flush/compact of " + tableName + " to complete");
+                Thread.sleep(100);
+            }
+        }
+        return tmpRowKey;
+    }
+
+    /** Force a major compaction and wait for it to finish.
+     *  This method can be used in a test to avoid issue HBASE-2256 after performing a delete operation 
+     *  Uses same principle as {@link #cleanTables()}
+     */ 
+    public void majorCompact(String tableName, String CFName) throws Exception {
+        byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
+        byte[] CF = Bytes.toBytes(CFName);
+        byte[] COL = Bytes.toBytes("DummyColumn");
+        HBaseAdmin admin = new HBaseAdmin(getConf());
+        HTable htable = new HTable(CONF, tableName);
+        
+        // Write a dummy row
+        Put put = new Put(tmpRowKey);
+        put.add(CF, COL, 1, new byte[] { 0 });
+        htable.put(put);
+        // Delete the value again
+        Delete delete = new Delete(tmpRowKey);
+        delete.deleteColumn(CF, COL);
+        htable.delete(delete);
+        
+        // Perform major compaction
+        admin.flush(tableName);
+        admin.majorCompact(tableName);
+        
+        // Wait for compact to finish
+        waitForCompact(tableName, CF);
+    }
 }

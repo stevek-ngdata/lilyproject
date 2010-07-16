@@ -1,12 +1,7 @@
 package org.lilycms.repository.impl.test;
 
 import static org.easymock.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
+import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +13,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lilycms.repository.api.*;
 import org.lilycms.repository.impl.IdGeneratorImpl;
+import org.lilycms.testfw.HBaseProxy;
 
 public abstract class AbstractRepositoryTest {
 
+    protected static final HBaseProxy HBASE_PROXY = new HBaseProxy();
     protected static IdGenerator idGenerator = new IdGeneratorImpl();
     protected static TypeManager typeManager;
     protected static Repository repository;
@@ -635,6 +632,54 @@ public abstract class AbstractRepositoryTest {
             fail();
         } catch (RecordNotFoundException expected) {
         }
+        try {
+            repository.update(record);
+            fail();
+        } catch (RecordNotFoundException expected) {
+        }
+        repository.delete(record.getId()); // Deleting a record twice does not throw an exception
+    }
+    
+    @Test
+    public void TestDeleteRecordCleansUpDataBeforeRecreate() throws Exception {
+        Record record = createDefaultRecord();
+        RecordId recordId = record.getId();
+        repository.delete(recordId);
+        
+     // Work around HBASE-2256
+        HBASE_PROXY.majorCompact("recordTable", "VCF");
+
+        record = repository.newRecord(recordId);
+        record.setRecordType(recordType2.getId(), recordType2.getVersion());
+        record.setField(fieldType4.getName(), 555);
+        record.setField(fieldType5.getName(), false);
+        record.setField(fieldType6.getName(), "zzz");
+        repository.create(record);
+        Record readRecord = repository.read(recordId);
+        assertEquals(Long.valueOf(1), readRecord.getVersion());
+        try {
+            readRecord.getField(fieldType1.getName());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            readRecord.getField(fieldType2.getName());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            readRecord.getField(fieldType3.getName());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        
+        
+        
+        
+        
+        assertEquals(555, readRecord.getField(fieldType4.getName()));
+        assertFalse((Boolean)readRecord.getField(fieldType5.getName()));
+        assertEquals("zzz", readRecord.getField(fieldType6.getName()));
     }
 
     /*

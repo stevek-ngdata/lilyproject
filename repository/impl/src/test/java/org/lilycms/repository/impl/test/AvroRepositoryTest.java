@@ -35,13 +35,10 @@ import org.lilycms.repository.impl.IdGeneratorImpl;
 import org.lilycms.repository.impl.RepositoryRemoteImpl;
 import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilycms.repository.impl.TypeManagerRemoteImpl;
-import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class AvroRepositoryTest extends AbstractRepositoryTest {
     private static HBaseRepository serverRepository;
-
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {

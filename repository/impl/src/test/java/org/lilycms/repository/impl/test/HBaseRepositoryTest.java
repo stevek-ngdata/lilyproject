@@ -27,12 +27,10 @@ import org.lilycms.repository.impl.DFSBlobStoreAccess;
 import org.lilycms.repository.impl.HBaseRepository;
 import org.lilycms.repository.impl.HBaseTypeManager;
 import org.lilycms.repository.impl.SizeBasedBlobStoreAccessFactory;
-import org.lilycms.testfw.HBaseProxy;
 import org.lilycms.testfw.TestHelper;
 
 public class HBaseRepositoryTest extends AbstractRepositoryTest {
 
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
