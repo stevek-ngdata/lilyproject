@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<hbase>
-  <!-- Comma-separated list of zookeeper servers -->
-  <zookeeperQuorum>localhost</zookeeperQuorum>
-  <zookeeperClientPort>2181</zookeeperClientPort>
-</hbase>

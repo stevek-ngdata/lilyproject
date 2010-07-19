@@ -40,7 +40,7 @@
          Then build using:
          ant -Djava5.home=/usr/lib/jdk1.5/ -Dforrest.home=/path/to/apache-forrest-0.8 tar
     -->
-    <hadoop.version>0.20.3-append-r956776+1240</hadoop.version>
+    <hadoop.version>0.20.3-append-r956776+1240+tail</hadoop.version>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>

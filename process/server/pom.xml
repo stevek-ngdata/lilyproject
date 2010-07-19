@@ -23,7 +23,7 @@
   </parent>
 
   <modules>
-    <module>hbase-module</module>
+    <module>general-module</module>
     <module>repository-module</module>
     <module>indexer-module</module>
   </modules>

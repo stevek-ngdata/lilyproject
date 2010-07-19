@@ -18,28 +18,17 @@
     <constructor-arg ref="confRegistry"/>
   </bean>
 
-  <kauri:import-service
-      id="hbaseConfFactory"
-      service="org.lilycms.server.modules.general.HBaseConfigurationFactory"/>
+  <kauri:export-service ref="hbaseConfiguration" service="org.lilycms.server.modules.general.HBaseConfigurationFactory"/>
 
-  <kauri:import-service
-      id="repository"
-      service="org.lilycms.repository.api.Repository"/>
+  <bean id="hbaseConfiguration"
+      class="org.lilycms.server.modules.general.HBaseConfigurationFactoryImpl">
+    <constructor-arg value="${hbase:zookeeperQuorum}"/>
+    <constructor-arg value="${hbase:zookeeperClientPort}"/>
+  </bean>
 
-  <kauri:import-service
-      id="messageQueue"
-      service="org.lilycms.rowlog.api.RowLog"/>
-
-  <bean id="hbaseConf"
-      factory-bean="hbaseConfFactory"
-      factory-method="get"/>
-
-  <bean id="indexerSetup" class="org.lilycms.server.modules.indexer.IndexerSetup">
-    <constructor-arg ref="repository"/>
-    <constructor-arg ref="messageQueue"/>
-    <constructor-arg ref="hbaseConf"/>
-    <constructor-arg value="${indexer:confPath}"/>
-    <constructor-arg value="${indexer:solrAddress}"/>
+  <bean id="metrics"
+      class="org.lilycms.server.modules.general.Metrics">
+    <constructor-arg><kauri:conf path="metrics"/></constructor-arg>
   </bean>
 
 </beans>

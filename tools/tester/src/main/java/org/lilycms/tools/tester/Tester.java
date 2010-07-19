@@ -1,6 +1,7 @@
 package org.lilycms.tools.tester;
 
 import de.svenjacobs.loremipsum.LoremIpsum;
+import org.apache.hadoop.metrics.*;
 import org.apache.zookeeper.KeeperException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
@@ -20,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 
 public class Tester {
@@ -43,11 +45,16 @@ public class Tester {
 
     private List<Field> fields;
     private LoremIpsum loremIpsum = new LoremIpsum();
-    RecordType recordType;
-    List<TestRecord> records = new ArrayList<TestRecord>(50000);
+    private RecordType recordType;
+    private List<TestRecord> records = new ArrayList<TestRecord>(50000);
 
-    PrintStream reportStream;
-    PrintStream errorStream;
+    private PrintStream reportStream;
+    private PrintStream errorStream;
+
+    private String metricsRecordName;
+    private Metrics metrics;
+
+    private enum Action { CREATE, READ, UPDATE, DELETE }
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException,
             RepositoryException, ImportConflictException, ServerUnavailableException, ImportException {
@@ -72,6 +79,11 @@ public class Tester {
         repository = client.getRepository();
 
         createSchema(configNode);
+
+        if (metricsRecordName != null) {
+            System.out.println("Enabling metrics.");
+            metrics = new Metrics();
+        }
 
         openStreams();
         try {            
@@ -98,7 +110,7 @@ public class Tester {
         Closer.close(errorStream);
     }
 
-    public void readConfig(JsonNode configNode) {
+    public void readConfig(JsonNode configNode) throws IOException {
         JsonNode scenario = JsonUtil.getNode(configNode, "scenario");
         createCount = JsonUtil.getInt(scenario, "creates");
         readCount = JsonUtil.getInt(scenario, "reads");
@@ -121,6 +133,25 @@ public class Tester {
         zookeeperConnectString = JsonUtil.getString(configNode, "zookeeper");
         reportFileName = JsonUtil.getString(configNode, "reportFile");
         failuresFileName = JsonUtil.getString(configNode, "failuresFile");
+
+        JsonNode metricsNode = configNode.get("metrics");
+        if (metricsNode != null) {
+            metricsRecordName = JsonUtil.getString(metricsNode, "recordName", null);
+
+            ContextFactory contextFactory = ContextFactory.getFactory();
+
+            String className = JsonUtil.getString(metricsNode, "class", null);
+            if (className != null)
+                contextFactory.setAttribute("lily.class", className);
+
+            String period = JsonUtil.getString(metricsNode, "period", null);
+            if (period != null)
+                contextFactory.setAttribute("lily.period", period);
+
+            String servers = JsonUtil.getString(metricsNode, "servers", null);
+            if (servers != null)
+                contextFactory.setAttribute("lily.servers", servers);
+        }
     }
 
     public void createSchema(JsonNode configNode) throws IOException, RepositoryException, ImportConflictException,
@@ -170,11 +201,11 @@ public class Tester {
                 try {
                     record = repository.create(record);
                     long after = System.currentTimeMillis();
-                    report("C", true, (int)(after - before));
+                    report(Action.CREATE, true, (int)(after - before));
                     records.add(new TestRecord(record));
                 } catch (Throwable t) {
                     long after = System.currentTimeMillis();
-                    report("C", false, (int)(after - before));
+                    report(Action.CREATE, false, (int)(after - before));
                     reportError("Error creating record.", t);
                 }
 
@@ -191,14 +222,14 @@ public class Tester {
                 try {
                     Record readRecord = repository.read(testRecord.record.getId());
                     long after = System.currentTimeMillis();
-                    report("R", true, (int)(after - before));
+                    report(Action.READ, true, (int)(after - before));
 
                     if (!readRecord.equals(testRecord.record)) {
                         System.out.println("Read record does not match written record!");
                     }
                 } catch (Throwable t) {
                     long after = System.currentTimeMillis();
-                    report("R", true, (int)(after - before));
+                    report(Action.READ, true, (int)(after - before));
                     reportError("Error reading record.", t);
                 }
 
@@ -221,12 +252,12 @@ public class Tester {
                 try {
                     updatedRecord = repository.update(updatedRecord);
                     long after = System.currentTimeMillis();
-                    report("U", true, (int)(after - before));
+                    report(Action.UPDATE, true, (int)(after - before));
 
                     testRecord.record = updatedRecord;
                 } catch (Throwable t) {
                     long after = System.currentTimeMillis();
-                    report("U", true, (int)(after - before));
+                    report(Action.UPDATE, true, (int)(after - before));
                     reportError("Error updating record.", t);
                 }
 
@@ -244,10 +275,10 @@ public class Tester {
                     repository.delete(testRecord.record.getId());
                     long after = System.currentTimeMillis();
                     testRecord.deleted = true;
-                    report("D", true, (int)(after - before));
+                    report(Action.DELETE, true, (int)(after - before));
                 } catch (Throwable t) {
                     long after = System.currentTimeMillis();
-                    report("D", true, (int)(after - before));
+                    report(Action.DELETE, true, (int)(after - before));
                     reportError("Error deleting record.", t);
                 }
 
@@ -295,8 +326,12 @@ public class Tester {
         return testRecord;
     }
 
-    private void report(String action, boolean success, int duration) {
+    private void report(Action action, boolean success, int duration) {
         reportStream.println((success ? "S" : "F") + "," + action + "," + duration);
+
+        if (metrics != null) {
+            metrics.report(action, success, duration);
+        }
     }
 
     private void reportError(String message, Throwable throwable) {
@@ -304,6 +339,54 @@ public class Tester {
         errorStream.println("[" + new DateTime() + "] " + message);
         StackTracePrinter.printStackTrace(throwable, errorStream);
         errorStream.println("---------------------------------------------------------------------------");        
+    }
+
+    private class Metrics implements Updater {
+        private int successCount;
+        private int failureCount;
+        private EnumMap<Action, Long> duration = new EnumMap<Action, Long>(Action.class);
+        private EnumMap<Action, Long> count = new EnumMap<Action, Long>(Action.class);
+        private MetricsRecord record;
+
+        public Metrics() {
+            for (Action action : Action.values()) {
+                duration.put(action, 0L);
+                count.put(action, 0L);
+            }
+
+            MetricsContext lilyContext = MetricsUtil.getContext("lily");
+            record = lilyContext.createRecord(metricsRecordName);
+            lilyContext.registerUpdater(this);
+        }
+
+        public synchronized void doUpdates(MetricsContext unused) {
+            record.incrMetric("successCount", successCount);
+            successCount = 0;
+
+            record.incrMetric("failureCount", failureCount);
+            failureCount = 0;
+
+            for (Action action : Action.values()) {
+                long duration = this.duration.get(action);
+                long count = this.count.get(action);
+
+                this.duration.put(action, 0L);
+                this.count.put(action, 0L);
+
+                record.setMetric("duration." + action, count > 0 ? duration / count : 0);
+            }
+            record.update();
+        }
+
+        synchronized void report(Action action, boolean success, int duration) {
+            if (success)
+                successCount ++;
+            else
+                failureCount++;
+
+            this.duration.put(action, this.duration.get(action) + duration);
+            this.count.put(action, this.count.get(action) + 1);
+        }
     }
 
     private class Field {

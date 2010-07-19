@@ -18,10 +18,10 @@
     <constructor-arg ref="confRegistry"/>
   </bean>
 
-  <kauri:export-service ref="hbaseConfiguration" service="org.lilycms.server.modules.hbase.HBaseConfigurationFactory"/>
+  <kauri:export-service ref="hbaseConfiguration" service="org.lilycms.server.modules.general.HBaseConfigurationFactory"/>
 
   <bean id="hbaseConfiguration"
-      class="org.lilycms.server.modules.hbase.HBaseConfigurationFactoryImpl">
+      class="org.lilycms.server.modules.general.HBaseConfigurationFactoryImpl">
     <constructor-arg value="${hbase:zookeeperQuorum}"/>
     <constructor-arg value="${hbase:zookeeperClientPort}"/>
   </bean>

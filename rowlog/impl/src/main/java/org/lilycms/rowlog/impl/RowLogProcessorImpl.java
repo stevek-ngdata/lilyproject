@@ -25,6 +25,10 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.metrics.MetricsContext;
+import org.apache.hadoop.metrics.MetricsRecord;
+import org.apache.hadoop.metrics.MetricsUtil;
+import org.apache.hadoop.metrics.Updater;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -256,13 +260,16 @@ public class RowLogProcessorImpl implements RowLogProcessor {
     private class ConsumerThread extends Thread {
         private final RowLogMessageConsumer consumer;
         private long lastWakeup;
+        private ProcessorMetrics metrics;
 
         public ConsumerThread(RowLogMessageConsumer consumer) {
             this.consumer = consumer;
+            this.metrics = new ProcessorMetrics();
         }
         
         public synchronized void wakeup() {
             lastWakeup = System.currentTimeMillis();
+            metrics.incWakeupCount();
             this.notify();
         }
         
@@ -273,13 +280,16 @@ public class RowLogProcessorImpl implements RowLogProcessor {
             while (!isInterrupted()) {
                 try {
                     message = shard.next(consumer.getId());
+                    metrics.incScanCount();
                     if (message != null) {
                         byte[] lock = rowLog.lockMessage(message, consumer.getId());
                         if (lock != null) {
                             if (consumer.processMessage(message)) {
                                 rowLog.messageDone(message, consumer.getId(), lock);
+                                metrics.incSuccessCount();
                             } else {
                                 rowLog.unlockMessage(message, consumer.getId(), lock);
+                                metrics.incFailureCount();
                             }
                         }
                     } else {
@@ -300,5 +310,49 @@ public class RowLogProcessorImpl implements RowLogProcessor {
                 }
             }
         }
+
+        private class ProcessorMetrics implements Updater {
+            private int scanCount = 0;
+            private int successCount = 0;
+            private int failureCount = 0;
+            private int wakeupCount = 0;
+            private MetricsRecord record;
+
+            public ProcessorMetrics() {
+                MetricsContext lilyContext = MetricsUtil.getContext("lily");
+                record = lilyContext.createRecord("rowLogProcessor." + consumer.getId());
+                lilyContext.registerUpdater(this);
+            }
+
+            public synchronized void doUpdates(MetricsContext unused) {
+                record.setMetric("scanCount", scanCount);
+                record.setMetric("successCount", successCount);
+                record.setMetric("failureCount", failureCount);
+                record.setMetric("wakeupCount", wakeupCount);
+                record.update();
+
+                scanCount = 0;
+                successCount = 0;
+                failureCount = 0;
+                wakeupCount = 0;
+            }
+
+            synchronized void incScanCount() {
+                scanCount++;
+            }
+
+            synchronized void incSuccessCount() {
+                successCount++;
+            }
+
+            synchronized void incFailureCount() {
+                failureCount++;
+            }
+
+            synchronized void incWakeupCount() {
+                wakeupCount++;
+            }
+        }
+
     }
 }

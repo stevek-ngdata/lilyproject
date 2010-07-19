@@ -5,6 +5,16 @@
 
   "failuresFile": "failures.log",
 
+  metrics: {
+    /* Uncomment the following to let the tester report to ganglia */
+    /*
+    recordName: "tester",
+    class: "org.apache.hadoop.metrics.ganglia.GangliaContext",
+    period: "10",
+    servers: "localhost:8649"
+    */
+  },
+
   "namespaces": [
     { "prefix": "tester", "uri": "org.lilycms.tools.tester"}
   ],

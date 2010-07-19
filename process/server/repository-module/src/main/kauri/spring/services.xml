@@ -20,7 +20,7 @@
 
   <kauri:import-service
       id="hbaseConfFactory"
-      service="org.lilycms.server.modules.hbase.HBaseConfigurationFactory"/>
+      service="org.lilycms.server.modules.general.HBaseConfigurationFactory"/>
 
   <kauri:export-service
       ref="repository"

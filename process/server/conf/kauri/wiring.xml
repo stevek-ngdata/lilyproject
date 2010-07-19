@@ -3,7 +3,7 @@
 
   <modules>
 
-    <artifact id="hbase" groupId="org.lilycms" artifactId="lily-hbase-module" version="0.1-dev">
+    <artifact id="general" groupId="org.lilycms" artifactId="lily-general-module" version="0.1-dev">
     </artifact>
 
     <artifact id="repository" groupId="org.lilycms" artifactId="lily-repository-module" version="0.1-dev">
