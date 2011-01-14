@@ -51,7 +51,9 @@ public abstract class BaseTestTool extends BaseZkCliTool {
 
     protected Metrics metrics;
 
-    protected ZooKeeperItf zk;
+    private ZooKeeperItf zk;
+
+    private Configuration hbaseConf;
 
     protected int getDefaultWorkers() {
         return 2;
@@ -178,13 +180,15 @@ public abstract class BaseTestTool extends BaseZkCliTool {
     }
 
     public void startExecutor() {
-        executor = new ThreadPoolExecutor(workers, workers, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(1000));
+        executor = new ThreadPoolExecutor(workers, workers, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(100));
         executor.setRejectedExecutionHandler(new WaitPolicy());
     }
 
     public void stopExecutor() throws InterruptedException {
         executor.shutdown();
-        boolean successfulFinish = executor.awaitTermination(5, TimeUnit.MINUTES);
+        // There might be quite some jobs waiting in the queue, and we don't care how long they take to run
+        // to an end
+        boolean successfulFinish = executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
         if (!successfulFinish) {
             System.out.println("Executor did not end successfully");
         }
@@ -192,15 +196,16 @@ public abstract class BaseTestTool extends BaseZkCliTool {
     }
 
     public Configuration getHBaseConf() {
-        Configuration hbaseConf = HBaseConfiguration.create();
+        if (hbaseConf == null) {
+            hbaseConf = HBaseConfiguration.create();
 
-        // TODO
-        if (zkConnectionString.contains(":")) {
-            System.err.println("ATTENTION: do not include port numbers in zookeeper connection string when using features/tests that use HBase.");
+            // TODO
+            if (zkConnectionString.contains(":")) {
+                System.err.println("ATTENTION: do not include port numbers in zookeeper connection string when using features/tests that use HBase.");
+            }
+
+            hbaseConf.set("hbase.zookeeper.quorum", zkConnectionString);
         }
-
-        hbaseConf.set("hbase.zookeeper.quorum", zkConnectionString);
-
         return hbaseConf;
     }
 

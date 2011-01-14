@@ -13,7 +13,6 @@ import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 
 import java.io.IOException;

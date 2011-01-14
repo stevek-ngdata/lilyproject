@@ -75,7 +75,7 @@ public class HBaseMetrics {
         }
 
         for (Map.Entry<String, TableInfo> entry : tableInfos.entrySet()) {
-            HTableInterface table = new HTable(entry.getKey());
+            HTableInterface table = new HTable(hbaseAdmin.getConfiguration(), entry.getKey());
             Scan scan = new Scan();
             scan.setCaching(100);
             scan.setCacheBlocks(false);
