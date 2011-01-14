@@ -83,6 +83,8 @@ public class CreateAction extends AbstractTestAction implements TestAction {
                 return new ActionResult(true, new Link(((Record)result.object).getId()), result.duration);
             } else {
                 TestRecord record2 = testActionContext.records.getRecord(linkedRecordSource);
+                if (record2 == null)
+                    return new ActionResult(false, null, 0);
                 return new ActionResult(true, new Link(record2.getRecordId()), 0);
             }
         } else {

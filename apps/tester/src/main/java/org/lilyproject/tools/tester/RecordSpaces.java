@@ -21,15 +21,22 @@ public class RecordSpaces {
     }
     
     public void addRecord(String space, TestRecord record) {
-        recordSpaces.get(space).addRecord(record);
+        RecordSpace recordSpace = recordSpaces.get(space);
+        if (recordSpace != null) 
+            recordSpace.addRecord(record);
     }
     
     public void removeRecord(String space, TestRecord record) {
-        recordSpaces.get(space).removeRecord(record);
+        RecordSpace recordSpace = recordSpaces.get(space);
+        if (recordSpace != null) 
+            recordSpace.removeRecord(record);
     }
     
     public TestRecord getRecord(String space) {
-        return recordSpaces.get(space).getRecord();
+        RecordSpace recordSpace = recordSpaces.get(space);
+        if (recordSpace != null)
+            return recordSpace.getRecord();
+        else return null;
     }
     
     private class RecordSpace {
