@@ -22,9 +22,11 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.zookeeper.*;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -161,7 +163,7 @@ public class HBaseProxy {
             if (stopHBaseThread.isAlive()) {
                 System.err.println("Unable to stop embedded mini cluster within predetermined timeout.");
                 System.err.println("Dumping stack for future investigation.");
-                Thread.dumpStack();
+                ReflectionUtils.printThreadInfo(new PrintWriter(System.out), "Thread dump");
                 System.out.println("Will now try to interrupt the mini-cluster-stop-thread and give it some more time to end.");
                 stopHBaseThread.interrupt();
                 stopHBaseThread.join(20000);
