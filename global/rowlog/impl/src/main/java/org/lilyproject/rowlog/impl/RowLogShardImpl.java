@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -142,6 +143,10 @@ public class RowLogShardImpl implements RowLogShard {
             if (minimalTimestamp != null)
                 scan.setTimeRange(minimalTimestamp, Long.MAX_VALUE);
             scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
+            // Add a filter to stop the scan as soon as we encounter a KV from another subscription, otherwise
+            // we would end up scanning over a whole lot of deletion tombstones.
+            scan.setFilter(new PrefixFilter(rowPrefix));
+
             ResultScanner scanner = table.getScanner(scan);
             boolean keepScanning = problematic;
             do {

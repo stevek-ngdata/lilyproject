@@ -22,6 +22,7 @@ import org.apache.hadoop.metrics.MetricsUtil;
 import org.apache.hadoop.metrics.Updater;
 import org.apache.hadoop.metrics.util.MetricsBase;
 import org.apache.hadoop.metrics.util.MetricsRegistry;
+import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 import org.lilyproject.util.hbase.metrics.MetricsNonTimeRate;
@@ -36,6 +37,8 @@ public class ProcessorMetrics implements Updater {
     private final MetricsContext context;
 
     public MetricsRate scans = new MetricsRate("scans_rate", registry);
+
+    public MetricsTimeVaryingRate scanDuration = new MetricsTimeVaryingRate("scan_duration", registry);
 
     public MetricsNonTimeRate messagesPerScan = new MetricsNonTimeRate("messagesPerScan", registry);
 

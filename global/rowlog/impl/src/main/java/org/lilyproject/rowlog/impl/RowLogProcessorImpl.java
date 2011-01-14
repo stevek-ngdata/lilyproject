@@ -49,6 +49,13 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     private Log log = LogFactory.getLog(getClass());
     private long lastNotify = -1;
     private RowLogConfig rowLogConfig;
+
+    /*
+     * Maximum expected clock skew between servers.
+     * At the time of this writing, HBase checked this skew, but allowed up to 30s:
+     * https://issues.apache.org/jira/browse/HBASE-3168
+     */
+    private static final int MAX_CLOCK_SKEW_BETWEEN_SERVERS = 5000;
     
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     
@@ -188,9 +195,10 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         private volatile boolean stopRequested = false; // do not rely only on Thread.interrupt since some libraries eat interruptions
         private MessagesWorkQueue messagesWorkQueue = new MessagesWorkQueue();
         private SubscriptionHandler subscriptionHandler;
-		private long wakeupTimeout = 5000;
-		private long waitAtLeastUntil = 0;
+        private long wakeupTimeout = 5000;
+        private long waitAtLeastUntil = 0;
         private final RowLogSubscription subscription;
+        private boolean firstRun = true;
 
         public SubscriptionThread(RowLogSubscription subscription) {
             super("Row log SubscriptionThread for " + subscription.getId());
@@ -239,16 +247,29 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                 while (!isInterrupted() && !stopRequested) {
                     try {
                         metrics.scans.inc();
+
+                        long before = System.currentTimeMillis();
                         List<RowLogMessage> messages = shard.next(subscription.getId(), minimalTimestamp);
+                        metrics.scanDuration.inc(System.currentTimeMillis() - before);
 
                         if (stopRequested) {
                             // Check if not stopped because HBase hides thread interruptions
                             return;
                         }
 
+                        if (firstRun) {
+                            firstRun = false;
+                            if (messages.isEmpty()) {
+                                // If on startup of this processor, we have no messages, we initialize the
+                                // minimalTimestamp manually so that we would not always scan from the start
+                                // of the table. We subtract a margin just in case any message just got in.
+                                minimalTimestamp = System.currentTimeMillis() - MAX_CLOCK_SKEW_BETWEEN_SERVERS;
+                            }
+                        }
+
                         metrics.messagesPerScan.inc(messages != null ? messages.size() : 0);
 						if (messages != null && !messages.isEmpty()) {
-						    minimalTimestamp = messages.get(0).getTimestamp(); 
+						    minimalTimestamp = messages.get(0).getTimestamp() - MAX_CLOCK_SKEW_BETWEEN_SERVERS;
                             for (RowLogMessage message : messages) {
                                 if (stopRequested)
                                     return;
