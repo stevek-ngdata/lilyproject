@@ -23,27 +23,77 @@
     "org.lilyproject.tools.tester": "tester",
     "org.lilyproject.vtag": "vtag"
   },
+  
+  /* Record spaces :
+  
+     * Record spaces contain lists of recordIds
+     * These lists can be used as sources or destinations for an action in the scenario
+
+     * name : The name of the record space to be used in the scenario.
+     * limit : The maximum amount of id's to store in the space. 
+               If the maximum is reached, a random id will be removed before adding a new one.    
+  */
+  recordSpaces: [
+    {
+      name: "recordsRT1",
+      limit: 10000
+    },
+    {
+      name: "recordsRT2",
+      limit: 10000
+    },
+    { 
+      name: "subRecords",
+      limit: 10000
+    },
+    { 
+      name: "deletedRecords",
+      limit: 10000
+    }
+  ],
 
   /*
     Field types:
 
-      * Each created test record will have a value for each of these fields
+      * Define the field types that can be used in the record types.
 
       * These field types are automatically created if necessary.
 
       * If the field type would already exist but not correspond to the
         description here, an error will be generated.
 
-      The format to describe the field types is the same as for the lily-import
-      tool or the REST interface, please refer to their documentation for more
-      details.
-
+      * The format to describe the field types is the similar as for the lily-import
+        tool or the REST interface, please refer to their documentation for more
+        details.
+        
+      * In addition there can be a properties parameter per field type.
+        The content of this parameter depends on the valueType of the fieldType.
+        * STRING :
+          enum : A comma separated list of words that can be used when generating values.
+                 A random word will be picked from this list.
+                 If no enum is given, a big Word list will be used instead.
+          wordCount : The number of words to concatenate, separated with spaces.
+                      If no wordCount is given, a random number of words will be used.
+        * INTEGER, LONG :
+          enum : A comma separated list of numbers that can be used when generating values.  
+                 A random number will be picked from this list.
+          min, max : The mininum and maximum numbers between which to pick a number.
+                     If enum is given, min and max are ignored.
+                     If no min and max are given, MIN_VALUE and MAX_VALUE are used.
+        * LINK :
+          recordType : The link will contain a recordId to a record (or records in case of multivalue)
+                       of that record type.
+                       If no record type is given a random recordId will be generated.
+          recordSource : The space from which to select a random recordId. Note: this space should contain 
+                         records of the given record type.
+                         If no recordSource is given a new record will be created of the given record type.
   */
   fieldTypes: [
     {
       name: "tester$field1",
       valueType: { "primitive": "STRING" },
-      scope: "versioned"
+      scope: "versioned",
+      properties: {enum: "foo,bar,something", wordCount: 3}
     },
     {
       name: "tester$field2",
@@ -63,12 +113,14 @@
     {
       name: "tester$field5",
       valueType: { "primitive": "INTEGER" },
-      scope: "versioned"
+      scope: "versioned",
+      properties: {enum: "5,55,555"}
     },
     {
       name: "tester$field6",
       valueType: { "primitive": "LONG" },
-      scope: "non_versioned"
+      scope: "non_versioned",
+      properties: {min: 3000000000, max: 4000000000}
     },
     {
       name: "tester$field7",
@@ -83,7 +135,8 @@
     {
       name: "tester$field9",
       valueType: { "primitive": "LINK" },
-      scope: "versioned"
+      scope: "versioned",
+      properties: {recordType: "tester$RTSub", recordSource: "subRecords"}
     },
     {
       name: "tester$field10",
@@ -92,35 +145,136 @@
     },
     {
       name: "vtag$last",
-      valueType: { primitive: "LONG" },
+      valueType: { "primitive": "LONG" },
       scope: "non_versioned"
     }
   ],
 
   /*
-     Record type:
+     Record types:
 
-        This is the record type used for creating all test records.
+        These are the record types used for creating all test records.
 
-        This record type will be automatically created or updated as necessary,
-        containing all the above fields (as not mandatory).
+        These record types will be automatically created or updated as necessary,
+        containing the indicated fields (as not mandatory) which must have been declared above.
   */
-  recordTypeName: "tester$TesterRecordType",
+  recordTypes: [
+    {
+      name: "tester$RT1",
+      fields: [
+        {
+          name: "tester$field1"
+        },
+        {
+          name: "tester$field2"
+        },
+        {
+          name: "tester$field3"
+        }
+      ]
+    },
+    {
+      name: "tester$RTSub",
+      fields: [
+        {
+          name: "tester$field6"
+        }
+      ] 
+    },
+    {
+      name: "tester$RT2",
+      fields: [
+        {
+          name: "tester$field4"
+        },
+        {
+          name: "tester$field5"
+        },
+        {
+          name: "tester$field9"
+        }
+      ]
+    }
+  ], 
 
-  scenario: {
-    /* The number of record creations to be done upon each iteration. Should be > 0 */
-    creates: 5,
-
-    /* The number or record reads to be done upon each iteration. */
-    reads: 5,
-
-    /* The number of record updates to be done upon each iteration. */
-    updates: 1,
-
-    /* The number of record delete operations to be done upon each iteration. Should be
-    less than the number of creates. */
-    deletes: 1
-  },
+/* Scenario :
+   
+   * The scenario describes the actions to perform in one iteration of the test
+   * name : The name of the action, which will be used in the metrics.
+   * action : The action code which must correspond to a TestAction class.
+   * count : The number of times to perform the action before going to the next action.
+   * recordType : The record type the action of performed upon.
+   * source : The record space to use as source for the action.
+   * destination : The record space to use as destination for the action.
+   * pattern : (Only applicable for Update action)
+               The kind of update operation to perform.
+               Can be one off : 
+                 "all" : update all fields of the record
+                 "fields" : which fields to update
+                 "random" : pick random fields from the record
+                 * patternDetail : extra information for the pattern
+                   * in case of fields pattern : a comma separated list of the fields to update
+                   * in case of random : the number of random fields to pick
+*/
+  scenario: [
+    {
+      name: "create1",
+      action: "create",
+      recordType: "tester$RTSub",
+      count: 5,
+      destination: "subRecords"
+    },
+    {
+      name: "create2",
+      action: "create",
+      recordType: "tester$RT1",
+      count: 5,
+      destination: "recordsRT1"
+    },
+    {
+      name: "create3",
+      action: "create",
+      recordType: "tester$RT2",
+      count: 2,
+      destination: "recordsRT2"
+    },
+    {
+      name: "read1",
+      action: "read",
+      count: 1,
+      source: "recordsRT1"
+    },
+        {
+      name: "read2",
+      action: "read",
+      count: 1,
+      source: "recordsRT2"
+    },
+    {
+      name: "update1",
+      action: "update",
+      pattern: "random", 
+      patternDetail: "2",
+      count: 1,
+      source: "recordsRT1",
+      destination: "recordsRT1"
+    },
+    {
+      name: "update2",
+      action: "update",
+      pattern: "all",
+      count: 1,
+      source: "recordsRT2",
+      destination: "recordsRT2"
+    },
+    {
+      name: "delete1",
+      action: "delete",
+      count: 1,
+      source: "recordsRT1",
+      destination: "deletedRecords"
+    }
+  ],
 
 
   /*
@@ -130,7 +284,6 @@
   stopConditions: {
     /* The time is in minutes */
     maximumRunTime: 10,
-    maximumRecordsCreated: 1000000,
     maximumFailures: 1000
   }
 }
