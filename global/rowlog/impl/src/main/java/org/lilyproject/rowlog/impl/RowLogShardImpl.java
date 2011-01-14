@@ -180,6 +180,10 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
 
+    public int getBatchSize() {
+        return batchSize;
+    }
+
     public void markProblematic(RowLogMessage message, String subscription) throws RowLogException {
         byte[] rowKey = createRowKey(message, subscription, true);
         Put put = new Put(rowKey);

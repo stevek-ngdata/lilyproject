@@ -58,7 +58,7 @@ public interface RowLogShard {
      * Retrieves the next messages to be processed by the indicated subscription.
      * 
      * @param subscription the id of the subscription for which the next messages should be retrieved
-     * @return the next 100, or less {@link RowLogMessage}s to be processed
+     * @return the next {@link #getBatchSize}, or less {@link RowLogMessage}s to be processed
      * @throws RowLogException when an unexpected exception occurs
      */
     List<RowLogMessage> next(String subscription) throws RowLogException;
@@ -68,10 +68,15 @@ public interface RowLogShard {
      * 
      * @param subscription the id of the subscription for which the next messages should be retrieved
      * @param startTimestamp the minimal timestamp of the messages to be retrieved
-     * @return the next 100, or less {@link RowLogMessage}s to be processed
+     * @return the next {@link #getBatchSize}, or less {@link RowLogMessage}s to be processed
      * @throws RowLogException when an unexpected exception occurs
      */
     List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException;
+
+    /**
+     * Returns the maximum amount of messages that are returned by a call to {@link #next}.
+     */
+    int getBatchSize();
 
     /**
      * Marks a RowLogMessage as problematic for the indicated subscription.

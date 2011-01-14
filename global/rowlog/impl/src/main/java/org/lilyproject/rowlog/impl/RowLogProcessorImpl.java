@@ -196,7 +196,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         private MessagesWorkQueue messagesWorkQueue = new MessagesWorkQueue();
         private SubscriptionHandler subscriptionHandler;
         private long wakeupTimeout = 5000;
-        private long waitAtLeastUntil = 0;
         private final RowLogSubscription subscription;
         private boolean firstRun = true;
 
@@ -224,8 +223,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         public synchronized void wakeup() {
             metrics.wakeups.inc();
             lastWakeup = System.currentTimeMillis();
-            if (lastWakeup > waitAtLeastUntil) 
-            	this.notify(); // Only notify if the process delay of the oldest message has expired
+            this.notify();
         }
         
         @Override
@@ -248,9 +246,9 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                     try {
                         metrics.scans.inc();
 
-                        long before = System.currentTimeMillis();
+                        long tsBeforeGetMessages = System.currentTimeMillis();
                         List<RowLogMessage> messages = shard.next(subscription.getId(), minimalTimestamp);
-                        metrics.scanDuration.inc(System.currentTimeMillis() - before);
+                        metrics.scanDuration.inc(System.currentTimeMillis() - tsBeforeGetMessages);
 
                         if (stopRequested) {
                             // Check if not stopped because HBase hides thread interruptions
@@ -289,14 +287,19 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                     }
                                 }
                             }
-                        } else {
-                        	// There are no messages in the queue
-                        	// We wait for a while to avoid too many scans on the HBase table
-                        	// If a wake-up comes in, a notify will take us out of the wait
-                            if (lastWakeup + wakeupTimeout < System.currentTimeMillis()) {
-                                synchronized (this) {
-                                    wait(wakeupTimeout);
-                                }
+                        }
+
+                        // If we had a full batch of messages, we will immediately request the next batch, without
+                        // sleeping. If we got less, we sleep unless we received a wake-up signal after we started
+                        // scanning for messages.
+                        // Also: the minimalProcessDelay setting is not taken into account: as it currently is,
+                        // this is only relevant for the WAL, which does not make use of the wake-up signal.
+                        if (messages.size() < shard.getBatchSize() && lastWakeup < tsBeforeGetMessages) {
+                            synchronized (this) {
+                                // The timeout covers two cases:
+                                //   (1) a safety fallback, in case a wake-up got lost or so
+                                //   (2) the WAL, which does not make use of wake-ups
+                                wait(wakeupTimeout);
                             }
                         }
                     } catch (InterruptedException e) {
@@ -327,7 +330,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         private boolean checkMinimalProcessDelay(RowLogMessage message) throws InterruptedException {
             long now = System.currentTimeMillis();
             long messageTimestamp = message.getTimestamp();
-            waitAtLeastUntil = messageTimestamp + rowLogConfig.getMinimalProcessDelay();
+            long waitAtLeastUntil = messageTimestamp + rowLogConfig.getMinimalProcessDelay();
             if (now < waitAtLeastUntil) {
                 synchronized (this) {
                     wait(waitAtLeastUntil - now);
