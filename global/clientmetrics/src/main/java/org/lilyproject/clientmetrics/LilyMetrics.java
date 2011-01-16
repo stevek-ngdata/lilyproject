@@ -8,6 +8,9 @@ import javax.management.openmbean.CompositeDataSupport;
 import java.io.PrintStream;
 import java.util.List;
 
+/**
+ * Various utility methods to pull interesting data from Lily.
+ */
 public class LilyMetrics {
     private ZooKeeperItf zk;
     private JmxConnections jmxConnections = new JmxConnections();

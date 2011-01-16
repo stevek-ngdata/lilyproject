@@ -4,9 +4,24 @@ import org.joda.time.DateTime;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
- * Keeps metrics for a certain interval and prints them out when the interval ends.
+ * Simple system for collecting metrics in client/test applications.
+ *
+ * <p>The intention is that metrics are immediately interpretable while the test is running. For this purpose,
+ * each 30 second interval, a summary table is printed with the metric values of the last 30 seconds, as well
+ * as the running total averages.
+ *
+ * <p>This class in itself is usable in any context, independent of Lily. Besides the metrics that you report
+ * yourself, it is also possible to collect some system/HBase metrics at the end of each interval. These
+ * are retrieved via HBaseAdmin & JMX. See {@link HBaseMetricsPlugin}.
+ *
+ * <p>If afterwards you'd like some charts of the metrics, check out
+ * {@link org.lilyproject.clientmetrics.postproc.MetricsReportTool}.
+ *
+ * <p>The metrics files produced by this class are human readable but also machine readable, they can
+ * be parsed using {@link org.lilyproject.clientmetrics.postproc.MetricsParser}.
  */
 public class Metrics {
     private Map<String, Metric> metrics = new TreeMap<String, Metric>();
@@ -18,6 +33,8 @@ public class Metrics {
     private boolean inReport;
     private int threadCount = 1;
     private Table table;
+
+    private static final Pattern NAME_PATTERN = Pattern.compile("\\w+");
 
     public Metrics() {
         this(System.out, null);
@@ -69,18 +86,17 @@ public class Metrics {
         reportStream.println("");
     }
 
-    public void printPhaseTitle(String title) {
-        reportStream.print("+");
-        for (int i = 0; i < title.length() + 2; i++) {
-            reportStream.print("-");
+    public void beginTest(String testName, String testDescription) {
+        // The testName should be something simple, as it is used by MetricsReportTool for filenames.
+        if (!NAME_PATTERN.matcher(testName).matches()) {
+            throw new IllegalArgumentException("Invalid test name, should be alphanumeric only: " + testName);
         }
-        reportStream.println("+");
-        reportStream.println("| " + title + " |");
-        reportStream.print("+");
-        for (int i = 0; i < title.length() + 2; i++) {
-            reportStream.print("-");
-        }
-        reportStream.println("+");
+
+        reportStream.println();
+        reportStream.print("===================================================================================================");
+        reportStream.print(testName + ": " + testDescription);
+        reportStream.print("===================================================================================================");
+        reportStream.println();
     }
 
     public int getIntervalDuration() {
@@ -97,10 +113,29 @@ public class Metrics {
 
     /**
      *
+     * @param name a name for this metric. Can contain any character but colon. The symbol '@' has a special
+     *             meaning towards post-processing tools such as
+     *             {@link org.lilyproject.clientmetrics.postproc.MetricsReportTool}: it will group metrics with
+     *             the same text before the @ symbol.
      * @param type optional, can be null. If specified, number of operations per second will be summarized
-     *             for all metrics of the same type. The value must represent a timing in milliseconds.
+     *             for all metrics of the same type. The value must represent a timing in milliseconds. Only
+     *             alphanumeric characters allowed.
+     * @param operations the number of operations performed, usually 1, but sometimes operations are performed
+     *                   in groups
+     * @param value the value for the metric, such as a duration (typically in ms), an operation count, or whatever
+     *              quantity you want to keep track of such as free memory, cpu load, ...
      */
     public synchronized void increment(String name, String type, int operations, double value) {
+        if (type != null && !NAME_PATTERN.matcher(type).matches()) {
+            // Being strict here, can be helpful for further reporting
+            throw new IllegalArgumentException("Invalid type name, should be alphanumeric only: " + type);
+        }
+        if (name.indexOf(':') > 0) {
+            // Colons are used to separate the type from the name in the output, and type is optional, so if
+            // would allow colon in the name we would not be able to know what it stands for
+            throw new IllegalArgumentException("Usage of the colon character is reserved in the metric name: " + name);
+        }
+
         if (intervalStartedAt == null) {
             // it's our very first value
             intervalStartedAt = new DateTime();

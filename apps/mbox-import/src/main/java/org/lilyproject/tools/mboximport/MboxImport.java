@@ -239,7 +239,7 @@ public class MboxImport extends BaseRepositoryTestTool {
                         os.close();
                     }
                     double duration = System.nanoTime() - startTime;
-                    metrics.increment("Blob creation", "B", duration / 1e6d);
+                    metrics.increment("Blob creation", "Blob", duration / 1e6d);
 
                     Part part = message.addPart(blob);
                     part.baseMediaType = stream.getBodyDescriptor().getMimeType();
@@ -316,7 +316,7 @@ public class MboxImport extends BaseRepositoryTestTool {
         long startTime = System.nanoTime();
         messageRecord = repository.createOrUpdate(messageRecord);
         double duration = System.nanoTime() - startTime;
-        metrics.increment("Message record", "C", duration / 1e6d);
+        metrics.increment("Message record", "Create", duration / 1e6d);
 
         for (int i = 0; i < message.parts.size(); i++) {
             Part part = message.parts.get(i);
@@ -329,7 +329,7 @@ public class MboxImport extends BaseRepositoryTestTool {
             startTime = System.nanoTime();
             partRecord = repository.createOrUpdate(partRecord);
             duration = System.nanoTime() - startTime;
-            metrics.increment("Part record", "C", duration / 1e6d);
+            metrics.increment("Part record", "Create", duration / 1e6d);
 
             part.recordId = partRecord.getId();
             increment(part.baseMediaType);

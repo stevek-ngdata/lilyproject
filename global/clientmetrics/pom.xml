@@ -31,6 +31,28 @@
   </parent>
 
   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-genscript-plugin</artifactId>
+        <configuration>
+          <scripts>
+            <script>
+              <basename>lily-metrics-report</basename>
+              <mainClass>org.lilyproject.clientmetrics.postproc.MetricsReportTool</mainClass>
+            </script>
+          </scripts>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>genscript</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 
   <dependencies>
@@ -47,6 +69,11 @@
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-zk-util</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-cli-fw</artifactId>
     </dependency>
 
     <dependency>

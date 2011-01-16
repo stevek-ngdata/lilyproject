@@ -4,6 +4,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class for producing ASCII-tables.
+ */
 public class Table {
     private List<Column> columns = new ArrayList<Column>();
     private boolean defined = false;

@@ -7,9 +7,7 @@ import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.openmbean.CompositeType;
 import javax.management.remote.JMXConnector;
@@ -21,18 +19,25 @@ import java.lang.management.MemoryUsage;
 import java.net.MalformedURLException;
 import java.util.*;
 
+/**
+ * Various utility methods to pull interesting data from HBase.
+ */
 public class HBaseMetrics {
     private HBaseAdmin hbaseAdmin;
     private JmxConnections jmxConnections = new JmxConnections();
     private static final String HBASE_JMX_PORT = "10102";
 
-    private ObjectName regionServerStats;
-    private ObjectName operationSystem;
+    private ObjectName regionServerStats = new ObjectName("hadoop:service=RegionServer,name=RegionServerStatistics");;
+    private ObjectName operationSystem = new ObjectName("java.lang:type=OperatingSystem");
+    private ObjectName memory = new ObjectName("java.lang:type=Memory");
+    private ObjectName gcMarkSweep = new ObjectName("java.lang:type=GarbageCollector,name=PS MarkSweep");
+    private ObjectName gcScavenge = new ObjectName("java.lang:type=GarbageCollector,name=PS Scavenge");
+    private ObjectName threading = new ObjectName("java.lang:type=Threading");
+
+    private Map<String, Long> previousGcData = new HashMap<String, Long>();
 
     public HBaseMetrics(HBaseAdmin hbaseAdmin) throws MasterNotRunningException, MalformedObjectNameException {
         this.hbaseAdmin = hbaseAdmin;
-        this.regionServerStats = new ObjectName("hadoop:service=RegionServer,name=RegionServerStatistics");
-        this.operationSystem = new ObjectName("java.lang:type=OperatingSystem");
     }
 
     public void reportMetrics(Metrics metrics) throws Exception {
@@ -44,10 +49,50 @@ public class HBaseMetrics {
 
             Integer blockCacheHitRatio = (Integer)connection.getAttribute(regionServerStats, "blockCacheHitRatio");
             Double sysLoadAvg = (Double)connection.getAttribute(operationSystem, "SystemLoadAverage");
+            Integer threadCount = (Integer)connection.getAttribute(threading, "ThreadCount");
 
+            CompositeDataSupport heapMemUsage = (CompositeDataSupport)connection.getAttribute(memory, "HeapMemoryUsage");
+            double usedHeapMB = ((double)(Long)heapMemUsage.get("used")) / 1024d / 1024d;
 
-            metrics.increment("blockCacheHitRatio:" + serverName, blockCacheHitRatio);
-            metrics.increment("sysLoadAvg:" + serverName, sysLoadAvg);
+            Long gcScavengeCollCount = getDiffWithPrevious("sc", connection, gcScavenge, "CollectionCount");
+            Long gcScavengeCollTime = getDiffWithPrevious("sc", connection, gcScavenge, "CollectionTime");
+
+            Long gcMarkSweepCollCount = getDiffWithPrevious("ms", connection, gcMarkSweep, "CollectionCount");
+            Long gcMarkSweepCollTime = getDiffWithPrevious("ms", connection, gcMarkSweep, "CollectionTime");
+
+            // The dash at the beginning of the name is a hint towards the MetricsReportTool that the avg/min/max
+            // is the same (there is only one value per interval)
+            // The usage of the @ symbol is also a hint for MetricsReportTool: it will group all values with the
+            // same text before the @ symbol.
+            metrics.increment("-blockCacheHitRatio@" + serverName, blockCacheHitRatio);
+            metrics.increment("-sysLoadAvg@" + serverName, sysLoadAvg);
+            metrics.increment("-usedHeap@" + serverName, usedHeapMB);
+            metrics.increment("-threadCount@" + serverName, threadCount);
+
+            if (gcScavengeCollCount != null)
+                metrics.increment("-gcScavengeCollCount@" + serverName, gcScavengeCollCount);
+            if (gcScavengeCollTime != null)
+                metrics.increment("-gcScavengeCollTime@" + serverName, gcScavengeCollTime);
+            if (gcMarkSweepCollCount != null)
+                metrics.increment("-gcMarkSweepCollCount@" + serverName, gcMarkSweepCollCount);
+            if (gcMarkSweepCollTime != null)
+                metrics.increment("-gcMarkSweepCollTime@" + serverName, gcMarkSweepCollTime);
+        }
+    }
+
+    private Long getDiffWithPrevious(String scope, MBeanServerConnection connection, ObjectName name, String attr)
+            throws Exception {
+
+        Long current = (Long)connection.getAttribute(name, attr);
+
+        String key = scope + attr;
+        Long prev = previousGcData.get(key);
+        previousGcData.put(key, current);
+
+        if (prev == null) {
+            return null;
+        } else {
+            return current - prev;
         }
     }
 
@@ -160,7 +205,6 @@ public class HBaseMetrics {
         table.columnSepLine();
 
         ObjectName runtime = new ObjectName("java.lang:type=Runtime");
-        ObjectName memory = new ObjectName("java.lang:type=Memory");
 
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
         for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
