@@ -55,7 +55,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
      * At the time of this writing, HBase checked this skew, but allowed up to 30s:
      * https://issues.apache.org/jira/browse/HBASE-3168
      */
-    private static final int MAX_CLOCK_SKEW_BETWEEN_SERVERS = 5000;
+    private static final int MAX_CLOCK_SKEW_BETWEEN_SERVERS = 2000;
     
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     
@@ -260,8 +260,8 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                             if (messages.isEmpty()) {
                                 // If on startup of this processor, we have no messages, we initialize the
                                 // minimalTimestamp manually so that we would not always scan from the start
-                                // of the table. We subtract a margin just in case any message just got in.
-                                minimalTimestamp = System.currentTimeMillis() - MAX_CLOCK_SKEW_BETWEEN_SERVERS;
+                                // of the table.
+                                minimalTimestamp = tsBeforeGetMessages - MAX_CLOCK_SKEW_BETWEEN_SERVERS;
                             }
                         }
 
