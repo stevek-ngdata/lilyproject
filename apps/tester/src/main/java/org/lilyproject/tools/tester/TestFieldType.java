@@ -218,7 +218,7 @@ public class TestFieldType {
     }
     
     public ActionResult updateValue(TestAction testAction, Record record) {
-        if (linkedRecordTypeName == null)  {
+        if (linkedRecordTypeName == null && linkedRecordSource == null)  {
             return generateValue(null); // The value will not be a link field, so we can give null here
         } else {
             Object value = record.getField(fieldType.getName());
@@ -230,6 +230,11 @@ public class TestFieldType {
         if (fieldType.getValueType().isMultiValue()) {
             List<Object> values = (List<Object>)value;
             int index = (int) (Math.random() * values.size());
+            ActionResult result = updateHierarchical(testAction, values.get(index));
+            if (result.success && result.object != null) {
+                values.add(index, result.object);
+                return new ActionResult(true, values, result.duration);
+            }
             return updateHierarchical(testAction, values.get(index));
         } else {
             return updateHierarchical(testAction, value);
@@ -242,7 +247,12 @@ public class TestFieldType {
             Object[] values = path.getElements();
             int index = (int) (Math.random() * values.length);
             // LinkedRecordTypeName should only be given in case of link fields
-            return updateLink(testAction, (Link)values[index]);
+            ActionResult result = updateLink(testAction, (Link)values[index]);
+            if (result.success && result.object != null) {
+                values[index] = result.object;
+                return new ActionResult(true, values, result.duration);
+            }
+            return result;
         } else {
             return updateLink(testAction, (Link)value);
         }

@@ -84,8 +84,7 @@
           recordType : The link will contain a recordId to a record (or records in case of multivalue)
                        of that record type.
                        If no record type is given a random recordId will be generated.
-          recordSource : The space from which to select a random recordId. Note: this space should contain 
-                         records of the given record type.
+          recordSource : The space from which to select a random recordId. 
                          If no recordSource is given a new record will be created of the given record type.
   */
   fieldTypes: [

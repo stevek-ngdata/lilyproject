@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.JsonNode;
+import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
@@ -77,7 +78,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         // in order to update the record that is linked to
         boolean readRecord = false;
         for (TestFieldType field: fieldsToUpdate) {
-            if (field.getLinkedRecordTypeName() != null) {
+            if (field.getLinkedRecordTypeName() != null || field.getLinkedRecordSource() != null) {
                 readRecord = true;
                 break;
             }
@@ -129,6 +130,8 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
     
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
         double duration = 0;
+        String linkedRecordSource = testFieldType.getLinkedRecordSource();
+        // Update the record where the link points to
         String linkedRecordTypeName = testFieldType.getLinkedRecordTypeName();
         if (linkedRecordTypeName != null) {
             TestRecordType linkedRecordType = testActionContext.recordTypes.get(linkedRecordTypeName);
@@ -139,8 +142,15 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
                 return new ActionResult(false, null, duration);
             // We updated the record that was linked to but not the linkfield itself. So we return null in the ActionResult.
             return new ActionResult(true, null, duration);
-        } else {
-            return new ActionResult(true, testFieldType.generateLink(), 0);
+        } 
+        // Pick a link from the RecordSpace source
+        if (linkedRecordSource != null) {
+            TestRecord record = testActionContext.records.getRecord(linkedRecordSource);
+            if (record == null)
+                return new ActionResult(false, null, 0);
+            return new ActionResult(true, new Link(record.getRecordId()), 0);
         }
+        // Generate a link that possibly (most likely) points to a non-existing record
+        return new ActionResult(true, testFieldType.generateLink(), 0);
     }
 }

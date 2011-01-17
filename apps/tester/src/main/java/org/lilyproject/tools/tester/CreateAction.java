@@ -71,24 +71,25 @@ public class CreateAction extends AbstractTestAction implements TestAction {
     }
     
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
-        String linkedRecordTypeName = testFieldType.getLinkedRecordTypeName();
         String linkedRecordSource = testFieldType.getLinkedRecordSource();
+        // Pick a link from the RecordSpace source
+        if (linkedRecordSource != null) {
+            TestRecord record = testActionContext.records.getRecord(linkedRecordSource);
+            if (record == null)
+                return new ActionResult(false, null, 0);
+            return new ActionResult(true, new Link(record.getRecordId()), 0);
+        }
+        // Create a record of the specified RecordType
+        String linkedRecordTypeName = testFieldType.getLinkedRecordTypeName();
         if (linkedRecordTypeName != null) {
-            if (linkedRecordSource == null) {
                 TestRecordType linkedRecordType = testActionContext.recordTypes.get(linkedRecordTypeName);
                 ActionResult result = createRecord(linkedRecordType);
                 report(result.success, result.duration, "linkCreate."+linkedRecordType.getRecordType().getName().getName());
                 if (!result.success)
                     return new ActionResult(false, null, 0);
                 return new ActionResult(true, new Link(((Record)result.object).getId()), result.duration);
-            } else {
-                TestRecord record2 = testActionContext.records.getRecord(linkedRecordSource);
-                if (record2 == null)
-                    return new ActionResult(false, null, 0);
-                return new ActionResult(true, new Link(record2.getRecordId()), 0);
-            }
-        } else {
-            return new ActionResult(true, testFieldType.generateLink(), 0);
         }
+        // Generate a link that possibly (most likely) points to a non-existing record
+        return new ActionResult(true, testFieldType.generateLink(), 0);
     }
 }
