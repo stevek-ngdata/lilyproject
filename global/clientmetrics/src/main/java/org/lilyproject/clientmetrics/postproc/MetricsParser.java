@@ -4,8 +4,6 @@ import org.joda.time.DateTime;
 import org.lilyproject.util.io.Closer;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Parses a metrics file as produced by {@Metrics}.
@@ -15,7 +13,7 @@ public class MetricsParser {
 
     private LineCountingReader reader;
 
-    public List<Test> parse(File file) throws IOException {
+    public Tests parse(File file) throws IOException {
         InputStream is = new FileInputStream(file);
         try {
             return parse(is);
@@ -24,10 +22,10 @@ public class MetricsParser {
         }
     }
 
-    public List<Test> parse(InputStream is) throws IOException {
+    public Tests parse(InputStream is) throws IOException {
         reader = new LineCountingReader(new InputStreamReader(is));
 
-        List<Test> result = new ArrayList<Test>();
+        Tests tests = new Tests();
 
         Test test = null;
         String line;
@@ -40,10 +38,20 @@ public class MetricsParser {
                 int colonPos = testDefinitionLine.indexOf(":");
                 String testName = testDefinitionLine.substring(0, colonPos);
                 test = new Test(testName);
-                result.add(test);
+                tests.entries.add(test);
+
+                test.description = testDefinitionLine.substring(colonPos + 1).trim();
 
                 // read test-heading closing line
                 reader.readLine();
+            } else if (line.startsWith("~~begin header")) {
+                while ((line = reader.readLine()) != null && !line.equals("~~end header")) {
+                    tests.header.add(line);
+                }
+            } else if (line.startsWith("~~begin footer")) {
+                while ((line = reader.readLine()) != null && !line.equals("~~end footer")) {
+                    tests.footer.add(line);
+                }
             } else if (line.startsWith(INT_START_LINE)) {
                 // The code below parses tables like the following one:
                 //
@@ -68,7 +76,7 @@ public class MetricsParser {
 
                 if (test == null) {
                     test = new Test("default");
-                    result.add(test);
+                    tests.entries.add(test);
                 }
 
                 Interval interval = new Interval(test);
@@ -78,14 +86,14 @@ public class MetricsParser {
                 interval.begin = new DateTime(ts);
 
                 // read all heading section lines
-                while (reader.readLine().startsWith("| "));
+                while ((line = reader.readLine()) != null && line.startsWith("| "));
 
                 // read the title lines (we are already positioned at the first one)
                 reader.readLine();
                 reader.readLine();
 
                 // read the metrics
-                while ((line = reader.readLine()).startsWith("|")) {
+                while ((line = reader.readLine()) != null && line.startsWith("|")) {
                     int countColStart = line.indexOf("|", 1);
                     int averageColStart = line.indexOf("|", countColStart + 1);
                     int medianColStart = line.indexOf("|", averageColStart + 1);
@@ -107,7 +115,7 @@ public class MetricsParser {
                 }
 
                 // we are now on the line that closes the metrics section, ops/sec might follow (but is optional)
-                while ((line = reader.readLine()).startsWith("|")) {
+                while ((line = reader.readLine()) != null && line.startsWith("|")) {
                     int colonPos = line.indexOf(":");
                     // the metricsname is prefixed with a dash: indication to the reporting tool that this value
                     // only has an average
@@ -127,7 +135,7 @@ public class MetricsParser {
         reader.close();
         reader = null;
 
-        return result;
+        return tests;
     }
 
     public int getCurrentLine() {

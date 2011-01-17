@@ -11,6 +11,7 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
     private HBaseMetrics hbaseMetrics;
     private HBaseAdmin hbaseAdmin;
     private boolean useJmx;
+    private long lastRequestCountReport;
 
     public HBaseMetricsPlugin(HBaseMetrics hbaseMetrics, HBaseAdmin hbaseAdmin, boolean useJmx) throws MasterNotRunningException {
         this.hbaseAdmin = hbaseAdmin;
@@ -29,17 +30,29 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
         }
     }
 
+    public void afterIncrement(Metrics metrics) {
+        try {
+            long now = System.currentTimeMillis();
+            // the 3000 is the default value of hbase.regionserver.msginterval
+            if (now - lastRequestCountReport > 3000) {
+                lastRequestCountReport = now;
+                hbaseMetrics.reportRequestCountMetric(metrics);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
     public List<String> getExtraInfoLines() {
         try {
             ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
 
-            double avgLoad = clusterStatus.getAverageLoad();
             int deadServers = clusterStatus.getDeadServers();
             int liveServers = clusterStatus.getServers();
             int regionCount = clusterStatus.getRegionsCount();
 
-            String line = String.format("HBase cluster status: avg load: %1$.2f, dead servers: %2$d, live servers: %3$d, regions: %4$d",
-                    avgLoad, deadServers, liveServers, regionCount);
+            String line = String.format("HBase cluster status: dead servers: %1$d, live servers: %2$d, regions: %3$d",
+                    deadServers, liveServers, regionCount);
 
             return Collections.singletonList(line);
         } catch (Throwable t) {

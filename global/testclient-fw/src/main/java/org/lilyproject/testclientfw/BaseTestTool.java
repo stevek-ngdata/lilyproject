@@ -132,6 +132,10 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         HBaseMetricsPlugin metricsPlugin = new HBaseMetricsPlugin(hbaseMetrics, hbaseAdmin, useHbaseMetrics);
 
         metricsStream = new PrintStream(new FileOutputStream(metricsFile));
+        metrics = new Metrics(metricsStream, metricsPlugin);
+        metrics.setThreadCount(workers);
+
+        metrics.startHeader();
 
         metricsStream.println("Now: " + new DateTime());
         metricsStream.println("Number of threads used: " + workers);
@@ -150,11 +154,16 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         metricsStream.println("by the threads together. Another issue is that sometimes operations are very");
         metricsStream.println("quick but that their time is measured with a too low granularity.");
         metricsStream.println();
+        metricsStream.println("About hbaseLoad (if present): this is currently the same as the number of regions");
+        metricsStream.println("   deployed on the region server.");
+        metricsStream.println("About hbaseRequestCount (if present): this is number of requests that happened");
+        metricsStream.println("   since the previous report to the master, which happens every");
+        metricsStream.println("   hbase.regionserver.msginterval, default 3 seconds.");
+        metricsStream.println();
 
         outputGeneralMetricReports();
 
-        metrics = new Metrics(metricsStream, metricsPlugin);
-        metrics.setThreadCount(workers);
+        metrics.endHeader();
 
         System.out.println("Metrics ready, summary will be outputted every " + (metrics.getIntervalDuration() / 1000) + "s");
         System.out.println("Follow them using tail -f " + metricsFileName);
@@ -163,7 +172,10 @@ public abstract class BaseTestTool extends BaseZkCliTool {
 
     public void finishMetrics() throws Exception {
         metrics.finish();
+
+        metrics.startFooter();
         outputGeneralMetricReports();
+        metrics.endFooter();
     }
 
     private void outputGeneralMetricReports() throws Exception {

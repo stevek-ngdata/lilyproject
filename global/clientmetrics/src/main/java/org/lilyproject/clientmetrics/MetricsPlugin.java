@@ -9,6 +9,11 @@ public interface MetricsPlugin {
     void beforeReport(Metrics metrics);
 
     /**
+     * Called once after each metric increment, hence usually very often, thus should be very lightweight.
+     */
+    void afterIncrement(Metrics metrics);
+
+    /**
      * Extra heading lines to be included in the header of each interval.
      */
     List<String> getExtraInfoLines();

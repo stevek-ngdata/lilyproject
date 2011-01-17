@@ -87,7 +87,7 @@ public class MetricsReportTool extends BaseCliTool {
         }
 
         MetricsParser parser = new MetricsParser();
-        List<Test> tests;
+        Tests tests;
         try {
             tests = parser.parse(metricFile);
         } catch (Exception e) {
@@ -97,17 +97,19 @@ public class MetricsReportTool extends BaseCliTool {
             return 1;
         }
 
-        if (tests.size() == 0) {
+        if (tests.entries.size() == 0) {
             System.err.println("No test data found in specified metrics file");
             return 1;
         }
 
-        for (Test test : tests) {
+        for (Test test : tests.entries) {
             File testDir = new File(outputDir, test.name);
             FileUtils.forceMkdir(testDir);
 
             writeMetrics(test, testDir);
         }
+
+        writeTestsInfo(tests, outputDir);
 
         // Include a copy of the original input metrics file in the output dir
         System.out.println("Copy original metrics file in output directory");
@@ -116,7 +118,7 @@ public class MetricsReportTool extends BaseCliTool {
         return 0;
     }
 
-    private void writeMetrics(Test test, File outputDir) throws IOException, InterruptedException {
+    private GroupMap writeMetrics(Test test, File outputDir) throws IOException, InterruptedException {
 
         // Determine how the metrics will be grouped into files (plots)
 
@@ -154,8 +156,11 @@ public class MetricsReportTool extends BaseCliTool {
         }
         System.out.println();
 
-        writeHtmlReport(groups.keySet(), outputDir);
+        writeHtmlReport(groups.keySet(), test, outputDir);
+
         System.out.println();
+
+        return groups;
     }
 
     private void writeDataFile(GroupName groupName, List<String> metricNames, Test test, File outputDir) throws IOException {
@@ -294,7 +299,7 @@ public class MetricsReportTool extends BaseCliTool {
         }
     }
 
-    private void writeHtmlReport(Set<GroupName> groupNames, File outputDir) throws IOException {
+    private void writeHtmlReport(Set<GroupName> groupNames, Test test, File outputDir) throws IOException {
         File file = new File(outputDir, "report.html");
         System.out.println("Writing HTML report " + file);
 
@@ -302,11 +307,59 @@ public class MetricsReportTool extends BaseCliTool {
 
         ps.println("<html><body>");
 
+        ps.println("<a href='../info.html'>General tests info</a>");
+
+        ps.println("<h1>" + test.name + ": " + (test.description != null ? test.description : "(no title)") + "</h1>");
+
         List<GroupName> orderedGroupNames = new ArrayList<GroupName>(groupNames);
         Collections.sort(orderedGroupNames);
 
         for (GroupName group : orderedGroupNames) {
             ps.println("<img src='" + group.fileName  + ".png'/><br/>");
+        }
+
+        ps.println("</body></html>");
+
+        ps.close();
+    }
+
+    private void writeTestsInfo(Tests tests, File outputDir) throws IOException {
+        File file = new File(outputDir, "info.html");
+        System.out.println("Writing HTML report " + file);
+
+        PrintStream ps = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
+
+        ps.println("<html><body>");
+
+        ps.println("<h1>Tests</h1>");
+
+        ps.println("<ul>");
+        for (Test test : tests.entries) {
+            ps.println("<li><a href='" + test.name + "/report.html'>" + test.name + "</a>");
+        }
+        ps.println("</ul>");
+
+        if (tests.header.size() > 0) {
+            ps.println("<h1>Pre-tests information</h1>");
+            ps.println("<p>System information before execution of the tests.");
+
+            ps.print("<pre>");
+            for (String line : tests.header) {
+                ps.println(line);
+            }
+            ps.println("</pre>");
+        }
+
+        if (tests.footer.size() > 0) {
+            ps.println("<h1>Post-tests information</h1>");
+
+            ps.println("<p>System information after execution of the tests.");
+
+            ps.print("<pre>");
+            for (String line : tests.footer) {
+                ps.println(line);
+            }
+            ps.println("</pre>");
         }
 
         ps.println("</body></html>");

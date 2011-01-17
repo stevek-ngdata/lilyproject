@@ -34,8 +34,6 @@ public class HBaseMetrics {
     private ObjectName gcScavenge = new ObjectName("java.lang:type=GarbageCollector,name=PS Scavenge");
     private ObjectName threading = new ObjectName("java.lang:type=Threading");
 
-    private Map<String, Long> previousGcData = new HashMap<String, Long>();
-
     public HBaseMetrics(HBaseAdmin hbaseAdmin) throws MasterNotRunningException, MalformedObjectNameException {
         this.hbaseAdmin = hbaseAdmin;
     }
@@ -44,6 +42,8 @@ public class HBaseMetrics {
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
         for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
             String serverName = serverInfo.getHostname();
+
+            int hbaseLoad = serverInfo.getLoad().getLoad();
 
             MBeanServerConnection connection = jmxConnections.getMBeanServer(serverName, HBASE_JMX_PORT);
 
@@ -54,45 +54,33 @@ public class HBaseMetrics {
             CompositeDataSupport heapMemUsage = (CompositeDataSupport)connection.getAttribute(memory, "HeapMemoryUsage");
             double usedHeapMB = ((double)(Long)heapMemUsage.get("used")) / 1024d / 1024d;
 
-            Long gcScavengeCollCount = getDiffWithPrevious("sc", connection, gcScavenge, "CollectionCount");
-            Long gcScavengeCollTime = getDiffWithPrevious("sc", connection, gcScavenge, "CollectionTime");
+            long gcScavengeCollCount = (Long)connection.getAttribute(gcScavenge, "CollectionCount");
+            long gcScavengeCollTime = (Long)connection.getAttribute(gcScavenge, "CollectionTime");
 
-            Long gcMarkSweepCollCount = getDiffWithPrevious("ms", connection, gcMarkSweep, "CollectionCount");
-            Long gcMarkSweepCollTime = getDiffWithPrevious("ms", connection, gcMarkSweep, "CollectionTime");
+            long gcMarkSweepCollCount = (Long)connection.getAttribute(gcMarkSweep, "CollectionCount");
+            long gcMarkSweepCollTime = (Long)connection.getAttribute(gcMarkSweep, "CollectionTime");
 
             // The dash at the beginning of the name is a hint towards the MetricsReportTool that the avg/min/max
             // is the same (there is only one value per interval)
             // The usage of the @ symbol is also a hint for MetricsReportTool: it will group all values with the
             // same text before the @ symbol.
+            metrics.increment("-hbaseLoad@" + serverName, hbaseLoad);
             metrics.increment("-blockCacheHitRatio@" + serverName, blockCacheHitRatio);
             metrics.increment("-sysLoadAvg@" + serverName, sysLoadAvg);
             metrics.increment("-usedHeap@" + serverName, usedHeapMB);
             metrics.increment("-threadCount@" + serverName, threadCount);
 
-            if (gcScavengeCollCount != null)
-                metrics.increment("-gcScavengeCollCount@" + serverName, gcScavengeCollCount);
-            if (gcScavengeCollTime != null)
-                metrics.increment("-gcScavengeCollTime@" + serverName, gcScavengeCollTime);
-            if (gcMarkSweepCollCount != null)
-                metrics.increment("-gcMarkSweepCollCount@" + serverName, gcMarkSweepCollCount);
-            if (gcMarkSweepCollTime != null)
-                metrics.increment("-gcMarkSweepCollTime@" + serverName, gcMarkSweepCollTime);
+            metrics.increment("-gcScavengeCollCount@" + serverName, gcScavengeCollCount);
+            metrics.increment("-gcScavengeCollTime@" + serverName, gcScavengeCollTime);
+            metrics.increment("-gcMarkSweepCollCount@" + serverName, gcMarkSweepCollCount);
+            metrics.increment("-gcMarkSweepCollTime@" + serverName, gcMarkSweepCollTime);
         }
     }
 
-    private Long getDiffWithPrevious(String scope, MBeanServerConnection connection, ObjectName name, String attr)
-            throws Exception {
-
-        Long current = (Long)connection.getAttribute(name, attr);
-
-        String key = scope + attr;
-        Long prev = previousGcData.get(key);
-        previousGcData.put(key, current);
-
-        if (prev == null) {
-            return null;
-        } else {
-            return current - prev;
+    public void reportRequestCountMetric(Metrics metrics) throws Exception {
+        ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
+        for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
+            metrics.increment("hbaseRequestCount@" + serverInfo.getHostname(), serverInfo.getLoad().getNumberOfRequests());
         }
     }
 

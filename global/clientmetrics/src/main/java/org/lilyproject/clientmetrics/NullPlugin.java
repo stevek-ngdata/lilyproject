@@ -7,6 +7,9 @@ public class NullPlugin implements MetricsPlugin {
     public void beforeReport(Metrics metrics) {
     }
 
+    public void afterIncrement(Metrics metrics) {
+    }
+
     public List<String> getExtraInfoLines() {
         return Collections.emptyList();
     }

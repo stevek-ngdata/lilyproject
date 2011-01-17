@@ -12,6 +12,8 @@ import java.util.Map;
 public class Test {
     public String name;
 
+    public String description;
+
     /** Each metric is associated with a number, which is its index in {@link Interval#datas}. */
     public Map<String, Integer> metricNames = new HashMap<String, Integer>();
 

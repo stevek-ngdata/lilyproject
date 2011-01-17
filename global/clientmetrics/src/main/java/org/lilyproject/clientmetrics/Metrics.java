@@ -33,6 +33,8 @@ public class Metrics {
     private boolean inReport;
     private int threadCount = 1;
     private Table table;
+    private boolean inHeader;
+    private boolean inFooter;
 
     private static final Pattern NAME_PATTERN = Pattern.compile("\\w+");
 
@@ -86,7 +88,7 @@ public class Metrics {
         reportStream.println("");
     }
 
-    public void beginTest(String testName, String testDescription) {
+    public void startTest(String testName, String testDescription) {
         // The testName should be something simple, as it is used by MetricsReportTool for filenames.
         if (!NAME_PATTERN.matcher(testName).matches()) {
             throw new IllegalArgumentException("Invalid test name, should be alphanumeric only: " + testName);
@@ -97,6 +99,25 @@ public class Metrics {
         reportStream.print(testName + ": " + testDescription);
         reportStream.print("===================================================================================================");
         reportStream.println();
+    }
+
+    public void startHeader() {
+        reportStream.println("~~begin header");
+        inHeader = true;
+    }
+
+    public void endHeader() {
+        reportStream.println("~~end header");
+        inHeader = false;
+    }
+
+    public void startFooter() {
+        reportStream.println("~~begin footer");
+        inFooter = true;
+    }
+
+    public void endFooter() {
+        reportStream.println("~~end footer");
     }
 
     public int getIntervalDuration() {
@@ -158,6 +179,8 @@ public class Metrics {
         }
 
         metric.add(operations, value);
+
+        plugin.afterIncrement(this);
     }
 
     public void printReport() {
