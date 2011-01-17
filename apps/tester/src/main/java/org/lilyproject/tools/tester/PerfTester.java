@@ -246,7 +246,6 @@ public class PerfTester extends BaseRepositoryTestTool {
             threads.add(new Thread() {
                 public void run() {
                     for (int i = 0; i < nrOfIterations; i++) {
-                        System.out.println("[Evert] running iteration " + i + " of thread " + Thread.currentThread());
                         for (TestAction testAction : testActions) {
                             failureCount += testAction.run();
                         }

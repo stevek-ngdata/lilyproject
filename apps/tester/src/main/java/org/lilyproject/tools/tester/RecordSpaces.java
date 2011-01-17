@@ -1,10 +1,9 @@
 package org.lilyproject.tools.tester;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
+import org.apache.commons.collections.set.ListOrderedSet;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.util.json.JsonUtil;
 
@@ -41,21 +40,19 @@ public class RecordSpaces {
     
     private class RecordSpace {
         private int limit;
-        private Set<TestRecord> records;
+        private ListOrderedSet records;
         
         public RecordSpace(int limit) {
             this.limit = limit;
-            records = new HashSet<TestRecord>();
+            records = new ListOrderedSet();
         }
         
         public synchronized void addRecord(TestRecord record) {
-            
             if (records.size() < limit) {
                 records.add(record);
             } else {
-                TestRecord[] array = records.toArray(new TestRecord[records.size()]);
                 int index = (int) Math.floor(Math.random() * records.size());
-                if (records.remove(array[index]))
+                if (records.remove(index) != null)
                     records.add(record);
             }
         }
@@ -68,9 +65,8 @@ public class RecordSpaces {
             TestRecord testRecord;
             int loopCnt = 0;
             do {
-                TestRecord[] array = records.toArray(new TestRecord[records.size()]);
                 int index = (int) Math.floor(Math.random() * records.size());
-                testRecord = array[index];
+                testRecord = (TestRecord)records.get(index);
                 loopCnt++;
                 if ((loopCnt % 100) == 0) {
                     System.out.println("Already tried " + loopCnt + " times to pick a non-deleted record.");
