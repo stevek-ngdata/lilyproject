@@ -30,9 +30,9 @@ public class HBaseMetrics {
     private ObjectName regionServerStats = new ObjectName("hadoop:service=RegionServer,name=RegionServerStatistics");;
     private ObjectName operationSystem = new ObjectName("java.lang:type=OperatingSystem");
     private ObjectName memory = new ObjectName("java.lang:type=Memory");
-    private ObjectName gcMarkSweep = new ObjectName("java.lang:type=GarbageCollector,name=PS MarkSweep");
-    private ObjectName gcScavenge = new ObjectName("java.lang:type=GarbageCollector,name=PS Scavenge");
     private ObjectName threading = new ObjectName("java.lang:type=Threading");
+    private boolean gcMetricsInitialized = false;
+    private Map<String, ObjectName> garbageCollectionNames = new HashMap<String, ObjectName>();
 
     public HBaseMetrics(HBaseAdmin hbaseAdmin) throws MasterNotRunningException, MalformedObjectNameException {
         this.hbaseAdmin = hbaseAdmin;
@@ -46,6 +46,7 @@ public class HBaseMetrics {
             int hbaseLoad = serverInfo.getLoad().getLoad();
 
             MBeanServerConnection connection = jmxConnections.getMBeanServer(serverName, HBASE_JMX_PORT);
+            initGarbageCollMetrics(connection);
 
             Integer blockCacheHitRatio = (Integer)connection.getAttribute(regionServerStats, "blockCacheHitRatio");
             Double sysLoadAvg = (Double)connection.getAttribute(operationSystem, "SystemLoadAverage");
@@ -54,12 +55,6 @@ public class HBaseMetrics {
             CompositeDataSupport heapMemUsage = (CompositeDataSupport)connection.getAttribute(memory, "HeapMemoryUsage");
             double usedHeapMB = ((double)(Long)heapMemUsage.get("used")) / 1024d / 1024d;
 
-            long gcScavengeCollCount = (Long)connection.getAttribute(gcScavenge, "CollectionCount");
-            long gcScavengeCollTime = (Long)connection.getAttribute(gcScavenge, "CollectionTime");
-
-            long gcMarkSweepCollCount = (Long)connection.getAttribute(gcMarkSweep, "CollectionCount");
-            long gcMarkSweepCollTime = (Long)connection.getAttribute(gcMarkSweep, "CollectionTime");
-
             // The dash at the beginning of the name is a hint towards the MetricsReportTool that the avg/min/max
             // is the same (there is only one value per interval)
             // The usage of the @ symbol is also a hint for MetricsReportTool: it will group all values with the
@@ -67,13 +62,26 @@ public class HBaseMetrics {
             metrics.increment("-hbaseLoad@" + serverName, hbaseLoad);
             metrics.increment("-blockCacheHitRatio@" + serverName, blockCacheHitRatio);
             metrics.increment("-sysLoadAvg@" + serverName, sysLoadAvg);
-            metrics.increment("-usedHeap@" + serverName, usedHeapMB);
-            metrics.increment("-threadCount@" + serverName, threadCount);
+            metrics.increment("-hbaseUsedHeap@" + serverName, usedHeapMB);
+            metrics.increment("-hbaseThreadCount@" + serverName, threadCount);
 
-            metrics.increment("-gcScavengeCollCount@" + serverName, gcScavengeCollCount);
-            metrics.increment("-gcScavengeCollTime@" + serverName, gcScavengeCollTime);
-            metrics.increment("-gcMarkSweepCollCount@" + serverName, gcMarkSweepCollCount);
-            metrics.increment("-gcMarkSweepCollTime@" + serverName, gcMarkSweepCollTime);
+            for (Map.Entry<String, ObjectName> entry : garbageCollectionNames.entrySet()) {
+                long collectionCount = (Long)connection.getAttribute(entry.getValue(), "CollectionCount");
+                long collectionTime = (Long)connection.getAttribute(entry.getValue(), "CollectionTime");
+
+                metrics.increment("-" + entry.getKey() + "CollCount@" + serverName, collectionCount);
+                metrics.increment("-" + entry.getKey() + "CollTime@" + serverName, collectionTime);
+            }
+        }
+    }
+
+    private void initGarbageCollMetrics(MBeanServerConnection connection) throws Exception {
+        if (!gcMetricsInitialized) {
+            gcMetricsInitialized = true;
+            Set<ObjectInstance> mbeans = connection.queryMBeans(new ObjectName("java.lang:type=GarbageCollector,name=*"), null);
+            for (ObjectInstance instance : mbeans) {
+                garbageCollectionNames.put(instance.getObjectName().getKeyProperty("name"), instance.getObjectName());
+            }
         }
     }
 
