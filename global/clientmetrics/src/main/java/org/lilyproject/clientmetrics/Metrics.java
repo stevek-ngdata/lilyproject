@@ -95,9 +95,9 @@ public class Metrics {
         }
 
         reportStream.println();
-        reportStream.print("===================================================================================================");
-        reportStream.print(testName + ": " + testDescription);
-        reportStream.print("===================================================================================================");
+        reportStream.println("===================================================================================================");
+        reportStream.println(testName + ": " + testDescription);
+        reportStream.println("===================================================================================================");
         reportStream.println();
     }
 
