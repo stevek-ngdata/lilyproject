@@ -31,6 +31,14 @@ public class MetricsReportTool extends BaseCliTool {
 
     private static final int COLS_PER_METRIC = 5;
 
+    private static final int HEADER_COLUMNS = 2;
+
+    private static final int COL_CNT = 1;
+    private static final int COL_AVG = 2;
+    private static final int COL_MED = 3;
+    private static final int COL_MIN = 4;
+    private static final int COL_MAX = 5;
+
     private NumberFormat doubleFormat = new DecimalFormat("0.00");
 
     private DateTimeFormatter timeFormat = DateTimeFormat.forPattern("yyyyMMDDkkmmss");
@@ -175,7 +183,9 @@ public class MetricsReportTool extends BaseCliTool {
         PrintStream ps = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
 
         StringBuffer titleLine = new StringBuffer();
-        titleLine.append(STRING_QUOTE).append("title").append(STRING_QUOTE);
+        titleLine.append(STRING_QUOTE).append("time").append(STRING_QUOTE);
+        titleLine.append(SEP);
+        titleLine.append(STRING_QUOTE).append("seq").append(STRING_QUOTE);
 
         for (String metricName : metricNames) {
             titleLine.append(SEP);
@@ -192,8 +202,11 @@ public class MetricsReportTool extends BaseCliTool {
 
         ps.println(titleLine.toString());
 
+        int i = 0;
         for (Interval interval : test.intervals) {
             ps.print(timeFormat.print(interval.begin));
+            ps.print(SEP);
+            ps.print(i++);
 
             for (String metricName : metricNames) {
                 int index = test.getIndex(metricName);
@@ -262,20 +275,33 @@ public class MetricsReportTool extends BaseCliTool {
         ps.println("set output \"" + groupName.fileName + ".png\"");
         ps.println("set autoscale");
         ps.println("set title '" + groupName.title + "'");
-        ps.println("set xdata time");
-        ps.println("set timefmt \"%Y%m%d%H%M%S\"");
         ps.println("set key autotitle columnheader");
         ps.println("set datafile missing 'NaN'");
         ps.println("set ylabel \"unit depends on metric, times usually in ms\"");
         ps.println("set xlabel \"time\"");
         ps.println("set grid");
 
-        final int firstPlotValue = 2;
-        int lastPlotValue = 4;
-        if (groupName.name.startsWith("-")) {
-            // if the name starts with a dash, it means the values for avg/med/min/max are (intended to be) the same
-            lastPlotValue = 2;
+        // if the name starts with a dash, it means the values for avg/med/min/max are (intended to be) the same
+        boolean isAvgOnly = groupName.name.startsWith("-");
+
+        final int firstPlotValue = COL_AVG;
+        int lastPlotValue = COL_MIN;
+        if (isAvgOnly) {
+            lastPlotValue = COL_AVG;
         }
+
+        // Calculate trendlines: on median except for avg-only metrics
+        // The trendline is calculated against col 2, that is the column containing the seq numbers, since it
+        // does not work with the date values (I think because they are too big integers?)
+        for (int i = 0; i < metricNames.size(); i++) {
+            ps.println("f" + i + "(x)=m*x+c");
+            int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + (isAvgOnly ? COL_AVG : COL_MED);
+            ps.println("fit f" + i + "(x) \"" + groupName.fileName + ".txt\" using 2:" + dataCol + " via m,c");
+        }
+
+        // Change xdata to time only after calculating trendlines
+        ps.println("set xdata time");
+        ps.println("set timefmt \"%Y%m%d%H%M%S\"");
 
         StringBuffer plot = new StringBuffer();
         plot.append("plot ");
@@ -284,9 +310,13 @@ public class MetricsReportTool extends BaseCliTool {
                 if (i > 0 || c > firstPlotValue)
                     plot.append(", ");
 
-                int dataCol = (COLS_PER_METRIC * i) + 1 + c;
-                plot.append("'").append(groupName.fileName).append(".txt").append("' using 1:").append(dataCol).append(" with steps");
+                int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + c;
+                plot.append("'").append(groupName.fileName).append(".txt' using 1:").append(dataCol).append(" with steps");
             }
+
+            // add trendline
+            plot.append(", '").append(groupName.fileName).append(".txt' using 1:(f").append(i).append("($2)) with lines title '")
+                    .append(removeGroupingPrefix(metricNames.get(i))).append(isAvgOnly ? " avg" : " med").append(" trend'");
         }
 
         ps.println(plot.toString());
