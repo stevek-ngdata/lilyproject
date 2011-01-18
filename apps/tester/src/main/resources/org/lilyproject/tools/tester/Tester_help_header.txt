@@ -1,1 +1,2 @@
-A simple testing tool that performs CRUD operations in a loop.
+Tester tool allows to performance test Lily with a configurable schema and
+a configurable scenario of CRUD operations.

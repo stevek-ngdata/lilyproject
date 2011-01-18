@@ -1,23 +1,7 @@
 /* This file is in relaxed JSON format, this is JSON without property quoting
    requirement and with support for comments. */
 {
-  zookeeper: "localhost:2181",
-
-  reportFile: "testreport.csv",
-
   failuresFile: "failures.log",
-
-  metrics: {
-    recordName: "tester1",
-    class: "org.apache.hadoop.metrics.spi.NullContextWithUpdateThread",
-    period: "15"
-    /* Enable the following to report to Ganglia */
-    /*
-    ,
-    class: "org.apache.hadoop.metrics.ganglia.GangliaContext31",
-    servers: "localhost:8649"
-    */
-  },
 
   namespaces: {
     "org.lilyproject.tools.tester": "tester",

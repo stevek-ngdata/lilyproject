@@ -41,10 +41,6 @@
               <basename>lily-tester</basename>
               <mainClass>org.lilyproject.tools.tester.Tester</mainClass>
             </script>
-            <script>
-              <basename>lily-perftester</basename>
-              <mainClass>org.lilyproject.tools.tester.PerfTester</mainClass>
-            </script>
           </scripts>
         </configuration>
         <executions>
