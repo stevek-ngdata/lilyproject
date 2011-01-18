@@ -55,9 +55,11 @@ public class MetricsParser {
                     tests.header.add(line);
                 }
             } else if (line.startsWith("~~begin footer")) {
+                System.out.println("footer gevonden");
                 while ((line = reader.readLine()) != null && !line.equals("~~end footer")) {
                     tests.footer.add(line);
                 }
+                System.out.println("footer gevonden:" + tests.footer.size());
             } else if (line.startsWith(INT_START_LINE)) {
                 // The code below parses tables like the following one:
                 //
@@ -134,6 +136,9 @@ public class MetricsParser {
                     interval.set(metricName, data);
                 }
 
+                // If there were no ops/sec, we might have read a line too much, in other cases it can't hurt to unread
+                reader.unreadLine();
+
                 test.add(interval);
             }
         }
@@ -150,6 +155,8 @@ public class MetricsParser {
 
     public static class LineCountingReader extends BufferedReader {
         int currentLine;
+        String line;
+        boolean unreadLine = false;
 
         public LineCountingReader(Reader in) {
             super(in);
@@ -157,8 +164,17 @@ public class MetricsParser {
 
         @Override
         public String readLine() throws IOException {
+            if (unreadLine) {
+                unreadLine = false;
+                return line;
+            }
             currentLine++;
-            return super.readLine();
+            this.line = super.readLine();
+            return line;
+        }
+
+        public void unreadLine() {
+            unreadLine = true;
         }
     }
 }
