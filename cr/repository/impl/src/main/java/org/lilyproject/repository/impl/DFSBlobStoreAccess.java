@@ -55,20 +55,31 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         blobKey = Bytes.add(blobKey, Bytes.toBytes(uuid.getLeastSignificantBits()));
         FSDataOutputStream fsDataOutputStream;
         try {
-            fsDataOutputStream = fileSystem.create(new Path(rootDir, uuid.toString()));
+            fsDataOutputStream = fileSystem.create(createPath(uuid));
         } catch (IOException e) {
             throw new BlobException("Failed to open an outputstream for blob <" +blob+ "> on the DFS blobstore", e);
         }
         return new DFSBlobOutputStream(fsDataOutputStream, blobKey, blob);
     }
 
+
     public InputStream getInputStream(byte[] blobKey) throws BlobException {
         UUID uuid = decode(blobKey);
         try {
-            return fileSystem.open(new Path(rootDir, uuid.toString()));
+            return fileSystem.open(createPath(uuid));
         } catch (IOException e) {
             throw new BlobException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the DFS blobstore", e);
         }
+    }
+
+    private Path createPath(UUID uuid) {
+        String fileName = uuid.toString();
+        String dirLevel1 = fileName.substring(0, 2);
+        String dirLevel2 = fileName.substring(2, 4);
+        Path path = new Path(rootDir, dirLevel1);
+        path = new Path(path, dirLevel2);
+        path = new Path(path, fileName);
+        return path;
     }
 
     public void delete(byte[] blobKey) throws BlobException {
