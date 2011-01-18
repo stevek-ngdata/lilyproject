@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 import org.lilyproject.util.io.Closer;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Parses a metrics file as produced by {@Metrics}.
@@ -15,6 +16,11 @@ public class MetricsParser {
 
     public Tests parse(File file) throws IOException {
         InputStream is = new FileInputStream(file);
+
+        if (file.getName().endsWith(".gz")) {
+            is = new GZIPInputStream(is);
+        }
+
         try {
             return parse(is);
         } finally {

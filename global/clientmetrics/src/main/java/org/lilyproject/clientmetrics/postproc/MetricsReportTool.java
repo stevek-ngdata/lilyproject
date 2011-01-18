@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.lilyproject.cli.BaseCliTool;
+import org.lilyproject.util.ConsoleUtil;
 
 import java.io.*;
 import java.text.Collator;
@@ -83,7 +84,9 @@ public class MetricsReportTool extends BaseCliTool {
         File outputDir = new File(cmd.getOptionValue(outputDirOption.getOpt()));
         if (outputDir.exists()) {
             System.err.println("Specified output directory already exists: " + outputDir.getAbsolutePath());
-            return 1;
+            boolean proceed = ConsoleUtil.promptYesNo("Continue anyway? [y/N]", false);
+            if (!proceed)
+                return 1;
         }
 
         MetricsParser parser = new MetricsParser();
@@ -111,9 +114,12 @@ public class MetricsReportTool extends BaseCliTool {
 
         writeTestsInfo(tests, outputDir);
 
-        // Include a copy of the original input metrics file in the output dir
-        System.out.println("Copy original metrics file in output directory");
-        FileUtils.copyFile(metricFile, new File(outputDir, metricFile.getName()));
+        // Include a copy of the original input metrics file in the output dir, except if the output is
+        // produced in the same directory as where the metrics file is located
+        if (!outputDir.getAbsoluteFile().getCanonicalFile().equals(metricFile.getAbsoluteFile().getParentFile().getCanonicalFile())) {
+            System.out.println("Copy original metrics file in output directory");
+            FileUtils.copyFile(metricFile, new File(outputDir, metricFile.getName()));
+        }
 
         return 0;
     }
