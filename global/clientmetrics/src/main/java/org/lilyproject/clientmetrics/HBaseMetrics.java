@@ -88,7 +88,7 @@ public class HBaseMetrics {
     public void reportRequestCountMetric(Metrics metrics) throws Exception {
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
         for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
-            metrics.increment("hbaseRequestCount@" + serverInfo.getHostname(), serverInfo.getLoad().getNumberOfRequests());
+            metrics.increment("-hbaseRequestCount@" + serverInfo.getHostname(), serverInfo.getLoad().getNumberOfRequests());
         }
     }
 
