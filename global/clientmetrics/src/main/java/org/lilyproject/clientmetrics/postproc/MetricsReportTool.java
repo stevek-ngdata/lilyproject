@@ -39,6 +39,21 @@ public class MetricsReportTool extends BaseCliTool {
     private static final int COL_MIN = 4;
     private static final int COL_MAX = 5;
 
+    // http://www.uni-hamburg.de/Wiss/FB/15/Sustainability/schneider/gnuplot/colors.htm
+    private static final String[] COLORS = new String[] {
+            "#D2691E", /* chocolate */
+            "#DC143C", /* crimson */
+            "#00008B", /* darkblue */
+            "#006400", /* darkgreen */
+            "#FF8C00", /* darkorange */
+            "#FF1493", /* deeppink */
+            "#FFD700", /* gold */
+            "#808000", /* olive */
+            "#FF0000", /* red */
+            "#708090", /* slategray */
+            "#00008B"  /* darkblue */
+    };
+
     private NumberFormat doubleFormat = new DecimalFormat("0.00");
 
     private DateTimeFormatter timeFormat = DateTimeFormat.forPattern("yyyyMMDDkkmmss");
@@ -153,6 +168,10 @@ public class MetricsReportTool extends BaseCliTool {
                 // all the rest: each in its own group
                 groups.getByString(metricName).add(metricName);
             }
+        }
+
+        for (List<String> list : groups.values()) {
+            Collections.sort(list);
         }
 
         for (Map.Entry<GroupName, List<String>> entry : groups.entrySet()) {
@@ -271,7 +290,7 @@ public class MetricsReportTool extends BaseCliTool {
         System.out.println("Writing plot script " + file);
         PrintStream ps = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
 
-        ps.println("set terminal pngcairo enhanced rounded linewidth 1 size 1300, 500");
+        ps.println("set terminal pngcairo enhanced rounded linewidth 2 size 1300, 500");
         ps.println("set output \"" + groupName.fileName + ".png\"");
         ps.println("set autoscale");
         ps.println("set title '" + groupName.title + "'");
@@ -294,28 +313,37 @@ public class MetricsReportTool extends BaseCliTool {
         // The trendline is calculated against col 2, that is the column containing the seq numbers, since it
         // does not work with the date values (I think because they are too big integers?)
         for (int i = 0; i < metricNames.size(); i++) {
-            ps.println("f" + i + "(x)=m*x+c");
+            ps.println("f" + i + "(x)=m" + i + "*x+c" + i);
             int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + (isAvgOnly ? COL_AVG : COL_MED);
-            ps.println("fit f" + i + "(x) \"" + groupName.fileName + ".txt\" using 2:" + dataCol + " via m,c");
+            ps.println("fit f" + i + "(x) \"" + groupName.fileName + ".txt\" using 2:" + dataCol + " via m" + i + ",c" + i);
         }
 
         // Change xdata to time only after calculating trendlines
         ps.println("set xdata time");
         ps.println("set timefmt \"%Y%m%d%H%M%S\"");
 
+        int numberOfValues = lastPlotValue - firstPlotValue + 1;
+
         StringBuffer plot = new StringBuffer();
         plot.append("plot ");
         for (int i = 0; i < metricNames.size(); i++) {
+            int colorStart = i * numberOfValues;
+
             for (int c = firstPlotValue; c <= lastPlotValue; c++) {
                 if (i > 0 || c > firstPlotValue)
                     plot.append(", ");
 
                 int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + c;
-                plot.append("'").append(groupName.fileName).append(".txt' using 1:").append(dataCol).append(" with steps");
+                int color = colorStart + c - firstPlotValue;
+                plot.append("'").append(groupName.fileName).append(".txt' using 1:").append(dataCol).
+                        append(" with steps linecolor rgb '").append(COLORS[color % COLORS.length]).append("'");
             }
 
             // add trendline
-            plot.append(", '").append(groupName.fileName).append(".txt' using 1:(f").append(i).append("($2)) with lines title '")
+            // same color as data line
+            int color = colorStart + (isAvgOnly ? COL_AVG : COL_MED) - firstPlotValue;
+            plot.append(", '").append(groupName.fileName).append(".txt' using 1:(f").append(i).append("($2))").
+                    append(" with lines linewidth 1 linecolor rgb '").append(COLORS[color % COLORS.length]).append("' title '")
                     .append(removeGroupingPrefix(metricNames.get(i))).append(isAvgOnly ? " avg" : " med").append(" trend'");
         }
 
@@ -461,7 +489,7 @@ public class MetricsReportTool extends BaseCliTool {
     private static class GroupMap extends HashMap<GroupName, List<String>> {
         public List<String> getByString(String key) {
             GroupName groupName = new GroupName(key);
-            List<String> list = super.get(key);
+            List<String> list = super.get(groupName);
             if (list == null) {
                 list = new ArrayList<String>();
                 put(groupName, list);
