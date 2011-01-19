@@ -55,11 +55,9 @@ public class MetricsParser {
                     tests.header.add(line);
                 }
             } else if (line.startsWith("~~begin footer")) {
-                System.out.println("footer gevonden");
                 while ((line = reader.readLine()) != null && !line.equals("~~end footer")) {
                     tests.footer.add(line);
                 }
-                System.out.println("footer gevonden:" + tests.footer.size());
             } else if (line.startsWith(INT_START_LINE)) {
                 // The code below parses tables like the following one:
                 //
