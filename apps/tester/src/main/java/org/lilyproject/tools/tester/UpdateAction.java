@@ -31,7 +31,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
             TestRecordType recordTypeToUpdate = testRecord.getRecordType();
             RecordId recordId = testRecord.getRecordId();
             ActionResult result = updateRecord(recordTypeToUpdate, recordId);
-            report(result.success, result.duration);
+            report(result.success, result.duration, result.success ? "U" : null, null);
             if (result.success)
                 testActionContext.records.addRecord(destination, new TestRecord(((Record)result.object).getId(), recordTypeToUpdate));
         }

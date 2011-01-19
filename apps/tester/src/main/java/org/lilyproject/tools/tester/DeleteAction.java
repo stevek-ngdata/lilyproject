@@ -20,7 +20,7 @@ public class DeleteAction extends AbstractTestAction implements TestAction {
             long before = System.nanoTime();
             try {
                 testActionContext.repository.delete(testRecord.getRecordId());
-                report(true, System.nanoTime() - before);
+                report(true, System.nanoTime() - before, "D", null);
                 testActionContext.records.removeRecord(source, testRecord);
                 testRecord.setDeleted(true);
                 testActionContext.records.addRecord(destination, new TestRecord(testRecord.getRecordId(), testRecord.getRecordType()));

@@ -40,12 +40,16 @@ public abstract class AbstractTestAction implements TestAction {
     }
     
     protected void report(boolean success, double duration, String subactionName) {
+        report(success, duration, null, subactionName);
+    }
+
+    protected void report(boolean success, double duration, String actionType, String subactionName) {
         String metricname = name;
         if (subactionName != null) {
-            metricname = name + "."+subactionName;
+            metricname = name + "." + subactionName;
         }
         if (testActionContext.metrics != null) {
-            testActionContext.metrics.increment(metricname, duration / 1e6d);
+            testActionContext.metrics.increment(metricname, actionType, duration / 1e6d);
         }
     }
 

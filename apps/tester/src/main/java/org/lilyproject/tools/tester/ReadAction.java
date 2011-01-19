@@ -22,7 +22,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             try {
                 Record readRecord = testActionContext.repository.read(testRecord.getRecordId());
                 long after = System.nanoTime();
-                report(true, (int) (after - before));
+                report(true, (int) (after - before), "R", null);
                 // if (!readRecord.equals(testRecord.record)) {
                 // System.out.println("Read record does not match written record!");
                 // }

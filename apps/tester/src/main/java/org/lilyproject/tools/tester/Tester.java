@@ -52,8 +52,6 @@ public class Tester extends BaseRepositoryTestTool {
     private int failureCount;
     private Option iterationsOption;
     private int nrOfIterations;
-    private Option threadsOption;
-    private int nrOfThreads;
     private TestActionFactory testActionFactory = new TestActionFactory();
     private ArrayList<TestAction> testActions;
 
@@ -95,13 +93,6 @@ public class Tester extends BaseRepositoryTestTool {
             .create("i");
         options.add(iterationsOption);
         
-        threadsOption = OptionBuilder
-            .withArgName("threads")
-            .hasArg()
-            .withDescription("Number of threads to run the scenario simultaneously")
-            .withLongOpt("threads")
-            .create("t");
-        options.add(threadsOption);
         return options;
     }
     
@@ -143,7 +134,6 @@ public class Tester extends BaseRepositoryTestTool {
             System.out.println("Running tests...");
             System.out.println("Tail the output files if you wonder what is happening.");
             nrOfIterations = Util.getIntOption(cmd, iterationsOption, 1000);
-            nrOfThreads = Util.getIntOption(cmd, threadsOption, 1);
             test();
         } finally {
             closeStreams();
@@ -241,8 +231,8 @@ public class Tester extends BaseRepositoryTestTool {
 
     private void test() throws InterruptedException {
         startTime = System.currentTimeMillis();
-        HashSet<Thread> threads = new HashSet<Thread>(nrOfThreads);
-        for (int i = 0; i < nrOfThreads; i++) {
+        HashSet<Thread> threads = new HashSet<Thread>(workers);
+        for (int i = 0; i < workers; i++) {
             threads.add(new Thread() {
                 public void run() {
                     for (int i = 0; i < nrOfIterations; i++) {
