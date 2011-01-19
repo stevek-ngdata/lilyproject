@@ -176,6 +176,9 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         metrics.startFooter();
         outputGeneralMetricReports();
         metrics.endFooter();
+
+        hbaseMetrics.close();
+        lilyMetrics.close();
     }
 
     private void outputGeneralMetricReports() throws Exception {

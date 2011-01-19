@@ -20,6 +20,10 @@ public class LilyMetrics {
         this.zk = zk;
     }
 
+    public void close() {
+        jmxConnections.close();
+    }
+
     public void outputLilyServerInfo(PrintStream ps) throws Exception {
         Table table = new Table(ps);
         table.addColumn(30, "Lily server", "s");
@@ -47,7 +51,7 @@ public class LilyMetrics {
             int colonPos = server.indexOf(':');
             String address = server.substring(0, colonPos);
 
-            MBeanServerConnection connection = jmxConnections.getMBeanServer(address, LILY_JMX_PORT);
+            MBeanServerConnection connection = jmxConnections.getConnector(address, LILY_JMX_PORT).getMBeanServerConnection();
             String version = (String)connection.getAttribute(lily, "Version");
             boolean indexerMaster = (Boolean)connection.getAttribute(lily, "IndexerMaster");
             boolean mqProcessor = (Boolean)connection.getAttribute(lily, "RowLogProcessorMQ");

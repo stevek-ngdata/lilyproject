@@ -9,14 +9,8 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
 import javax.management.*;
 import javax.management.openmbean.CompositeDataSupport;
-import javax.management.openmbean.CompositeType;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.management.MemoryUsage;
-import java.net.MalformedURLException;
 import java.util.*;
 
 /**
@@ -38,6 +32,10 @@ public class HBaseMetrics {
         this.hbaseAdmin = hbaseAdmin;
     }
 
+    public void close() {
+        jmxConnections.close();
+    }
+
     public void reportMetrics(Metrics metrics) throws Exception {
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
         for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
@@ -45,7 +43,7 @@ public class HBaseMetrics {
 
             int hbaseLoad = serverInfo.getLoad().getLoad();
 
-            MBeanServerConnection connection = jmxConnections.getMBeanServer(serverName, HBASE_JMX_PORT);
+            MBeanServerConnection connection = jmxConnections.getConnector(serverName, HBASE_JMX_PORT).getMBeanServerConnection();
             initGarbageCollMetrics(connection);
 
             Integer blockCacheHitRatio = (Integer)connection.getAttribute(regionServerStats, "blockCacheHitRatio");
@@ -205,7 +203,7 @@ public class HBaseMetrics {
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
         for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
             String hostname = serverInfo.getHostname();
-            MBeanServerConnection connection = jmxConnections.getMBeanServer(hostname, HBASE_JMX_PORT);
+            MBeanServerConnection connection = jmxConnections.getConnector(hostname, HBASE_JMX_PORT).getMBeanServerConnection();
 
             String arch = (String)connection.getAttribute(operationSystem, "Arch");
             Integer processors = (Integer)connection.getAttribute(operationSystem, "AvailableProcessors");
