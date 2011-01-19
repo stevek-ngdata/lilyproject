@@ -17,14 +17,14 @@ public class JmxConnections {
 
     public JMXConnector getConnector(String serverName, String port) throws IOException {
         String hostport = serverName + ":" + port;
-        JMXConnector connection = connections.get(hostport);
-        if (connection == null) {
+        JMXConnector connector = connections.get(hostport);
+        if (connector == null) {
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
-            JMXConnector connector = JMXConnectorFactory.connect(url);
+            connector = JMXConnectorFactory.connect(url);
             connector.connect();
             connections.put(hostport, connector);
         }
-        return connection;
+        return connector;
     }
 
     public void close() {
