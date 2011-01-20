@@ -52,7 +52,6 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeColumn;
 import org.lilyproject.util.io.Closer;
@@ -61,6 +60,9 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
 
     private HTableInterface typeTable;
+
+    // TODO this is temporary, should be removed once the reason mentioned in TypeManagerMBean is resolved
+    private boolean cacheInvalidationEnabled = true;
 
     public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper, HBaseTableFactory hbaseTableFactory)
             throws IOException, InterruptedException, KeeperException {
@@ -87,7 +89,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     // Only invalidate the cache from the server-side
     // Updates from the RemoteTypeManager will have to pass through (server-side) HBaseTypeManager anyway
     private void notifyCacheInvalidate() throws KeeperException, InterruptedException {
-        zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
+        if (cacheInvalidationEnabled) {
+            zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
+        }
     }
 
     public RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException,
@@ -616,4 +620,27 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return typeTable;
     }
 
+    // TODO this is temporary, should be removed once the reason mentioned in TypeManagerMBean is resolved
+    public TypeManagerMBean getMBean() {
+        return new TypeManagerMBeanImpl();
+    }
+
+    // TODO this is temporary, should be removed once the reason mentioned in TypeManagerMBean is resolved
+    public class TypeManagerMBeanImpl implements TypeManagerMBean {
+        public void enableCacheInvalidationTrigger() {
+            cacheInvalidationEnabled = true;
+        }
+
+        public void disableCacheInvalidationTrigger() {
+            cacheInvalidationEnabled = false;
+        }
+
+        public void notifyCacheInvalidate() throws Exception {
+            HBaseTypeManager.this.notifyCacheInvalidate();
+        }
+
+        public boolean isCacheInvalidationTriggerEnabled() {
+            return cacheInvalidationEnabled;
+        }
+    }
 }

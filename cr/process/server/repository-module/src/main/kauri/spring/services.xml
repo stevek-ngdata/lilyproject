@@ -123,4 +123,17 @@
     <constructor-arg ref="hbaseConf"/>
   </bean>
 
+  <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">
+    <property name="beans">
+      <map>
+        <entry key="Lily:name=TypeManager">
+          <bean factory-bean="typeManager" factory-method="getMBean"/>
+        </entry>
+      </map>
+    </property>
+    <property name="server">
+      <bean class="java.lang.management.ManagementFactory" factory-method="getPlatformMBeanServer"/>
+    </property>
+  </bean>
+
 </beans>
