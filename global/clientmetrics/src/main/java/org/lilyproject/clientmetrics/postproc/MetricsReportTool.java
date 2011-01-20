@@ -180,7 +180,7 @@ public class MetricsReportTool extends BaseCliTool {
         System.out.println();
 
         for (Map.Entry<GroupName, List<String>> entry : groups.entrySet()) {
-            writePlotScript(entry.getKey(), entry.getValue(), outputDir);
+            writePlotScript(entry.getKey(), entry.getValue(), test, outputDir);
         }
         System.out.println();
 
@@ -285,7 +285,7 @@ public class MetricsReportTool extends BaseCliTool {
         }
     }
 
-    private void writePlotScript(GroupName groupName, List<String> metricNames, File outputDir) throws IOException {
+    private void writePlotScript(GroupName groupName, List<String> metricNames, Test test, File outputDir) throws IOException {
         File file = new File(outputDir, groupName.fileName + ".plot.txt");
         System.out.println("Writing plot script " + file);
         PrintStream ps = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
@@ -309,13 +309,15 @@ public class MetricsReportTool extends BaseCliTool {
             lastPlotValue = COL_AVG;
         }
 
-        // Calculate trendlines: on median except for avg-only metrics
-        // The trendline is calculated against col 2, that is the column containing the seq numbers, since it
-        // does not work with the date values (I think because they are too big integers?)
-        for (int i = 0; i < metricNames.size(); i++) {
-            ps.println("f" + i + "(x)=m" + i + "*x+c" + i);
-            int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + (isAvgOnly ? COL_AVG : COL_MED);
-            ps.println("fit f" + i + "(x) \"" + groupName.fileName + ".txt\" using 2:" + dataCol + " via m" + i + ",c" + i);
+        if (test.intervals.size() > 1) {
+            // Calculate trendlines: on median except for avg-only metrics
+            // The trendline is calculated against col 2, that is the column containing the seq numbers, since it
+            // does not work with the date values (I think because they are too big integers?)
+            for (int i = 0; i < metricNames.size(); i++) {
+                ps.println("f" + i + "(x)=m" + i + "*x+c" + i);
+                int dataCol = (COLS_PER_METRIC * i) + HEADER_COLUMNS + (isAvgOnly ? COL_AVG : COL_MED);
+                ps.println("fit f" + i + "(x) \"" + groupName.fileName + ".txt\" using 2:" + dataCol + " via m" + i + ",c" + i);
+            }
         }
 
         // Change xdata to time only after calculating trendlines
@@ -339,12 +341,14 @@ public class MetricsReportTool extends BaseCliTool {
                         append(" with steps linecolor rgb '").append(COLORS[color % COLORS.length]).append("'");
             }
 
-            // add trendline
-            // same color as data line
-            int color = colorStart + (isAvgOnly ? COL_AVG : COL_MED) - firstPlotValue;
-            plot.append(", '").append(groupName.fileName).append(".txt' using 1:(f").append(i).append("($2))").
-                    append(" with lines linewidth 1 linecolor rgb '").append(COLORS[color % COLORS.length]).append("' title '")
-                    .append(removeGroupingPrefix(metricNames.get(i))).append(isAvgOnly ? " avg" : " med").append(" trend'");
+            if (test.intervals.size() > 1) {
+                // add trendline
+                // same color as data line
+                int color = colorStart + (isAvgOnly ? COL_AVG : COL_MED) - firstPlotValue;
+                plot.append(", '").append(groupName.fileName).append(".txt' using 1:(f").append(i).append("($2))").
+                        append(" with lines linewidth 1 linecolor rgb '").append(COLORS[color % COLORS.length]).append("' title '")
+                        .append(removeGroupingPrefix(metricNames.get(i))).append(isAvgOnly ? " avg" : " med").append(" trend'");
+            }
         }
 
         ps.println(plot.toString());
