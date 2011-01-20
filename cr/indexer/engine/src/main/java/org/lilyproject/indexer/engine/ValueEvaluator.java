@@ -150,10 +150,10 @@ public class ValueEvaluator {
     }
 
     private Object evalFieldValue(FieldValue value, IdRecord record, Repository repository, String vtag) {
-        try {
-            return record.getField(value.getFieldType().getId());
-        } catch (FieldNotFoundException e) {
-            // TODO
+        String fieldId = value.getFieldType().getId();
+        if (record.hasField(fieldId)) {
+            return record.getField(fieldId);
+        } else {
             return null;
         }
     }
