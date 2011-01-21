@@ -8,10 +8,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.joda.time.DateTime;
 import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.clientmetrics.HBaseMetrics;
-import org.lilyproject.clientmetrics.LilyMetrics;
-import org.lilyproject.clientmetrics.Metrics;
-import org.lilyproject.clientmetrics.HBaseMetricsPlugin;
+import org.lilyproject.clientmetrics.*;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -129,10 +126,13 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         hbaseMetrics = new HBaseMetrics(hbaseAdmin);
         lilyMetrics = new LilyMetrics(getZooKeeper());
 
+        ListMetricsPlugin plugins = new ListMetricsPlugin();
         HBaseMetricsPlugin metricsPlugin = new HBaseMetricsPlugin(hbaseMetrics, hbaseAdmin, useHbaseMetrics);
+        plugins.add(metricsPlugin);
+        addMetricsPlugins(plugins);
 
         metricsStream = new PrintStream(new FileOutputStream(metricsFile));
-        metrics = new Metrics(metricsStream, metricsPlugin);
+        metrics = new Metrics(metricsStream, plugins);
         metrics.setThreadCount(workers);
 
         metrics.startHeader();
@@ -168,6 +168,10 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         System.out.println("Metrics ready, summary will be outputted every " + (metrics.getIntervalDuration() / 1000) + "s");
         System.out.println("Follow them using tail -f " + metricsFileName);
         System.out.println();
+    }
+
+    protected void addMetricsPlugins(ListMetricsPlugin plugins) {
+
     }
 
     public void finishMetrics() throws Exception {
