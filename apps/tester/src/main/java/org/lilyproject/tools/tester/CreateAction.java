@@ -20,6 +20,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
     }
     
     public int run() {
+        failureCount = 0;
         for (int i = 0; i < count; i++) {
             ActionResult result = createRecord(recordTypeToCreate);
             report(result.success, result.duration);

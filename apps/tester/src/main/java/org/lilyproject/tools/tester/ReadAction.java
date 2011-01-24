@@ -12,6 +12,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
     }
 
     public int run() {
+        failureCount = 0;
         for (int i = 0; i < count; i++) {
             TestRecord testRecord = testActionContext.records.getRecord(source);
 

@@ -49,11 +49,11 @@ public class Tester extends BaseRepositoryTestTool {
     private PrintStream errorStream;
     private long startTime;
     private RecordSpaces records ;
-    private int failureCount;
+    private int failureCount = 0;
     private Option iterationsOption;
     private int nrOfIterations;
     private TestActionFactory testActionFactory = new TestActionFactory();
-    private ArrayList<TestAction> testActions;
+    private List<List<TestAction>> workersTestActions = new ArrayList<List<TestAction>>();
 
     private Map<String, TestRecordType> recordTypes = new HashMap<String, TestRecordType>();
     private Map<String, TestFieldType> fieldTypes = new HashMap<String, TestFieldType>();
@@ -156,11 +156,14 @@ public class Tester extends BaseRepositoryTestTool {
     }
     
     private void prepareActions(JsonNode configNode) throws IOException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-        testActions = new ArrayList<TestAction>();
-        JsonNode scenarioNode = JsonUtil.getNode(configNode, "scenario");
-        TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes, records, repository, metrics, errorStream);
-        for (JsonNode actionNode : scenarioNode) {
-            testActions.add(testActionFactory.getTestAction(actionNode, testActionContext));
+        for (int i = 0; i < workers; i++) {
+            List<TestAction> testActions = new ArrayList<TestAction>();
+            JsonNode scenarioNode = JsonUtil.getNode(configNode, "scenario");
+            TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes, records, repository, metrics, errorStream);
+            for (JsonNode actionNode : scenarioNode) {
+                testActions.add(testActionFactory.getTestAction(actionNode, testActionContext));
+            }
+            workersTestActions.add(testActions);
         }
     }
     
@@ -233,16 +236,7 @@ public class Tester extends BaseRepositoryTestTool {
         startTime = System.currentTimeMillis();
         HashSet<Thread> threads = new HashSet<Thread>(workers);
         for (int i = 0; i < workers; i++) {
-            threads.add(new Thread() {
-                public void run() {
-                    for (int i = 0; i < nrOfIterations; i++) {
-                        for (TestAction testAction : testActions) {
-                            failureCount += testAction.run();
-                        }
-                        if (checkStopConditions()) return;
-                    }
-                };
-            });
+            threads.add(new WorkerThread(workersTestActions.get(i)));
         }
         
         for (Thread thread : threads) {
@@ -252,9 +246,35 @@ public class Tester extends BaseRepositoryTestTool {
             thread.join();
         }
     }
+    
+    private class WorkerThread extends Thread {
+        private final List<TestAction> testActions;
+
+        public WorkerThread(List<TestAction> testActions) {
+            this.testActions = testActions;
+        }
+        
+        public void run() {
+            for (int j = 0; j < nrOfIterations; j++) {
+                for (TestAction testAction : testActions) {
+                    incFailureCount(testAction.run());
+                }
+                if (checkStopConditions()) return;
+            }
+        }
+        
+    }
+     
+    private synchronized void incFailureCount(int amount) {
+        failureCount = failureCount + amount;
+    }
+    
+    private synchronized int getFailureCount() {
+        return failureCount;
+    }
 
     private boolean checkStopConditions() {
-        if (failureCount >= maximumFailures) {
+        if (getFailureCount() >= maximumFailures) {
             System.out.println("Stopping because maximum number of failures is reached: " + maximumFailures);
             return true;
         }

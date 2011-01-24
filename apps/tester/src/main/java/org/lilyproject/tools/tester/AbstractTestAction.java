@@ -54,7 +54,7 @@ public abstract class AbstractTestAction implements TestAction {
     }
 
     protected void reportError(String message, Throwable throwable) {
-        failureCount ++;
+        failureCount++;
         testActionContext.errorStream.println("[" + new DateTime() + "] " + message);
         StackTracePrinter.printStackTrace(throwable, testActionContext.errorStream);
         testActionContext.errorStream.println("---------------------------------------------------------------------------");        
