@@ -16,6 +16,7 @@
 package org.lilyproject.util.hbase;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -73,10 +74,16 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
             
         } else if (nrOfRecordRegions != null) {
             log.info("Creating record table using " + nrOfRecordRegions + " regions");
-            splitKeys = new byte[nrOfRecordRegions][1];
-            for (int i = 0; i < nrOfRecordRegions; i++) {
-                splitKeys[i] = new byte[]{(byte)((0xff/nrOfRecordRegions)*i)};
-            }
+            
+            byte[] startBytes = new byte[]{(byte)0};
+            byte[] endBytes =  new byte[16];
+            Bytes.putLong(endBytes, 0, Long.MAX_VALUE);
+            Bytes.putLong(endBytes, 8, Long.MAX_VALUE);
+            byte[][] splits = Bytes.split(startBytes, endBytes, nrOfRecordRegions);
+            // Stripping the first key to avoid a region [null,0[ which will always be empty
+            // And the last key to avoind [xffxffxff....,null[ to contain only few values if variants are created
+            // for a record with record id xffxffxff.....
+            splitKeys = Arrays.copyOfRange(splits, 1, splits.length-1);
         } else {
             log.info("Creating record table with only 1 region");
         }
