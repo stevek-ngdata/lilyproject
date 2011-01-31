@@ -50,7 +50,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
                 tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_PAYLOAD.bytes));
                 tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_STATE.bytes));
                 byte[][] splitKeys = recordTableConfig.getSplitKeys();
-                log.info("Creating record table using " + splitKeys.length + " regions.");
+                log.info("Creating record table using " + (splitKeys == null ? 1 : splitKeys.length + 1) + " regions.");
                 admin.createTable(tableDescriptor, splitKeys);
             } catch (TableExistsException e2) {
                 // Likely table is created by another process

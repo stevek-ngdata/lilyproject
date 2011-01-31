@@ -97,7 +97,8 @@ public class IndexManager {
         put.add(Bytes.toBytes("meta"), Bytes.toBytes("conf"), jsonData);
         metaTable.put(put);
 
-        log.info("Created index table '" + indexDef.getName() + "' using " + splitKeys.length + " initial splits.");
+        log.info("Created index table '" + indexDef.getName() + "' using " +
+                (splitKeys == null ? 1 : splitKeys.length + 1) + " initial regions.");
     }
 
     public synchronized void createIndexIfNotExists(IndexDefinition indexDef) throws IOException {
