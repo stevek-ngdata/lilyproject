@@ -162,9 +162,18 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
                         stateWatcherThread.interrupt();
                         stateWatcherThread = null;
                     }
-                    sessionTimeout = getSessionTimeout();
-                    if (sessionTimeout != requestedSessionTimeout) {
-                        log.info("The negotatiated ZooKeeper session timeout is different from the requested one." +
+                    int negotiatedSessionTimeout = getSessionTimeout();
+                    // It could be that we again lost the ZK connection by now, in which case getSessionTimeout() will
+                    // return 0, and sessionTimeout should not be set to 0 since it is used to decide to shut down (see
+                    // StateWatcher thread).
+                    sessionTimeout = negotiatedSessionTimeout > 0 ? negotiatedSessionTimeout : requestedSessionTimeout;
+                    if (negotiatedSessionTimeout == 0) {
+                        // We could consider not even distributing this event further, but not sure about that, so
+                        // just logging it for now.
+                        log.info("The negotiated ZooKeeper session timeout is " + negotiatedSessionTimeout + ", which" +
+                                "indicates that the connection has been lost again.");
+                    } else if (sessionTimeout != requestedSessionTimeout) {
+                        log.info("The negotiated ZooKeeper session timeout is different from the requested one." +
                                 " Requested: " + requestedSessionTimeout + ", negotiated: " + sessionTimeout);
                     }
                 }
