@@ -89,6 +89,18 @@ public class HBaseProxy {
                 System.clearProperty(HBaseTestingUtility.TEST_DIRECTORY_KEY);
                 TEST_UTIL = new HBaseTestingUtility(CONF);
                 TEST_UTIL.startMiniCluster(1);
+
+                // In the past, it happened that HMaster would not become initialized, blocking later on
+                // the proper shutdown of the mini cluster. Now added this as an early warning mechanism.
+                long before = System.currentTimeMillis();
+                while (!TEST_UTIL.getMiniHBaseCluster().getMaster().isInitialized()) {
+                    if (System.currentTimeMillis() - before > 60000) {
+                        throw new RuntimeException("HMaster.isInitialized() does not become true.");
+                    }
+                    System.out.println("Waiting for HMaster to be initialized");
+                    Thread.sleep(500);
+                }
+
                 CONF = TEST_UTIL.getConfiguration();
                 break;
             case CONNECT:
