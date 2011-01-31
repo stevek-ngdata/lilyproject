@@ -116,7 +116,7 @@ public class IndexerTest {
         zk = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
 
         idGenerator = new IdGeneratorImpl();
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null, null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
         typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zk, hbaseTableFactory);
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);

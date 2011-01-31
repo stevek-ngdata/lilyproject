@@ -80,7 +80,7 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             String zkConnectString = jobConf.get("org.lilyproject.indexer.batchbuild.zooKeeperConnectString");
             int zkSessionTimeout = getIntProp("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", null, jobConf);
             zk = ZkUtil.connect(zkConnectString, zkSessionTimeout);
-            hbaseTableFactory = new HBaseTableFactoryImpl(conf, null, null);
+            hbaseTableFactory = new HBaseTableFactoryImpl(conf, null);
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
 
             BlobStoreAccessFactory blobStoreAccessFactory = LilyClient.getBlobStoreAccess(zk);

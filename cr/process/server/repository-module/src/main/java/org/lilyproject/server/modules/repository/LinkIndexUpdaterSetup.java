@@ -45,10 +45,10 @@ public class LinkIndexUpdaterSetup {
         // The registration of the subscription for the link index happens in the rowlog module,
         // to be sure it is already installed before the repository is started.
 
-        IndexManager.createIndexMetaTableIfNotExists(hbaseConf);
+        // The creation of the linkindex indexes happens in the general module.
+
         IndexManager indexManager = new IndexManager(hbaseConf);
 
-        LinkIndex.createIndexes(indexManager);
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
 
         LinkIndexUpdater linkIndexUpdater = new LinkIndexUpdater(repository, linkIndex);

@@ -53,10 +53,10 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
         HBASE_PROXY.start();
         configuration = HBASE_PROXY.getConf();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null, null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
         setupRowLogConfigurationManager(zooKeeper);
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null, null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
         serverTypeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);

@@ -16,7 +16,6 @@
 package org.lilyproject.util.hbase;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,20 +23,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {    
     private Log log = LogFactory.getLog(getClass());
     private final Configuration configuration;
-    private final Integer nrOfRecordRegions;
-    private final String regionKeys;
-    
-    public HBaseTableFactoryImpl(Configuration configuration, String regionKeys, Integer nrOfRecordRegions) {
+    private final TableConfig recordTableConfig;
+
+    public HBaseTableFactoryImpl(Configuration configuration, TableConfig recordTableConfig) {
         this.configuration = configuration;
-        this.regionKeys = regionKeys;
-        this.nrOfRecordRegions = nrOfRecordRegions;
+        this.recordTableConfig = recordTableConfig == null ? new TableConfig() : recordTableConfig;
     }
     
     public HTableInterface getRecordTable() throws IOException {
@@ -53,7 +49,9 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
                 tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.WAL_STATE.bytes));
                 tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_PAYLOAD.bytes));
                 tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_STATE.bytes));
-                admin.createTable(tableDescriptor, getSplitKeys());
+                byte[][] splitKeys = recordTableConfig.getSplitKeys();
+                log.info("Creating record table using " + splitKeys.length + " regions.");
+                admin.createTable(tableDescriptor, splitKeys);
             } catch (TableExistsException e2) {
                 // Likely table is created by another process
             }
@@ -62,34 +60,6 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
         return new LocalHTable(configuration, Table.RECORD.bytes);
     }
 
-    private byte[][] getSplitKeys() {
-        byte[][] splitKeys = null;
-        if (regionKeys != null && !regionKeys.isEmpty()) {
-            log.info("Creating record table using region keys : " + regionKeys);
-            String[] split = regionKeys.split(",");
-            splitKeys = new byte[split.length][];
-            for (int i = 0; i < split.length; i++) {
-                splitKeys[i] = Bytes.toBytes(split[i]);
-            }
-            
-        } else if (nrOfRecordRegions != null) {
-            log.info("Creating record table using " + nrOfRecordRegions + " regions");
-            
-            byte[] startBytes = new byte[]{(byte)0};
-            byte[] endBytes =  new byte[16];
-            Bytes.putLong(endBytes, 0, Long.MAX_VALUE);
-            Bytes.putLong(endBytes, 8, Long.MAX_VALUE);
-            byte[][] splits = Bytes.split(startBytes, endBytes, nrOfRecordRegions);
-            // Stripping the first key to avoid a region [null,0[ which will always be empty
-            // And the last key to avoind [xffxffxff....,null[ to contain only few values if variants are created
-            // for a record with record id xffxffxff.....
-            splitKeys = Arrays.copyOfRange(splits, 1, splits.length-1);
-        } else {
-            log.info("Creating record table with only 1 region");
-        }
-        return splitKeys;
-    }
-    
     public HTableInterface getTypeTable() throws IOException {
         HBaseAdmin admin = new HBaseAdmin(configuration);
 

@@ -69,8 +69,22 @@
   <bean id="hbaseTableFactory"
         class="org.lilyproject.util.hbase.HBaseTableFactoryImpl">
     <constructor-arg ref="hbaseConf"/>
-    <constructor-arg value="${tables:recordRegionKeys}"/>
-    <constructor-arg value="${tables:nrOfRecordRegions}"/>     
+    <constructor-arg>
+      <bean class="org.lilyproject.util.hbase.TableConfig">
+        <constructor-arg value="${tables:recordTable/splits/regionCount}"/>
+        <constructor-arg value="${tables:recordTable/splits/splitKeys}"/>
+      </bean>
+    </constructor-arg>
+  </bean>
+
+  <bean class="org.lilyproject.server.modules.general.LinkIndexTableSetup">
+    <constructor-arg ref="hbaseConf"/>
+    <constructor-arg>
+      <bean class="org.lilyproject.util.hbase.TableConfig">
+        <constructor-arg value="${tables:linkIndexTable/splits/regionCount}"/>
+        <constructor-arg value="${tables:linkIndexTable/splits/splitKeys}"/>
+      </bean>
+    </constructor-arg>
   </bean>
 
   <bean id="endProcessHook"

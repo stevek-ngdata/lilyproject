@@ -1,16 +1,35 @@
 <?xml version="1.0"?>
 <tables xmlns:conf="http://kauriproject.org/configuration"
-       conf:inherit="shallow">
+       conf:inherit="deep">
 
-  <!--  The amount of record table regions to be created at first startup.
-        The system generated record-id key-space will be divided evenly over these regions.
-        This number is only picked up when the recordRegionsKeys property is empty.
-        Default : 100  
-        -->
-  <nrOfRecordRegions>10</nrOfRecordRegions>
+  <recordTable>
+    <splits>
+      <!--
+           The initial region splits to be specified when creating the table on HBase. This can help
+           initial performance a lot, since load will be distributed over all initial region servers
+           and no region splits/moves will need to happen for a while.
 
-  <!--  Comma separated list of start keys of the record table regions to be created at first startup.
-        Example: <recordRegionKeys>A,KLM,Z</recordRegionKeys>  -->
-  <recordRegionKeys></recordRegionKeys>
+           Specify either regionCount or splitKeys:
+
+            - regionCount: generate this number of initial region splits, based on the assumption that the
+                           record IDs are random UUIDs (Lily's default).
+
+            - splitKeys: specify the region splits as a comma-separated list.
+                         Example: <splitKeys>A,KLM,Z</splitKeys>
+
+           When using custom record IDs, either use 1 initial region, or specify custom split keys.
+      -->
+      <regionCount>20</regionCount>
+      <splitKeys></splitKeys>
+    </splits>
+  </recordTable>
+
+  <!-- The following configuration applies to both the forward and backward linkindex tables. -->
+  <linkIndexTable>
+    <splits>
+      <regionCount>20</regionCount>
+      <splitKeys></splitKeys>
+    </splits>
+  </linkIndexTable>
 
 </tables>

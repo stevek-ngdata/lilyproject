@@ -65,7 +65,7 @@ public class TypeManagerReliableCreateTest {
         TestHelper.setupLogging();
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null, null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
         basicTypeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
         valueType = basicTypeManager.getValueType("LONG", false, false);
     }

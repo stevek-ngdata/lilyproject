@@ -15,6 +15,8 @@
  */
 package org.lilyproject.hbaseindex;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -40,6 +42,7 @@ public class IndexManager {
     private Configuration hbaseConf;
     private HBaseAdmin hbaseAdmin;
     private HTableInterface metaTable;
+    private final Log log = LogFactory.getLog(getClass());
 
     public static final String DEFAULT_META_TABLE = "indexmeta";
 
@@ -66,13 +69,17 @@ public class IndexManager {
         metaTable = new LocalHTable(hbaseConf, metaTableName);
     }
 
+    public synchronized void createIndex(IndexDefinition indexDef) throws IOException {
+        createIndex(indexDef, null);
+    }
+
     /**
      * Creates a new index.
      *
      * <p>This first creates the HBase table for this index, then adds the index
      * definition to the indexmeta table.
      */
-    public synchronized void createIndex(IndexDefinition indexDef) throws IOException {
+    public synchronized void createIndex(IndexDefinition indexDef, byte[][] splitKeys) throws IOException {
         if (indexDef.getFields().size() == 0) {
             throw new IllegalArgumentException("An IndexDefinition should contain at least one field.");
         }
@@ -84,19 +91,25 @@ public class IndexManager {
                 HColumnDescriptor.DEFAULT_IN_MEMORY, HColumnDescriptor.DEFAULT_BLOCKCACHE, HColumnDescriptor.DEFAULT_BLOCKSIZE,
                 HColumnDescriptor.DEFAULT_TTL, HColumnDescriptor.DEFAULT_BLOOMFILTER, HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
         table.addFamily(family);
-        hbaseAdmin.createTable(table);
+        hbaseAdmin.createTable(table, splitKeys);
 
         Put put = new Put(Bytes.toBytes(indexDef.getName()));
         put.add(Bytes.toBytes("meta"), Bytes.toBytes("conf"), jsonData);
         metaTable.put(put);
+
+        log.info("Created index table '" + indexDef.getName() + "' using " + splitKeys.length + " initial splits.");
     }
 
     public synchronized void createIndexIfNotExists(IndexDefinition indexDef) throws IOException {
+        createIndexIfNotExists(indexDef, null);
+    }
+
+    public synchronized void createIndexIfNotExists(IndexDefinition indexDef, byte[][] splitKeys) throws IOException {
         Get get = new Get(Bytes.toBytes(indexDef.getName()));
         Result result = metaTable.get(get);
 
         if (result.isEmpty()) {
-            createIndex(indexDef);
+            createIndex(indexDef, splitKeys);
         } else {
             Index index = instantiateIndex(indexDef.getName(), result);
             if (!index.getDefinition().equals(indexDef)) {
