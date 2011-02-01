@@ -46,7 +46,7 @@ public class BlobStoreTest extends AbstractBlobStoreTest {
         IdGenerator idGenerator = new IdGeneratorImpl();
         configuration = HBASE_PROXY.getConf();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(configuration, null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(configuration);

@@ -52,6 +52,7 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeColumn;
 import org.lilyproject.util.io.Closer;
@@ -70,7 +71,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         log = LogFactory.getLog(getClass());
         this.idGenerator = idGenerator;
 
-        this.typeTable = hbaseTableFactory.getTypeTable();
+        this.typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         registerDefaultValueTypes();
         setupCaches();
     }

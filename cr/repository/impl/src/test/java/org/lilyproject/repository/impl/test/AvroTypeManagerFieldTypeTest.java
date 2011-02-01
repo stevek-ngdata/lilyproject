@@ -52,6 +52,7 @@ import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -78,7 +79,7 @@ public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTe
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
         configuration = HBASE_PROXY.getConf();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         serverTypeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
@@ -102,7 +103,8 @@ public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTe
     protected static void setupWal() throws Exception {
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L));
-        wal = new RowLogImpl("WAL", hbaseTableFactory.getRecordTable(), RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfMgr);
+        wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
+                RecordCf.WAL_STATE.bytes, rowLogConfMgr);
         RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
         wal.registerShard(walShard);
     }

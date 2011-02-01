@@ -22,10 +22,11 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LocalHTable;
 
 import java.io.ByteArrayOutputStream;
@@ -42,6 +43,7 @@ public class IndexManager {
     private Configuration hbaseConf;
     private HBaseAdmin hbaseAdmin;
     private HTableInterface metaTable;
+    private HBaseTableFactory tableFactory;
     private final Log log = LogFactory.getLog(getClass());
 
     public static final String DEFAULT_META_TABLE = "indexmeta";
@@ -64,12 +66,17 @@ public class IndexManager {
      * @param metaTableName name of the HBase table in which to manage the configuration of the indexes
      */
     public IndexManager(Configuration hbaseConf, String metaTableName) throws IOException {
+        this(hbaseConf, metaTableName, null);
+    }
+
+    public IndexManager(Configuration hbaseConf, String metaTableName, HBaseTableFactory tableFactory) throws IOException {
         this.hbaseConf = hbaseConf;
         hbaseAdmin = new HBaseAdmin(hbaseConf);
         metaTable = new LocalHTable(hbaseConf, metaTableName);
+        this.tableFactory = tableFactory != null ? tableFactory : new HBaseTableFactoryImpl(hbaseConf);
     }
 
-    public synchronized void createIndex(IndexDefinition indexDef) throws IOException {
+    public synchronized void createIndex(IndexDefinition indexDef) throws IOException, InterruptedException {
         createIndex(indexDef, null);
     }
 
@@ -78,8 +85,11 @@ public class IndexManager {
      *
      * <p>This first creates the HBase table for this index, then adds the index
      * definition to the indexmeta table.
+     *
+     * @throws IndexExistsException if an index with the same name already exists
      */
-    public synchronized void createIndex(IndexDefinition indexDef, byte[][] splitKeys) throws IOException {
+    public synchronized void createIndex(IndexDefinition indexDef, byte[][] splitKeys)
+            throws IOException, InterruptedException {
         if (indexDef.getFields().size() == 0) {
             throw new IllegalArgumentException("An IndexDefinition should contain at least one field.");
         }
@@ -91,7 +101,36 @@ public class IndexManager {
                 HColumnDescriptor.DEFAULT_IN_MEMORY, HColumnDescriptor.DEFAULT_BLOCKCACHE, HColumnDescriptor.DEFAULT_BLOCKSIZE,
                 HColumnDescriptor.DEFAULT_TTL, HColumnDescriptor.DEFAULT_BLOOMFILTER, HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
         table.addFamily(family);
-        hbaseAdmin.createTable(table, splitKeys);
+
+        if (splitKeys == null) {
+            splitKeys = tableFactory.getSplitKeys(table.getName());
+        }
+
+        try {
+            hbaseAdmin.createTable(table, splitKeys);
+        } catch (TableExistsException e) {
+            // This could be because:
+            //   * the index simply already exists
+            //   * the index is in the process of being created concurrently by another process (a typical scenario
+            //     when starting the same process concurrently on multiple nodes). In this case, after table creation
+            //     the metaTable still needs to be updated, therefore the loop below to give this some time.
+
+            Get get = new Get(Bytes.toBytes(indexDef.getName()));
+            Result result = metaTable.get(get);
+            int count = 0;
+            while (result.isEmpty() && count < 30) {
+                Thread.sleep(100);
+                count++;
+                result = metaTable.get(get);
+            }
+
+            if (result.isEmpty()) {
+                // The table exists but not as an index: throw the original TableExistsException
+                throw e;
+            } else {
+                throw new IndexExistsException(indexDef.getName());
+            }
+        }
 
         Put put = new Put(Bytes.toBytes(indexDef.getName()));
         put.add(Bytes.toBytes("meta"), Bytes.toBytes("conf"), jsonData);
@@ -101,20 +140,31 @@ public class IndexManager {
                 (splitKeys == null ? 1 : splitKeys.length + 1) + " initial regions.");
     }
 
-    public synchronized void createIndexIfNotExists(IndexDefinition indexDef) throws IOException {
+    public synchronized void createIndexIfNotExists(IndexDefinition indexDef) throws IOException, InterruptedException {
         createIndexIfNotExists(indexDef, null);
     }
 
-    public synchronized void createIndexIfNotExists(IndexDefinition indexDef, byte[][] splitKeys) throws IOException {
+    public synchronized void createIndexIfNotExists(IndexDefinition indexDef, byte[][] splitKeys) throws IOException,
+            InterruptedException {
+
         Get get = new Get(Bytes.toBytes(indexDef.getName()));
         Result result = metaTable.get(get);
+        boolean indexExisted = !result.isEmpty();
 
-        if (result.isEmpty()) {
-            createIndex(indexDef, splitKeys);
-        } else {
+        if (!indexExisted) {
+            try {
+                createIndex(indexDef, splitKeys);
+            } catch (IndexExistsException e) {
+                indexExisted = true;
+            }
+        }
+
+        if (indexExisted) {
+            result = metaTable.get(get); // would still have been empty in case of IndexExistsException
             Index index = instantiateIndex(indexDef.getName(), result);
             if (!index.getDefinition().equals(indexDef)) {
-                throw new RuntimeException("Index " + indexDef.getName() + " exists but its definition does not match the supplied definition.");
+                throw new RuntimeException("Index " + indexDef.getName() +
+                        " exists but its definition does not match the supplied definition.");
             }
         }
     }

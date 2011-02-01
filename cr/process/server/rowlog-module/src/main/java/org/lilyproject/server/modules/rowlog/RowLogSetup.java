@@ -40,6 +40,7 @@ import org.lilyproject.rowlog.impl.RowLogShardImpl;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.LilyInfoMBean;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -102,13 +103,14 @@ public class RowLogSetup {
             }
         }
 
-        messageQueue = new RowLogImpl("mq", hbaseTableFactory.getRecordTable(), RecordCf.MQ_PAYLOAD.bytes,
+        messageQueue = new RowLogImpl("mq", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.MQ_PAYLOAD.bytes,
                 RecordCf.MQ_STATE.bytes, confMgr);
-        messageQueue.registerShard(new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100));
+        RowLogShard mqShard = new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100, hbaseTableFactory);
+        messageQueue.registerShard(mqShard);
 
-        writeAheadLog = new RowLogImpl("wal", hbaseTableFactory.getRecordTable(), RecordCf.WAL_PAYLOAD.bytes,
+        writeAheadLog = new RowLogImpl("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
                 RecordCf.WAL_STATE.bytes, confMgr);
-        RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100);
+        RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);
         writeAheadLog.registerShard(walShard);
 
         RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));

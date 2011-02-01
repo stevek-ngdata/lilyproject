@@ -50,6 +50,7 @@ import org.lilyproject.rowlog.impl.RowLogShardImpl;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
@@ -96,7 +97,8 @@ public abstract class AbstractRepositoryTest {
     
     protected static void setupWal() throws Exception {
         rowLogConfigurationManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L));
-        wal = new RowLogImpl("WAL", hbaseTableFactory.getRecordTable(), RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfigurationManager);
+        wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
+                RecordCf.WAL_STATE.bytes, rowLogConfigurationManager);
         RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
         wal.registerShard(walShard);
     }
@@ -157,7 +159,7 @@ public abstract class AbstractRepositoryTest {
         
         rowLogConfigurationManager.addRowLog("MQ", new RowLogConfig(10000L, false, true, 100L, 0L));
         rowLogConfigurationManager.addSubscription("WAL", "MQFeeder", Type.VM, 3, 1);
-        messageQueue = new RowLogImpl("MQ", hbaseTableFactory.getRecordTable(), RecordCf.MQ_PAYLOAD.bytes,
+        messageQueue = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.MQ_PAYLOAD.bytes,
                 RecordCf.MQ_STATE.bytes, rowLogConfigurationManager);
         messageQueue.registerShard(new RowLogShardImpl("MQS1", configuration, messageQueue, 100));
 

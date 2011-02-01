@@ -26,6 +26,7 @@ import org.lilyproject.rowlog.impl.*;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 
@@ -116,7 +117,7 @@ public class IndexerTest {
         zk = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
 
         idGenerator = new IdGeneratorImpl();
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zk, hbaseTableFactory);
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
@@ -124,7 +125,7 @@ public class IndexerTest {
 
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zk);
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L));
-        RowLog wal = new RowLogImpl("WAL", hbaseTableFactory.getRecordTable(),
+        RowLog wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
                 RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfMgr);
         RowLogShard walShard = new RowLogShardImpl("WS1", HBASE_PROXY.getConf(), wal, 100);
         wal.registerShard(walShard);

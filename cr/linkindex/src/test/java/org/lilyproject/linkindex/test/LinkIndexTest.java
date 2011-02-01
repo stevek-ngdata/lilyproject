@@ -59,6 +59,7 @@ import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
@@ -88,7 +89,7 @@ public class LinkIndexTest {
         IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
 
         IdGenerator idGenerator = new IdGeneratorImpl();
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zk, hbaseTableFactory);
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
@@ -97,7 +98,7 @@ public class LinkIndexTest {
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 0L, 5000L));
         
         
-        RowLog wal = new RowLogImpl("WAL", hbaseTableFactory.getRecordTable(),
+        RowLog wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
                 RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfMgr);
         RowLogShard walShard = new RowLogShardImpl("WS1", HBASE_PROXY.getConf(), wal, 100);
         wal.registerShard(walShard);

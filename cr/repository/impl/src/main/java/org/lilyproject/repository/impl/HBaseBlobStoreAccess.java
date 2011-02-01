@@ -25,13 +25,13 @@ import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.util.hbase.LocalHTable;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 
 public class HBaseBlobStoreAccess implements BlobStoreAccess {
 
@@ -41,18 +41,16 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
     private static final byte[] BLOBS_COLUMN_FAMILY_BYTES = Bytes.toBytes(BLOBS_COLUMN_FAMILY);
     private static final byte[] BLOB_COLUMN = Bytes.toBytes("b");
     private HTableInterface table;
-    
 
-    public HBaseBlobStoreAccess(Configuration configuration) throws IOException {
-        HBaseAdmin admin = new HBaseAdmin(configuration);
-        try {
-            admin.getTableDescriptor(BLOB_TABLE);
-        } catch (TableNotFoundException e) {
-            HTableDescriptor tableDescriptor = new HTableDescriptor(BLOB_TABLE);
-            tableDescriptor.addFamily(new HColumnDescriptor(BLOBS_COLUMN_FAMILY));
-            admin.createTable(tableDescriptor);
-        }
-        table = new LocalHTable(configuration, BLOB_TABLE);
+    public HBaseBlobStoreAccess(Configuration hbaseConf) throws IOException {
+        this(new HBaseTableFactoryImpl(hbaseConf));
+    }
+
+    public HBaseBlobStoreAccess(HBaseTableFactory tableFactory) throws IOException {
+        HTableDescriptor tableDescriptor = new HTableDescriptor(BLOB_TABLE);
+        tableDescriptor.addFamily(new HColumnDescriptor(BLOBS_COLUMN_FAMILY));
+
+        table = tableFactory.getTable(tableDescriptor);
     }
     
     public String getId() {

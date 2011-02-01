@@ -347,12 +347,7 @@ public class LinkIndex {
         return builder.toString();
     }
 
-    public static void createIndexes(IndexManager indexManager) throws IOException {
-        createIndexes(indexManager, null);
-    }
-
-    public static void createIndexes(IndexManager indexManager, byte[][] splitKeys) throws IOException {
-
+    public static void createIndexes(IndexManager indexManager) throws IOException, InterruptedException {
         // About the structure of these indexes:
         //  - the vtag comes after the recordid because this way we can delete all
         //    entries for a record without having to know the vtags under which they occur
@@ -363,7 +358,7 @@ public class LinkIndex {
             indexDef.addByteField("target");
             indexDef.addStringField("vtag");
             indexDef.addByteField("sourcefield");
-            indexManager.createIndexIfNotExists(indexDef, splitKeys);
+            indexManager.createIndexIfNotExists(indexDef);
         }
 
         {
@@ -371,7 +366,7 @@ public class LinkIndex {
             indexDef.addByteField("source");
             indexDef.addStringField("vtag");
             indexDef.addByteField("sourcefield");
-            indexManager.createIndexIfNotExists(indexDef, splitKeys);
+            indexManager.createIndexIfNotExists(indexDef);
         }
     }
 

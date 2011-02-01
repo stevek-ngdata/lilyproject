@@ -90,7 +90,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         // Type manager
         // TODO should be able to avoid ZK for this use-case?
         final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, 10000);
-        typeMgr = new HBaseTypeManager(idGenerator, conf, zk, new HBaseTableFactoryImpl(conf, null));
+        typeMgr = new HBaseTypeManager(idGenerator, conf, zk, new HBaseTableFactoryImpl(conf));
 
         Get get = new Get(recordId.toBytes());
         get.setMaxVersions();

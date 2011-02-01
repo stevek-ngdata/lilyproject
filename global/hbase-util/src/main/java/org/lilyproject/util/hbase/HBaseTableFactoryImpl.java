@@ -16,6 +16,8 @@
 package org.lilyproject.util.hbase;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,62 +25,56 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import org.lilyproject.util.ByteArrayKey;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {    
     private Log log = LogFactory.getLog(getClass());
     private final Configuration configuration;
-    private final TableConfig recordTableConfig;
+    private final Map<ByteArrayKey, TableConfig> tableConfigs;
 
-    public HBaseTableFactoryImpl(Configuration configuration, TableConfig recordTableConfig) {
-        this.configuration = configuration;
-        this.recordTableConfig = recordTableConfig == null ? new TableConfig() : recordTableConfig;
+    public HBaseTableFactoryImpl(Configuration configuration) {
+        this(configuration, null);
     }
-    
-    public HTableInterface getRecordTable() throws IOException {
+
+    public HBaseTableFactoryImpl(Configuration configuration, Map<ByteArrayKey, TableConfig> tableConfigs) {
+        this.configuration = configuration;
+        this.tableConfigs = tableConfigs == null ? Collections.<ByteArrayKey, TableConfig>emptyMap() : tableConfigs;
+    }
+
+    public HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException {
+        return getTable(tableDescriptor, getSplitKeys(tableDescriptor.getName()));
+    }
+
+    private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
         HBaseAdmin admin = new HBaseAdmin(configuration);
+
         try {
-            admin.getTableDescriptor(Table.RECORD.bytes);
+            admin.getTableDescriptor(tableDescriptor.getName());
         } catch (TableNotFoundException e) {
             try {
-                HTableDescriptor tableDescriptor = new HTableDescriptor(Table.RECORD.bytes);
-                tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.SYSTEM.bytes, HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-                tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.DATA.bytes, HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-                tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.WAL_PAYLOAD.bytes));
-                tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.WAL_STATE.bytes));
-                tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_PAYLOAD.bytes));
-                tableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_STATE.bytes));
-                byte[][] splitKeys = recordTableConfig.getSplitKeys();
-                log.info("Creating record table using " + (splitKeys == null ? 1 : splitKeys.length + 1) + " regions.");
+                log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "
+                        + (splitKeys == null ? 1 : splitKeys.length + 1) + " regions.");
                 admin.createTable(tableDescriptor, splitKeys);
             } catch (TableExistsException e2) {
-                // Likely table is created by another process
+                // Table is meanwhile created by another process
+                log.info("Table already existed: '" + tableDescriptor.getNameAsString() + "'.");
             }
         }
 
-        return new LocalHTable(configuration, Table.RECORD.bytes);
+        // TODO we could check if the existing table matches the given table descriptor
+
+        return new LocalHTable(configuration, tableDescriptor.getName());
     }
 
-    public HTableInterface getTypeTable() throws IOException {
-        HBaseAdmin admin = new HBaseAdmin(configuration);
-
-        try {
-            admin.getTableDescriptor(Table.TYPE.bytes);
-        } catch (TableNotFoundException e) {
-            try {
-                HTableDescriptor tableDescriptor = new HTableDescriptor(Table.TYPE.bytes);
-                tableDescriptor.addFamily(new HColumnDescriptor(TypeCf.DATA.bytes));
-                tableDescriptor.addFamily(new HColumnDescriptor(TypeCf.FIELDTYPE_ENTRY.bytes, HConstants.ALL_VERSIONS,
-                        "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-                tableDescriptor.addFamily(new HColumnDescriptor(TypeCf.MIXIN.bytes, HConstants.ALL_VERSIONS, "none",
-                        false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-                admin.createTable(tableDescriptor);
-            } catch (TableExistsException e2) {
-                // Likely table is created by another process
-            }
-        }
-
-        return new LocalHTable(configuration, Table.TYPE.bytes);
+    public TableConfig getTableConfig(byte[] tableName) {
+        TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));
+        return config != null ? config : new TableConfig();
     }
+
+    public byte[][] getSplitKeys(byte[] tableName) {
+        TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));
+        byte[][] splitKeys = config != null ? config.getSplitKeys() : null;
+        return splitKeys;
+    }
+
 }

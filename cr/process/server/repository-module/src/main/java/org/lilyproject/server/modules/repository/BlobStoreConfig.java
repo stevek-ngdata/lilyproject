@@ -27,15 +27,18 @@ import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
 import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.repo.DfsUri;
 
 public class BlobStoreConfig {
-    static BlobStoreAccessFactory get(URI dfsUri, Configuration configuration) throws IOException {
+    static BlobStoreAccessFactory get(URI dfsUri, Configuration configuration, HBaseTableFactory tableFactory)
+            throws IOException {
+
         FileSystem fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));
 
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(fs, blobRootPath);
-        BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(configuration);
+        BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(tableFactory);
         BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess(); 
         SizeBasedBlobStoreAccessFactory factory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         factory.addBlobStoreAccess(5000, inlineBlobStoreAccess);

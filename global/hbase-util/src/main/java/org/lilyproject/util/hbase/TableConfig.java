@@ -7,6 +7,7 @@ import java.util.Arrays;
 public class TableConfig {
     private Integer regionCount;
     private String splitKeysAsString;
+    private byte[] splitKeyPrefix;
 
     public TableConfig() {
 
@@ -18,43 +19,37 @@ public class TableConfig {
      * @param regionCount (optional, can be null) number of regions. Creates splits suited for row keys that are
      *                    random UUIDs.
      */
-    public TableConfig(Integer regionCount, String splitKeys) {
+    public TableConfig(Integer regionCount, String splitKeys, byte[] splitKeyPrefix) {
         this.regionCount = regionCount;
         this.splitKeysAsString = splitKeys;
+        this.splitKeyPrefix = splitKeyPrefix == null ? new byte[0] : splitKeyPrefix;
     }
 
     public byte[][] getSplitKeys() {
-        return getSplitKeys(null);
-    }
-
-    public byte[][] getSplitKeys(byte[] prefixBytes) {
-        if (prefixBytes == null) {
-            prefixBytes = new byte[0];
-        }
-
         byte[][] splitKeys = null;
         if (splitKeysAsString != null && !splitKeysAsString.isEmpty()) {
             String[] split = splitKeysAsString.split(",");
             splitKeys = new byte[split.length][];
             for (int i = 0; i < split.length; i++) {
-                splitKeys[i] = Bytes.add(prefixBytes, Bytes.toBytes(split[i]));
+                splitKeys[i] = Bytes.add(splitKeyPrefix, Bytes.toBytesBinary(split[i]));
             }
         } else if (regionCount != null && regionCount <= 1) {
             // one region requested, no need to define splits
         } else if (regionCount != null) {
             byte[] startBytes = new byte[]{(byte)0};
-            byte[] endBytes =  new byte[prefixBytes.length + 16];
-            System.arraycopy(prefixBytes, 0, endBytes, 0, prefixBytes.length);
-            for (int i = prefixBytes.length; i < endBytes.length; i++) {
+            byte[] endBytes =  new byte[splitKeyPrefix.length + 16];
+            System.arraycopy(splitKeyPrefix, 0, endBytes, 0, splitKeyPrefix.length);
+            for (int i = splitKeyPrefix.length; i < endBytes.length; i++) {
                 endBytes[i] = (byte)0xFF;
             }
             // number of splits = number of regions - 1
-            byte[][] splits = Bytes.split(startBytes, endBytes, regionCount - 1);
+            splitKeys = Bytes.split(startBytes, endBytes, regionCount - 1);
             // Stripping the first key to avoid a region [null,0[ which will always be empty
             // And the last key to avoind [xffxffxff....,null[ to contain only few values if variants are created
             // for a record with record id xffxffxff.....
-            splitKeys = Arrays.copyOfRange(splits, 1, splits.length - 1);
+            splitKeys = Arrays.copyOfRange(splitKeys, 1, splitKeys.length - 1);
         }
+
         return splitKeys;
     }
 }

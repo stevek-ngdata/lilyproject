@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <tables xmlns:conf="http://kauriproject.org/configuration"
-       conf:inherit="deep">
+        conf:inherit="deep"
+        conf:inheritKey="string(@name)">
 
-  <recordTable>
+  <table name="record">
     <splits>
       <!--
            The initial region splits to be specified when creating the table on HBase. This can help
@@ -20,16 +21,26 @@
            When using custom record IDs, either use 1 initial region, or specify custom split keys.
       -->
       <regionCount>20</regionCount>
-      <splitKeys></splitKeys>
+      <splitKeys>A\xFF,B,C</splitKeys>
     </splits>
-  </recordTable>
+  </table>
 
-  <!-- The following configuration applies to both the forward and backward linkindex tables. -->
-  <linkIndexTable>
+  <table name="links-forward">
     <splits>
       <regionCount>20</regionCount>
       <splitKeys></splitKeys>
+      <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null -->
+      <splitKeyPrefix>\x00</splitKeyPrefix>
     </splits>
-  </linkIndexTable>
+  </table>
+
+  <table name="links-backward">
+    <splits>
+      <regionCount>20</regionCount>
+      <splitKeys></splitKeys>
+      <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null -->
+      <splitKeyPrefix>\x00</splitKeyPrefix>
+    </splits>
+  </table>
 
 </tables>

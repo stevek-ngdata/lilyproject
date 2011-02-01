@@ -41,7 +41,7 @@ public class TypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTest {
         TestHelper.setupLogging();
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf(), null);
+        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
     }
 

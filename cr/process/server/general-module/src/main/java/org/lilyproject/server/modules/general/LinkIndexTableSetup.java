@@ -3,6 +3,7 @@ package org.lilyproject.server.modules.general;
 import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.LinkIndex;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.TableConfig;
 
 import javax.annotation.PostConstruct;
@@ -10,21 +11,17 @@ import java.io.IOException;
 
 public class LinkIndexTableSetup {
     private final Configuration hbaseConf;
-    private final TableConfig tableConfig;
+    private final HBaseTableFactory tableFactory;
 
-    public LinkIndexTableSetup(Configuration hbaseConf, TableConfig tableConfig) {
+    public LinkIndexTableSetup(Configuration hbaseConf, HBaseTableFactory tableFactory) {
         this.hbaseConf = hbaseConf;
-        this.tableConfig = tableConfig;
+        this.tableFactory = tableFactory;
     }
 
     @PostConstruct
-    public void init() throws IOException {
+    public void init() throws IOException, InterruptedException {
         IndexManager.createIndexMetaTableIfNotExists(hbaseConf);
-        IndexManager indexManager = new IndexManager(hbaseConf);
-
-        // Each index field is prefixed with a meta-byte, which, if the field is not null, which is the case
-        // for the link index, is currently always 0.
-        byte[][] splitKeys = tableConfig.getSplitKeys(new byte[]{0});
-        LinkIndex.createIndexes(indexManager, splitKeys);
+        IndexManager indexManager = new IndexManager(hbaseConf, IndexManager.DEFAULT_META_TABLE, tableFactory);
+        LinkIndex.createIndexes(indexManager);
     }
 }

@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.ByteArrayKey;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -88,9 +89,9 @@ public class Index {
         byte[] indexKey = buildRowKey(entry);
         Put put = new Put(indexKey);
 
-        Map<IndexEntry.ByteArrayKey, byte[]> data = entry.getData();
+        Map<ByteArrayKey, byte[]> data = entry.getData();
         if (data.size() > 0) {
-            for (Map.Entry<IndexEntry.ByteArrayKey, byte[]> item : data.entrySet()) {
+            for (Map.Entry<ByteArrayKey, byte[]> item : data.entrySet()) {
                 put.add(DATA_FAMILY, item.getKey().getKey(), item.getValue());
             }
         } else {

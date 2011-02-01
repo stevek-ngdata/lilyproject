@@ -82,6 +82,7 @@
       </bean>
     </constructor-arg>
     <constructor-arg ref="hbaseConf"/>
+    <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
   <bean id="repository" class="org.lilyproject.repository.impl.HBaseRepository">

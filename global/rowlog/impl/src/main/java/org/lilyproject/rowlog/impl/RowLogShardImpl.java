@@ -19,15 +19,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -40,7 +36,8 @@ import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.util.hbase.LocalHTable;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
 
 public class RowLogShardImpl implements RowLogShard {
@@ -52,24 +49,23 @@ public class RowLogShardImpl implements RowLogShard {
     private final RowLog rowLog;
     private final String id;
     private final int batchSize;
-    private Log log = LogFactory.getLog(getClass());
 
-    public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog, int batchSize) throws IOException {
+    public RowLogShardImpl(String id, Configuration hbaseConf, RowLog rowLog, int batchSize) throws IOException {
+        this(id, hbaseConf, rowLog, batchSize, new HBaseTableFactoryImpl(hbaseConf));
+    }
+
+    public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog, int batchSize,
+            HBaseTableFactory tableFactory) throws IOException {
+
         this.id = id;
         this.rowLog = rowLog;
         this.batchSize = batchSize;
 
-        String tableName = rowLog.getId()+"-"+id;
-        HBaseAdmin admin = new HBaseAdmin(configuration);
-        try {
-            admin.getTableDescriptor(Bytes.toBytes(tableName));
-        } catch (TableNotFoundException e) {
-            HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-            tableDescriptor.addFamily(new HColumnDescriptor(MESSAGES_CF));
-            admin.createTable(tableDescriptor);
-        }
+        String tableName = rowLog.getId() + "-" + id;
+        HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+        tableDescriptor.addFamily(new HColumnDescriptor(MESSAGES_CF));
 
-        table = new LocalHTable(configuration, tableName);
+        table = tableFactory.getTable(tableDescriptor);
     }
 
     public String getId() {

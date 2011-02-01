@@ -1,11 +1,50 @@
 package org.lilyproject.util.hbase;
 
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
 
 public class LilyHBaseSchema {
     public static final byte EXISTS_FLAG = (byte) 0;
     public static final byte DELETE_FLAG = (byte) 1;
     public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
+
+    private static final HTableDescriptor recordTableDescriptor;
+
+    static {
+        recordTableDescriptor = new HTableDescriptor(Table.RECORD.bytes);
+        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.SYSTEM.bytes,
+                HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
+        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.DATA.bytes,
+                HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
+        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.WAL_PAYLOAD.bytes));
+        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.WAL_STATE.bytes));
+        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_PAYLOAD.bytes));
+        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.MQ_STATE.bytes));
+    }
+
+    private static final HTableDescriptor typeTableDescriptor;
+
+    static {
+        typeTableDescriptor = new HTableDescriptor(Table.TYPE.bytes);
+        typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.DATA.bytes));
+        typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.FIELDTYPE_ENTRY.bytes, HConstants.ALL_VERSIONS,
+                "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
+        typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.MIXIN.bytes, HConstants.ALL_VERSIONS, "none",
+                false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
+    }
+
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory) throws IOException {
+        return tableFactory.getTable(recordTableDescriptor);
+    }
+
+    public static HTableInterface getTypeTable(HBaseTableFactory tableFactory) throws IOException {
+        return tableFactory.getTable(typeTableDescriptor);
+    }
 
     public static enum Table {
         RECORD("record"),

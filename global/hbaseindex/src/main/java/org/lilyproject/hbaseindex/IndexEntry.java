@@ -16,8 +16,8 @@
 package org.lilyproject.hbaseindex;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.ByteArrayKey;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -81,29 +81,5 @@ public class IndexEntry {
 
     public void setIdentifier(byte[] identifier) {
         this.identifier = identifier;
-    }
-
-    protected static class ByteArrayKey {
-        private byte[] key;
-        private int hash;
-
-        public ByteArrayKey(byte[] key) {
-            this.key = Arrays.copyOf(key, key.length);
-            this.hash = Arrays.hashCode(key);
-        }
-
-        public byte[] getKey() {
-            return key;
-        }
-
-        @Override
-        public int hashCode() {
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof ByteArrayKey && Arrays.equals(key, ((ByteArrayKey)obj).key);
-        }
     }
 }

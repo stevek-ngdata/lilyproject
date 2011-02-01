@@ -70,21 +70,15 @@
         class="org.lilyproject.util.hbase.HBaseTableFactoryImpl">
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg>
-      <bean class="org.lilyproject.util.hbase.TableConfig">
-        <constructor-arg value="${tables:recordTable/splits/regionCount}"/>
-        <constructor-arg value="${tables:recordTable/splits/splitKeys}"/>
+      <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="build">
+        <constructor-arg><kauri:conf path="tables"/></constructor-arg>
       </bean>
     </constructor-arg>
   </bean>
 
   <bean class="org.lilyproject.server.modules.general.LinkIndexTableSetup">
     <constructor-arg ref="hbaseConf"/>
-    <constructor-arg>
-      <bean class="org.lilyproject.util.hbase.TableConfig">
-        <constructor-arg value="${tables:linkIndexTable/splits/regionCount}"/>
-        <constructor-arg value="${tables:linkIndexTable/splits/splitKeys}"/>
-      </bean>
-    </constructor-arg>
+    <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
   <bean id="connectionDisposer"

@@ -54,6 +54,7 @@ import org.lilyproject.repository.impl.primitivevaluetype.LongValueType;
 import org.lilyproject.repository.impl.primitivevaluetype.StringValueType;
 import org.lilyproject.repository.impl.primitivevaluetype.UriValueType;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.ByteArrayKey;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -74,7 +75,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
     private Map<String, FieldType> fieldTypeIdCache = new HashMap<String, FieldType>();
     private Map<String, RecordType> recordTypeIdCache = new HashMap<String, RecordType>();
-    private Map<BytesId, FieldType> fieldTypeBytesIdCache = new HashMap<BytesId, FieldType>();
+    private Map<ByteArrayKey, FieldType> fieldTypeBytesIdCache = new HashMap<ByteArrayKey, FieldType>();
     private final CacheWatcher cacheWatcher = new CacheWatcher();
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache";
     
@@ -188,13 +189,13 @@ public abstract class AbstractTypeManager implements TypeManager {
     private synchronized void refreshFieldTypeCache() {
         Map<QName, FieldType> newFieldTypeNameCache = new HashMap<QName, FieldType>();
         Map<String, FieldType> newFieldTypeIdCache = new HashMap<String, FieldType>();
-        Map<BytesId, FieldType> newFieldTypeBytesIdCache = new HashMap<BytesId, FieldType>();
+        Map<ByteArrayKey, FieldType> newFieldTypeBytesIdCache = new HashMap<ByteArrayKey, FieldType>();
         try {
             List<FieldType> fieldTypes = getFieldTypesWithoutCache();
             for (FieldType fieldType : fieldTypes) {
                 newFieldTypeNameCache.put(fieldType.getName(), fieldType);
                 newFieldTypeIdCache.put(fieldType.getId(), fieldType);
-                newFieldTypeBytesIdCache.put(new BytesId(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
+                newFieldTypeBytesIdCache.put(new ByteArrayKey(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
             }
             fieldTypeNameCache = newFieldTypeNameCache;
             fieldTypeIdCache = newFieldTypeIdCache;
@@ -231,11 +232,11 @@ public abstract class AbstractTypeManager implements TypeManager {
         if (oldFieldType != null) {
             fieldTypeNameCache.remove(oldFieldType.getName());
             fieldTypeIdCache.remove(oldFieldType.getId());
-            fieldTypeBytesIdCache.remove(new BytesId(HBaseTypeManager.idToBytes(oldFieldType.getId())));
+            fieldTypeBytesIdCache.remove(new ByteArrayKey(HBaseTypeManager.idToBytes(oldFieldType.getId())));
         }
         fieldTypeNameCache.put(fieldType.getName(), fieldType);
         fieldTypeIdCache.put(fieldType.getId(), fieldType);
-        fieldTypeBytesIdCache.put(new BytesId(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
+        fieldTypeBytesIdCache.put(new ByteArrayKey(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
     }
 
     protected synchronized void updateRecordTypeCache(RecordType recordType) {
@@ -273,7 +274,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
     
     protected synchronized FieldType getFieldTypeFromCache(byte[] id) {
-        return fieldTypeBytesIdCache.get(new BytesId(id));
+        return fieldTypeBytesIdCache.get(new ByteArrayKey(id));
     }
     
     protected synchronized RecordType getRecordTypeFromCache(QName name) {
@@ -411,29 +412,5 @@ public abstract class AbstractTypeManager implements TypeManager {
         registerPrimitiveValueType(new LinkValueType(idGenerator));
         registerPrimitiveValueType(new BlobValueType());
         registerPrimitiveValueType(new UriValueType());
-    }
-    
-    private class BytesId {
-        private byte[] id;
-        private String idString;
-        public BytesId(byte[] id) {
-            this.id = id;
-        }
-        @Override
-        public int hashCode() {
-            return Arrays.hashCode(id);
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            BytesId other = (BytesId) obj;
-            return Arrays.equals(id, other.id);
-        }
-        
     }
 }

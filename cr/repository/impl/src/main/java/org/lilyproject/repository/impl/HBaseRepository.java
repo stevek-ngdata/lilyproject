@@ -57,6 +57,7 @@ import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
@@ -94,7 +95,7 @@ public class HBaseRepository implements Repository {
         this.hbaseTableFactory = hbaseTableFactory;
         blobStoreAccessRegistry = new BlobStoreAccessRegistry();
         blobStoreAccessRegistry.setBlobStoreAccessFactory(blobStoreAccessFactory);
-        recordTable = hbaseTableFactory.getRecordTable();
+        recordTable = LilyHBaseSchema.getRecordTable(hbaseTableFactory);
 
         recordTypeIdColumnNames.put(Scope.NON_VERSIONED, RecordColumn.NON_VERSIONED_RT_ID.bytes);
         recordTypeIdColumnNames.put(Scope.VERSIONED, RecordColumn.VERSIONED_RT_ID.bytes);
