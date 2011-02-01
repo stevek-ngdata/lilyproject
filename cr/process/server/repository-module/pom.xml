@@ -60,6 +60,28 @@
         <groupId>org.kauriproject</groupId>
         <artifactId>kauri-genclassloader-plugin</artifactId>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes/KAURI-INF/conf</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../conf/repository</directory>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
