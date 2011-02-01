@@ -18,14 +18,11 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.util.List;
 
-import org.apache.avro.ipc.AvroRemoteException;
-import org.apache.avro.ipc.HttpTransceiver;
-import org.apache.avro.ipc.NettyTransceiver;
+import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
-import org.apache.avro.specific.SpecificRequestor;
+import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.*;
@@ -60,12 +57,12 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         //TODO idGenerator should not be available or used in the remote implementation
         this.idGenerator = idGenerator;
         //client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
-        client = new NettyTransceiver(address);
+        client = NettyTransceiverFactory.create(address);
 
         lilyProxy = SpecificRequestor.getClient(AvroLily.class, client);
         registerDefaultValueTypes();
     }
-    
+
     /**
      * Start should be called for the RemoteTypeManager after the typemanager has been assigned to the repository,
      * after the repository has been assigned to the AvroConverter and before using the typemanager and repository.

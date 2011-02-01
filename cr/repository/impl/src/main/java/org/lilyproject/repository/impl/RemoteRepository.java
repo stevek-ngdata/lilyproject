@@ -20,16 +20,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.avro.ipc.AvroRemoteException;
-import org.apache.avro.ipc.HttpTransceiver;
+import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
-import org.apache.avro.specific.SpecificRequestor;
+import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.util.ArgumentValidator;
