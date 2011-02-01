@@ -54,21 +54,23 @@ public class HBaseProxy {
         RETAIN_TABLES.add("indexmeta");
     }
 
-    // For some tables, we exploit the timestamp dimension by using custom timestamps, which
-    // for certain tests (where the same row key and timestamp is reused) cause problems, due
-    // to the use of non-increasing timestamps, see also http://markmail.org/message/xskvbzhrvkv7skxz
-    // or http://search-hadoop.com/m/rNnhN15Xecu
-    // For these tables, we need to flush and compact them, and wait for this to complete,
-    // before continuing.
-    // This map contains as key the name of the table and as value the name of the/a column family where versions
-    // are used in this way.
-    private static Map<String, byte[]> EXPLOIT_TIMESTAMP_TABLES = new HashMap<String, byte[]>();
+    private static Map<String, byte[]> DEFAULT_TIMESTAMP_REUSING_TABLES = new HashMap<String, byte[]>();
     static {
-        EXPLOIT_TIMESTAMP_TABLES.put("record", Bytes.toBytes("data"));
-        EXPLOIT_TIMESTAMP_TABLES.put("type", Bytes.toBytes("fieldtype-entry"));
+        DEFAULT_TIMESTAMP_REUSING_TABLES.put("record", Bytes.toBytes("data"));
+        DEFAULT_TIMESTAMP_REUSING_TABLES.put("type", Bytes.toBytes("fieldtype-entry"));
     }
 
     public void start() throws Exception {
+        start(Collections.<String, byte[]>emptyMap());
+    }
+
+    /**
+     *
+     * @param timestampReusingTables map containing table name as key and column family as value. Since HBase does
+     *                               not support supporting writing data older than a deletion thombstone, these tables
+     *                               will be compacted and waited for until inserting data works again.
+     */
+    public void start(Map<String, byte[]> timestampReusingTables) throws Exception {
         String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
         if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
             MODE = Mode.EMBED;
@@ -108,7 +110,11 @@ public class HBaseProxy {
                 CONF.set("hbase.zookeeper.property.clientPort", "2181"); // matches HBaseRunner
                 addUserProps(CONF);
                 cleanZooKeeper();
-                cleanTables();
+
+                Map<String, byte[]> allTimestampReusingTables = new HashMap<String, byte[]>();
+                allTimestampReusingTables.putAll(DEFAULT_TIMESTAMP_REUSING_TABLES);
+                allTimestampReusingTables.putAll(timestampReusingTables);
+                cleanTables(allTimestampReusingTables);
                 break;
             default:
                 throw new RuntimeException("Unexpected mode: " + MODE);
@@ -249,7 +255,7 @@ public class HBaseProxy {
         }
     }
 
-    public void cleanTables() throws Exception {
+    public void cleanTables(Map<String, byte[]> timestampReusingTables) throws Exception {
         System.out.println("------------------------ Resetting HBase tables ------------------------");
 
         StringBuilder truncateReport = new StringBuilder();
@@ -271,8 +277,9 @@ public class HBaseProxy {
 
             HTable htable = new HTable(getConf(), table.getName());
 
-            if (EXPLOIT_TIMESTAMP_TABLES.containsKey(table.getNameAsString())) {
-                insertTimestampTableTestRecord(table.getNameAsString(), htable);
+            if (timestampReusingTables.containsKey(table.getNameAsString())) {
+                insertTimestampTableTestRecord(table.getNameAsString(), htable,
+                        timestampReusingTables.get(table.getNameAsString()));
                 exploitTimestampTables.add(table.getNameAsString());
             }
 
@@ -297,7 +304,7 @@ public class HBaseProxy {
             scanner.close();
             htable.close();
 
-            if (EXPLOIT_TIMESTAMP_TABLES.containsKey(table.getNameAsString())) {
+            if (timestampReusingTables.containsKey(table.getNameAsString())) {
                 admin.flush(table.getName());
                 admin.majorCompact(table.getName());
             }
@@ -309,29 +316,29 @@ public class HBaseProxy {
         System.out.println(truncateReport);
         System.out.println(retainReport);
 
-        waitForTimestampTables(exploitTimestampTables);
+        waitForTimestampTables(exploitTimestampTables, timestampReusingTables);
 
         System.out.println("------------------------------------------------------------------------");
 
     }
 
-    private void insertTimestampTableTestRecord(String tableName, HTable htable) throws IOException {
+    private void insertTimestampTableTestRecord(String tableName, HTable htable, byte[] family) throws IOException {
         byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
-        byte[] CF = EXPLOIT_TIMESTAMP_TABLES.get(tableName);
         byte[] COL = Bytes.toBytes("DummyColumn");
         Put put = new Put(tmpRowKey);
         // put a value with a fixed timestamp
-        put.add(CF, COL, 1, new byte[] { 0 });
+        put.add(family, COL, 1, new byte[] { 0 });
 
         htable.put(put);
     }
 
-    private void waitForTimestampTables(Set<String> tables) throws IOException, InterruptedException {
+    private void waitForTimestampTables(Set<String> tables, Map<String, byte[]> timestampReusingTables)
+            throws IOException, InterruptedException {
         for (String tableName : tables) {
 
             HTable htable = new HTable(CONF, tableName);
 
-            byte[] CF = EXPLOIT_TIMESTAMP_TABLES.get(tableName);
+            byte[] CF = timestampReusingTables.get(tableName);
             byte[] tmpRowKey = waitForCompact(tableName, CF);
 
             // Delete our dummy row again
@@ -364,7 +371,7 @@ public class HBaseProxy {
 
     /** Force a major compaction and wait for it to finish.
      *  This method can be used in a test to avoid issue HBASE-2256 after performing a delete operation 
-     *  Uses same principle as {@link #cleanTables()}
+     *  Uses same principle as {@link #cleanTables}
      */ 
     public void majorCompact(String tableName, String[] columnFamilies) throws Exception {
         byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");

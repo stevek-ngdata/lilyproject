@@ -17,6 +17,8 @@ package org.lilyproject.repository.impl.lock.test;
 
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -46,7 +48,11 @@ public class RowLockerTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY.start();
+
+        Map<String, byte[]> timestampReusingTables = new HashMap<String, byte[]>();
+        timestampReusingTables.put("RowLockerTable", Bytes.toBytes("RowLockerCF"));
+
+        HBASE_PROXY.start(timestampReusingTables);
         HBaseAdmin admin = new HBaseAdmin(HBASE_PROXY.getConf());
         HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
         tableDescriptor.addFamily(new HColumnDescriptor(family));
