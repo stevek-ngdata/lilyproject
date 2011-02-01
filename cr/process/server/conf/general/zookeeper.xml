@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <zooKeeper xmlns:conf="http://kauriproject.org/configuration"
-       conf:inherit="shallow">
+           conf:inherit="deep">
 
   <!--
      | Configuration of the ZooKeeper instance used by Lily. This can be a

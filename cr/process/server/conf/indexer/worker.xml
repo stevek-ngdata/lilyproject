@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<indexerWorker>
+<indexerWorker xmlns:conf="http://kauriproject.org/configuration"
+               conf:inherit="deep">
   <!--
     The amount of message queue listeners (index updaters) that should be
     started (on one Lily node) per index.

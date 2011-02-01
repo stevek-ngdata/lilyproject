@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<rowlog>
+<rowlog  xmlns:conf="http://kauriproject.org/configuration"
+         conf:inherit="deep">
+
   <!-- The WAL or MQ processor is a component which is active on one of the Lily servers,
        elected through ZooKeeper. The processor is responsible for continuing interrupted
        secondary actions (in case of the WAL) or distributing messages to listeners (in

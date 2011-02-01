@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
-<metrics>
-  <hadoopMetricsAttributes>
+<metrics xmlns:conf="http://kauriproject.org/configuration"
+         conf:inherit="deep">
+
+  <hadoopMetricsAttributes conf:inheritKey="string(@name)">
 
     <!-- The NullContextWithUpdateThread makes sure the metrics are reported to JMX when
          no other metrics output is enabled. -->

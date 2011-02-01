@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <repository xmlns:conf="http://kauriproject.org/configuration"
-            conf:inherit="shallow">
+            conf:inherit="deep">
 
   <!-- Filesystem to use to store blobs. The directory will be created if it
        does not yet exist. -->

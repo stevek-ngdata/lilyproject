@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<conf>
+<conf xmlns:conf="http://kauriproject.org/configuration"
+      conf:inherit="deep">
+
   <!-- Lily does not support configuration changes at runtime currently, so makes
        no sense to scan the configuration for changes. -->
 

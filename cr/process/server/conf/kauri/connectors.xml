@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<connectors>
+<connectors xmlns:conf="http://kauriproject.org/configuration"
+            conf:inherit="deep">
+
   <!--
      | Configuration of the HTTP connector that serves the REST interface.
      -->
@@ -10,7 +12,8 @@
     on one host, without port conflicts, and without resorting to arbitrary ephemeral port numbers.
     To use a fixed port, remove the suggestedPort attribute and set the port to the desired value.
   -->
-  <serverConnector protocols="HTTP" port="0" suggestedPort="8888" suggestedPortAlt="sequential">
+  <serverConnector protocols="HTTP" port="0" suggestedPort="8888" suggestedPortAlt="sequential"
+       conf:inheritKey="string(@name)">
     <!--
       The full list of parameters that can be used here can be found in the Javadoc
       of the class org.restlet.ext.jetty.HttpServerHelper and its parent class.
