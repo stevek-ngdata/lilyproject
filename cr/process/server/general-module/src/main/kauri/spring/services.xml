@@ -87,11 +87,6 @@
     </constructor-arg>
   </bean>
 
-  <bean id="endProcessHook"
-        class="org.lilyproject.server.modules.general.EndProcessHookSetup">
-    <constructor-arg ref="zooKeeper"/>
-  </bean>
-
   <bean id="connectionDisposer"
         class="org.lilyproject.server.modules.general.HBaseConnectionDisposer">
   </bean>
