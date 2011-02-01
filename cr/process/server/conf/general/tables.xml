@@ -21,7 +21,7 @@
            When using custom record IDs, either use 1 initial region, or specify custom split keys.
       -->
       <regionCount>20</regionCount>
-      <splitKeys>A\xFF,B,C</splitKeys>
+      <splitKeys></splitKeys>
     </splits>
   </table>
 
