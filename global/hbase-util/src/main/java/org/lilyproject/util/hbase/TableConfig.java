@@ -39,6 +39,8 @@ public class TableConfig {
             for (int i = 0; i < split.length; i++) {
                 splitKeys[i] = Bytes.add(prefixBytes, Bytes.toBytes(split[i]));
             }
+        } else if (regionCount != null && regionCount <= 1) {
+            // one region requested, no need to define splits
         } else if (regionCount != null) {
             byte[] startBytes = new byte[]{(byte)0};
             byte[] endBytes =  new byte[prefixBytes.length + 16];
@@ -46,7 +48,8 @@ public class TableConfig {
             for (int i = prefixBytes.length; i < endBytes.length; i++) {
                 endBytes[i] = (byte)0xFF;
             }
-            byte[][] splits = Bytes.split(startBytes, endBytes, regionCount);
+            // number of splits = number of regions - 1
+            byte[][] splits = Bytes.split(startBytes, endBytes, regionCount - 1);
             // Stripping the first key to avoid a region [null,0[ which will always be empty
             // And the last key to avoind [xffxffxff....,null[ to contain only few values if variants are created
             // for a record with record id xffxffxff.....
