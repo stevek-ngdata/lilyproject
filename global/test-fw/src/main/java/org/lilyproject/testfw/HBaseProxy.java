@@ -255,6 +255,12 @@ public class HBaseProxy {
         }
     }
 
+    public void cleanTables() throws Exception {
+        Map<String, byte[]> timestampReusingTables = new HashMap<String, byte[]>();
+        timestampReusingTables.putAll(DEFAULT_TIMESTAMP_REUSING_TABLES);
+        cleanTables(timestampReusingTables);
+    }
+
     public void cleanTables(Map<String, byte[]> timestampReusingTables) throws Exception {
         System.out.println("------------------------ Resetting HBase tables ------------------------");
 
