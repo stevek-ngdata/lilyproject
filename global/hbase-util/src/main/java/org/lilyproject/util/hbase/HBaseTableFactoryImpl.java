@@ -42,15 +42,23 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     }
 
     public HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException {
-        return getTable(tableDescriptor, getSplitKeys(tableDescriptor.getName()));
+        return getTable(tableDescriptor, true);
     }
 
-    private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
+    public HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException {
+        return getTable(tableDescriptor, getSplitKeys(tableDescriptor.getName()), create);
+    }
+
+    private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys, boolean create) throws IOException {
         HBaseAdmin admin = new HBaseAdmin(configuration);
 
         try {
             admin.getTableDescriptor(tableDescriptor.getName());
         } catch (TableNotFoundException e) {
+            if (!create) {
+                throw e;
+            }
+
             try {
                 int regionCount = splitKeys == null ? 1 : splitKeys.length + 1;
                 log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "

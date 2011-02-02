@@ -16,6 +16,8 @@ public interface HBaseTableFactory {
      */
     HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException;
 
+    HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException;
+
     /**
      * @return never null, a default TableConfig is returned if the user did not specify anything.
      */
