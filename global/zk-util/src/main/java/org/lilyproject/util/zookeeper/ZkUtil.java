@@ -16,6 +16,7 @@
 package org.lilyproject.util.zookeeper;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -58,43 +59,62 @@ public class ZkUtil {
 
     public static void createPath(final ZooKeeperItf zk, final String path)
             throws InterruptedException, KeeperException {
-        createPath(zk, path, null, CreateMode.PERSISTENT);
+        createPath(zk, path, null);
     }
 
     /**
      * Creates a persistent path on zookeeper if it does not exist yet, including any parents.
      * Keeps retrying in case of connection loss.
      *
+     * <p>The supplied data is used for the last node in the path. If the path already exists,
+     * the data is updated if necessary.
      */
-    public static void createPath(final ZooKeeperItf zk, final String path, final byte[] data,
-            final CreateMode createMode) throws InterruptedException, KeeperException {
-
-        Stat stat = zk.retryOperation(new ZooKeeperOperation<Stat>() {
-            public Stat execute() throws KeeperException, InterruptedException {
-                return zk.exists(path, null);
-            }
-        });
-
-        if (stat != null)
-            return;
+    public static void createPath(final ZooKeeperItf zk, final String path, final byte[] data)
+            throws InterruptedException, KeeperException {
 
         if (!path.startsWith("/"))
             throw new IllegalArgumentException("Path should start with a slash.");
 
+        if (path.endsWith("/"))
+            throw new IllegalArgumentException("Path should not end on a slash.");
+
         String[] parts = path.substring(1).split("/");
 
         final StringBuilder subPath = new StringBuilder();
-        for (String part : parts) {
+        boolean created = false;
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
             subPath.append("/").append(part);
-            try {
-                zk.retryOperation(new ZooKeeperOperation<String>() {
-                    public String execute() throws KeeperException, InterruptedException {
-                        return zk.create(subPath.toString(), data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode);
+
+            // Only use the supplied data for the last node in the path
+            final byte[] newData = (i == parts.length - 1 ? data : null);
+
+            created = zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+                public Boolean execute() throws KeeperException, InterruptedException {
+                    if (zk.exists(subPath.toString(), false) == null) {
+                        try {
+                            zk.create(subPath.toString(), newData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                            return true;
+                        } catch (KeeperException.NodeExistsException e) {
+                            return false;
+                        }
                     }
-                });
-            } catch (KeeperException.NodeExistsException e) {
-                // ignore
-            }
+                    return false;
+                }
+            });
+        }
+
+        if (!created) {
+            // The node already existed, update its data if necessary
+            zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+                public Boolean execute() throws KeeperException, InterruptedException {
+                    byte[] currentData = zk.getData(path, false, new Stat());
+                    if (!Arrays.equals(currentData, data)) {
+                        zk.setData(path, data, -1);
+                    }
+                    return null;
+                }
+            });
         }
     }
 }

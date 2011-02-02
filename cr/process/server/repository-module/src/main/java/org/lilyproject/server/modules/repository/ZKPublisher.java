@@ -70,8 +70,8 @@ public class ZKPublisher {
         // The below serves as a stop-gap solution for the blob configuration: we store the information in ZK
         // that clients need to know how to access the blob store locations, but the actual setup of the
         // BlobStoreAccessFactory is currently hardcoded
-        ZkUtil.createPath(zk, blobDfsUriPath, dfsUri.getBytes(), CreateMode.PERSISTENT);
-        ZkUtil.createPath(zk, blobHBaseZkQuorumPath, hbaseConf.get("hbase.zookeeper.quorum").getBytes(), CreateMode.PERSISTENT);
-        ZkUtil.createPath(zk, blobHBaseZkPortPath, hbaseConf.get("hbase.zookeeper.property.clientPort").getBytes(), CreateMode.PERSISTENT);
+        ZkUtil.createPath(zk, blobDfsUriPath, dfsUri.getBytes());
+        ZkUtil.createPath(zk, blobHBaseZkQuorumPath, hbaseConf.get("hbase.zookeeper.quorum").getBytes());
+        ZkUtil.createPath(zk, blobHBaseZkPortPath, hbaseConf.get("hbase.zookeeper.property.clientPort").getBytes());
     }
 }

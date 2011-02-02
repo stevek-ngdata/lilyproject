@@ -82,7 +82,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         final String path = rowLogPath(rowLogId);
         
         final byte[] data = RowLogConfigConverter.INSTANCE.toJsonBytes(rowLogId, rowLogConfig);
-        ZkUtil.createPath(zooKeeper, path, data, CreateMode.PERSISTENT);
+        ZkUtil.createPath(zooKeeper, path, data);
         // Perform an extra update in case the rowlog node already existed
         zooKeeper.retryOperation(new ZooKeeperOperation<String>() {
             public String execute() throws KeeperException, InterruptedException {
