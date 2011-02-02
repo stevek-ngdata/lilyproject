@@ -16,6 +16,7 @@
 package org.lilyproject.rest;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.NullInputStream;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.tools.import_.json.BlobConverter;
 import org.lilyproject.util.io.Closer;
@@ -51,6 +52,11 @@ public class BlobCollectionResource extends RepositoryEnabled {
 
         long length = Long.parseLong(lengthHeader);
         Blob blob = new Blob(mediaType, length, null);
+
+        if (length == 0 && is == null) {
+            // Apparently when the length is 0, no InputStream is provided, therefore the following
+            is = new NullInputStream(0);
+        }
 
         OutputStream os = null;
         try {
