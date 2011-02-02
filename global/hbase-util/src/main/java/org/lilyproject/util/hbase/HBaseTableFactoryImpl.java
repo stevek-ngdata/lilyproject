@@ -52,8 +52,9 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
             admin.getTableDescriptor(tableDescriptor.getName());
         } catch (TableNotFoundException e) {
             try {
+                int regionCount = splitKeys == null ? 1 : splitKeys.length + 1;
                 log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "
-                        + (splitKeys == null ? 1 : splitKeys.length + 1) + " regions.");
+                        + regionCount + " initial region" + (regionCount > 1 ? "s.": "."));
                 admin.createTable(tableDescriptor, splitKeys);
             } catch (TableExistsException e2) {
                 // Table is meanwhile created by another process
