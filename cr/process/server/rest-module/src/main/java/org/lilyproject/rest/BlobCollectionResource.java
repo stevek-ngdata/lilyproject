@@ -18,7 +18,6 @@ package org.lilyproject.rest;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
 import org.lilyproject.repository.api.Blob;
-import org.lilyproject.tools.import_.json.BlobConverter;
 import org.lilyproject.util.io.Closer;
 
 import javax.ws.rs.Consumes;
@@ -28,10 +27,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -68,10 +65,7 @@ public class BlobCollectionResource extends RepositoryEnabled {
             Closer.close(os);
         }
 
-        // TODO the URI we point to in the location header does currently not exist.
-        String value = BlobConverter.valueToString(blob.getValue());
-        URI uri = UriBuilder.fromUri("/blob/" + value).build();
-        return Response.created(uri).entity(blob).build();
+        return Response.ok().entity(blob).build();
     }
 
 }
