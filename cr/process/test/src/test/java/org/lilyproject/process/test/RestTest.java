@@ -632,7 +632,7 @@ public class RestTest {
         req.setEntity(blobRepr);
         response = CLIENT.handle(req);
 
-        assertStatus(Status.SUCCESS_CREATED, response);
+        assertStatus(Status.SUCCESS_OK, response);
         JsonNode jsonNode = readJson(response.getEntity());
         String blobValue = jsonNode.get("value").getTextValue();
         assertEquals("text/plain", jsonNode.get("mediaType").getTextValue());
