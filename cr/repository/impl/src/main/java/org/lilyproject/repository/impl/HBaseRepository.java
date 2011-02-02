@@ -292,10 +292,10 @@ public class HBaseRepository implements Repository {
     private void checkCreatePreconditions(Record record) throws InvalidRecordException {
         ArgumentValidator.notNull(record, "record");
         if (record.getRecordTypeName() == null) {
-            throw new InvalidRecordException(record, "The recordType cannot be null for a record to be created.");
+            throw new InvalidRecordException("The recordType cannot be null for a record to be created.", record.getId());
         }
         if (record.getFields().isEmpty()) {
-            throw new InvalidRecordException(record, "Creating an empty record is not allowed");
+            throw new InvalidRecordException("Creating an empty record is not allowed", record.getId());
         }
     }
 
@@ -307,7 +307,7 @@ public class HBaseRepository implements Repository {
         long before = System.currentTimeMillis();
         try {
             if (record.getId() == null) {
-                throw new InvalidRecordException(record, "The recordId cannot be null for a record to be updated.");
+                throw new InvalidRecordException("The recordId cannot be null for a record to be updated.", record.getId());
             }
             try {
                 if (!checkAndProcessOpenMessages(record.getId())) {
@@ -469,7 +469,7 @@ public class HBaseRepository implements Repository {
                 FieldType fieldType = typeManager.getFieldTypeById(fieldTypeEntry.getFieldTypeId());
                 QName fieldName = fieldType.getName();
                 if (fieldsToDelete.contains(fieldName)) {
-                    throw new InvalidRecordException(record, "Field: <"+fieldName+"> is mandatory.");
+                    throw new InvalidRecordException("Field: <"+fieldName+"> is mandatory.", record.getId());
                 }
                 try {
                     record.getField(fieldName); 
@@ -477,7 +477,7 @@ public class HBaseRepository implements Repository {
                     try {
                         originalRecord.getField(fieldName);
                     } catch (FieldNotFoundException notFoundOnOriginalRecord) {
-                        throw new InvalidRecordException(record, "Field: <"+fieldName+"> is mandatory.");
+                        throw new InvalidRecordException("Field: <"+fieldName+"> is mandatory.", record.getId());
                     }
                 }
             }
@@ -589,8 +589,8 @@ public class HBaseRepository implements Repository {
         
         Long version = record.getVersion();
         if (version == null) {
-            throw new InvalidRecordException(record,
-                    "The version of the record cannot be null to update mutable fields");
+            throw new InvalidRecordException("The version of the record cannot be null to update mutable fields",
+                    record.getId());
         }
 
         try {
@@ -797,9 +797,7 @@ public class HBaseRepository implements Repository {
                 requestedVersion = latestVersion;
             } else {
                 if (latestVersion == null || latestVersion < requestedVersion ) {
-                    Record record = newRecord(recordId);
-                    record.setVersion(requestedVersion);
-                    throw new VersionNotFoundException(record);
+                    throw new VersionNotFoundException(recordId, requestedVersion);
                 }
             }
             return getRecordFromRowResult(recordId, requestedVersion, readContext, result);
@@ -856,12 +854,12 @@ public class HBaseRepository implements Repository {
             result = recordTable.get(get);
             
             if (result == null || result.isEmpty())
-                throw new RecordNotFoundException(newRecord(recordId));
+                throw new RecordNotFoundException(recordId);
             
             // Check if the record was deleted
             byte[] deleted = result.getValue(systemColumnFamily, RecordColumn.DELETED.bytes);
             if ((deleted == null) || (Bytes.toBoolean(deleted))) {
-                throw new RecordNotFoundException(newRecord(recordId));
+                throw new RecordNotFoundException(recordId);
             }
         } catch (IOException e) {
             throw new RecordException("Exception occurred while retrieving record <" + recordId
@@ -1033,7 +1031,7 @@ public class HBaseRepository implements Repository {
                     }
                 }
             } else {
-                throw new RecordNotFoundException(newRecord(recordId));
+                throw new RecordNotFoundException(recordId);
             }
         } catch (RowLogException e) {
             throw new RecordException("Exception occurred while deleting record <" + recordId

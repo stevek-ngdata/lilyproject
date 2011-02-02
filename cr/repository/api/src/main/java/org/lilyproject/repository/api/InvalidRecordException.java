@@ -17,22 +17,29 @@ package org.lilyproject.repository.api;
 
 public class InvalidRecordException extends RepositoryException {
 
-    private final Record record;
+    private final RecordId recordId;
     private final String message;
 
-    public InvalidRecordException(Record record, String message) {
-        this.record = record;
-        // TODO Auto-generated constructor stub
+    public InvalidRecordException(String message) {
+        this(message, null);
+    }
+
+    public InvalidRecordException(String message, RecordId recordId) {
+        this.recordId = recordId;
         this.message = message;
     }
-    
-    public Record getRecord() {
-        return record;
+
+    public RecordId getRecordId() {
+        return recordId;
     }
-    
+
     @Override
     public String getMessage() {
-        return "Record <"+record.getId()+">: " + message;
+        if (recordId != null) {
+            return "Record '" + recordId + "': " + message;
+        } else {
+            return message;
+        }
     }
 
 }

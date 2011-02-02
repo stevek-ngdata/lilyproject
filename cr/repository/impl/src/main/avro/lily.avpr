@@ -99,7 +99,7 @@
       "name": "AvroRecordExistsException",
       "type": "error",
       "fields": [
-          {"name": "record", "type": "AvroRecord"},
+          {"name": "recordId", "type": "bytes"},
           {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
     },
@@ -108,7 +108,7 @@
       "name": "AvroRecordNotFoundException",
       "type": "error",
       "fields": [
-        {"name": "record", "type": "AvroRecord"},
+        {"name": "recordId", "type": "bytes"},
         {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
     },
@@ -117,7 +117,8 @@
       "name": "AvroVersionNotFoundException",
       "type": "error",
       "fields": [
-        {"name": "record", "type": "AvroRecord"},
+        {"name": "recordId", "type": "bytes"},
+        {"name": "version", "type": "long"},
         {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
     },
@@ -135,7 +136,7 @@
       "name": "AvroInvalidRecordException",
       "type": "error",
       "fields": [
-        {"name": "record", "type": "AvroRecord"},
+        {"name": "recordId", "type": ["bytes", "null"]},
         {"name": "message", "type": ["string", "null"]},
         {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]

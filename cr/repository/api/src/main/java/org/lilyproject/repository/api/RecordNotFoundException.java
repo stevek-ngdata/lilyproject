@@ -17,23 +17,18 @@ package org.lilyproject.repository.api;
 
 public class RecordNotFoundException extends RepositoryException {
 
-    private final Record record;
+    private final RecordId recordId;
 
-    public RecordNotFoundException(Record record) {
-        this.record = record;
+    public RecordNotFoundException(RecordId recordId) {
+        this.recordId = recordId;
     }
     
-    public Record getRecord() {
-        return record;
+    public RecordId getRecordId() {
+        return recordId;
     }
     
     @Override
     public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        message.append("Record <");
-        message.append(record.getId());
-        message.append("> ");
-        message.append("not found");
-        return message.toString();
+        return "Record '" + recordId + "' not found.";
     }
 }

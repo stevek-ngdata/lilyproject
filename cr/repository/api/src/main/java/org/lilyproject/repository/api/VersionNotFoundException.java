@@ -17,30 +17,25 @@ package org.lilyproject.repository.api;
 
 public class VersionNotFoundException extends RepositoryException {
 
-    private final Record record;
+    private final RecordId recordId;
+    private final long version;
 
-    public VersionNotFoundException(Record record) {
-        this.record = record;
+    public VersionNotFoundException(RecordId recordId, long version) {
+        this.recordId = recordId;
+        this.version = version;
     }
 
-    public Record getRecord() {
-        return record;
+    public RecordId getRecordId() {
+        return recordId;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     @Override
     public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        message.append("Record <");
-        message.append(record.getId());
-        message.append("> ");
-        Long version = record.getVersion();
-        if (version != null) {
-            message.append("<version:");
-            message.append(version);
-            message.append(">");
-        }
-        message.append("not found");
-        return message.toString();
+        return "Record '" + recordId + "', version " + version + " not found.";
     }
 }
 

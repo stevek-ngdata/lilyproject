@@ -525,7 +525,7 @@ public class AvroConverter {
             throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
 
         AvroRecordExistsException avroException = new AvroRecordExistsException();
-        avroException.record = convert(exception.getRecord());
+        avroException.recordId = convert(exception.getRecordId());
         avroException.remoteCauses = buildCauses(exception);
         return avroException;
         
@@ -535,7 +535,7 @@ public class AvroConverter {
             throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
 
         AvroRecordNotFoundException avroException = new AvroRecordNotFoundException();
-        avroException.record = convert(exception.getRecord());
+        avroException.recordId = convert(exception.getRecordId());
         avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
@@ -544,7 +544,8 @@ public class AvroConverter {
             throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
 
         AvroVersionNotFoundException avroException = new AvroVersionNotFoundException();
-        avroException.record = convert(exception.getRecord());
+        avroException.recordId = convert(exception.getRecordId());
+        avroException.version = exception.getVersion();
         avroException.remoteCauses = buildCauses(exception);
         return avroException;
     }
@@ -553,7 +554,7 @@ public class AvroConverter {
             throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
 
         AvroInvalidRecordException avroException = new AvroInvalidRecordException();
-        avroException.record = convert(exception.getRecord());
+        avroException.recordId = convert(exception.getRecordId());
         avroException.message = exception.getMessage();
         avroException.remoteCauses = buildCauses(exception);
         return avroException;
@@ -567,47 +568,29 @@ public class AvroConverter {
     }
 
     public RecordExistsException convert(AvroRecordExistsException avroException) {
-        try {
-            RecordExistsException exception = new RecordExistsException(convert(avroException.record));
-            restoreCauses(avroException.remoteCauses, exception);
-            return exception;
-        } catch (Exception e) {
-            // TODO this is not good, exceptions should never fail to deserialize
-            throw new RuntimeException("Error deserializing exception.", e);
-        }
+        RecordExistsException exception = new RecordExistsException(convertAvroRecordId(avroException.recordId));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
     public RecordNotFoundException convert(AvroRecordNotFoundException avroException) {
-        try {
-            RecordNotFoundException exception = new RecordNotFoundException(convert(avroException.record));
-            restoreCauses(avroException.remoteCauses, exception);
-            return exception;
-        } catch (Exception e) {
-            // TODO this is not good, exceptions should never fail to deserialize
-            throw new RuntimeException("Error deserializing exception.", e);
-        }
+        RecordNotFoundException exception = new RecordNotFoundException(convertAvroRecordId(avroException.recordId));
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
     public VersionNotFoundException convert(AvroVersionNotFoundException avroException) {
-        try {
-            VersionNotFoundException exception = new VersionNotFoundException(convert(avroException.record));
-            restoreCauses(avroException.remoteCauses, exception);
-            return exception;
-        } catch (Exception e) {
-            // TODO this is not good, exceptions should never fail to deserialize
-            throw new RuntimeException("Error deserializing exception.", e);
-        }
+        VersionNotFoundException exception = new VersionNotFoundException(convertAvroRecordId(avroException.recordId),
+                avroException.version);
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
 
     public InvalidRecordException convert(AvroInvalidRecordException avroException) {
-        try {
-            InvalidRecordException exception = new InvalidRecordException(convert(avroException.record), convert(avroException.message));
-            restoreCauses(avroException.remoteCauses, exception);
-            return exception;
-        } catch (Exception e) {
-            // TODO this is not good, exceptions should never fail to deserialize
-            throw new RuntimeException("Error deserializing exception.", e);
-        }
+        RecordId recordId = avroException.recordId == null ? null : convertAvroRecordId(avroException.recordId);
+        InvalidRecordException exception = new InvalidRecordException(convert(avroException.message), recordId);
+        restoreCauses(avroException.remoteCauses, exception);
+        return exception;
     }
     
     public RecordLockedException convert(AvroRecordLockedException avroException) {

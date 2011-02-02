@@ -17,23 +17,18 @@ package org.lilyproject.repository.api;
 
 
 public class RecordExistsException extends RepositoryException {
-    private final Record record;
+    private final RecordId recordId;
 
-    public RecordExistsException(Record record) {
-        this.record = record;
+    public RecordExistsException(RecordId recordId) {
+        this.recordId = recordId;
     }
 
-    public Record getRecord() {
-        return record;
+    public RecordId getRecordId() {
+        return recordId;
     }
     
     @Override
     public String getMessage() {
-        StringBuilder message = new StringBuilder();
-        message.append("Record <");
-        message.append(record.getId());
-        message.append("> ");
-        message.append("already exists");
-        return message.toString();
+        return "Record '" + recordId + "' already exists.";
     }
 }
