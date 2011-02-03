@@ -9,7 +9,7 @@ You should have HBase running in order to run the Lily repository server.
 You can either:
 
  * launch a dummy Hadoop/HBase/ZooKeeper via:
-      cd testfw
+      cd global/testfw
       ./target/launch-hadoop
 
  * or use a HBase installation you set up yourself.
@@ -29,10 +29,7 @@ cp -r conf myconf
 cd myconf
 find -name .svn rm -rf {} \;
 
-and then edit the files
-
-conf/general/hbase.xml
-conf/general/zookeeper.xml
+and then edit the various files as appropriate
 
 Run
 ===
