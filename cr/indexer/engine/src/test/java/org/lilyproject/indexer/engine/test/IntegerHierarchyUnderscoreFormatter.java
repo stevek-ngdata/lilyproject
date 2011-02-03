@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.engine.test;
 
 import org.lilyproject.indexer.model.indexerconf.Formatter;
+import org.lilyproject.indexer.model.indexerconf.IndexValue;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.ValueType;
 
@@ -26,8 +27,8 @@ import java.util.Set;
 public class IntegerHierarchyUnderscoreFormatter implements Formatter {
     private static final Set<String> types = Collections.singleton("INTEGER");
 
-    public List<String> format(Object value, ValueType valueType) {
-        HierarchyPath path = (HierarchyPath)value;
+    public List<String> format(List<IndexValue> indexValues, ValueType valueType) {
+        HierarchyPath path = (HierarchyPath)indexValues.get(0).value;
 
         StringBuilder builder = new StringBuilder();
         for (Object item : path.getElements()) {

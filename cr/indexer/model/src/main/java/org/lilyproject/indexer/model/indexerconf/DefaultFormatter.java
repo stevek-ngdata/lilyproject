@@ -27,33 +27,28 @@ import java.util.List;
 import java.util.Set;
 
 public class DefaultFormatter implements Formatter {
-    public List<String> format(Object value, ValueType valueType) {
+    public List<String> format(List<IndexValue> indexValues, ValueType valueType) {
         List<String> result = new ArrayList<String>();
-        formatMultiValue(value, valueType, result);
+        formatMultiValue(indexValues, valueType, result);
         return result;
     }
 
-    private void formatMultiValue(Object value, ValueType valueType, List<String> result) {
-        if (valueType.isMultiValue()) {
-            List values = (List)value;
-            for (Object item : values) {
-                formatHierarchicalValue(item, valueType, result);
-            }
-        } else {
-            formatHierarchicalValue(value, valueType, result);
+    private void formatMultiValue(List<IndexValue> indexValues, ValueType valueType, List<String> result) {
+        for (IndexValue item : indexValues) {
+            formatHierarchicalValue(item, valueType, result);
         }
     }
 
-    private void formatHierarchicalValue(Object value, ValueType valueType, List<String> result) {
+    private void formatHierarchicalValue(IndexValue indexValue, ValueType valueType, List<String> result) {
         if (valueType.isHierarchical()) {
-            HierarchyPath path = (HierarchyPath)value;
+            HierarchyPath path = (HierarchyPath)indexValue.value;
             StringBuffer formattedPath = new StringBuffer();
             for (Object item : path.getElements()) {
                 formattedPath.append("/");
                 formattedPath.append(formatPrimitiveValue(item, valueType));
             }
         } else {
-            result.add(formatPrimitiveValue(value, valueType));
+            result.add(formatPrimitiveValue(indexValue.value, valueType));
         }
     }
 

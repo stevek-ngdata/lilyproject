@@ -29,7 +29,12 @@ import java.util.Set;
  * both supportsSingleValue() and supportsNonHierarchicalValue() return true.
  */
 public interface Formatter {
-    List<String> format(Object value, ValueType valueType);
+    /**
+     *
+     * @param indexValues if {@link #supportsMultiValue} is false, one can be sure that this
+     *                    list will contain exactly one non-null element.
+     */
+    List<String> format(List<IndexValue> indexValues, ValueType valueType);
 
     /**
      * Returning an empty set means this formatter accepts any kind of value (even non-built-in

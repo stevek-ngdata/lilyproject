@@ -1012,6 +1012,7 @@ public class IndexerTest {
         {
             log.debug("Begin test V70");
             Blob blob1 = createBlob("org/lilyproject/indexer/engine/test/blob1_msword.doc", "application/msword", "blob1_msword.doc");
+            Blob blob1dup = createBlob("org/lilyproject/indexer/engine/test/blob1_msword.doc", "application/msword", "blob1_msword.doc");
             Blob blob2 = createBlob("org/lilyproject/indexer/engine/test/blob2.pdf", "application/pdf", "blob2.pdf");
             Blob blob3 = createBlob("org/lilyproject/indexer/engine/test/blob3_oowriter.odt", "application/vnd.oasis.opendocument.text", "blob3_oowriter.odt");
             Blob blob4 = createBlob("org/lilyproject/indexer/engine/test/blob4_excel.xls", "application/excel", "blob4_excel.xls");
@@ -1031,7 +1032,7 @@ public class IndexerTest {
 
             // Multi-value and hierarchical blob field
             log.debug("Begin test V71");
-            HierarchyPath path1 = new HierarchyPath(blob1, blob2);
+            HierarchyPath path1 = new HierarchyPath(blob1dup, blob2);
             HierarchyPath path2 = new HierarchyPath(blob3, blob4);
             List blobs = Arrays.asList(path1, path2);
 

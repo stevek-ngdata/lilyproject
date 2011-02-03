@@ -22,14 +22,11 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
-import org.lilyproject.indexer.model.indexerconf.DerefValue;
+import org.lilyproject.indexer.model.indexerconf.*;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.Follow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.FieldFollow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.VariantFollow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.MasterFollow;
-import org.lilyproject.indexer.model.indexerconf.FieldValue;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
-import org.lilyproject.indexer.model.indexerconf.Value;
 import org.lilyproject.indexer.model.indexerconf.Formatter;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.io.Closer;
@@ -58,88 +55,71 @@ public class ValueEvaluator {
      * @return null if there is no value
      */
     public List<String> eval(Value valueDef, IdRecord record, Repository repository, String vtag) {
-        Object value = evalValue(valueDef, record, repository, vtag);
-        if (value == null)
+        List<IndexValue> indexValues = evalValue(valueDef, record, repository, vtag);
+        if (indexValues == null || indexValues.size() == 0)
             return null;
 
         if (valueDef.extractContent()) {
-            return extractContent(valueDef, value, record, repository);
+            return extractContent(indexValues, repository);
         }
 
         ValueType valueType = valueDef.getValueType();
         Formatter formatter = valueDef.getFormatter() != null ? conf.getFormatters().getFormatter(valueDef.getFormatter()) : conf.getFormatters().getFormatter(valueType);
 
-        return formatter.format(value, valueType);
+        return formatter.format(indexValues, valueType);
     }
 
-    private List<String> extractContent(Value valueDef, Object value, IdRecord record, Repository repository) {
+    private List<String> extractContent(List<IndexValue> indexValues, Repository repository) {
         // At this point we can be sure the value will be a blob, this is validated during
         // the construction of the indexer conf.
 
-        ValueType valueType = valueDef.getValueType();
+        List<String> result = new ArrayList<String>(indexValues.size());
 
-        List<Blob> blobs = new ArrayList<Blob>();
-        collectBlobs(value, valueType, blobs);
-
-        if (blobs.size() == 0)
-            return null;
-
-        List<String> result = new ArrayList<String>(blobs.size());
-
-        // TODO add some debug (or even info) logging to indicate what we are working on.
-        for (Blob blob : blobs) {
-            InputStream is = null;
-            try {
-//                is = repository.getInputStream(blob);
-
-                // TODO make write limit configurable
-                BodyContentHandler ch = new BodyContentHandler();
-
-                Metadata metadata = new Metadata();
-                metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());
-                if (blob.getName() != null)
-                    metadata.add(Metadata.RESOURCE_NAME_KEY, blob.getName());
-
-                ParseContext parseContext = new ParseContext();
-
-                tikaParser.parse(is, ch, metadata, parseContext);
-
-                String text = ch.toString();
-                if (text.length() > 0)
-                    result.add(text);
-
-            } catch (Throwable t) {
-                log.error("Error extracting blob content. Field: " + valueDef.getTargetFieldType().getName() + ", record: "
-                        + record.getId(), t);
-            } finally {
-                Closer.close(is);
+        for (IndexValue indexValue : indexValues) {
+            if (indexValue.fieldType.getValueType().isHierarchical()) {
+                Object[] hierValue = ((HierarchyPath)indexValue.value).getElements();
+                for (int i = 0; i < hierValue.length; i++) {
+                    extractContent(hierValue[i], indexValue.record, indexValue.fieldType, indexValue.multiValueIndex, i, result, repository);
+                }
+            } else {
+                extractContent(indexValue.value, indexValue.record, indexValue.fieldType, indexValue.multiValueIndex, null, result, repository);
             }
         }
 
         return result.isEmpty() ? null : result;
     }
 
-    private void collectBlobs(Object value, ValueType valueType, List<Blob> blobs) {
-        if (valueType.isMultiValue()) {
-            List values = (List)value;
-            for (Object item : values)
-                collectBlobsHierarchical(item, valueType, blobs);
-        } else {
-            collectBlobsHierarchical(value, valueType, blobs);
+    private void extractContent(Object value, Record record, FieldType fieldType, Integer multiValueIndex, Integer hierIndex, List<String> result, Repository repository) {
+        Blob blob = (Blob)value;
+        InputStream is = null;
+        try {
+            is = repository.getInputStream(record.getId(), record.getVersion(), fieldType.getName(), multiValueIndex, hierIndex);
+
+            // TODO make write limit configurable
+            BodyContentHandler ch = new BodyContentHandler();
+
+            Metadata metadata = new Metadata();
+            metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());
+            if (blob.getName() != null)
+                metadata.add(Metadata.RESOURCE_NAME_KEY, blob.getName());
+
+            ParseContext parseContext = new ParseContext();
+
+            tikaParser.parse(is, ch, metadata, parseContext);
+
+            String text = ch.toString();
+            if (text.length() > 0)
+                result.add(text);
+
+        } catch (Throwable t) {
+            log.error("Error extracting blob content. Field '" + fieldType.getName() + "', record '"
+                    + record.getId() + "'.", t);
+        } finally {
+            Closer.close(is);
         }
     }
 
-    private void collectBlobsHierarchical(Object value, ValueType valueType, List<Blob> blobs) {
-        if (valueType.isHierarchical()) {
-            HierarchyPath hierarchyPath = (HierarchyPath)value;
-            for (Object item : hierarchyPath.getElements())
-                blobs.add((Blob)item);
-        } else {
-            blobs.add((Blob)value);
-        }
-    }
-
-    private Object evalValue(Value value, IdRecord record, Repository repository, String vtag) {
+    private List<IndexValue> evalValue(Value value, IdRecord record, Repository repository, String vtag) {
         if (value instanceof FieldValue) {
             return evalFieldValue((FieldValue)value, record, repository, vtag);
         } else if (value instanceof DerefValue) {
@@ -149,16 +129,25 @@ public class ValueEvaluator {
         }
     }
 
-    private Object evalFieldValue(FieldValue value, IdRecord record, Repository repository, String vtag) {
+    private List<IndexValue> evalFieldValue(FieldValue value, IdRecord record, Repository repository, String vtag) {
         String fieldId = value.getFieldType().getId();
         if (record.hasField(fieldId)) {
-            return record.getField(fieldId);
+            if (value.getFieldType().getValueType().isMultiValue()) {
+                List<Object> values = (List<Object>)record.getField(fieldId);
+                List<IndexValue> result = new ArrayList<IndexValue>(values.size());
+                for (int i = 0; i < values.size(); i++) {
+                    result.add(new IndexValue(record, value.getFieldType(), i, values.get(i)));
+                }
+                return result;
+            } else {
+                return Collections.singletonList(new IndexValue(record, value.getFieldType(), record.getField(fieldId)));
+            }
         } else {
             return null;
         }
     }
 
-    private Object evalDerefValue(DerefValue deref, IdRecord record, Repository repository, String vtag) {
+    private List<IndexValue> evalDerefValue(DerefValue deref, IdRecord record, Repository repository, String vtag) {
         FieldType fieldType = deref.getTargetFieldType();
         if (vtag.equals(VersionTag.VERSIONLESS_TAG) && fieldType.getScope() != Scope.NON_VERSIONED) {
             // From a versionless record, it is impossible to deref a versioned field.
@@ -184,15 +173,18 @@ public class ValueEvaluator {
         if (records.isEmpty())
             return null;
 
-        List<Object> result = new ArrayList<Object>();
+        List<IndexValue> result = new ArrayList<IndexValue>();
         for (IdRecord item : records) {
             if (item.hasField(fieldType.getId())) {
                 Object value = item.getField(fieldType.getId());
                 if (value != null) {
                     if (deref.getTargetField().getValueType().isMultiValue()) {
-                        result.addAll((List)value);
+                        List<Object> multiValues = (List<Object>)value;
+                        for (int r = 0; r < multiValues.size(); r++) {
+                            result.add(new IndexValue(item, fieldType, r, multiValues.get(r)));
+                        }
                     } else {
-                        result.add(value);
+                        result.add(new IndexValue(item, fieldType, value));
                     }
                 }
             }
@@ -200,9 +192,6 @@ public class ValueEvaluator {
 
         if (result.isEmpty())
             return null;
-
-        if (!deref.getValueType().isMultiValue())
-            return result.get(0);
 
         return result;
     }
