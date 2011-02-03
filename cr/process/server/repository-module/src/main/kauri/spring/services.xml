@@ -73,7 +73,7 @@
   </bean>
 
   <bean
-    id="blobStoreAccessFactory"
+    id="blobManager"
     class="org.lilyproject.server.modules.repository.BlobStoreConfig"
     factory-method="get">
     <constructor-arg>
@@ -88,10 +88,10 @@
   <bean id="repository" class="org.lilyproject.repository.impl.HBaseRepository">
     <constructor-arg ref="typeManager"/>
     <constructor-arg ref="idGenerator"/>
-    <constructor-arg ref="blobStoreAccessFactory"/>
     <constructor-arg ref="writeAheadLog"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="blobManager"/>
   </bean>
 
   <bean class="org.lilyproject.server.modules.repository.LinkIndexUpdaterSetup">

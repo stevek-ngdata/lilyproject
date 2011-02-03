@@ -26,7 +26,6 @@ public class NettyTransceiverFactory {
             this.delegate = delegate;
         }
 
-        @Override
         public Thread newThread(Runnable r) {
             Thread thread = delegate.newThread(r);
             // Using daemon threads so that client applications would exit without having to properly

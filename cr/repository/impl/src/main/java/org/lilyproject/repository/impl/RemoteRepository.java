@@ -16,11 +16,11 @@
 package org.lilyproject.repository.impl;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -28,8 +28,45 @@ import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobInputStream;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobNotFoundException;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.IORecordException;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.InvalidRecordException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordExistsException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordLockedException;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.repository.avro.AvroConverter;
+import org.lilyproject.repository.avro.AvroFieldTypeNotFoundException;
+import org.lilyproject.repository.avro.AvroGenericException;
+import org.lilyproject.repository.avro.AvroInvalidRecordException;
+import org.lilyproject.repository.avro.AvroLily;
+import org.lilyproject.repository.avro.AvroQName;
+import org.lilyproject.repository.avro.AvroRecordException;
+import org.lilyproject.repository.avro.AvroRecordExistsException;
+import org.lilyproject.repository.avro.AvroRecordLockedException;
+import org.lilyproject.repository.avro.AvroRecordNotFoundException;
+import org.lilyproject.repository.avro.AvroRecordTypeNotFoundException;
+import org.lilyproject.repository.avro.AvroRepositoryException;
+import org.lilyproject.repository.avro.AvroTypeException;
+import org.lilyproject.repository.avro.AvroVersionNotFoundException;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.io.Closer;
 
@@ -42,17 +79,16 @@ public class RemoteRepository implements Repository {
     private final AvroConverter converter;
     private IdGenerator idGenerator;
     private final TypeManager typeManager;
-    private BlobStoreAccessRegistry blobStoreAccessRegistry;
     private Transceiver client;
+    private final BlobManager blobManager;
 
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
-            IdGenerator idGenerator, BlobStoreAccessFactory blobStoreAccessFactory) throws IOException {        
+            IdGenerator idGenerator, BlobManager blobManager) throws IOException {        
         this.converter = converter;
         this.typeManager = typeManager;
         this.idGenerator = idGenerator;
-        blobStoreAccessRegistry = new BlobStoreAccessRegistry();
-        blobStoreAccessRegistry.setBlobStoreAccessFactory(blobStoreAccessFactory);
-
+        this.blobManager = blobManager;
+        
         //client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
         client = new NettyTransceiver(address);
 
@@ -327,44 +363,26 @@ public class RemoteRepository implements Repository {
     }
 
     public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
-        blobStoreAccessRegistry.register(blobStoreAccess);
+        blobManager.register(blobStoreAccess);
     }
     
-    public void delete(Blob blob) throws BlobNotFoundException, BlobException {
-        try {
-            lilyProxy.deleteBlob(converter.convert(blob));
-        } catch (AvroBlobNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroBlobException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredBlobThrowable(e);
-        }
+    public BlobInputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws BlobNotFoundException, BlobException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, InterruptedException {
+        Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
+        FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
+        return blobManager.getInputStream(record, fieldName, multivalueIndex, hierarchyIndex, fieldType);
     }
     
-    public InputStream getInputStream(Blob blob) throws BlobNotFoundException, BlobException {
-        return blobStoreAccessRegistry.getInputStream(blob);
+    public BlobInputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, InterruptedException {
+        return getInputStream(recordId, null, fieldName, null, null);
     }
     
     public OutputStream getOutputStream(Blob blob) throws BlobException {
-        return blobStoreAccessRegistry.getOutputStream(blob);
+        return blobManager.getOutputStream(blob);
     }
-
+    
     private RuntimeException handleUndeclaredRecordThrowable(UndeclaredThrowableException e) throws RecordException {
         if (e.getCause() instanceof IOException) {
             throw new IORecordException(e.getCause());
-        } else {
-            throw e;
-        }
-    }
-
-    private RuntimeException handleUndeclaredBlobThrowable(UndeclaredThrowableException e) throws BlobException {
-        if (e.getCause() instanceof IOException) {
-            throw new IOBlobException(e.getCause());
         } else {
             throw e;
         }

@@ -22,7 +22,9 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableExistsException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.util.ByteArrayKey;
@@ -74,6 +76,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
 
         return new LocalHTable(configuration, tableDescriptor.getName());
     }
+    
 
     public TableConfig getTableConfig(byte[] tableName) {
         TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));
@@ -85,5 +88,4 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
         byte[][] splitKeys = config != null ? config.getSplitKeys() : null;
         return splitKeys;
     }
-
 }

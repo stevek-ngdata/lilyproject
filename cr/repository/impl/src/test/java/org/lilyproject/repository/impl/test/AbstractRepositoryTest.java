@@ -34,7 +34,22 @@ import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldNotFoundException;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.InvalidRecordException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
@@ -49,11 +64,10 @@ import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
 import org.lilyproject.rowlog.impl.RowLogShardImpl;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 public abstract class AbstractRepositoryTest {
 

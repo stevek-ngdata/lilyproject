@@ -19,7 +19,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,10 +36,11 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
+import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.BlobStoreAccessFactory;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.avro.AvroConverter;
+import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
@@ -42,6 +48,8 @@ import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RemoteRepository;
 import org.lilyproject.repository.impl.RemoteTypeManager;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.DfsUri;
 import org.lilyproject.util.zookeeper.ZkConnectException;
@@ -155,21 +163,22 @@ public class LilyClient implements Closeable {
         RemoteTypeManager typeManager = new RemoteTypeManager(parseAddressAndPort(server.lilyAddressAndPort),
                 remoteConverter, idGenerator, zk);
         
-        BlobStoreAccessFactory blobStoreAccessFactory = getBlobStoreAccess(zk);
+        BlobManager blobManager = getBlobManager(zk);
         
         Repository repository = new RemoteRepository(parseAddressAndPort(server.lilyAddressAndPort),
-                remoteConverter, typeManager, idGenerator, blobStoreAccessFactory);
+                remoteConverter, typeManager, idGenerator, blobManager);
         
         remoteConverter.setRepository(repository);
         typeManager.start();
         server.repository = repository;
     }
-
-    public static BlobStoreAccessFactory getBlobStoreAccess(ZooKeeperItf zk) throws IOException {
+    
+    public static BlobManager getBlobManager(ZooKeeperItf zk) throws IOException {
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.quorum", getBlobHBaseZkQuorum(zk));
         configuration.set("hbase.zookeeper.property.clientPort", getBlobHBaseZkPort(zk));
-
+        HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
+        
         URI dfsUri = getDfsUri(zk);
         FileSystem fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));
@@ -180,7 +189,8 @@ public class LilyClient implements Closeable {
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(5000, inlineBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(200000, hbaseBlobStoreAccess);
-        return blobStoreAccessFactory;
+        
+        return new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory);
     }
     
     private static URI getDfsUri(ZooKeeperItf zk)  {

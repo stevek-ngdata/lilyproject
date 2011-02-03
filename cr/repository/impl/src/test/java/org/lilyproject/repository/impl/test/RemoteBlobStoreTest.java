@@ -20,27 +20,22 @@ import java.net.InetSocketAddress;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
-import org.apache.hadoop.fs.Path;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.avro.AvroLily;
 import org.lilyproject.repository.avro.AvroLilyImpl;
 import org.lilyproject.repository.avro.LilySpecificResponder;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
+import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.RemoteRepository;
 import org.lilyproject.repository.impl.RemoteTypeManager;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
-import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
@@ -48,7 +43,7 @@ import org.lilyproject.util.zookeeper.ZkUtil;
 
 public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
 
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    
     private static HBaseRepository serverRepository;
     private static Server lilyServer;
     private static TypeManager serverTypeManager;
@@ -63,14 +58,12 @@ public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
         serverTypeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
-        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(configuration);
-        BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess(); 
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        blobStoreAccessFactory.addBlobStoreAccess(50, inlineBlobStoreAccess);
-        blobStoreAccessFactory.addBlobStoreAccess(1024, hbaseBlobStoreAccess);
+        BlobManager serverBlobManager = setupBlobManager();
         setupWal();
-        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreAccessFactory, wal, configuration, hbaseTableFactory);
+        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, wal, configuration, hbaseTableFactory, serverBlobManager);
+     // Create a blobStoreAccessRegistry for testing purposes
+        testBlobStoreAccessRegistry = new BlobStoreAccessRegistry(serverBlobManager);
+        testBlobStoreAccessRegistry.setBlobStoreAccessFactory(blobStoreAccessFactory);
         
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
@@ -81,11 +74,9 @@ public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
         AvroConverter remoteConverter = new AvroConverter();
         typeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()),
                 remoteConverter, idGenerator, zooKeeper);
+        BlobManager blobManager = setupBlobManager();
         repository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                (RemoteTypeManager)typeManager, idGenerator, blobStoreAccessFactory);
-        repository.registerBlobStoreAccess(dfsBlobStoreAccess);
-        repository.registerBlobStoreAccess(hbaseBlobStoreAccess);
-        repository.registerBlobStoreAccess(inlineBlobStoreAccess);
+                (RemoteTypeManager)typeManager, idGenerator, blobManager);
         remoteConverter.setRepository(repository);
         ((RemoteTypeManager)typeManager).start();
     }

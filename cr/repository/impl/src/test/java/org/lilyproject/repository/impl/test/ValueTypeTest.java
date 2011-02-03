@@ -22,7 +22,6 @@ import java.net.URI;
 import java.util.Arrays;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -42,10 +41,11 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.AbstractTypeManager;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
+import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.InlineBlobStoreAccess;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
@@ -84,10 +84,9 @@ public class ValueTypeTest {
         idGenerator = new IdGeneratorImpl();
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
-        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        BlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, initializeWal(HBASE_PROXY.getConf()), HBASE_PROXY.getConf(), hbaseTableFactory);
-
+        InlineBlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
+        BlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(inlineBlobStoreAccess);
+        repository = new HBaseRepository(typeManager, idGenerator, initializeWal(HBASE_PROXY.getConf()), HBASE_PROXY.getConf(), hbaseTableFactory, new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory));
     }
 
     @AfterClass
@@ -173,6 +172,7 @@ public class ValueTypeTest {
         Blob blob1 = new Blob(Bytes.toBytes("aKey"), "text/html", Long.MAX_VALUE, null);
         Blob blob2 = new Blob(Bytes.toBytes("anotherKey"), "image/jpeg", Long.MIN_VALUE, "images/image.jpg");
         Blob blob3 = new Blob("text/plain", Long.valueOf(0), null);
+        
         runValueTypeTests("blobTypeId", "BLOB", blob1, blob2, blob3);
     }
 

@@ -48,6 +48,10 @@ public class InlineBlobStoreAccess implements BlobStoreAccess {
     public void delete(byte[] blobKey) {
         // no-op
     }
+    
+    public boolean incubate() {
+        return false;
+    }
 
     private class InlineBlobOutputStream extends ByteArrayOutputStream {
         

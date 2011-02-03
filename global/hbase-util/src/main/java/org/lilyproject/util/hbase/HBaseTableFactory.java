@@ -22,7 +22,7 @@ public interface HBaseTableFactory {
      * @return never null, a default TableConfig is returned if the user did not specify anything.
      */
     TableConfig getTableConfig(byte[] tableName);
-
+    
     /**
      *
      * @return the split keys for the table, possibly null.

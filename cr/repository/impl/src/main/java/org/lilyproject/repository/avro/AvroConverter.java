@@ -15,7 +15,6 @@
  */
 package org.lilyproject.repository.avro;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +27,35 @@ import java.util.Map.Entry;
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.util.Utf8;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobNotFoundException;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.FieldTypeUpdateException;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.InvalidRecordException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordExistsException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordLockedException;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.RemoteException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.impl.IdRecordImpl;
 
 public class AvroConverter {
@@ -600,8 +627,14 @@ public class AvroConverter {
     }
 
     public BlobNotFoundException convert(AvroBlobNotFoundException avroException) {
-        BlobNotFoundException exception = new BlobNotFoundException(convert(avroException.blob));
-        return exception;
+        try {
+            BlobNotFoundException exception = new BlobNotFoundException(convert(avroException.blob), convert(avroException.message));
+            restoreCauses(avroException.remoteCauses, exception);
+            return exception;
+        } catch (Exception e) {
+            // TODO this is not good, exceptions should never fail to deserialize
+            throw new RuntimeException("Error deserializing exception.", e);
+        }
     }
 
     public RecordId convertAvroRecordId(ByteBuffer recordId) {

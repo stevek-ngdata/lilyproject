@@ -240,25 +240,27 @@ public interface Repository extends Closeable {
      */
     OutputStream getOutputStream(Blob blob) throws BlobException, InterruptedException;
 
-    /**
-     * Returns an {@link InputStream} from which the binary data of a blob can
-     * be read. The value of blob is used to identify the underlying blobstore
-     * and actual data to return through this InputStream, see {@link #getOutputStream(Blob)}.
-     *
-     * @param blob the blob for which to open an InputStream
-     * @return an InputStream
-     * @throws BlobNotFoundException when the blob does not contain a valid key in its value
-     * @throws RepositoryException when an unexpected exception occurs
-     */
-    InputStream getInputStream(Blob blob) throws BlobNotFoundException, BlobException, InterruptedException;
+    
 
     /**
-     * Deletes the data identified by a blob from the underlying blobstore. See {@link #getOutputStream(Blob)} and {@link #getInputStream(Blob)}.
-     * @param blob the blob to delete
-     * @throws BlobNotFoundException when the blob does not contain a valid key in its value
-     * @throws RepositoryException when an unexpected exception occurs
+     * Returns an {@link InputStream} from which the binary data of a blob can be read.
+     * The blob can only be retrieved by referring to location of the blob in the record 
+     * and field where it is used.   
+     * @param recordId the id of the record containing the blob
+     * @param fieldName the QName of the field containing the blob
+     * @param version optionally a version of the record, if null the latest record version is used
+     * @param multivalueIndex the position of the blob in a multivalue field
+     * @param hierarchyIndex the position of the blob in a hierarchical field
+     * @return a BlobInputStream
+     * @throws BlobNotFoundException thrown when no blob can be found at the given location
+     * @throws BlobException thrown when opening an InputStream on the blob fails 
      */
-    void delete(Blob blob) throws BlobNotFoundException, BlobException, InterruptedException;
+    BlobInputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws BlobNotFoundException, BlobException, InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
+
+    /**
+     * Shortcut getInputStream method where version, multivalueIndex and hierarchyIndex are set to null.
+     */
+    BlobInputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException, InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Get all the variants that exist for the given recordId.

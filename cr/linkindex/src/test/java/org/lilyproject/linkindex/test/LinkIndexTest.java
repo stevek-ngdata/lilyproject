@@ -31,6 +31,7 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
+import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
@@ -41,6 +42,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseTypeManager;
@@ -93,6 +95,7 @@ public class LinkIndexTest {
         typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zk, hbaseTableFactory);
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
+        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory);
 
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zk);
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 0L, 5000L));
@@ -102,8 +105,7 @@ public class LinkIndexTest {
                 RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfMgr);
         RowLogShard walShard = new RowLogShardImpl("WS1", HBASE_PROXY.getConf(), wal, 100);
         wal.registerShard(walShard);
-
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, wal, HBASE_PROXY.getConf(), hbaseTableFactory);
+        repository = new HBaseRepository(typeManager, idGenerator, wal, HBASE_PROXY.getConf(), hbaseTableFactory, blobManager);
         ids = repository.getIdGenerator();
         IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 

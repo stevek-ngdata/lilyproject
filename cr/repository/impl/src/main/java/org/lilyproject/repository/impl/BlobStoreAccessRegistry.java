@@ -17,22 +17,28 @@ package org.lilyproject.repository.impl;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobInputStream;
+import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobNotFoundException;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.BlobStoreAccessFactory;
 import org.lilyproject.util.Pair;
 
 public class BlobStoreAccessRegistry {
 
     Map<String, BlobStoreAccess> registry = new HashMap<String, BlobStoreAccess>();
     private BlobStoreAccessFactory blobStoreAccessFactory;
+    private final BlobManager blobManager;
     
-    public BlobStoreAccessRegistry() {
+    public BlobStoreAccessRegistry(BlobManager blobManager) {
+        this.blobManager = blobManager;
     }
     
     public void register(BlobStoreAccess blobStoreAccess) {
@@ -48,18 +54,18 @@ public class BlobStoreAccessRegistry {
 
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         BlobStoreAccess blobStoreAccess = blobStoreAccessFactory.get(blob);
-        return new BlobOutputStream(blobStoreAccess.getOutputStream(blob), blobStoreAccess.getId(), blob);
+        return new BlobOutputStream(blobStoreAccess.getOutputStream(blob), blobStoreAccess.getId(), blob, blobManager, blobStoreAccess.incubate());
     }
 
-    public InputStream getInputStream(Blob blob) throws BlobNotFoundException, BlobException {
+    public BlobInputStream getInputStream(Blob blob) throws BlobNotFoundException, BlobException {
         Pair<String, byte[]> decodedKey = decodeKey(blob);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
-        return blobStoreAccess.getInputStream(decodedKey.getV2());
+        return new BlobInputStream(blobStoreAccess.getInputStream(decodedKey.getV2()), blob);
     }
 
     private Pair<String, byte[]> decodeKey(Blob blob) throws BlobNotFoundException, BlobException {
         if (blob.getValue() == null) {
-            throw new BlobNotFoundException(blob);
+            throw new BlobNotFoundException(blob, "Blob has no reference to a blob in the blobstore", null);
         }
         Pair<String, byte[]> decodedKey;
         try {
@@ -96,17 +102,25 @@ public class BlobStoreAccessRegistry {
 
         private final Blob blob;
         private final String blobStoreAccessId;
+        private final BlobManager blobManager;
+        private final boolean incubate;
 
-        public BlobOutputStream(OutputStream outputStream, String blobStoreAccessId, Blob blob) {
+        public BlobOutputStream(OutputStream outputStream, String blobStoreAccessId, Blob blob, BlobManager blobManager, boolean incubate) {
             super(outputStream);
             this.blobStoreAccessId = blobStoreAccessId;
             this.blob = blob;
+            this.blobManager = blobManager;
+            this.incubate = incubate;
         }
 
         @Override
         public void close() throws IOException {
             super.close();
-            blob.setValue(encode(blobStoreAccessId, blob.getValue()));
+            byte[] encodedBlobKey = encode(blobStoreAccessId, blob.getValue());
+            if (incubate) {
+                blobManager.incubateBlob(encodedBlobKey);
+            }
+            blob.setValue(encodedBlobKey);
         }
     }
 

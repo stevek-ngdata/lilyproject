@@ -64,5 +64,7 @@ public interface RecordId {
      */
     SortedMap<String, String> getVariantProperties();
 
+    int hashCode();
+
     boolean equals(Object obj);
 }

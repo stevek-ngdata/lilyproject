@@ -16,22 +16,23 @@
 package org.lilyproject.indexer.engine.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
-import org.apache.hadoop.fs.Path;
-import org.lilyproject.indexer.engine.*;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.linkindex.LinkIndexUpdater;
-import org.lilyproject.rowlog.api.*;
-import org.lilyproject.rowlog.impl.*;
-import org.lilyproject.solrtestfw.SolrTestingUtility;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.repo.RecordEvent;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -44,24 +45,60 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.IndexUpdater;
+import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.SolrServers;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
+import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.linkindex.LinkIndex;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
-import org.lilyproject.util.repo.VersionTag;
+import org.lilyproject.linkindex.LinkIndexUpdater;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.BlobManagerImpl;
+import org.lilyproject.repository.impl.DFSBlobStoreAccess;
+import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogMessageListener;
+import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
+import org.lilyproject.rowlog.api.RowLogShard;
+import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.rowlog.impl.RowLogImpl;
+import org.lilyproject.rowlog.impl.RowLogShardImpl;
+import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.RecordEvent;
+import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
 
 // To run this test from an IDE, set a property solr.war pointing to the SOLR war
 
@@ -129,8 +166,8 @@ public class IndexerTest {
                 RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfMgr);
         RowLogShard walShard = new RowLogShardImpl("WS1", HBASE_PROXY.getConf(), wal, 100);
         wal.registerShard(walShard);
-
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, wal, HBASE_PROXY.getConf(), hbaseTableFactory);
+        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory);
+        repository = new HBaseRepository(typeManager, idGenerator, wal, HBASE_PROXY.getConf(), hbaseTableFactory, blobManager);
 
         IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
         IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());

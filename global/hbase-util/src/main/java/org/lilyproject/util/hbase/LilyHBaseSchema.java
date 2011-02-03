@@ -37,6 +37,13 @@ public class LilyHBaseSchema {
         typeTableDescriptor.addFamily(new HColumnDescriptor(TypeCf.MIXIN.bytes, HConstants.ALL_VERSIONS, "none",
                 false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
     }
+    
+    private static final HTableDescriptor blobIncubatorDescriptor;
+    
+    static {
+        blobIncubatorDescriptor = new HTableDescriptor(Table.BLOBINCUBATOR.bytes);
+        blobIncubatorDescriptor.addFamily(new HColumnDescriptor(BlobIncubatorCf.REF.bytes));
+    }
 
     public static HTableInterface getRecordTable(HBaseTableFactory tableFactory) throws IOException {
         return tableFactory.getTable(recordTableDescriptor);
@@ -45,10 +52,15 @@ public class LilyHBaseSchema {
     public static HTableInterface getTypeTable(HBaseTableFactory tableFactory) throws IOException {
         return tableFactory.getTable(typeTableDescriptor);
     }
+    
+    public static HTableInterface getBlobIncubatorTable(HBaseTableFactory tableFactory) throws IOException {
+        return tableFactory.getTable(blobIncubatorDescriptor);
+    }
 
     public static enum Table {
         RECORD("record"),
-        TYPE("type");
+        TYPE("type"),
+        BLOBINCUBATOR("blobincubator");
 
         public final byte[] bytes;
         public final String name;
@@ -134,6 +146,36 @@ public class LilyHBaseSchema {
         public final String name;
 
         TypeColumn(String name) {
+            this.name = name;
+            this.bytes = Bytes.toBytes(name);
+        }
+    }
+    
+    /**
+     * Column families in the blob incubator table.
+     */
+    public static enum BlobIncubatorCf {
+        REF("ref");
+        
+        public final byte[] bytes;
+        public final String name;
+
+        BlobIncubatorCf(String name) {
+            this.name = name;
+            this.bytes = Bytes.toBytes(name);
+        }
+    }
+    
+    /**
+     * Columns in the blob incubator table.
+     */
+    public static enum BlobIncubatorColumn {
+        RECORD("record"), FIELD("field");
+        
+        public final byte[] bytes;
+        public final String name;
+        
+        BlobIncubatorColumn(String name) {
             this.name = name;
             this.bytes = Bytes.toBytes(name);
         }

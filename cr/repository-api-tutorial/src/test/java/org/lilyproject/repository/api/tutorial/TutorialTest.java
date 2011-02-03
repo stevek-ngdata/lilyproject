@@ -32,6 +32,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Link;
@@ -42,6 +43,7 @@ import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseTypeManager;
@@ -84,6 +86,7 @@ public class TutorialTest {
 
     private static HBaseTableFactory hbaseTableFactory;
 
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
@@ -100,8 +103,9 @@ public class TutorialTest {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(Long.MAX_VALUE, dfsBlobStoreAccess);
+        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory);
         setupWal();
-        repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, wal, configuration, hbaseTableFactory);
+        repository = new HBaseRepository(typeManager, idGenerator, wal, configuration, hbaseTableFactory, blobManager);
 
     }
     
@@ -293,7 +297,7 @@ public class TutorialTest {
         //
         InputStream is = null;
         try {
-            is = repository.getInputStream((Blob)record.getField(new QName(NS, "description")));
+            is = repository.getInputStream(record.getId(), new QName(NS, "description"));
             System.out.println("Data read from blob is:");
             Reader reader = new InputStreamReader(is, "UTF-8");
             char[] buffer = new char[20];

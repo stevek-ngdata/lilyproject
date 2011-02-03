@@ -16,7 +16,10 @@
 package org.lilyproject.repository.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.HierarchyPath;
@@ -40,7 +43,7 @@ public class ValueTypeImpl implements ValueType {
     public boolean isMultiValue() {
         return multiValue;
     }
-    
+
     public boolean isHierarchical() {
         return hierarchical;
     }
@@ -78,7 +81,7 @@ public class ValueTypeImpl implements ValueType {
         }
         return result;
     }
-    
+
     private HierarchyPath fromHierarchicalBytes(byte[] bytes) {
         List<Object> result = new ArrayList<Object>();
         int offset = 0;
@@ -93,7 +96,7 @@ public class ValueTypeImpl implements ValueType {
         }
         return new HierarchyPath(result.toArray(new Object[result.size()]));
     }
-    
+
     public byte[] toBytes(Object value) {
         if (isMultiValue()) {
             return toMultiValueBytes(value);
@@ -107,7 +110,7 @@ public class ValueTypeImpl implements ValueType {
     private byte[] toMultiValueBytes(Object value) {
         byte[] result;
         result = new byte[0];
-        for(Object element : ((List<Object>)value)) {
+        for (Object element : ((List<Object>) value)) {
             byte[] encodedValue;
             if (isHierarchical()) {
                 encodedValue = toHierarchyBytes(element);
@@ -119,11 +122,11 @@ public class ValueTypeImpl implements ValueType {
         }
         return result;
     }
-    
+
     private byte[] toHierarchyBytes(Object value) {
         byte[] result;
         result = new byte[0];
-        for(Object element : ((HierarchyPath)value).getElements()) {
+        for (Object element : ((HierarchyPath) value).getElements()) {
             byte[] encodedValue = primitiveValueType.toBytes(element);
             result = Bytes.add(result, Bytes.toBytes(encodedValue.length));
             result = Bytes.add(result, encodedValue);
@@ -134,14 +137,14 @@ public class ValueTypeImpl implements ValueType {
     public PrimitiveValueType getPrimitive() {
         return primitiveValueType;
     }
-    
+
     public Class getType() {
         if (isMultiValue()) {
             return List.class;
         }
         return primitiveValueType.getType();
     }
-    
+
     public byte[] toBytes() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(primitiveValueType.getName());
@@ -152,12 +155,43 @@ public class ValueTypeImpl implements ValueType {
         return Bytes.toBytes(stringBuilder.toString());
     }
 
+    public Set<Object> getValues(Object value) {
+        Set<Object> result = new HashSet<Object>();
+        if (isMultiValue()) {
+            result.addAll(getMultiValueValues(value));
+        } else if (isHierarchical()) {
+            result.addAll(getHierarchyValues(value));
+        } else {
+            result.add(value);
+        }
+        return result;
+    }
+
+    private Set<Object> getMultiValueValues(Object value) {
+        Set<Object> result = new HashSet<Object>();
+        if (isHierarchical()) {
+            for (Object element : ((List<Object>) value)) {
+                result.addAll(getHierarchyValues(element));
+            }
+        } else {
+            result.addAll((List<Object>) value);
+        }
+        return result;
+    }
+
+    private Set<Object> getHierarchyValues(Object value) {
+        Set<Object> result = new HashSet<Object>();
+        result.addAll(Arrays.asList(((HierarchyPath) value).getElements()));
+        return result;
+    }
+    
     public static ValueType fromBytes(byte[] bytes, AbstractTypeManager typeManager) {
         String encodedString = Bytes.toString(bytes);
         int endOfPrimitiveValueTypeName = encodedString.indexOf(",");
         String primitiveValueTypeName = encodedString.substring(0, endOfPrimitiveValueTypeName);
-        int endOfMultiValueBoolean = encodedString.indexOf(",", endOfPrimitiveValueTypeName+1); 
-        boolean multiValue = Boolean.parseBoolean(encodedString.substring(endOfPrimitiveValueTypeName + 1, endOfMultiValueBoolean));
+        int endOfMultiValueBoolean = encodedString.indexOf(",", endOfPrimitiveValueTypeName + 1);
+        boolean multiValue = Boolean.parseBoolean(encodedString.substring(endOfPrimitiveValueTypeName + 1,
+                endOfMultiValueBoolean));
         boolean hierarchical = Boolean.parseBoolean(encodedString.substring(endOfMultiValueBoolean + 1));
         return typeManager.getValueType(primitiveValueTypeName, multiValue, hierarchical);
     }
@@ -189,5 +223,4 @@ public class ValueTypeImpl implements ValueType {
             return false;
         return true;
     }
-
 }

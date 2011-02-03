@@ -19,7 +19,22 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldTypeExistsException;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.FieldTypeUpdateException;
+import org.lilyproject.repository.api.InvalidRecordException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordExistsException;
+import org.lilyproject.repository.api.RecordLockedException;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.RecordTypeExistsException;
+import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.VersionNotFoundException;
 
 public class AvroLilyImpl implements AvroLily {
 
@@ -363,19 +378,4 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
-
-    public Void deleteBlob(AvroBlob avroBlob) throws AvroBlobNotFoundException, AvroBlobException,
-            AvroInterruptedException {
-        try {
-            repository.delete(converter.convert(avroBlob));
-        } catch (BlobNotFoundException e) {
-            throw converter.convert(e);
-        } catch (BlobException e) {
-            throw converter.convert(e);
-        } catch (InterruptedException e) {
-            throw converter.convert(e);
-        }
-        return null;
-    }
-
 }

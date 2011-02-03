@@ -90,7 +90,7 @@ public class ValueEvaluator {
         for (Blob blob : blobs) {
             InputStream is = null;
             try {
-                is = repository.getInputStream(blob);
+//                is = repository.getInputStream(blob);
 
                 // TODO make write limit configurable
                 BodyContentHandler ch = new BodyContentHandler();

@@ -155,7 +155,9 @@
       "name": "AvroBlobNotFoundException",
       "type": "error",
       "fields": [
-        {"name": "blob", "type": "AvroBlob"}
+        {"name": "blob", "type": "AvroBlob"},
+        {"name": "message", "type": ["string", "null"]},
+        {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
     },
     
@@ -355,12 +357,6 @@
       "response": "null",
       "errors": ["AvroRecordException", "AvroRecordNotFoundException", "AvroRecordLockedException",
       "AvroGenericException", "AvroInterruptedException"]
-    },
-    
-    "deleteBlob": {
-      "request": [{"name": "blob", "type": "AvroBlob"}],
-      "response": "null",
-      "errors": ["AvroBlobNotFoundException", "AvroBlobException", "AvroGenericException", "AvroInterruptedException"]
     },
     
     "getVariants": {

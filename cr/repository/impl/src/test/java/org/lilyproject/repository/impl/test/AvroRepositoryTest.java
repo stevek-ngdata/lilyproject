@@ -23,12 +23,14 @@ import org.apache.avro.ipc.Server;
 import org.apache.hadoop.fs.Path;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccessFactory;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.avro.AvroLily;
 import org.lilyproject.repository.avro.AvroLilyImpl;
 import org.lilyproject.repository.avro.LilySpecificResponder;
+import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseTypeManager;
@@ -59,8 +61,9 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
         serverTypeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
+        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory);
         setupWal();
-        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, blobStoreAccessFactory , wal, configuration, hbaseTableFactory);
+        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, wal, configuration, hbaseTableFactory, blobManager);
         
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(serverRepository);
@@ -72,14 +75,14 @@ public class AvroRepositoryTest extends AbstractRepositoryTest {
         typeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()),
                 remoteConverter, idGenerator, zooKeeper);
         repository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                (RemoteTypeManager)typeManager, idGenerator, blobStoreAccessFactory);
+                (RemoteTypeManager)typeManager, idGenerator, blobManager);
         remoteConverter.setRepository(repository);
         ((RemoteTypeManager)typeManager).start();
         setupTypes();
         setupMessageQueue();
         setupMessageQueueProcessor();
     }
-
+    
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         if (messageQueueProcessor != null)

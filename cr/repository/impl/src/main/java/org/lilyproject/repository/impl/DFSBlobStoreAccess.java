@@ -85,10 +85,14 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
     public void delete(byte[] blobKey) throws BlobException {
         UUID uuid = decode(blobKey);
         try {
-            fileSystem.delete(new Path(uuid.toString()), false);
+            fileSystem.delete(createPath(uuid), false);
         } catch (IOException e) {
             throw new BlobException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
         }
+    }
+
+    public boolean incubate() {
+        return true;
     }
 
     private UUID decode(byte[] blobKey) {
@@ -110,4 +114,5 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
             blob.setValue(blobKey);
         }
     }
+    
 }

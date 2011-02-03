@@ -15,6 +15,8 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Set;
+
 /**
  * A value type represents the type of the value of a {@link FieldType}.
  *
@@ -91,6 +93,12 @@ public interface ValueType {
      * Returns an encoded byte[] representing this value type.
      */
     byte[] toBytes();
+    
+    /**
+     * Returns a set of all values contained in this value.
+     * It flattens out the aspects of multivalue and hierarchy values.
+     */
+    Set<Object> getValues(Object value);
     
     boolean equals(Object obj);
 }

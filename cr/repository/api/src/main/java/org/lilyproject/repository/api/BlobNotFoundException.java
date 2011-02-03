@@ -16,18 +16,34 @@
 package org.lilyproject.repository.api;
 
 public class BlobNotFoundException extends RepositoryException {
-    private final Blob blob;
+    private Blob blob = null;
 
-    public BlobNotFoundException(Blob blob) {
+    public BlobNotFoundException(Blob blob, String message, Throwable cause) {
+        super(message, cause);
         this.blob = blob;
     }
-
+    
+    public BlobNotFoundException(Blob blob, String message) {
+        super(message);
+        this.blob = blob;
+    }
+    
+    public BlobNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    
+    public BlobNotFoundException(String message) {
+        super(message);
+    }
+    
     public Blob getBlob() {
         return blob;
     }
 
     @Override
     public String getMessage() {
-        return "Blob <" + blob + "> could not be found.";
+        if (blob != null)
+            return "Blob <" + blob + "> could not be found." + super.getMessage();
+        return super.getMessage();
     }
 }

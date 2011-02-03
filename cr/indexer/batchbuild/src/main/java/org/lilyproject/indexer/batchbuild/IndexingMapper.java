@@ -83,10 +83,10 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             hbaseTableFactory = new HBaseTableFactoryImpl(conf);
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
 
-            BlobStoreAccessFactory blobStoreAccessFactory = LilyClient.getBlobStoreAccess(zk);
-
             RowLog wal = new DummyRowLog("The write ahead log should not be called from within MapReduce jobs.");
-            repository = new HBaseRepository(typeManager, idGenerator, blobStoreAccessFactory, wal, conf, hbaseTableFactory);
+            
+            BlobManager blobManager = LilyClient.getBlobManager(zk);
+            repository = new HBaseRepository(typeManager, idGenerator, wal, conf, hbaseTableFactory, blobManager);
 
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), repository);

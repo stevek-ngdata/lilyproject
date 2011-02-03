@@ -43,14 +43,15 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
 
     protected static Response getBlob(String id, String version, String fieldName, UriInfo uriInfo,
             final Repository repository) {
-        RecordId recordId = repository.getIdGenerator().fromString(id);
+        final RecordId recordId = repository.getIdGenerator().fromString(id);
 
-        QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());
+        final QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());
 
-        Long versionNr = null;
+        Long vNr = null;
         if (version != null) {
-            versionNr = Long.parseLong(version);
+            vNr = Long.parseLong(version);
         }
+        final Long versionNr = vNr;
 
         Record record;
         try {
@@ -72,7 +73,7 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
                 public void write(OutputStream output) throws IOException, WebApplicationException {
                     InputStream is = null;
                     try {
-                        is = repository.getInputStream(blob);
+                        is = repository.getInputStream(recordId, versionNr, fieldQName, null, null);
                         IOUtils.copyLarge(is, output);
                     } catch (BlobNotFoundException e) {
                         throw new ResourceException(e, NOT_FOUND.getStatusCode());
