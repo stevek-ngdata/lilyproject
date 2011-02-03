@@ -62,9 +62,13 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
             }
 
             try {
+                // Make a deep copy, we don't want to touch the original
+                tableDescriptor = new HTableDescriptor(tableDescriptor);
+                configure(tableDescriptor);
+
                 int regionCount = splitKeys == null ? 1 : splitKeys.length + 1;
                 log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "
-                        + regionCount + " initial region" + (regionCount > 1 ? "s.": "."));
+                        + regionCount + " initial region" + (regionCount > 1 ? "s." : "."));
                 admin.createTable(tableDescriptor, splitKeys);
             } catch (TableExistsException e2) {
                 // Table is meanwhile created by another process
@@ -75,6 +79,16 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
         // TODO we could check if the existing table matches the given table descriptor
 
         return new LocalHTable(configuration, tableDescriptor.getName());
+    }
+
+    public void configure(HTableDescriptor tableDescriptor) {
+        Long maxFileSize = getTableConfig(tableDescriptor.getName()).getMaxFileSize();
+        if (maxFileSize != null)
+            tableDescriptor.setMaxFileSize(maxFileSize);
+
+        Long memStoreFlushSize = getTableConfig(tableDescriptor.getName()).getMemStoreFlushSize();
+        if (memStoreFlushSize != null)
+            tableDescriptor.setMemStoreFlushSize(memStoreFlushSize);
     }
     
 

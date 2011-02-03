@@ -20,7 +20,12 @@ public class TableConfigBuilder {
             String splitKeyPrefix = table.getChild("splits").getChild("splitKeyPrefix").getValue(null);
             byte[] splitKeyPrefixBytes = splitKeyPrefix != null ? Bytes.toBytesBinary(splitKeyPrefix) : null;
 
+            Long maxFileSize = table.getChild("maxFileSize").getValueAsLong(null);
+            Long memStoreFlushSize = table.getChild("memStoreFlushSize").getValueAsLong(null);
+
             TableConfig config = new TableConfig(regionCount, splitKeys, splitKeyPrefixBytes);
+            config.setMaxFileSize(maxFileSize);
+            config.setMemStoreFlushSize(memStoreFlushSize);
 
             result.put(new ByteArrayKey(tableName), config);
         }

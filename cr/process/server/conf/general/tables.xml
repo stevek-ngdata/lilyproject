@@ -22,6 +22,16 @@
       -->
       <regionCount>20</regionCount>
       <splitKeys></splitKeys>
+
+      <!-- Maximum file size in bytes -->
+      <!--
+      <maxFileSize>67108864</maxFileSize>
+      -->
+
+      <!-- Memstore flush size in bytes -->
+      <!--
+      <memStoreFlushSize>33554432</memStoreFlushSize>
+      -->
     </splits>
   </table>
 

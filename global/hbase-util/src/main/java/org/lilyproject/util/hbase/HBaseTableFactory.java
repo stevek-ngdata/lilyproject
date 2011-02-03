@@ -23,6 +23,8 @@ public interface HBaseTableFactory {
      */
     TableConfig getTableConfig(byte[] tableName);
     
+    void configure(HTableDescriptor tableDescriptor);
+
     /**
      *
      * @return the split keys for the table, possibly null.

@@ -8,6 +8,8 @@ public class TableConfig {
     private Integer regionCount;
     private String splitKeysAsString;
     private byte[] splitKeyPrefix;
+    private Long maxFileSize;
+    private Long memStoreFlushSize;
 
     public TableConfig() {
 
@@ -23,6 +25,22 @@ public class TableConfig {
         this.regionCount = regionCount;
         this.splitKeysAsString = splitKeys;
         this.splitKeyPrefix = splitKeyPrefix == null ? new byte[0] : splitKeyPrefix;
+    }
+
+    public Long getMaxFileSize() {
+        return maxFileSize;
+    }
+
+    public void setMaxFileSize(Long maxFileSize) {
+        this.maxFileSize = maxFileSize;
+    }
+
+    public Long getMemStoreFlushSize() {
+        return memStoreFlushSize;
+    }
+
+    public void setMemStoreFlushSize(Long memStoreFlushSize) {
+        this.memStoreFlushSize = memStoreFlushSize;
     }
 
     public byte[][] getSplitKeys() {

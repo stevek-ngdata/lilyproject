@@ -102,6 +102,8 @@ public class IndexManager {
                 HColumnDescriptor.DEFAULT_TTL, HColumnDescriptor.DEFAULT_BLOOMFILTER, HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
         table.addFamily(family);
 
+        tableFactory.configure(table);
+
         if (splitKeys == null) {
             splitKeys = tableFactory.getSplitKeys(table.getName());
         }
