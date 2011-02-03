@@ -16,13 +16,17 @@
 package org.lilyproject.server.modules.general;
 
 import org.apache.hadoop.conf.Configuration;
+import org.kauriproject.conf.Conf;
 
 public interface HadoopConfigurationFactory {
     Configuration getHBaseConf();
 
     Configuration getMapReduceConf();
 
-    Configuration getMapReduceJobConf();
+    /**
+     * Combines the default MR properties with those specified in the conf argument.
+     */
+    Configuration getMapReduceConf(Conf subConf);
 
     String getZooKeeperConnectString();
 

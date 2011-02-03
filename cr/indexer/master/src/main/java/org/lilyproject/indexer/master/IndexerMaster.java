@@ -22,6 +22,7 @@ import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
+import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogSubscription;
@@ -63,6 +64,8 @@ public class IndexerMaster {
 
     private final RowLogConfigurationManager rowLogConfMgr;
 
+    private final SolrClientConfig solrClientConfig;
+
     private LeaderElection leaderElection;
 
     private IndexerModelListener listener = new MyListener();
@@ -79,7 +82,7 @@ public class IndexerMaster {
 
     public IndexerMaster(ZooKeeperItf zk , WriteableIndexerModel indexerModel, Configuration mapReduceConf,
             Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString, int zkSessionTimeout,
-            RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo) {
+            RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig) {
         this.zk = zk;
         this.indexerModel = indexerModel;
         this.mapReduceConf = mapReduceConf;
@@ -89,6 +92,7 @@ public class IndexerMaster {
         this.zkSessionTimeout = zkSessionTimeout;
         this.rowLogConfMgr = rowLogConfMgr;
         this.lilyInfo = lilyInfo;
+        this.solrClientConfig = solrClientConfig;
     }
 
     @PostConstruct
@@ -224,7 +228,7 @@ public class IndexerMaster {
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsBatchBuildStart(index)) {
                     Job job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
-                            zkConnectString, zkSessionTimeout);
+                            zkConnectString, zkSessionTimeout, solrClientConfig);
 
                     ActiveBatchBuildInfo jobInfo = new ActiveBatchBuildInfo();
                     jobInfo.setSubmitTime(System.currentTimeMillis());

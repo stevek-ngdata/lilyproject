@@ -17,10 +17,14 @@ package org.lilyproject.indexer.engine;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.solr.client.solrj.ResponseParser;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
+import org.apache.solr.client.solrj.impl.BinaryResponseParser;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.request.RequestWriter;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
@@ -38,11 +42,34 @@ public class SolrServers {
     private Map<String, SolrServer> shardConnections;
     private ShardSelector selector;
     private HttpClient httpClient;
+    private RequestWriter requestWriter;
+    private ResponseParser responseParser;
 
-    public SolrServers(Map<String, String> shards, ShardSelector selector, HttpClient httpClient) throws MalformedURLException {
+    public SolrServers(Map<String, String> shards, ShardSelector selector, HttpClient httpClient,
+            SolrClientConfig solrClientConfig) throws MalformedURLException {
         this.shards = shards;
         this.selector = selector;
         this.httpClient = httpClient;
+
+        if (solrClientConfig.getRequestWriter() != null) {
+            try {
+                this.requestWriter = (RequestWriter)Class.forName(solrClientConfig.getRequestWriter()).newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Problem instantiating SOLR request writer", e);
+            }
+        } else {
+            this.requestWriter = new BinaryRequestWriter();
+        }
+
+        if (solrClientConfig.getResponseParser() != null) {
+            try {
+                this.responseParser = (ResponseParser)Class.forName(solrClientConfig.getResponseParser()).newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Problem instantiating SOLR response parser", e);
+            }
+        } else {
+            this.responseParser = new BinaryResponseParser();
+        }
 
         init();
     }
@@ -55,7 +82,8 @@ public class SolrServers {
         SortedMap<String, String> shards = new TreeMap<String, String>();
         shards.put("shard1", uri);
         ShardSelector selector = DefaultShardSelectorBuilder.createDefaultSelector(shards);
-        return new SolrServers(shards, selector, new HttpClient(new MultiThreadedHttpConnectionManager()));
+        return new SolrServers(shards, selector, new HttpClient(new MultiThreadedHttpConnectionManager()),
+                new SolrClientConfig());
     }
 
     /**
@@ -77,7 +105,10 @@ public class SolrServers {
     private void init() throws MalformedURLException {
         shardConnections = new HashMap<String, SolrServer>();
         for (Map.Entry<String, String> shard : shards.entrySet()) {
-            shardConnections.put(shard.getKey(), new CommonsHttpSolrServer(shard.getValue(), httpClient));
+            CommonsHttpSolrServer solr = new CommonsHttpSolrServer(shard.getValue(), httpClient);
+            solr.setRequestWriter(requestWriter);
+            solr.setParser(responseParser);
+            shardConnections.put(shard.getKey(), solr);
         }
     }
 

@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
+import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
@@ -41,7 +42,8 @@ public class BatchIndexBuilder {
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf,
-            Configuration hbaseConf, String zkConnectString, int zkSessionTimeout) throws Exception {
+            Configuration hbaseConf, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig)
+            throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
         Job job = new Job(conf);
@@ -103,6 +105,16 @@ public class BatchIndexBuilder {
         //
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperConnectString", zkConnectString);
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", String.valueOf(zkSessionTimeout));
+
+        //
+        // SOLR options
+        //
+        if (solrConfig.getRequestWriter() != null) {
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.requestwriter", solrConfig.getRequestWriter());
+        }
+        if (solrConfig.getResponseParser() != null) {
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.responseparser", solrConfig.getResponseParser());
+        }
 
         job.submit();
 

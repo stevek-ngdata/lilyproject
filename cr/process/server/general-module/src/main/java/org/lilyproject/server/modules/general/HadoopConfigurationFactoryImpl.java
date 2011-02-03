@@ -56,7 +56,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
         return hadoopConf;
     }
 
-    public Configuration getMapReduceJobConf() {
+    public Configuration getMapReduceConf(Conf subConf) {
         Configuration hadoopConf = new Configuration();
 
         for (Conf conf : mrConf.getChild("properties").getChildren("property")) {
@@ -65,7 +65,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
             hadoopConf.set(name, value);
         }
 
-        for (Conf conf : mrConf.getChild("jobProperties").getChildren("property")) {
+        for (Conf conf : subConf.getChildren("property")) {
             String name = conf.getRequiredChild("name").getValue();
             String value = conf.getRequiredChild("value").getValue();
             hadoopConf.set(name, value);

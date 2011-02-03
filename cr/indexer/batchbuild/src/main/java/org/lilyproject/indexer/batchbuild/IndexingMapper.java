@@ -27,12 +27,9 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.engine.IndexLocker;
-import org.lilyproject.indexer.engine.Indexer;
-import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.*;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.indexer.engine.SolrServers;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
@@ -114,7 +111,11 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             connectionManager.getParams().setMaxTotalConnections(50);
             HttpClient httpClient = new HttpClient(connectionManager);
 
-            SolrServers solrServers = new SolrServers(solrShards, shardSelector, httpClient);
+            SolrClientConfig solrConfig = new SolrClientConfig();
+            solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
+            solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
+
+            SolrServers solrServers = new SolrServers(solrShards, shardSelector, httpClient, solrConfig);
 
             indexLocker = new IndexLocker(zk);
 

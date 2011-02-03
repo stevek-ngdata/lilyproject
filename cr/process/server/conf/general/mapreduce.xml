@@ -4,7 +4,7 @@
 
   <!--
      | Base properties, used to connect to job tracker for status information and also
-     |  used for new MR jobs.
+     |  used for MR jobs.
      -->
   <properties conf:inheritKey="string(name)">
     <property>
@@ -17,21 +17,5 @@
       <value>hdfs://localhost:9000</value>
     </property>
   </properties>
-
-  <!--
-     | In addition to the general properties above, the properties here will be added
-     |  to each new started MR task.
-     -->
-  <jobProperties conf:inheritKey="string(name)">
-    <property>
-      <!--
-         | Number of concurrent indexing threads within one indexing map task.
-         | Since some time is spent in IO (retrieving data from HBase, sending data to SOLR)
-         | the indexing can be sped up by running multiple threads.
-         -->
-      <name>org.lilyproject.indexer.batchbuild.threads</name>
-      <value>5</value>
-    </property>
-  </jobProperties>
 
 </mapreduce>
