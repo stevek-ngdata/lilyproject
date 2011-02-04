@@ -1371,4 +1371,47 @@ public abstract class AbstractRepositoryTest {
         assertEquals(ResponseStatus.UP_TO_DATE, resultRecord.getResponseStatus());
     }
 
+    @Test
+    public void testUpdateMutableFieldsRecordType() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType2.getName(), recordType2.getVersion());
+        record.setField(fieldType4.getName(), 123);
+        record.setField(fieldType5.getName(), true);
+        record.setField(fieldType6.getName(), "value1");
+        record = repository.create(record);
+
+        // Updating versioned mutable fields should not require record type to be specified in the record
+        record = repository.newRecord(record.getId());
+        record.setVersion(1L);
+        record.setField(fieldType6.getName(), "value2");
+        record = repository.update(record, true, true);
+
+        // Change record to a different record type
+        RecordType recordTypeA = typeManager.newRecordType(new QName("testmut", "RTA"));
+        recordTypeA.addFieldTypeEntry(fieldType4.getId(), false);
+        recordTypeA.addFieldTypeEntry(fieldType5.getId(), false);
+        recordTypeA.addFieldTypeEntry(fieldType6.getId(), false);
+        recordTypeA = typeManager.createRecordType(recordTypeA);
+
+        // Change the record type of the non-versioned scope (at the time of this writing, could not modify
+        // just the record type of a record, hence also touching a field)
+        record = repository.read(record.getId());
+        record.setRecordType(recordTypeA.getName(), null);
+        record.setField(fieldType4.getName(), 456);
+        record = repository.update(record);
+        record = repository.read(record.getId());
+        assertEquals(recordTypeA.getName(), record.getRecordTypeName());
+
+        // The record type of the versioned mutable scope should still be what it was before
+        assertEquals(recordType2.getName(), record.getRecordTypeName(Scope.VERSIONED_MUTABLE));
+
+        // Now update a versioned-mutable field without specifying a record type, would expect it to move
+        // also to the new record type of the non-versioned scope.
+        record = repository.newRecord(record.getId());
+        record.setVersion(1L);
+        record.setField(fieldType6.getName(), "value3");
+        record = repository.update(record, true, true);
+        assertEquals(recordTypeA.getName(), record.getRecordTypeName(Scope.VERSIONED_MUTABLE));
+        assertEquals(recordTypeA.getVersion(), record.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
+    }
 }

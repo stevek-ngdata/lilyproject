@@ -536,14 +536,8 @@ public class HBaseRepository implements Repository {
                 if (fieldsToDelete.contains(fieldName)) {
                     throw new InvalidRecordException("Field: <"+fieldName+"> is mandatory.", record.getId());
                 }
-                try {
-                    record.getField(fieldName); 
-                } catch (FieldNotFoundException notFoundOnNewRecord) {
-                    try {
-                        originalRecord.getField(fieldName);
-                    } catch (FieldNotFoundException notFoundOnOriginalRecord) {
-                        throw new InvalidRecordException("Field: <"+fieldName+"> is mandatory.", record.getId());
-                    }
+                if (!record.hasField(fieldName) && !originalRecord.hasField(fieldName)) {
+                    throw new InvalidRecordException("Field: <"+fieldName+"> is mandatory.", record.getId());
                 }
             }
         }
@@ -698,14 +692,23 @@ public class HBaseRepository implements Repository {
             }
             
             if (!changedScopes.isEmpty()) {
-                Long recordTypeVersion = latestRecordType ? null : record.getRecordTypeVersion();
-                RecordType recordType = typeManager.getRecordTypeByName(record.getRecordTypeName(), recordTypeVersion);
+                // If no record type is specified explicitly, use the current one of the non-versioned scope
+                QName recordTypeName = record.getRecordTypeName() != null ? record.getRecordTypeName() : originalRecord.getRecordTypeName();
+                Long recordTypeVersion;
+                if (latestRecordType) {
+                    recordTypeVersion = null;
+                } else if (record.getRecordTypeName() == null) {
+                    recordTypeVersion = originalRecord.getRecordTypeVersion();
+                } else {
+                    recordTypeVersion = record.getRecordTypeVersion();
+                }
+                RecordType recordType = typeManager.getRecordTypeByName(recordTypeName, recordTypeVersion);
                 
                 // Update the mutable record type
                 Scope scope = Scope.VERSIONED_MUTABLE;
                 newRecord.setRecordType(scope, recordType.getName(), recordType.getVersion());
                 
-                validateRecord(record, originalRecord, recordType);
+                validateRecord(newRecord, originalRecord, recordType);
 
                 put.add(systemColumnFamily, recordTypeIdColumnNames.get(scope), version, Bytes
                         .toBytes(recordType.getId()));

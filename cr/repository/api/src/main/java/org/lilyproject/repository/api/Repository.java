@@ -73,18 +73,60 @@ public interface Repository extends Closeable {
     /**
      * Updates an existing record in the repository.
      *
+     * <p>An update can either update the versioned and/or non-versioned fields (in this last case a new version
+     * will be created), or it can update the versioned-mutable fields. This last one is an update of (manipulation
+     * of) an existing version and cannot be combined with updating fields in the versioned and non-versioned scope.
+     * So these are two distinct operations, you have to choose which one you want to do, this is done by setting
+     * the updateVersion argument. Most of the time you will update versioned or non-versioned fields, for this you
+     * set updateVersion to false.
+     *
      * <p>The provided Record object can either be obtained by reading a record via {@link #read} or
      * it can also be instantiated from scratch via {@link #newRecord}.
      *
-     * <p>The Record object only needs to contain fields that actually need to be updated (though it might also
-     * contain unchanged fields). Fields that are not present in the record will not be deleted, deleting fields
+     * <p>The Record object can be limited to contain only those fields that you are interested in changing, so it
+     * can be sparsely filled. If you want to be sure of the value of all fields, then specify them all, even if
+     * they have not changed compared to what you read, since another update might have been performed concurrently.
+     * Fields that are not present in the record will not be deleted, deleting fields
      * needs to be done explicitly by adding them to the list of fields to delete, see {@link Record#getFieldsToDelete}.
      *
-     * <p>If the record contains any changed versioned fields, a new version will be created. The number of this
+     * <p>If the record contains any changed versioned fields, a new version will be created. The number of the created
      * version will be available on the returned Record object.
      * 
-     * <p>If no RecordType is given, the same RecordType will be used as for the original Record. The latest version of that RecordType
-     * will be taken. A given version number is ignored.  
+     * <p>If no record type is specified in the record object, the record type that is currently stored (in the
+     * non-versioned scope) will be used. Newly created versions always get the same record type as the current
+     * record type of the non-versioned scope (= either the one specified in the Record, or if absent, from
+     * what is currently stored). Usually you will want to move automatically to the latest version of
+     * the record type. This can be done by setting the version to null in the record (if you also specify the name
+     * in the record object), but more conveniently using the useLatestRecordType argument.
+     *
+     * <p><b>Updating an existing version: updating versioned-mutable fields</b>
+     *
+     * <p>The following applies to updating an existing version:
+     *
+     * <ul>
+     *
+     * <li>It is required to specify a version in the Record object.
+     *
+     * <li>If you do not specify a record type in the Record object, the record type of the versioned-mutable scope
+     * of the version that is being modified will be set to the current one (= the stored one) of the non-versioned
+     * scope, and possibly to its latest version depending on the argument useLatestRecordType.
+     *
+     * <li>If you do specify a record type in the Record object (using {@link Record#setRecordType(QName)), the record
+     * type of the versioned-mutable scope of the version that is being modified will be changed to it, but the record
+     * type of the non-versioned scope will be left unmodified. This is in contrast to the record type of the versioned
+     * scope, which is always brought to the record type of the non-versioned scope when a new version is created.
+     * However, we found it should be possible to modify the versioned-mutable record type of an existing version
+     * without influencing the current record state.
+     *
+     * </ul>
+     *
+     * <p><b>The returned record object</b>
+     *
+     * <p>The record object you supply as argument will not be modified, it is internally cloned an modified. Currently
+     * these modifications are mostly limited to setting the resolved record type and version. The returned record
+     * object will never contain any fields you did not specify in the Record object, so you might have to do a read
+     * to see the full record sitution (other fields might have been added by concurrent updates). This will be
+     * addressed by issue <a href="http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/93">93<a>.<p>
      *
      * @param updateVersion if true, the version indicated in the record will be updated (i.e. only the mutable fields will be updated)
      *          otherwise, a new version of the record will be created (if it contains versioned fields)
