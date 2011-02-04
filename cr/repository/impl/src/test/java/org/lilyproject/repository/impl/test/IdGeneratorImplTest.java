@@ -103,7 +103,7 @@ public class IdGeneratorImplTest {
 
         RecordId variantRecordId = idGenerator.newRecordId(masterRecordId, variantProperties);
 
-        String variantRecordIdString = masterRecordId.toString() + ".dim1=dimvalue1;dim2=dimvalue2";
+        String variantRecordIdString = masterRecordId.toString() + ".dim1=dimvalue1,dim2=dimvalue2";
         assertEquals(variantRecordId, idGenerator.fromString(variantRecordIdString));
         
         assertEquals(variantRecordIdString, idGenerator.fromString(variantRecordIdString).toString());

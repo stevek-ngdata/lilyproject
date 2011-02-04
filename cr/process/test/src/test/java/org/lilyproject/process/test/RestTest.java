@@ -521,7 +521,7 @@ public class RestTest {
                 "'n$fURI' : 'http://www.lilyproject.org/'," +
                 "'n$fDATETIME' : '2010-08-28T21:32:49Z'," +
                 "'n$fDATE' : '2010-08-28'," +
-                "'n$fLINK' : 'USER.foobar.!*;arg1=val1;+arg2;-arg3'" +
+                "'n$fLINK' : 'USER.foobar.!*,arg1=val1,+arg2,-arg3'" +
                 "}, namespaces : { 'org.lilyproject.resttest': 'n' } } }");
         response = post(BASE_URI + "/record", body);
         assertStatus(Status.SUCCESS_CREATED, response);
@@ -541,7 +541,7 @@ public class RestTest {
         assertEquals(new URI("http://www.lilyproject.org/"), new URI(fieldsNode.get(prefix + "$fURI").getTextValue()));
         assertEquals(new DateTime("2010-08-28T21:32:49Z"), new DateTime(fieldsNode.get(prefix + "$fDATETIME").getTextValue()));
         assertEquals(new LocalDate("2010-08-28"), new LocalDate(fieldsNode.get(prefix + "$fDATE").getTextValue()));
-        assertEquals("USER.foobar.!*;arg1=val1;+arg2;-arg3", fieldsNode.get(prefix + "$fLINK").getTextValue());
+        assertEquals("USER.foobar.!*,arg1=val1,+arg2,-arg3", fieldsNode.get(prefix + "$fLINK").getTextValue());
     }
 
     @Test

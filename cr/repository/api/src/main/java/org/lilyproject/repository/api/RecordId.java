@@ -39,7 +39,7 @@ public interface RecordId {
      *
      * <pre>A variant record id starts of the same, with the variant properties appended.
      *
-     * <pre>{record id type}.{master record id}.varprop1=value1;varprop2=value2</pre>
+     * <pre>{record id type}.{master record id}.varprop1=value1,varprop2=value2</pre>
      *
      * <p>The variant properties are sorted in lexicographic order.
      */

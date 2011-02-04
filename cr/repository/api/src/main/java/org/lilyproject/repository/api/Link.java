@@ -195,7 +195,7 @@ public class Link {
     }
 
     private static void argsFromString(String args, LinkBuilder builder, String link) {
-        String[] variantStringParts = args.split(";");
+        String[] variantStringParts = args.split(",");
         for (String part : variantStringParts) {
             int eqPos = part.indexOf('=');
             if (eqPos == -1) {
@@ -240,9 +240,9 @@ public class Link {
      *
      * <p>The syntax is:
      *
-     * <pre>{recordId}.!*;arg1=val1;+arg2;-arg3<pre>
+     * <pre>{recordId}.!*,arg1=val1,+arg2,-arg3<pre>
      *
-     * <p>The recordId is optional. Arguments, if any, follow after the . symbol and are separated by ';'
+     * <p>The recordId is optional. Arguments, if any, follow after the . symbol and are separated by ','
      * symbols. Note that the {recordId} itself also contains a dot to separate the record id type and its
      * actual content (e.g. USER.235523432).
      *
@@ -297,7 +297,7 @@ public class Link {
                 if (firstArg) {
                     firstArg = false;
                 } else {
-                    builder.append(";");
+                    builder.append(",");
                 }
 
                 switch (entry.getValue().mode) {

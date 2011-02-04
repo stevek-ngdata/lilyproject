@@ -149,7 +149,7 @@ public class IdGeneratorImpl implements IdGenerator {
             if (first) {
                 first = false;
             } else {
-                stringBuilder.append(";");
+                stringBuilder.append(",");
             }
             
             stringBuilder.append(entry.getKey()).append('=').append(entry.getValue());
@@ -196,7 +196,7 @@ public class IdGeneratorImpl implements IdGenerator {
         // Parse the variant string
         Map<String, String> variantProps = new HashMap<String, String>();
 
-        String[] variantStringParts = variantString.split(";");
+        String[] variantStringParts = variantString.split(",");
         for (String part : variantStringParts) {
             int eqPos = part.indexOf('=');
             if (eqPos == -1) {
@@ -240,8 +240,8 @@ public class IdGeneratorImpl implements IdGenerator {
             switch (text.charAt(i)) {
                 case '.':
                 case '=':
-                case ';':
-                    throw new IllegalArgumentException("Reserved record id character (one of: . ; =) in \"" +
+                case ',':
+                    throw new IllegalArgumentException("Reserved record id character (one of: . , =) in \"" +
                             text + "\".");
             }
         }
