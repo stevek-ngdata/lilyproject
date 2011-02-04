@@ -33,16 +33,16 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorColumn;
 public class BlobManagerImpl implements BlobManager {
     private Log log = LogFactory.getLog(getClass());
     
-    private static final byte[] INCUBATE = new byte[]{(byte)-1};
+    protected static final byte[] INCUBATE = new byte[]{(byte)-1};
     private HTableInterface blobIncubatorTable;
 
     private final BlobStoreAccessFactory factory;
 
     private BlobStoreAccessRegistry registry;
 
-    public BlobManagerImpl(HBaseTableFactory hbaseTableFactory, BlobStoreAccessFactory blobStoreAccessFactory) throws IOException {
+    public BlobManagerImpl(HBaseTableFactory hbaseTableFactory, BlobStoreAccessFactory blobStoreAccessFactory, boolean clientMode) throws IOException {
         this.factory = blobStoreAccessFactory;
-        blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(hbaseTableFactory);
+        blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(hbaseTableFactory, clientMode);
         registry = new BlobStoreAccessRegistry(this);
         registry.setBlobStoreAccessFactory(blobStoreAccessFactory);
     }
@@ -162,5 +162,10 @@ public class BlobManagerImpl implements BlobManager {
             blob = (Blob)field; 
         }
         return blob;
+    }
+
+    public void delete(byte[] blobKey) throws BlobException {
+        registry.delete(blobKey);
+        
     }
 }

@@ -20,5 +20,11 @@
       <regionCount>1</regionCount>
     </splits>
   </table>
+  
+  <table name="blobincubator">
+    <splits>
+      <regionCount>1</regionCount>
+    </splits>
+  </table>
 
 </tables>

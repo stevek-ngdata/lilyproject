@@ -43,7 +43,7 @@ public class BlobStoreTest extends AbstractBlobStoreTest {
         hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
         setupWal();
-        BlobManager blobManager = setupBlobManager();
+        blobManager = setupBlobManager();
         repository = new HBaseRepository(typeManager, idGenerator, wal, configuration, hbaseTableFactory, blobManager);
         // Create a blobStoreAccessRegistry for testing purposes
         testBlobStoreAccessRegistry = new BlobStoreAccessRegistry(blobManager);

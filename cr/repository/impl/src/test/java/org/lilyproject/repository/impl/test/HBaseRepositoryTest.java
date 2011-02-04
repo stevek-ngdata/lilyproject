@@ -52,7 +52,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
         typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
         blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory,blobStoreAccessFactory);
+        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory,blobStoreAccessFactory, false);
         setupWal();
         repository = new HBaseRepository(typeManager, idGenerator, wal, configuration, hbaseTableFactory, blobManager);
         setupTypes();

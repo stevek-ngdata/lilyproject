@@ -1224,9 +1224,12 @@ public class HBaseRepository implements Repository {
         Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
         for (BlobReference blobReference : blobs) {
             FieldTypeImpl fieldType = (FieldTypeImpl)blobReference.getFieldType();
-            Get get = new Get(recordId.toBytes());
-            get.addColumn(columnFamily, fieldType.getIdBytes());
+            byte[] fieldTypeIdBytes = fieldType.getIdBytes();
+            byte[] recordIdBytes = recordId.toBytes();
             ValueType valueType = fieldType.getValueType();
+
+            Get get = new Get(recordIdBytes);
+            get.addColumn(columnFamily, fieldTypeIdBytes);
             byte[] valueToCompare;
             if (valueType.isMultiValue() && valueType.isHierarchical()) {
                 valueToCompare = Bytes.toBytes(2);
@@ -1235,7 +1238,7 @@ public class HBaseRepository implements Repository {
             } else {
                 valueToCompare = Bytes.toBytes(0);
             }
-            valueToCompare = Bytes.add(valueToCompare, valueType.getPrimitive().toBytes(blobReference.getBlob()));
+            valueToCompare = Bytes.add(valueToCompare, blobReference.getBlob().getValue());
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new ValueFilter(CompareOp.EQUAL, valueComparator);
             get.setFilter(filter);

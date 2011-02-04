@@ -52,5 +52,12 @@
       <splitKeyPrefix>\x00</splitKeyPrefix>
     </splits>
   </table>
+  
+  <table name="blobincubator">
+    <splits>
+      <regionCount>20</regionCount>
+      <splitKeys></splitKeys>
+    </splits>
+  </table>
 
 </tables>

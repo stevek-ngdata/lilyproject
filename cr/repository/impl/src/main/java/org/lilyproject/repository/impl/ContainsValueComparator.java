@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.ValueType;
 
 public class ContainsValueComparator extends WritableByteArrayComparable {
     private byte[] valueTypeAndValue;
@@ -45,31 +44,33 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
     @Override
     public int compareTo(byte[] theirValue) {
         int valueTypeCode = Bytes.toInt(valueTypeAndValue);
-        byte[] ourValue = Bytes.tail(valueTypeAndValue, valueTypeAndValue.length-Bytes.SIZEOF_INT);
-        if (theirValue == null && ourValue == null)
+        byte[] ourStoreKey = Bytes.tail(valueTypeAndValue, valueTypeAndValue.length-Bytes.SIZEOF_INT);
+        if (theirValue == null && ourStoreKey == null)
             return 0;
-        if (theirValue.length == 0 && ourValue.length == 0)
+        if (theirValue.length == 0 && ourStoreKey.length == 0)
             return 0;
-        if (theirValue.length < ourValue.length)
+        if (theirValue.length < ourStoreKey.length)
             return -1;
         if (theirValue[0] == (byte)(1)) {
             return -1;
         }
         // Multivalue and hierarchical
-        int offset = 1;
+        int offset = 1; // First byte indicates if it was deleted or not
         if (2 == valueTypeCode) {
             int compareTo = -1;
             while (offset < theirValue.length) {
-                int multivalueLength = Bytes.toInt(theirValue, offset);
+                int multivalueKeyLength = Bytes.toInt(theirValue, offset); // Length of the next multivalue key
                 offset = offset + Bytes.SIZEOF_INT;
-                int nextMultivalueOffset = offset+multivalueLength;
-                while (offset < nextMultivalueOffset) {
-                    int valueLength = Bytes.toInt(theirValue, offset);
+                int stopIndex = offset + multivalueKeyLength;
+                while (offset < stopIndex) {
+                    int hierarchycalKeyLength = Bytes.toInt(theirValue, offset); // Length of the next hierarchy key
                     offset = offset + Bytes.SIZEOF_INT;
-                    compareTo = Bytes.compareTo(ourValue, 0, ourValue.length, theirValue, offset, valueLength);
+                    int valueLength = Bytes.toInt(theirValue, offset); // Length of the blob key
+                    // Don't increase offset here, it's calculated in the hierarchycalKeyLength
+                    compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset + Bytes.SIZEOF_INT, valueLength);
                     if (0 == compareTo)
                         return 0;
-                    offset = offset + valueLength;
+                    offset = offset + hierarchycalKeyLength;
                 }
             }
             return compareTo;
@@ -78,16 +79,19 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         if (1 == valueTypeCode || 1 == valueTypeCode) {
             int compareTo = -1;
             while (offset < theirValue.length) {
-                int valueLength = Bytes.toInt(theirValue, offset);
+                int multiValueKeyLength = Bytes.toInt(theirValue, offset); // Length of the next multivalue or hierarchy key
                 offset = offset + Bytes.SIZEOF_INT;
-                compareTo = Bytes.compareTo(ourValue, 0, ourValue.length, theirValue, offset, valueLength);
+                int valueLength = Bytes.toInt(theirValue, offset); // Length of the blob key
+             // Don't increase offset here, it's calculated in the multivalueKeyLength
+                compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset + Bytes.SIZEOF_INT, valueLength);
                 if (0 == compareTo)
                     return 0;
-                offset = offset + valueLength;
+                offset = offset + multiValueKeyLength;
             }
             return -1;
         }
-        int valueLength = Bytes.toInt(theirValue, offset);
-        return Bytes.compareTo(ourValue, 0, ourValue.length, theirValue, offset, valueLength);
+        int valueLength = Bytes.toInt(theirValue, offset); // Length of the blob key, everything beyond that is mediatype, size, filename etc.
+        offset = offset + Bytes.SIZEOF_INT; 
+        return Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset, valueLength);
     }
 }

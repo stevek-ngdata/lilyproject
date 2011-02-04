@@ -74,7 +74,7 @@
 
   <bean
     id="blobManager"
-    class="org.lilyproject.server.modules.repository.BlobStoreConfig"
+    class="org.lilyproject.server.modules.repository.BlobManagerSetup"
     factory-method="get">
     <constructor-arg>
       <bean class="java.net.URI">
@@ -83,6 +83,14 @@
     </constructor-arg>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
+  </bean>
+  
+  <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
+    <constructor-arg ref="zooKeeper"/>
+    <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="blobManager"/>
+    <constructor-arg ref="typeManager"/>
+    <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
   </bean>
 
   <bean id="repository" class="org.lilyproject.repository.impl.HBaseRepository">

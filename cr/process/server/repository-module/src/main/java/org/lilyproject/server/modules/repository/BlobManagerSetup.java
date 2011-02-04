@@ -31,7 +31,7 @@ import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.repo.DfsUri;
 
-public class BlobStoreConfig {
+public class BlobManagerSetup {
     static BlobManager get(URI dfsUri, Configuration configuration, HBaseTableFactory tableFactory) throws IOException {
         FileSystem fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));
@@ -42,6 +42,6 @@ public class BlobStoreConfig {
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(5000, inlineBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(200000, hbaseBlobStoreAccess);
-        return new BlobManagerImpl(tableFactory, blobStoreAccessFactory);
+        return new BlobManagerImpl(tableFactory, blobStoreAccessFactory, false);
     }
 }

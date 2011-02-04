@@ -190,7 +190,7 @@ public class LilyClient implements Closeable {
         blobStoreAccessFactory.addBlobStoreAccess(5000, inlineBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(200000, hbaseBlobStoreAccess);
         
-        return new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory);
+        return new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, true);
     }
     
     private static URI getDfsUri(ZooKeeperItf zk)  {

@@ -83,6 +83,12 @@ public class BlobStoreAccessRegistry {
         blobStoreAccess.delete(decodedKey.getV2());
     }
     
+    public void delete(byte[] blobKey) throws BlobException {
+        Pair<String,byte[]> decodedKey = decode(blobKey);
+        BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
+        blobStoreAccess.delete(decodedKey.getV2());
+    }
+    
     static private byte[] encode(String id, byte[] blobKey) {
         byte[] bytes = new byte[0];
         bytes = Bytes.add(bytes, Bytes.toBytes(id.length()));

@@ -51,7 +51,7 @@ public class FieldTypeImpl implements FieldType {
         return id;
     }
     
-    protected byte[] getIdBytes() {
+    public byte[] getIdBytes() {
         return idBytes;
     }
 

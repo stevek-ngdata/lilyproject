@@ -74,7 +74,7 @@ public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
         AvroConverter remoteConverter = new AvroConverter();
         typeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()),
                 remoteConverter, idGenerator, zooKeeper);
-        BlobManager blobManager = setupBlobManager();
+        blobManager = setupBlobManager();
         repository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
                 (RemoteTypeManager)typeManager, idGenerator, blobManager);
         remoteConverter.setRepository(repository);

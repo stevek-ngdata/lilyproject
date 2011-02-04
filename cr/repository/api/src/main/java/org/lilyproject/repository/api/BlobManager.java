@@ -77,4 +77,5 @@ public interface BlobManager {
      */
     void register(BlobStoreAccess blobStoreAccess);
 
+    void delete(byte[] blobKey) throws BlobException;
 }

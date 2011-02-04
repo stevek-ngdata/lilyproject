@@ -53,8 +53,8 @@ public class LilyHBaseSchema {
         return tableFactory.getTable(typeTableDescriptor);
     }
     
-    public static HTableInterface getBlobIncubatorTable(HBaseTableFactory tableFactory) throws IOException {
-        return tableFactory.getTable(blobIncubatorDescriptor);
+    public static HTableInterface getBlobIncubatorTable(HBaseTableFactory tableFactory, boolean clientMode) throws IOException {
+        return tableFactory.getTable(blobIncubatorDescriptor, !clientMode);
     }
 
     public static enum Table {

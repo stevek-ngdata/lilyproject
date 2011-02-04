@@ -240,11 +240,10 @@ public interface Repository extends Closeable {
      */
     OutputStream getOutputStream(Blob blob) throws BlobException, InterruptedException;
 
-    
-
     /**
      * Returns an {@link InputStream} from which the binary data of a blob can be read.
-     * The blob can only be retrieved by referring to location of the blob in the record 
+     * 
+     * <p>The blob can only be retrieved by referring to location of the blob in the record 
      * and field where it is used.   
      * @param recordId the id of the record containing the blob
      * @param fieldName the QName of the field containing the blob

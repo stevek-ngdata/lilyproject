@@ -22,41 +22,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobException;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobNotFoundException;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeEntry;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.HierarchyPath;
-import org.lilyproject.repository.api.InvalidRecordException;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordException;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.VersionNotFoundException;
-import org.lilyproject.repository.impl.BlobManagerImpl;
-import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
-import org.lilyproject.repository.impl.InlineBlobStoreAccess;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.*;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
@@ -85,6 +59,7 @@ public abstract class AbstractBlobStoreTest {
     protected static BlobStoreAccess inlineBlobStoreAccess;
     protected static Random random = new Random();
     protected static BlobStoreAccessRegistry testBlobStoreAccessRegistry;
+    protected static BlobManager blobManager;
 
     protected static void setupWal() throws Exception {
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
@@ -102,7 +77,7 @@ public abstract class AbstractBlobStoreTest {
         blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(50, inlineBlobStoreAccess);
         blobStoreAccessFactory.addBlobStoreAccess(1024, hbaseBlobStoreAccess);
-        return new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory);
+        return new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
     }
     
     @Test
@@ -702,7 +677,105 @@ public abstract class AbstractBlobStoreTest {
             
         }
     }
+    
+    @Test
+    public void testBlobIncubatorMonitorUnusedBlob() throws Exception {
+        QName fieldName = new QName("test", "testBlobIncubatorMonitorUnusedBlob");
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+                Scope.NON_VERSIONED);
+        fieldType = typeManager.createFieldType(fieldType);
+        RecordType recordType = typeManager.newRecordType(new QName(null, "testBlobIncubatorMonitorUnusedBlobRT"));
+        FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
+        recordType.addFieldTypeEntry(fieldTypeEntry);
+        recordType = typeManager.createRecordType(recordType);
+        
+        // Incubate blob but never use it
+        byte[] bytes = new byte[3000]; 
+        random.nextBytes(bytes);
+        Blob blob = writeBlob(bytes, "aMediaType", "testCreate");  
+        
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100);
+        monitor.startMonitoring();
+        Thread.sleep(10000);
+        monitor.stopMonitoring();
+        
+        assertBlobDelete(true, blob);
+    }
 
+    @Test
+    public void testBlobIncubatorMonitorFailureAfterReservation() throws Exception {
+        QName fieldName = new QName("test", "testBlobIncubatorMonitorFailureAfterReservation");
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+                Scope.NON_VERSIONED);
+        fieldType = typeManager.createFieldType(fieldType);
+        RecordType recordType = typeManager.newRecordType(new QName(null, "testBlobIncubatorMonitorFailureAfterReservationRT"));
+        FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
+        recordType.addFieldTypeEntry(fieldTypeEntry);
+        recordType = typeManager.createRecordType(recordType);
+        
+    // This is the failure scenario where creating the record fails after reserving the blob
+        byte[] bytes = new byte[3000]; 
+        random.nextBytes(bytes);
+        Blob blob = writeBlob(bytes, "aMediaType", "testCreate");
+        IdGeneratorImpl idGeneratorImpl = new IdGeneratorImpl();
+        RecordId recordId = idGeneratorImpl.newRecordId();
+        BlobReference blobReference = new BlobReference(blob, recordId, fieldType);
+        Set<BlobReference> blobs = new HashSet<BlobReference>();
+        blobs.add(blobReference);
+        blobManager.reserveBlobs(blobs);
+        
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100);
+        monitor.startMonitoring();
+        Thread.sleep(10000);
+        monitor.stopMonitoring();
+     
+        assertBlobDelete(true, blob);
+    }
+    
+    @Test
+    public void testBlobIncubatorMonitorFailureBeforeRemovingReservation() throws Exception {
+        QName fieldName = new QName("test", "testBlobIncubatorMonitorFailureBeforeRemovingReservation");
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+                Scope.NON_VERSIONED);
+        fieldType = typeManager.createFieldType(fieldType);
+        RecordType recordType = typeManager.newRecordType(new QName(null, "testBlobIncubatorMonitorFailureBeforeRemovingReservation"));
+        FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
+        recordType.addFieldTypeEntry(fieldTypeEntry);
+        recordType = typeManager.createRecordType(recordType);
+        
+    // This is the failure scenario where creating the record fails after reserving the blob
+        byte[] bytes = new byte[3000]; 
+        random.nextBytes(bytes);
+        Blob blob = writeBlob(bytes, "aMediaType", "testCreate");
+        IdGeneratorImpl idGeneratorImpl = new IdGeneratorImpl();
+        RecordId recordId = idGeneratorImpl.newRecordId();
+        BlobReference blobReference = new BlobReference(blob, recordId, fieldType);
+        Set<BlobReference> blobs = new HashSet<BlobReference>();
+        blobs.add(blobReference);
+        repository.newRecord();
+        Record record = repository.newRecord();
+        record.setRecordType(recordType.getName());
+        record.setField(fieldName, blob);
+        record = repository.create(record);
+        
+        // Faking failure
+        HTableInterface blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(hbaseTableFactory, true);
+        Put put = new Put(blob.getValue());
+        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, record.getId().toBytes());
+        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, ((FieldTypeImpl)fieldType).getIdBytes());
+        blobIncubatorTable.put(put);
+        
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100);
+        monitor.startMonitoring();
+        Thread.sleep(10000);
+        monitor.stopMonitoring();
+     
+        assertBlobDelete(false, blob);
+        Get get = new Get(blob.getValue());
+        Result result = blobIncubatorTable.get(get);
+        assertTrue(result == null || result.isEmpty());
+    }
+        
     private void assertBlobDelete(boolean expectDelete, Blob blob) throws BlobNotFoundException, BlobException {
         if (expectDelete) {
             try {
@@ -714,7 +787,6 @@ public abstract class AbstractBlobStoreTest {
             testBlobStoreAccessRegistry.getInputStream(blob);
         }
     }
-
     
     @Test
     public void testBadEncoding() throws Exception {
