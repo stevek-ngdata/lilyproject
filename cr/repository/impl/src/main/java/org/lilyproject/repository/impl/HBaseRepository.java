@@ -77,7 +77,7 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
-import org.lilyproject.repository.impl.RepositoryMetrics.HBaseAction;
+import org.lilyproject.repository.impl.lock.RowLock;
 import org.lilyproject.repository.impl.lock.RowLocker;
 import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
 import org.lilyproject.rowlog.api.RowLog;
@@ -227,21 +227,15 @@ public class HBaseRepository implements Repository {
     
             byte[] rowId = recordId.toBytes();
             RowLock rowLock = null;
-            org.lilyproject.repository.impl.lock.RowLock customRowLock = null;
-            RowLogMessage walMessage;
-    
+
             try {
-    
-                // Take HBase RowLock
-                rowLock = recordTable.lockRow(rowId);
-                if (rowLock == null)
-                    throw new RecordException("Failed to lock row while creating record <" + recordId
-                            + "> in HBase table", null);
-    
+                // Lock the row
+                rowLock = lockRow(recordId);
+
                 long version = 1L;
                 // If the record existed it would have been deleted.
                 // The version numbering continues from where it has been deleted.
-                Get get = new Get(rowId, rowLock);
+                Get get = new Get(rowId);
                 get.addColumn(systemColumnFamily, RecordColumn.VERSION.bytes);
                 Result result = recordTable.get(get);
                 if (!result.isEmpty()) {
@@ -257,7 +251,7 @@ public class HBaseRepository implements Repository {
                 }
                 
                 Record dummyOriginalRecord = newRecord();
-                Put put = new Put(newRecord.getId().toBytes(), rowLock);
+                Put put = new Put(newRecord.getId().toBytes());
                 put.add(systemColumnFamily, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(false));
                 RecordEvent recordEvent = new RecordEvent();
                 recordEvent.setType(Type.CREATE);
@@ -275,21 +269,12 @@ public class HBaseRepository implements Repository {
 
                 // Reserve blobs so no other records can use them
                 reserveBlobs(null, referencedBlobs);
-                
-                walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
-                long beforeHbase = System.currentTimeMillis();
-                recordTable.put(put);
-                metrics.reportHBase(HBaseAction.PUT, System.currentTimeMillis()-beforeHbase);
-                
+
+                putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
+
                 // Remove the used blobs from the blobIncubator
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
                 
-                // Take Custom RowLock before releasing the HBase RowLock
-                try {
-                    customRowLock = lockRow(recordId, rowLock);
-                } catch (IOException ignore) {
-                    log.info("Exception while taking a custom rowLock. Processing the wal message will be retried later.", ignore);
-                }
             } catch (IOException e) {
                 throw new RecordException("Exception occurred while creating record <" + recordId + "> in HBase table",
                         e);
@@ -304,27 +289,7 @@ public class HBaseRepository implements Repository {
                 throw new RecordException("Exception occurred while creating record <" + recordId + ">",
                         e);
             } finally {
-                if (rowLock != null) {
-                    try {
-                        recordTable.unlockRow(rowLock);
-                    } catch (IOException e) {
-                        log.info("Exception while unlocking HBase lock <"+rowLock+">", e);
-                    }
-                }
-            }
-    
-            if (customRowLock != null) {
-                try {
-                    if (walMessage != null) 
-                        wal.processMessage(walMessage);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    log.warn("Processing message <"+walMessage+"> by the WAL got interrupted. It will be retried later.", e);
-                } catch (RowLogException e) {
-                    log.warn("Exception while processing message <"+walMessage+"> by the WAL. It will be retried later.", e);
-                } finally {
-                    unlockRow(customRowLock);
-                }
+                unlockRow(rowLock);
             }
 
             newRecord.setResponseStatus(ResponseStatus.CREATED);
@@ -409,7 +374,7 @@ public class HBaseRepository implements Repository {
                 if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs, unReferencedBlobs, useLatestRecordType)) {
                     // Reserve blobs so no other records can use them
                     reserveBlobs(record.getId(), referencedBlobs);
-                    putMessageOnWalAndProcess(recordId, rowLock, put, recordEvent);
+                    putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
                     // Remove the used blobs from the blobIncubator and delete unreferenced blobs from the blobstore
                     blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
                     newRecord.setResponseStatus(ResponseStatus.UPDATED);
@@ -438,7 +403,7 @@ public class HBaseRepository implements Repository {
         return newRecord;
     }
 
-    private void putMessageOnWalAndProcess(RecordId recordId, org.lilyproject.repository.impl.lock.RowLock rowLock,
+    private void putRowWithWalProcessing(RecordId recordId, org.lilyproject.repository.impl.lock.RowLock rowLock,
             Put put, RecordEvent recordEvent) throws InterruptedException, RowLogException, IOException, RecordException {
         RowLogMessage walMessage;
         walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
@@ -450,8 +415,11 @@ public class HBaseRepository implements Repository {
         if (walMessage != null) {
             try {
                 wal.processMessage(walMessage);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Processing message '" + walMessage + "' by the WAL got interrupted. It will be retried later.", e);
             } catch (RowLogException e) {
-                // Processing the message failed, it will be retried later.
+                log.warn("Exception while processing message '" + walMessage + "' by the WAL. It will be retried later.", e);
             }
         }
     }
@@ -717,7 +685,7 @@ public class HBaseRepository implements Repository {
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
                 
-                putMessageOnWalAndProcess(recordId, rowLock, put, recordEvent);
+                putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
                 
                 // The unReferencedBlobs could still be in use in another version of the mutable field,
                 // therefore we filter them first
@@ -971,8 +939,8 @@ public class HBaseRepository implements Repository {
         return result;
     }
     
-    private boolean recordExists(byte[] rowId, RowLock rowLock) throws IOException {
-        Get get = new Get(rowId, rowLock);
+    private boolean recordExists(byte[] rowId) throws IOException {
+        Get get = new Get(rowId);
         
         get.addColumn(systemColumnFamily, RecordColumn.DELETED.bytes);
         Result result = recordTable.get(get);
@@ -1115,7 +1083,7 @@ public class HBaseRepository implements Repository {
             // Take Custom Lock
             rowLock = lockRow(recordId);
 
-            if (recordExists(rowId, null)) { // Check if the record exists in the first place 
+            if (recordExists(rowId)) { // Check if the record exists in the first place
                 Put put = new Put(rowId);
                 // Mark the record as deleted
                 put.add(systemColumnFamily, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
@@ -1236,13 +1204,7 @@ public class HBaseRepository implements Repository {
 
     private org.lilyproject.repository.impl.lock.RowLock lockRow(RecordId recordId) throws IOException,
             RecordLockedException {
-        return lockRow(recordId, null);
-    }
-    
-    private org.lilyproject.repository.impl.lock.RowLock lockRow(RecordId recordId, RowLock hbaseRowLock)
-            throws IOException, RecordLockedException {
-        org.lilyproject.repository.impl.lock.RowLock rowLock;
-        rowLock = rowLocker.lockRow(recordId.toBytes(), hbaseRowLock);
+        RowLock rowLock = rowLocker.lockRow(recordId.toBytes());
         if (rowLock == null)
             throw new RecordLockedException(recordId);
         return rowLock;
