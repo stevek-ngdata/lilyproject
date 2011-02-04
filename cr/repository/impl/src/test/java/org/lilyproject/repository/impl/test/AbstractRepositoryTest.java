@@ -110,7 +110,7 @@ public abstract class AbstractRepositoryTest {
     }
     
     protected static void setupWal() throws Exception {
-        rowLogConfigurationManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L));
+        rowLogConfigurationManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
         wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
                 RecordCf.WAL_STATE.bytes, rowLogConfigurationManager);
         RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
@@ -171,7 +171,7 @@ public abstract class AbstractRepositoryTest {
     
     protected static void setupMessageQueue() throws Exception {
         
-        rowLogConfigurationManager.addRowLog("MQ", new RowLogConfig(10000L, false, true, 100L, 0L));
+        rowLogConfigurationManager.addRowLog("MQ", new RowLogConfig(10000L, false, true, 100L, 0L, 5000L));
         rowLogConfigurationManager.addSubscription("WAL", "MQFeeder", Type.VM, 3, 1);
         messageQueue = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.MQ_PAYLOAD.bytes,
                 RecordCf.MQ_STATE.bytes, rowLogConfigurationManager);

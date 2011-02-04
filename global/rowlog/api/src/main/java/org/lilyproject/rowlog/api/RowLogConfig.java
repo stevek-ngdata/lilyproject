@@ -7,6 +7,7 @@ public class RowLogConfig {
     private boolean enableNotify;
     private long notifyDelay;
     private long minimalProcessDelay;
+    private long wakeupTimeout;
 
     /**
      * A value object bundling the configuration paramaters for a rowlog and its processors.
@@ -17,13 +18,15 @@ public class RowLogConfig {
      * @param enableNotify true if the processor need to be notified of new messages being put on the rowlog
      * @param notifyDelay the minimal delay between two notify messages to be sent to the processor
      * @param minimalProcessDelay the minimal age a messages needs to have before a processor will pick it up for processing
+     * @param wakeupTimeout the maximum time to wait before checking for new messages in case notify messages are missed notifying is disabled
      */
-    public RowLogConfig(long lockTimeout, boolean respsectOrder, boolean enableNotify, long notifyDelay, long minimalProcessDelay) {
+    public RowLogConfig(long lockTimeout, boolean respsectOrder, boolean enableNotify, long notifyDelay, long minimalProcessDelay, long wakeupTimeout) {
         this.lockTimeout = lockTimeout;
         this.respectOrder = respsectOrder;
         this.enableNotify = enableNotify;
         this.notifyDelay = notifyDelay;
         this.minimalProcessDelay = minimalProcessDelay;
+        this.wakeupTimeout = wakeupTimeout;
     }
 
     public long getLockTimeout() {
@@ -65,6 +68,14 @@ public class RowLogConfig {
     public void setMinimalProcessDelay(long minimalProcessDelay) {
         this.minimalProcessDelay = minimalProcessDelay;
     }
+    
+    public long getWakeupTimeout() {
+        return wakeupTimeout;
+    }
+    
+    public void setWakeupTimeout(long wakeupTimeout) {
+        this.wakeupTimeout = wakeupTimeout;
+    }
 
     @Override
     public int hashCode() {
@@ -74,6 +85,7 @@ public class RowLogConfig {
         result = prime * result + (int) (lockTimeout ^ (lockTimeout >>> 32));
         result = prime * result + (int) (minimalProcessDelay ^ (minimalProcessDelay >>> 32));
         result = prime * result + (int) (notifyDelay ^ (notifyDelay >>> 32));
+        result = prime * result + (int) (wakeupTimeout ^ (wakeupTimeout >>> 32));
         result = prime * result + (respectOrder ? 1231 : 1237);
         return result;
     }
@@ -95,6 +107,8 @@ public class RowLogConfig {
             return false;
         if (notifyDelay != other.notifyDelay)
             return false;
+        if (wakeupTimeout != other.wakeupTimeout)
+            return false;
         if (respectOrder != other.respectOrder)
             return false;
         return true;
@@ -103,6 +117,6 @@ public class RowLogConfig {
     @Override
     public String toString() {
         return "RowLogConfig [lockTimeout=" + lockTimeout + ", respectOrder=" + respectOrder + ", enableNotify="
-                + enableNotify + ", notifyDelay=" + notifyDelay + ", minimalProcessDelay=" + minimalProcessDelay + "]";
+                + enableNotify + ", notifyDelay=" + notifyDelay + ", minimalProcessDelay=" + minimalProcessDelay + ", wakeupTimeout=" + wakeupTimeout +"]";
     }
 }

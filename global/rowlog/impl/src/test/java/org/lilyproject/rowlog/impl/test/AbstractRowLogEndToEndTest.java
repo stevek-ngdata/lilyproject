@@ -66,7 +66,7 @@ public abstract class AbstractRowLogEndToEndTest {
         // to be JVM-level).
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 120000);
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
-        rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(1000L, true, true, 100L, 0L));
+        rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(1000L, true, true, 100L, 0L, 5000L));
         rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY,
                 RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY, rowLogConfigurationManager);
         shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog, 100);

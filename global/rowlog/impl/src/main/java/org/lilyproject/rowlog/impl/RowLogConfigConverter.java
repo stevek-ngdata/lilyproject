@@ -43,8 +43,9 @@ public class RowLogConfigConverter {
         boolean enableNotify = JsonUtil.getBoolean(node, "enableNotify");
         long notifyDelay = JsonUtil.getLong(node, "notifyDelay");
         long minimalProcessDelay = JsonUtil.getLong(node, "minimalProcessDelay");
+        long wakeupTimeout = JsonUtil.getLong(node, "wakeupTimeout");
 
-        return new RowLogConfig(lockTimeout, respectOrder, enableNotify, notifyDelay, minimalProcessDelay);
+        return new RowLogConfig(lockTimeout, respectOrder, enableNotify, notifyDelay, minimalProcessDelay, wakeupTimeout);
     }
 
     public byte[] toJsonBytes(String rowLogId, RowLogConfig config) {
@@ -64,6 +65,7 @@ public class RowLogConfigConverter {
         node.put("enableNotify", config.isEnableNotify());
         node.put("notifyDelay", config.getNotifyDelay());
         node.put("minimalProcessDelay", config.getMinimalProcessDelay());
+        node.put("wakeupTimeout", config.getWakeupTimeout());
 
         return node;
     }

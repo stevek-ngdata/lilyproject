@@ -100,7 +100,7 @@ public class ValueTypeTest {
 
     private static RowLog initializeWal(Configuration configuration) throws Exception {
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
-        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 0L, 100L));
+        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 0L, 100L, 5000L));
         RowLog wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
                 RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfMgr);
         // Work with only one shard for now

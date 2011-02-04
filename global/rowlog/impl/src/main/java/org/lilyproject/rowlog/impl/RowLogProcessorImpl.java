@@ -195,7 +195,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         private volatile boolean stopRequested = false; // do not rely only on Thread.interrupt since some libraries eat interruptions
         private MessagesWorkQueue messagesWorkQueue = new MessagesWorkQueue();
         private SubscriptionHandler subscriptionHandler;
-        private long wakeupTimeout = 5000;
         private final RowLogSubscription subscription;
         private boolean firstRun = true;
 
@@ -299,7 +298,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 // The timeout covers two cases:
                                 //   (1) a safety fallback, in case a wake-up got lost or so
                                 //   (2) the WAL, which does not make use of wake-ups
-                                wait(wakeupTimeout);
+                                wait(rowLogConfig.getWakeupTimeout());
                             }
                         }
                     } catch (InterruptedException e) {

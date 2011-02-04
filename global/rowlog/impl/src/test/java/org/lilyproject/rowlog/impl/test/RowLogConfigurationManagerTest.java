@@ -82,19 +82,19 @@ public class RowLogConfigurationManagerTest {
         callBack.validate();
 
         // Add rowlog
-        callBack.expect(new RowLogConfig(10L, true, true, 100L, 5000L));
-        rowLogConfigurationManager.addRowLog(rowLogId, new RowLogConfig(10L, true, true, 100L, 5000L));
+        callBack.expect(new RowLogConfig(10L, true, true, 100L, 5000L, 5000L));
+        rowLogConfigurationManager.addRowLog(rowLogId, new RowLogConfig(10L, true, true, 100L, 5000L, 5000L));
         callBack.validate();
         
         RowLogCallBack callBack2 = new RowLogCallBack();
-        callBack2.expect(new RowLogConfig(10L, true, true, 100L, 5000L));
-        rowLogConfigurationManager.addRowLog(rowLogId2, new RowLogConfig(10L, true, true, 100L, 5000L));
+        callBack2.expect(new RowLogConfig(10L, true, true, 100L, 5000L, 5000L));
+        rowLogConfigurationManager.addRowLog(rowLogId2, new RowLogConfig(10L, true, true, 100L, 5000L, 5000L));
         rowLogConfigurationManager.addRowLogObserver(rowLogId2, callBack2);
         callBack2.validate();
         
         // Update rowlog
-        callBack.expect(new RowLogConfig(11L, false, true, 200L, 9L));
-        rowLogConfigurationManager.updateRowLog(rowLogId, new RowLogConfig(11L, false, true, 200L, 9L));
+        callBack.expect(new RowLogConfig(11L, false, true, 200L, 9L, 5000L));
+        rowLogConfigurationManager.updateRowLog(rowLogId, new RowLogConfig(11L, false, true, 200L, 9L, 5000L));
         callBack.validate();
         
         // Remove rowlog
@@ -103,7 +103,7 @@ public class RowLogConfigurationManagerTest {
         callBack.validate();
         
         // RowLogId2 was not updated nor removed
-        callBack2.expect(new RowLogConfig(10L, true, true, 100L, 5000L));
+        callBack2.expect(new RowLogConfig(10L, true, true, 100L, 5000L, 5000L));
         callBack2.validate(); 
     }
     

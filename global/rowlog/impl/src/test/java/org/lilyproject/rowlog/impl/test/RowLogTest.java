@@ -71,7 +71,7 @@ public class RowLogTest {
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
-        configurationManager.addRowLog(rowLogId, new RowLogConfig(60000L, true, true, 100L, 500L));
+        configurationManager.addRowLog(rowLogId, new RowLogConfig(60000L, true, true, 100L, 500L, 5000L));
         configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 3, 1);
         control = createControl();
         rowTable = RowLogTableUtil.getRowTable(HBASE_PROXY.getConf());
@@ -222,7 +222,7 @@ public class RowLogTest {
     
     @Test
     public void testLockTimeout() throws Exception {
-        configurationManager.updateRowLog(rowLogId, new RowLogConfig(1L, true, false, 0L, 5000L));
+        configurationManager.updateRowLog(rowLogId, new RowLogConfig(1L, true, false, 0L, 5000L, 5000L));
 
         shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
         

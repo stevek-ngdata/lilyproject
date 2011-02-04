@@ -38,7 +38,6 @@ import org.lilyproject.rowlog.impl.RowLogProcessorElection;
 import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
 import org.lilyproject.rowlog.impl.RowLogShardImpl;
 import org.lilyproject.util.LilyInfo;
-import org.lilyproject.util.LilyInfoMBean;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
@@ -71,11 +70,11 @@ public class RowLogSetup {
     @PostConstruct
     public void start() throws InterruptedException, KeeperException, IOException, LeaderElectionSetupException, RowLogException {
         if (!confMgr.rowLogExists("wal")) {
-            confMgr.addRowLog("wal", new RowLogConfig(10000L, true, false, 200L, 5000L));
+            confMgr.addRowLog("wal", new RowLogConfig(10000L, true, false, 200L, 5000L, 5000L));
         }
         
         if (!confMgr.rowLogExists("mq")) {
-            confMgr.addRowLog("mq", new RowLogConfig(10000L, true, true, 200L, 0L));
+            confMgr.addRowLog("mq", new RowLogConfig(10000L, true, true, 200L, 0L, 5000L));
         }
         
         boolean linkIdxEnabled = rowLogConf.getChild("linkIndexUpdater").getAttributeAsBoolean("enabled", true);
