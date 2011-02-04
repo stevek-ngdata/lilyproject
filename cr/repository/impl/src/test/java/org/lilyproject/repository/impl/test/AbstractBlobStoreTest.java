@@ -189,7 +189,6 @@ public abstract class AbstractBlobStoreTest {
             record4 = repository.create(record4);
             fail("Using the same blob in two records should not succeed");
         } catch (InvalidRecordException expected) {
-            System.out.println("[Evert]");
         }
     }
 
