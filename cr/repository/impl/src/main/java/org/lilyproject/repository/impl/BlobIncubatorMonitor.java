@@ -157,16 +157,16 @@ public class BlobIncubatorMonitor {
             byte[] recordId = result.getValue(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes);
             byte[] blobKey = result.getRow();
             if (Arrays.equals(recordId,BlobManagerImpl.INCUBATE)) {
-                    deleteBlob(blobKey);
+                    deleteBlob(blobKey, recordId, null);
             } else {
                 byte[] fieldId = result.getValue(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes);
                 Result blobUsage;
                 try {
                     blobUsage = getBlobUsage(blobKey, recordId, fieldId);
                     if (blobUsage == null || blobUsage.isEmpty()) {
-                        deleteBlob(blobKey); // Delete blob and reference
+                        deleteBlob(blobKey, recordId, fieldId); // Delete blob and reference
                     } else {
-                        deleteReference(blobKey, null); // The blob is used: only delete the reference
+                        deleteReference(blobKey, recordId); // The blob is used: only delete the reference
                     }
                 } catch (FieldTypeNotFoundException e) {
                     log.warn("Failed to check blob usage " + blobKey + ", recordId " + recordId + ", fieldId " + fieldId, e);
@@ -176,24 +176,30 @@ public class BlobIncubatorMonitor {
             }
         }
         
-        private void deleteBlob(byte[] blobKey) throws IOException {
-            RowLock rowLock = blobIncubatorTable.lockRow(blobKey);
-            try {
-                blobManager.delete(blobKey);
-                deleteReference(blobKey, rowLock);
-            } catch (BlobException e) {
-                log.warn("Failed to delete blob " + blobKey, e);
-                return;
-            } finally {
-                blobIncubatorTable.unlockRow(rowLock);
+        private void deleteBlob(byte[] blobKey, byte[] recordId, byte[] fieldId) throws IOException {
+            if (deleteReference(blobKey, recordId)) {
+                try {
+                    blobManager.delete(blobKey);
+                } catch (BlobException e) {
+                    log.warn("Failed to delete blob " + blobKey, e);
+                    // Deleting the blob failed. We put back the reference to try it again later.
+                    // There's a small chance that this fails as well. In that there will be an unreferenced blob in the blobstore.
+                    Put put = new Put(blobKey);
+                    put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, recordId);
+                    if (fieldId != null) {
+                        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, fieldId);
+                    }
+                    blobIncubatorTable.put(put);
+                    return;
+                } 
             }
         }
 
-        private void deleteReference(byte[] blobKey, RowLock rowLock) throws IOException {
-            Delete delete = new Delete(blobKey, System.currentTimeMillis(), rowLock);
-            blobIncubatorTable.delete(delete);
+        private boolean deleteReference(byte[] blobKey, byte[] recordId) throws IOException {
+            Delete delete = new Delete(blobKey);
+            return blobIncubatorTable.checkAndDelete(blobKey, LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, recordId, delete);
         }
-        
+
         private Result getBlobUsage(byte[] blobKey, byte[] recordId, byte[] fieldId) throws FieldTypeNotFoundException, TypeException, InterruptedException, IOException {
             FieldType fieldType = typeManager.getFieldTypeById(fieldId);
             ValueType valueType = fieldType.getValueType();
