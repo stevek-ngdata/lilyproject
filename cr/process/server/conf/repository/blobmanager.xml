@@ -4,7 +4,8 @@
 
   <!--  BlobIncubatorMonitor : Monitors the BlobIncubatorTable and cleans up any unused (stale) blobs.
         minimalAge : The minimal age (in seconds) an unused blob needs to have before it gets deleted 
-        monitorDelay : The minimal time (in seconds) between the checks executed by the BlobIncubatorMonitor.
-                       This is used to control the load the BlobIncubatorMonitor generates on the system.  -->
-  <blobIncubatorMonitor minimalAge="3600" monitorDelay="60"/>
+        monitorDelay : The minimal time (in seconds) between the individual blob checks executed by the BlobIncubatorMonitor.
+                       This is used to control the load the BlobIncubatorMonitor generates on the system.
+        runDelay : The minimal time (in seconds) between two runs of the monitor. -->
+  <blobIncubatorMonitor minimalAge="3600" monitorDelay="60" runDelay="1800"/>
 </blobmanager>

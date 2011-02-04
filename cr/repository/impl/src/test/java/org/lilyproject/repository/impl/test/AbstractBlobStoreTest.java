@@ -694,7 +694,7 @@ public abstract class AbstractBlobStoreTest {
         random.nextBytes(bytes);
         Blob blob = writeBlob(bytes, "aMediaType", "testCreate");  
         
-        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100);
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100, 0);
         monitor.startMonitoring();
         Thread.sleep(10000);
         monitor.stopMonitoring();
@@ -724,7 +724,7 @@ public abstract class AbstractBlobStoreTest {
         blobs.add(blobReference);
         blobManager.reserveBlobs(blobs);
         
-        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100);
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100, 0);
         monitor.startMonitoring();
         Thread.sleep(10000);
         monitor.stopMonitoring();
@@ -765,7 +765,7 @@ public abstract class AbstractBlobStoreTest {
         put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, ((FieldTypeImpl)fieldType).getIdBytes());
         blobIncubatorTable.put(put);
         
-        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100);
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100, 0);
         monitor.startMonitoring();
         Thread.sleep(10000);
         monitor.stopMonitoring();

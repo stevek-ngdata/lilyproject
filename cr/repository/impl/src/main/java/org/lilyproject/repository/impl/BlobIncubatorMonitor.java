@@ -30,14 +30,16 @@ public class BlobIncubatorMonitor {
     private Thread monitorThread;
     private HTableInterface recordTable;
     private HTableInterface blobIncubatorTable;
+    private final long runDelay;
 
-    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, BlobManager blobManager, TypeManager typeManager, long minimalAge, long monitorDelay) {
+    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, BlobManager blobManager, TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) {
         this.zk = zk;
         this.tableFactory = tableFactory;
         this.blobManager = blobManager;
         this.typeManager = typeManager;
         this.minimalAge = minimalAge;
         this.monitorDelay = monitorDelay;
+        this.runDelay = runDelay;
     }
     
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
@@ -64,18 +66,17 @@ public class BlobIncubatorMonitor {
             stop = false;
             monitorThread = new Thread() {
                 public void run() {
-                    byte[] startRow = null;
                     while (!stop) {
                         try {
                             try {
-                                startRow = monitor(startRow);
+                                monitor();
                             } catch (IOException e) {
                                 log.warn("Failed monitoring BlobIncubatorTable", e);
                                 break;
                             }
                             if (stop)
                                 break;
-                            Thread.sleep(monitorDelay);
+                            Thread.sleep(runDelay);
                         } catch (InterruptedException e) {
                             break;
                         }
@@ -97,21 +98,18 @@ public class BlobIncubatorMonitor {
         }
     }
     
-    private byte[] monitor(byte[] startRow) throws IOException, InterruptedException {
-        Scan scan;
-        if (startRow == null)
-            scan = new Scan();
-        else 
-            scan = new Scan(startRow);
+    private void monitor() throws IOException, InterruptedException {
+        Scan scan = new Scan();
         scan.addFamily(LilyHBaseSchema.BlobIncubatorCf.REF.bytes);
         long maxStamp = System.currentTimeMillis() - minimalAge;
         scan.setTimeRange(0, maxStamp);
         ResultScanner scanner = blobIncubatorTable.getScanner(scan);
-        Result[] results = scanner.next(100);
-        byte[] checkedRow = null;
-        if (results != null) {
+        while (!stop) {
+            Result[] results = scanner.next(100);
+            if (results == null || (results.length == 0)) {
+               break; 
+            }
             for (Result result : results) {
-                checkedRow = result.getRow();
                 checkResult(result);
                 if (stop) {
                     break;
@@ -119,7 +117,6 @@ public class BlobIncubatorMonitor {
                 Thread.sleep(monitorDelay);
             }
         }
-        return checkedRow;
     }
     
     private void checkResult(Result result) throws IOException, InterruptedException {
