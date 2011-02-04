@@ -182,6 +182,15 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.expectMessages(3);
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
+
+        // After the message is delivered to the listener, the rowlog still has to mark it as problematic.
+        // This happens concurrently with our test code which continues, therefore we poll here until
+        // it is marked as problematic (which might not happen in case of bugs, therefore a timeout).
+        long waitUntil = System.currentTimeMillis() + 120000;
+        while (!rowLog.isProblematic(message, subscriptionId) && System.currentTimeMillis() < waitUntil) {
+            Thread.sleep(1000);
+        }
+
         processor.stop();
         Assert.assertTrue(rowLog.isProblematic(message, subscriptionId));
         validationListener.validate();
