@@ -91,16 +91,17 @@ public class BlobStoreAccessRegistry {
     
     static private byte[] encode(String id, byte[] blobKey) {
         byte[] bytes = new byte[0];
-        bytes = Bytes.add(bytes, Bytes.toBytes(id.length()));
-        bytes = Bytes.add(bytes, Bytes.toBytes(id));
         bytes = Bytes.add(bytes, blobKey);
+        bytes = Bytes.add(bytes, Bytes.toBytes(id));
+        bytes = Bytes.add(bytes, Bytes.toBytes(id.length()));
         return bytes;
     }
     
     static private Pair<String, byte[]>  decode(byte[] key) {
-        int idLength = Bytes.toInt(key);
-        String id = Bytes.toString(key, Bytes.SIZEOF_INT, idLength);
-        byte[] blobKey = Bytes.tail(key, key.length - Bytes.SIZEOF_INT - idLength);
+        int sizeofInt = Bytes.SIZEOF_INT;
+        int idLength = Bytes.toInt(key, key.length - sizeofInt, sizeofInt);
+        String id = Bytes.toString(key, key.length - sizeofInt - idLength, idLength);
+        byte[] blobKey = Bytes.head(key, key.length - sizeofInt - idLength);
         return new Pair<String, byte[]>(id, blobKey);
     }
     
