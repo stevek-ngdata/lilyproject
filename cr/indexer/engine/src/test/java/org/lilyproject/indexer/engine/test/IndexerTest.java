@@ -147,7 +147,9 @@ public class IndexerTest {
     public static void setUpBeforeClass() throws Exception {
         SOLR_TEST_UTIL = new SolrTestingUtility("org/lilyproject/indexer/engine/test/schema1.xml");
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex");
+        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
+                "org.lilyproject.rowlog.impl.RowLogImpl");
+
         HBASE_PROXY.start();
         SOLR_TEST_UTIL.start();
 

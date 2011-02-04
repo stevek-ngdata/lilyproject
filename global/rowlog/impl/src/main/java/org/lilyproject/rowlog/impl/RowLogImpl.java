@@ -243,14 +243,37 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         if (rowLogConfig.isRespectOrder()) {
             Collections.sort(subscriptionsSnapshot);
         }
-        for (RowLogSubscription subscription : getSubscriptions()) {
+
+        List<RowLogSubscription> subscriptions = getSubscriptions();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Processing msg '" + formatId(message) + "' nr of subscriptions: " + subscriptions.size());
+        }
+
+        for (RowLogSubscription subscription : subscriptions) {
             String subscriptionId = subscription.getId();
+
+            if (log.isDebugEnabled()) {
+                log.debug("Processing msg '" + formatId(message) + "', subscr '" + subscriptionId + "' state: " +
+                        executionState.getState(subscriptionId));
+            }
+
             if (!executionState.getState(subscriptionId)) {
                 boolean done = false;
                 executionState.incTryCount(subscriptionId);
                 RowLogMessageListener listener = RowLogMessageListenerMapping.INSTANCE.get(subscriptionId);
-                if (listener != null) 
+                if (listener != null) {
                     done = listener.processMessage(message);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Processing msg '" + formatId(message) + "', subscr '" + subscriptionId +
+                                "' processing result: " + done);
+                    }
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Processing msg '" + formatId(message) + "', subscr '" + subscriptionId +
+                                "' no listener present.");
+                    }
+                }
                 executionState.setState(subscriptionId, done);
                 if (!done) {
                     allDone = false;
@@ -264,6 +287,10 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             }
         }
         return allDone;
+    }
+
+    private String formatId(RowLogMessage message) {
+        return Bytes.toStringBinary(message.getRowKey()) + ":" + message.getSeqNr();
     }
     
     public List<RowLogSubscription> getSubscriptions() {

@@ -83,7 +83,7 @@ public class LinkIndexTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        TestHelper.setupLogging("org.lilyproject.linkindex");
+        TestHelper.setupLogging("org.lilyproject.linkindex", "org.lilyproject.rowlog.impl.RowLogImpl");
 
         HBASE_PROXY.start();
         zk = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
