@@ -16,9 +16,18 @@
 package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.*;
+import org.lilyproject.tools.import_.core.ImportMode;
+import org.lilyproject.tools.import_.core.ImportResult;
+import org.lilyproject.tools.import_.core.ImportResultType;
+import org.lilyproject.tools.import_.core.RecordImport;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
+import java.net.URI;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
@@ -39,6 +48,41 @@ public class RecordByVersionResource extends RepositoryEnabled {
         }
     }
 
-    // TODO implement updating of versioned-mutable data (PUT or POST?)
+    @PUT
+    @Produces("application/json")
+    @Consumes("application/json")
+    public Response put(@PathParam("id") String id, @PathParam("version") Long version, Record record) {
+        RecordId recordId = repository.getIdGenerator().fromString(id);
 
+        if (record.getId() != null && !record.getId().equals(recordId)) {
+            throw new ResourceException("Record id in submitted record does not match record id in URI.",
+                    BAD_REQUEST.getStatusCode());
+        }
+
+        if (record.getVersion() != null && !record.getVersion().equals(version)) {
+            throw new ResourceException("Version in submitted record does not match version in URI.",
+                    BAD_REQUEST.getStatusCode());
+        }
+
+        record.setId(recordId);
+        record.setVersion(version);
+
+        try {
+            boolean useLatestRecordType = record.getRecordTypeName() == null || record.getRecordTypeVersion() == null;
+            record = repository.update(record, true, useLatestRecordType);
+        } catch (RecordNotFoundException e) {
+            throw new ResourceException("Record not found: " + recordId, NOT_FOUND.getStatusCode());
+        } catch (VersionNotFoundException e) {
+            throw new ResourceException("Record '" + recordId + "', version " + record.getVersion() + " not found.",
+                    NOT_FOUND.getStatusCode());
+        } catch (Exception e) {
+            throw new ResourceException("Error updating versioned-mutable scope of record with id " + id, e,
+                    INTERNAL_SERVER_ERROR.getStatusCode());
+        }
+
+        // TODO record we respond with should be full record or be limited to user-specified field list
+        Response response = Response.ok(record).build();
+
+        return response;
+    }
 }

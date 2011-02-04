@@ -805,6 +805,74 @@ public class RestTest {
         assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
     }
 
+    @Test
+    public void testVersionedMutableScope() throws Exception {
+        // Create a versioned field type
+        String body = json("{action: 'create', fieldType: {name: 'b$subject', valueType: { primitive: 'STRING' }, " +
+                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
+        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Create a versioned-mutable field type
+        body = json("{action: 'create', fieldType: {name: 'b$state', valueType: { primitive: 'STRING' }, " +
+                "scope: 'versioned_mutable', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Create a record type
+        body = json("{action: 'create', recordType: {name: 'b$article', " +
+                "fields: [ {name: 'b$subject'}, {name: 'b$state'} ]," +
+                "namespaces: { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/schema/recordTypeById", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Create a record
+        body = json("{ type: 'b$article', fields: { 'b$subject': 'Peace', 'b$state': 'draft' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        response = put(BASE_URI + "/record/USER.peace", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Read the record
+        response = get(BASE_URI + "/record/USER.peace");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        JsonNode json = readJson(response.getEntity());
+        JsonNode fieldsNode = json.get("fields");
+        String prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
+
+        assertEquals("draft", fieldsNode.get(prefix + "$state").getValueAsText());
+        assertEquals("Peace", fieldsNode.get(prefix + "$subject").getValueAsText());
+
+        // Update the versioned-mutable field
+        body = json("{ fields: { 'b$state': 'in_review' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        response = put(BASE_URI + "/record/USER.peace/version/1", body);
+        assertStatus(Status.SUCCESS_OK, response);
+
+        response = get(BASE_URI + "/record/USER.peace");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        json = readJson(response.getEntity());
+        fieldsNode = json.get("fields");
+        prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
+
+        assertEquals(1L, json.get("version").getLongValue()); // no new version created
+        assertEquals("in_review", fieldsNode.get(prefix + "$state").getValueAsText());
+
+        // Update versioned-mutable field without changes, change to versioned field should be ignored
+        body = json("{ fields: { 'b$subject': 'Peace2', 'b$state': 'in_review' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        response = put(BASE_URI + "/record/USER.peace/version/1", body);
+        assertStatus(Status.SUCCESS_OK, response);
+
+        response = get(BASE_URI + "/record/USER.peace");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        json = readJson(response.getEntity());
+        fieldsNode = json.get("fields");
+        prefix = json.get("namespaces").get("org.lilyproject.resttest").getTextValue();
+
+        assertEquals(1L, json.get("version").getLongValue()); // no new version created
+        assertEquals("Peace", fieldsNode.get(prefix + "$subject").getValueAsText());
+    }
+
     private void assertStatus(Status expectedStatus, Response response) throws IOException {
         if (!expectedStatus.equals(response.getStatus())) {
             System.err.println("Detected unexpected response status, body of the response is:");
