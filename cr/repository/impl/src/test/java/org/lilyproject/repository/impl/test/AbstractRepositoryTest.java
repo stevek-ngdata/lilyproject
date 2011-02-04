@@ -869,44 +869,38 @@ public abstract class AbstractRepositoryTest {
     }
     
     @Test
-    public void TestDeleteRecordCleansUpDataBeforeRecreate() throws Exception {
-        // We will not allow recreation after a delete.
-        // A record will be marked as deleted, creating it again will cause a next version to be created
+    public void TestDeleteRecordCleansUpData() throws Exception {
+        Record record = createDefaultRecord();
+        RecordId recordId = record.getId();
+        repository.delete(recordId);
         
-//        Record record = createDefaultRecord();
-//        RecordId recordId = record.getId();
-//        repository.delete(recordId);
-//        
-//     // Work around HBASE-2256
-////        HBASE_PROXY.majorCompact("recordTable", new String[] {"VSCF", "VCF", "VMCF"});
-//
-//        record = repository.newRecord(recordId);
-//        record.setRecordType(recordType2.getName(), recordType2.getVersion());
-//        record.setField(fieldType4.getName(), 555);
-//        record.setField(fieldType5.getName(), false);
-//        record.setField(fieldType6.getName(), "zzz");
-//        repository.create(record);
-//        Record readRecord = repository.read(recordId);
-//        assertEquals(Long.valueOf(1), readRecord.getVersion());
-//        try {
-//            readRecord.getField(fieldType1.getName());
-//            fail();
-//        } catch (FieldNotFoundException expected) {
-//        }
-//        try {
-//            readRecord.getField(fieldType2.getName());
-//            fail();
-//        } catch (FieldNotFoundException expected) {
-//        }
-//        try {
-//            readRecord.getField(fieldType3.getName());
-//            fail();
-//        } catch (FieldNotFoundException expected) {
-//        }
-//        
-//        assertEquals(555, readRecord.getField(fieldType4.getName()));
-//        assertFalse((Boolean)readRecord.getField(fieldType5.getName()));
-//        assertEquals("zzz", readRecord.getField(fieldType6.getName()));
+        record = repository.newRecord(recordId);
+        record.setRecordType(recordType2.getName(), recordType2.getVersion());
+        record.setField(fieldType4.getName(), 555);
+        record.setField(fieldType5.getName(), false);
+        record.setField(fieldType6.getName(), "zzz");
+        repository.create(record);
+        Record readRecord = repository.read(recordId);
+        assertEquals(Long.valueOf(2), readRecord.getVersion());
+        try {
+            readRecord.getField(fieldType1.getName());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            readRecord.getField(fieldType2.getName());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        try {
+            readRecord.getField(fieldType3.getName());
+            fail();
+        } catch (FieldNotFoundException expected) {
+        }
+        
+        assertEquals(555, readRecord.getField(fieldType4.getName()));
+        assertFalse((Boolean)readRecord.getField(fieldType5.getName()));
+        assertEquals("zzz", readRecord.getField(fieldType6.getName()));
     }
 
     @Test

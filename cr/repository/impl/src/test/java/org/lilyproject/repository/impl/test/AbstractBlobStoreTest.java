@@ -678,6 +678,89 @@ public abstract class AbstractBlobStoreTest {
     }
     
     @Test
+    public void testDelete() throws Exception {
+        QName fieldName = new QName("test", "testDelete");
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+                Scope.NON_VERSIONED);
+        fieldType = typeManager.createFieldType(fieldType);
+        RecordType recordType = typeManager.newRecordType(new QName(null, "testDeleteRT"));
+        FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
+        recordType.addFieldTypeEntry(fieldTypeEntry);
+        recordType = typeManager.createRecordType(recordType);
+        
+        byte[] bytes = new byte[3000]; 
+        random.nextBytes(bytes);
+        Blob blob = writeBlob(bytes, "aMediaType", "testCreate");
+        Record record = repository.newRecord();
+        record.setRecordType(recordType.getName());
+        record.setField(fieldName, blob);
+        record = repository.create(record);
+        
+        repository.delete(record.getId());
+        
+        assertBlobDelete(true, blob);
+    }
+    
+    @Test
+    public void testDeleteMultivalueHierarchyBlobSmall() throws Exception {
+        testDeleteMultivalueHierarchyBlob(50, false); // An inputstream for the inline blob is created on the blobKey directly 
+    }
+    
+    @Test
+    public void testDeleteMultivalueHierarchyBlobMedium() throws Exception {
+        testDeleteMultivalueHierarchyBlob(150, true);
+    }
+    
+    @Test
+    public void testDeleteMultivalueHierarchyBlobLarge() throws Exception {
+        testDeleteMultivalueHierarchyBlob(3000, true);
+    }
+    
+    private void testDeleteMultivalueHierarchyBlob(int size, boolean expectDelete) throws Exception {
+        QName fieldName = new QName("test", "testDeleteMultivalueHierarchyBlob"+size);
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", true, true), fieldName,
+                Scope.VERSIONED_MUTABLE);
+        fieldType = typeManager.createFieldType(fieldType);
+        RecordType recordType = typeManager.newRecordType(new QName(null, "testDeleteMultivalueHierarchyBlobRT"+size));
+        FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
+        recordType.addFieldTypeEntry(fieldTypeEntry);
+        recordType = typeManager.createRecordType(recordType);
+
+        byte[] bytes = new byte[size]; 
+        random.nextBytes(bytes);
+        Blob blob = writeBlob(bytes, "aMediaType", "testUpdateMutableMultivalueHierarchyBlob");
+
+        byte[] bytes2 = new byte[size]; 
+        random.nextBytes(bytes);
+        Blob blob2 = writeBlob(bytes2, "aMediaType", "testUpdateMutableMultivalueHierarchyBlob2");
+        
+        byte[] bytes3 = new byte[size]; 
+        random.nextBytes(bytes3);
+        Blob blob3 = writeBlob(bytes3, "aMediaType", "testUpdateMutableMultivalueHierarchyBlob3");
+        
+        byte[] bytes4 = new byte[size]; 
+        random.nextBytes(bytes4);
+        Blob blob4 = writeBlob(bytes4, "aMediaType", "testUpdateMutableMultivalueHierarchyBlob4");
+        
+        Record record = repository.newRecord();
+        record.setRecordType(recordType.getName(), null);
+        record.setField(fieldName, Arrays.asList(new HierarchyPath[]{new HierarchyPath(blob, blob2), new HierarchyPath(blob3)}));
+        record = repository.create(record);
+
+        Record record2 = repository.newRecord(record.getId());
+        record2.setRecordType(recordType.getName(), null);
+        record2.setField(fieldName, Arrays.asList(new HierarchyPath[]{new HierarchyPath(blob2), new HierarchyPath(blob3, blob4)}));
+        record2 = repository.update(record2, false, false);
+
+        repository.delete(record.getId());
+        
+        assertBlobDelete(expectDelete, blob);
+        assertBlobDelete(expectDelete, blob2);
+        assertBlobDelete(expectDelete, blob3);
+        assertBlobDelete(expectDelete, blob4);
+    }
+    
+    @Test
     public void testBlobIncubatorMonitorUnusedBlob() throws Exception {
         QName fieldName = new QName("test", "testBlobIncubatorMonitorUnusedBlob");
         FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,

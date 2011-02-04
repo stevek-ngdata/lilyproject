@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
 import org.lilyproject.repository.impl.HBaseRepository;

@@ -35,13 +35,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.RowLock;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -109,7 +103,7 @@ public class HBaseRepository implements Repository {
     private HTableInterface recordTable;
     private final TypeManager typeManager;
     private final IdGenerator idGenerator;
-    private byte[] columnFamily = RecordCf.DATA.bytes;
+    private byte[] dataColumnFamily = RecordCf.DATA.bytes;
     private byte[] systemColumnFamily = RecordCf.SYSTEM.bytes;
     private Map<Scope, byte[]> recordTypeIdColumnNames = new HashMap<Scope, byte[]>();
     private Map<Scope, byte[]> recordTypeVersionColumnNames = new HashMap<Scope, byte[]>();
@@ -253,7 +247,12 @@ public class HBaseRepository implements Repository {
                 if (!result.isEmpty()) {
 	                byte[] oldVersion = result.getValue(systemColumnFamily, RecordColumn.VERSION.bytes);
 	                if (oldVersion != null) {
-	                    version = Bytes.toLong(oldVersion);
+	                    version = Bytes.toLong(oldVersion) + 1;
+	                    // Make sure any old data gets cleared and old blobs are deleted
+	                    // This is to cover the failure scenario where a record was deleted, but a failure
+	                    // occured before executing the clearData
+	                    // If this was already done, this is a no-op
+	                    clearData(recordId);
 	                }
                 }
                 
@@ -501,7 +500,7 @@ public class HBaseRepository implements Repository {
                 put.add(systemColumnFamily, RecordColumn.VERSION.bytes, 1L, versionBytes);
                 if (VersionTag.hasLastVTag(recordType, typeManager) || VersionTag.hasLastVTag(record, typeManager) || VersionTag.hasLastVTag(originalRecord, typeManager)) {
                     FieldTypeImpl lastVTagType = (FieldTypeImpl)VersionTag.getLastVTagType(typeManager);
-                    put.add(columnFamily, lastVTagType.getIdBytes(), 1L, encodeFieldValue(lastVTagType, version));
+                    put.add(dataColumnFamily, lastVTagType.getIdBytes(), 1L, encodeFieldValue(lastVTagType, version));
                     record.setField(lastVTagType.getName(), version);
                 }
             }
@@ -618,9 +617,9 @@ public class HBaseRepository implements Repository {
 
                 // Set the value 
                 if (Scope.NON_VERSIONED.equals(scope)) {
-                    put.add(columnFamily, fieldIdAsBytes, 1L, encodedFieldValue);
+                    put.add(dataColumnFamily, fieldIdAsBytes, 1L, encodedFieldValue);
                 } else {
-                    put.add(columnFamily, fieldIdAsBytes, version, encodedFieldValue);
+                    put.add(dataColumnFamily, fieldIdAsBytes, version, encodedFieldValue);
                     if (originalNextFields != null && !fieldIsNewOrDeleted && originalNextFields.containsKey(fieldName)) {
                         copyValueToNextVersionIfNeeded(version, put, originalNextFields, fieldName, originalValue);
                     }
@@ -774,7 +773,7 @@ public class HBaseRepository implements Repository {
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
             FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeByName(fieldName);
             byte[] encodedValue = encodeFieldValue(fieldType, originalValue);
-            put.add(columnFamily, fieldType.getIdBytes(), version + 1, encodedValue);
+            put.add(dataColumnFamily, fieldType.getIdBytes(), version + 1, encodedValue);
         }
     }
 
@@ -939,7 +938,7 @@ public class HBaseRepository implements Repository {
             throws RecordNotFoundException, RecordException {
         Result result;
         Get get = new Get(recordId.toBytes());
-        get.addFamily(columnFamily);
+        get.addFamily(dataColumnFamily);
         get.addFamily(systemColumnFamily);
         
         try {
@@ -1027,7 +1026,7 @@ public class HBaseRepository implements Repository {
     private List<Pair<QName, Object>> extractFields(Long version, Result result, ReadContext context)
             throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException {
         List<Pair<QName, Object>> fields = new ArrayList<Pair<QName, Object>>();
-        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(columnFamily);
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(dataColumnFamily);
         if (mapWithVersions != null) {
             for (Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : mapWithVersions.entrySet()) {
                 NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
@@ -1060,7 +1059,7 @@ public class HBaseRepository implements Repository {
         boolean added = false;
         if (fields != null) {
             for (FieldType field : fields) {
-                get.addColumn(columnFamily, ((FieldTypeImpl)field).getIdBytes());
+                get.addColumn(dataColumnFamily, ((FieldTypeImpl)field).getIdBytes());
                 added = true;
             }
         }
@@ -1118,6 +1117,7 @@ public class HBaseRepository implements Repository {
 
             if (recordExists(rowId, null)) { // Check if the record exists in the first place 
                 Put put = new Put(rowId);
+                // Mark the record as deleted
                 put.add(systemColumnFamily, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
                 RecordEvent recordEvent = new RecordEvent();
                 recordEvent.setType(Type.DELETE);
@@ -1125,6 +1125,9 @@ public class HBaseRepository implements Repository {
                 if (!rowLocker.put(put, rowLock)) {
                     throw new RecordException("Exception occurred while deleting record <" + recordId + "> on HBase table", null);
                 }
+                
+                // Clear the old data and delete any referenced blobs
+                clearData(recordId);
     
                 if (walMessage != null) {
                     try {
@@ -1153,7 +1156,74 @@ public class HBaseRepository implements Repository {
             metrics.report(Action.DELETE, (after-before));
         }
     }
+    
+    // Clear all data of the recordId until the latest record version (included)
+    // And delete any referred blobs
+    private void clearData(RecordId recordId) throws IOException, InterruptedException {
+        Get get = new Get(recordId.toBytes());
+        get.addFamily(dataColumnFamily);
+        get.addColumn(systemColumnFamily, RecordColumn.VERSION.bytes);
+        get.setMaxVersions();
+        Result result = recordTable.get(get);
+        
+        if (result != null && !result.isEmpty()) {
+            boolean dataToDelete = false; 
+            Delete delete = new Delete(recordId.toBytes());
+            Set<BlobReference> blobsToDelete = new HashSet<BlobReference>();
 
+            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = result.getMap();
+            Set<Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>> familiesSet = map.entrySet();
+            for (Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> family : familiesSet) {
+                if (Arrays.equals(dataColumnFamily,family.getKey())) {
+                    NavigableMap<byte[], NavigableMap<Long, byte[]>> columnsSet = family.getValue();
+                    for (Entry<byte[], NavigableMap<Long, byte[]>> column : columnsSet.entrySet()) {
+                        try {
+                            byte[] columnQualifier = column.getKey();
+                            FieldType fieldType = typeManager.getFieldTypeById(columnQualifier);
+                            ValueType valueType = fieldType.getValueType();
+                            NavigableMap<Long,byte[]> cells = column.getValue();
+                            Set<Entry<Long, byte[]>> cellsSet = cells.entrySet();
+                            for (Entry<Long, byte[]> cell : cellsSet) {
+                                // Get blobs to delete
+                                if (valueType.getPrimitive() instanceof BlobValueType) {
+                                    byte[] value = cell.getValue();
+                                    if (!isDeleteMarker(value)) {
+                                        Object valueObject = valueType.fromBytes(EncodingUtil.stripPrefix(value));
+                                        try {
+                                            Set<BlobReference> referencedBlobs = getReferencedBlobs((FieldTypeImpl)fieldType, valueObject);
+                                            blobsToDelete.addAll(referencedBlobs);
+                                        } catch (BlobException e) {
+                                            log.warn("Failure occured while clearing blob data", e);
+                                            // We do a best effort here
+                                        }
+                                    }
+                                }
+                                // Get cells to delete
+                                delete.deleteColumn(dataColumnFamily, columnQualifier, cell.getKey());
+                                dataToDelete = true;
+                            }
+                        } catch (FieldTypeNotFoundException e) {
+                            log.warn("Failure occured while clearing blob data", e);
+                            // We do a best effort here
+                        } catch (TypeException e) {
+                            log.warn("Failure occured while clearing blob data", e);
+                            // We do a best effort here
+                        }
+                    }
+                } else {
+                    //skip
+                }
+            }
+            // Delete the blobs
+            blobManager.handleBlobReferences(recordId, null, blobsToDelete);
+            
+            // Delete data
+            if (dataToDelete) { // Avoid a delete action when no data was found to delete
+                recordTable.delete(delete);
+            }
+        }
+    }
+    
     private void unlockRow(org.lilyproject.repository.impl.lock.RowLock rowLock) {
         if (rowLock != null) {
             try {
@@ -1236,7 +1306,7 @@ public class HBaseRepository implements Repository {
             ValueType valueType = fieldType.getValueType();
 
             Get get = new Get(recordIdBytes);
-            get.addColumn(columnFamily, fieldTypeIdBytes);
+            get.addColumn(dataColumnFamily, fieldTypeIdBytes);
             byte[] valueToCompare;
             if (valueType.isMultiValue() && valueType.isHierarchical()) {
                 valueToCompare = Bytes.toBytes(2);
@@ -1256,7 +1326,7 @@ public class HBaseRepository implements Repository {
             } else {
                 if (ignoreVersion != null) {
                     boolean stillReferenced = false;
-                    List<KeyValue> column = result.getColumn(columnFamily, fieldType.getIdBytes());
+                    List<KeyValue> column = result.getColumn(dataColumnFamily, fieldType.getIdBytes());
                     for (KeyValue keyValue : column) {
                         if (keyValue.getTimestamp() != ignoreVersion) {
                             stillReferenced = true;

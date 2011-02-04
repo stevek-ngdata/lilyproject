@@ -96,24 +96,35 @@ public class BlobManagerImpl implements BlobManager {
     }
     
     public void handleBlobReferences(RecordId recordId, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs) {
-        try {
-            for (BlobReference blobReference : referencedBlobs) {
-                blobIncubatorTable.delete(new Delete(blobReference.getBlob().getValue()));
-            }
-        } catch (IOException e) {
-            // We do a best effort to remove the blobs from the blobIncubator
-            // If it fails a background cleanup process will notice this later and clean it up
-            log.info("Failed to remove blobs from the blobIncubator for record <"+ recordId +">", e);
-        }
-        for (BlobReference blobReference : unReferencedBlobs) {
-            // We do a best effort to delete the blobs from the blobstore
-            // If it fails, the blob will never be cleaned up.
+        // Remove references from the blobIncubator for the blobs that are still referenced.
+        if (referencedBlobs != null) {
             try {
-                registry.delete(blobReference.getBlob());
-            } catch (BlobException e) {
-                log.warn("Failed to remove blobs from the blobstore for record <"+ recordId +">", e);
-            } catch (BlobNotFoundException e) {
-                log.warn("Failed to remove blobs from the blobstore for record <"+ recordId +">", e);
+                for (BlobReference blobReference : referencedBlobs) {
+                    blobIncubatorTable.delete(new Delete(blobReference.getBlob().getValue()));
+                }
+            } catch (IOException e) {
+                // We do a best effort to remove the blobs from the blobIncubator
+                // If it fails a background cleanup process will notice this later and clean it up
+                log.info("Failed to remove blobs from the blobIncubator for record <"+ recordId +">", e);
+            }
+        }
+        
+        // Remove blobs that are no longer referenced.
+        if (unReferencedBlobs != null) {
+            Set<Blob> blobsToDelete = new HashSet<Blob>();
+            for (BlobReference blobReference : unReferencedBlobs) {
+                blobsToDelete.add(blobReference.getBlob());
+            }
+            for (Blob blobToDelete : blobsToDelete) {
+                // We do a best effort to delete the blobs from the blobstore
+                // If it fails, the blob will never be cleaned up.
+                try {
+                    registry.delete(blobToDelete);
+                } catch (BlobException e) {
+                    log.warn("Failed to remove blobs from the blobstore for record <"+ recordId +">", e);
+                } catch (BlobNotFoundException e) {
+                    log.warn("Failed to remove blobs from the blobstore for record <"+ recordId +">", e);
+                }
             }
         }
     }
@@ -166,6 +177,5 @@ public class BlobManagerImpl implements BlobManager {
 
     public void delete(byte[] blobKey) throws BlobException {
         registry.delete(blobKey);
-        
     }
 }
