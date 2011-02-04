@@ -58,7 +58,6 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobNotFoundException;
 import org.lilyproject.repository.api.BlobReference;
 import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.FieldNotFoundException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
@@ -330,9 +329,7 @@ public class HBaseRepository implements Repository {
             }
 
             newRecord.setResponseStatus(ResponseStatus.CREATED);
-            
-            
-            
+            newRecord.getFieldsToDelete().clear();
             return newRecord;
         } finally {
             metrics.report(Action.CREATE, System.currentTimeMillis() - before);
@@ -437,6 +434,8 @@ public class HBaseRepository implements Repository {
         } finally {
             unlockRow(rowLock);
         }
+
+        newRecord.getFieldsToDelete().clear();
         return newRecord;
     }
 
@@ -520,7 +519,6 @@ public class HBaseRepository implements Repository {
 
         // Clear the list of deleted fields, as this is typically what the user will expect when using the
         // record object for future updates. 
-        record.getFieldsToDelete().clear();
         return fieldsHaveChanged;
     }
     
@@ -728,6 +726,10 @@ public class HBaseRepository implements Repository {
                 
                 // Remove the used blobs from the blobIncubator
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
+
+                newRecord.setResponseStatus(ResponseStatus.UPDATED);
+            } else {
+                newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
             }
         } catch (RowLogException e) {
             throw new RecordException("Exception occurred while updating record <" + recordId+ "> on HBase table", e);
@@ -741,6 +743,8 @@ public class HBaseRepository implements Repository {
         } finally {
             unlockRow(rowLock);
         }
+
+        newRecord.getFieldsToDelete().clear();
         return newRecord;
     }
 
