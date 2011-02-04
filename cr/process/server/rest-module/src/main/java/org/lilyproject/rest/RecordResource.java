@@ -66,7 +66,7 @@ public class RecordResource extends RepositoryEnabled {
         try {
             result = RecordImport.importRecord(record, ImportMode.CREATE_OR_UPDATE, repository);
         } catch (Exception e) {
-            throw new ResourceException("Error creating or updating record type with id " + id, e,
+            throw new ResourceException("Error creating or updating record with id " + id, e,
                     INTERNAL_SERVER_ERROR.getStatusCode());
         }
 
