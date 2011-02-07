@@ -1,4 +1,4 @@
-package org.lilyproject.repository.impl;
+package org.lilyproject.hbaseext;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -20,8 +20,6 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
     /**
      * Constructor.
      * 
-     * @param value2
-     *            the value to compare against
      */
     public ContainsValueComparator(byte[] valueTypeAndValue) {
         this.valueTypeAndValue = valueTypeAndValue;

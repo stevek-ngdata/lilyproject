@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobException;
 import org.lilyproject.repository.api.BlobInputStream;

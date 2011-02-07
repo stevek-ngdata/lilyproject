@@ -12,6 +12,7 @@ import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
+import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
