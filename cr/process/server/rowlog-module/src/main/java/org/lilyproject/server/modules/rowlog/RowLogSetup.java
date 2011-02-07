@@ -41,6 +41,7 @@ import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -52,6 +53,7 @@ public class RowLogSetup {
     private RowLogImpl writeAheadLog;
     private RowLogProcessorElection messageQueueProcessorLeader;
     private RowLogProcessorElection writeAheadLogProcessorLeader;
+    private Thread walProcessorStartupThread;
     private final HBaseTableFactory hbaseTableFactory;
     private final Conf rowLogConf;
     private final LilyInfo lilyInfo;
@@ -123,15 +125,6 @@ public class RowLogSetup {
             log.info("Not participating in MQ processor election.");
         }
         
-        // Start the wal processor
-        boolean walProcEnabled = rowLogConf.getChild("walProcessor").getAttributeAsBoolean("enabled", true);
-        if (walProcEnabled) {
-            writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, new RowLogProcessorImpl(writeAheadLog, confMgr), lilyInfo);
-            writeAheadLogProcessorLeader.start();
-        } else {
-            log.info("Not participating in WAL processor election.");
-        }
-
         if (linkIdxEnabled) {
             confMgr.addListener("wal", "LinkIndexUpdater", "LinkIndexUpdaterListener");
         }
@@ -139,14 +132,29 @@ public class RowLogSetup {
         if (mqFeederEnabled) {
             confMgr.addListener("wal", "MQFeeder", "MQFeederListener");
         }
+
+        // Start the wal processor
+        boolean walProcEnabled = rowLogConf.getChild("walProcessor").getAttributeAsBoolean("enabled", true);
+        if (walProcEnabled) {
+            writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, new RowLogProcessorImpl(writeAheadLog, confMgr), lilyInfo);
+            // The WAL processor should only be started once the LinkIndexUpdater listener is available
+            walProcessorStartupThread = new Thread(new DelayedWALProcessorStartup());
+            walProcessorStartupThread.start();
+        } else {
+            log.info("Not participating in WAL processor election.");
+        }
     }
 
     @PreDestroy
     public void stop() throws RowLogException, InterruptedException, KeeperException {
-        messageQueueProcessorLeader.stop();
-        writeAheadLogProcessorLeader.stop();
-        messageQueue.stop();
-        writeAheadLog.stop();
+        Closer.close(messageQueueProcessorLeader);
+        if (walProcessorStartupThread != null && walProcessorStartupThread.isAlive()) {
+            walProcessorStartupThread.interrupt();
+            walProcessorStartupThread.join();
+        }
+        Closer.close(writeAheadLogProcessorLeader);
+        Closer.close(messageQueue);
+        Closer.close(writeAheadLog);
         confMgr.removeListener("wal", "LinkIndexUpdater", "LinkIndexUpdaterListener");
         confMgr.removeListener("wal", "MQFeeder", "MQFeederListener");
         RowLogMessageListenerMapping.INSTANCE.remove("MQFeeder");        
@@ -158,5 +166,30 @@ public class RowLogSetup {
 
     public RowLog getWriteAheadLog() {
         return writeAheadLog;
+    }
+
+    private class DelayedWALProcessorStartup implements Runnable {
+        public void run() {
+            long timeOut = 5 * 60 * 1000; // 5 minutes
+            long waitUntil = System.currentTimeMillis() + timeOut;
+            while (RowLogMessageListenerMapping.INSTANCE.get("LinkIndexUpdater") == null) {
+                if (System.currentTimeMillis() > waitUntil) {
+                    log.error("IMPORTANT: LinkIndexUpdater did not appear in RowLogMessageListenerMapping after" +
+                            " waiting for " + timeOut + "ms. Will not start up WAL processor.");
+                    return;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+
+            try {
+                writeAheadLogProcessorLeader.start();
+            } catch (Throwable t) {
+                log.error("Error starting up WAL processor", t);
+            }
+        }
     }
 }
