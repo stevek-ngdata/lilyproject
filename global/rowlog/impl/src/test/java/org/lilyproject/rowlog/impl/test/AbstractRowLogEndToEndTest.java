@@ -15,6 +15,8 @@
  */
 package org.lilyproject.rowlog.impl.test;
 
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
@@ -92,6 +94,38 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.validate();
     }
     
+    @Test(timeout=150000)
+    public void testRemovalFromShardFailed() throws Exception {
+        RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
+        validationListener.expectMessage(message);
+        validationListener.expectMessages(1);
+        processor.start();
+        validationListener.waitUntilMessagesConsumed(120000);
+        processor.stop();
+        validationListener.validate();
+        
+        shard.putMessage(message);
+        Assert.assertFalse(shard.next(subscriptionId).isEmpty());
+        processor.start();
+        Thread.sleep(10000); // Give processor some time to cleanup the message
+        processor.stop();
+        Assert.assertTrue("The message should have been cleaned up since it was already processed",shard.next(subscriptionId).isEmpty());
+    }
+
+    @Test(timeout=150000)
+    public void testRemovalFromShardAfterMarkingProblematicFailed() throws Exception {
+        RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
+        
+        shard.markProblematic(message, subscriptionId);
+        shard.putMessage(message);
+
+        Assert.assertFalse(shard.next(subscriptionId).isEmpty());
+        processor.start();
+        Thread.sleep(10000);
+        processor.stop();
+        Assert.assertTrue("The message should have been cleaned up since it was already marked as problematic",shard.next(subscriptionId).isEmpty());
+    }
+
     @Test(timeout=150000)
     public void testAtomicMessage() throws Exception {
         byte[] rowKey = Bytes.toBytes("row1");

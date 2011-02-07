@@ -242,11 +242,12 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             try {
                 Long minimalTimestamp = null;
                 while (!isInterrupted() && !stopRequested) {
+                    String subscriptionId = subscription.getId();
                     try {
                         metrics.scans.inc();
 
                         long tsBeforeGetMessages = System.currentTimeMillis();
-                        List<RowLogMessage> messages = shard.next(subscription.getId(), minimalTimestamp);
+                        List<RowLogMessage> messages = shard.next(subscriptionId, minimalTimestamp);
                         metrics.scanDuration.inc(System.currentTimeMillis() - tsBeforeGetMessages);
 
                         if (stopRequested) {
@@ -274,15 +275,19 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 if (checkMinimalProcessDelay(message))
                                 	break; // Rescan the messages since they might have been processed in the meanwhile
                                 
-                                if (!rowLog.isMessageDone(message, subscription.getId()) && !rowLog.isProblematic(message, subscription.getId())) {
-                                    // The above calls to isMessageDone and isProblematic pass into HBase client code,
-                                    // which, if interrupted, continue what it is doing and does not re-assert
-                                    // the thread's interrupted status. By checking here that stopRequested is false,
-                                    // we are sure that any interruption which comes after is is not ignored.
-                                    // (The above about eating interruption status was true for HBase 0.89 beta
-                                    // of October 2010).
-                                    if (!stopRequested) {
-                                        messagesWorkQueue.offer(message);
+                                if (!rowLog.isMessageDone(message, subscriptionId)) {
+                                    if (rowLog.isProblematic(message, subscriptionId)) {
+                                        shard.removeMessage(message, subscriptionId);
+                                    } else {
+                                        // The above calls to isMessageDone and isProblematic pass into HBase client code,
+                                        // which, if interrupted, continue what it is doing and does not re-assert
+                                        // the thread's interrupted status. By checking here that stopRequested is false,
+                                        // we are sure that any interruption which comes after is is not ignored.
+                                        // (The above about eating interruption status was true for HBase 0.89 beta
+                                        // of October 2010).
+                                        if (!stopRequested) {
+                                            messagesWorkQueue.offer(message);
+                                        }
                                     }
                                 }
                             }
@@ -305,11 +310,11 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         return;
                     } catch (RowLogException e) {
                         // The message will be retried later
-                        log.info("Error processing message for subscription " + subscription.getId() + " (message will be retried later).", e);
+                        log.info("Error processing message for subscription " + subscriptionId + " (message will be retried later).", e);
                     } catch (Throwable t) {
                         if (Thread.currentThread().isInterrupted())
                             return;
-                        log.error("Error in subscription thread for " + subscription.getId(), t);
+                        log.error("Error in subscription thread for " + subscriptionId, t);
                     }
                 }
             } finally {
