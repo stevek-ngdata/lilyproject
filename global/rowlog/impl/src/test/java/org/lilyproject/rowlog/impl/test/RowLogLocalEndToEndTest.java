@@ -38,7 +38,7 @@ public class RowLogLocalEndToEndTest extends AbstractRowLogEndToEndTest {
         validationListener = new ValidationMessageListener("VML1", subscriptionId, rowLog);
         RowLogMessageListenerMapping.INSTANCE.put(subscriptionId , validationListener);
         rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId,  RowLogSubscription.Type.VM, 3, 1);
-        waitForSubscription(subscriptionId);
+        waitForSubscription(rowLog, subscriptionId);
         rowLogConfigurationManager.addListener(rowLog.getId(), subscriptionId, "listener1");
         t0 = System.currentTimeMillis();
     }
@@ -55,7 +55,7 @@ public class RowLogLocalEndToEndTest extends AbstractRowLogEndToEndTest {
         validationListener2 = new ValidationMessageListener("VML2", subscriptionId2, rowLog);
         RowLogMessageListenerMapping.INSTANCE.put(subscriptionId2, validationListener2);
         rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.VM, 3, 2);
-        waitForSubscription(subscriptionId2); // Avoid putting messages on the rowlog before all subscriptions are setup
+        waitForSubscription(rowLog, subscriptionId2); // Avoid putting messages on the rowlog before all subscriptions are setup
         rowLogConfigurationManager.addListener(rowLog.getId(), subscriptionId2, "Listener2");
         validationListener.expectMessages(10);
         validationListener2.expectMessages(10);
@@ -85,7 +85,7 @@ public class RowLogLocalEndToEndTest extends AbstractRowLogEndToEndTest {
         validationListener2 = new ValidationMessageListener("VML2", subscriptionId2, rowLog);
         RowLogMessageListenerMapping.INSTANCE.put(subscriptionId2, validationListener2);
         rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.VM, 3, 0);
-        waitForSubscription(subscriptionId2);
+        waitForSubscription(rowLog, subscriptionId2);
         rowLogConfigurationManager.addListener(rowLog.getId(), subscriptionId2, "Listener2");
         int rownr = 222;
         byte[] data = Bytes.toBytes(222);

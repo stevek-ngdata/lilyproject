@@ -127,6 +127,7 @@ public class RowLogTest {
         assertTrue(rowLog.getMessages(rowKey).isEmpty());
         control.verify();
         configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 3, 1); // Put subscription back for the other tests
+        AbstractRowLogEndToEndTest.waitForSubscription(rowLog, subscriptionId1);
     }
     
     @Test

@@ -32,6 +32,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.easymock.IMocksControl;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.FieldNotFoundException;
@@ -51,11 +52,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogShard;
+import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.rowlog.impl.MessageQueueFeeder;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
@@ -179,6 +176,8 @@ public abstract class AbstractRepositoryTest {
 
         RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;
         listenerClassMapping.put("MQFeeder", new MessageQueueFeeder(messageQueue));
+
+        waitForSubscription(messageQueue, "MQFeeder");
     }
 
     protected static void setupMessageQueueProcessor() throws RowLogException, KeeperException, InterruptedException {
@@ -1407,5 +1406,22 @@ public abstract class AbstractRepositoryTest {
         record = repository.update(record, true, true);
         assertEquals(recordTypeA.getName(), record.getRecordTypeName(Scope.VERSIONED_MUTABLE));
         assertEquals(recordTypeA.getVersion(), record.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
+    }
+
+    public static void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
+        boolean subscriptionKnown = false;
+        int timeOut = 10000;
+        long waitUntil = System.currentTimeMillis() + 10000;
+        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
+            for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
+                if (subscriptionId.equals(subscription.getId())) {
+                    subscriptionKnown = true;
+                    break;
+                }
+            }
+            Thread.sleep(10);
+        }
+        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
+                subscriptionKnown);
     }
 }

@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import org.apache.hadoop.fs.Path;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hbaseindex.IndexManager;
@@ -114,6 +115,8 @@ public class LinkIndexTest {
 
         rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1, 1);
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
+
+        waitForSubscription(wal, "LinkIndexUpdater");
     }
 
     @AfterClass
@@ -224,5 +227,22 @@ public class LinkIndexTest {
 //            assertEquals(0, linkIndex.getAllForwardLinks(record.getId()).size());
 
         }
+    }
+
+    public static void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
+        boolean subscriptionKnown = false;
+        int timeOut = 10000;
+        long waitUntil = System.currentTimeMillis() + 10000;
+        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
+            for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
+                if (subscriptionId.equals(subscription.getId())) {
+                    subscriptionKnown = true;
+                    break;
+                }
+            }
+            Thread.sleep(10);
+        }
+        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
+                subscriptionKnown);
     }
 }

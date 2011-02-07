@@ -27,12 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogMessage;
-import org.lilyproject.rowlog.api.RowLogProcessor;
-import org.lilyproject.rowlog.api.RowLogShard;
-import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
 import org.lilyproject.rowlog.impl.RowLogImpl;
 import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
@@ -43,7 +38,8 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-public abstract class AbstractRowLogEndToEndTest {
+public abstract class
+        AbstractRowLogEndToEndTest {
     protected final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     protected static RowLog rowLog;
     protected static RowLogShard shard;
@@ -228,9 +224,10 @@ public abstract class AbstractRowLogEndToEndTest {
         Assert.assertTrue(rowLog.isProblematic(message, subscriptionId));
         validationListener.validate();
     }
-    
-    protected void waitForSubscription(String subscriptionId) throws InterruptedException {
+
+    public static void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
         boolean subscriptionKnown = false;
+        int timeOut = 10000;
         long waitUntil = System.currentTimeMillis() + 10000;
         while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
             for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
@@ -241,6 +238,7 @@ public abstract class AbstractRowLogEndToEndTest {
             }
             Thread.sleep(10);
         }
-        Assert.assertTrue("Subscription <" + subscriptionId +"> not known to rowlog within reasonable time <10s>", subscriptionKnown);
+        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
+                subscriptionKnown);
     }
 }

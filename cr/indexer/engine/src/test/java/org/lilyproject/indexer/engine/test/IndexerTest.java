@@ -42,6 +42,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hbaseindex.IndexManager;
@@ -183,6 +184,10 @@ public class IndexerTest {
         rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1, 1);
         rowLogConfMgr.addSubscription("WAL", "IndexUpdater", RowLogSubscription.Type.VM, 1, 2);
         rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 1, 3);
+
+        waitForSubscription(wal, "LinkIndexUpdater");
+        waitForSubscription(wal, "IndexUpdater");
+        waitForSubscription(wal, "MessageVerifier");
 
         solrServers = SolrServers.createForOneShard(SOLR_TEST_UTIL.getUri());
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream("org/lilyproject/indexer/engine/test/indexerconf1.xml"), repository);
@@ -1326,4 +1331,21 @@ public class IndexerTest {
         }
     }
 
+
+    public static void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
+        boolean subscriptionKnown = false;
+        int timeOut = 10000;
+        long waitUntil = System.currentTimeMillis() + 10000;
+        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
+            for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
+                if (subscriptionId.equals(subscription.getId())) {
+                    subscriptionKnown = true;
+                    break;
+                }
+            }
+            Thread.sleep(10);
+        }
+        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
+                subscriptionKnown);
+    }
 }
