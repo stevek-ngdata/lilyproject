@@ -71,14 +71,19 @@ public interface RowLogConfigurationManager {
      *
      * <p>This method blocks if the ZooKeeper connection is down.
      *
-     * <p>If the subscription would already exist, this method will update the subscription. 
+     * <p>If the subscription would already exist, this method will update the subscription.
+     *
+     * <p>The new subscription becomes active asynchronously, the various row log instances (which might run in
+     * different processes) are notified via ZooKeeper of the existence of the new subscription. Therefore, when
+     * this method returns, it can still take a small moment for the subscriptions to become active.
      * 
-     * <p>Due to the nature of the implementation of this method, it is difficult to know if it was really this process which created the node.
-     * Note that there is also a chance the current process is interrupted or dies after the subscription is
-     * created but before this method returned. It might also be that someone else removes the subscription again
-     * by the time this method returns into your code. Therefore, the advice is that subscriptionId's should be
-     * selected such that it does not matter if the subscription already existed, but only that the outcome is
-     * 'a subscription with this id exists'.
+     * <p>Due to the nature of the implementation of this method, it is difficult to know if it was really this
+     * process which created the node. Note that there is also a chance the current process is interrupted or dies
+     * after the subscription is created but before this method returned. It might also be that someone else removes
+     * the subscription again by the time this method returns into your code. Therefore, the advice is that
+     * subscriptionId's should be selected such that it does not matter if the subscription already existed, but
+     * only that the outcome is 'a subscription with this id exists'.
+     *
      * @param rowLogId the id of the rowlog to add the subscription to
      * @param subscriptionId the id of the subscription to add
      * @param type to indicate wether the listeners of the subscription will run locally (VM) or remote (Netty)
@@ -92,6 +97,7 @@ public interface RowLogConfigurationManager {
      * Updates a subscription.
      * 
      * <p>This method blocks if the ZooKeeper connection is down.
+     *
      * @param rowLogId the id of the rowlog to add the subscription to
      * @param subscriptionId the id of the subscription to add
      * @param type to indicate wether the listeners of the subscription will run locally (VM) or remote (Netty)
