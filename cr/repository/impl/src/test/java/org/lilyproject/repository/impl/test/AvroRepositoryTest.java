@@ -16,88 +16,31 @@
 package org.lilyproject.repository.impl.test;
 
 
-import java.net.InetSocketAddress;
-
-import org.apache.avro.ipc.NettyServer;
-import org.apache.avro.ipc.Server;
-import org.apache.hadoop.fs.Path;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobStoreAccessFactory;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.avro.AvroLily;
-import org.lilyproject.repository.avro.AvroLilyImpl;
-import org.lilyproject.repository.avro.LilySpecificResponder;
-import org.lilyproject.repository.impl.BlobManagerImpl;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.repository.impl.RemoteRepository;
-import org.lilyproject.repository.impl.RemoteTypeManager;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.ZkUtil;
 
 public class AvroRepositoryTest extends AbstractRepositoryTest {
-    private static HBaseRepository serverRepository;
-    private static Server lilyServer;
-    private static TypeManager serverTypeManager;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         avro = true;
         TestHelper.setupLogging();
-        HBASE_PROXY.start();
-        configuration = HBASE_PROXY.getConf();
-        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
-        setupRowLogConfigurationManager(zooKeeper);
-        IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-        serverTypeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
-        DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        BlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        setupWal();
-        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, wal, configuration, hbaseTableFactory, blobManager);
-        
-        AvroConverter serverConverter = new AvroConverter();
-        serverConverter.setRepository(serverRepository);
-        lilyServer = new NettyServer(
-                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(serverRepository, serverConverter),
-                        serverConverter), new InetSocketAddress(0));
-        lilyServer.start();
-        AvroConverter remoteConverter = new AvroConverter();
-        typeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()),
-                remoteConverter, idGenerator, zooKeeper);
-        repository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                (RemoteTypeManager)typeManager, idGenerator, blobManager);
-        remoteConverter.setRepository(repository);
-        ((RemoteTypeManager)typeManager).start();
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
+        repoSetup.setupRemoteAccess();
+        repoSetup.setupMessageQueue(true);
+
+        idGenerator = repoSetup.getIdGenerator();
+        repository = repoSetup.getRemoteRepository();
+        typeManager = repoSetup.getRemoteTypeManager();
+
         setupTypes();
-        setupMessageQueue();
-        setupMessageQueueProcessor();
     }
     
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        if (messageQueueProcessor != null)
-            messageQueueProcessor.stop();
-        Closer.close(typeManager);
-        Closer.close(rowLogConfigurationManager);
-        Closer.close(repository);
-        if (lilyServer != null) {
-            lilyServer.close();
-            lilyServer.join();
-        }
-        Closer.close(serverTypeManager);
-        Closer.close(serverRepository);
-        Closer.close(zooKeeper);
-        HBASE_PROXY.stop();
+        repoSetup.stop();
     }
 }
 

@@ -21,65 +21,28 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
 import java.util.*;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.*;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogShard;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
-import org.lilyproject.testfw.HBaseProxy;
-import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class AbstractBlobStoreTest {
-    protected final static HBaseProxy HBASE_PROXY = new HBaseProxy();
-    protected static RowLog wal;
+    protected static final RepositorySetup repoSetup = new RepositorySetup();
+    static {
+        repoSetup.setBlobLimits(50, 1024);
+    }
+
     protected static Repository repository;
     protected static TypeManager typeManager;
-    protected static Configuration configuration;
-    protected static ZooKeeperItf zooKeeper;
-    protected static RowLogConfigurationManager rowLogConfMgr;
-    protected static HBaseTableFactory hbaseTableFactory;
-    protected static SizeBasedBlobStoreAccessFactory blobStoreAccessFactory;
-    protected static BlobStoreAccess dfsBlobStoreAccess;
-    protected static BlobStoreAccess hbaseBlobStoreAccess;
-    protected static BlobStoreAccess inlineBlobStoreAccess;
+
     protected static Random random = new Random();
     protected static BlobStoreAccessRegistry testBlobStoreAccessRegistry;
     protected static BlobManager blobManager;
 
-    protected static void setupWal() throws Exception {
-        rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
-        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
-        wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
-                RecordCf.WAL_STATE.bytes, rowLogConfMgr);
-        RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
-        wal.registerShard(walShard);
-    }
-
-    protected static BlobManager setupBlobManager() throws IOException, URISyntaxException {
-        dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        hbaseBlobStoreAccess = new HBaseBlobStoreAccess(configuration);
-        inlineBlobStoreAccess = new InlineBlobStoreAccess();
-        blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        blobStoreAccessFactory.addBlobStoreAccess(50, inlineBlobStoreAccess);
-        blobStoreAccessFactory.addBlobStoreAccess(1024, hbaseBlobStoreAccess);
-        return new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-    }
-    
     @Test
     public void testCreate() throws Exception {
         QName fieldName = new QName("test", "testCreate");
@@ -776,7 +739,8 @@ public abstract class AbstractBlobStoreTest {
         random.nextBytes(bytes);
         Blob blob = writeBlob(bytes, "aMediaType", "testCreate");  
         
-        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100, 0);
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
+                blobManager, typeManager, 1000, 100, 0);
         monitor.startMonitoring();
         Thread.sleep(10000);
         monitor.stopMonitoring();
@@ -806,7 +770,8 @@ public abstract class AbstractBlobStoreTest {
         blobs.add(blobReference);
         blobManager.reserveBlobs(blobs);
         
-        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100, 0);
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
+                blobManager, typeManager, 1000, 100, 0);
         monitor.startMonitoring();
         Thread.sleep(10000);
         monitor.stopMonitoring();
@@ -841,13 +806,14 @@ public abstract class AbstractBlobStoreTest {
         record = repository.create(record);
         
         // Faking failure
-        HTableInterface blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(hbaseTableFactory, true);
+        HTableInterface blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(repoSetup.getHbaseTableFactory(), true);
         Put put = new Put(blob.getValue());
         put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, record.getId().toBytes());
         put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, ((FieldTypeImpl)fieldType).getIdBytes());
         blobIncubatorTable.put(put);
         
-        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(zooKeeper, hbaseTableFactory, blobManager, typeManager, 1000, 100, 0);
+        BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
+                blobManager, typeManager, 1000, 100, 0);
         monitor.startMonitoring();
         Thread.sleep(10000);
         monitor.stopMonitoring();

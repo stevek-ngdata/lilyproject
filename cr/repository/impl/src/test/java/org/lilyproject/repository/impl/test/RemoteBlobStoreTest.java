@@ -15,83 +15,36 @@
  */
 package org.lilyproject.repository.impl.test;
 
-
-import java.net.InetSocketAddress;
-
-import org.apache.avro.ipc.NettyServer;
-import org.apache.avro.ipc.Server;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.avro.AvroLily;
-import org.lilyproject.repository.avro.AvroLilyImpl;
-import org.lilyproject.repository.avro.LilySpecificResponder;
 import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.repository.impl.RemoteRepository;
-import org.lilyproject.repository.impl.RemoteTypeManager;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.ZkUtil;
 
 public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
-
-    
-    private static HBaseRepository serverRepository;
-    private static Server lilyServer;
-    private static TypeManager serverTypeManager;
-    
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY.start();
-        IdGeneratorImpl idGenerator = new IdGeneratorImpl();
-        configuration = HBASE_PROXY.getConf();
-        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
-        serverTypeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
-        BlobManager serverBlobManager = setupBlobManager();
-        setupWal();
-        serverRepository = new HBaseRepository(serverTypeManager, idGenerator, wal, configuration, hbaseTableFactory, serverBlobManager);
-     // Create a blobStoreAccessRegistry for testing purposes
-        testBlobStoreAccessRegistry = new BlobStoreAccessRegistry(serverBlobManager);
-        testBlobStoreAccessRegistry.setBlobStoreAccessFactory(blobStoreAccessFactory);
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
+        repoSetup.setupRemoteAccess();
+
+        repository = repoSetup.getRepository();
+        typeManager = repoSetup.getTypeManager();
+        blobManager = repoSetup.getBlobManager();
+
+        // Create a blobStoreAccessRegistry for testing purposes
+        testBlobStoreAccessRegistry = new BlobStoreAccessRegistry(repoSetup.getRemoteBlobManager());
+        testBlobStoreAccessRegistry.setBlobStoreAccessFactory(repoSetup.getRemoteBlobStoreAccessFactory());
         
-        AvroConverter serverConverter = new AvroConverter();
-        serverConverter.setRepository(serverRepository);
-        lilyServer = new NettyServer(
-                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(serverRepository, serverConverter),
-                        serverConverter), new InetSocketAddress(0));
-        lilyServer.start();
-        AvroConverter remoteConverter = new AvroConverter();
-        typeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()),
-                remoteConverter, idGenerator, zooKeeper);
-        blobManager = setupBlobManager();
-        repository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                (RemoteTypeManager)typeManager, idGenerator, blobManager);
-        remoteConverter.setRepository(repository);
-        ((RemoteTypeManager)typeManager).start();
+        blobManager = repoSetup.getRemoteBlobManager();
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(rowLogConfMgr);
-        Closer.close(typeManager);
-        Closer.close(repository);
-        lilyServer.close();
-        lilyServer.join();
-        Closer.close(serverTypeManager);
-        Closer.close(serverRepository);
-        Closer.close(zooKeeper);
-        HBASE_PROXY.stop();
+        repoSetup.stop();
     }
 
     @Before
@@ -102,5 +55,4 @@ public class RemoteBlobStoreTest extends AbstractBlobStoreTest {
     public void tearDown() throws Exception {
     }
 
-    
 }

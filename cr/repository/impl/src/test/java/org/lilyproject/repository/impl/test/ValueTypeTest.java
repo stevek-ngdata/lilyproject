@@ -21,7 +21,6 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Arrays;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -30,85 +29,35 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobStoreAccessFactory;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.HierarchyPath;
-import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.PrimitiveValueType;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.impl.AbstractTypeManager;
-import org.lilyproject.repository.impl.BlobManagerImpl;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.repository.impl.InlineBlobStoreAccess;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogShard;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
-import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.ZkUtil;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class ValueTypeTest {
 
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
-    private static ZooKeeperItf zooKeeper;
-    private static RowLogConfigurationManager rowLogConfMgr;
+    private static final RepositorySetup repoSetup = new RepositorySetup();
 
-    private static AbstractTypeManager typeManager;
-    private static HBaseRepository repository;
-
-    private static IdGeneratorImpl idGenerator;
-    private static HBaseTableFactory hbaseTableFactory;
+    private static TypeManager typeManager;
+    private static Repository repository;
+    private static IdGenerator idGenerator;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY.start();
-        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        idGenerator = new IdGeneratorImpl();
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
-        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
-        InlineBlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
-        BlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(inlineBlobStoreAccess);
-        repository = new HBaseRepository(typeManager, idGenerator, initializeWal(HBASE_PROXY.getConf()), HBASE_PROXY.getConf(), hbaseTableFactory, new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false));
+        // TODO this test relies on all blobs being inline blobs, since it reuses blob values
+        repoSetup.setBlobLimits(Long.MAX_VALUE, -1);
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
+
+        typeManager = repoSetup.getTypeManager();
+        repository = repoSetup.getRepository();
+        idGenerator = repoSetup.getIdGenerator();
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(rowLogConfMgr);
-        Closer.close(typeManager);
-        Closer.close(repository);
-        Closer.close(zooKeeper);
-        HBASE_PROXY.stop();
+        repoSetup.stop();
     }
 
-    private static RowLog initializeWal(Configuration configuration) throws Exception {
-        rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
-        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 0L, 100L, 5000L));
-        RowLog wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                RecordCf.WAL_PAYLOAD.bytes, RecordCf.WAL_STATE.bytes, rowLogConfMgr);
-        // Work with only one shard for now
-        RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
-        wal.registerShard(walShard);
-        return wal;
-    }
-    
     @Before
     public void setUp() throws Exception {
     }

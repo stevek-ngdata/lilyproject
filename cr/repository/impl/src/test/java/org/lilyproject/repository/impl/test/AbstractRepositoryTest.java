@@ -28,11 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.zookeeper.KeeperException;
 import org.easymock.IMocksControl;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.FieldNotFoundException;
@@ -51,29 +48,18 @@ import org.lilyproject.repository.api.ResponseStatus;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.VersionNotFoundException;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.rowlog.api.*;
-import org.lilyproject.rowlog.api.RowLogSubscription.Type;
-import org.lilyproject.rowlog.impl.MessageQueueFeeder;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
-import org.lilyproject.testfw.HBaseProxy;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.repo.VersionTag;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class AbstractRepositoryTest {
 
-    protected static final HBaseProxy HBASE_PROXY = new HBaseProxy();
-    protected static RowLog messageQueue;
-    protected static IdGenerator idGenerator = new IdGeneratorImpl();
+    protected static final RepositorySetup repoSetup = new RepositorySetup();
+    protected static boolean avro = false;
+
+    protected static IdGenerator idGenerator;
     protected static TypeManager typeManager;
     protected static Repository repository;
     protected static FieldType fieldType1;
+
     private static FieldType fieldType1B;
     private static FieldType fieldType2;
     private static FieldType fieldType3;
@@ -85,13 +71,6 @@ public abstract class AbstractRepositoryTest {
     private static RecordType recordType1B;
     private static RecordType recordType2;
     private static RecordType recordType3;
-    protected static RowLogConfigurationManagerImpl rowLogConfigurationManager;
-    protected static RowLogProcessorImpl messageQueueProcessor;
-    protected static Configuration configuration;
-    protected static RowLog wal;
-    protected static ZooKeeperItf zooKeeper;
-    protected static boolean avro = false;
-    protected static HBaseTableFactory hbaseTableFactory;
 
     @Before
     public void setUp() throws Exception {
@@ -104,14 +83,6 @@ public abstract class AbstractRepositoryTest {
     protected static void setupTypes() throws Exception {
         setupFieldTypes();
         setupRecordTypes();
-    }
-    
-    protected static void setupWal() throws Exception {
-        rowLogConfigurationManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
-        wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
-                RecordCf.WAL_STATE.bytes, rowLogConfigurationManager);
-        RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
-        wal.registerShard(walShard);
     }
 
     private static void setupFieldTypes() throws Exception {
@@ -162,28 +133,6 @@ public abstract class AbstractRepositoryTest {
         recordType3 = typeManager.updateRecordType(recordType3);
     }
 
-    protected static void setupRowLogConfigurationManager(ZooKeeperItf zooKeeper) throws Exception {
-        rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
-    }
-    
-    protected static void setupMessageQueue() throws Exception {
-        
-        rowLogConfigurationManager.addRowLog("MQ", new RowLogConfig(10000L, false, true, 100L, 0L, 5000L));
-        rowLogConfigurationManager.addSubscription("WAL", "MQFeeder", Type.VM, 3, 1);
-        messageQueue = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.MQ_PAYLOAD.bytes,
-                RecordCf.MQ_STATE.bytes, rowLogConfigurationManager);
-        messageQueue.registerShard(new RowLogShardImpl("MQS1", configuration, messageQueue, 100));
-
-        RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;
-        listenerClassMapping.put("MQFeeder", new MessageQueueFeeder(messageQueue));
-
-        waitForSubscription(messageQueue, "MQFeeder");
-    }
-
-    protected static void setupMessageQueueProcessor() throws RowLogException, KeeperException, InterruptedException {
-        messageQueueProcessor = new RowLogProcessorImpl(messageQueue, rowLogConfigurationManager);
-        messageQueueProcessor.start();
-    }
 
     @Test
     public void testRecordCreateWithoutRecordType() throws Exception {
@@ -1406,22 +1355,5 @@ public abstract class AbstractRepositoryTest {
         record = repository.update(record, true, true);
         assertEquals(recordTypeA.getName(), record.getRecordTypeName(Scope.VERSIONED_MUTABLE));
         assertEquals(recordTypeA.getVersion(), record.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
-    }
-
-    public static void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
-        boolean subscriptionKnown = false;
-        int timeOut = 10000;
-        long waitUntil = System.currentTimeMillis() + 10000;
-        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
-            for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
-                if (subscriptionId.equals(subscription.getId())) {
-                    subscriptionKnown = true;
-                    break;
-                }
-            }
-            Thread.sleep(10);
-        }
-        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
-                subscriptionKnown);
     }
 }

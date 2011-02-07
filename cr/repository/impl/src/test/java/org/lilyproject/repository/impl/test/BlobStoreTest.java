@@ -20,42 +20,29 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.ZkUtil;
 
 public class BlobStoreTest extends AbstractBlobStoreTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY.start();
-        IdGenerator idGenerator = new IdGeneratorImpl();
-        configuration = HBASE_PROXY.getConf();
-        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
-        hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
-        typeManager = new HBaseTypeManager(idGenerator, configuration, zooKeeper, hbaseTableFactory);
-        setupWal();
-        blobManager = setupBlobManager();
-        repository = new HBaseRepository(typeManager, idGenerator, wal, configuration, hbaseTableFactory, blobManager);
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
+
+        repository = repoSetup.getRepository();
+        typeManager = repoSetup.getTypeManager();
+        blobManager = repoSetup.getBlobManager();
+
         // Create a blobStoreAccessRegistry for testing purposes
         testBlobStoreAccessRegistry = new BlobStoreAccessRegistry(blobManager);
-        testBlobStoreAccessRegistry.setBlobStoreAccessFactory(blobStoreAccessFactory);
+        testBlobStoreAccessRegistry.setBlobStoreAccessFactory(repoSetup.getBlobStoreAccessFactory());
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(rowLogConfMgr);
-        Closer.close(typeManager);
-        Closer.close(repository);
-        Closer.close(zooKeeper);
-        HBASE_PROXY.stop();
+        repoSetup.stop();
     }
 
     @Before
