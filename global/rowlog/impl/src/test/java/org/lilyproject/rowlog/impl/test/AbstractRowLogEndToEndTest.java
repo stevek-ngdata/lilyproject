@@ -119,7 +119,6 @@ public abstract class AbstractRowLogEndToEndTest {
         shard.markProblematic(message, subscriptionId);
         shard.putMessage(message);
 
-        Assert.assertFalse(shard.next(subscriptionId).isEmpty());
         processor.start();
         Thread.sleep(10000);
         processor.stop();

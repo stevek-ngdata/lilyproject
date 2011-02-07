@@ -81,15 +81,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
                         .newCachedThreadPool());
             }
             bootstrap = new ClientBootstrap(channelFactory);
-            bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-                public ChannelPipeline getPipeline() {
-                    ChannelPipeline pipeline = Channels.pipeline();
-                    pipeline.addLast("resultDecoder", new ResultDecoder());
-                    pipeline.addLast("resultHandler", new ResultHandler());
-                    pipeline.addLast("messageEncoder", new MessageEncoder());
-                    return pipeline;
-                }
-            });
+            bootstrap.setPipelineFactory(new ChannelPipelineFactoryImplementation(this));
             bootstrap.setOption("tcpNoDelay", true);
             bootstrap.setOption("keepAlive", true);
         }
@@ -107,7 +99,26 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         }
     }
 
-    private class ResultDecoder extends OneToOneDecoder {
+    private static final class ChannelPipelineFactoryImplementation implements ChannelPipelineFactory {
+        private static final ResultDecoder RESULT_DECODER = new ResultDecoder();
+        private static final MessageEncoder MESSAGE_ENCODER = new MessageEncoder();
+        private final RemoteListenersSubscriptionHandler remoteListenersSubscriptionHandler;
+
+        public ChannelPipelineFactoryImplementation(
+                RemoteListenersSubscriptionHandler remoteListenersSubscriptionHandler) {
+                    this.remoteListenersSubscriptionHandler = remoteListenersSubscriptionHandler;
+        }
+
+        public ChannelPipeline getPipeline() {
+            ChannelPipeline pipeline = Channels.pipeline();
+            pipeline.addLast("resultDecoder", RESULT_DECODER);
+            pipeline.addLast("resultHandler", remoteListenersSubscriptionHandler.new ResultHandler());
+            pipeline.addLast("messageEncoder", MESSAGE_ENCODER);
+            return pipeline;
+        }
+    }
+
+    private static class ResultDecoder extends OneToOneDecoder {
         @Override
         protected Boolean decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
             ChannelBufferInputStream inputStream = new ChannelBufferInputStream((ChannelBuffer) msg);
@@ -133,7 +144,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         }
     }
 
-    private class MessageEncoder extends OneToOneEncoder {
+    private static class MessageEncoder extends OneToOneEncoder {
         @Override
         protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
             ChannelBufferOutputStream outputStream = null;
