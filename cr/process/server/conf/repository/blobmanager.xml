@@ -2,10 +2,17 @@
 <blobmanager  xmlns:conf="http://kauriproject.org/configuration"
          conf:inherit="deep">
 
-  <!--  BlobIncubatorMonitor : Monitors the BlobIncubatorTable and cleans up any unused (stale) blobs.
-        minimalAge : The minimal age (in seconds) an unused blob needs to have before it gets deleted 
-        monitorDelay : The minimal time (in seconds) between the individual blob checks executed by the BlobIncubatorMonitor.
+  <!--  BlobIncubatorMonitor : Monitors the BlobIncubatorTable and cleans up any unused (stale) blobs. These are
+                               blobs which were uploaded, but not actually used in records.
+
+        minimalAge : The minimal age (in seconds) an unused blob needs to have before it gets deleted
+
+        monitorDelay : The time (in milliseconds) to pause between individual blob checks.
                        This is used to control the load the BlobIncubatorMonitor generates on the system.
-        runDelay : The minimal time (in seconds) between two runs of the monitor. -->
-  <blobIncubatorMonitor minimalAge="3600" monitorDelay="60" runDelay="1800"/>
+                       This should be a small value, e.g. if you take 20ms this means at most 50 expired
+                       blobs can be handled per second (assuming a block check takes 0ms).
+
+        runDelay : The minimal time (in seconds) between two runs of the monitor.
+   -->
+  <blobIncubatorMonitor minimalAge="3600" monitorDelay="20" runDelay="600"/>
 </blobmanager>

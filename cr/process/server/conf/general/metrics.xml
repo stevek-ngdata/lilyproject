@@ -56,6 +56,13 @@
     <attribute name="linkIndexUpdater.servers" value="localhost:8649"/>
     -->
 
+    <attribute name="blobIncubator.class" value="org.apache.hadoop.metrics.spi.NullContextWithUpdateThread"/>
+    <attribute name="blobIncubator.period" value="15"/>
+    <!--
+    <attribute name="blobIncubator.class" value="org.apache.hadoop.metrics.ganglia.GangliaContext31"/>
+    <attribute name="blobIncubator.servers" value="localhost:8649"/>
+    -->
+
     <!--
     <attribute name="jvm.class" value="org.apache.hadoop.metrics.ganglia.GangliaContext31"/>
     <attribute name="jvm.period" value="15"/>

@@ -33,9 +33,9 @@ public class BlobIncubatorMonitorSetup {
 
     @PostConstruct
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
-        long minimalAge = 1000 * blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("minimalAge", 3600L);
-        long monitorDelay = 1000 * blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("monitorDelay", 60L);
-        long runDelay = 1000 * blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("runDelay", 1800L);
+        long minimalAge = 1000 * blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("minimalAge");
+        long monitorDelay = blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("monitorDelay");
+        long runDelay = 1000 * blobManagerConf.getChild("blobIncubatorMonitor").getAttributeAsLong("runDelay");
         blobIncubatorMonitor = new BlobIncubatorMonitor(zookeeper, hbaseTableFactory, blobManager, typeManager, minimalAge, monitorDelay, runDelay);
         blobIncubatorMonitor.start();
     }

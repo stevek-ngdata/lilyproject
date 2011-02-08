@@ -25,6 +25,7 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorColumn;
 
 public class BlobIncubatorMonitor {
     private Log log = LogFactory.getLog(getClass());
+    private BlobIncubatorMetrics metrics = new BlobIncubatorMetrics();
     private final ZooKeeperItf zk;
     private LeaderElection leaderElection;
     private final long minimalAge;
@@ -138,6 +139,8 @@ public class BlobIncubatorMonitor {
         }
 
         public void monitor() throws IOException, InterruptedException {
+            log.debug("Start run blob incubator monitor");
+            long monitorBegin = System.currentTimeMillis();
             Scan scan = new Scan();
             scan.addFamily(BlobIncubatorCf.REF.bytes);
             long maxStamp = System.currentTimeMillis() - minimalAge;
@@ -149,13 +152,23 @@ public class BlobIncubatorMonitor {
                    break;
                 }
                 for (Result result : results) {
+                    long before = System.currentTimeMillis();
                     checkResult(result);
+                    // usually these times will be very short, a bit too short to measure with ms precision, but
+                    // this is mainly to observe when it would take long so that is fine
+                    metrics.checkDuration.inc(System.currentTimeMillis() - before);
+
                     if (stopRequested) {
                         break;
                     }
-                    Thread.sleep(monitorDelay);
+
+                    if (monitorDelay > 0) {
+                        Thread.sleep(monitorDelay);
+                    }
                 }
             }
+            metrics.runDuration.inc(System.currentTimeMillis() - monitorBegin);
+            log.debug("Stop run blob incubator monitor");
         }
 
         private void checkResult(Result result) throws IOException, InterruptedException {
