@@ -38,10 +38,6 @@ public class RowLocker {
     }
     
     public RowLock lockRow(byte[] rowKey) throws IOException {
-        return lockRow(rowKey, null);
-    }
-    
-    public RowLock lockRow(byte[] rowKey, org.apache.hadoop.hbase.client.RowLock hbaseRowLock) throws IOException {
         long now = System.currentTimeMillis();
         Get get = new Get(rowKey);
         get.addColumn(family, qualifier);
@@ -57,7 +53,7 @@ public class RowLocker {
             }
         }
         if ((previousTimestamp == -1) || (previousTimestamp + timeout  < now)) {
-            Put put = new Put(rowKey, hbaseRowLock);
+            Put put = new Put(rowKey);
             RowLock rowLock = RowLock.createRowLock(rowKey);
             put.add(family, qualifier, 1L, rowLock.getPermit());
             if (table.checkAndPut(rowKey, family, qualifier, previousPermit, put)) {

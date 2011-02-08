@@ -32,22 +32,7 @@ import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.lilyproject.repository.api.FieldNotFoundException;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdRecord;
-import org.lilyproject.repository.api.InvalidRecordException;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.ResponseStatus;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.VersionTag;
 
 public abstract class AbstractRepositoryTest {
@@ -182,6 +167,26 @@ public abstract class AbstractRepositoryTest {
         assertEquals(Long.valueOf(1), createdRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
 
         assertEquals(createdRecord, repository.read(createdRecord.getId()));
+        control.verify();
+    }
+    
+    @Test
+    public void testCreateTwice() throws Exception {
+        IMocksControl control = createControl();
+        control.replay();
+        Record createdRecord = createDefaultRecord();
+
+        Record record = repository.newRecord(createdRecord.getId());
+        record.setRecordType(recordType1.getName(), recordType1.getVersion());
+        record.setField(fieldType1.getName(), "value1");
+        record.setField(fieldType2.getName(), 123);
+        record.setField(fieldType3.getName(), true);
+        try {
+            repository.create(record);
+            fail();
+        } catch (RecordExistsException expected) {
+        }
+        
         control.verify();
     }
     

@@ -191,9 +191,15 @@ public class HBaseRepository extends BaseRepository {
                 // If the record existed it would have been deleted.
                 // The version numbering continues from where it has been deleted.
                 Get get = new Get(rowId);
+                get.addColumn(systemColumnFamily, RecordColumn.DELETED.bytes);
                 get.addColumn(systemColumnFamily, RecordColumn.VERSION.bytes);
                 Result result = recordTable.get(get);
                 if (!result.isEmpty()) {
+                    // If the record existed it should have been deleted
+                    byte[] recordDeleted = result.getValue(systemColumnFamily, RecordColumn.DELETED.bytes);
+                    if (recordDeleted != null && !Bytes.toBoolean(recordDeleted)) {
+                        throw new RecordExistsException(recordId);
+                    }
                     byte[] oldVersion = result.getValue(systemColumnFamily, RecordColumn.VERSION.bytes);
                     if (oldVersion != null) {
                         version = Bytes.toLong(oldVersion) + 1;
