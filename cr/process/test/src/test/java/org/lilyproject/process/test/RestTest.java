@@ -882,7 +882,7 @@ public class RestTest {
     }
 
     private void printErrorResponse(Response response) throws IOException {
-        if (response.getEntity().getMediaType().equals(MediaType.APPLICATION_JSON)) {
+        if (response.getEntity() != null && MediaType.APPLICATION_JSON.equals(response.getEntity().getMediaType())) {
             JsonNode json = readJson(response.getEntity());
             System.err.println("Error:");
             System.err.println("  Description: " +
