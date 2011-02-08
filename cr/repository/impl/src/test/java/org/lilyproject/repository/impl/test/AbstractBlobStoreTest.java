@@ -847,6 +847,55 @@ public abstract class AbstractBlobStoreTest {
         }
     }
 
+    @Test
+    public void testInvalidReadRequests() throws Exception {
+        ValueType stringType = typeManager.getValueType("STRING", false, false);
+        ValueType blobType = typeManager.getValueType("BLOB", false, false);
+
+        FieldType nonBlobField = typeManager.newFieldType(stringType, new QName("test", "NonBlobField"), Scope.VERSIONED);
+        nonBlobField = typeManager.createFieldType(nonBlobField);
+
+        FieldType absentField = typeManager.newFieldType(blobType, new QName("test", "AbsentField"), Scope.VERSIONED);
+        absentField = typeManager.createFieldType(absentField);
+
+        RecordType rt = typeManager.newRecordType(new QName("test", "NoBlobsRT"));
+        rt.addFieldTypeEntry(nonBlobField.getId(), false);
+        rt = typeManager.createRecordType(rt);
+
+        Record record = repository.newRecord();
+        record.setRecordType(rt.getName());
+        record.setField(nonBlobField.getName(), "This is not a blob");
+        record = repository.create(record);
+
+        try {
+            repository.getInputStream(record.getId(), record.getVersion(), nonBlobField.getName(), null, null);
+            fail("Expected exception");
+        } catch (BlobException e) {
+            // ok
+        }
+
+        try {
+            repository.getInputStream(record.getId(), record.getVersion(), absentField.getName(), null, null);
+            fail("Expected exception");
+        } catch (FieldNotFoundException e) {
+            // ok
+        }
+
+        try {
+            repository.getInputStream(record.getId(), record.getVersion(), new QName("test", "nonExistingFieldType"), null, null);
+            fail("Expected exception");
+        } catch (FieldTypeNotFoundException e) {
+            // ok
+        }
+
+        try {
+            repository.getInputStream(record.getId(), record.getVersion(), null, null, null);
+            fail("Expected exception");
+        } catch (IllegalArgumentException e) {
+            // ok
+        }
+    }
+
     private Blob writeBlob(byte[] bytes, String mediaType, String name) throws BlobException, InterruptedException,
             IOException {
         Blob blob = new Blob(mediaType, (long) bytes.length, name);
@@ -856,11 +905,13 @@ public abstract class AbstractBlobStoreTest {
         return blob;
     }
     
-    private byte[] readBlob(RecordId recordId, QName fieldName, long size) throws BlobNotFoundException, BlobException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, InterruptedException, IOException {
+    private byte[] readBlob(RecordId recordId, QName fieldName, long size) throws RepositoryException,
+            InterruptedException, IOException {
         return readBlob(recordId, null, fieldName, null, null, size);
     }
     
-    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex, long size) throws BlobNotFoundException, BlobException, InterruptedException, IOException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException {
+    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
+            Integer hierarchyIndex, long size) throws RepositoryException, InterruptedException, IOException {
         InputStream inputStream = repository.getInputStream(recordId, version, fieldName, multivalueIndex, hierarchyIndex);
         byte[] readBytes = new byte[(int)size];
         inputStream.read(readBytes);

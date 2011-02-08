@@ -57,6 +57,9 @@ public class BlobManagerImpl implements BlobManager {
     
     public BlobInputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex,
             Integer hierarchyIndex, FieldType fieldType) throws BlobNotFoundException, BlobException {
+        if (!fieldType.getValueType().getPrimitive().getName().equals("BLOB")) {
+            throw new BlobException("Cannot read a blob from a non-blob field type: " + fieldType.getName());
+        }
         Blob blob = getBlobFromRecord(record, fieldName, multivalueIndex, hierarchyIndex, fieldType);
         return registry.getInputStream(blob);
 
