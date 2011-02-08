@@ -11,12 +11,15 @@ import org.lilyproject.repository.avro.AvroLily;
 import org.lilyproject.repository.avro.AvroLilyImpl;
 import org.lilyproject.repository.avro.LilySpecificResponder;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -95,9 +98,10 @@ public class RepositorySetup {
 
         if (withWal) {
             setupRowLogConfigurationManager();
+            RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.SYSTEM.bytes, RecordColumn.LOCK.bytes, 10000);
             rowLogConfManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
             wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.WAL_PAYLOAD.bytes,
-                    LilyHBaseSchema.RecordCf.WAL_STATE.bytes, rowLogConfManager);
+                    LilyHBaseSchema.RecordCf.WAL_STATE.bytes, rowLogConfManager, rowLocker);
             RowLogShard walShard = new RowLogShardImpl("WS1", hadoopConf, wal, 100);
             wal.registerShard(walShard);
         }
@@ -170,7 +174,7 @@ public class RepositorySetup {
         rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 3, 1);
 
         mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.MQ_PAYLOAD.bytes,
-                LilyHBaseSchema.RecordCf.MQ_STATE.bytes, rowLogConfManager);
+                LilyHBaseSchema.RecordCf.MQ_STATE.bytes, rowLogConfManager, null);
         mq.registerShard(new RowLogShardImpl("MQS1", hadoopConf, mq, 100));
 
         RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;

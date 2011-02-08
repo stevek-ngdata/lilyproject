@@ -86,7 +86,7 @@ public class RowLogTest {
 
     @Before
     public void setUp() throws Exception {
-        rowLog = new RowLogImpl(rowLogId, rowTable, payloadColumnFamily, rowLogColumnFamily, configurationManager);
+        rowLog = new RowLogImpl(rowLogId, rowTable, payloadColumnFamily, rowLogColumnFamily, configurationManager, null);
         shard = control.createMock(RowLogShard.class);
         shard.getId();
         expectLastCall().andReturn("ShardId").anyTimes();
@@ -182,7 +182,7 @@ public class RowLogTest {
         rowLog.registerShard(shard);
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
 
-        byte[] lock = rowLog.lockMessage(message, subscriptionId1);
+        Object lock = rowLog.lockMessage(message, subscriptionId1);
         rowLog.messageDone(message, subscriptionId1, lock);
         assertFalse(rowLog.isMessageLocked(message, subscriptionId1));
         control.verify();
@@ -210,11 +210,11 @@ public class RowLogTest {
         rowLog.registerShard(shard);
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
         
-        byte[] lock = rowLog.lockMessage(message, subscriptionId1);
+        Object lock = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock);
         assertTrue(rowLog.unlockMessage(message, subscriptionId1, true, lock));
         assertFalse(rowLog.isMessageLocked(message, subscriptionId1));
-        byte[] lock2 = rowLog.lockMessage(message, subscriptionId1);
+        Object lock2 = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock2);
         control.verify();
         //Cleanup 
@@ -231,11 +231,11 @@ public class RowLogTest {
         rowLog.registerShard(shard);
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row2"), null, null, null);
         
-        byte[] lock = rowLog.lockMessage(message, subscriptionId1);
+        Object lock = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock);
         Thread.sleep(10L);
         assertFalse(rowLog.isMessageLocked(message, subscriptionId1));
-        byte[] lock2 = rowLog.lockMessage(message, subscriptionId1);
+        Object lock2 = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock2);
         
         assertFalse(rowLog.unlockMessage(message, subscriptionId1, true, lock));
@@ -265,13 +265,13 @@ public class RowLogTest {
         byte[] rowKey = Bytes.toBytes("row2");
         RowLogMessage message = rowLog.putMessage(rowKey, null, null, null);
         
-        byte[] lock = rowLog.lockMessage(message, subscriptionId1);
+        Object lock = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock);
         assertFalse(rowLog.isMessageLocked(message, subscriptionId2));
         assertTrue(rowLog.unlockMessage(message, subscriptionId1, true, lock));
         assertFalse(rowLog.isMessageLocked(message, subscriptionId1));
         
-        byte[] lock2 = rowLog.lockMessage(message, subscriptionId2);
+        Object lock2 = rowLog.lockMessage(message, subscriptionId2);
         assertNotNull(lock2);
         rowLog.messageDone(message, subscriptionId2, lock2);
         assertFalse(rowLog.isMessageLocked(message, subscriptionId2));
@@ -316,7 +316,7 @@ public class RowLogTest {
         RowLogMessage message1 = rowLog.putMessage(rowKey, null, null, null);
         RowLogMessage message2 = rowLog.putMessage(rowKey, null, null, null);
 
-        byte[] lock = rowLog.lockMessage(message1, subscriptionId1);
+        Object lock = rowLog.lockMessage(message1, subscriptionId1);
         rowLog.messageDone(message1, subscriptionId1, lock);
         lock = rowLog.lockMessage(message2, subscriptionId3);
         rowLog.messageDone(message2, subscriptionId3, lock);

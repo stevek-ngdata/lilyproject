@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.lock.test;
+package org.lilyproject.rowlock.test;
 
 
 import java.io.IOException;
@@ -33,8 +33,8 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.impl.lock.RowLock;
-import org.lilyproject.repository.impl.lock.RowLocker;
+import org.lilyproject.rowlock.RowLock;
+import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
 

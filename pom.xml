@@ -76,6 +76,7 @@
     <module>global/hbaseindex</module>
     <module>global/hbaseindex-perftest</module>
     <module>global/rowlog</module>
+    <module>global/rowlock</module>
     <module>global/util</module>
     <module>global/test-fw</module>
     <module>global/hbase-util</module>
@@ -184,6 +185,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rowlog-impl</artifactId>
+        <version>0.3-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-rowlock</artifactId>
         <version>0.3-SNAPSHOT</version>
       </dependency>
       <dependency>

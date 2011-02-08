@@ -47,15 +47,15 @@ public class DummyRowLog implements RowLog {
         throw new RuntimeException(failMessage);
     }
 
-    public boolean processMessage(RowLogMessage message) throws RowLogException {
+    public boolean processMessage(RowLogMessage message, Object rowLock) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    public byte[] lockMessage(RowLogMessage message, String subscriptionId) throws RowLogException {
+    public Object lockMessage(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    public boolean unlockMessage(RowLogMessage message, String subscriptionId, boolean realTry, byte[] lock) throws RowLogException {
+    public boolean unlockMessage(RowLogMessage message, String subscriptionId, boolean realTry, Object lock) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
@@ -63,7 +63,7 @@ public class DummyRowLog implements RowLog {
         throw new RuntimeException(failMessage);
     }
 
-    public boolean messageDone(RowLogMessage message, String subscriptionId, byte[] lock) throws RowLogException {
+    public boolean messageDone(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 

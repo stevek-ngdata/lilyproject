@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.kauriproject.conf.Conf;
+import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
@@ -41,6 +42,7 @@ import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -105,12 +107,13 @@ public class RowLogSetup {
         }
 
         messageQueue = new RowLogImpl("mq", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.MQ_PAYLOAD.bytes,
-                RecordCf.MQ_STATE.bytes, confMgr);
+                RecordCf.MQ_STATE.bytes, confMgr, null);
         RowLogShard mqShard = new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100, hbaseTableFactory);
         messageQueue.registerShard(mqShard);
 
+        RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.SYSTEM.bytes, RecordColumn.LOCK.bytes, 10000);
         writeAheadLog = new RowLogImpl("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
-                RecordCf.WAL_STATE.bytes, confMgr);
+                RecordCf.WAL_STATE.bytes, confMgr, rowLocker);
         RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);
         writeAheadLog.registerShard(walShard);
 

@@ -140,17 +140,19 @@ public interface Repository extends Closeable {
      *             TBD
      * @throws FieldTypeNotFoundException
      * @throws RecordTypeNotFoundException
+     * @throws WalProcessingException 
      */
     Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RecordNotFoundException,
             InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-            VersionNotFoundException, RecordLockedException, TypeException, InterruptedException;
+            VersionNotFoundException, RecordLockedException, TypeException, InterruptedException, WalProcessingException;
     
     /**
      * Shortcut for update(record, false, true)
+     * @throws WalProcessingException 
      */
     Record update(Record record) throws RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
-            RecordLockedException, InterruptedException;
+            RecordLockedException, InterruptedException, WalProcessingException;
 
     /**
      * Creates or updates a record, depending on whether the record already exists.
@@ -159,7 +161,7 @@ public interface Repository extends Closeable {
      */
     Record createOrUpdate(Record record) throws FieldTypeNotFoundException, RecordException,
             RecordTypeNotFoundException, InvalidRecordException, TypeException,
-            VersionNotFoundException, RecordLockedException, InterruptedException;
+            VersionNotFoundException, RecordLockedException, InterruptedException, WalProcessingException;
 
     /**
      * Creates or updates a record, depending on whether the record already exists.
@@ -174,7 +176,7 @@ public interface Repository extends Closeable {
      */
     Record createOrUpdate(Record record, boolean useLatestRecordType) throws FieldTypeNotFoundException,
             RecordException, RecordTypeNotFoundException, InvalidRecordException, TypeException,
-            VersionNotFoundException, RecordLockedException, InterruptedException;
+            VersionNotFoundException, RecordLockedException, InterruptedException, WalProcessingException;
 
     /**
      * Reads a record fully. All the fields of the record will be read.

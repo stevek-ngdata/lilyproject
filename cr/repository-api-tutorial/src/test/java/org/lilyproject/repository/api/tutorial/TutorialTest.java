@@ -49,6 +49,7 @@ import org.lilyproject.repository.impl.HBaseRepository;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
@@ -62,6 +63,7 @@ import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.PrintUtil;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
@@ -111,9 +113,10 @@ public class TutorialTest {
     
     protected static void setupWal() throws Exception {
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zooKeeper);
+        RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.SYSTEM.bytes, RecordColumn.LOCK.bytes, 10000);
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 0L, 5000L, 5000L));
         wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
-                RecordCf.WAL_STATE.bytes, rowLogConfMgr);
+                RecordCf.WAL_STATE.bytes, rowLogConfMgr, rowLocker);
         RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
         wal.registerShard(walShard);
     }

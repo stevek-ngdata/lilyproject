@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.lock;
+package org.lilyproject.rowlock;
 
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class RowLocker {
@@ -92,5 +89,11 @@ public class RowLocker {
         if (!Bytes.equals(put.getRow(), lock.getRowKey()))
                 return false;
         return table.checkAndPut(lock.getRowKey(), family, qualifier, lock.getPermit(), put);
+    }
+    
+    public boolean delete(Delete delete, RowLock lock) throws IOException {
+        if (!Bytes.equals(delete.getRow(), lock.getRowKey()))
+                return false;
+        return table.checkAndDelete(lock.getRowKey(), family, qualifier, lock.getPermit(), delete);
     }
 }

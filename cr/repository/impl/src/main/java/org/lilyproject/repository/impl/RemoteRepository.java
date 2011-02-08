@@ -26,37 +26,8 @@ import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.IORecordException;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdRecord;
-import org.lilyproject.repository.api.InvalidRecordException;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordException;
-import org.lilyproject.repository.api.RecordExistsException;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordLockedException;
-import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.VersionNotFoundException;
-import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.avro.AvroFieldTypeNotFoundException;
-import org.lilyproject.repository.avro.AvroGenericException;
-import org.lilyproject.repository.avro.AvroInvalidRecordException;
-import org.lilyproject.repository.avro.AvroLily;
-import org.lilyproject.repository.avro.AvroQName;
-import org.lilyproject.repository.avro.AvroRecordException;
-import org.lilyproject.repository.avro.AvroRecordExistsException;
-import org.lilyproject.repository.avro.AvroRecordLockedException;
-import org.lilyproject.repository.avro.AvroRecordNotFoundException;
-import org.lilyproject.repository.avro.AvroRecordTypeNotFoundException;
-import org.lilyproject.repository.avro.AvroRepositoryException;
-import org.lilyproject.repository.avro.AvroTypeException;
-import org.lilyproject.repository.avro.AvroVersionNotFoundException;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.avro.*;
 import org.lilyproject.util.io.Closer;
 
 // ATTENTION: when adding new methods, do not forget to add handling for UndeclaredThrowableException! This is
@@ -221,13 +192,13 @@ public class RemoteRepository extends BaseRepository {
     
     public Record update(Record record) throws RecordNotFoundException, InvalidRecordException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordLockedException, RecordException,
-            TypeException, VersionNotFoundException {
+            TypeException, VersionNotFoundException, WalProcessingException {
         return update(record, false, true);
     }
 
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws
             RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RecordLockedException, VersionNotFoundException, RecordException, TypeException {
+            RecordLockedException, VersionNotFoundException, RecordException, TypeException, WalProcessingException {
         try {
             return converter.convert(lilyProxy.update(converter.convert(record), updateVersion, useLatestRecordType));
         } catch (AvroRecordNotFoundException e) {
@@ -245,6 +216,8 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroRecordException e) {
             throw converter.convert(e);
         } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroWalProcessingException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);

@@ -109,17 +109,22 @@ public interface RowLog {
      * tries has been reached for a consumer, the message is marked as problematic for that consumer. A {@link RowLogProcessor}
      * will no longer pick up the message for that consumer. 
      * @param message a {@link RowLogMessage} to be processed
+     * @param if the row related to this message was locked with a rowlock, this lock should be given
      * @return true if all consumers have processed the {@link RowLogMessage} successfully
      * @throws RowLogException
      */
-    boolean processMessage(RowLogMessage message) throws RowLogException, InterruptedException;
+    boolean processMessage(RowLogMessage message, Object lock) throws RowLogException, InterruptedException;
     
     /**
      * Locks a {@link RowLogMessage} for a certain subscription. This lock can be used if a subscription wants
      * to indicate that it is busy processing a message. 
      * The lock can be released either by calling {@link #unlockMessage(RowLogMessage, String, byte[])}, 
      * {@link #messageDone(RowLogMessage, String, byte[])}, or when the lock's timeout expires.
-     * This lock only locks the message for a certain subscription, other subscriptions can still process the message in parallel.
+     * <p>If a {@link RowLocker} was given to the constructor of the Rowlog, this will lock the whole row this message
+     * refers to using this {@link RowLocker}, avoiding other updates to happen to the row or other messages for this
+     * row to be processed.
+     * If no {@link RowLocker} was given, this lock only locks the message for a certain subscription.
+     * Other subscriptions can still process the message in parallel.
      * <p>This call increases the try count of the message for this subscription.
      * @param message the {@link RowLogMessage} for which to take the lock
      * @param subscriptionId the id of the subscription for which to lock the message
@@ -127,7 +132,7 @@ public interface RowLog {
      * it was locked by another instance of the same subscription
      * @throws RowLogException
      */
-    byte[] lockMessage(RowLogMessage message, String subscriptionId) throws RowLogException;
+    Object lockMessage(RowLogMessage message, String subscriptionId) throws RowLogException;
 
     /**
      * Unlocks a {@link RowLogMessage} for a certain subscription 
@@ -141,7 +146,7 @@ public interface RowLog {
      * given lock does not match the lock that is currently on the message 
      * @throws RowLogException
      */
-    boolean unlockMessage(RowLogMessage message, String subscriptionId, boolean realTry, byte[] lock) throws RowLogException;
+    boolean unlockMessage(RowLogMessage message, String subscriptionId, boolean realTry, Object lock) throws RowLogException;
     
     /**
      * Checks if a {@link RowLogMessage} is locked for a certain subscription
@@ -165,7 +170,7 @@ public interface RowLog {
      * @return true if the message has been successfully put to done
      * @throws RowLogException
      */
-    boolean messageDone(RowLogMessage message, String subscriptionId, byte[] lock) throws RowLogException;
+    boolean messageDone(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException;
     
     /**
      * Checks if the message is done for a certain subscription.

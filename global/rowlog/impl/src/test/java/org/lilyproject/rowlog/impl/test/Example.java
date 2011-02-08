@@ -62,7 +62,7 @@ public class Example {
 
         // Create a RowLog instance
         configurationManager.addRowLog("Example", new RowLogConfig(1000L, false, true, 100L, 0L, 5000L));
-        RowLog rowLog = new RowLogImpl("Example", rowTable, PAYLOAD_COLUMN_FAMILY, EXECUTIONSTATE_COLUMN_FAMILY, configurationManager);
+        RowLog rowLog = new RowLogImpl("Example", rowTable, PAYLOAD_COLUMN_FAMILY, EXECUTIONSTATE_COLUMN_FAMILY, configurationManager, null);
         
         // Create a shard and register it with the rowlog
         RowLogShard shard = new RowLogShardImpl("AShard", configuration, rowLog, 100);
@@ -85,7 +85,7 @@ public class Example {
         RowLogMessage message = rowLog.putMessage(row1, Bytes.toBytes("SomeInfo"), Bytes.toBytes("Updated:AUserField"), put);
         rowTable.put(put);
         // Explicitly request the RowLog to process the message
-        rowLog.processMessage(message);
+        rowLog.processMessage(message, null);
         
         // The MQ use case
         

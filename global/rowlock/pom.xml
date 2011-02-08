@@ -20,31 +20,17 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-rowlog-impl</artifactId>
-  <name>Lily: Row Log IMPL</name>
+  <artifactId>lily-rowlock</artifactId>
+  <name>Lily: Row Lock</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily-rowlog</artifactId>
+    <artifactId>lily</artifactId>
     <version>0.3-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
   </parent>
 
   <dependencies>
-    <dependency>
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-api</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlock</artifactId>
-    </dependency>
-    
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-client</artifactId>
@@ -62,27 +48,7 @@
     
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-zk-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-json-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-testfw</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-core-asl</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
     
     <dependency>
@@ -105,28 +71,9 @@
       <artifactId>easymockclassextension</artifactId>
     </dependency>  
     
-    <dependency>
-      <groupId>org.jboss.netty</groupId>
-      <artifactId>netty</artifactId>
-    </dependency>  
-    
   </dependencies>
   
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>schema</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
   
 </project>

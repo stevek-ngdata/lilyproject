@@ -19,15 +19,7 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
@@ -35,21 +27,16 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
-import org.apache.hadoop.hbase.filter.ValueFilter;
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.WalProcessingException.Reason;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
-import org.lilyproject.repository.impl.lock.RowLock;
-import org.lilyproject.repository.impl.lock.RowLocker;
 import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
+import org.lilyproject.rowlock.RowLock;
+import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -111,13 +98,13 @@ public class HBaseRepository extends BaseRepository {
 
     public Record createOrUpdate(Record record) throws FieldTypeNotFoundException, RecordException,
             RecordTypeNotFoundException, InvalidRecordException, TypeException,
-            VersionNotFoundException, RecordLockedException {
+            VersionNotFoundException, RecordLockedException, WalProcessingException {
         return createOrUpdate(record, true);
     }
 
     public Record createOrUpdate(Record record, boolean useLatestRecordType) throws FieldTypeNotFoundException,
             RecordException, RecordTypeNotFoundException, InvalidRecordException, TypeException,
-            VersionNotFoundException, RecordLockedException {
+            VersionNotFoundException, RecordLockedException, WalProcessingException {
 
         if (record.getId() == null) {
             // While we could generate an ID ourselves in this case, this would defeat partly the purpose of
@@ -271,59 +258,58 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
+    public Record update(Record record) throws InvalidRecordException, RecordNotFoundException,
+    RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
+    TypeException, RecordLockedException, WalProcessingException {
+        return update(record, false, true);
+    }
+
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType)
             throws InvalidRecordException, RecordNotFoundException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
-            RecordLockedException {
+            RecordLockedException, WalProcessingException {
 
         long before = System.currentTimeMillis();
+        RecordId recordId = record.getId();
+        RowLock rowLock = null;
         try {
-            if (record.getId() == null) {
+            if (recordId == null) {
                 throw new InvalidRecordException("The recordId cannot be null for a record to be updated.", record.getId());
             }
-            try {
-                if (!checkAndProcessOpenMessages(record.getId())) {
-                    throw new RecordException("Record <"+ record.getId()+"> update could not be performed due to remaining messages on the WAL");
-                }
-            }  catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RecordException("Exception occurred while updating record <" + record.getId() + ">",
-                        e);
-            }
+            
+            // Take Custom Lock
+            rowLock = lockRow(recordId);
+
+            checkAndProcessOpenMessages(record.getId(), rowLock);
             
             // Check if the update is an update of mutable fields
             if (updateVersion) {
                 try {
-                    return updateMutableFields(record, useLatestRecordType);
+                    return updateMutableFields(record, useLatestRecordType, rowLock);
                 } catch (BlobException e) {
                     throw new RecordException("Exception occurred while updating record <" + record.getId() + ">",
                             e);
                 }
             } else {
-                return updateRecord(record, useLatestRecordType);
+                return updateRecord(record, useLatestRecordType, rowLock);
             }
+        } catch (IOException e) {
+            throw new RecordException("Exception occurred while updating record <" + recordId + "> on HBase table",
+                    e); 
         } finally {
+            unlockRow(rowLock);
             metrics.report(Action.UPDATE, System.currentTimeMillis() - before);
         }
     }
     
-    public Record update(Record record) throws InvalidRecordException, RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
-            TypeException, RecordLockedException {
-        return update(record, false, true);
-    }
     
-    private Record updateRecord(Record record, boolean useLatestRecordType) throws RecordNotFoundException,
+    private Record updateRecord(Record record, boolean useLatestRecordType, RowLock rowLock) throws RecordNotFoundException,
             InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
             VersionNotFoundException, TypeException, RecordLockedException {
         Record newRecord = record.clone();
 
         RecordId recordId = record.getId();
-        org.lilyproject.repository.impl.lock.RowLock rowLock = null;
         try {
-            // Take Custom Lock
-            rowLock = lockRow(recordId);
-
             Record originalRecord = read(newRecord.getId(), null, null, new ReadContext());
 
             Put put = new Put(newRecord.getId().toBytes());
@@ -357,8 +343,6 @@ public class HBaseRepository extends BaseRepository {
         } catch (BlobException e) {
             throw new RecordException("Exception occurred while putting updated record <" + recordId
                     + "> on HBase table", e);
-        } finally {
-            unlockRow(rowLock);
         }
 
         newRecord.getFieldsToDelete().clear();
@@ -369,7 +353,7 @@ public class HBaseRepository extends BaseRepository {
     // A wal message is added to this put object
     // The rowLocker is asked to put the data and message on the record table using the given rowlock
     // Finally the wal is asked to process the message
-    private void putRowWithWalProcessing(RecordId recordId, org.lilyproject.repository.impl.lock.RowLock rowLock,
+    private void putRowWithWalProcessing(RecordId recordId, RowLock rowLock,
             Put put, RecordEvent recordEvent) throws InterruptedException, RowLogException, IOException, RecordException {
         RowLogMessage walMessage;
         walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
@@ -380,7 +364,7 @@ public class HBaseRepository extends BaseRepository {
 
         if (walMessage != null) {
             try {
-                wal.processMessage(walMessage);
+                wal.processMessage(walMessage, rowLock);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.warn("Processing message '" + walMessage + "' by the WAL got interrupted. It will be retried later.", e);
@@ -594,14 +578,13 @@ public class HBaseRepository extends BaseRepository {
         return (fieldValue instanceof byte[]) && Arrays.equals(DELETE_MARKER, (byte[])fieldValue);
     }
 
-    private Record updateMutableFields(Record record, boolean latestRecordType) throws InvalidRecordException,
+    private Record updateMutableFields(Record record, boolean latestRecordType, RowLock rowLock) throws InvalidRecordException,
             RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
             VersionNotFoundException, TypeException, RecordLockedException, BlobException {
 
         Record newRecord = record.clone();
 
         RecordId recordId = record.getId();
-        org.lilyproject.repository.impl.lock.RowLock rowLock = null;
         
         Long version = record.getVersion();
         if (version == null) {
@@ -610,9 +593,6 @@ public class HBaseRepository extends BaseRepository {
         }
 
         try {
-            // Take Custom Lock
-            rowLock = lockRow(recordId);
-            
             Map<QName, Object> fields = getFieldsToUpdate(record);
             fields = filterMutableFields(fields);
 
@@ -1091,7 +1071,7 @@ public class HBaseRepository extends BaseRepository {
     public void delete(RecordId recordId) throws RecordException, RecordNotFoundException, RecordLockedException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
-        org.lilyproject.repository.impl.lock.RowLock rowLock = null;
+        RowLock rowLock = null;
         byte[] rowId = recordId.toBytes();
         try {
             // Take Custom Lock
@@ -1113,7 +1093,7 @@ public class HBaseRepository extends BaseRepository {
     
                 if (walMessage != null) {
                     try {
-                        wal.processMessage(walMessage);
+                        wal.processMessage(walMessage, rowLock);
                     } catch (RowLogException e) {
                         // Processing the message failed, it will be retried later.
                     }
@@ -1206,7 +1186,7 @@ public class HBaseRepository extends BaseRepository {
         }
     }
     
-    private void unlockRow(org.lilyproject.repository.impl.lock.RowLock rowLock) {
+    private void unlockRow(RowLock rowLock) {
         if (rowLock != null) {
             try {
                 rowLocker.unlockRow(rowLock);
@@ -1216,7 +1196,7 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    private org.lilyproject.repository.impl.lock.RowLock lockRow(RecordId recordId) throws IOException,
+    private RowLock lockRow(RecordId recordId) throws IOException,
             RecordLockedException {
         RowLock rowLock = rowLocker.lockRow(recordId.toBytes());
         if (rowLock == null)
@@ -1326,18 +1306,25 @@ public class HBaseRepository extends BaseRepository {
         return recordIds;
     }
     
-    private boolean checkAndProcessOpenMessages(RecordId recordId) throws RecordException, InterruptedException {
+    private void checkAndProcessOpenMessages(RecordId recordId, RowLock rowLock) throws WalProcessingException {
         byte[] rowKey = recordId.toBytes();
         try {
             List<RowLogMessage> messages = wal.getMessages(rowKey);
             if (messages.isEmpty())
-               return true;
-            for (RowLogMessage rowLogMessage : messages) {
-                wal.processMessage(rowLogMessage);
+               return;
+            try {
+                for (RowLogMessage rowLogMessage : messages) {
+                    wal.processMessage(rowLogMessage, rowLock);
+                }
+                if (!(wal.getMessages(rowKey).isEmpty())) {
+                    throw new WalProcessingException(Reason.PROCESSING_FAILURE, recordId);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new WalProcessingException(Reason.OTHER, recordId, e);
             }
-            return (wal.getMessages(rowKey).isEmpty());
         } catch (RowLogException e) {
-            throw new RecordException("Failed to check for open WAL message for record <" + recordId + ">", e);
+            throw new WalProcessingException(Reason.OTHER, recordId, e);
         }
     }
 

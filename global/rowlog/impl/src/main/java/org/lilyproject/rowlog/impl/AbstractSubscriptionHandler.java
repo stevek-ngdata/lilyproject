@@ -70,7 +70,7 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                     message = messagesWorkQueue.take();
                     if (message != null) {
                         try {
-                            byte[] lock = rowLog.lockMessage(message, subscriptionId);
+                            Object lock = rowLog.lockMessage(message, subscriptionId);
                             if (lock != null) {
                                 if (!rowLog.isMessageAvailable(message, subscriptionId) || rowLog.isProblematic(message, subscriptionId)) {
                                     rowLog.unlockMessage(message, subscriptionId, false, lock);

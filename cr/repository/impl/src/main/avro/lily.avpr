@@ -94,6 +94,17 @@
         {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
     },
+    
+    {
+      "name": "AvroWalProcessingException",
+      "type": "error",
+      "fields": [
+        {"name": "recordId", "type": "bytes"},
+        {"name": "reason", "type": "string"},
+        {"name": "message", "type": ["string", "null"]},
+        {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
+      ]
+    },
 
     {
       "name": "AvroRecordExistsException",
@@ -313,7 +324,7 @@
       "response": "AvroRecord",
       "errors": ["AvroRecordNotFoundException", "AvroInvalidRecordException", "AvroRecordTypeNotFoundException",
       "AvroVersionNotFoundException", "AvroFieldTypeNotFoundException", "AvroRecordException", "AvroTypeException",
-      "AvroRecordLockedException", "AvroGenericException", "AvroInterruptedException"]
+      "AvroRecordLockedException", "AvroWalProcessingException", "AvroGenericException", "AvroInterruptedException"]
     },
 
     "createOrUpdate": {
@@ -324,7 +335,7 @@
       "response": "AvroRecord",
       "errors": ["AvroInvalidRecordException",
       "AvroRecordTypeNotFoundException", "AvroFieldTypeNotFoundException", "AvroRecordException", "AvroTypeException",
-      "AvroRecordLockedException", "AvroGenericException", "AvroInterruptedException"]
+      "AvroRecordLockedException", "AvroWalProcessingException", "AvroGenericException", "AvroInterruptedException"]
     },
 
     "read": {
