@@ -3,6 +3,7 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
@@ -19,6 +20,9 @@ import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.zookeeper.*;
 
+import static org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorColumn;
+
 public class BlobIncubatorMonitor {
     private Log log = LogFactory.getLog(getClass());
     private final ZooKeeperItf zk;
@@ -27,20 +31,22 @@ public class BlobIncubatorMonitor {
     private final long monitorDelay;
     private final BlobManager blobManager;
     private final TypeManager typeManager;
-    private final HBaseTableFactory tableFactory;
     private MonitorThread monitorThread;
     private HTableInterface recordTable;
     private HTableInterface blobIncubatorTable;
     private final long runDelay;
 
-    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, BlobManager blobManager, TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) {
+    public BlobIncubatorMonitor(ZooKeeperItf zk, HBaseTableFactory tableFactory, BlobManager blobManager,
+            TypeManager typeManager, long minimalAge, long monitorDelay, long runDelay) throws IOException {
         this.zk = zk;
-        this.tableFactory = tableFactory;
         this.blobManager = blobManager;
         this.typeManager = typeManager;
         this.minimalAge = minimalAge;
         this.monitorDelay = monitorDelay;
         this.runDelay = runDelay;
+
+        this.blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(tableFactory, false);
+        this.recordTable = LilyHBaseSchema.getRecordTable(tableFactory);
     }
     
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
@@ -61,8 +67,6 @@ public class BlobIncubatorMonitor {
     }
     
     public synchronized void startMonitoring() throws InterruptedException, IOException {
-        this.blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(tableFactory, false);
-        this.recordTable = LilyHBaseSchema.getRecordTable(tableFactory);
         monitorThread = new MonitorThread();
         monitorThread.start();
     }
@@ -76,6 +80,7 @@ public class BlobIncubatorMonitor {
                     monitorThread.join();
                 }
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
             monitorThread = null;
         }
@@ -131,18 +136,17 @@ public class BlobIncubatorMonitor {
                 }
             }
         }
-        
-        
-        private void monitor() throws IOException, InterruptedException {
+
+        public void monitor() throws IOException, InterruptedException {
             Scan scan = new Scan();
-            scan.addFamily(LilyHBaseSchema.BlobIncubatorCf.REF.bytes);
+            scan.addFamily(BlobIncubatorCf.REF.bytes);
             long maxStamp = System.currentTimeMillis() - minimalAge;
             scan.setTimeRange(0, maxStamp);
             ResultScanner scanner = blobIncubatorTable.getScanner(scan);
             while (!stopRequested) {
                 Result[] results = scanner.next(100);
                 if (results == null || (results.length == 0)) {
-                   break; 
+                   break;
                 }
                 for (Result result : results) {
                     checkResult(result);
@@ -153,14 +157,14 @@ public class BlobIncubatorMonitor {
                 }
             }
         }
-        
+
         private void checkResult(Result result) throws IOException, InterruptedException {
-            byte[] recordId = result.getValue(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes);
+            byte[] recordId = result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes);
             byte[] blobKey = result.getRow();
             if (Arrays.equals(recordId,BlobManagerImpl.INCUBATE)) {
                     deleteBlob(blobKey, recordId, null);
             } else {
-                byte[] fieldId = result.getValue(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes);
+                byte[] fieldId = result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes);
                 Result blobUsage;
                 try {
                     blobUsage = getBlobUsage(blobKey, recordId, fieldId);
@@ -170,13 +174,17 @@ public class BlobIncubatorMonitor {
                         deleteReference(blobKey, recordId); // The blob is used: only delete the reference
                     }
                 } catch (FieldTypeNotFoundException e) {
-                    log.warn("Failed to check blob usage " + blobKey + ", recordId " + recordId + ", fieldId " + fieldId, e);
+                    log.warn("Failed to check blob usage " + Hex.encodeHexString(blobKey) +
+                            ", recordId " + Hex.encodeHexString(recordId) +
+                            ", fieldId " + Hex.encodeHexString(fieldId), e);
                 } catch (TypeException e) {
-                    log.warn("Failed to check blob usage " + blobKey + ", recordId " + recordId + ", fieldId " + fieldId, e);
+                    log.warn("Failed to check blob usage " + Hex.encodeHexString(blobKey) +
+                            ", recordId " + Hex.encodeHexString(recordId) +
+                            ", fieldId " + Hex.encodeHexString(fieldId), e);
                 }
             }
         }
-        
+
         private void deleteBlob(byte[] blobKey, byte[] recordId, byte[] fieldId) throws IOException {
             if (deleteReference(blobKey, recordId)) {
                 try {
@@ -186,22 +194,24 @@ public class BlobIncubatorMonitor {
                     // Deleting the blob failed. We put back the reference to try it again later.
                     // There's a small chance that this fails as well. In that there will be an unreferenced blob in the blobstore.
                     Put put = new Put(blobKey);
-                    put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, recordId);
+                    put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes, recordId);
                     if (fieldId != null) {
-                        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, fieldId);
+                        put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes, fieldId);
                     }
                     blobIncubatorTable.put(put);
                     return;
-                } 
+                }
             }
         }
 
         private boolean deleteReference(byte[] blobKey, byte[] recordId) throws IOException {
             Delete delete = new Delete(blobKey);
-            return blobIncubatorTable.checkAndDelete(blobKey, LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, recordId, delete);
+            return blobIncubatorTable.checkAndDelete(blobKey, BlobIncubatorCf.REF.bytes,
+                    BlobIncubatorColumn.RECORD.bytes, recordId, delete);
         }
 
-        private Result getBlobUsage(byte[] blobKey, byte[] recordId, byte[] fieldId) throws FieldTypeNotFoundException, TypeException, InterruptedException, IOException {
+        private Result getBlobUsage(byte[] blobKey, byte[] recordId, byte[] fieldId) throws FieldTypeNotFoundException,
+                TypeException, InterruptedException, IOException {
             FieldType fieldType = typeManager.getFieldTypeById(fieldId);
             ValueType valueType = fieldType.getValueType();
             Get get = new Get(recordId);
@@ -221,4 +231,13 @@ public class BlobIncubatorMonitor {
             return recordTable.get(get);
         }
     }
+
+    /**
+     * Runs the monitor once on the current thread. Should not be called if the cleanup might already be running
+     * on another thread (i.e. {@link #start} should not have been called).
+     */
+    public void runMonitorOnce() throws IOException, InterruptedException {
+        new MonitorThread().monitor();
+    }
+
 }

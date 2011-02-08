@@ -737,14 +737,15 @@ public abstract class AbstractBlobStoreTest {
         // Incubate blob but never use it
         byte[] bytes = new byte[3000]; 
         random.nextBytes(bytes);
-        Blob blob = writeBlob(bytes, "aMediaType", "testCreate");  
+        Blob blob = writeBlob(bytes, "aMediaType", "testCreate");
+
+        // Give time for the blob to expire
+        Thread.sleep(60);
         
         BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
-                blobManager, typeManager, 1000, 100, 0);
-        monitor.startMonitoring();
-        Thread.sleep(10000);
-        monitor.stopMonitoring();
-        
+                blobManager, typeManager, 50, 0, 0);
+        monitor.runMonitorOnce();
+
         assertBlobDelete(true, blob);
     }
 
@@ -759,7 +760,7 @@ public abstract class AbstractBlobStoreTest {
         recordType.addFieldTypeEntry(fieldTypeEntry);
         recordType = typeManager.createRecordType(recordType);
         
-    // This is the failure scenario where creating the record fails after reserving the blob
+        // This is the failure scenario where creating the record fails after reserving the blob
         byte[] bytes = new byte[3000]; 
         random.nextBytes(bytes);
         Blob blob = writeBlob(bytes, "aMediaType", "testCreate");
@@ -769,13 +770,14 @@ public abstract class AbstractBlobStoreTest {
         Set<BlobReference> blobs = new HashSet<BlobReference>();
         blobs.add(blobReference);
         blobManager.reserveBlobs(blobs);
-        
+
+        // Give time for the blob to expire
+        Thread.sleep(60);
+
         BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
-                blobManager, typeManager, 1000, 100, 0);
-        monitor.startMonitoring();
-        Thread.sleep(10000);
-        monitor.stopMonitoring();
-     
+                blobManager, typeManager, 50, 0, 0);
+        monitor.runMonitorOnce();
+
         assertBlobDelete(true, blob);
     }
     
@@ -790,7 +792,7 @@ public abstract class AbstractBlobStoreTest {
         recordType.addFieldTypeEntry(fieldTypeEntry);
         recordType = typeManager.createRecordType(recordType);
         
-    // This is the failure scenario where creating the record fails after reserving the blob
+        // This is the failure scenario where creating the record fails after reserving the blob
         byte[] bytes = new byte[3000]; 
         random.nextBytes(bytes);
         Blob blob = writeBlob(bytes, "aMediaType", "testCreate");
@@ -812,12 +814,13 @@ public abstract class AbstractBlobStoreTest {
         put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, ((FieldTypeImpl)fieldType).getIdBytes());
         blobIncubatorTable.put(put);
         
+        // Give time for the blob to expire
+        Thread.sleep(60);
+
         BlobIncubatorMonitor monitor = new BlobIncubatorMonitor(repoSetup.getZk(), repoSetup.getHbaseTableFactory(),
-                blobManager, typeManager, 1000, 100, 0);
-        monitor.startMonitoring();
-        Thread.sleep(10000);
-        monitor.stopMonitoring();
-     
+                blobManager, typeManager, 50, 0, 0);
+        monitor.runMonitorOnce();
+
         assertBlobDelete(false, blob);
         Get get = new Get(blob.getValue());
         Result result = blobIncubatorTable.get(get);
