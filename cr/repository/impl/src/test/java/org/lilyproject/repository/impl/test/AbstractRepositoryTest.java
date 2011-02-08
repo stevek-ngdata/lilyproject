@@ -899,13 +899,28 @@ public abstract class AbstractRepositoryTest {
     
     @Test
     public void testUpdateMutableFieldWithNewRecordType() throws Exception {
+        // Create default record
         Record record = createDefaultRecord();
+        
+        // Update the record, creates a second version
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
-        repository.update(updateRecord);
+        Record updatedRecord = repository.update(updateRecord, false, false);
 
+        // Read the first version of the record
+        Record readRecord = repository.read(record.getId(), Long.valueOf(1));
+        assertEquals(recordType1.getName(), readRecord.getRecordTypeName());
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion());
+        assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.NON_VERSIONED));
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion(Scope.NON_VERSIONED));
+        assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.VERSIONED));
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion(Scope.VERSIONED));
+        assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.VERSIONED_MUTABLE));
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
+        
+        // Do a mutable update of the first version of the record, change the record type
         Record updateMutableRecord = repository.newRecord(record.getId());
         updateMutableRecord.setVersion(Long.valueOf(1));
         updateMutableRecord.setRecordType(recordType2.getName(), recordType2.getVersion());
@@ -913,9 +928,11 @@ public abstract class AbstractRepositoryTest {
         updateMutableRecord.setField(fieldType5.getName(), false);
         updateMutableRecord.setField(fieldType6.getName(), "value3");
 
-        assertEquals(Long.valueOf(1), repository.update(updateMutableRecord, true, false).getVersion());
+        Record updatedMutableRecord = repository.update(updateMutableRecord, true, false);
+        assertEquals(Long.valueOf(1), updatedMutableRecord.getVersion());
 
-        Record readRecord = repository.read(record.getId(), Long.valueOf(1));
+        // Read the first version of the record again
+        readRecord = repository.read(record.getId(), Long.valueOf(1));
         assertEquals(Long.valueOf(1), readRecord.getVersion());
         assertEquals("value2", readRecord.getField(fieldType1.getName()));
         assertEquals(123, readRecord.getField(fieldType2.getName()));
@@ -937,10 +954,16 @@ public abstract class AbstractRepositoryTest {
         } catch (FieldNotFoundException expected) {
         }
         assertEquals(recordType1.getName(), readRecord.getRecordTypeName());
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion());
         assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.NON_VERSIONED));
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion(Scope.NON_VERSIONED));
         assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.VERSIONED));
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion(Scope.VERSIONED));
+        // The mutable record type should have been changed
         assertEquals(recordType2.getName(), readRecord.getRecordTypeName(Scope.VERSIONED_MUTABLE));
+        assertEquals(recordType2.getVersion(), readRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
 
+        // Read the second version again of the record
         readRecord = repository.read(record.getId());
         assertEquals(Long.valueOf(2), readRecord.getVersion());
         assertEquals("value2", readRecord.getField(fieldType1.getName()));
@@ -950,6 +973,7 @@ public abstract class AbstractRepositoryTest {
         assertEquals(recordType1.getName(), readRecord.getRecordTypeName());
         assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.NON_VERSIONED));
         assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.VERSIONED));
+        // The original mutable record type should have been copied to the next version
         assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.VERSIONED_MUTABLE));
     }
 
