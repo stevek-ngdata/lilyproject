@@ -25,6 +25,8 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     private String zkConnectString;
     private int zkSessionTimeout;
 
+    private Configuration hbaseConfig;
+
     public HadoopConfigurationFactoryImpl(Conf hbaseConf, Conf mrConf, String zkConnectString, int zkSessionTimeout) {
         this.hbaseConf = hbaseConf;
         this.mrConf = mrConf;
@@ -33,15 +35,18 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     }
 
     public Configuration getHBaseConf() {
-        Configuration hadoopConf = HBaseConfiguration.create();
+        // To enable reuse of HBase connections, we should always return the same Configuration instance
+        if (hbaseConfig == null) {
+            hbaseConfig = HBaseConfiguration.create();
 
-        for (Conf conf : hbaseConf.getChild("properties").getChildren("property")) {
-            String name = conf.getRequiredChild("name").getValue();
-            String value = conf.getRequiredChild("value").getValue();
-            hadoopConf.set(name, value);
+            for (Conf conf : hbaseConf.getChild("properties").getChildren("property")) {
+                String name = conf.getRequiredChild("name").getValue();
+                String value = conf.getRequiredChild("value").getValue();
+                hbaseConfig.set(name, value);
+            }
         }
 
-        return hadoopConf;
+        return hbaseConfig;
     }
 
     public Configuration getMapReduceConf() {
