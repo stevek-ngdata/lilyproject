@@ -882,7 +882,8 @@ public abstract class AbstractBlobStoreTest {
         }
 
         try {
-            repository.getInputStream(record.getId(), record.getVersion(), new QName("test", "nonExistingFieldType"), null, null);
+            repository.getInputStream(record.getId(), record.getVersion(), new QName("test", "nonExistingFieldType"),
+                    null, null);
             fail("Expected exception");
         } catch (FieldTypeNotFoundException e) {
             // ok
@@ -892,6 +893,14 @@ public abstract class AbstractBlobStoreTest {
             repository.getInputStream(record.getId(), record.getVersion(), null, null, null);
             fail("Expected exception");
         } catch (IllegalArgumentException e) {
+            // ok
+        }
+
+        try {
+            repository.getInputStream(repoSetup.getIdGenerator().fromString("USER.nonexistingrecord"), null,
+                    absentField.getName(), null, null);
+            fail("Expected exception");
+        } catch (RecordNotFoundException e) {
             // ok
         }
     }
