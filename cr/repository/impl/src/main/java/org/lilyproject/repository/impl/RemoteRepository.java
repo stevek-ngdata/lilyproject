@@ -77,7 +77,7 @@ public class RemoteRepository extends BaseRepository {
         this.idGenerator = idGenerator;
 
         //client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
-        client = new NettyTransceiver(address);
+        client = NettyTransceiverFactory.create(address);
 
         lilyProxy = SpecificRequestor.getClient(AvroLily.class, client);
     }
