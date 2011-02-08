@@ -19,7 +19,6 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,37 +45,7 @@ import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseext.ContainsValueComparator;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobException;
-import org.lilyproject.repository.api.BlobInputStream;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobNotFoundException;
-import org.lilyproject.repository.api.BlobReference;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeEntry;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdRecord;
-import org.lilyproject.repository.api.InvalidRecordException;
-import org.lilyproject.repository.api.PrimitiveValueType;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordException;
-import org.lilyproject.repository.api.RecordExistsException;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordLockedException;
-import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.ResponseStatus;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.lock.RowLock;
 import org.lilyproject.repository.impl.lock.RowLocker;
@@ -99,10 +68,9 @@ import org.lilyproject.util.repo.RecordEvent.Type;
  * Repository implementation.
  * 
  */
-public class HBaseRepository implements Repository {
+public class HBaseRepository extends BaseRepository {
  
     private HTableInterface recordTable;
-    private final TypeManager typeManager;
     private final IdGenerator idGenerator;
     private byte[] dataColumnFamily = RecordCf.DATA.bytes;
     private byte[] systemColumnFamily = RecordCf.SYSTEM.bytes;
@@ -113,14 +81,13 @@ public class HBaseRepository implements Repository {
     
     private Log log = LogFactory.getLog(getClass());
     private RepositoryMetrics metrics;
-    private BlobManager blobManager;
 
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator,
             RowLog wal, Configuration configuration, HBaseTableFactory hbaseTableFactory, BlobManager blobManager) throws IOException {
-        this.typeManager = typeManager;
+        super(typeManager, blobManager);
+
         this.idGenerator = idGenerator;
         this.wal = wal;
-        this.blobManager = blobManager;
 
         recordTable = LilyHBaseSchema.getRecordTable(hbaseTableFactory);
 
@@ -140,19 +107,6 @@ public class HBaseRepository implements Repository {
 
     public IdGenerator getIdGenerator() {
         return idGenerator;
-    }
-
-    public TypeManager getTypeManager() {
-        return typeManager;
-    }
-
-    public Record newRecord() {
-        return new RecordImpl();
-    }
-
-    public Record newRecord(RecordId recordId) {
-        ArgumentValidator.notNull(recordId, "recordId");
-        return new RecordImpl(recordId);
     }
 
     public Record createOrUpdate(Record record) throws FieldTypeNotFoundException, RecordException,
@@ -1209,24 +1163,6 @@ public class HBaseRepository implements Repository {
         if (rowLock == null)
             throw new RecordLockedException(recordId);
         return rowLock;
-    }
-
-    public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
-        blobManager.register(blobStoreAccess);
-    }
-
-    public OutputStream getOutputStream(Blob blob) throws BlobException {
-        return blobManager.getOutputStream(blob);
-    }
-    
-    public BlobInputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws BlobNotFoundException, BlobException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, InterruptedException {
-        Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
-        FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
-        return blobManager.getInputStream(record, fieldName, multivalueIndex, hierarchyIndex, fieldType);
-    }
-    
-    public BlobInputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, InterruptedException {
-        return getInputStream(recordId, null, fieldName, null, null);
     }
 
     private Set<BlobReference> getReferencedBlobs(FieldTypeImpl fieldType, Object value) throws BlobException {

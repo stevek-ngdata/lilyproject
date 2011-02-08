@@ -827,12 +827,12 @@ public abstract class AbstractBlobStoreTest {
     private void assertBlobDelete(boolean expectDelete, Blob blob) throws BlobNotFoundException, BlobException {
         if (expectDelete) {
             try {
-                testBlobStoreAccessRegistry.getInputStream(blob);
+                testBlobStoreAccessRegistry.getBlobAccess(blob).getInputStream();
                 fail("The blob " + blob + " should have been deleted.");
             } catch (BlobException expected) {
             }
         } else {
-            testBlobStoreAccessRegistry.getInputStream(blob);
+            testBlobStoreAccessRegistry.getBlobAccess(blob).getInputStream();
         }
     }
     
@@ -841,7 +841,7 @@ public abstract class AbstractBlobStoreTest {
         Blob blob = new Blob("aMediaType", (long) 10, "aName");
         blob.setValue(new byte[0]);
         try {
-            testBlobStoreAccessRegistry.getInputStream(blob);
+            testBlobStoreAccessRegistry.getBlobAccess(blob).getInputStream();
             fail();
         } catch (BlobException expected) {
         }

@@ -55,17 +55,17 @@ public interface BlobManager {
     OutputStream getOutputStream(Blob blob) throws BlobException;
     
     /**
-     * Returns a BlobInputStream based on the given location of a blob in a record.
+     * Returns a BlobAccess based on the given location of a blob in a record.
+     *
      * @param record the record containing the blob
      * @param fieldName the name of the field containing the blob
      * @param multivalueIndex the index of the blob in a multivalue field, can be null 
      * @param hierarchyIndex the index of the blob in a  hierarchical field, can be null
      * @param fieldType the fieldType of the field
-     * @return a BlobInputStream
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
      * @throws BlobException thrown when no InputStream can be opened on the blob
      */
-    BlobInputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
+    BlobAccess getBlobAccess(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
             FieldType fieldType) throws BlobNotFoundException, BlobException;
 
     /**

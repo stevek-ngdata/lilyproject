@@ -15,18 +15,11 @@
  */
 package org.lilyproject.rest;
 
-import org.apache.commons.io.IOUtils;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.util.io.Closer;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
@@ -47,47 +40,19 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
 
         final QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());
 
-        Long vNr = null;
+        Long versionNr = null;
         if (version != null) {
-            vNr = Long.parseLong(version);
+            versionNr = Long.parseLong(version);
         }
-        final Long versionNr = vNr;
 
-        Record record;
         try {
-            record = repository.read(recordId, versionNr, Collections.singletonList(fieldQName));
-
-            if (!record.hasField(fieldQName)) {
-                throw new ResourceException("Record " + id + " has no field " + fieldQName, NOT_FOUND.getStatusCode());
-            }
-
-            Object value = record.getField(fieldQName);
-            if (!(value instanceof Blob)) {
-                throw new ResourceException("Specified field is not a blob field. Record " + id + ", field " +
-                        fieldQName, BAD_REQUEST.getStatusCode());
-            }
-
-            final Blob blob = (Blob)value;
-
-            StreamingOutput output = new StreamingOutput() {
-                public void write(OutputStream output) throws IOException, WebApplicationException {
-                    InputStream is = null;
-                    try {
-                        is = repository.getInputStream(recordId, versionNr, fieldQName, null, null);
-                        IOUtils.copyLarge(is, output);
-                    } catch (BlobNotFoundException e) {
-                        throw new ResourceException(e, NOT_FOUND.getStatusCode());
-                    } catch (Exception e) {
-                        throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
-                    } finally {
-                        Closer.close(is);
-                    }
-                }
-            };
-
-            return Response.ok(output, MediaType.valueOf(blob.getMediaType())).build();
-
+            final BlobAccess blobAccess = repository.getBlob(recordId, versionNr, fieldQName, null, null);
+            return Response.ok(blobAccess, MediaType.valueOf(blobAccess.getBlob().getMediaType())).build();
         } catch (RecordNotFoundException e) {
+            throw new ResourceException(e, NOT_FOUND.getStatusCode());
+        } catch (FieldNotFoundException e) {
+            throw new ResourceException(e, NOT_FOUND.getStatusCode());
+        } catch (BlobNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
             throw new ResourceException("Error loading record.", e, INTERNAL_SERVER_ERROR.getStatusCode());

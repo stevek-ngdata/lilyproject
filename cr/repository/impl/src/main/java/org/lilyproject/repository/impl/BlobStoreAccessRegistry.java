@@ -22,13 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobException;
-import org.lilyproject.repository.api.BlobInputStream;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobNotFoundException;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.BlobStoreAccessFactory;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.Pair;
 
 public class BlobStoreAccessRegistry {
@@ -57,10 +51,10 @@ public class BlobStoreAccessRegistry {
         return new BlobOutputStream(blobStoreAccess.getOutputStream(blob), blobStoreAccess.getId(), blob, blobManager, blobStoreAccess.incubate());
     }
 
-    public BlobInputStream getInputStream(Blob blob) throws BlobNotFoundException, BlobException {
+    public BlobAccess getBlobAccess(Blob blob) throws BlobNotFoundException, BlobException {
         Pair<String, byte[]> decodedKey = decodeKey(blob);
         BlobStoreAccess blobStoreAccess = registry.get(decodedKey.getV1());
-        return new BlobInputStream(blobStoreAccess.getInputStream(decodedKey.getV2()), blob);
+        return new BlobAccessImpl(blob, blobStoreAccess, decodedKey.getV2());
     }
 
     private Pair<String, byte[]> decodeKey(Blob blob) throws BlobNotFoundException, BlobException {

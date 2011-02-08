@@ -283,25 +283,49 @@ public interface Repository extends Closeable {
     OutputStream getOutputStream(Blob blob) throws BlobException, InterruptedException;
 
     /**
-     * Returns an {@link InputStream} from which the binary data of a blob can be read.
-     * 
-     * <p>The blob can only be retrieved by referring to location of the blob in the record 
-     * and field where it is used.   
+     * Returns a {@link BlobAccess} object which provides access to the blob metadata and the input stream to
+     * read the blob's data.
+     *
+     * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
+     *
      * @param recordId the id of the record containing the blob
      * @param fieldName the QName of the field containing the blob
      * @param version optionally a version of the record, if null the latest record version is used
-     * @param multivalueIndex the position of the blob in a multivalue field
-     * @param hierarchyIndex the position of the blob in a hierarchical field
-     * @return a BlobInputStream
+     * @param multiValueIndex optionally, the position of the blob in a multi-value field
+     * @param hierarchyIndex optionally, the position of the blob in a hierarchical field
+
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
-     * @throws BlobException thrown when opening an InputStream on the blob fails 
+     * @throws BlobException thrown when opening an InputStream on the blob fails
      */
-    BlobInputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws BlobNotFoundException, BlobException, InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
+    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
+            Integer hierarchyIndex) throws BlobNotFoundException, BlobException, InterruptedException,
+            RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
+            VersionNotFoundException, TypeException;
 
     /**
-     * Shortcut getInputStream method where version, multivalueIndex and hierarchyIndex are set to null.
+     * Shortcut getBlob method where version, multiValueIndex and hierarchyIndex are set to null.
      */
-    BlobInputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException, InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException;
+    BlobAccess getBlob(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
+            InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
+            RecordException, VersionNotFoundException, TypeException;
+
+    /**
+     * Returns an {@link InputStream} from which the binary data of a blob can be read.
+     *
+     * <p>This is a shortcut for {@link #getBlob}.getInputStream().
+     *
+     */
+    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
+            Integer hierarchyIndex) throws BlobNotFoundException, BlobException, InterruptedException,
+            RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
+            VersionNotFoundException, TypeException;
+
+    /**
+     * Shortcut getInputStream method where version, multiValueIndex and hierarchyIndex are set to null.
+     */
+    InputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
+            InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
+            RecordException, VersionNotFoundException, TypeException;
 
     /**
      * Get all the variants that exist for the given recordId.

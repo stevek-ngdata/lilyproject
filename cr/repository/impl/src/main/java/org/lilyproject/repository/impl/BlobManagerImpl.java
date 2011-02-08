@@ -11,20 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobException;
-import org.lilyproject.repository.api.BlobInputStream;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobNotFoundException;
-import org.lilyproject.repository.api.BlobReference;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.BlobStoreAccessFactory;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.HierarchyPath;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
@@ -54,17 +41,18 @@ public class BlobManagerImpl implements BlobManager {
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return registry.getOutputStream(blob);
     }
-    
-    public BlobInputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex,
-            Integer hierarchyIndex, FieldType fieldType) throws BlobNotFoundException, BlobException {
+
+    public BlobAccess getBlobAccess(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
+            FieldType fieldType) throws BlobNotFoundException, BlobException {
+
         if (!fieldType.getValueType().getPrimitive().getName().equals("BLOB")) {
             throw new BlobException("Cannot read a blob from a non-blob field type: " + fieldType.getName());
         }
-        Blob blob = getBlobFromRecord(record, fieldName, multivalueIndex, hierarchyIndex, fieldType);
-        return registry.getInputStream(blob);
 
+        Blob blob = getBlobFromRecord(record, fieldName, multivalueIndex, hierarchyIndex, fieldType);
+        return registry.getBlobAccess(blob);
     }
-    
+
     public void incubateBlob(byte[] blobKey) throws IOException {
         Put put = new Put(blobKey);
         // We put a byte[] because we need to put at least one column 
