@@ -328,6 +328,20 @@ public interface Repository extends Closeable {
     InputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
             InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
             RecordException, VersionNotFoundException, TypeException;
+    
+    /**
+     * getInputStream method where the record containing the blob is given instead of its recordId.
+     * This avoids an extra call on the repository to read the record.
+     * This is especially usefull for inline blobs. 
+     */
+    InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws 
+            FieldTypeNotFoundException, TypeException, BlobException, BlobNotFoundException, InterruptedException ;
+
+    /**
+     * Shortcut getInputStream method where the record is given and multivalueIndex and hierarchyIndex are set to null. 
+     */
+    InputStream getInputStream(Record record, QName fieldName) throws FieldTypeNotFoundException, TypeException, 
+            BlobException, BlobNotFoundException, InterruptedException ;
 
     /**
      * Get all the variants that exist for the given recordId.

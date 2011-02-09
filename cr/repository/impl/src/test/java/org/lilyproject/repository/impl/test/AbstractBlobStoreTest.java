@@ -63,6 +63,13 @@ public abstract class AbstractBlobStoreTest {
         
         byte[] readBytes = readBlob(record.getId(), fieldName, blob.getSize());
         assertTrue(Arrays.equals(bytes, readBytes));
+        
+        // Test the getInputStream with giving the record instead of the recordId
+        byte[] readBytes2 = new byte[(int)(blob.getSize().longValue())];
+        InputStream inputStream = repository.getInputStream(record, fieldName);
+        inputStream.read(readBytes2);
+        inputStream.close();
+        assertTrue(Arrays.equals(bytes, readBytes2));
     }
 
     @Test

@@ -37,15 +37,27 @@ public abstract class BaseRepository implements Repository {
         return blobManager.getOutputStream(blob);
     }
 
+    public InputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
+    RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
+    VersionNotFoundException, TypeException, InterruptedException {
+        return getInputStream(recordId, null, fieldName, null, null);
+    }
+
     public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
             Integer hierarchyIndex) throws BlobNotFoundException, BlobException, RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
             TypeException, InterruptedException {
-
         Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
+        return getInputStream(record, fieldName, multivalueIndex, hierarchyIndex);
+    }
+    
+    public InputStream getInputStream(Record record, QName fieldName) throws FieldTypeNotFoundException, TypeException, BlobException, BlobNotFoundException, InterruptedException {
+        return getInputStream(record, fieldName, null, null);
+    }
+    
+    public InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws FieldTypeNotFoundException, TypeException, InterruptedException, BlobException, BlobNotFoundException {
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
         return blobManager.getBlobAccess(record, fieldName, multivalueIndex, hierarchyIndex, fieldType).getInputStream();
-
     }
 
     public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
@@ -59,13 +71,6 @@ public abstract class BaseRepository implements Repository {
 
     }
 
-    public InputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
-            RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-            VersionNotFoundException, TypeException, InterruptedException {
-
-        return getInputStream(recordId, null, fieldName, null, null);
-
-    }
 
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
             InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
