@@ -93,7 +93,7 @@ public class ValueEvaluator {
         Blob blob = (Blob)value;
         InputStream is = null;
         try {
-            is = repository.getInputStream(record.getId(), record.getVersion(), fieldType.getName(), multiValueIndex, hierIndex);
+            is = repository.getInputStream(record, fieldType.getName(), multiValueIndex, hierIndex);
 
             // TODO make write limit configurable
             BodyContentHandler ch = new BodyContentHandler();

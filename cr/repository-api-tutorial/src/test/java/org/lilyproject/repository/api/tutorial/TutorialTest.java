@@ -300,7 +300,7 @@ public class TutorialTest {
         //
         InputStream is = null;
         try {
-            is = repository.getInputStream(record.getId(), new QName(NS, "description"));
+            is = repository.getInputStream(record, new QName(NS, "description"));
             System.out.println("Data read from blob is:");
             Reader reader = new InputStreamReader(is, "UTF-8");
             char[] buffer = new char[20];
