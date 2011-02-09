@@ -5,4 +5,4 @@ The quick-conf is also used by the process testcases.
 
 To use it, combine it with the normal conf:
 
-./target/lily-server -c quick-conf:conf
+lily-server -c quick-conf:conf

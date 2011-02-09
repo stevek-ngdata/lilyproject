@@ -242,6 +242,11 @@
       <outputDirectory>/conf</outputDirectory>
       <useDefaultExcludes>true</useDefaultExcludes>
     </fileSet>
+    <fileSet>
+      <directory>${basedir}/../cr/process/server/quick-conf</directory>
+      <outputDirectory>/quick-conf</outputDirectory>
+      <useDefaultExcludes>true</useDefaultExcludes>
+    </fileSet>
 
     <!-- Empty logs directory -->
     <fileSet>
