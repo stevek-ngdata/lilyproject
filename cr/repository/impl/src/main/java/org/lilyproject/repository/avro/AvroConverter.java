@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.util.Utf8;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.api.WalProcessingException.Reason;
 import org.lilyproject.repository.impl.IdRecordImpl;
 
 public class AvroConverter {
@@ -569,7 +568,6 @@ public class AvroConverter {
 
     public AvroWalProcessingException convert(WalProcessingException exception) {
         AvroWalProcessingException avroException = new AvroWalProcessingException();
-        avroException.reason = exception.getReason().name();
         avroException.recordId = convert(exception.getRecordId());
         avroException.message = exception.getMessage();
         avroException.remoteCauses = buildCauses(exception);
@@ -621,8 +619,7 @@ public class AvroConverter {
     
     public WalProcessingException convert(AvroWalProcessingException avroException) {
         RecordId recordId = avroException.recordId == null ? null : convertAvroRecordId(avroException.recordId);
-        Reason reason = avroException.reason == null ? null : Reason.valueOf(convert(avroException.reason));
-        WalProcessingException exception = new WalProcessingException(reason, recordId, convert(avroException.message));
+        WalProcessingException exception = new WalProcessingException(recordId, convert(avroException.message));
         restoreCauses(avroException.remoteCauses, exception);
         return exception;
     }

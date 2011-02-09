@@ -32,7 +32,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.api.WalProcessingException.Reason;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
 import org.lilyproject.rowlock.RowLock;
@@ -1317,14 +1316,14 @@ public class HBaseRepository extends BaseRepository {
                     wal.processMessage(rowLogMessage, rowLock);
                 }
                 if (!(wal.getMessages(rowKey).isEmpty())) {
-                    throw new WalProcessingException(Reason.PROCESSING_FAILURE, recordId);
+                    throw new WalProcessingException(recordId, "Not all messages were processed");
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new WalProcessingException(Reason.OTHER, recordId, e);
+                throw new WalProcessingException(recordId, e);
             }
         } catch (RowLogException e) {
-            throw new WalProcessingException(Reason.OTHER, recordId, e);
+            throw new WalProcessingException(recordId, e);
         }
     }
 
