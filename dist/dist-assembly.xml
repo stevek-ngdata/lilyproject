@@ -20,7 +20,9 @@
 
   <formats>
     <format>tar.gz</format>
+    <!--
     <format>zip</format>
+    -->
   </formats>
 
   <files>
@@ -46,21 +48,21 @@
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/src/main/resources/service/lily-service.bat</source>
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
-    <file>
+    </file-->
+    <!--file>
       <source>${basedir}/src/main/resources/service/install-lily-service.bat</source>
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
-    <file>
+    </file-->
+    <!--file>
       <source>${basedir}/src/main/resources/service/uninstall-lily-service.bat</source>
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/src/main/resources/service/README.txt</source>
       <outputDirectory>/service</outputDirectory>
@@ -78,11 +80,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/process/server/target/dist-scripts/lily-server.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Import tool -->
     <file>
@@ -90,11 +92,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../apps/import/target/dist-scripts/lily-import.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- MBOX Import tool -->
     <file>
@@ -102,20 +104,27 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../apps/mbox-import/target/dist-scripts/lily-mbox-import.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
+    </file-->
+
+    <!-- Tester tool -->
+    <file>
+      <source>${basedir}/../global/clientmetrics/target/dist-scripts/lily-metrics-report</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
     </file>
+    <!--file>
+      <source>${basedir}/../apps/tester/target/dist-scripts/lily-tester.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
 
     <!-- Tester tool -->
     <file>
       <source>${basedir}/../apps/tester/target/dist-scripts/lily-tester</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
-    <file>
-      <source>${basedir}/../apps/tester/target/dist-scripts/lily-tester.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
@@ -126,61 +135,61 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-add-index.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-update-index</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-update-index.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-list-indexes</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-list-indexes.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-indexerconf</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-indexerconf.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-shardingconf</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-shardingconf.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-touch-index</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-touch-index.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Launch hadoop -->
     <file>
@@ -188,11 +197,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../global/test-fw/target/dist-scripts/launch-hadoop.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Launch SOLR -->
     <file>
@@ -200,11 +209,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../global/solr-test-fw/target/dist-scripts/launch-solr.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Print host tool -->
     <file>
@@ -212,11 +221,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../tools/print-host/target/dist-scripts/lily-print-host.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
   </files>
 
   <fileSets>
