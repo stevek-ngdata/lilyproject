@@ -1,0 +1,2 @@
+Creates charts (using gnuplot) from metrics files as produced by the
+lily-tester or lily-mbox-import tools.

@@ -84,7 +84,7 @@ public class MetricsReportTool extends BaseCliTool {
                 .isRequired()
                 .withArgName("dirname")
                 .hasArg()
-                .withDescription("Name of the output dir (non-existing)")
+                .withDescription("Name of the output dir")
                 .withLongOpt("output-dir")
                 .create("o");
         options.add(outputDirOption);

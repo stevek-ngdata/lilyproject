@@ -1,0 +1,7 @@
+You should have gnuplot installed for this to work.
+
+The test tools can include various system metrics when run with the options
+-hm (hbase metrics) and -lm (Lily metrics), both require that you have
+enabled passwordless JMX access on their default ports on all nodes.
+For this, comment out some lines in hbase-env.sh and
+lily/service/wrapper.conf.
