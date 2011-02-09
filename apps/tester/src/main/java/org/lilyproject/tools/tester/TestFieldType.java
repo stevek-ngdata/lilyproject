@@ -2,6 +2,7 @@ package org.lilyproject.tools.tester;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.naming.OperationNotSupportedException;
 
@@ -17,7 +18,7 @@ import org.lilyproject.testclientfw.Words;
 import org.lilyproject.util.json.JsonUtil;
 
 public class TestFieldType {
-    
+    private static final Random random = new Random();
     private final Repository repository;
 
     FieldType fieldType;
@@ -140,45 +141,46 @@ public class TestFieldType {
     
     private int generateInt() {
         // Default
-        if (properties == null)
-            return Integer.MIN_VALUE + (int)(Math.random() * ((Integer.MAX_VALUE - Integer.MIN_VALUE) + 1));
-        
         int value = 0;
-        String numberString = JsonUtil.getString(properties, "enum", null);
-        if (numberString != null) {
-            String[] numbers = numberString.split(",");
-            int index = (int) (Math.random() * numbers.length);
-            value = Integer.valueOf(numbers[index]);
+        if (properties == null) {
+            value = random.nextInt();
         } else {
-            int min = JsonUtil.getInt(properties, "min", Integer.MIN_VALUE);
-            int max = JsonUtil.getInt(properties, "max", Integer.MAX_VALUE);
-            value = min + (int)(Math.random() * ((max - min) + 1));
+            String numberString = JsonUtil.getString(properties, "enum", null);
+            if (numberString != null) {
+                String[] numbers = numberString.split(",");
+                int index = (int) (Math.random() * numbers.length);
+                value = Integer.valueOf(numbers[index]);
+            } else {
+                int min = JsonUtil.getInt(properties, "min", Integer.MIN_VALUE);
+                int max = JsonUtil.getInt(properties, "max", Integer.MAX_VALUE);
+                value = min + (int)(Math.random() * ((max - min) + 1));
+            }
         }
         return value;
     }
     
     private long generateLong() {
         // Default
-        if (properties == null)
-            return Long.MIN_VALUE + (long)(Math.random() * ((Long.MAX_VALUE - Long.MIN_VALUE) + 1));
-
         long value = 0;
-        String numberString = JsonUtil.getString(properties, "enum", null);
-        if (numberString != null) {
-            String[] numbers = numberString.split(",");
-            int index = (int) (Math.random() * numbers.length);
-            value = Long.valueOf(numbers[index]);
-        } else {
-            long min = JsonUtil.getLong(properties, "min", Long.MIN_VALUE);
-            long max = JsonUtil.getLong(properties, "max", Long.MAX_VALUE);
-            value = min + (long)(Math.random() * ((max - min) + 1));
+        if (properties == null)
+            value = random.nextLong();
+        else {
+            String numberString = JsonUtil.getString(properties, "enum", null);
+            if (numberString != null) {
+                String[] numbers = numberString.split(",");
+                int index = (int) (Math.random() * numbers.length);
+                value = Long.valueOf(numbers[index]);
+            } else {
+                long min = JsonUtil.getLong(properties, "min", Long.MIN_VALUE);
+                long max = JsonUtil.getLong(properties, "max", Long.MAX_VALUE);
+                value = min + (long)(Math.random() * ((max - min) + 1));
+            }
         }
         return value;
     }
     
     private boolean generateBoolean() {
-        int value = (int)Math.floor(Math.random() * 1);
-        return value != 0;
+        return random.nextBoolean();
     }
     
     private LocalDate generateLocalDate() {

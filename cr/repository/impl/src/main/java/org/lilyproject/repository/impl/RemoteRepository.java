@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.lilyproject.repository.api.*;
