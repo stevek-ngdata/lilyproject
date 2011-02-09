@@ -40,13 +40,16 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
 
         final QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());
 
+        Integer mvIndex = ResourceClassUtil.getIntegerParam(uriInfo, "mvIndex", null);
+        Integer hIndex = ResourceClassUtil.getIntegerParam(uriInfo, "hIndex", null);
+
         Long versionNr = null;
         if (version != null) {
             versionNr = Long.parseLong(version);
         }
 
         try {
-            final BlobAccess blobAccess = repository.getBlob(recordId, versionNr, fieldQName, null, null);
+            final BlobAccess blobAccess = repository.getBlob(recordId, versionNr, fieldQName, mvIndex, hIndex);
             return Response.ok(blobAccess, MediaType.valueOf(blobAccess.getBlob().getMediaType())).build();
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());

@@ -23,7 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.*;
 
 public class ResourceClassUtil {
     public static QName parseQName(String name, MultivaluedMap<String, String> queryParams) {
@@ -58,5 +58,19 @@ public class ResourceClassUtil {
             }
         }
         return fieldQNames;
+    }
+
+    public static Integer getIntegerParam(UriInfo uriInfo, String name, Integer defaultValue) {
+        String value = uriInfo.getQueryParameters().getFirst(name);
+        if (value == null) {
+            return defaultValue;
+        }
+
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            throw new ResourceException("Request parameter '" + name + "' does not contain an integer: '" + value +
+                    "'.", BAD_REQUEST.getStatusCode());
+        }
     }
 }

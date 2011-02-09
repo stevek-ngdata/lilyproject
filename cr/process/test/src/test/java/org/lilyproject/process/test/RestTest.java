@@ -672,6 +672,82 @@ public class RestTest {
     }
 
     @Test
+    public void testMultiValueHierarchicalBlobs() throws Exception {
+        // Create a blob field type
+        String body = json("{action: 'create', fieldType: {name: 'b$blob2', valueType: " +
+                "{ primitive: 'BLOB', multiValue: true, hierarchical: true }, " +
+                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
+        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Create a record type holding the blob field
+        body = json("{action: 'create', recordType: {name: 'b$blobRT2', fields: [ {name: 'b$blob2'} ]," +
+                "namespaces: { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/schema/recordTypeById", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Upload some blobs
+        ObjectNode blob1Value = createTextBlob("My blob 1");
+        ObjectNode blob2Value = createTextBlob("My blob 2");
+        ObjectNode blob3Value = createTextBlob("My blob 3");
+        ObjectNode blob4Value = createTextBlob("My blob 4");
+
+        // Create a record with these blobs
+        ObjectNode recordNode = JsonNodeFactory.instance.objectNode();
+        recordNode.put("type", "b$blobRT");
+        ObjectNode fieldsNode = recordNode.putObject("fields");
+
+        ArrayNode blobNode = fieldsNode.putArray("b$blob2");
+
+        ArrayNode hierarchicalBlob1 = blobNode.addArray();
+        hierarchicalBlob1.add(blob1Value);
+        hierarchicalBlob1.add(blob2Value);
+
+        ArrayNode hierarchicalBlob2 = blobNode.addArray();
+        hierarchicalBlob2.add(blob3Value);
+        hierarchicalBlob2.add(blob4Value);
+
+        ObjectNode nsNode = recordNode.putObject("namespaces");
+        nsNode.put("org.lilyproject.resttest", "b");
+
+        response = put(BASE_URI + "/record/USER.blob2", recordNode.toString());
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Read the record
+        response = get(BASE_URI + "/record/USER.blob2");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        JsonNode jsonNode = readJson(response.getEntity());
+        String prefix = jsonNode.get("namespaces").get("org.lilyproject.resttest").getValueAsText();
+        blobNode = (ArrayNode)jsonNode.get("fields").get(prefix + "$blob2");
+        assertEquals(2, blobNode.size());
+
+        // Read the blobs
+        for (int mvIndex = 0; mvIndex < 2; mvIndex++) {
+            for (int hIndex = 0; hIndex < 2; hIndex++) {
+                response = get(BASE_URI + "/record/USER.blob2/field/b$blob2/data?ns.b=org.lilyproject.resttest&mvIndex=" +
+                        mvIndex + "&hIndex=" + hIndex);
+                assertStatus(Status.SUCCESS_OK, response);
+            }
+        }
+
+        // Read a blob at non-existing indexes
+        response = get(BASE_URI + "/record/USER.blob2/field/b$blob2/data?ns.b=org.lilyproject.resttest&mvIndex=5&hIndex=3");
+        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
+    }
+
+    private ObjectNode createTextBlob(String data) throws IOException {
+        Request req = new Request(Method.POST, BASE_URI + "/blob");
+        Representation blobRepr = new StringRepresentation(data, MediaType.TEXT_PLAIN);
+        req.setEntity(blobRepr);
+        Response response = CLIENT.handle(req);
+
+        assertStatus(Status.SUCCESS_OK, response);
+        JsonNode jsonNode = readJson(response.getEntity());
+        return (ObjectNode)jsonNode;
+    }
+
+    @Test
     public void testVersionCollection() throws Exception {
         // Create some field types
         String body = json("{action: 'create', fieldType: {name: 'p$name', valueType: { primitive: 'STRING' }, " +
