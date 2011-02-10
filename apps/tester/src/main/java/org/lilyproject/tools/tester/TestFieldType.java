@@ -1,5 +1,6 @@
 package org.lilyproject.tools.tester;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -9,11 +10,7 @@ import javax.naming.OperationNotSupportedException;
 import org.codehaus.jackson.JsonNode;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.HierarchyPath;
-import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.testclientfw.Words;
 import org.lilyproject.util.json.JsonUtil;
 
@@ -54,7 +51,7 @@ public class TestFieldType {
     
     private ActionResult generateMultiValue(TestAction testAction) {
         if (fieldType.getValueType().isMultiValue()) {
-            int size = (int)Math.ceil(Math.random() * 5);
+            int size = (int)Math.ceil(Math.random() * 2);
             List<Object> values = new ArrayList<Object>();
             long duration = 0;
             for (int i = 0; i < size; i++) {
@@ -72,7 +69,7 @@ public class TestFieldType {
 
     private ActionResult generateHierarchical(TestAction testAction) {
         if (fieldType.getValueType().isHierarchical()) {
-            int size = (int)Math.ceil(Math.random() * 5);
+            int size = (int)Math.ceil(Math.random() * 3);
             Object[] elements = new Object[size];
             long duration = 0;
             for (int i = 0; i < size; i++) {
@@ -103,6 +100,8 @@ public class TestFieldType {
             return new ActionResult(true, generateLocalDate(), 0);
         } else if (primitive.equals("DATETIME")) {
             return new ActionResult(true, generateDateTime(), 0);
+        } else if (primitive.equals("BLOB")) {
+            return new ActionResult(true, generateBlob(), 0);
         } else if (primitive.equals("LINK")) {
             try {
                 return testAction.linkFieldAction(this, null);
@@ -213,6 +212,37 @@ public class TestFieldType {
                 fail++;
             }
         }
+    }
+    
+    private Blob generateBlob() {
+        // Generate a blob that should be cleaned up by BlobIncubator
+        actualGenerateBlob();
+        return actualGenerateBlob();
+    }
+    
+    private Blob actualGenerateBlob() {
+        
+        //4K, 150K, 200MB
+        int[] sizes = new int[]{
+                4000, 150000, 200000000
+        };
+//        long start = System.currentTimeMillis();
+        int min = 1;
+        int max = sizes[0 + (int)(Math.random() * ((2 - 0) + 1))];
+        int size = min + (int)(Math.random() * ((max - min) + 1));
+        byte[] bytes = new byte[size];
+        random.nextBytes(bytes);
+        Blob blob = new Blob("tester", (long)bytes.length, "test"+size);
+        try {
+            OutputStream outputStream = repository.getOutputStream(blob);
+            outputStream.write(bytes);
+            outputStream.close();
+//            System.out.println("created blob of size "+size+" in "+ (System.currentTimeMillis()-start) +" ms");
+            return blob;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate blob", e);
+        }
+        
     }
     
     public Link generateLink() {

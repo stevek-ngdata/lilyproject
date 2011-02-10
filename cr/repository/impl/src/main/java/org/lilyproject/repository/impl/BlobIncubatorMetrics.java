@@ -4,9 +4,7 @@ import org.apache.hadoop.metrics.MetricsContext;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.apache.hadoop.metrics.MetricsUtil;
 import org.apache.hadoop.metrics.Updater;
-import org.apache.hadoop.metrics.util.MetricsBase;
-import org.apache.hadoop.metrics.util.MetricsRegistry;
-import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
+import org.apache.hadoop.metrics.util.*;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
@@ -22,6 +20,9 @@ public class BlobIncubatorMetrics implements Updater {
 
     public MetricsTimeVaryingRate checkDuration = new MetricsTimeVaryingRate("check_duration", registry);
 
+    public MetricsTimeVaryingInt blobDeleteCount = new MetricsTimeVaryingInt("blob_delete_cnt", registry);
+    public MetricsTimeVaryingInt refDeleteCount = new MetricsTimeVaryingInt("ref_delete_cnt", registry);
+    
     public BlobIncubatorMetrics() {
         context = MetricsUtil.getContext("blobIncubator");
         metricsRecord = MetricsUtil.createRecord(context, "blobIncubator");

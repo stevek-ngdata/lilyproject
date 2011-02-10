@@ -202,6 +202,7 @@ public class BlobIncubatorMonitor {
             if (deleteReference(blobKey, recordId)) {
                 try {
                     blobManager.delete(blobKey);
+                    metrics.blobDeleteCount.inc();
                 } catch (BlobException e) {
                     log.warn("Failed to delete blob " + blobKey, e);
                     // Deleting the blob failed. We put back the reference to try it again later.
@@ -219,8 +220,12 @@ public class BlobIncubatorMonitor {
 
         private boolean deleteReference(byte[] blobKey, byte[] recordId) throws IOException {
             Delete delete = new Delete(blobKey);
-            return blobIncubatorTable.checkAndDelete(blobKey, BlobIncubatorCf.REF.bytes,
+            boolean result = blobIncubatorTable.checkAndDelete(blobKey, BlobIncubatorCf.REF.bytes,
                     BlobIncubatorColumn.RECORD.bytes, recordId, delete);
+            if (result) {
+                metrics.refDeleteCount.inc();
+            }
+            return result;
         }
 
         private Result getBlobUsage(byte[] blobKey, byte[] recordId, byte[] fieldId) throws FieldTypeNotFoundException,

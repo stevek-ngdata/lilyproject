@@ -70,6 +70,8 @@
                        If no record type is given a random recordId will be generated.
           recordSource : The space from which to select a random recordId. 
                          If no recordSource is given a new record will be created of the given record type.
+                         
+      * For BLOB field types, generating a random value results in a random blob with a maximum size of 200MB to be uploaded.
   */
   fieldTypes: [
     {
@@ -124,6 +126,11 @@
     {
       name: "tester$field10",
       valueType: { "primitive": "BOOLEAN" },
+      scope: "versioned"
+    },
+    {
+      name: "tester$field11",
+      valueType: { "primitive": "BLOB" },
       scope: "versioned"
     },
     {
@@ -185,6 +192,7 @@
    * The scenario describes the actions to perform in one iteration of the test
    * name : The name of the action, which will be used in the metrics.
    * action : The action code which must correspond to a TestAction class.
+   * for read actions: readBlobs indicates if the the actual blob content needs to be read from the blobstore
    * count : The number of times to perform the action before going to the next action.
    * recordType : The record type the action of performed upon.
    * source : The record space to use as source for the action.
@@ -227,10 +235,11 @@
       count: 1,
       source: "recordsRT1"
     },
-        {
+    {
       name: "read2",
       action: "read",
       count: 1,
+      readBlobs: false,
       source: "recordsRT2"
     },
     {
