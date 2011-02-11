@@ -53,7 +53,7 @@ public class ZkLockTest {
         ZK_CLUSTER.setClientPort(ZK_CLIENT_PORT);
         ZK_CLUSTER.startup(ZK_DIR);
 
-        ZK = ZkUtil.connect("localhost:" + ZK_CLIENT_PORT, 3000);
+        ZK = ZkUtil.connect("localhost:" + ZK_CLIENT_PORT, 30000);
     }
 
     @AfterClass
