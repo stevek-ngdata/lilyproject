@@ -27,6 +27,7 @@
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-repository</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <relativePath>../</relativePath>
   </parent>
 
   <dependencies>
