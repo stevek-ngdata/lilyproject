@@ -552,11 +552,13 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         if (namespace == null) {
             encodedName = Bytes.add(encodedName, Bytes.toBytes(0));
         } else {
-            encodedName = Bytes.add(encodedName, Bytes.toBytes(namespace.length()));
-            encodedName = Bytes.add(encodedName, Bytes.toBytes(namespace));
+            byte[] namespaceBytes = Bytes.toBytes(namespace);
+            encodedName = Bytes.add(encodedName, Bytes.toBytes(namespaceBytes.length));
+            encodedName = Bytes.add(encodedName, namespaceBytes);
         }
-        encodedName = Bytes.add(encodedName, Bytes.toBytes(name.length()));
-        encodedName = Bytes.add(encodedName, Bytes.toBytes(name));
+        byte[] nameBytes = Bytes.toBytes(name);
+        encodedName = Bytes.add(encodedName, Bytes.toBytes(nameBytes.length));
+        encodedName = Bytes.add(encodedName, nameBytes);
         return encodedName;
     }
 

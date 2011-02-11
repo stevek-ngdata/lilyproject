@@ -86,8 +86,9 @@ public class BlobStoreAccessRegistry {
     static private byte[] encode(String id, byte[] blobKey) {
         byte[] bytes = new byte[0];
         bytes = Bytes.add(bytes, blobKey);
-        bytes = Bytes.add(bytes, Bytes.toBytes(id));
-        bytes = Bytes.add(bytes, Bytes.toBytes(id.length()));
+        byte[] idBytes = Bytes.toBytes(id);
+        bytes = Bytes.add(bytes, idBytes);
+        bytes = Bytes.add(bytes, Bytes.toBytes(idBytes.length));
         return bytes;
     }
     

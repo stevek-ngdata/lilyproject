@@ -65,8 +65,9 @@ public class BlobValueType implements PrimitiveValueType {
             bytes = Bytes.add(bytes, Bytes.toBytes(key.length));
             bytes = Bytes.add(bytes, key);
         }
-        bytes = Bytes.add(bytes, Bytes.toBytes(blob.getMediaType().length()));
-        bytes = Bytes.add(bytes, Bytes.toBytes(blob.getMediaType()));
+        byte[] mediaTypeBytes = Bytes.toBytes(blob.getMediaType());
+        bytes = Bytes.add(bytes, Bytes.toBytes(mediaTypeBytes.length));
+        bytes = Bytes.add(bytes, mediaTypeBytes);
         Long size = blob.getSize();
         if (size == null) {
             size = Long.valueOf(-1);
@@ -76,8 +77,9 @@ public class BlobValueType implements PrimitiveValueType {
         if (filename == null) {
             bytes = Bytes.add(bytes, Bytes.toBytes(Integer.valueOf(0)));
         } else {
-            bytes = Bytes.add(bytes, Bytes.toBytes(filename.length()));
-            bytes = Bytes.add(bytes, Bytes.toBytes(blob.getName()));
+            byte[] fileNameBytes = Bytes.toBytes(blob.getName());
+            bytes = Bytes.add(bytes, Bytes.toBytes(fileNameBytes.length));
+            bytes = Bytes.add(bytes, fileNameBytes);
         }
         return bytes;
     }
