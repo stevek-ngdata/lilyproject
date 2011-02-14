@@ -64,7 +64,7 @@ public class Tester extends BaseRepositoryTestTool {
     
     @Override
     protected String getCmdName() {
-        return "lily-perftest";
+        return "lily-tester";
     }
 
     @Override
