@@ -66,6 +66,10 @@ public class Metrics {
         this.threadCount = threadCount;
     }
 
+    public void setIntervalDuration(int duration) {
+        this.intervalDuration = duration;
+    }
+
     public void finish() {
         // print one last report
         printReport();
