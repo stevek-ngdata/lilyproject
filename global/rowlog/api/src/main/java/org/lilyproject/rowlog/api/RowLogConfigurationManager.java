@@ -63,6 +63,7 @@ public interface RowLogConfigurationManager {
      * report the initial rowlog configuration parameters.
      */
     void addRowLogObserver(String rowLogId, RowLogObserver observer);
+
     void removeRowLogObserver(String rowLogId, RowLogObserver observer);
 
     
