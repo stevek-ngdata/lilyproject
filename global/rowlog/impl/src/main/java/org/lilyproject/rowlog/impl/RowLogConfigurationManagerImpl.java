@@ -83,13 +83,6 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         
         final byte[] data = RowLogConfigConverter.INSTANCE.toJsonBytes(rowLogId, rowLogConfig);
         ZkUtil.createPath(zooKeeper, path, data);
-        // Perform an extra update in case the rowlog node already existed
-        zooKeeper.retryOperation(new ZooKeeperOperation<String>() {
-            public String execute() throws KeeperException, InterruptedException {
-                zooKeeper.setData(path, data, -1);
-                return null;
-            }
-        });
     }
     
     public synchronized void updateRowLog(String rowLogId, RowLogConfig rowLogConfig) throws KeeperException, InterruptedException {
@@ -183,7 +176,8 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         }
     }
     
-    public synchronized void updateSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type, int maxTries, int orderNr) throws KeeperException, InterruptedException, RowLogException {
+    public synchronized void updateSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type,
+            int maxTries, int orderNr) throws KeeperException, InterruptedException, RowLogException {
         if (!subscriptionExists(rowLogId, subscriptionId))
             throw new RowLogException("Subscription " + subscriptionId + "does not exist for rowlog " + rowLogId);
         
@@ -442,7 +436,8 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
                     }
 
                     synchronized (changesLock) {
-                        while (this.changedRowLogs.isEmpty() && this.changedListeners.isEmpty() && this.changedSubscriptions.isEmpty() && this.changedProcessors.isEmpty() && !stop) {
+                        while (this.changedRowLogs.isEmpty() && this.changedListeners.isEmpty()
+                                && this.changedSubscriptions.isEmpty() && this.changedProcessors.isEmpty() && !stop) {
                             changesLock.wait();
                         }
                     }
@@ -638,11 +633,11 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
                 Stat stat = new Stat();
                 try {
                     byte[] data = zooKeeper.getData(rowLogPath(rowLogId), watcher, stat);
-                    if (data == null) 
-                        return false;
-                    config = RowLogConfigConverter.INSTANCE.fromJsonBytes(rowLogId, data);
+                    if (data != null) {
+                        config = RowLogConfigConverter.INSTANCE.fromJsonBytes(rowLogId, data);
+                    }
                 } catch (NoNodeException e) {
-                 // Someone added an observer for a row log which does not exist, this is allowed
+                    // Someone added an observer for a row log which does not exist, this is allowed
                     zooKeeper.exists(rowLogPath(rowLogId), watcher);
                     config = null;
                 }
