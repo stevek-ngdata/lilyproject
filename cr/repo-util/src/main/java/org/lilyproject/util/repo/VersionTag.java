@@ -51,13 +51,13 @@ public class VersionTag {
      *
      * <p>Note that version numbers do not necessarily correspond to existing versions.
      */
-    public static Map<String, Long> getTagsById(Record record, TypeManager typeManager) {
+    public static Map<String, Long> getTagsById(Record record, FieldTypeCache fieldTypeCache) {
         Map<String, Long> vtags = new HashMap<String, Long>();
 
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             FieldType fieldType;
             try {
-                fieldType = typeManager.getFieldTypeByName(field.getKey());
+                fieldType = fieldTypeCache.getFieldTypeByName(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 // A field whose field type does not exist: skip it
                 // TODO would be better to do above retrieval based on ID?
@@ -84,13 +84,13 @@ public class VersionTag {
      *
      * <p>Note that version numbers do not necessarily correspond to existing versions.
      */
-    public static Map<String, Long> getTagsById(IdRecord record, TypeManager typeManager) {
+    public static Map<String, Long> getTagsById(IdRecord record, FieldTypeCache fieldTypeCache) {
         Map<String, Long> vtags = new HashMap<String, Long>();
 
         for (Map.Entry<String, Object> field : record.getFieldsById().entrySet()) {
             FieldType fieldType;
             try {
-                fieldType = typeManager.getFieldTypeById(field.getKey());
+                fieldType = fieldTypeCache.getFieldTypeById(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 // A field whose field type does not exist: skip it
                 continue;
@@ -116,10 +116,11 @@ public class VersionTag {
     public static Map<String, Long> getTagsByName(Record record, TypeManager typeManager) {
         Map<String, Long> vtags = new HashMap<String, Long>();
 
+        FieldTypeCache fieldTypeCache = typeManager.getFieldTypeCache();
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             FieldType fieldType;
             try {
-                fieldType = typeManager.getFieldTypeByName(field.getKey());
+                fieldType = fieldTypeCache.getFieldTypeByName(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 // A field whose field type does not exist: skip it
                 // TODO would be better to do above retrieval based on ID?
@@ -182,11 +183,11 @@ public class VersionTag {
     /**
      * Filters the given set of fields to only those that are vtag fields.
      */
-    public static Set<String> filterVTagFields(Set<String> fieldIds, TypeManager typeManager) {
+    public static Set<String> filterVTagFields(Set<String> fieldIds, FieldTypeCache fieldTypeCache) {
         Set<String> result = new HashSet<String>();
         for (String field : fieldIds) {
             try {
-                if (VersionTag.isVersionTag(typeManager.getFieldTypeById(field))) {
+                if (VersionTag.isVersionTag(fieldTypeCache.getFieldTypeById(field))) {
                     result.add(field);
                 }
             } catch (FieldTypeNotFoundException e) {
@@ -296,10 +297,10 @@ public class VersionTag {
     /**
      * Returns true if the Record contains a field that serves as the last version tag.
      */
-    public static boolean hasLastVTag(Record record, TypeManager typeManager) throws FieldTypeNotFoundException,
+    public static boolean hasLastVTag(Record record, TypeManager typeManager, FieldTypeCache fieldTypeCache) throws FieldTypeNotFoundException,
             TypeException, InterruptedException {
         for (QName name : record.getFields().keySet()) {
-            if (isLastVersionTag(typeManager.getFieldTypeByName(name)))
+            if (isLastVersionTag(fieldTypeCache.getFieldTypeByName(name)))
                 return true;
         }
         return false;
@@ -308,17 +309,17 @@ public class VersionTag {
     /**
      * Returns true if the RecordType or one of its mixins has FieldType defined that serves as last version tag.
      */
-    public static boolean hasLastVTag(RecordType recordType, TypeManager typeManager)
+    public static boolean hasLastVTag(RecordType recordType, TypeManager typeManager, FieldTypeCache fieldTypeCache)
             throws FieldTypeNotFoundException, RecordTypeNotFoundException, TypeException,
             InterruptedException {
         Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
-            if (isLastVersionTag(typeManager.getFieldTypeById(fieldTypeEntry.getFieldTypeId())))
+            if (isLastVersionTag(fieldTypeCache.getFieldTypeById(fieldTypeEntry.getFieldTypeId())))
                     return true;
         }
         Map<String, Long> mixins = recordType.getMixins();
         for (Entry<String, Long> entry : mixins.entrySet()) {
-            if (hasLastVTag(typeManager.getRecordTypeById(entry.getKey(), entry.getValue()), typeManager))
+            if (hasLastVTag(typeManager.getRecordTypeById(entry.getKey(), entry.getValue()), typeManager, fieldTypeCache))
                 return true;
         }
         return false;
@@ -335,8 +336,8 @@ public class VersionTag {
     /**
      * Returns the FieldType that serves as last version tag if it exists.
      */
-    public static FieldType getLastVTagType(TypeManager typeManager) throws FieldTypeNotFoundException, TypeException,
+    public static FieldType getLastVTagType(FieldTypeCache fieldTypeCache) throws FieldTypeNotFoundException, TypeException,
             InterruptedException {
-        return typeManager.getFieldTypeByName(qname(LAST));
+        return fieldTypeCache.getFieldTypeByName(qname(LAST));
     }
 }

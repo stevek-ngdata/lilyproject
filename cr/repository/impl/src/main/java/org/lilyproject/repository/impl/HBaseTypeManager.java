@@ -407,8 +407,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             long concurrentCounter = getTypeTable().incrementColumnValue(nameBytes, TypeCf.DATA.bytes,
                     TypeColumn.CONCURRENT_COUNTER.bytes, 1);
 
-            if (getFieldTypeFromCache(fieldType.getName()) != null)
-                throw new FieldTypeExistsException(fieldType);
+            try {
+                if (getFieldTypeCache().getFieldTypeByName(fieldType.getName()) != null)
+                    throw new FieldTypeExistsException(fieldType);
+            } catch (FieldTypeNotFoundException ignore) {
+            }
 
             Put put = new Put(rowId);
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes, fieldType.getValueType().toBytes());

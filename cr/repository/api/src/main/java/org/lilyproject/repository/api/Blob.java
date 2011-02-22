@@ -38,9 +38,9 @@ import org.lilyproject.util.ArgumentValidator;
  */
 public class Blob {
 
-    private final String mediaType;
-    private final Long size;
-    private final String name;
+    private String mediaType;
+    private Long size;
+    private String name;
     private byte[] value;
 
     /**
@@ -82,12 +82,24 @@ public class Blob {
         return mediaType;
     }
     
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
+    }
+    
     public Long getSize() {
         return size;
     }
     
+    public void setSize(Long size) {
+        this.size = size;
+    }
+    
     public String getName() {
         return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

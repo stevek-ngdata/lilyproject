@@ -16,45 +16,17 @@
 package org.lilyproject.repository.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeEntry;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.PrimitiveValueType;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.BooleanValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.DateTimeValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.DateValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.DecimalValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.DoubleValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.IntegerValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.LinkValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.LongValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.StringValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.UriValueType;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.primitivevaluetype.*;
 import org.lilyproject.util.ArgumentValidator;
-import org.lilyproject.util.ByteArrayKey;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -71,11 +43,11 @@ public abstract class AbstractTypeManager implements TypeManager {
     // Caching
     //
     protected ZooKeeperItf zooKeeper;
-    private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
+    private FieldTypeCacheImpl fieldTypeCache;
+    private FieldTypeCacheImpl updatingFieldTypeCache = new FieldTypeCacheImpl();
+    private boolean updatedFieldTypeCache = false;
     private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
-    private Map<String, FieldType> fieldTypeIdCache = new HashMap<String, FieldType>();
     private Map<String, RecordType> recordTypeIdCache = new HashMap<String, RecordType>();
-    private Map<ByteArrayKey, FieldType> fieldTypeBytesIdCache = new HashMap<ByteArrayKey, FieldType>();
     private final CacheWatcher cacheWatcher = new CacheWatcher();
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache";
     
@@ -182,30 +154,16 @@ public abstract class AbstractTypeManager implements TypeManager {
             // Relying on the ConnectionWatcher to put it again and initialize
             // the caches.
         }
-        refreshFieldTypeCache();
+        try {
+            updatingFieldTypeCache.refresh(getFieldTypesWithoutCache());
+            updatedFieldTypeCache = true;
+        } catch (Exception e) {
+            // We keep on working with the old cache
+            log.warn("Exception while refreshing RecordType cache. Cache is possibly out of date.", e);
+        } 
         refreshRecordTypeCache();
     }
 
-    private synchronized void refreshFieldTypeCache() {
-        Map<QName, FieldType> newFieldTypeNameCache = new HashMap<QName, FieldType>();
-        Map<String, FieldType> newFieldTypeIdCache = new HashMap<String, FieldType>();
-        Map<ByteArrayKey, FieldType> newFieldTypeBytesIdCache = new HashMap<ByteArrayKey, FieldType>();
-        try {
-            List<FieldType> fieldTypes = getFieldTypesWithoutCache();
-            for (FieldType fieldType : fieldTypes) {
-                newFieldTypeNameCache.put(fieldType.getName(), fieldType);
-                newFieldTypeIdCache.put(fieldType.getId(), fieldType);
-                newFieldTypeBytesIdCache.put(new ByteArrayKey(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
-            }
-            fieldTypeNameCache = newFieldTypeNameCache;
-            fieldTypeIdCache = newFieldTypeIdCache;
-            fieldTypeBytesIdCache = newFieldTypeBytesIdCache;
-        } catch (Exception e) {
-            // We keep on working with the old cache
-            log.warn("Exception while refreshing FieldType cache. Cache is possibly out of date.", e);
-        }
-    }
-    
     private synchronized void refreshRecordTypeCache() {
         Map<QName, RecordType> newRecordTypeNameCache = new HashMap<QName, RecordType>();
         Map<String, RecordType> newRecordTypeIdCache = new HashMap<String, RecordType>();
@@ -223,22 +181,22 @@ public abstract class AbstractTypeManager implements TypeManager {
         } 
     }
 
+    public synchronized FieldTypeCacheImpl getFieldTypeCache() {
+        if (updatedFieldTypeCache) {
+            fieldTypeCache = updatingFieldTypeCache.clone();
+            updatedFieldTypeCache = false;
+        }
+        return fieldTypeCache;
+    }
+    
     abstract protected List<FieldType> getFieldTypesWithoutCache() throws IOException, FieldTypeNotFoundException, TypeException;
     abstract protected List<RecordType> getRecordTypesWithoutCache() throws IOException, RecordTypeNotFoundException, TypeException;
     
-    
     protected synchronized void updateFieldTypeCache(FieldType fieldType) {
-        FieldType oldFieldType = getFieldTypeFromCache(fieldType.getId());
-        if (oldFieldType != null) {
-            fieldTypeNameCache.remove(oldFieldType.getName());
-            fieldTypeIdCache.remove(oldFieldType.getId());
-            fieldTypeBytesIdCache.remove(new ByteArrayKey(HBaseTypeManager.idToBytes(oldFieldType.getId())));
-        }
-        fieldTypeNameCache.put(fieldType.getName(), fieldType);
-        fieldTypeIdCache.put(fieldType.getId(), fieldType);
-        fieldTypeBytesIdCache.put(new ByteArrayKey(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
+        updatingFieldTypeCache.updateFieldTypeCache(fieldType);
+        updatedFieldTypeCache = true;
     }
-
+    
     protected synchronized void updateRecordTypeCache(RecordType recordType) {
         RecordType oldType = getRecordTypeFromCache(recordType.getId());
         if (oldType != null) {
@@ -258,24 +216,10 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
     
     public synchronized List<FieldType> getFieldTypes() {
-        List<FieldType> fieldTypes = new ArrayList<FieldType>();
-        for (FieldType fieldType : fieldTypeNameCache.values()) {
-            fieldTypes.add(fieldType.clone());
-        }
-        return fieldTypes;
+        return getFieldTypeCache().getFieldTypes();
     }
 
-    protected synchronized FieldType getFieldTypeFromCache(QName name) {
-        return fieldTypeNameCache.get(name);
-    }
     
-    protected synchronized FieldType getFieldTypeFromCache(String id) {
-        return fieldTypeIdCache.get(id);
-    }
-    
-    protected synchronized FieldType getFieldTypeFromCache(byte[] id) {
-        return fieldTypeBytesIdCache.get(new ByteArrayKey(id));
-    }
     
     protected synchronized RecordType getRecordTypeFromCache(QName name) {
         return recordTypeNameCache.get(name);
@@ -320,30 +264,15 @@ public abstract class AbstractTypeManager implements TypeManager {
     abstract protected RecordType getRecordTypeByIdWithoutCache(String id, Long version) throws RecordTypeNotFoundException, TypeException;
     
     public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException {
-        ArgumentValidator.notNull(id, "id");
-        FieldType fieldType = getFieldTypeFromCache(id);
-        if (fieldType == null) {
-            throw new FieldTypeNotFoundException(id);
-        }
-        return fieldType.clone();
+        return getFieldTypeCache().getFieldTypeById(id);
     }
     
     public FieldType getFieldTypeById(byte[] id) throws FieldTypeNotFoundException {
-        ArgumentValidator.notNull(id, "id");
-        FieldType fieldType = getFieldTypeFromCache(id);
-        if (fieldType == null) {
-            throw new FieldTypeNotFoundException(HBaseTypeManager.idFromBytes(id));
-        }
-        return fieldType.clone();
+        return getFieldTypeCache().getFieldTypeById(id);
     }
 
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
-        ArgumentValidator.notNull(name, "name");
-        FieldType fieldType = getFieldTypeFromCache(name);
-        if (fieldType == null) {
-            throw new FieldTypeNotFoundException(name);
-        }
-        return fieldType.clone();
+        return getFieldTypeCache().getFieldTypeByName(name);
     }
     
     //

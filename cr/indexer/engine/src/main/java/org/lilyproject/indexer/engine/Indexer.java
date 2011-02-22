@@ -74,7 +74,7 @@ public class Indexer {
             SolrServerException, ShardSelectorException, InterruptedException {
 
         IdRecord record = repository.readWithIds(recordId, null, null);
-        Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
+        Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager.getFieldTypeCache());
 
         IndexCase indexCase = conf.getIndexCase(record.getRecordTypeName(), record.getId().getVariantProperties());
         if (indexCase == null) {

@@ -109,7 +109,9 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                     boolean hasVersions = record.getVersion() != null;
     
                     if (hasVersions) {
-                        Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
+                        FieldTypeCache fieldTypeCache = typeManager.getFieldTypeCache();
+
+                        Map<String, Long> vtags = VersionTag.getTagsById(record, fieldTypeCache);
                         Map<Long, Set<String>> tagsByVersion = VersionTag.tagsByVersion(vtags);
     
                         //
@@ -118,7 +120,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                         Set<String> vtagsToProcess = new HashSet<String>();
     
                         // Modified vtag fields
-                        Set<String> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), typeManager);
+                        Set<String> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), fieldTypeCache);
                         vtagsToProcess.addAll(changedVTags);
     
                         // The vtags of the created/modified version, if any
