@@ -8,19 +8,19 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.ByteArrayKey;
 
-public class FieldTypeCacheImpl implements FieldTypeCache {
+public class FieldTypesImpl implements FieldTypes {
     private Log log = LogFactory.getLog(getClass());
     
     private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
     private Map<String, FieldType> fieldTypeIdCache = new HashMap<String, FieldType>();
     private Map<ByteArrayKey, FieldType> fieldTypeBytesIdCache = new HashMap<ByteArrayKey, FieldType>();
 
-    public synchronized FieldTypeCacheImpl clone() {
-        FieldTypeCacheImpl newFieldTypeCache = new FieldTypeCacheImpl();
-        newFieldTypeCache.fieldTypeNameCache.putAll(fieldTypeNameCache);
-        newFieldTypeCache.fieldTypeIdCache.putAll(fieldTypeIdCache);
-        newFieldTypeCache.fieldTypeBytesIdCache.putAll(fieldTypeBytesIdCache);
-        return newFieldTypeCache;
+    public synchronized FieldTypesImpl clone() {
+        FieldTypesImpl newFieldTypes = new FieldTypesImpl();
+        newFieldTypes.fieldTypeNameCache.putAll(fieldTypeNameCache);
+        newFieldTypes.fieldTypeIdCache.putAll(fieldTypeIdCache);
+        newFieldTypes.fieldTypeBytesIdCache.putAll(fieldTypeBytesIdCache);
+        return newFieldTypes;
     }
     
     public synchronized void refresh(List<FieldType> fieldTypes) {
@@ -42,7 +42,7 @@ public class FieldTypeCacheImpl implements FieldTypeCache {
         }
     }
     
-    public synchronized void updateFieldTypeCache(FieldType fieldType) {
+    public synchronized void update(FieldType fieldType) {
         FieldType oldFieldType = fieldTypeIdCache.get(fieldType.getId());
         if (oldFieldType != null) {
             fieldTypeNameCache.remove(oldFieldType.getName());

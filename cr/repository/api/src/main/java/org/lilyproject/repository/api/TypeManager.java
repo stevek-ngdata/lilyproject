@@ -226,8 +226,8 @@ public interface TypeManager extends Closeable {
     void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) throws TypeException;
 
     /**
-     * Returns a snapshot of the FieldTypeCache. To be used when a consistent snapshot is needed while performing a CRUD operation.
-     * @return a snapshot of the FieldType cache
+     * Returns a snapshot of the FieldTypes. To be used when a consistent snapshot is needed while performing a CRUD operation.
+     * @return a snapshot of the FieldTypes cache
      */
-    FieldTypeCache getFieldTypeCache();
+    FieldTypes getFieldTypesSnapshot();
 }

@@ -1,13 +1,13 @@
 package org.lilyproject.repository.api;
 
 /**
- * The FieldTypeCache contains a snapshot of the field types in the Lily Schema. 
+ * The FieldTypes contains a snapshot of the field types in the Lily Schema. 
  * 
  * <p> To be used when a consistent shapshot is needed while performing CRUD operations.
  */
-public interface FieldTypeCache {
+public interface FieldTypes {
     /**
-     * Gets a FieldType from the FieldTypeCache.
+     * Gets a FieldType from the FieldTypes.
      *
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
@@ -15,7 +15,7 @@ public interface FieldTypeCache {
     FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
     
     /**
-     * Gets a FieldType from the FieldTypeCache.
+     * Gets a FieldType from the FieldTypes.
      *
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
@@ -23,7 +23,7 @@ public interface FieldTypeCache {
     FieldType getFieldTypeById(byte[] id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
 
     /**
-     * Gets a FieldType from the FieldTypeCache.
+     * Gets a FieldType from the FieldTypes.
      *
      * @throws FieldTypeNotFoundException when no fieldType with the given name exists
      * @throws RepositoryException when an unexpected exception occurs on the repository

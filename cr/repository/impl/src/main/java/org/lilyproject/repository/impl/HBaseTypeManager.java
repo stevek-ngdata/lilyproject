@@ -408,7 +408,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                     TypeColumn.CONCURRENT_COUNTER.bytes, 1);
 
             try {
-                if (getFieldTypeCache().getFieldTypeByName(fieldType.getName()) != null)
+                if (getFieldTypesSnapshot().getFieldTypeByName(fieldType.getName()) != null)
                     throw new FieldTypeExistsException(fieldType);
             } catch (FieldTypeNotFoundException ignore) {
             }

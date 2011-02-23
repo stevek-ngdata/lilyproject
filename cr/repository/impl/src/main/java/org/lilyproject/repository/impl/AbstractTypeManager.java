@@ -43,9 +43,9 @@ public abstract class AbstractTypeManager implements TypeManager {
     // Caching
     //
     protected ZooKeeperItf zooKeeper;
-    private FieldTypeCacheImpl fieldTypeCache;
-    private FieldTypeCacheImpl updatingFieldTypeCache = new FieldTypeCacheImpl();
-    private boolean updatedFieldTypeCache = false;
+    private FieldTypesImpl fieldTypes;
+    private FieldTypesImpl updatingFieldTypes = new FieldTypesImpl();
+    private boolean updatedFieldTypes = false;
     private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
     private Map<String, RecordType> recordTypeIdCache = new HashMap<String, RecordType>();
     private final CacheWatcher cacheWatcher = new CacheWatcher();
@@ -155,8 +155,8 @@ public abstract class AbstractTypeManager implements TypeManager {
             // the caches.
         }
         try {
-            updatingFieldTypeCache.refresh(getFieldTypesWithoutCache());
-            updatedFieldTypeCache = true;
+            updatingFieldTypes.refresh(getFieldTypesWithoutCache());
+            updatedFieldTypes = true;
         } catch (Exception e) {
             // We keep on working with the old cache
             log.warn("Exception while refreshing RecordType cache. Cache is possibly out of date.", e);
@@ -181,20 +181,20 @@ public abstract class AbstractTypeManager implements TypeManager {
         } 
     }
 
-    public synchronized FieldTypeCacheImpl getFieldTypeCache() {
-        if (updatedFieldTypeCache) {
-            fieldTypeCache = updatingFieldTypeCache.clone();
-            updatedFieldTypeCache = false;
+    public synchronized FieldTypesImpl getFieldTypesSnapshot() {
+        if (updatedFieldTypes) {
+            fieldTypes = updatingFieldTypes.clone();
+            updatedFieldTypes = false;
         }
-        return fieldTypeCache;
+        return fieldTypes;
     }
     
     abstract protected List<FieldType> getFieldTypesWithoutCache() throws IOException, FieldTypeNotFoundException, TypeException;
     abstract protected List<RecordType> getRecordTypesWithoutCache() throws IOException, RecordTypeNotFoundException, TypeException;
     
     protected synchronized void updateFieldTypeCache(FieldType fieldType) {
-        updatingFieldTypeCache.updateFieldTypeCache(fieldType);
-        updatedFieldTypeCache = true;
+        updatingFieldTypes.update(fieldType);
+        updatedFieldTypes = true;
     }
     
     protected synchronized void updateRecordTypeCache(RecordType recordType) {
@@ -216,7 +216,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
     
     public synchronized List<FieldType> getFieldTypes() {
-        return getFieldTypeCache().getFieldTypes();
+        return getFieldTypesSnapshot().getFieldTypes();
     }
 
     
@@ -264,15 +264,15 @@ public abstract class AbstractTypeManager implements TypeManager {
     abstract protected RecordType getRecordTypeByIdWithoutCache(String id, Long version) throws RecordTypeNotFoundException, TypeException;
     
     public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException {
-        return getFieldTypeCache().getFieldTypeById(id);
+        return getFieldTypesSnapshot().getFieldTypeById(id);
     }
     
     public FieldType getFieldTypeById(byte[] id) throws FieldTypeNotFoundException {
-        return getFieldTypeCache().getFieldTypeById(id);
+        return getFieldTypesSnapshot().getFieldTypeById(id);
     }
 
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
-        return getFieldTypeCache().getFieldTypeByName(name);
+        return getFieldTypesSnapshot().getFieldTypeByName(name);
     }
     
     //

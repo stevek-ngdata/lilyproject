@@ -79,8 +79,6 @@ public class IndexUpdater implements RowLogMessageListener {
                 log.debug("Received message: " + event.toJson());
             }
 
-            FieldTypeCache fieldTypeCache = typeManager.getFieldTypeCache();
-            
             if (event.getType().equals(DELETE)) {
                 // For deleted records, we cannot determine the record type, so we do not know if there was
                 // an applicable index case, so we always perform a delete.
@@ -97,7 +95,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 }
 
                 // After this we can go to update denormalized data
-                updateDenormalizedData(recordId, event, null, null, fieldTypeCache);
+                updateDenormalizedData(recordId, event, null, null);
             } else {
                 Map<Long, Set<String>> vtagsByVersion;
                 Map<Scope, Set<FieldType>> updatedFieldsByScope;
@@ -118,17 +116,17 @@ public class IndexUpdater implements RowLogMessageListener {
                     // Read the vtags of the record. Note that while this algorithm is running, the record can meanwhile
                     // undergo changes. However, we continuously work with the snapshot of the vtags mappings read here.
                     // The processing of later events will bring the index up to date with any new changes.
-                    Map<String, Long> vtags = VersionTag.getTagsById(record, fieldTypeCache);
+                    Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
                     vtagsByVersion = VersionTag.tagsByVersion(vtags);
 
                     updatedFieldsByScope = getFieldTypeAndScope(event.getUpdatedFields());
 
-                    handleRecordCreateUpdate(record, event, vtags, vtagsByVersion, updatedFieldsByScope, fieldTypeCache);
+                    handleRecordCreateUpdate(record, event, vtags, vtagsByVersion, updatedFieldsByScope);
                 } finally {
                     indexLocker.unlockLogFailure(recordId);
                 }
 
-                updateDenormalizedData(recordId, event, updatedFieldsByScope, vtagsByVersion, fieldTypeCache);
+                updateDenormalizedData(recordId, event, updatedFieldsByScope, vtagsByVersion);
             }
 
 
@@ -145,7 +143,7 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     private void handleRecordCreateUpdate(IdRecord record, RecordEvent event, Map<String, Long> vtags,
-            Map<Long, Set<String>> vtagsByVersion, Map<Scope, Set<FieldType>> updatedFieldsByScope, FieldTypeCache fieldTypeCache) throws Exception {
+            Map<Long, Set<String>> vtagsByVersion, Map<Scope, Set<FieldType>> updatedFieldsByScope) throws Exception {
 
         // Determine the IndexCase:
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
@@ -243,7 +241,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 //
                 // Handle changes to vtag fields themselves
                 //
-                Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), fieldTypeCache);
+                Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
                 // Remove the vtags which are going to be reindexed anyway
                 changedVTagFields.removeAll(vtagsToIndex);
                 for (String vtag : changedVTagFields) {
@@ -273,7 +271,7 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     private void updateDenormalizedData(RecordId recordId, RecordEvent event,
-            Map<Scope, Set<FieldType>> updatedFieldsByScope, Map<Long, Set<String>> vtagsByVersion, FieldTypeCache fieldTypeCache) {
+            Map<Scope, Set<FieldType>> updatedFieldsByScope, Map<Long, Set<String>> vtagsByVersion) {
 
         // This algorithm is designed to first collect all the reindex-work, and then to perform it.
         // Otherwise the same document would be indexed multiple times if it would become invalid
@@ -351,7 +349,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
         // === Case 2 === handle updated/added/removed vtags
 
-        Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), fieldTypeCache);
+        Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
         if (!changedVTagFields.isEmpty()) {
             // In this case, the IndexFields which we need to handle are those that use fields from:
             //  - the previous version to which the vtag pointed (if it is not a new vtag)
@@ -538,7 +536,7 @@ public class IndexUpdater implements RowLogMessageListener {
                             indexer.index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
                         }
                     } else {
-                        Map<String, Long> recordVTags = VersionTag.getTagsById(record, fieldTypeCache);
+                        Map<String, Long> recordVTags = VersionTag.getTagsById(record, typeManager);
                         vtagsToIndex.retainAll(indexCase.getVersionTags());
                         // Only keep vtags which exist on the record
                         vtagsToIndex.retainAll(recordVTags.keySet());
