@@ -18,6 +18,7 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.zookeeper.*;
 
 import static org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
@@ -230,10 +231,10 @@ public class BlobIncubatorMonitor {
 
         private Result getBlobUsage(byte[] blobKey, byte[] recordId, byte[] fieldId) throws FieldTypeNotFoundException,
                 TypeException, InterruptedException, IOException {
-            FieldType fieldType = typeManager.getFieldTypeById(fieldId);
+            FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeById(fieldId);
             ValueType valueType = fieldType.getValueType();
             Get get = new Get(recordId);
-            get.addColumn(LilyHBaseSchema.RecordCf.DATA.bytes, fieldId);
+            get.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
             byte[] valueToCompare;
             if (valueType.isMultiValue() && valueType.isHierarchical()) {
                 valueToCompare = Bytes.toBytes(2);

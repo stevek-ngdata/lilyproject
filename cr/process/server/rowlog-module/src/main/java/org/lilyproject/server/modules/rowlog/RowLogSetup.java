@@ -111,7 +111,7 @@ public class RowLogSetup {
         RowLogShard mqShard = new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100, hbaseTableFactory);
         messageQueue.registerShard(mqShard);
 
-        RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.SYSTEM.bytes, RecordColumn.LOCK.bytes, 10000);
+        RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
         writeAheadLog = new RowLogImpl("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
                 RecordCf.WAL_STATE.bytes, confMgr, rowLocker);
         RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);

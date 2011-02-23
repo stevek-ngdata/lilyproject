@@ -28,6 +28,8 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+
 import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 import java.io.IOException;
@@ -85,11 +87,11 @@ public class BatchIndexBuilder {
         // Define the HBase scanner
         //
         FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-        filterList.addFilter(new SingleColumnValueFilter(RecordCf.SYSTEM.bytes,
+        filterList.addFilter(new SingleColumnValueFilter(RecordCf.DATA.bytes,
                 RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true)));
         Scan scan = new Scan();
         scan.setFilter(filterList);
-        scan.addColumn(RecordCf.SYSTEM.bytes, RecordColumn.DELETED.bytes);
+        scan.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
 
         TableMapReduceUtil.initTableMapperJob(Table.RECORD.name, scan,
             IndexingMapper.class, null, null, job);

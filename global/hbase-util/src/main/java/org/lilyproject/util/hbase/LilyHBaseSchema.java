@@ -12,13 +12,12 @@ public class LilyHBaseSchema {
     public static final byte EXISTS_FLAG = (byte) 0;
     public static final byte DELETE_FLAG = (byte) 1;
     public static final byte[] DELETE_MARKER = new byte[] { DELETE_FLAG };
+    
 
     private static final HTableDescriptor recordTableDescriptor;
 
     static {
         recordTableDescriptor = new HTableDescriptor(Table.RECORD.bytes);
-        recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.SYSTEM.bytes,
-                HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
         recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.DATA.bytes,
                 HConstants.ALL_VERSIONS, "none", false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
         recordTableDescriptor.addFamily(new HColumnDescriptor(RecordCf.WAL_PAYLOAD.bytes));
@@ -75,8 +74,7 @@ public class LilyHBaseSchema {
      * Column families in the record table.
      */
     public static enum RecordCf {
-        DATA("data"),
-        SYSTEM("system"),
+        DATA("data"), // The actual data fields and system fields of records are stored in the same column family
         WAL_PAYLOAD("wal-payload"),
         WAL_STATE("wal-state"),
         MQ_PAYLOAD("mq-payload"),
@@ -107,10 +105,13 @@ public class LilyHBaseSchema {
 
         public final byte[] bytes;
         public final String name;
+        // The fields and system fields of records are stored in the same column family : DATA
+        public static final byte SYSTEM_PREFIX = (byte)1; // The column-qualifiers of system fields are prefixed with (byte)1 
+        public static final byte DATA_PREFIX = (byte)2; // The column-qualifiers of actual data fields are prefixed with (byte)2
 
         RecordColumn(String name) {
             this.name = name;
-            this.bytes = Bytes.toBytes(name);
+            this.bytes = Bytes.add(new byte[]{SYSTEM_PREFIX},Bytes.toBytes(name));
         }
     }
 

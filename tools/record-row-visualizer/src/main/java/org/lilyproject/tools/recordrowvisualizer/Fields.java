@@ -6,6 +6,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 import java.util.*;
 
@@ -22,37 +23,39 @@ public class Fields {
         // Also, field values are decoded, etc. 
         for (Map.Entry<byte[], NavigableMap<Long,byte[]>> entry : cf.entrySet()) {
             byte[] column = entry.getKey();
-            UUID uuid = new UUID(Bytes.toLong(column, 0, 8), Bytes.toLong(column, 8, 8));
-            String fieldId = uuid.toString();
-
-            for (Map.Entry<Long, byte[]> columnEntry : entry.getValue().entrySet()) {
-                long version = columnEntry.getKey();
-                byte[] value = columnEntry.getValue();
-
-                FieldType fieldType = registerFieldType(fieldId, typeMgr, scope);
-
-                if (fieldType != null) {
-                    Map<String, Object> columns = values.get(version);
-                    if (columns == null) {
-                        columns = new HashMap<String, Object>();
-                        values.put(version, columns);
-                    }
-
-                    Object decodedValue;
-                    if (EncodingUtil.isDeletedField(value)) {
-                        decodedValue = DELETED;
-                    } else {
-                        decodedValue = fieldType.getValueType().fromBytes(EncodingUtil.stripPrefix(value));
-                    }
+            if (column[0] == RecordColumn.DATA_PREFIX) {
+                UUID uuid = new UUID(Bytes.toLong(column, 1, 8), Bytes.toLong(column, 9, 8));
+                String fieldId = uuid.toString();
     
-                    columns.put(fieldId, decodedValue);
+                for (Map.Entry<Long, byte[]> columnEntry : entry.getValue().entrySet()) {
+                    long version = columnEntry.getKey();
+                    byte[] value = columnEntry.getValue();
     
-                    if (version > maxVersion) {
-                        maxVersion = version;
-                    }
+                    FieldType fieldType = registerFieldType(fieldId, typeMgr, scope);
     
-                    if (version < minVersion) {
-                        minVersion = version;
+                    if (fieldType != null) {
+                        Map<String, Object> columns = values.get(version);
+                        if (columns == null) {
+                            columns = new HashMap<String, Object>();
+                            values.put(version, columns);
+                        }
+    
+                        Object decodedValue;
+                        if (EncodingUtil.isDeletedField(value)) {
+                            decodedValue = DELETED;
+                        } else {
+                            decodedValue = fieldType.getValueType().fromBytes(EncodingUtil.stripPrefix(value));
+                        }
+        
+                        columns.put(fieldId, decodedValue);
+        
+                        if (version > maxVersion) {
+                            maxVersion = version;
+                        }
+        
+                        if (version < minVersion) {
+                            minVersion = version;
+                        }
                     }
                 }
             }

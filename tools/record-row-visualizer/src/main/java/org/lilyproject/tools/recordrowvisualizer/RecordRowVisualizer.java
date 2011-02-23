@@ -98,7 +98,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long,byte[]>>> root = row.getMap();
 
-        readSystemFields(root.get(RecordCf.SYSTEM.bytes));
+        readSystemFields(root.get(RecordCf.DATA.bytes));
 
         readFields(root.get(RecordCf.DATA.bytes));
 
@@ -109,7 +109,6 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         readPayload(recordRow.walPayload, root.get(RecordCf.WAL_PAYLOAD.bytes));
 
         byte[][] treatedColumnFamilies = {
-                RecordCf.SYSTEM.bytes,
                 RecordCf.DATA.bytes,
                 RecordCf.MQ_STATE.bytes,
                 RecordCf.MQ_PAYLOAD.bytes,
@@ -141,8 +140,6 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         for (Map.Entry<byte[], NavigableMap<Long, byte[]>> columnEntry : cf.entrySet()) {
             byte[] columnKey = columnEntry.getKey();
 
-            
-            
             if (Arrays.equals(columnKey, RecordColumn.DELETED.bytes)) {
                 setVersionedValue(recordRow.deleted, columnEntry.getValue(), BOOLEAN_DECODER);
             } else if (Arrays.equals(columnKey, RecordColumn.NON_VERSIONED_RT_ID.bytes)) {
@@ -158,7 +155,9 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             } else if (Arrays.equals(columnKey, RecordColumn.VERSION.bytes)) {
                 setVersionedValue(recordRow.version, columnEntry.getValue(), LONG_DECODER);
             } else {
-                recordRow.unknownNvColumns.add(Bytes.toString(columnKey));
+                if (columnKey[0] != RecordColumn.DATA_PREFIX) {
+                    recordRow.unknownNvColumns.add(Bytes.toString(columnKey));
+                }
             }
         }
 

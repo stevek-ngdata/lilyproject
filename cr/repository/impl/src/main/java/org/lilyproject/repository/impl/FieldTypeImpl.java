@@ -15,16 +15,19 @@
  */
 package org.lilyproject.repository.impl;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class FieldTypeImpl implements FieldType {
 
     private String id;
     private byte[] idBytes;
+    private byte[] idQualifier;
     private ValueType valueType;
     private QName name;
     private Scope scope;
@@ -54,6 +57,10 @@ public class FieldTypeImpl implements FieldType {
     public byte[] getIdBytes() {
         return idBytes;
     }
+    
+    public byte[] getQualifier() {
+        return idQualifier;
+    }
 
     public ValueType getValueType() {
         return valueType;
@@ -69,10 +76,14 @@ public class FieldTypeImpl implements FieldType {
     }
     
     private void setIdBytes(String id) {
-        if (id == null)
+        if (id == null) {
             this.idBytes = null;
-        else 
+            this.idQualifier = null;
+        }
+        else { 
             this.idBytes = HBaseTypeManager.idToBytes(id);
+            this.idQualifier = Bytes.add(new byte[]{RecordColumn.DATA_PREFIX}, this.idBytes);
+        }
     }
     
     public void setName(QName name) {
@@ -91,6 +102,7 @@ public class FieldTypeImpl implements FieldType {
         FieldTypeImpl newFieldType = new FieldTypeImpl();
         newFieldType.id = this.id;
         newFieldType.idBytes = this.idBytes;
+        newFieldType.idQualifier = this.idQualifier;
         newFieldType.valueType = this.valueType;
         newFieldType.name = this.name;
         newFieldType.scope = this.scope;
