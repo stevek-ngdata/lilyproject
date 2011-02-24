@@ -250,9 +250,22 @@
 
     <!-- Empty logs directory -->
     <fileSet>
-      <directory>${basedir}/src/main/resources/logs</directory>
+      <directory>${basedir}/src/main/resources/emptydir</directory>
       <outputDirectory>/logs</outputDirectory>
       <useDefaultExcludes>true</useDefaultExcludes>
+      <excludes>
+        <exclude>*</exclude>
+      </excludes>
+    </fileSet>
+
+    <!-- Empty pids directory -->
+    <fileSet>
+      <directory>${basedir}/src/main/resources/emptydir</directory>
+      <outputDirectory>/pids</outputDirectory>
+      <useDefaultExcludes>true</useDefaultExcludes>
+      <excludes>
+        <exclude>*</exclude>
+      </excludes>
     </fileSet>
 
     <!-- Java service wrapper -->

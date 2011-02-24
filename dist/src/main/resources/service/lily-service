@@ -70,7 +70,7 @@ WRAPPER_CONF="./wrapper.conf"
 PRIORITY=
 
 # Location of the pid file.
-PIDDIR="."
+PIDDIR="$LILY_HOME/pids"
 
 # If uncommented, causes the Wrapper to be shutdown using an anchor file.
 #  When launched with the 'start' command, it will also ignore all INT and
