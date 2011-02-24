@@ -126,10 +126,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                         mixin.getValue()));
             }
 
+            getTypeTable().put(put);
+            /*
+            TODO FIXME bogus name reservation code
             if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
                     Bytes.toBytes(concurrentCounter), put)) {
                 throw new TypeException("Concurrent create occurred for recordType <" + recordType.getName() + ">");
             }
+            */
             newRecordType.setId(uuid.toString());
             newRecordType.setVersion(recordTypeVersion);
             updateRecordTypeCache(newRecordType.clone());
@@ -187,8 +191,12 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             if (fieldTypeEntriesChanged || mixinsChanged || nameChanged) {
                 put.add(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes, Bytes.toBytes(newRecordTypeVersion));
+                getTypeTable().put(put);
+                /*
+                TODO FIXME bogus name reservation code
                 getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
                         Bytes.toBytes(concurrentCount), put);
+                */
                 newRecordType.setVersion(newRecordTypeVersion);
             } else {
                 newRecordType.setVersion(latestRecordTypeVersion);
@@ -418,10 +426,16 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes, Bytes
                     .toBytes(fieldType.getScope().name()));
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
+
+            getTypeTable().put(put);
+
+            /*
+            TODO FIXME bogus name reservation code
             if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
                     Bytes.toBytes(concurrentCounter), put)) {
                 throw new TypeException("Concurrent create occurred for fieldType <" + fieldType.getName() + ">");
             }
+            */
             newFieldType = fieldType.clone();
             newFieldType.setId(uuid.toString());
             updateFieldTypeCache(newFieldType);
@@ -474,8 +488,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 }
                 Put put = new Put(rowId);
                 put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
+
+                getTypeTable().put(put);
+
+                /*
+                TODO FIXME bogus name reservation code
                 getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
                         Bytes.toBytes(concurrentCounter), put);
+                */
             }
             updateFieldTypeCache(fieldType);
             notifyCacheInvalidate();
