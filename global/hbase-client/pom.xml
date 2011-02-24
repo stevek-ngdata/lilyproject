@@ -194,6 +194,18 @@
           <groupId>jline</groupId>
           <artifactId>jline</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>javax.servlet.jsp</groupId>
+          <artifactId>jsp-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>servlet-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.cloudera.cdh</groupId>
+          <artifactId>hadoop-ant</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>   
   </dependencies>
