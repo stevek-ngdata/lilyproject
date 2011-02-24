@@ -1260,7 +1260,7 @@ public class HBaseRepository extends BaseRepository {
             }
             valueToCompare = Bytes.add(valueToCompare, blobReference.getBlob().getValue());
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
-            Filter filter = new ValueFilter(CompareOp.EQUAL, valueComparator);
+            Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);
             get.setFilter(filter);
             Result result = recordTable.get(get);
             

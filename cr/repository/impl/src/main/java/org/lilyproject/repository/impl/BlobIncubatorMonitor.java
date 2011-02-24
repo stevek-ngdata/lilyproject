@@ -7,9 +7,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.ValueFilter;
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
@@ -245,7 +243,7 @@ public class BlobIncubatorMonitor {
             }
             valueToCompare = Bytes.add(valueToCompare, blobKey);
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
-            Filter filter = new ValueFilter(CompareOp.EQUAL, valueComparator);
+            Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);
             get.setFilter(filter);
             return recordTable.get(get);
         }
