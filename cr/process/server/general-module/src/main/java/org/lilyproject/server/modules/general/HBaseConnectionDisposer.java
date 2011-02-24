@@ -15,7 +15,7 @@
  */
 package org.lilyproject.server.modules.general;
 
-import com.sun.org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 
 import javax.annotation.PreDestroy;
