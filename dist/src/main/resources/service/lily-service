@@ -58,7 +58,7 @@ export LILY_HOME
 #-----------------------------------------------------------------------------
 
 # Application
-APP_NAME="Lily server"
+APP_NAME="lily-server"
 APP_LONG_NAME="Lily server"
 
 # Wrapper
