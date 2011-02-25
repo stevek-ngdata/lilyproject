@@ -14,7 +14,7 @@
     <property>
       <!-- DFS location: needed for distributed cache (maybe also for other things, not sure) -->
       <name>fs.default.name</name>
-      <value>hdfs://localhost:9000</value>
+      <value>hdfs://localhost:8020</value>
     </property>
   </properties>
 

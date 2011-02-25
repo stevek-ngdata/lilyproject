@@ -202,7 +202,7 @@ public class HBaseProxy {
             String dfsUri = System.getProperty("lily.test.dfs");
 
             if (dfsUri == null) {
-                dfsUri = "hdfs://localhost:9000";
+                dfsUri = "hdfs://localhost:8020";
             }
 
             return FileSystem.get(new URI(dfsUri), getConf());

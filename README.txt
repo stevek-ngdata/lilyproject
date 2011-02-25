@@ -96,7 +96,7 @@ might need to restart it.
 If you want to connect to an HBase you have installed, you need to specify
 the name(s) and port of Zookeeper:
 
-mvn -Pconnect -DargLine="-Dlily.test.hbase.zookeeper.quorum=localhost -Dlily.test.hbase.zookeeper.property.clientPort=2181 -Dlily.test.dfs=hdfs://localhost:9000" test
+mvn -Pconnect -DargLine="-Dlily.test.hbase.zookeeper.quorum=localhost -Dlily.test.hbase.zookeeper.property.clientPort=2181 -Dlily.test.dfs=hdfs://localhost:8020" test
 
 The property lily.test.dfs points to the HDFS to be used to store blobs,
 the value shown here is the default.
