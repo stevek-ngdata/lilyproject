@@ -100,8 +100,8 @@ public class RepositorySetup {
             setupRowLogConfigurationManager();
             RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
             rowLogConfManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
-            wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.WAL_PAYLOAD.bytes,
-                    LilyHBaseSchema.RecordCf.WAL_STATE.bytes, rowLogConfManager, rowLocker);
+            wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
+                    LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker);
             RowLogShard walShard = new RowLogShardImpl("WS1", hadoopConf, wal, 100);
             wal.registerShard(walShard);
         }
@@ -173,8 +173,8 @@ public class RepositorySetup {
         rowLogConfManager.addRowLog("MQ", new RowLogConfig(10000L, false, true, 100L, 0L, 5000L));
         rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 3, 1);
 
-        mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.MQ_PAYLOAD.bytes,
-                LilyHBaseSchema.RecordCf.MQ_STATE.bytes, rowLogConfManager, null);
+        mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
+                LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null);
         mq.registerShard(new RowLogShardImpl("MQS1", hadoopConf, mq, 100));
 
         RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;

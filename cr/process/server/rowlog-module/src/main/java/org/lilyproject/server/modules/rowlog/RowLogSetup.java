@@ -26,18 +26,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.kauriproject.conf.Conf;
 import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogShard;
-import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.rowlog.impl.MessageQueueFeeder;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogProcessorElection;
-import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
+import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.impl.*;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -106,14 +96,14 @@ public class RowLogSetup {
             }
         }
 
-        messageQueue = new RowLogImpl("mq", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.MQ_PAYLOAD.bytes,
-                RecordCf.MQ_STATE.bytes, confMgr, null);
+        messageQueue = new RowLogImpl("mq", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
+                RecordColumn.MQ_PREFIX, confMgr, null);
         RowLogShard mqShard = new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100, hbaseTableFactory);
         messageQueue.registerShard(mqShard);
 
         RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
-        writeAheadLog = new RowLogImpl("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.WAL_PAYLOAD.bytes,
-                RecordCf.WAL_STATE.bytes, confMgr, rowLocker);
+        writeAheadLog = new RowLogImpl("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
+                RecordColumn.WAL_PREFIX, confMgr, rowLocker);
         RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);
         writeAheadLog.registerShard(walShard);
 

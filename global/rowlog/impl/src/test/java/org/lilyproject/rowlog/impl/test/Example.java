@@ -42,14 +42,12 @@ public class Example {
         // Create the row table
         final String ROW_TABLE = "rowTable";
         final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("DataCF");
-        final byte[] PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("PAYLOADCF");
-        final byte[] EXECUTIONSTATE_COLUMN_FAMILY = Bytes.toBytes("ESLOGCF");
+        final byte[] ROWLOG_COLUMN_FAMILY = Bytes.toBytes("RowLogCF");
         
         HBaseAdmin admin = new HBaseAdmin(configuration);
         HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
         tableDescriptor.addFamily(new HColumnDescriptor(DATA_COLUMN_FAMILY));
-        tableDescriptor.addFamily(new HColumnDescriptor(PAYLOAD_COLUMN_FAMILY));
-        tableDescriptor.addFamily(new HColumnDescriptor(EXECUTIONSTATE_COLUMN_FAMILY));
+        tableDescriptor.addFamily(new HColumnDescriptor(ROWLOG_COLUMN_FAMILY));
         admin.createTable(tableDescriptor);
         HTable rowTable = new HTable(configuration, ROW_TABLE);
 
@@ -62,7 +60,7 @@ public class Example {
 
         // Create a RowLog instance
         configurationManager.addRowLog("Example", new RowLogConfig(1000L, false, true, 100L, 0L, 5000L));
-        RowLog rowLog = new RowLogImpl("Example", rowTable, PAYLOAD_COLUMN_FAMILY, EXECUTIONSTATE_COLUMN_FAMILY, configurationManager, null);
+        RowLog rowLog = new RowLogImpl("Example", rowTable, ROWLOG_COLUMN_FAMILY, (byte)1, configurationManager, null);
         
         // Create a shard and register it with the rowlog
         RowLogShard shard = new RowLogShardImpl("AShard", configuration, rowLog, 100);

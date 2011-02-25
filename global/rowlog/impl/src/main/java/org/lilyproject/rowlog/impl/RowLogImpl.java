@@ -16,23 +16,15 @@
 package org.lilyproject.rowlog.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
@@ -44,11 +36,12 @@ import org.lilyproject.util.io.Closer;
  */
 public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver {
 
+    private static final byte PL_BYTE = (byte)1;
+    private static final byte ES_BYTE = (byte)2;
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
     private RowLogShard shard; // TODO: We only work with one shard for now
     private final HTableInterface rowTable;
-    private final byte[] payloadColumnFamily;
-    private final byte[] executionStateColumnFamily;
+    private final byte[] rowLogColumnFamily;
     private RowLogConfig rowLogConfig;
     
     private Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
@@ -60,23 +53,28 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     private final AtomicBoolean initialSubscriptionsLoaded = new AtomicBoolean(false);
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     private final RowLocker rowLocker;
+    private byte[] payloadPrefix;
+    private byte[] executionStatePrefix;
+    private byte[] seqNrQualifier;
 
     /**
      * The RowLog should be instantiated with information about the table that contains the rows the messages are 
      * related to, and the column families it can use within this table to put the payload and execution state of the
      * messages on.
      * @param rowTable the HBase table containing the rows to which the messages are related
-     * @param payloadColumnFamily the column family in which the payload of the messages can be stored
-     * @param executionStateColumnFamily the column family in which the execution state of the messages can be stored
-     * @param rowlocker if given, the rowlog will take locks at row level; if null, the locks will be taken at executionstate level
+     * @param rowLogColumnFamily the column family in which the payload and execution state of the messages can be stored
+     * @param rowLogId a byte uniquely identifying the rowLog amongst all rowLogs in the system
+     * @param rowLocker if given, the rowlog will take locks at row level; if null, the locks will be taken at executionstate level
      * @throws RowLogException
      */
-    public RowLogImpl(String id, HTableInterface rowTable, byte[] payloadColumnFamily, byte[] executionStateColumnFamily,
+    public RowLogImpl(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
             RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker) throws InterruptedException {
         this.id = id;
         this.rowTable = rowTable;
-        this.payloadColumnFamily = payloadColumnFamily;
-        this.executionStateColumnFamily = executionStateColumnFamily;
+        this.rowLogColumnFamily = rowLogColumnFamily;
+        this.payloadPrefix = new byte[]{rowLogId, PL_BYTE};
+        this.executionStatePrefix = new byte[]{rowLogId, ES_BYTE};
+        this.seqNrQualifier = Bytes.add(new byte[]{rowLogId}, SEQ_NR);
         this.rowLogConfigurationManager = rowLogConfigurationManager;
         this.rowLocker = rowLocker;
         rowLogConfigurationManager.addRowLogObserver(id, this);
@@ -126,45 +124,41 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     
     private long putPayload(byte[] rowKey, byte[] payload, long timestamp, Put put) throws IOException {
         Get get = new Get(rowKey);
-        get.addColumn(payloadColumnFamily, SEQ_NR);
+        get.addColumn(rowLogColumnFamily, seqNrQualifier);
         Result result = rowTable.get(get);
-        byte[] value = result.getValue(payloadColumnFamily, SEQ_NR);
+        byte[] value = result.getValue(rowLogColumnFamily, seqNrQualifier);
         long seqnr = -1;
         if (value != null) {
             seqnr = Bytes.toLong(value);
         }
         seqnr++;
         if (put != null) {
-            put.add(payloadColumnFamily, SEQ_NR, Bytes.toBytes(seqnr));
-            put.add(payloadColumnFamily, rowLocalMessageQualifier(seqnr, timestamp), payload);
+            put.add(rowLogColumnFamily, seqNrQualifier, Bytes.toBytes(seqnr));
+            put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
         } else {
             put = new Put(rowKey);
-            put.add(payloadColumnFamily, SEQ_NR, Bytes.toBytes(seqnr));
-            put.add(payloadColumnFamily, rowLocalMessageQualifier(seqnr, timestamp), payload);
+            put.add(rowLogColumnFamily, seqNrQualifier, Bytes.toBytes(seqnr));
+            put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
             rowTable.put(put);
         }
         return seqnr;
     }
 
-    private byte[] rowLocalMessageQualifier(long seqnr, long timestamp) {
-        byte[] qualifier;
-        qualifier = Bytes.toBytes(seqnr);
-        qualifier = Bytes.add(qualifier, Bytes.toBytes(timestamp));
-        return qualifier;
-    }
+    
+    
 
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] qualifier = payloadQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(payloadColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, qualifier);
         Result result;
         try {
             result = rowTable.get(get);
         } catch (IOException e) {
             throw new RowLogException("Exception while getting payload from the rowTable", e);
         }
-        return result.getValue(payloadColumnFamily, qualifier);
+        return result.getValue(rowLogColumnFamily, qualifier);
     }
 
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws InterruptedException, RowLogException {
@@ -201,12 +195,12 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         for (RowLogSubscription subscription : subscriptions) {
             executionState.setState(subscription.getId(), false);
         }
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] qualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         if (put != null) {
-            put.add(executionStateColumnFamily, qualifier, executionState.toBytes());
+            put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
         } else {
             put = new Put(message.getRowKey());
-            put.add(executionStateColumnFamily, qualifier, executionState.toBytes());
+            put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
             rowTable.put(put);
         }
     }
@@ -215,9 +209,9 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         if (message == null)
             return true;
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(executionStateColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         try {
             Result result = rowTable.get(get);
             if (result.isEmpty()) {
@@ -225,22 +219,22 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 // Treat this message as if it was processed
                 return true;
             }
-            byte[] previousValue = result.getValue(executionStateColumnFamily, qualifier);
+            byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
             SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
 
             boolean allDone = processMessage(message, executionState);
             
             if (allDone) {
                 if (rowLocker != null) {
-                    return removeExecutionStateAndPayload(rowKey, qualifier, previousValue, (RowLock)lock);
+                    return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, (RowLock)lock);
                 } else {
-                    return removeExecutionStateAndPayload(rowKey, qualifier, previousValue);
+                    return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue);
                 }
             } else {
                 if (rowLocker != null) {
-                    updateExecutionState(rowKey, qualifier, executionState, previousValue, (RowLock)lock);
+                    updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, (RowLock)lock);
                 } else {
-                    updateExecutionState(rowKey, qualifier, executionState, previousValue);
+                    updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue);
                 }
                 return false;
             }
@@ -331,25 +325,25 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             return null;
         }
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(executionStateColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         try {
             Result result = rowTable.get(get);
             if (result.isEmpty()) {
                 return null;
             }
-            byte[] previousValue = result.getValue(executionStateColumnFamily, qualifier);
+            byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
             SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
             byte[] previousLock = executionState.getLock(subscriptionId);
             executionState.incTryCount(subscriptionId);
             long now = System.currentTimeMillis();
             if (previousLock == null) {
-                return putLock(message, subscriptionId, rowKey, qualifier, previousValue, executionState, now, count);
+                return putLock(message, subscriptionId, rowKey, executionStateQualifier, previousValue, executionState, now, count);
             } else {
                 long previousTimestamp = Bytes.toLong(previousLock);
                 if (previousTimestamp + rowLogConfig.getLockTimeout() < now) {
-                    return putLock(message, subscriptionId, rowKey, qualifier, previousValue, executionState, now, count);
+                    return putLock(message, subscriptionId, rowKey, executionStateQualifier, previousValue, executionState, now, count);
                 } else {
                     return null;
                 }
@@ -359,14 +353,14 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
 
-    private byte[] putLock(RowLogMessage message, String subscriptionId, byte[] rowKey, byte[] qualifier, byte[] previousValue,
+    private byte[] putLock(RowLogMessage message, String subscriptionId, byte[] rowKey, byte[] executionStateQualifier, byte[] previousValue,
             SubscriptionExecutionState executionState, long now, int count) throws RowLogException {
         byte[] lock = Bytes.toBytes(now);
         executionState.setLock(subscriptionId, lock);
         Put put = new Put(rowKey);
-        put.add(executionStateColumnFamily, qualifier, executionState.toBytes());
+        put.add(rowLogColumnFamily, executionStateQualifier, executionState.toBytes());
         try {
-            if (!rowTable.checkAndPut(rowKey, executionStateColumnFamily, qualifier, previousValue, put)) {
+            if (!rowTable.checkAndPut(rowKey, rowLogColumnFamily, executionStateQualifier, previousValue, put)) {
                 return lockMessage(message, subscriptionId, count+1); // Retry
             } else {
                 return lock;
@@ -390,16 +384,16 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         if (subscription == null)
             throw new RowLogException("Failed to unlock message, subscription " + subscriptionId + " no longer exists for rowlog " + this.getId());
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] execStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(executionStateColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, execStateQualifier);
         Result result;
         try {
             result = rowTable.get(get);
             
             if (result.isEmpty()) return false; // The execution state does not exist anymore, thus no lock to unlock
             
-            byte[] previousValue = result.getValue(executionStateColumnFamily, qualifier);
+            byte[] previousValue = result.getValue(rowLogColumnFamily, execStateQualifier);
             SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
             byte[] previousLock = executionState.getLock(subscriptionId);
             if (!Bytes.equals((byte[])lock, previousLock)) return false; // The lock was lost  
@@ -411,8 +405,8 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 executionState.decTryCount(subscriptionId);
             }
             Put put = new Put(rowKey);
-            put.add(executionStateColumnFamily, qualifier, executionState.toBytes());
-            return rowTable.checkAndPut(rowKey, executionStateColumnFamily, qualifier, previousValue, put);
+            put.add(rowLogColumnFamily, execStateQualifier, executionState.toBytes());
+            return rowTable.checkAndPut(rowKey, rowLogColumnFamily, execStateQualifier, previousValue, put);
         } catch (IOException e) {
             throw new RowLogException("Failed to unlock message", e);
         }
@@ -443,14 +437,14 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     
     public boolean isMessageLocked(RowLogMessage message, String subscriptionId) throws RowLogException {
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(executionStateColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         try {
             Result result = rowTable.get(get);
             if (result.isEmpty()) return false;
             
-            SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(result.getValue(executionStateColumnFamily, qualifier));
+            SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(result.getValue(rowLogColumnFamily, executionStateQualifier));
             byte[] lock = executionState.getLock(subscriptionId);
             if (lock == null) return false;
         
@@ -471,20 +465,20 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     private boolean messageDoneRowLocked(RowLogMessage message, String subscriptionId, RowLock rowLock) throws RowLogException {
         RowLogShard shard = getShard(); // Fail fast if no shards are registered
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(executionStateColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         try {
             Result result = rowTable.get(get);
             if (!result.isEmpty()) {
-                byte[] previousValue = result.getValue(executionStateColumnFamily, qualifier);
+                byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
                 SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
                 executionState.setState(subscriptionId, true);
                 executionState.setLock(subscriptionId, null);
                 if (executionState.allDone()) {
-                    removeExecutionStateAndPayload(rowKey, qualifier, previousValue, rowLock);
+                    removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, rowLock);
                 } else {
-                    if (!updateExecutionState(rowKey, qualifier, executionState, previousValue, rowLock))
+                    if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, rowLock))
                         return false;
                 }
             }
@@ -502,13 +496,13 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
         RowLogShard shard = getShard(); // Fail fast if no shards are registered
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(executionStateColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         try {
             Result result = rowTable.get(get);
             if (!result.isEmpty()) {
-                byte[] previousValue = result.getValue(executionStateColumnFamily, qualifier);
+                byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
                 SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
                 if (!Bytes.equals(lock,executionState.getLock(subscriptionId))) {
                     return false; // Not owning the lock
@@ -516,9 +510,9 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 executionState.setState(subscriptionId, true);
                 executionState.setLock(subscriptionId, null);
                 if (executionState.allDone()) {
-                    removeExecutionStateAndPayload(rowKey, qualifier, previousValue);
+                    removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue);
                 } else {
-                    if (!updateExecutionState(rowKey, qualifier, executionState, previousValue)) {
+                    if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue)) {
                         return messageDone(message, subscriptionId, lock, count+1); // Retry
                     }
                 }
@@ -541,13 +535,13 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
 
     private SubscriptionExecutionState getExecutionState(RowLogMessage message) throws RowLogException {
         byte[] rowKey = message.getRowKey();
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
-        get.addColumn(executionStateColumnFamily, qualifier);
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         SubscriptionExecutionState executionState = null;
         try {
             Result result = rowTable.get(get);
-            byte[] previousValue = result.getValue(executionStateColumnFamily, qualifier);
+            byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
             if (previousValue != null)
                 executionState = SubscriptionExecutionState.fromBytes(previousValue);
         } catch (IOException e) {
@@ -576,29 +570,29 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         return !executionState.getState(subscriptionId);
     }
     
-    private boolean updateExecutionState(byte[] rowKey, byte[] qualifier, SubscriptionExecutionState executionState, byte[] previousValue) throws IOException {
+    private boolean updateExecutionState(byte[] rowKey, byte[] executionStateQualifier, SubscriptionExecutionState executionState, byte[] previousValue) throws IOException {
         Put put = new Put(rowKey);
-        put.add(executionStateColumnFamily, qualifier, executionState.toBytes());
-        return rowTable.checkAndPut(rowKey, executionStateColumnFamily, qualifier, previousValue, put);
+        put.add(rowLogColumnFamily, executionStateQualifier, executionState.toBytes());
+        return rowTable.checkAndPut(rowKey, rowLogColumnFamily, executionStateQualifier, previousValue, put);
     }
     
-    private boolean updateExecutionState(byte[] rowKey, byte[] qualifier, SubscriptionExecutionState executionState, byte[] previousValue, RowLock rowLock) throws IOException {
+    private boolean updateExecutionState(byte[] rowKey, byte[] executionStateQualifier, SubscriptionExecutionState executionState, byte[] previousValue, RowLock rowLock) throws IOException {
         Put put = new Put(rowKey);
-        put.add(executionStateColumnFamily, qualifier, executionState.toBytes());
+        put.add(rowLogColumnFamily, executionStateQualifier, executionState.toBytes());
         return rowLocker.put(put, rowLock);
     }
 
-    private boolean removeExecutionStateAndPayload(byte[] rowKey, byte[] qualifier, byte[] previousValue) throws IOException {
+    private boolean removeExecutionStateAndPayload(byte[] rowKey, byte[] executionStateQualifier, byte[] payloadQualifier, byte[] previousValue) throws IOException {
         Delete delete = new Delete(rowKey); 
-        delete.deleteColumns(executionStateColumnFamily, qualifier);
-        delete.deleteColumns(payloadColumnFamily, qualifier);
-        return rowTable.checkAndDelete(rowKey, executionStateColumnFamily, qualifier, previousValue, delete);
+        delete.deleteColumns(rowLogColumnFamily, executionStateQualifier);
+        delete.deleteColumns(rowLogColumnFamily, payloadQualifier);
+        return rowTable.checkAndDelete(rowKey, rowLogColumnFamily, executionStateQualifier, previousValue, delete);
     }
 
-    private boolean removeExecutionStateAndPayload(byte[] rowKey, byte[] qualifier, byte[] previousValue, RowLock rowLock) throws IOException {
+    private boolean removeExecutionStateAndPayload(byte[] rowKey, byte[] executionStateQualifier, byte[] payloadQualifier, byte[] previousValue, RowLock rowLock) throws IOException {
         Delete delete = new Delete(rowKey); 
-        delete.deleteColumns(executionStateColumnFamily, qualifier);
-        delete.deleteColumns(payloadColumnFamily, qualifier);
+        delete.deleteColumns(rowLogColumnFamily, executionStateQualifier);
+        delete.deleteColumns(rowLogColumnFamily, payloadQualifier);
         return rowLocker.delete(delete, rowLock);
     }
     
@@ -613,11 +607,12 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     public List<RowLogMessage> getMessages(byte[] rowKey, String ... subscriptionIds) throws RowLogException {
         List<RowLogMessage> messages = new ArrayList<RowLogMessage>();
         Get get = new Get(rowKey);
-        get.addFamily(executionStateColumnFamily);
+        get.addFamily(rowLogColumnFamily);
+        get.setFilter(new ColumnPrefixFilter(executionStatePrefix));
         try {
             Result result = rowTable.get(get);
             if (!result.isEmpty()) {
-                NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(executionStateColumnFamily);
+                NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(rowLogColumnFamily);
                 for (Entry<byte[], byte[]> entry : familyMap.entrySet()) {
                     SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(entry.getValue());
                     boolean add = false;
@@ -629,8 +624,10 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                                 add = true;
                         }
                     }
-                    if (add)
-                        messages.add(new RowLogMessageImpl(executionState.getTimestamp(), rowKey, Bytes.toLong(entry.getKey()), null, this));
+                    if (add) {
+                        ByteBuffer buffer = ByteBuffer.wrap(entry.getKey());
+                        messages.add(new RowLogMessageImpl(executionState.getTimestamp(), rowKey, buffer.getLong(2), null, this));
+                    }
                 }
             }
         } catch (IOException e) {
@@ -655,8 +652,8 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
      */
     private void checkOrphanMessage(RowLogMessage message, String subscriptionId) throws RowLogException {
         Get get = new Get(message.getRowKey());
-        byte[] qualifier = rowLocalMessageQualifier(message.getSeqNr(), message.getTimestamp());
-        get.addColumn(executionStateColumnFamily, qualifier);
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         Result result;
         try {
             result = rowTable.get(get);
@@ -704,5 +701,19 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
 
+    private byte[] payloadQualifier(long seqnr, long timestamp) {
+        ByteBuffer buffer = ByteBuffer.allocate(2 + 8 + 8); // payload-prefix + seqnr + timestamp
+        buffer.put(payloadPrefix);
+        buffer.putLong(seqnr);
+        buffer.putLong(timestamp);
+        return buffer.array();
+    }
     
+    private byte[] executionStateQualifier(long seqnr, long timestamp) {
+        ByteBuffer buffer = ByteBuffer.allocate(2 + 8 + 8); // executionState-prefix + seqnr + timestamp
+        buffer.put(executionStatePrefix);
+        buffer.putLong(seqnr);
+        buffer.putLong(timestamp);
+        return buffer.array();
+    }
  }

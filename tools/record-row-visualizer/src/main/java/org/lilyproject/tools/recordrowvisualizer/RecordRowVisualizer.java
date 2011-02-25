@@ -21,6 +21,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.rowlog.impl.RowLogImpl;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
@@ -31,6 +32,8 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -102,18 +105,11 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
         readFields(root.get(RecordCf.DATA.bytes));
 
-        readExecutionState(recordRow.mqState, root.get(RecordCf.MQ_STATE.bytes));
-        readPayload(recordRow.mqPayload, root.get(RecordCf.MQ_PAYLOAD.bytes));
-
-        readExecutionState(recordRow.walState, root.get(RecordCf.WAL_STATE.bytes));
-        readPayload(recordRow.walPayload, root.get(RecordCf.WAL_PAYLOAD.bytes));
+        readRowLog(recordRow.walState, recordRow.walPayload, recordRow.mqState, recordRow.mqPayload, root.get(RecordCf.ROWLOG.bytes));
 
         byte[][] treatedColumnFamilies = {
                 RecordCf.DATA.bytes,
-                RecordCf.MQ_STATE.bytes,
-                RecordCf.MQ_PAYLOAD.bytes,
-                RecordCf.WAL_STATE.bytes,
-                RecordCf.WAL_PAYLOAD.bytes
+                RecordCf.ROWLOG.bytes
         };
 
         for (byte[] cf : root.keySet()) {
@@ -178,77 +174,88 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         recordRow.vFields = new Fields(cf, typeMgr, Scope.VERSIONED);
     }
 
-    private void readExecutionState(Map<RowLogKey, List<ExecutionData>> stateByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf) throws IOException {
+    private void readRowLog(Map<RowLogKey, List<ExecutionData>> walStateByKey, Map<RowLogKey, List<String>> walPayloadByKey, Map<RowLogKey, List<ExecutionData>> mqStateByKey, Map<RowLogKey, List<String>> mqPayloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf) throws IOException {
         if (cf == null)
             return;
-        // columns are long seqnr as bytes
-        // value is SubscriptionExecutionState as bytes
-
-
+        
         for (Map.Entry<byte[], NavigableMap<Long, byte[]>> rowEntry : cf.entrySet()) {
             byte[] column = rowEntry.getKey();
-            long seqNr = Bytes.toLong(column);
-
-            for (Map.Entry<Long, byte[]> columnEntry : rowEntry.getValue().entrySet()) {
-                RowLogKey key = new RowLogKey(seqNr, columnEntry.getKey());
-
-                List<ExecutionData> states = stateByKey.get(key);
-                if (states == null) {
-                    states = new ArrayList<ExecutionData>();
-                    stateByKey.put(key, states);
-                }
-
-                SubscriptionExecutionState state = SubscriptionExecutionState.fromBytes(columnEntry.getValue());
-                for (CharSequence subscriptionIdCharSeq : state.getSubscriptionIds()) {
-                    String subscriptionId = subscriptionIdCharSeq.toString();
-
-                    ExecutionData data = new ExecutionData();
-                    data.subscriptionId = subscriptionId;
-                    data.tryCount = state.getTryCount(subscriptionId);
-                    data.success = state.getState(subscriptionId);
-                    data.lock = BASE64_DECODER.decode(state.getLock(subscriptionId));
-                    states.add(data);
-                }
-
+            // columns start with rowlow-prefix
+            byte rowlogId = column[0];
+            if (rowlogId == RecordColumn.WAL_PREFIX) {
+                readRowLog(walStateByKey, walPayloadByKey, rowEntry.getValue(), Arrays.copyOfRange(column, 1, column.length));
+            } else if (rowlogId == RecordColumn.MQ_PREFIX) {
+                readRowLog(mqStateByKey, mqPayloadByKey, rowEntry.getValue(), Arrays.copyOfRange(column, 1, column.length));
+            } else {
+                // TODO : unknown rowlog
             }
         }
     }
-
-    // TODO define in LilyHBaseSchema?
+    
+    private static final byte PL_BYTE = (byte)1;
+    private static final byte ES_BYTE = (byte)2;
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
-
-    public void readPayload(Map<RowLogKey, List<String>> payloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf) throws IOException {
-        if (cf == null)
-            return;
-
+    
+    private void readRowLog(Map<RowLogKey, List<ExecutionData>> stateByKey, Map<RowLogKey, List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells, byte[] key) throws IOException {
         NavigableMap<Long, byte[]> maxSeqNr = null;
-
-        for (Map.Entry<byte[], NavigableMap<Long, byte[]>> rowEntry : cf.entrySet()) {
-            byte[] column = rowEntry.getKey();
-
-            if (Arrays.equals(column, SEQ_NR)) {
-                maxSeqNr = rowEntry.getValue();
+        
+        if (Arrays.equals(key, SEQ_NR)) { // key could be "SEQNR"
+            maxSeqNr = columnCells;
+        } else { // or is prefixed by payload or executionState byte
+            if (key[0] == PL_BYTE) {
+                readPayload(payloadByKey, columnCells, Bytes.toLong(key, 1));
+            } else if (key[0] == ES_BYTE) {
+                readExecutionState(stateByKey, columnCells, Bytes.toLong(key, 1));
             } else {
-                long seqNr = Bytes.toLong(column);
-
-                for (Map.Entry<Long, byte[]> columnEntry : rowEntry.getValue().entrySet()) {
-                    RowLogKey key = new RowLogKey(seqNr, columnEntry.getKey());
-                    List<String> payloads = payloadByKey.get(key);
-                    if (payloads == null) {
-                        payloads = new ArrayList<String>();
-                        payloadByKey.put(key, payloads);
-                    }
-
-                    payloads.add(new String(columnEntry.getValue(), "UTF-8"));
-                }
+                // TODO unexpected
             }
         }
-
+        
         if (maxSeqNr != null) {
             // TODO
         }
     }
+    
+    private void readExecutionState(Map<RowLogKey, List<ExecutionData>> stateByKey, NavigableMap<Long, byte[]> columnCells, long seqNr) throws IOException {
+        for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
+            RowLogKey key = new RowLogKey(seqNr, columnEntry.getKey());
 
+            List<ExecutionData> states = stateByKey.get(key);
+            if (states == null) {
+                states = new ArrayList<ExecutionData>();
+                stateByKey.put(key, states);
+            }
+
+            SubscriptionExecutionState state = SubscriptionExecutionState.fromBytes(columnEntry.getValue());
+            for (CharSequence subscriptionIdCharSeq : state.getSubscriptionIds()) {
+                String subscriptionId = subscriptionIdCharSeq.toString();
+
+                ExecutionData data = new ExecutionData();
+                data.subscriptionId = subscriptionId;
+                data.tryCount = state.getTryCount(subscriptionId);
+                data.success = state.getState(subscriptionId);
+                data.lock = BASE64_DECODER.decode(state.getLock(subscriptionId));
+                states.add(data);
+            }
+
+        }
+    }
+
+    private void readPayload(Map<RowLogKey, List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells, long seqNr) throws UnsupportedEncodingException {
+        for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
+            RowLogKey key = new RowLogKey(seqNr, columnEntry.getKey());
+            List<String> payloads = payloadByKey.get(key);
+            if (payloads == null) {
+                payloads = new ArrayList<String>();
+                payloadByKey.put(key, payloads);
+            }
+            payloads.add(new String(columnEntry.getValue(), "UTF-8"));
+        }
+    }
+
+    
+
+    
     private void setVersionedValue(VersionedValue value, NavigableMap<Long, byte[]> valuesByVersion, ValueDecoder decoder) {
         for (Map.Entry<Long, byte[]> entry : valuesByVersion.entrySet()) {
             value.put(entry.getKey(), decoder.decode(entry.getValue()));

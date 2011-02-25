@@ -30,8 +30,7 @@ public class RowLogTableUtil {
     
     private static final byte[] ROW_TABLE = Bytes.toBytes("rowTable");
     public static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("DATACF");
-    public static final byte[] PAYLOAD_COLUMN_FAMILY = Bytes.toBytes("PAYLOADCF");
-    public static final byte[] EXECUTIONSTATE_COLUMN_FAMILY = Bytes.toBytes("ESLOGCF");
+    public static final byte[] ROWLOG_COLUMN_FAMILY = Bytes.toBytes("ROWLOGCF");
 
     public static HTableInterface getRowTable(Configuration configuration) throws IOException {
         HBaseAdmin admin = new HBaseAdmin(configuration);
@@ -40,8 +39,7 @@ public class RowLogTableUtil {
         } catch (TableNotFoundException e) {
             HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(DATA_COLUMN_FAMILY));
-            tableDescriptor.addFamily(new HColumnDescriptor(PAYLOAD_COLUMN_FAMILY));
-            tableDescriptor.addFamily(new HColumnDescriptor(EXECUTIONSTATE_COLUMN_FAMILY));
+            tableDescriptor.addFamily(new HColumnDescriptor(ROWLOG_COLUMN_FAMILY));
             admin.createTable(tableDescriptor);
         }
         return new LocalHTable(configuration, ROW_TABLE);

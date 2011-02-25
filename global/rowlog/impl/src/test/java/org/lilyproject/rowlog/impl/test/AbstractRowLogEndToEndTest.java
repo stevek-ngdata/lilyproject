@@ -15,23 +15,14 @@
  */
 package org.lilyproject.rowlog.impl.test;
 
-import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.lilyproject.rowlog.api.*;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
+import org.lilyproject.rowlog.impl.*;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.io.Closer;
@@ -65,8 +56,8 @@ public abstract class
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 120000);
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(1000L, true, true, 100L, 0L, 5000L));
-        rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.PAYLOAD_COLUMN_FAMILY,
-                RowLogTableUtil.EXECUTIONSTATE_COLUMN_FAMILY, rowLogConfigurationManager, null);
+        rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.ROWLOG_COLUMN_FAMILY,
+                (byte)1, rowLogConfigurationManager, null);
         shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog, 100);
         rowLog.registerShard(shard);
         processor = new RowLogProcessorImpl(rowLog, rowLogConfigurationManager);
