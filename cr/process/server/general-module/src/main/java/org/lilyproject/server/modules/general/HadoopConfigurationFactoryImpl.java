@@ -15,8 +15,16 @@
  */
 package org.lilyproject.server.modules.general;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.RetriesExhaustedException;
+import org.apache.hadoop.hbase.client.Scan;
 import org.kauriproject.conf.Conf;
 
 public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactory {
@@ -27,11 +35,54 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
 
     private Configuration hbaseConfig;
 
-    public HadoopConfigurationFactoryImpl(Conf hbaseConf, Conf mrConf, String zkConnectString, int zkSessionTimeout) {
+    private Log log = LogFactory.getLog(getClass());
+
+    public HadoopConfigurationFactoryImpl(Conf hbaseConf, Conf mrConf, String zkConnectString, int zkSessionTimeout)
+            throws Exception {
         this.hbaseConf = hbaseConf;
         this.mrConf = mrConf;
         this.zkConnectString = zkConnectString;
         this.zkSessionTimeout = zkSessionTimeout;
+
+        waitOnHBase();
+    }
+
+    private void waitOnHBase() throws Exception {
+        // This code serves to wait till HBase is ready. Note that both ZooKeeper and HBase have retry-loops too,
+        // so these are even more retries. The purpose is that when all processes are started together (e.g. on system
+        // startup) it can take a while for things to come up.
+        Configuration conf = getHBaseConf();
+
+        int attempt = 0;
+        boolean connected = false;
+        HTable table = null;
+        while (attempt < 3) {
+            try {
+                table = new HTable(conf, HConstants.META_TABLE_NAME);
+                connected = true;
+                break;
+            } catch (ZooKeeperConnectionException e) {
+                log.warn("ZooKeeperConnectionException while trying to connect to HBase, attempt = " + attempt, e);
+            } catch (RetriesExhaustedException e) {
+                log.warn("RetriesExhaustedException while trying to connect to HBase, attempt = " + attempt, e);
+            }
+            attempt++;
+        }
+
+        if (!connected) {
+            throw new Exception("Could not connect to HBase after several attempts, giving up. Check log for problems.");
+        }
+
+        long before = System.currentTimeMillis();
+        ResultScanner s = table.getScanner(new Scan());
+        while (s.next() != null) {
+        }
+
+        long duration = System.currentTimeMillis() - before;
+        if (duration > 1000) {
+            log.warn("Scanning the META table on Lily startup took " + duration + " ms.");
+        }
+
     }
 
     public Configuration getHBaseConf() {
