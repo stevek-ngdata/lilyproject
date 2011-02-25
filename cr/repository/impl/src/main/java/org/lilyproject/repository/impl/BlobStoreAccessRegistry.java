@@ -106,6 +106,7 @@ public class BlobStoreAccessRegistry {
         private final String blobStoreAccessId;
         private final BlobManager blobManager;
         private final boolean incubate;
+        private long size = 0;
 
         public BlobOutputStream(OutputStream outputStream, String blobStoreAccessId, Blob blob, BlobManager blobManager, boolean incubate) {
             super(outputStream);
@@ -123,6 +124,25 @@ public class BlobStoreAccessRegistry {
                 blobManager.incubateBlob(encodedBlobKey);
             }
             blob.setValue(encodedBlobKey);
+            blob.setSize(size);
+        }
+        
+        @Override
+        public void write(byte[] b) throws IOException {
+            super.out.write(b);
+            size = size + b.length;
+        }
+        
+        @Override
+        public void write(int b) throws IOException {
+            super.out.write(b);
+            size = size + 1;
+        }
+        
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            super.out.write(b, off, len);
+            size = size + len;
         }
     }
 
