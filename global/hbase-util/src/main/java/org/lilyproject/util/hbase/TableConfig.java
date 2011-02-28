@@ -3,6 +3,8 @@ package org.lilyproject.util.hbase;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TableConfig {
     private Integer regionCount;
@@ -10,6 +12,7 @@ public class TableConfig {
     private byte[] splitKeyPrefix;
     private Long maxFileSize;
     private Long memStoreFlushSize;
+    private Map<String, ColumnFamilyConfig> columnFamilies = new HashMap<String, ColumnFamilyConfig>();
 
     public TableConfig() {
 
@@ -25,6 +28,14 @@ public class TableConfig {
         this.regionCount = regionCount;
         this.splitKeysAsString = splitKeys;
         this.splitKeyPrefix = splitKeyPrefix == null ? new byte[0] : splitKeyPrefix;
+    }
+
+    public Map<String, ColumnFamilyConfig> getColumnFamilies() {
+        return columnFamilies;
+    }
+
+    public ColumnFamilyConfig getColumnFamilyConfig(String family) {
+        return columnFamilies.containsKey(family) ? columnFamilies.get(family) : new ColumnFamilyConfig();
     }
 
     public Long getMaxFileSize() {

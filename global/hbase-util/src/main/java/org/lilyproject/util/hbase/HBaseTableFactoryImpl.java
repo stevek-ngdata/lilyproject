@@ -22,25 +22,31 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.io.hfile.Compression;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.lilyproject.util.ByteArrayKey;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {    
     private Log log = LogFactory.getLog(getClass());
     private final Configuration configuration;
     private final Map<ByteArrayKey, TableConfig> tableConfigs;
+    private final ColumnFamilyConfig defaultCfConfig;
 
     public HBaseTableFactoryImpl(Configuration configuration) {
-        this(configuration, null);
+        this(configuration, null, new ColumnFamilyConfig());
     }
 
-    public HBaseTableFactoryImpl(Configuration configuration, Map<ByteArrayKey, TableConfig> tableConfigs) {
+    public HBaseTableFactoryImpl(Configuration configuration, Map<ByteArrayKey, TableConfig> tableConfigs,
+            ColumnFamilyConfig defaultCfConfig) {
         this.configuration = configuration;
         this.tableConfigs = tableConfigs == null ? Collections.<ByteArrayKey, TableConfig>emptyMap() : tableConfigs;
+        this.defaultCfConfig = defaultCfConfig;
     }
 
     public HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException {
@@ -82,15 +88,43 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     }
 
     public void configure(HTableDescriptor tableDescriptor) {
-        Long maxFileSize = getTableConfig(tableDescriptor.getName()).getMaxFileSize();
+        TableConfig tableConfig = getTableConfig(tableDescriptor.getName());
+
+        // max file size
+        Long maxFileSize = tableConfig.getMaxFileSize();
         if (maxFileSize != null)
             tableDescriptor.setMaxFileSize(maxFileSize);
 
-        Long memStoreFlushSize = getTableConfig(tableDescriptor.getName()).getMemStoreFlushSize();
+        // memstore flush size
+        Long memStoreFlushSize = tableConfig.getMemStoreFlushSize();
         if (memStoreFlushSize != null)
             tableDescriptor.setMemStoreFlushSize(memStoreFlushSize);
+
+        for (HColumnDescriptor column : tableDescriptor.getColumnFamilies()) {
+            ColumnFamilyConfig cfConf = tableConfig.getColumnFamilyConfig(column.getNameAsString());
+
+            // compression
+            Compression.Algorithm compression = cfConf.getCompression() != null ?
+                    cfConf.getCompression() : defaultCfConfig.getCompression();
+            if (compression != null) {
+                column.setCompressionType(compression);
+            }
+
+            // block size
+            Integer blockSize = cfConf.getBlockSize() != null ?
+                    cfConf.getBlockSize() : defaultCfConfig.getBlockSize();
+            if (blockSize != null) {
+                column.setBlocksize(blockSize);
+            }
+
+            // bloom filter
+            StoreFile.BloomType bloomFilter = cfConf.getBoomFilter() != null ?
+                    cfConf.getBoomFilter() : defaultCfConfig.getBoomFilter();
+            if (bloomFilter != null) {
+                column.setBloomFilterType(bloomFilter);
+            }
+        }
     }
-    
 
     public TableConfig getTableConfig(byte[] tableName) {
         TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));

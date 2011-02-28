@@ -3,6 +3,21 @@
         conf:inherit="deep"
         conf:inheritKey="string(@name)">
 
+  <!--
+     | This file enables to customize settings of the HBase tables created by Lily.
+     |
+     | These settings have only effect when the tables are initially created, thus
+     | the very first time when Lily is booted. Afterwards, change settings directly
+     | on HBase.
+     -->
+
+  <!-- Default settings for all created column families -->
+  <familyDefaults>
+    <!--<compression>lzo</compression>-->
+    <!--<bloomFilter>row</bloomFilter>-->
+    <!--<blockSize>65536</blockSize>-->
+  </familyDefaults>
+
   <table name="record">
     <splits>
       <!--
@@ -23,16 +38,27 @@
       <regionCount>20</regionCount>
       <splitKeys></splitKeys>
 
-      <!-- Maximum file size in bytes -->
-      <!--
-      <maxFileSize>67108864</maxFileSize>
-      -->
-
-      <!-- Memstore flush size in bytes -->
-      <!--
-      <memStoreFlushSize>33554432</memStoreFlushSize>
-      -->
     </splits>
+
+    <!-- Maximum file size in bytes -->
+    <!--
+    <maxFileSize>67108864</maxFileSize>
+    -->
+
+    <!-- Memstore flush size in bytes -->
+    <!--
+    <memStoreFlushSize>33554432</memStoreFlushSize>
+    -->
+
+    <!--
+    <families>
+      <family name="data">
+        <compression>lzo</compression>
+        <bloomFilter>row</bloomFilter>
+        <blockSize>65536</blockSize>
+      </family>
+    </families>
+    -->
   </table>
 
   <table name="links-forward">

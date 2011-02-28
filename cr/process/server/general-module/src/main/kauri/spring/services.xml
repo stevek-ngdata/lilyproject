@@ -70,8 +70,13 @@
         class="org.lilyproject.util.hbase.HBaseTableFactoryImpl">
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg>
-      <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="build">
+      <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildTableConfigs">
         <constructor-arg><kauri:conf path="tables"/></constructor-arg>
+      </bean>
+    </constructor-arg>
+    <constructor-arg>
+      <bean class="org.lilyproject.server.modules.general.TableConfigBuilder" factory-method="buildCfConfig">
+        <constructor-arg><kauri:conf path="tables" select="familyDefaults" type="node"/></constructor-arg>
       </bean>
     </constructor-arg>
   </bean>
