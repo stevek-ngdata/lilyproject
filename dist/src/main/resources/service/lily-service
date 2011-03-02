@@ -23,11 +23,6 @@
 # Beginning Lily-specific section
 #
 
-if [ -z "$JAVA_HOME" ] ; then
-  echo "JAVA_HOME not set"
-  exit 1
-fi
-
 # This technique for detecting LILY_HOME has been adapted from ant's startup script
 if [ -z "$LILY_HOME" -o ! -d "$LILY_HOME" ] ; then
   ## resolve links - $0 may be a link to Lily's home
@@ -52,6 +47,9 @@ if [ -z "$LILY_HOME" -o ! -d "$LILY_HOME" ] ; then
 fi
 
 export LILY_HOME
+
+# This will set/check JAVA_HOME
+. $LILY_HOME/bin/lily-env.sh
 
 #
 # End Lily-specific section

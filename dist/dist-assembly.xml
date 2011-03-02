@@ -74,6 +74,12 @@
       <outputDirectory>/</outputDirectory>
     </file>
 
+    <!-- lily-env.sh -->
+    <file>
+      <source>${basedir}/src/main/resources/lily-env.sh</source>
+      <outputDirectory>/bin</outputDirectory>
+    </file>
+
     <!-- Lily server -->
     <file>
       <source>${basedir}/../cr/process/server/target/dist-scripts/lily-server</source>
