@@ -19,7 +19,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseindex.*;
 import org.lilyproject.linkindex.LinkIndexMetrics.Action;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
 
@@ -264,7 +263,7 @@ public class LinkIndex {
             QueryResult qr = BACKWARD_INDEX.get().performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                SchemaId sourceField = new SchemaIdImpl(qr.getData(SOURCE_FIELD_KEY));
+                SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
                 result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -286,7 +285,7 @@ public class LinkIndex {
             QueryResult qr = FORWARD_INDEX.get().performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                SchemaId sourceField = new SchemaIdImpl(qr.getData(SOURCE_FIELD_KEY));
+                SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
                 String vtag = Bytes.toString(qr.getData(VTAG_KEY));
                 result.add(new Pair<FieldedLink, String>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
             }
@@ -310,7 +309,7 @@ public class LinkIndex {
             QueryResult qr = FORWARD_INDEX.get().performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                SchemaId sourceField = new SchemaIdImpl(qr.getData(SOURCE_FIELD_KEY));
+                SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
                 result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.

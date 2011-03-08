@@ -77,4 +77,9 @@ public interface IdGenerator {
      */
     RecordId fromString(String recordIdString);
 
+    /**
+     * Creates a SchemaId based on the provided byte[] representation of the id.
+     * @return a SchemaId
+     */
+    SchemaId getSchemaId(byte[] bytes);
 }

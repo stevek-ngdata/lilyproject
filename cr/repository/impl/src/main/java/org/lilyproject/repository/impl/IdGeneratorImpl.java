@@ -21,6 +21,7 @@ import java.util.Map;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ArgumentValidator;
 
 
@@ -247,4 +248,7 @@ public class IdGeneratorImpl implements IdGenerator {
         }
     }
     
+    public SchemaId getSchemaId(byte[] bytes) {
+        return new SchemaIdImpl(bytes);
+    }
 }
