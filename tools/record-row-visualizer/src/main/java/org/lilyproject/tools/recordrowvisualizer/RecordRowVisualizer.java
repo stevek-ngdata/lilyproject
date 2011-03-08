@@ -267,10 +267,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         for (Map.Entry<Long, byte[]> entry : valuesByVersion.entrySet()) {
             Type type = (Type)value.get(entry.getKey());
             if (type != null) {
-                type.id = new SchemaIdImpl(STRING_DECODER.decode(entry.getValue()));
+                type.id = new SchemaIdImpl(entry.getValue());
             } else {
                 type = new Type();
-                type.id = new SchemaIdImpl(STRING_DECODER.decode(entry.getValue()));
+                type.id = new SchemaIdImpl(entry.getValue());
                 value.put(entry.getKey(), type);
             }
         }
