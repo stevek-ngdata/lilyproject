@@ -12,30 +12,30 @@ public class FieldTypesImpl implements FieldTypes {
     private Log log = LogFactory.getLog(getClass());
     
     private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
-    private Map<String, FieldType> fieldTypeIdCache = new HashMap<String, FieldType>();
-    private Map<ByteArrayKey, FieldType> fieldTypeBytesIdCache = new HashMap<ByteArrayKey, FieldType>();
+    private Map<SchemaId, FieldType> fieldTypeIdCache = new HashMap<SchemaId, FieldType>();
+    private Map<String, FieldType> fieldTypeIdStringCache = new HashMap<String, FieldType>();
 
     public synchronized FieldTypesImpl clone() {
         FieldTypesImpl newFieldTypes = new FieldTypesImpl();
         newFieldTypes.fieldTypeNameCache.putAll(fieldTypeNameCache);
         newFieldTypes.fieldTypeIdCache.putAll(fieldTypeIdCache);
-        newFieldTypes.fieldTypeBytesIdCache.putAll(fieldTypeBytesIdCache);
+        newFieldTypes.fieldTypeIdStringCache.putAll(fieldTypeIdStringCache);
         return newFieldTypes;
     }
     
     public synchronized void refresh(List<FieldType> fieldTypes) {
         Map<QName, FieldType> newFieldTypeNameCache = new HashMap<QName, FieldType>();
-        Map<String, FieldType> newFieldTypeIdCache = new HashMap<String, FieldType>();
-        Map<ByteArrayKey, FieldType> newFieldTypeBytesIdCache = new HashMap<ByteArrayKey, FieldType>();
+        Map<SchemaId, FieldType> newFieldTypeIdCache = new HashMap<SchemaId, FieldType>();
+        Map<String, FieldType> newFieldTypeIdStringCache = new HashMap<String, FieldType>();
         try {
             for (FieldType fieldType : fieldTypes) {
                 newFieldTypeNameCache.put(fieldType.getName(), fieldType);
                 newFieldTypeIdCache.put(fieldType.getId(), fieldType);
-                newFieldTypeBytesIdCache.put(new ByteArrayKey(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
+                newFieldTypeIdStringCache.put(fieldType.getId().toString(), fieldType);
             }
             fieldTypeNameCache = newFieldTypeNameCache;
             fieldTypeIdCache = newFieldTypeIdCache;
-            fieldTypeBytesIdCache = newFieldTypeBytesIdCache;
+            fieldTypeIdStringCache = newFieldTypeIdStringCache;
         } catch (Exception e) {
             // We keep on working with the old cache
             log.warn("Exception while refreshing FieldType cache. Cache is possibly out of date.", e);
@@ -47,11 +47,11 @@ public class FieldTypesImpl implements FieldTypes {
         if (oldFieldType != null) {
             fieldTypeNameCache.remove(oldFieldType.getName());
             fieldTypeIdCache.remove(oldFieldType.getId());
-            fieldTypeBytesIdCache.remove(new ByteArrayKey(HBaseTypeManager.idToBytes(oldFieldType.getId())));
+            fieldTypeIdStringCache.remove(oldFieldType.getId().toString());
         }
         fieldTypeNameCache.put(fieldType.getName(), fieldType);
         fieldTypeIdCache.put(fieldType.getId(), fieldType);
-        fieldTypeBytesIdCache.put(new ByteArrayKey(HBaseTypeManager.idToBytes(fieldType.getId())), fieldType);
+        fieldTypeIdStringCache.put(fieldType.getId().toString(), fieldType);
     }
     
     public synchronized List<FieldType> getFieldTypes() {
@@ -64,18 +64,18 @@ public class FieldTypesImpl implements FieldTypes {
     
     public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(id, "id");
-        FieldType fieldType = fieldTypeIdCache.get(id);
+        FieldType fieldType = fieldTypeIdStringCache.get(id);
         if (fieldType == null) {
-            throw new FieldTypeNotFoundException(id);
+            throw new FieldTypeNotFoundException(new SchemaIdImpl(id)); 
         }
         return fieldType.clone();
     }
     
-    public FieldType getFieldTypeById(byte[] id) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(id, "id");
-        FieldType fieldType = fieldTypeBytesIdCache.get(new ByteArrayKey(id));
+        FieldType fieldType = fieldTypeIdCache.get(id);
         if (fieldType == null) {
-            throw new FieldTypeNotFoundException(HBaseTypeManager.idFromBytes(id));
+            throw new FieldTypeNotFoundException(id);
         }
         return fieldType.clone();
     }

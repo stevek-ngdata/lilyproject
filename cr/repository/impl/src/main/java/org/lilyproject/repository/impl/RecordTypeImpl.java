@@ -19,34 +19,31 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.lilyproject.repository.api.FieldTypeEntry;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
 public class RecordTypeImpl implements RecordType {
     
-    private String id;
+    private SchemaId id;
     private QName name;
     private Long version;
-    private Map<String, Long> mixins = new HashMap<String, Long>();
-    private Map<String, FieldTypeEntry> fieldTypeEntries = new HashMap<String, FieldTypeEntry>();
+    private Map<SchemaId, Long> mixins = new HashMap<SchemaId, Long>();
+    private Map<SchemaId, FieldTypeEntry> fieldTypeEntries = new HashMap<SchemaId, FieldTypeEntry>();
 
     /**
      * This constructor should not be called directly.
      * @use {@link TypeManager#newRecordType} instead
      */
-    public RecordTypeImpl(String id, QName name) {
+    public RecordTypeImpl(SchemaId id, QName name) {
         this.id = id;
         this.name = name;
     }
     
-    public void setId(String id) {
+    public void setId(SchemaId id) {
         this.id = id;
     }
     
-    public String getId() {
+    public SchemaId getId() {
         return id;
     }
     
@@ -70,11 +67,11 @@ public class RecordTypeImpl implements RecordType {
         return fieldTypeEntries.values();
     }
     
-    public FieldTypeEntry getFieldTypeEntry(String fieldTypeId) {
+    public FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId) {
         return fieldTypeEntries.get(fieldTypeId);
     }
     
-    public void removeFieldTypeEntry(String fieldTypeId) {
+    public void removeFieldTypeEntry(SchemaId fieldTypeId) {
         fieldTypeEntries.remove(fieldTypeId);
     }
     
@@ -82,26 +79,26 @@ public class RecordTypeImpl implements RecordType {
         fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
     }
 
-    public FieldTypeEntry addFieldTypeEntry(String fieldTypeId, boolean mandatory) {
+    public FieldTypeEntry addFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
         FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl(fieldTypeId, mandatory);
         addFieldTypeEntry(fieldTypeEntry);
         return fieldTypeEntry;
     }
 
-    public void addMixin(String recordTypeId, Long recordTypeVersion) {
+    public void addMixin(SchemaId recordTypeId, Long recordTypeVersion) {
         ArgumentValidator.notNull(recordTypeId, "recordTypeId");
         mixins.put(recordTypeId, recordTypeVersion);
     }
     
-    public void addMixin(String recordTypeId) {
+    public void addMixin(SchemaId recordTypeId) {
         addMixin(recordTypeId, null);
     }
     
-    public void removeMixin(String recordTypeId) {
+    public void removeMixin(SchemaId recordTypeId) {
         mixins.remove(recordTypeId);
     }
     
-    public Map<String, Long> getMixins() {
+    public Map<SchemaId, Long> getMixins() {
         return mixins;
     }
 

@@ -171,12 +171,13 @@ public class BlobIncubatorMonitor {
         }
 
         private void checkResult(Result result) throws IOException, InterruptedException {
-            byte[] recordId = result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes);
+            byte[] recordIdBytes = result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes);
+            SchemaId recordId = new SchemaIdImpl(recordIdBytes);
             byte[] blobKey = result.getRow();
-            if (Arrays.equals(recordId,BlobManagerImpl.INCUBATE)) {
+            if (Arrays.equals(recordIdBytes,BlobManagerImpl.INCUBATE)) {
                     deleteBlob(blobKey, recordId, null);
             } else {
-                byte[] fieldId = result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes);
+                SchemaId fieldId = new SchemaIdImpl(result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes));
                 Result blobUsage;
                 try {
                     blobUsage = getBlobUsage(blobKey, recordId, fieldId);
@@ -187,17 +188,17 @@ public class BlobIncubatorMonitor {
                     }
                 } catch (FieldTypeNotFoundException e) {
                     log.warn("Failed to check blob usage " + Hex.encodeHexString(blobKey) +
-                            ", recordId " + Hex.encodeHexString(recordId) +
-                            ", fieldId " + Hex.encodeHexString(fieldId), e);
+                            ", recordId " + recordId +
+                            ", fieldId " + fieldId, e);
                 } catch (TypeException e) {
                     log.warn("Failed to check blob usage " + Hex.encodeHexString(blobKey) +
-                            ", recordId " + Hex.encodeHexString(recordId) +
-                            ", fieldId " + Hex.encodeHexString(fieldId), e);
+                            ", recordId " + recordId +
+                            ", fieldId " + fieldId, e);
                 }
             }
         }
 
-        private void deleteBlob(byte[] blobKey, byte[] recordId, byte[] fieldId) throws IOException {
+        private void deleteBlob(byte[] blobKey, SchemaId recordId, SchemaId fieldId) throws IOException {
             if (deleteReference(blobKey, recordId)) {
                 try {
                     blobManager.delete(blobKey);
@@ -207,9 +208,9 @@ public class BlobIncubatorMonitor {
                     // Deleting the blob failed. We put back the reference to try it again later.
                     // There's a small chance that this fails as well. In that there will be an unreferenced blob in the blobstore.
                     Put put = new Put(blobKey);
-                    put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes, recordId);
+                    put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes, recordId.getBytes());
                     if (fieldId != null) {
-                        put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes, fieldId);
+                        put.add(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.FIELD.bytes, fieldId.getBytes());
                     }
                     blobIncubatorTable.put(put);
                     return;
@@ -217,21 +218,21 @@ public class BlobIncubatorMonitor {
             }
         }
 
-        private boolean deleteReference(byte[] blobKey, byte[] recordId) throws IOException {
+        private boolean deleteReference(byte[] blobKey, SchemaId recordId) throws IOException {
             Delete delete = new Delete(blobKey);
             boolean result = blobIncubatorTable.checkAndDelete(blobKey, BlobIncubatorCf.REF.bytes,
-                    BlobIncubatorColumn.RECORD.bytes, recordId, delete);
+                    BlobIncubatorColumn.RECORD.bytes, recordId.getBytes(), delete);
             if (result) {
                 metrics.refDeleteCount.inc();
             }
             return result;
         }
 
-        private Result getBlobUsage(byte[] blobKey, byte[] recordId, byte[] fieldId) throws FieldTypeNotFoundException,
+        private Result getBlobUsage(byte[] blobKey, SchemaId recordId, SchemaId fieldId) throws FieldTypeNotFoundException,
                 TypeException, InterruptedException, IOException {
             FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeById(fieldId);
             ValueType valueType = fieldType.getValueType();
-            Get get = new Get(recordId);
+            Get get = new Get(recordId.getBytes());
             get.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
             byte[] valueToCompare;
             if (valueType.isMultiValue() && valueType.isHierarchical()) {

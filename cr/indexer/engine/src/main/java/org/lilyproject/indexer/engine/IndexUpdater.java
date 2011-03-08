@@ -401,7 +401,7 @@ public class IndexUpdater implements RowLogMessageListener {
                     Set<RecordId> newReferrers = new HashSet<RecordId>();
 
                     if (follow instanceof DerefValue.FieldFollow) {
-                        String fieldId = ((DerefValue.FieldFollow)follow).getFieldId();
+                        SchemaId fieldId = ((DerefValue.FieldFollow)follow).getFieldId();
                         for (RecordId referrer : referrers) {
                             try {
                                 Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);

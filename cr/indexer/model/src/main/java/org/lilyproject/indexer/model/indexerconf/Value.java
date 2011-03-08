@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.ValueType;
 
 public interface Value {
@@ -24,7 +25,7 @@ public interface Value {
      * from the current record, thus in the case of a dereference it is the first link field, not the field value
      * taken from the target document.
      */
-    String getFieldDependency();
+    SchemaId getFieldDependency();
 
     /**
      * Name of the formatter to use for this value, or null if no specific one.

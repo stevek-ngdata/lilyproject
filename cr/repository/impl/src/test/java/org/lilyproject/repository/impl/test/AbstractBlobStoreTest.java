@@ -818,7 +818,7 @@ public abstract class AbstractBlobStoreTest {
         HTableInterface blobIncubatorTable = LilyHBaseSchema.getBlobIncubatorTable(repoSetup.getHbaseTableFactory(), true);
         Put put = new Put(blob.getValue());
         put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.RECORD.bytes, record.getId().toBytes());
-        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, ((FieldTypeImpl)fieldType).getIdBytes());
+        put.add(LilyHBaseSchema.BlobIncubatorCf.REF.bytes, LilyHBaseSchema.BlobIncubatorColumn.FIELD.bytes, fieldType.getId().getBytes());
         blobIncubatorTable.put(put);
         
         // Give time for the blob to expire

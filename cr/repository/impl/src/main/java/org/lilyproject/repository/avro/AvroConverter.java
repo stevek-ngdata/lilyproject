@@ -29,6 +29,7 @@ import org.apache.avro.AvroRemoteException;
 import org.apache.avro.util.Utf8;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public class AvroConverter {
 
@@ -240,7 +241,7 @@ public class AvroConverter {
     public FieldType convert(AvroFieldType avroFieldType) throws TypeException {
         ValueType valueType = convert(avroFieldType.valueType);
         QName name = convert(avroFieldType.name);
-        String id = convert(avroFieldType.id);
+        SchemaId id = convert(avroFieldType.id);
         if (id != null) {
             return typeManager.newFieldType(id, valueType, name, avroFieldType.scope);
         }
@@ -250,7 +251,7 @@ public class AvroConverter {
     public AvroFieldType convert(FieldType fieldType) {
         AvroFieldType avroFieldType = new AvroFieldType();
         
-        avroFieldType.id = fieldType.getId();
+        avroFieldType.id = convert(fieldType.getId());
         avroFieldType.name = convert(fieldType.getName());
         avroFieldType.valueType = convert(fieldType.getValueType());
         avroFieldType.scope = fieldType.getScope();
@@ -258,7 +259,7 @@ public class AvroConverter {
     }
 
     public RecordType convert(AvroRecordType avroRecordType) throws TypeException {
-        String recordTypeId = convert(avroRecordType.id);
+        SchemaId recordTypeId = convert(avroRecordType.id);
         QName recordTypeName = convert(avroRecordType.name);
         RecordType recordType = typeManager.newRecordType(recordTypeId, recordTypeName);
         recordType.setVersion(avroRecordType.version);
@@ -279,7 +280,7 @@ public class AvroConverter {
 
     public AvroRecordType convert(RecordType recordType) {
         AvroRecordType avroRecordType = new AvroRecordType();
-        avroRecordType.id = recordType.getId();
+        avroRecordType.id = convert(recordType.getId());
         avroRecordType.name = convert(recordType.getName());
         Long version = recordType.getVersion();
         if (version != null) {
@@ -290,9 +291,9 @@ public class AvroConverter {
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
             avroRecordType.fieldTypeEntries.add(convert(fieldTypeEntry));
         }
-        Set<Entry<String,Long>> mixinEntries = recordType.getMixins().entrySet();
+        Set<Entry<SchemaId,Long>> mixinEntries = recordType.getMixins().entrySet();
         avroRecordType.mixins = new ArrayList<AvroMixin>(mixinEntries.size());
-        for (Entry<String, Long> mixinEntry : mixinEntries) {
+        for (Entry<SchemaId, Long> mixinEntry : mixinEntries) {
             avroRecordType.mixins.add(convert(mixinEntry));
         }
         return avroRecordType;
@@ -324,9 +325,9 @@ public class AvroConverter {
         return avroQName;
     }
 
-    public AvroMixin convert(Entry<String, Long> mixinEntry) {
+    public AvroMixin convert(Entry<SchemaId, Long> mixinEntry) {
         AvroMixin avroMixin = new AvroMixin();
-        avroMixin.recordTypeId = mixinEntry.getKey();
+        avroMixin.recordTypeId = convert(mixinEntry.getKey());
         Long version = mixinEntry.getValue();
         if (version != null) {
             avroMixin.recordTypeVersion = version;
@@ -340,7 +341,7 @@ public class AvroConverter {
 
     public AvroFieldTypeEntry convert(FieldTypeEntry fieldTypeEntry) {
         AvroFieldTypeEntry avroFieldTypeEntry = new AvroFieldTypeEntry();
-        avroFieldTypeEntry.id = fieldTypeEntry.getFieldTypeId();
+        avroFieldTypeEntry.id = convert(fieldTypeEntry.getFieldTypeId());
         avroFieldTypeEntry.mandatory = fieldTypeEntry.isMandatory();
         return avroFieldTypeEntry;
     }
@@ -429,7 +430,7 @@ public class AvroConverter {
     public AvroRecordTypeNotFoundException convert(RecordTypeNotFoundException exception) {
         AvroRecordTypeNotFoundException avroException = new AvroRecordTypeNotFoundException();
         if (exception.getId() != null)
-            avroException.id = exception.getId();
+            avroException.id = convert(exception.getId());
         if (exception.getName() != null)
             avroException.name = convert(exception.getName());
         Long version = exception.getVersion();
@@ -443,7 +444,7 @@ public class AvroConverter {
     public AvroFieldTypeNotFoundException convert(FieldTypeNotFoundException exception) {
         AvroFieldTypeNotFoundException avroException = new AvroFieldTypeNotFoundException();
         if (exception.getId() != null)
-            avroException.id = exception.getId();
+            avroException.id = convert(exception.getId());
         if (exception.getName() != null)
             avroException.name = convert(exception.getName());
         avroException.remoteCauses = buildCauses(exception);
@@ -806,5 +807,23 @@ public class AvroConverter {
         avroBlob.size = blob.getSize();
         avroBlob.name = convert(blob.getName());
         return avroBlob;
+    }
+    
+    public SchemaId convert(AvroSchemaId avroSchemaId) {
+        if (avroSchemaId == null)
+            return null;
+        byte[] idBytes = null;
+        if (avroSchemaId.idBytes != null)
+            idBytes = avroSchemaId.idBytes.array();
+        return new SchemaIdImpl(idBytes);
+    }
+    
+    public AvroSchemaId convert(SchemaId schemaId) {
+        if (schemaId == null)
+            return null;
+        AvroSchemaId avroSchemaId = new AvroSchemaId();
+        if (schemaId.getBytes() != null) 
+            avroSchemaId.idBytes = ByteBuffer.wrap(schemaId.getBytes());
+        return avroSchemaId;
     }
 }

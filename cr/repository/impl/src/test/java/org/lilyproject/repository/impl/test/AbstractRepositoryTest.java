@@ -912,7 +912,7 @@ public abstract class AbstractRepositoryTest {
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
-        Record updatedRecord = repository.update(updateRecord, false, false);
+        repository.update(updateRecord, false, false);
 
         // Read the first version of the record
         Record readRecord = repository.read(record.getId(), Long.valueOf(1));
@@ -1130,15 +1130,15 @@ public abstract class AbstractRepositoryTest {
         record = repository.create(record);
 
         IdRecord idRecord = repository.readWithIds(record.getId(), null, null);
-        assertEquals("hello", idRecord.getField(fieldType1.getId()));
-        assertTrue(idRecord.hasField(fieldType1.getId()));
-        assertEquals(new Integer(4), idRecord.getField(fieldType2.getId()));
-        assertTrue(idRecord.hasField(fieldType2.getId()));
+        assertEquals("hello", idRecord.getField(fieldType1.getId().toString()));
+        assertTrue(idRecord.hasField(fieldType1.getId().toString()));
+        assertEquals(new Integer(4), idRecord.getField(fieldType2.getId().toString()));
+        assertTrue(idRecord.hasField(fieldType2.getId().toString()));
 
         Map<String, Object> fields = idRecord.getFieldsById();
         assertEquals(3, fields.size());
-        assertEquals("hello", fields.get(fieldType1.getId()));
-        assertEquals(new Integer(4), fields.get(fieldType2.getId()));
+        assertEquals("hello", fields.get(fieldType1.getId().toString()));
+        assertEquals(new Integer(4), fields.get(fieldType2.getId().toString()));
 
         assertEquals(record, idRecord.getRecord());
     }

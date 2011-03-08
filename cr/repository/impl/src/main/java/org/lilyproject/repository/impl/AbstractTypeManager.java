@@ -47,7 +47,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     private FieldTypesImpl updatingFieldTypes = new FieldTypesImpl();
     private boolean updatedFieldTypes = false;
     private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
-    private Map<String, RecordType> recordTypeIdCache = new HashMap<String, RecordType>();
+    private Map<SchemaId, RecordType> recordTypeIdCache = new HashMap<SchemaId, RecordType>();
     private final CacheWatcher cacheWatcher = new CacheWatcher();
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache";
     
@@ -166,7 +166,7 @@ public abstract class AbstractTypeManager implements TypeManager {
 
     private synchronized void refreshRecordTypeCache() {
         Map<QName, RecordType> newRecordTypeNameCache = new HashMap<QName, RecordType>();
-        Map<String, RecordType> newRecordTypeIdCache = new HashMap<String, RecordType>();
+        Map<SchemaId, RecordType> newRecordTypeIdCache = new HashMap<SchemaId, RecordType>();
         try {
             List<RecordType> recordTypes = getRecordTypesWithoutCache();
             for (RecordType recordType : recordTypes) {
@@ -225,11 +225,11 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordTypeNameCache.get(name);
     }
 
-    protected synchronized RecordType getRecordTypeFromCache(String id) {
+    protected synchronized RecordType getRecordTypeFromCache(SchemaId id) {
         return recordTypeIdCache.get(id);
     }
     
-    public RecordType getRecordTypeById(String id, Long version) throws RecordTypeNotFoundException, TypeException {
+    public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(id, "id");
         RecordType recordType = getRecordTypeFromCache(id);
         if (recordType == null) {
@@ -261,13 +261,13 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordType.clone();
     }
     
-    abstract protected RecordType getRecordTypeByIdWithoutCache(String id, Long version) throws RecordTypeNotFoundException, TypeException;
+    abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException;
     
-    public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldTypeById(id);
     }
     
-    public FieldType getFieldTypeById(byte[] id) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldTypeById(id);
     }
 
@@ -282,7 +282,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return new RecordTypeImpl(null, name);
     }
     
-    public RecordType newRecordType(String recordTypeId, QName name) {
+    public RecordType newRecordType(SchemaId recordTypeId, QName name) {
         ArgumentValidator.notNull(name, "name");
         return new RecordTypeImpl(recordTypeId, name);
     }
@@ -291,14 +291,14 @@ public abstract class AbstractTypeManager implements TypeManager {
         return newFieldType(null, valueType, name, scope);
     }
 
-    public FieldTypeEntry newFieldTypeEntry(String fieldTypeId, boolean mandatory) {
+    public FieldTypeEntry newFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
         ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
         ArgumentValidator.notNull(mandatory, "mandatory");
         return new FieldTypeEntryImpl(fieldTypeId, mandatory);
     }
 
 
-    public FieldType newFieldType(String id, ValueType valueType, QName name,
+    public FieldType newFieldType(SchemaId id, ValueType valueType, QName name,
             Scope scope) {
                 ArgumentValidator.notNull(valueType, "valueType");
                 ArgumentValidator.notNull(name, "name");

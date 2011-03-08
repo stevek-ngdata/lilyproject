@@ -16,6 +16,7 @@
 package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.tools.import_.core.*;
 
 import javax.ws.rs.*;
@@ -30,7 +31,7 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
     @Produces("application/json")
     public RecordType get(@PathParam("id") String id) {
         try {
-            return repository.getTypeManager().getRecordTypeById(id, null);
+            return repository.getTypeManager().getRecordTypeById(new SchemaIdImpl(id), null);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -46,7 +47,7 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
             throw new ResourceException("Record type id in submitted field type does not match the id in URI.",
                     BAD_REQUEST.getStatusCode());
         }
-        recordType.setId(id);
+        recordType.setId(new SchemaIdImpl(id));
 
         ImportResult<RecordType> result;
         try {

@@ -72,7 +72,7 @@ public class VersionTag {
             }
 
             if (isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId(), (Long)field.getValue());
+                vtags.put(fieldType.getId().toString(), (Long)field.getValue());
             }
         }
 
@@ -101,7 +101,7 @@ public class VersionTag {
             }
 
             if (isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId(), (Long)field.getValue());
+                vtags.put(fieldType.getId().toString(), (Long)field.getValue());
             }
         }
 
@@ -316,8 +316,8 @@ public class VersionTag {
             if (isLastVersionTag(typeManager.getFieldTypeById(fieldTypeEntry.getFieldTypeId())))
                     return true;
         }
-        Map<String, Long> mixins = recordType.getMixins();
-        for (Entry<String, Long> entry : mixins.entrySet()) {
+        Map<SchemaId, Long> mixins = recordType.getMixins();
+        for (Entry<SchemaId, Long> entry : mixins.entrySet()) {
             if (hasLastVTag(typeManager.getRecordTypeById(entry.getKey(), entry.getValue()), typeManager))
                 return true;
         }

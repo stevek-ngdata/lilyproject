@@ -119,7 +119,7 @@ public class PrintUtil {
 
     public static void print(RecordType recordType, Repository repository, PrintStream out) {
 
-        List<String> failedFieldTypes = new ArrayList<String>();
+        List<SchemaId> failedFieldTypes = new ArrayList<SchemaId>();
 
         Map<Scope, List<Pair<FieldTypeEntry, FieldType>>> fieldTypeEntriesByScope =
                 new HashMap<Scope, List<Pair<FieldTypeEntry, FieldType>>>();
@@ -175,8 +175,8 @@ public class PrintUtil {
         if (failedFieldTypes.size() > 0) {
             println(out, indent, "Field types that could not be loaded:");
             indent += 2;
-            for (String id : failedFieldTypes) {
-                println(out, indent, id);
+            for (SchemaId id : failedFieldTypes) {
+                println(out, indent, id.toString());
             }
             indent -= 2;
         }

@@ -36,20 +36,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeEntry;
-import org.lilyproject.repository.api.FieldTypeExistsException;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.FieldTypeUpdateException;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeExistsException;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -101,8 +88,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         RecordType newRecordType = recordType.clone();
         Long recordTypeVersion = Long.valueOf(1);
         try {
-            UUID uuid = getValidUUID();
-            byte[] rowId = idToBytes(uuid);
+            SchemaId id = getValidId();
+            byte[] rowId = id.getBytes();
             // Take a counter on a row with the name as key
             byte[] nameBytes = encodeName(recordType.getName());
             long concurrentCounter = getTypeTable().incrementColumnValue(nameBytes, TypeCf.DATA.bytes,
@@ -120,8 +107,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 putFieldTypeEntry(recordTypeVersion, put, fieldTypeEntry);
             }
 
-            Map<String, Long> mixins = recordType.getMixins();
-            for (Entry<String, Long> mixin : mixins.entrySet()) {
+            Map<SchemaId, Long> mixins = recordType.getMixins();
+            for (Entry<SchemaId, Long> mixin : mixins.entrySet()) {
                 newRecordType.addMixin(mixin.getKey(), putMixinOnRecordType(recordTypeVersion, put, mixin.getKey(),
                         mixin.getValue()));
             }
@@ -134,7 +121,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 throw new TypeException("Concurrent create occurred for recordType <" + recordType.getName() + ">");
             }
             */
-            newRecordType.setId(uuid.toString());
+            newRecordType.setId(id);
             newRecordType.setVersion(recordTypeVersion);
             updateRecordTypeCache(newRecordType.clone());
             notifyCacheInvalidate();
@@ -151,10 +138,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return newRecordType;
     }
 
-    private Long putMixinOnRecordType(Long recordTypeVersion, Put put, String mixinId, Long mixinVersion)
+    private Long putMixinOnRecordType(Long recordTypeVersion, Put put, SchemaId mixinId, Long mixinVersion)
             throws RecordTypeNotFoundException, TypeException {
         Long newMixinVersion = getRecordTypeByIdWithoutCache(mixinId, mixinVersion).getVersion();
-        put.add(TypeCf.MIXIN.bytes, Bytes.toBytes(mixinId), recordTypeVersion, Bytes.toBytes(newMixinVersion));
+        put.add(TypeCf.MIXIN.bytes, mixinId.getBytes(), recordTypeVersion, Bytes.toBytes(newMixinVersion));
         return newMixinVersion;
     }
 
@@ -162,11 +149,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             FieldTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
         RecordType newRecordType = recordType.clone();
-        String id = newRecordType.getId();
+        SchemaId id = newRecordType.getId();
         if (id == null) {
             throw new RecordTypeNotFoundException(newRecordType.getName(), null);
         }
-        byte[] rowId = idToBytes(id);
+        byte[] rowId = id.getBytes();
         try {
             // Do an exists check first and avoid useless creation of the row
             // due to an incrementColumnValue call
@@ -232,10 +219,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return false;
     }
 
-    protected RecordType getRecordTypeByIdWithoutCache(String id, Long version) throws RecordTypeNotFoundException,
+    protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException,
             TypeException {
         ArgumentValidator.notNull(id, "recordTypeId");
-        Get get = new Get(idToBytes(id));
+        Get get = new Get(id.getBytes());
         if (version != null) {
             get.setMaxVersions();
         }
@@ -283,7 +270,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
         // Remove remaining FieldTypeEntries
         for (FieldTypeEntry fieldTypeEntry : latestFieldTypeEntries) {
-            put.add(TypeCf.FIELDTYPE_ENTRY.bytes, idToBytes(fieldTypeEntry.getFieldTypeId()), newRecordTypeVersion,
+            put.add(TypeCf.FIELDTYPE_ENTRY.bytes, fieldTypeEntry.getFieldTypeId().getBytes(), newRecordTypeVersion,
                     DELETE_MARKER);
             changed = true;
         }
@@ -292,7 +279,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     private void putFieldTypeEntry(Long version, Put put, FieldTypeEntry fieldTypeEntry)
             throws FieldTypeNotFoundException, TypeException {
-        byte[] idBytes = idToBytes(fieldTypeEntry.getFieldTypeId());
+        byte[] idBytes = fieldTypeEntry.getFieldTypeId().getBytes();
         Get get = new Get(idBytes);
         try {
             if (!getTypeTable().exists(get)) {
@@ -307,20 +294,20 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     private boolean updateMixins(Put put, Long newRecordTypeVersion, RecordType recordType, RecordType latestRecordType) {
         boolean changed = false;
-        Map<String, Long> latestMixins = latestRecordType.getMixins();
+        Map<SchemaId, Long> latestMixins = latestRecordType.getMixins();
         // Update mixins
-        for (Entry<String, Long> entry : recordType.getMixins().entrySet()) {
-            String mixinId = entry.getKey();
+        for (Entry<SchemaId, Long> entry : recordType.getMixins().entrySet()) {
+            SchemaId mixinId = entry.getKey();
             Long mixinVersion = entry.getValue();
             if (!mixinVersion.equals(latestMixins.get(mixinId))) {
-                put.add(TypeCf.MIXIN.bytes, Bytes.toBytes(mixinId), newRecordTypeVersion, Bytes.toBytes(mixinVersion));
+                put.add(TypeCf.MIXIN.bytes, mixinId.getBytes(), newRecordTypeVersion, Bytes.toBytes(mixinVersion));
                 changed = true;
             }
             latestMixins.remove(mixinId);
         }
         // Remove remaining mixins
-        for (Entry<String, Long> entry : latestMixins.entrySet()) {
-            put.add(TypeCf.MIXIN.bytes, Bytes.toBytes(entry.getKey()), newRecordTypeVersion, DELETE_MARKER);
+        for (Entry<SchemaId, Long> entry : latestMixins.entrySet()) {
+            put.add(TypeCf.MIXIN.bytes, entry.getKey().getBytes(), newRecordTypeVersion, DELETE_MARKER);
             changed = true;
         }
         return changed;
@@ -333,7 +320,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                     .get(TypeCf.FIELDTYPE_ENTRY.bytes);
             if (fieldTypeEntriesVersionsMap != null) {
                 for (Entry<byte[], NavigableMap<Long, byte[]>> entry : fieldTypeEntriesVersionsMap.entrySet()) {
-                    String fieldTypeId = idFromBytes(entry.getKey());
+                    SchemaId fieldTypeId = new SchemaIdImpl(entry.getKey());
                     Entry<Long, byte[]> ceilingEntry = entry.getValue().ceilingEntry(version);
                     if (ceilingEntry != null) {
                         FieldTypeEntry fieldTypeEntry = decodeFieldTypeEntry(ceilingEntry.getValue(), fieldTypeId);
@@ -347,7 +334,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             NavigableMap<byte[], byte[]> versionableMap = result.getFamilyMap(TypeCf.FIELDTYPE_ENTRY.bytes);
             if (versionableMap != null) {
                 for (Entry<byte[], byte[]> entry : versionableMap.entrySet()) {
-                    String fieldTypeId = idFromBytes(entry.getKey());
+                    SchemaId fieldTypeId = new SchemaIdImpl(entry.getKey());
                     FieldTypeEntry fieldTypeEntry = decodeFieldTypeEntry(entry.getValue(), fieldTypeId);
                     if (fieldTypeEntry != null) {
                         recordType.addFieldTypeEntry(fieldTypeEntry);
@@ -363,7 +350,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             NavigableMap<byte[], NavigableMap<Long, byte[]>> mixinVersionsMap = allVersionsMap.get(TypeCf.MIXIN.bytes);
             if (mixinVersionsMap != null) {
                 for (Entry<byte[], NavigableMap<Long, byte[]>> entry : mixinVersionsMap.entrySet()) {
-                    String mixinId = Bytes.toString(entry.getKey());
+                    SchemaId mixinId = new SchemaIdImpl(entry.getKey());
                     Entry<Long, byte[]> ceilingEntry = entry.getValue().ceilingEntry(version);
                     if (ceilingEntry != null) {
                         if (!EncodingUtil.isDeletedField(ceilingEntry.getValue())) {
@@ -377,7 +364,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             if (mixinMap != null) {
                 for (Entry<byte[], byte[]> entry : mixinMap.entrySet()) {
                     if (!EncodingUtil.isDeletedField(entry.getValue())) {
-                        recordType.addMixin(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
+                        recordType.addMixin(new SchemaIdImpl(entry.getKey()), Bytes.toLong(entry.getValue()));
                     }
                 }
             }
@@ -393,7 +380,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return EncodingUtil.prefixValue(bytes, EXISTS_FLAG);
     }
 
-    private FieldTypeEntry decodeFieldTypeEntry(byte[] bytes, String fieldTypeId) {
+    private FieldTypeEntry decodeFieldTypeEntry(byte[] bytes, SchemaId fieldTypeId) {
         if (EncodingUtil.isDeletedField(bytes)) {
             return null;
         }
@@ -408,8 +395,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         FieldType newFieldType;
         Long version = Long.valueOf(1);
         try {
-            UUID uuid = getValidUUID();
-            byte[] rowId = idToBytes(uuid);
+            SchemaId id = getValidId();
+            byte[] rowId = id.getBytes();
             // Take a counter on a row with the name as key
             byte[] nameBytes = encodeName(fieldType.getName());
             long concurrentCounter = getTypeTable().incrementColumnValue(nameBytes, TypeCf.DATA.bytes,
@@ -437,7 +424,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
             */
             newFieldType = fieldType.clone();
-            newFieldType.setId(uuid.toString());
+            newFieldType.setId(id);
             updateFieldTypeCache(newFieldType);
             notifyCacheInvalidate();
         } catch (IOException e) {
@@ -455,7 +442,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     public FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
             TypeException {
-        byte[] rowId = ((FieldTypeImpl)fieldType).getIdBytes();
+        byte[] rowId = fieldType.getId().getBytes();
         try {
             // Do an exists check first and avoid useless creation of the row
             // due to an incrementColumnValue call
@@ -512,10 +499,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return fieldType.clone();
     }
     
-    private FieldType getFieldTypeByIdWithoutCache(String id) throws FieldTypeNotFoundException, TypeException {
+    private FieldType getFieldTypeByIdWithoutCache(SchemaId id) throws FieldTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(id, "id");
         Result result;
-        Get get = new Get(idToBytes(id));
+        Get get = new Get(id.getBytes());
         try {
             result = getTypeTable().get(get);
             // This covers the case where a given id would match a name that was
@@ -542,7 +529,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         try {
             scanner = getTypeTable().getScanner(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes);
             for (Result result : scanner) {
-                FieldType fieldType = getFieldTypeByIdWithoutCache(idFromBytes(result.getRow()));
+                FieldType fieldType = getFieldTypeByIdWithoutCache(new SchemaIdImpl(result.getRow()));
                 fieldTypes.add(fieldType);
             }
         } finally {
@@ -558,7 +545,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         try {
             scanner = getTypeTable().getScanner(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
             for (Result result : scanner) {
-                RecordType recordType = getRecordTypeByIdWithoutCache(idFromBytes(result.getRow()), null);
+                RecordType recordType = getRecordTypeByIdWithoutCache(new SchemaIdImpl(result.getRow()), null);
                 recordTypes.add(recordType);
             }
         } finally {
@@ -600,46 +587,24 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return new QName(namespace, name);
     }
 
-    private byte[] idToBytes(UUID id) {
-        byte[] rowId;
-        rowId = new byte[16];
-        Bytes.putLong(rowId, 0, id.getMostSignificantBits());
-        Bytes.putLong(rowId, 8, id.getLeastSignificantBits());
-        return rowId;
-    }
-
-    protected static byte[] idToBytes(String id) {
-        UUID uuid = UUID.fromString(id);
-        byte[] rowId;
-        rowId = new byte[16];
-        Bytes.putLong(rowId, 0, uuid.getMostSignificantBits());
-        Bytes.putLong(rowId, 8, uuid.getLeastSignificantBits());
-        return rowId;
-    }
-
-    protected static String idFromBytes(byte[] bytes) {
-        UUID uuid = new UUID(Bytes.toLong(bytes, 0, 8), Bytes.toLong(bytes, 8, 8));
-        return uuid.toString();
-    }
-
     /**
-     * Generates a uuid and checks if it's not already in use
+     * Generates a SchemaId based on a uuid and checks if it's not already in use
      */
-    private UUID getValidUUID() throws IOException {
-        UUID uuid = UUID.randomUUID();
-        byte[] rowId = idToBytes(uuid);
+    private SchemaId getValidId() throws IOException {
+        SchemaId id = new SchemaIdImpl(UUID.randomUUID());
+        byte[] rowId = id.getBytes();
         // The chance it would already exist is small
         if (typeTable.exists(new Get(rowId)))
-            return getValidUUID();
+            return getValidId();
         // The chance a same uuid is generated after doing the exists check is
         // even smaller
         // If it would still happen, the incrementColumnValue would return a
         // number bigger than 1
         if (1L != typeTable
                 .incrementColumnValue(rowId, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes, 1L)) {
-            return getValidUUID();
+            return getValidId();
         }
-        return uuid;
+        return id;
     }
 
     protected HTableInterface getTypeTable() {

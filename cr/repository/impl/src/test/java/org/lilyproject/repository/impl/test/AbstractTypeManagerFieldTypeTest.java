@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public abstract class AbstractTypeManagerFieldTypeTest {
 
@@ -42,7 +43,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
 
     @Test
     public void testCreateIgnoresGivenId() throws Exception {
-        String id = UUID.randomUUID().toString();
+        SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         ValueType valueType = typeManager.getValueType("STRING", false, false);
         FieldType fieldType = typeManager.newFieldType(id, valueType , new QName(null, "aName"), Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);

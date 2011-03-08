@@ -51,7 +51,7 @@ public class RecordLinkExtractor {
         }
     }
 
-    private static void extract(Object value, LinkCollector collector, String fieldTypeId, RecordId ctx,
+    private static void extract(Object value, LinkCollector collector, SchemaId fieldTypeId, RecordId ctx,
             IdGenerator idGenerator) {
         if (value instanceof List) {
             List list = (List)value;

@@ -19,6 +19,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 
 import static org.lilyproject.util.json.JsonUtil.*;
 
@@ -41,7 +42,7 @@ public class RecordTypeReader implements EntityReader<RecordType> {
 
         String id = getString(node, "id", null);
         if (id != null)
-            recordType.setId(id);
+            recordType.setId(new SchemaIdImpl(id));
 
         if (node.get("fields") != null) {
             ArrayNode fields = getArray(node, "fields");
@@ -50,21 +51,21 @@ public class RecordTypeReader implements EntityReader<RecordType> {
 
                 boolean mandatory = getBoolean(field, "mandatory", false);
 
-                String fieldId = getString(field, "id", null);
+                String fieldIdString = getString(field, "id", null);
                 String fieldName = getString(field, "name", null);
 
-                if (fieldId != null) {
-                    recordType.addFieldTypeEntry(fieldId, mandatory);
+                if (fieldIdString != null) {
+                    recordType.addFieldTypeEntry(new SchemaIdImpl(fieldIdString), mandatory);
                 } else if (fieldName != null) {
                     QName fieldQName = QNameConverter.fromJson(fieldName, namespaces);
 
                     try {
-                        fieldId = typeManager.getFieldTypeByName(fieldQName).getId();
+                        SchemaId fieldId = typeManager.getFieldTypeByName(fieldQName).getId();
+                        recordType.addFieldTypeEntry(fieldId, mandatory);
                     } catch (RepositoryException e) {
                         throw new JsonFormatException("Record type " + name + ": error looking up field type with name: " +
                                 fieldQName, e);
                     }
-                    recordType.addFieldTypeEntry(fieldId, mandatory);
                 } else {
                     throw new JsonFormatException("Record type " + name + ": field entry should specify an id or name");
                 }
@@ -76,22 +77,22 @@ public class RecordTypeReader implements EntityReader<RecordType> {
             for (int i = 0; i < mixins.size(); i++) {
                 JsonNode mixin = mixins.get(i);
 
-                String rtId = getString(mixin, "id", null);
+                String rtIdString = getString(mixin, "id", null);
                 String rtName = getString(mixin, "name", null);
                 Long rtVersion = getLong(mixin, "version", null);
 
-                if (rtId != null) {
-                    recordType.addMixin(rtId, rtVersion);
+                if (rtIdString != null) {
+                    recordType.addMixin(new SchemaIdImpl(rtIdString), rtVersion);
                 } else if (rtName != null) {
                     QName rtQName = QNameConverter.fromJson(rtName, namespaces);
 
                     try {
-                        rtId = typeManager.getRecordTypeByName(rtQName, null).getId();
+                        SchemaId rtId = typeManager.getRecordTypeByName(rtQName, null).getId();
+                        recordType.addMixin(rtId, rtVersion);
                     } catch (RepositoryException e) {
                         throw new JsonFormatException("Record type " + name + ": error looking up mixin record type with name: " +
                                 rtQName, e);
                     }
-                    recordType.addMixin(rtId, rtVersion);
                 } else {
                     throw new JsonFormatException("Record type " + name + ": mixin should specify an id or name");
                 }

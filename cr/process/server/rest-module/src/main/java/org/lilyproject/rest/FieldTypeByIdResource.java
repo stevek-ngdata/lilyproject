@@ -16,6 +16,7 @@
 package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.tools.import_.core.*;
 
 import javax.ws.rs.*;
@@ -42,11 +43,14 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, FieldType fieldType) {
-        if (fieldType.getId() != null && !fieldType.getId().equals(id)) {
+        if (fieldType.getId() != null && !fieldType.getId().toString().equals(id)) {
             throw new ResourceException("Field type id in submitted field type does not match the id in URI.",
                     BAD_REQUEST.getStatusCode());
         }
-        fieldType.setId(id);
+        SchemaId schemaId = null;
+        if (id != null)
+            schemaId = new SchemaIdImpl(id);
+        fieldType.setId(schemaId);
 
         ImportResult<FieldType> result;
         try {

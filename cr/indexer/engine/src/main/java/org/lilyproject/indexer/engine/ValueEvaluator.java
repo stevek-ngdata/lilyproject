@@ -130,7 +130,7 @@ public class ValueEvaluator {
     }
 
     private List<IndexValue> evalFieldValue(FieldValue value, IdRecord record, Repository repository, String vtag) {
-        String fieldId = value.getFieldType().getId();
+        String fieldId = value.getFieldType().getId().toString();
         if (record.hasField(fieldId)) {
             if (value.getFieldType().getValueType().isMultiValue()) {
                 List<Object> values = (List<Object>)record.getField(fieldId);
@@ -175,8 +175,8 @@ public class ValueEvaluator {
 
         List<IndexValue> result = new ArrayList<IndexValue>();
         for (IdRecord item : records) {
-            if (item.hasField(fieldType.getId())) {
-                Object value = item.getField(fieldType.getId());
+            if (item.hasField(fieldType.getId().toString())) {
+                Object value = item.getField(fieldType.getId().toString());
                 if (value != null) {
                     if (deref.getTargetField().getValueType().isMultiValue()) {
                         List<Object> multiValues = (List<Object>)value;
@@ -211,7 +211,7 @@ public class ValueEvaluator {
     private List<IdRecord> evalFieldFollow(DerefValue deref, FieldFollow follow, IdRecord record, Repository repository, String vtag) {
         FieldType fieldType = follow.getFieldType();
 
-        if (!record.hasField(fieldType.getId())) {
+        if (!record.hasField(fieldType.getId().toString())) {
             return null;
         }
 
@@ -223,7 +223,7 @@ public class ValueEvaluator {
             return null;
         }
 
-        Object value = record.getField(fieldType.getId());
+        Object value = record.getField(fieldType.getId().toString());
         if (value instanceof Link) {
             RecordId recordId = ((Link)value).resolve(record, repository.getIdGenerator());
             IdRecord linkedRecord = resolveRecordId(recordId, vtag, repository);

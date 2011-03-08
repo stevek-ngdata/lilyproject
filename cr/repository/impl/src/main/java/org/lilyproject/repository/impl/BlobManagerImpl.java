@@ -82,7 +82,7 @@ public class BlobManagerImpl implements BlobManager {
         byte[] fieldQualifier = BlobIncubatorColumn.FIELD.bytes;
         Put put = new Put(row);
         put.add(family, recordQualifier, referencedBlob.getRecordId().toBytes());
-        put.add(family, fieldQualifier, ((FieldTypeImpl)referencedBlob.getFieldType()).getIdBytes());
+        put.add(family, fieldQualifier, referencedBlob.getFieldType().getId().getBytes());
         return blobIncubatorTable.checkAndPut(row, family, recordQualifier, INCUBATE, put);
     }
     

@@ -47,12 +47,12 @@ public interface FieldType {
      * <p>Even though IDs are system-generated, you might need to set them on the field type e.g. to construct
      * a field type to pass to the {@link TypeManager#updateFieldType(FieldType)}.
      */
-    void setId(String id);
+    void setId(SchemaId id);
 
     /**
      * The id is unique, immutable and system-generated.
      */
-    String getId();
+    SchemaId getId();
 
     void setName(QName name);
 

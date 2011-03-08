@@ -21,6 +21,7 @@ import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.rowlog.impl.RowLogImpl;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
@@ -266,10 +267,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         for (Map.Entry<Long, byte[]> entry : valuesByVersion.entrySet()) {
             Type type = (Type)value.get(entry.getKey());
             if (type != null) {
-                type.id = STRING_DECODER.decode(entry.getValue());
+                type.id = new SchemaIdImpl(STRING_DECODER.decode(entry.getValue()));
             } else {
                 type = new Type();
-                type.id = STRING_DECODER.decode(entry.getValue());
+                type.id = new SchemaIdImpl(STRING_DECODER.decode(entry.getValue()));
                 value.put(entry.getKey(), type);
             }
         }

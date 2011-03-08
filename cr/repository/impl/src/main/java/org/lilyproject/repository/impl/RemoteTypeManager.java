@@ -102,7 +102,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
-    protected RecordType getRecordTypeByIdWithoutCache(String id, Long version) throws RecordTypeNotFoundException, TypeException {
+    protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException {
         try {
             long avroVersion;
             if (version == null) {
@@ -110,7 +110,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
             } else {
                 avroVersion = version;
             }
-            return converter.convert(lilyProxy.getRecordTypeById(id, avroVersion));
+            return converter.convert(lilyProxy.getRecordTypeById(converter.convert(id), avroVersion));
         } catch (AvroRecordTypeNotFoundException e) {
             throw converter.convert(e);
         } catch (AvroTypeException e) {

@@ -232,7 +232,7 @@ public class IndexerConfBuilder {
             tag = tag.trim();
             if (tag.length() > 0) {
                 try {
-                    vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
+                    vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId().toString());
                 } catch (FieldTypeNotFoundException e) {
                     throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
                 } catch (TypeException e) {
@@ -383,18 +383,6 @@ public class IndexerConfBuilder {
         }
 
         return new QName(uri, localName);
-    }
-
-    private String getFieldTypeId(String qname, Element contextEl) throws IndexerConfException, InterruptedException {
-        QName parsedQName = parseQName(qname, contextEl);
-
-        try {
-            return typeManager.getFieldTypeByName(parsedQName).getId();
-        } catch (FieldTypeNotFoundException e) {
-            throw new IndexerConfException("unknown field type: " + parsedQName, e);
-        } catch (TypeException e) {
-            throw new IndexerConfException("error loading field type: " + parsedQName, e);
-        }
     }
 
     private FieldType getFieldType(String qname, Element contextEl) throws IndexerConfException, InterruptedException {

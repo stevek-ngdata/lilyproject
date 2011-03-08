@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
 
 import java.util.*;
 
@@ -34,9 +35,9 @@ import java.util.*;
 public class IndexerConf {
     private List<IndexCase> indexCases = new ArrayList<IndexCase>();
     private List<IndexField> indexFields = new ArrayList<IndexField>();
-    private Set<String> repoFieldDependencies = new HashSet<String>();
+    private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
     private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
-    private Map<String, List<IndexField>> derefIndexFieldsByField = new HashMap<String, List<IndexField>>();
+    private Map<SchemaId, List<IndexField>> derefIndexFieldsByField = new HashMap<SchemaId, List<IndexField>>();
     private Set<String> vtags = new HashSet<String>();
     private Formatters formatters = new Formatters();
 
@@ -65,14 +66,14 @@ public class IndexerConf {
     protected void addIndexField(IndexField indexField) {
         indexFields.add(indexField);
 
-        String fieldDep = indexField.getValue().getFieldDependency();
+        SchemaId fieldDep = indexField.getValue().getFieldDependency();
         if (fieldDep != null)
             repoFieldDependencies.add(fieldDep);
 
         if (indexField.getValue() instanceof DerefValue) {
             derefIndexFields.add(indexField);
 
-            String fieldId = ((DerefValue)indexField.getValue()).getTargetField().getId();
+            SchemaId fieldId = ((DerefValue)indexField.getValue()).getTargetField().getId();
             List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
             if (fields == null) {
                 fields = new ArrayList<IndexField>();
@@ -85,7 +86,7 @@ public class IndexerConf {
     /**
      * Checks if the supplied field type is used by one of the indexField's.
      */
-    public boolean isIndexFieldDependency(String fieldTypeId) {
+    public boolean isIndexFieldDependency(SchemaId fieldTypeId) {
         return repoFieldDependencies.contains(fieldTypeId);
     }
 
@@ -99,7 +100,7 @@ public class IndexerConf {
     /**
      * Returns all IndexFields which have a DerefValue pointing to the given field id, or null if there are none.
      */
-    public List<IndexField> getDerefIndexFields(String fieldId) {
+    public List<IndexField> getDerefIndexFields(SchemaId fieldId) {
         List<IndexField> result = derefIndexFieldsByField.get(fieldId);
         return result == null ? Collections.<IndexField>emptyList() : result;
     }

@@ -29,6 +29,7 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.FieldTypeImpl;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 /**
  *
  */
@@ -48,7 +49,7 @@ public class FieldTypeImplTest {
     public void testClone() {
         ValueType valueType = control.createMock(ValueType.class);
         control.replay();
-        FieldType fieldType = new FieldTypeImpl(UUID.randomUUID().toString(), valueType, new QName("DS9", "name"), Scope.VERSIONED);
+        FieldType fieldType = new FieldTypeImpl(new SchemaIdImpl(UUID.randomUUID()), valueType, new QName("DS9", "name"), Scope.VERSIONED);
         assertEquals(fieldType, fieldType.clone());
         assertEquals(fieldType, fieldType.clone());
         control.verify();

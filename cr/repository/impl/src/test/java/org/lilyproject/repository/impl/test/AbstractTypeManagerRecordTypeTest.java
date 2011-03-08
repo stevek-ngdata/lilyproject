@@ -24,15 +24,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Test;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeExistsException;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public abstract class AbstractTypeManagerRecordTypeTest {
 
@@ -150,7 +143,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
             fail();
         } catch (RecordTypeNotFoundException expected) {
         }
-        recordType.setId(UUID.randomUUID().toString());
+        recordType.setId(new SchemaIdImpl(UUID.randomUUID()));
         try {
             System.out.println("Expecting RecordTypeNotFoundException");
             typeManager.updateRecordType(recordType);
@@ -163,7 +156,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     public void testFieldTypeExistsOnCreate() throws Exception {
         QName name = new QName("testNS", "testUpdateNonExistingRecordTypeFails");
         RecordType recordType = typeManager.newRecordType(name);
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(UUID.randomUUID().toString(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(new SchemaIdImpl(UUID.randomUUID()), false));
         try {
             System.out.println("Expecting FieldTypeNotFoundException");
             typeManager.createRecordType(recordType);
@@ -178,7 +171,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
         
-        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(UUID.randomUUID().toString(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(new SchemaIdImpl(UUID.randomUUID()), false));
         try {
             System.out.println("Expecting FieldTypeNotFoundException");
             typeManager.updateRecordType(recordType);
@@ -312,7 +305,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         recordType = typeManager.updateRecordType(recordType);
         assertEquals(Long.valueOf(2), recordType.getVersion());
         RecordType readRecordType = typeManager.getRecordTypeById(recordType.getId(), null);
-        Map<String, Long> mixins = readRecordType.getMixins();
+        Map<SchemaId, Long> mixins = readRecordType.getMixins();
         assertEquals(1, mixins.size());
         assertEquals(Long.valueOf(1), mixins.get(mixinType2.getId()));
     }

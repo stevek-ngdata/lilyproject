@@ -16,6 +16,7 @@
 package org.lilyproject.repository.impl;
 
 import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ArgumentValidator;
 
 /**
@@ -23,16 +24,16 @@ import org.lilyproject.util.ArgumentValidator;
  */
 public class FieldTypeEntryImpl implements FieldTypeEntry {
 
-    private String fieldTypeId;
+    private SchemaId fieldTypeId;
     private boolean mandatory;
 
-    public FieldTypeEntryImpl(String fieldTypeId, boolean mandatory) {
+    public FieldTypeEntryImpl(SchemaId fieldTypeId, boolean mandatory) {
         ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
         this.fieldTypeId = fieldTypeId;
         this.mandatory = mandatory;
     }
 
-    public String getFieldTypeId() {
+    public SchemaId getFieldTypeId() {
         return fieldTypeId;
     }
     
@@ -40,7 +41,7 @@ public class FieldTypeEntryImpl implements FieldTypeEntry {
         return mandatory;
     }
 
-    public void setFieldTypeId(String id) {
+    public void setFieldTypeId(SchemaId id) {
         this.fieldTypeId = id;
     }
     

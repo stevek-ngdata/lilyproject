@@ -73,12 +73,12 @@ public class RecordTypeImport {
                     }
 
                     // Update mixins
-                    Map<String, Long> oldMixins = oldRecordType.getMixins();
-                    Map<String, Long> newMixins = newRecordType.getMixins();
+                    Map<SchemaId, Long> oldMixins = oldRecordType.getMixins();
+                    Map<SchemaId, Long> newMixins = newRecordType.getMixins();
 
                     // Resolve any 'null' versions to actual version numbers, otherwise we are unable to compare
                     // with the old state.
-                    for (Map.Entry<String, Long> entry : newMixins.entrySet()) {
+                    for (Map.Entry<SchemaId, Long> entry : newMixins.entrySet()) {
                         if (entry.getValue() == null) {
                             entry.setValue(typeManager.getRecordTypeById(entry.getKey(), null).getVersion());
                         }
@@ -89,7 +89,7 @@ public class RecordTypeImport {
 
                         oldRecordType.getMixins().clear();
 
-                        for (Map.Entry<String, Long> entry : newMixins.entrySet()) {
+                        for (Map.Entry<SchemaId, Long> entry : newMixins.entrySet()) {
                             oldRecordType.addMixin(entry.getKey(), entry.getValue());
                         }
                     }

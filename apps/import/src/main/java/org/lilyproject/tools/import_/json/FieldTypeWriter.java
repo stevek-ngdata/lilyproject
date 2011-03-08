@@ -41,7 +41,7 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
     public static ObjectNode toJson(FieldType fieldType, Namespaces namespaces, boolean includeName) {
         ObjectNode fieldNode = JsonNodeFactory.instance.objectNode();
 
-        fieldNode.put("id", fieldType.getId());
+        fieldNode.put("id", fieldType.getId().toString());
 
         if (includeName) {
             fieldNode.put("name", QNameConverter.toJson(fieldType.getName(), namespaces));

@@ -56,20 +56,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.HierarchyPath;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.BlobManagerImpl;
 import org.lilyproject.repository.impl.DFSBlobStoreAccess;
 import org.lilyproject.repository.impl.HBaseRepository;
@@ -611,10 +598,10 @@ public class IndexerTest {
             verifyResultCount("v_field1:apple", 1);
             verifyResultCount("v_field1:pear", 2);
 
-            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(previewTag.getId()), 1);
-            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(lastTag.getId()), 1);
-            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(liveTag.getId()), 0);
-            verifyResultCount("+v_field1:apple +@@vtag:" + qesc(liveTag.getId()), 1);
+            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(previewTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(lastTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(liveTag.getId().toString()), 0);
+            verifyResultCount("+v_field1:apple +@@vtag:" + qesc(liveTag.getId().toString()), 1);
         }
 
         //
@@ -700,11 +687,11 @@ public class IndexerTest {
             record2 = repository.update(record2);
 
             commitIndex();
-            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
-            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(liveTag.getId()), 0);
+            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(liveTag.getId().toString()), 0);
             verifyResultCount("+v_deref1:strawberries", 1);
-            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId()), 1);
-            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(previewTag.getId()), 0);
+            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(previewTag.getId().toString()), 0);
             verifyResultCount("+v_deref1:fig", 1);
 
             // Now do something similar with a 3th version, but first update record2 and then record1
@@ -719,12 +706,12 @@ public class IndexerTest {
             record1 = repository.update(record1);
 
             commitIndex();
-            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(lastTag.getId()), 1);
-            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId()), 1);
-            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId()), 1);
-            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(liveTag.getId()), 0);
-            verifyResultCount("+v_field1:kiwi +@@vtag:" + qesc(lastTag.getId()), 1);
-            verifyResultCount("+v_field1:fig +@@vtag:" + qesc(liveTag.getId()), 1);
+            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(lastTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(liveTag.getId().toString()), 0);
+            verifyResultCount("+v_field1:kiwi +@@vtag:" + qesc(lastTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
 
             // Perform updates to record3 and check if denorm'ed data in record4 follows
             log.debug("Begin test V11");
@@ -1242,19 +1229,19 @@ public class IndexerTest {
         assertEquals(count, response.getResults().getNumFound());
     }
 
-    private void expectEvent(RecordEvent.Type type, RecordId recordId, String... updatedFields) {
+    private void expectEvent(RecordEvent.Type type, RecordId recordId, SchemaId... updatedFields) {
         expectEvent(type, recordId, null, null, updatedFields);
     }
 
     private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
-            String... updatedFields) {
+            SchemaId... updatedFields) {
 
         RecordEvent event = new RecordEvent();
 
         event.setType(type);
 
-        for (String updatedField : updatedFields) {
-            event.addUpdatedField(updatedField);
+        for (SchemaId updatedField : updatedFields) {
+            event.addUpdatedField(updatedField.toString());
         }
 
         if (versionCreated != null)

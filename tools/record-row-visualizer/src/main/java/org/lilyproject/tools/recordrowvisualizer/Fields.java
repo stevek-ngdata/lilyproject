@@ -1,17 +1,16 @@
 package org.lilyproject.tools.recordrowvisualizer;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 import java.util.*;
 
 public class Fields {
-    Map<Long, Map<String, Object>> values = new HashMap<Long, Map<String, Object>>();
+    Map<Long, Map<SchemaId, Object>> values = new HashMap<Long, Map<SchemaId, Object>>();
     List<Type<FieldType>> fields = new ArrayList<Type<FieldType>>();
     long minVersion = Integer.MAX_VALUE;
     long maxVersion = Integer.MIN_VALUE;
@@ -24,8 +23,7 @@ public class Fields {
         for (Map.Entry<byte[], NavigableMap<Long,byte[]>> entry : cf.entrySet()) {
             byte[] column = entry.getKey();
             if (column[0] == RecordColumn.DATA_PREFIX) {
-                UUID uuid = new UUID(Bytes.toLong(column, 1, 8), Bytes.toLong(column, 9, 8));
-                String fieldId = uuid.toString();
+                SchemaId fieldId = new SchemaIdImpl(Arrays.copyOfRange(column, 1, column.length));
     
                 for (Map.Entry<Long, byte[]> columnEntry : entry.getValue().entrySet()) {
                     long version = columnEntry.getKey();
@@ -34,9 +32,9 @@ public class Fields {
                     FieldType fieldType = registerFieldType(fieldId, typeMgr, scope);
     
                     if (fieldType != null) {
-                        Map<String, Object> columns = values.get(version);
+                        Map<SchemaId, Object> columns = values.get(version);
                         if (columns == null) {
-                            columns = new HashMap<String, Object>();
+                            columns = new HashMap<SchemaId, Object>();
                             values.put(version, columns);
                         }
     
@@ -62,7 +60,7 @@ public class Fields {
         }
     }
 
-    private FieldType registerFieldType(String fieldId, TypeManager typeMgr, Scope scope) throws Exception {
+    private FieldType registerFieldType(SchemaId fieldId, TypeManager typeMgr, Scope scope) throws Exception {
         for (Type<FieldType> entry : fields) {
             if (entry.id.equals(fieldId))
                 return entry.object;
@@ -84,20 +82,20 @@ public class Fields {
         return fields;
     }
 
-    public Object getValue(long version, String fieldId) {
-        Map<String, Object> valuesByColumn = values.get(version);
+    public Object getValue(long version, SchemaId fieldId) {
+        Map<SchemaId, Object> valuesByColumn = values.get(version);
         if (valuesByColumn == null)
             return null;
         return valuesByColumn.get(fieldId);
     }
 
-    public boolean isNull(long version, String fieldId) {
-        Map<String, Object> valuesByColumn = values.get(version);
+    public boolean isNull(long version, SchemaId fieldId) {
+        Map<SchemaId, Object> valuesByColumn = values.get(version);
         return valuesByColumn == null || !valuesByColumn.containsKey(fieldId);
     }
 
-    public boolean isDeleted(long version, String fieldId) {
-        Map<String, Object> valuesByColumn = values.get(version);
+    public boolean isDeleted(long version, SchemaId fieldId) {
+        Map<SchemaId, Object> valuesByColumn = values.get(version);
         return valuesByColumn != null && valuesByColumn.get(fieldId) == DELETED;
     }
 

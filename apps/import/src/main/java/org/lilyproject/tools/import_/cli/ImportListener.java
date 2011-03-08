@@ -15,6 +15,8 @@
  */
 package org.lilyproject.tools.import_.cli;
 
+import org.lilyproject.repository.api.SchemaId;
+
 public interface ImportListener {
     void conflict(EntityType entityType, String entityName, String propName, Object oldValue, Object newValue)
             throws ImportConflictException;

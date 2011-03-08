@@ -64,6 +64,14 @@
         {"name": "value", "type": ["bytes", "null"]}
       ]
     },
+    
+    {
+      "name": "AvroSchemaId",
+      "type": "record",
+      "fields": [
+        {"name": "idBytes", "type": ["bytes", "null"]}
+      ]
+    },
 
     {
       "name": "AvroStackTraceElement",
@@ -220,7 +228,7 @@
       "name": "AvroFieldTypeEntry",
       "type": "record",
       "fields": [
-        {"name": "id", "type": "string"},
+        {"name": "id", "type": "AvroSchemaId"},
         {"name": "mandatory", "type": "boolean"}
       ]
     },
@@ -229,7 +237,7 @@
       "name": "AvroFieldType",
       "type": "record",
       "fields": [
-        {"name": "id",   "type": ["string", "null"]},
+        {"name": "id",   "type": ["AvroSchemaId", "null"]},
         {"name": "name", "type": "AvroQName"},
         {"name": "valueType", "type": "AvroValueType"},
         {"name": "scope", "type": {"namespace": "org.lilyproject.repository.api", "name": "Scope", "type": "enum", "symbols": ["NON_VERSIONED", "VERSIONED", "VERSIONED_MUTABLE"]}}
@@ -240,7 +248,7 @@
       "name": "AvroMixin",
       "type": "record",
       "fields": [
-        {"name": "recordTypeId", "type": "string"},
+        {"name": "recordTypeId", "type": "AvroSchemaId"},
         {"name": "recordTypeVersion", "type": ["long", "null"]}
       ]
     },
@@ -249,7 +257,7 @@
       "name": "AvroRecordType",
       "type": "record",
       "fields": [
-        {"name": "id", "type": ["string", "null"]},
+        {"name": "id", "type": ["AvroSchemaId", "null"]},
         {"name": "name", "type": "AvroQName"},
         {"name": "version", "type": ["long", "null"]},
         {"name": "fieldTypeEntries", "type": {"type": "array", "items": "AvroFieldTypeEntry"}},
@@ -270,7 +278,7 @@
       "name": "AvroFieldTypeNotFoundException",
       "type": "error",
       "fields": [
-        {"name": "id", "type": ["string", "null"]},
+        {"name": "id", "type": ["AvroSchemaId", "null"]},
         {"name": "name", "type": ["AvroQName", "null"]},
         {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
@@ -289,7 +297,7 @@
       "name": "AvroRecordTypeNotFoundException",
       "type": "error",
       "fields": [
-        {"name": "id", "type": ["string", "null"]},
+        {"name": "id", "type": ["AvroSchemaId", "null"]},
         {"name": "name", "type": ["AvroQName", "null"]},
         {"name": "version", "type": "long"},
         {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
@@ -397,7 +405,7 @@
 
     "getRecordTypeById": {
       "request": [
-        {"name": "id", "type": "string"},
+        {"name": "id", "type": "AvroSchemaId"},
         {"name": "version", "type": "long"}
       ],
       "response": "AvroRecordType",
@@ -437,7 +445,7 @@
     },
 
     "getFieldTypeById": {
-      "request": [{"name": "id", "type": "string"}],
+      "request": [{"name": "id", "type": "AvroSchemaId"}],
       "response": "AvroFieldType",
       "errors": ["AvroFieldTypeNotFoundException", "AvroTypeException", "AvroGenericException",
       "AvroInterruptedException"]

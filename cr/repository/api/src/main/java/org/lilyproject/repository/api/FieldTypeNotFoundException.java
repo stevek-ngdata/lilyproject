@@ -20,10 +20,10 @@ package org.lilyproject.repository.api;
  */
 public class FieldTypeNotFoundException extends RepositoryException {
 
-    private final String id;
+    private final SchemaId id;
     private final QName name;
 
-    public FieldTypeNotFoundException(String id) {
+    public FieldTypeNotFoundException(SchemaId id) {
         this.id = id;
         this.name = null;
     }
@@ -33,7 +33,7 @@ public class FieldTypeNotFoundException extends RepositoryException {
         this.name = name;
     }
 
-    public String getId() {
+    public SchemaId getId() {
         return id;
     }
 

@@ -18,9 +18,7 @@ package org.lilyproject.tools.import_.json;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.FieldTypeEntry;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.*;
 
 import java.util.Map;
 
@@ -44,7 +42,7 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
     public static ObjectNode toJson(RecordType recordType, Namespaces namespaces, boolean includeName) {
         ObjectNode rtNode = JsonNodeFactory.instance.objectNode();
 
-        rtNode.put("id", recordType.getId());
+        rtNode.put("id", recordType.getId().toString());
 
         if (includeName) {
             rtNode.put("name", QNameConverter.toJson(recordType.getName(), namespaces));
@@ -53,7 +51,7 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
         ArrayNode fieldsNode = rtNode.putArray("fields");
         for (FieldTypeEntry entry : recordType.getFieldTypeEntries()) {
             ObjectNode entryNode = fieldsNode.addObject();
-            entryNode.put("id", entry.getFieldTypeId());
+            entryNode.put("id", entry.getFieldTypeId().toString());
             entryNode.put("mandatory", entry.isMandatory());
         }
 
@@ -61,9 +59,9 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
 
 
         ArrayNode mixinsNode = rtNode.putArray("mixins");
-        for (Map.Entry<String, Long> mixin : recordType.getMixins().entrySet()) {
+        for (Map.Entry<SchemaId, Long> mixin : recordType.getMixins().entrySet()) {
             ObjectNode entryNode = mixinsNode.addObject();
-            entryNode.put("id", mixin.getKey());
+            entryNode.put("id", mixin.getKey().toString());
             entryNode.put("version", mixin.getValue());
         }
         

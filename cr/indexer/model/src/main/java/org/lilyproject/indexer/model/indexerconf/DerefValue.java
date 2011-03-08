@@ -98,7 +98,7 @@ public class DerefValue extends BaseValue {
             return fieldType.getValueType().isMultiValue();
         }
 
-        public String getFieldId() {
+        public SchemaId getFieldId() {
             return fieldType.getId();
         }
 
@@ -133,7 +133,7 @@ public class DerefValue extends BaseValue {
         return valueType;
     }
 
-    public String getFieldDependency() {
+    public SchemaId getFieldDependency() {
         if (follows.get(0) instanceof FieldFollow) {
             return ((FieldFollow)follows.get(0)).fieldType.getId();
         } else {

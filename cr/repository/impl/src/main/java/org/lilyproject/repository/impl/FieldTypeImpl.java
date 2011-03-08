@@ -16,17 +16,12 @@
 package org.lilyproject.repository.impl;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public class FieldTypeImpl implements FieldType {
 
-    private String id;
-    private byte[] idBytes;
+    private SchemaId id;
     private byte[] idQualifier;
     private ValueType valueType;
     private QName name;
@@ -36,12 +31,11 @@ public class FieldTypeImpl implements FieldType {
      * This constructor should not be called directly.
      * @use {@link TypeManager#newFieldType} instead
      */
-    public FieldTypeImpl(String id, ValueType valueType, QName name, Scope scope) {
+    public FieldTypeImpl(SchemaId id, ValueType valueType, QName name, Scope scope) {
         this.id = id;
         this.valueType = valueType;
         this.name = name;
         this.scope = scope;
-        setIdBytes(id);
     }
 
     private FieldTypeImpl(){}
@@ -50,15 +44,14 @@ public class FieldTypeImpl implements FieldType {
         return name;
     }
 
-    public String getId() {
+    public SchemaId getId() {
         return id;
     }
     
-    public byte[] getIdBytes() {
-        return idBytes;
-    }
-    
     public byte[] getQualifier() {
+        if (idQualifier == null) {
+            this.idQualifier = Bytes.add(new byte[]{RecordColumn.DATA_PREFIX}, id.getBytes());
+        }
         return idQualifier;
     }
 
@@ -70,20 +63,8 @@ public class FieldTypeImpl implements FieldType {
         return scope;
     }
 
-    public void setId(String id) {
+    public void setId(SchemaId id) {
         this.id = id;
-        setIdBytes(id);
-    }
-    
-    private void setIdBytes(String id) {
-        if (id == null) {
-            this.idBytes = null;
-            this.idQualifier = null;
-        }
-        else { 
-            this.idBytes = HBaseTypeManager.idToBytes(id);
-            this.idQualifier = Bytes.add(new byte[]{RecordColumn.DATA_PREFIX}, this.idBytes);
-        }
     }
     
     public void setName(QName name) {
@@ -101,7 +82,6 @@ public class FieldTypeImpl implements FieldType {
     public FieldType clone() {
         FieldTypeImpl newFieldType = new FieldTypeImpl();
         newFieldType.id = this.id;
-        newFieldType.idBytes = this.idBytes;
         newFieldType.idQualifier = this.idQualifier;
         newFieldType.valueType = this.valueType;
         newFieldType.name = this.name;

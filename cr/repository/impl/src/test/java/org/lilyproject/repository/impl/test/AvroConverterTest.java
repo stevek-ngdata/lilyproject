@@ -20,6 +20,7 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
 import static org.junit.Assert.assertEquals;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -35,20 +36,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.avro.AvroFieldType;
-import org.lilyproject.repository.avro.AvroFieldTypeEntry;
-import org.lilyproject.repository.avro.AvroMixin;
-import org.lilyproject.repository.avro.AvroQName;
-import org.lilyproject.repository.avro.AvroRecord;
-import org.lilyproject.repository.avro.AvroRecordType;
-import org.lilyproject.repository.avro.AvroValueType;
-import org.lilyproject.repository.impl.FieldTypeEntryImpl;
-import org.lilyproject.repository.impl.FieldTypeImpl;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.repository.impl.RecordImpl;
-import org.lilyproject.repository.impl.RecordTypeImpl;
-import org.lilyproject.repository.impl.ValueTypeImpl;
+import org.lilyproject.repository.avro.*;
+import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.primitivevaluetype.StringValueType;
 
 
@@ -125,14 +114,18 @@ public class AvroConverterTest {
     
     @Test
     public void testFieldTypeEntry() {
-        FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl("fieldTypeId", true);
-        typeManager.newFieldTypeEntry("fieldTypeId", true);
+        SchemaId id = new SchemaIdImpl(UUID.randomUUID());
+        FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl(id, true);
+        typeManager.newFieldTypeEntry(id, true);
         expectLastCall().andReturn(fieldTypeEntry);
         
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
         AvroFieldTypeEntry avroFieldTypeEntry = new AvroFieldTypeEntry();
-        avroFieldTypeEntry.id = "fieldTypeId";
+        AvroSchemaId avroSchemaId = new AvroSchemaId();
+        avroSchemaId.idBytes = ByteBuffer.wrap(id.getBytes());
+        avroFieldTypeEntry.id = avroSchemaId;
         avroFieldTypeEntry.mandatory = true;
         assertEquals(fieldTypeEntry, converter.convert(avroFieldTypeEntry));
         assertEquals(avroFieldTypeEntry, converter.convert(fieldTypeEntry));
@@ -145,15 +138,18 @@ public class AvroConverterTest {
         typeManager.getValueType("STRING", true, true);
         expectLastCall().andReturn(valueType);
         QName name = new QName("aNamespace", "aName");
-        String fieldTypeId = UUID.randomUUID().toString();
+        SchemaId fieldTypeId = new SchemaIdImpl(UUID.randomUUID());
         FieldType fieldType = new FieldTypeImpl(fieldTypeId, valueType , name, Scope.NON_VERSIONED);
         typeManager.newFieldType(fieldTypeId, valueType, name, Scope.NON_VERSIONED);
         expectLastCall().andReturn(fieldType);
 
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
         AvroFieldType avroFieldType = new AvroFieldType();
-        avroFieldType.id = fieldTypeId;
+        AvroSchemaId avroSchemaId = new AvroSchemaId();
+        avroSchemaId.idBytes = ByteBuffer.wrap(fieldTypeId.getBytes());
+        avroFieldType.id = avroSchemaId;
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
@@ -181,7 +177,8 @@ public class AvroConverterTest {
         expectLastCall().andReturn(fieldType);
 
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
         AvroFieldType avroFieldType = new AvroFieldType();
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
@@ -202,14 +199,18 @@ public class AvroConverterTest {
     @Test
     public void testEmptyRecordType() throws TypeException {
         QName name = new QName("aNamespace", "aName");
-        RecordType recordType = new RecordTypeImpl("recordTypeId", name);
-        typeManager.newRecordType("recordTypeId", name);
+        SchemaId id = new SchemaIdImpl(UUID.randomUUID());
+        RecordType recordType = new RecordTypeImpl(id, name);
+        typeManager.newRecordType(id, name);
         expectLastCall().andReturn(recordType);
 
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
         AvroRecordType avroRecordType = new AvroRecordType();
-        avroRecordType.id = "recordTypeId";
+        AvroSchemaId avroSchemaId = new AvroSchemaId();
+        avroSchemaId.idBytes = ByteBuffer.wrap(id.getBytes());
+        avroRecordType.id = avroSchemaId;
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
@@ -225,15 +226,19 @@ public class AvroConverterTest {
     @Test
     public void testRecordTypeVersion() throws TypeException {
         QName name = new QName("aNamespace", "aName");
-        RecordType recordType = new RecordTypeImpl("recordTypeId", name);
-        typeManager.newRecordType("recordTypeId", name);
+        SchemaId id = new SchemaIdImpl(UUID.randomUUID());
+        RecordType recordType = new RecordTypeImpl(id, name);
+        typeManager.newRecordType(id, name);
         expectLastCall().andReturn(recordType);
 
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
         recordType.setVersion(1L);
         AvroRecordType avroRecordType = new AvroRecordType();
-        avroRecordType.id = "recordTypeId";
+        AvroSchemaId avroSchemaId = new AvroSchemaId();
+        avroSchemaId.idBytes = ByteBuffer.wrap(id.getBytes());
+        avroRecordType.id = avroSchemaId;
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
@@ -250,23 +255,29 @@ public class AvroConverterTest {
     @Test
     public void testRecordTypeFieldTypeEntries() throws TypeException {
         QName name = new QName("aNamespace", "aName");
-        RecordType recordType = new RecordTypeImpl("recordTypeId", name);
-        typeManager.newRecordType("recordTypeId", name);
+        SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
+        RecordType recordType = new RecordTypeImpl(recordTypeId, name);
+        typeManager.newRecordType(recordTypeId, name);
         expectLastCall().andReturn(recordType);
         
-        FieldTypeEntryImpl fieldTypeEntry1 = new FieldTypeEntryImpl("field1", true);
-        FieldTypeEntryImpl fieldTypeEntry2 = new FieldTypeEntryImpl("field2", false);
-        typeManager.newFieldTypeEntry("field1", true);
+        SchemaId fieldTypeId1 = new SchemaIdImpl(UUID.randomUUID());        
+        SchemaId fieldTypeId2 = new SchemaIdImpl(UUID.randomUUID());        
+        FieldTypeEntryImpl fieldTypeEntry1 = new FieldTypeEntryImpl(fieldTypeId1, true);
+        FieldTypeEntryImpl fieldTypeEntry2 = new FieldTypeEntryImpl(fieldTypeId2, false);
+        typeManager.newFieldTypeEntry(fieldTypeId1, true);
         expectLastCall().andReturn(fieldTypeEntry1);
-        typeManager.newFieldTypeEntry("field2", false);
+        typeManager.newFieldTypeEntry(fieldTypeId2, false);
         expectLastCall().andReturn(fieldTypeEntry2);
         
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
         recordType.addFieldTypeEntry(fieldTypeEntry1);
         recordType.addFieldTypeEntry(fieldTypeEntry2);
         AvroRecordType avroRecordType = new AvroRecordType();
-        avroRecordType.id = "recordTypeId";
+        AvroSchemaId avroRecordTypeId = new AvroSchemaId();
+        avroRecordTypeId.idBytes = ByteBuffer.wrap(recordTypeId.getBytes());
+        avroRecordType.id = avroRecordTypeId;
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
@@ -274,13 +285,17 @@ public class AvroConverterTest {
         // fieldTypeEntries and mixins are by default empty instead of null
         avroRecordType.fieldTypeEntries = new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
         AvroFieldTypeEntry avroFieldTypeEntry = new AvroFieldTypeEntry();
-        avroFieldTypeEntry.id = "field1";
+        AvroSchemaId avroFieldTypeId1 = new AvroSchemaId();
+        avroFieldTypeId1.idBytes = ByteBuffer.wrap(fieldTypeId1.getBytes());
+        avroFieldTypeEntry.id = avroFieldTypeId1;
         avroFieldTypeEntry.mandatory = true;
         avroRecordType.fieldTypeEntries.add(avroFieldTypeEntry);
         Set<AvroFieldTypeEntry> expectedFieldTypeEntries = new HashSet<AvroFieldTypeEntry>();
         expectedFieldTypeEntries.add(avroFieldTypeEntry);
         avroFieldTypeEntry = new AvroFieldTypeEntry();
-        avroFieldTypeEntry.id = "field2";
+        AvroSchemaId avroFieldTypeId2 = new AvroSchemaId();
+        avroFieldTypeId2.idBytes = ByteBuffer.wrap(fieldTypeId2.getBytes());
+        avroFieldTypeEntry.id = avroFieldTypeId2;
         avroFieldTypeEntry.mandatory = false;
         avroRecordType.fieldTypeEntries.add(avroFieldTypeEntry);
         expectedFieldTypeEntries.add(avroFieldTypeEntry);
@@ -300,16 +315,22 @@ public class AvroConverterTest {
     @Test
     public void testRecordTypeMixins() throws TypeException {
         QName name = new QName("aNamespace", "aName");
-        RecordType recordType = new RecordTypeImpl("recordTypeId", name);
-        typeManager.newRecordType("recordTypeId", name);
+        SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
+        RecordType recordType = new RecordTypeImpl(recordTypeId, name);
+        typeManager.newRecordType(recordTypeId, name);
         expectLastCall().andReturn(recordType);
         
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
-        recordType.addMixin("mixinId1", 1L);
-        recordType.addMixin("mixinId2", 2L);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
+        SchemaId mixinId1 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addMixin(mixinId1, 1L);
+        SchemaId mixinId2 = new SchemaIdImpl(UUID.randomUUID());
+        recordType.addMixin(mixinId2, 2L);
         AvroRecordType avroRecordType = new AvroRecordType();
-        avroRecordType.id = "recordTypeId";
+        AvroSchemaId avroRecordTypeId = new AvroSchemaId();
+        avroRecordTypeId.idBytes = ByteBuffer.wrap(recordTypeId.getBytes());
+        avroRecordType.id = avroRecordTypeId;
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
@@ -317,17 +338,21 @@ public class AvroConverterTest {
         // fieldTypeEntries and mixins are by default empty instead of null
         avroRecordType.fieldTypeEntries = new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
         avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
-        AvroMixin avroMixin = new AvroMixin();
-        avroMixin.recordTypeId = "mixinId1";
-        avroMixin.recordTypeVersion = 1L;
-        avroRecordType.mixins.add(avroMixin);
+        AvroMixin avroMixin1 = new AvroMixin();
+        AvroSchemaId avroMixinId1 = new AvroSchemaId();
+        avroMixinId1.idBytes = ByteBuffer.wrap(mixinId1.getBytes());
+        avroMixin1.recordTypeId = avroMixinId1;
+        avroMixin1.recordTypeVersion = 1L;
+        avroRecordType.mixins.add(avroMixin1);
         Set<AvroMixin> expectedMixins = new HashSet<AvroMixin>();
-        expectedMixins.add(avroMixin);
-        avroMixin = new AvroMixin();
-        avroMixin.recordTypeId = "mixinId2";
-        avroMixin.recordTypeVersion = 2L;
-        avroRecordType.mixins.add(avroMixin);
-        expectedMixins.add(avroMixin);
+        expectedMixins.add(avroMixin1);
+        AvroMixin avroMixin2 = new AvroMixin();
+        AvroSchemaId avroMixinId2 = new AvroSchemaId();
+        avroMixinId2.idBytes = ByteBuffer.wrap(mixinId2.getBytes());
+        avroMixin2.recordTypeId = avroMixinId2;
+        avroMixin2.recordTypeVersion = 2L;
+        avroRecordType.mixins.add(avroMixin2);
+        expectedMixins.add(avroMixin2);
         assertEquals(recordType, converter.convert(avroRecordType));
         AvroRecordType actualAvroRecordType = converter.convert(recordType);
         List<AvroMixin> mixins = actualAvroRecordType.mixins;

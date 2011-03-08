@@ -406,8 +406,7 @@ public class HBaseRepository extends BaseRepository {
             if (!recordTypeName.equals(originalRecord.getRecordTypeName())
                     || !recordTypeVersion.equals(originalRecord.getRecordTypeVersion())) {
                 recordEvent.setRecordTypeChanged(true);
-                put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes, 1L, Bytes
-                        .toBytes(recordType.getId()));
+                put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes, 1L, recordType.getId().getBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_VERSION.bytes, 1L,
                         Bytes.toBytes(recordTypeVersion));
             }
@@ -483,12 +482,12 @@ public class HBaseRepository extends BaseRepository {
             // Only update the recordTypeNames and versions if they have indeed changed
             QName originalScopeRecordTypeName = originalRecord.getRecordTypeName(scope);
             if (originalScopeRecordTypeName == null) {
-                put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField, Bytes.toBytes(recordType.getId()));
+                put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField, recordType.getId().getBytes());
                 put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField, Bytes.toBytes(recordType.getVersion()));
             } else {
                 RecordType originalScopeRecordType = typeManager.getRecordTypeByName(originalScopeRecordTypeName, originalRecord.getRecordTypeVersion(scope));
                 if (!recordType.getId().equals(originalScopeRecordType.getId())) {
-                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField, Bytes.toBytes(recordType.getId()));
+                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField, recordType.getId().getBytes());
                 }
                 if (!recordType.getVersion().equals(originalScopeRecordType.getVersion())) {
                     put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField, Bytes.toBytes(recordType.getVersion()));
@@ -557,7 +556,7 @@ public class HBaseRepository extends BaseRepository {
                 
                 changedScopes.add(scope);
 
-                recordEvent.addUpdatedField(fieldType.getId());
+                recordEvent.addUpdatedField(fieldType.getId().toString());
             }
         }
         return changedScopes;
@@ -647,16 +646,16 @@ public class HBaseRepository extends BaseRepository {
                 // If the record type changed, update it on the record table
                 QName originalMutableScopeRecordTypeName = originalRecord.getRecordTypeName(mutableScope);
                 if (originalMutableScopeRecordTypeName == null) { // There was no initial mutable record type yet
-                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version, Bytes.toBytes(recordType.getId()));
+                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version, recordType.getId().getBytes());
                     put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(mutableScope), version, Bytes.toBytes(recordType.getVersion()));
                 } else {
                     RecordType originalMutableScopeRecordType = typeManager.getRecordTypeByName(originalMutableScopeRecordTypeName, originalRecord.getRecordTypeVersion(mutableScope));
                     if (!recordType.getId().equals(originalMutableScopeRecordType.getId())) {
                         // If the next record version had the same record type name, copy the original value to that one
                         if (originalNextRecord != null && originalMutableScopeRecordType.getName().equals(originalNextRecord.getRecordTypeName(mutableScope))) {
-                            put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version+1, Bytes.toBytes(originalMutableScopeRecordType.getId()));
+                            put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version+1, originalMutableScopeRecordType.getId().getBytes());
                         }
-                        put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version, Bytes.toBytes(recordType.getId()));
+                        put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version, recordType.getId().getBytes());
                     }
                     if (!recordType.getVersion().equals(originalMutableScopeRecordType.getVersion())) {
                         // If the next record version had the same record type version, copy the original value to that one
@@ -774,8 +773,19 @@ public class HBaseRepository extends BaseRepository {
         return fields;
     }
     
-    private List<FieldType> getFieldTypesFromIds(List<String> fieldIds, FieldTypes fieldTypes) throws FieldTypeNotFoundException,
+    private List<FieldType> getFieldTypesFromIds(List<SchemaId> fieldIds, FieldTypes fieldTypes) throws FieldTypeNotFoundException,
             TypeException, InterruptedException {
+        List<FieldType> fields = null;
+        if (fieldIds != null) {
+            fields = new ArrayList<FieldType>(fieldIds.size());
+            for (SchemaId fieldId : fieldIds) {
+                fields.add(fieldTypes.getFieldTypeById(fieldId));
+            }
+        }
+        return fields;
+    }
+    
+    private List<FieldType> getFieldTypesFromStringIds(List<String> fieldIds, FieldTypes fieldTypes) throws FieldTypeNotFoundException, TypeException, InterruptedException {
         List<FieldType> fields = null;
         if (fieldIds != null) {
             fields = new ArrayList<FieldType>(fieldIds.size());
@@ -784,7 +794,7 @@ public class HBaseRepository extends BaseRepository {
             }
         }
         return fields;
-    }
+    }    
     
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
             throws FieldTypeNotFoundException, TypeException, RecordNotFoundException, RecordException,
@@ -818,18 +828,18 @@ public class HBaseRepository extends BaseRepository {
         ReadContext readContext = new ReadContext();
 
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromIds(fieldIds, fieldTypes);
+        List<FieldType> fields = getFieldTypesFromStringIds(fieldIds, fieldTypes);
 
         Record record = read(recordId, version, fields, readContext, fieldTypes);
 
         Map<String, QName> idToQNameMapping = new HashMap<String, QName>();
         for (FieldType fieldType : readContext.getFieldTypes().values()) {
-            idToQNameMapping.put(fieldType.getId(), fieldType.getName());
+            idToQNameMapping.put(fieldType.getId().toString(), fieldType.getName());
         }
 
         Map<Scope, String> recordTypeIds = new HashMap<Scope, String>();
         for (Map.Entry<Scope, RecordType> entry : readContext.getRecordTypes().entrySet()) {
-            recordTypeIds.put(entry.getKey(), entry.getValue().getId());
+            recordTypeIds.put(entry.getKey(), entry.getValue().getId().toString());
         }
 
         return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
@@ -868,7 +878,7 @@ public class HBaseRepository extends BaseRepository {
         if (extractFieldsAndRecordTypes(result, requestedVersion, record, readContext, fieldTypes)) {
             // Set the recordType explicitly in case only versioned fields were
             // extracted
-            Pair<String, Long> recordTypePair = extractRecordType(Scope.NON_VERSIONED, result, null, record);
+            Pair<SchemaId, Long> recordTypePair = extractRecordType(Scope.NON_VERSIONED, result, null, record);
             if (recordTypePair != null) {
                 RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
                 record.setRecordType(recordType.getName(), recordType.getVersion());
@@ -937,7 +947,7 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    private Pair<String, Long> extractRecordType(Scope scope, Result result, Long version, Record record) {
+    private Pair<SchemaId, Long> extractRecordType(Scope scope, Result result, Long version, Record record) {
         if (version == null) {
             // Get latest version
             byte[] idBytes = result.getValue(RecordCf.DATA.bytes,
@@ -946,7 +956,7 @@ public class HBaseRepository extends BaseRepository {
                     recordTypeVersionColumnNames.get(scope));
             if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
                 return null;
-            return new Pair<String, Long>(Bytes.toString(idBytes), Bytes.toLong(versionBytes));
+            return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
 
         } else {
             // Get on version
@@ -957,7 +967,7 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    private Pair<String, Long> extractVersionRecordType(Long version,
+    private Pair<SchemaId, Long> extractVersionRecordType(Long version,
             NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions, Scope scope) {
         byte[] recordTypeIdColumnName = recordTypeIdColumnNames.get(scope);
         byte[] recordTypeVersionColumnName = recordTypeVersionColumnNames.get(scope);
@@ -966,10 +976,10 @@ public class HBaseRepository extends BaseRepository {
         if (recordTypeIdMap != null) {
             idCeilingEntry = recordTypeIdMap.ceilingEntry(version);
         }
-        String recordTypeId = null;
+        SchemaId recordTypeId = null;
         if (idCeilingEntry == null)
             return null;
-        recordTypeId = Bytes.toString(idCeilingEntry.getValue());
+        recordTypeId = new SchemaIdImpl(idCeilingEntry.getValue());
         
         Long recordTypeVersion = null;
         Entry<Long, byte[]> versionCeilingEntry = null;
@@ -980,7 +990,7 @@ public class HBaseRepository extends BaseRepository {
         if (versionCeilingEntry == null)
             return null;
         recordTypeVersion = Bytes.toLong(versionCeilingEntry.getValue());
-        Pair<String, Long> recordType = new Pair<String, Long>(recordTypeId, recordTypeVersion);
+        Pair<SchemaId, Long> recordType = new Pair<SchemaId, Long>(recordTypeId, recordTypeVersion);
         return recordType;
     }
 
@@ -1012,7 +1022,7 @@ public class HBaseRepository extends BaseRepository {
         if (EncodingUtil.isDeletedField(prefixedValue)) {
             return null;
         }
-        FieldType fieldType = fieldTypes.getFieldTypeById(Bytes.tail(key, key.length-1));
+        FieldType fieldType = fieldTypes.getFieldTypeById(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
         context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
         Object value = valueType.fromBytes(EncodingUtil.stripPrefix(prefixedValue));
@@ -1059,7 +1069,7 @@ public class HBaseRepository extends BaseRepository {
             record.setField(field.getV1(), field.getV2());
         }
         for (Scope scope : Scope.values()) {
-            Pair<String, Long> recordTypePair = extractRecordType(scope, result, version, record);
+            Pair<SchemaId, Long> recordTypePair = extractRecordType(scope, result, version, record);
             if (recordTypePair != null) {
                 RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
                 record.setRecordType(scope, recordType.getName(), recordType.getVersion());
@@ -1142,7 +1152,7 @@ public class HBaseRepository extends BaseRepository {
                     for (Entry<byte[], NavigableMap<Long, byte[]>> column : columnsSet.entrySet()) {
                         try {
                             byte[] columnQualifier = column.getKey();
-                            FieldType fieldType = typeManager.getFieldTypeById(Bytes.tail(columnQualifier, columnQualifier.length-1));
+                            FieldType fieldType = typeManager.getFieldTypeById(new SchemaIdImpl(Bytes.tail(columnQualifier, columnQualifier.length-1)));
                             ValueType valueType = fieldType.getValueType();
                             NavigableMap<Long,byte[]> cells = column.getValue();
                             Set<Entry<Long, byte[]>> cellsSet = cells.entrySet();
@@ -1335,7 +1345,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
     private static class ReadContext {
-        private Map<String, FieldType> fieldTypes = new HashMap<String, FieldType>();
+        private Map<SchemaId, FieldType> fieldTypes = new HashMap<SchemaId, FieldType>();
         private Map<Scope, RecordType> recordTypes = new HashMap<Scope, RecordType>();
         private Set<Scope> scopes = new HashSet<Scope>();
 
@@ -1352,7 +1362,7 @@ public class HBaseRepository extends BaseRepository {
             return recordTypes;
         }
 
-        public Map<String, FieldType> getFieldTypes() {
+        public Map<SchemaId, FieldType> getFieldTypes() {
             return fieldTypes;
         }
         

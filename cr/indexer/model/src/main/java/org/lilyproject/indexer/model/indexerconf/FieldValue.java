@@ -33,7 +33,7 @@ public class FieldValue extends BaseValue {
         return fieldType;
     }
 
-    public String getFieldDependency() {
+    public SchemaId getFieldDependency() {
         return fieldType.getId();
     }
 

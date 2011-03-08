@@ -53,12 +53,12 @@ public interface RecordType {
      * <p>Even though IDs are system-generated, you might need to set them on the record type e.g. to construct
      * a record type to pass to the {@link TypeManager#updateRecordType(RecordType)}.
      */
-    void setId(String id);
+    void setId(SchemaId id);
 
     /**
      * The id is unique, immutable and system-generated.
      */
-    String getId();
+    SchemaId getId();
     
     void setName(QName name);
 
@@ -79,11 +79,11 @@ public interface RecordType {
     /**
      * A shortcut for adding a field type entry without having to instantiate it yourself.
      */
-    FieldTypeEntry addFieldTypeEntry(String fieldTypeId, boolean mandatory);
+    FieldTypeEntry addFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory);
 
-    FieldTypeEntry getFieldTypeEntry(String fieldTypeId);
+    FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId);
     
-    void removeFieldTypeEntry(String fieldTypeId);
+    void removeFieldTypeEntry(SchemaId fieldTypeId);
     
     Collection<FieldTypeEntry> getFieldTypeEntries();
     
@@ -91,22 +91,22 @@ public interface RecordType {
      * Adds a mixin to the record type.
      * When no version is given, the latest recordType version will be filled in.
      */
-    void addMixin(String recordTypeId, Long recordTypeVersion);
+    void addMixin(SchemaId recordTypeId, Long recordTypeVersion);
 
     /**
-     * Same as {@link #addMixin(String, Long)} but with null for the recordTypeVersion.
+     * Same as {@link #addMixin(SchemaId, Long)} but with null for the recordTypeVersion.
      */
-    void addMixin(String recordTypeId);
+    void addMixin(SchemaId recordTypeId);
     
     /**
      * Removes a mixin from the recordType.
      */
-    void removeMixin(String recordTypeId);
+    void removeMixin(SchemaId recordTypeId);
     
     /**
      * Returns a map of the recordTypeIds and versions of the mixins of the RecordType.
      */
-    Map<String, Long> getMixins();
+    Map<SchemaId, Long> getMixins();
     
     RecordType clone();
     

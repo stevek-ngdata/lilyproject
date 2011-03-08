@@ -137,7 +137,7 @@ public class JsonImport {
 
         switch (result.getResultType()) {
             case CREATED:
-                importListener.created(EntityType.FIELD_TYPE, newFieldType.getName().toString(), newFieldType.getId());
+                importListener.created(EntityType.FIELD_TYPE, newFieldType.getName().toString(), newFieldType.getId().toString());
                 break;
             case UP_TO_DATE:
                 importListener.existsAndEqual(EntityType.FIELD_TYPE, newFieldType.getName().toString(), null);
@@ -178,10 +178,10 @@ public class JsonImport {
 
         switch (result.getResultType()) {
             case CREATED:
-                importListener.created(EntityType.RECORD_TYPE, newRecordType.getName().toString(), newRecordType.getId());
+                importListener.created(EntityType.RECORD_TYPE, newRecordType.getName().toString(), newRecordType.getId().toString());
                 break;
             case UPDATED:
-                importListener.updated(EntityType.RECORD_TYPE, null, newRecordType.getId(), newRecordType.getVersion());
+                importListener.updated(EntityType.RECORD_TYPE, null, newRecordType.getId().toString(), newRecordType.getVersion());
                 break;
             case UP_TO_DATE:
                 importListener.existsAndEqual(EntityType.RECORD_TYPE, recordType.getName().toString(), null);

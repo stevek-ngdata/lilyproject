@@ -18,6 +18,7 @@ package org.lilyproject.tools.import_.json;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.repo.VersionTag;
 
 import static org.lilyproject.util.json.JsonUtil.*;
@@ -47,7 +48,10 @@ public class FieldTypeReader implements EntityReader<FieldType> {
         ValueType valueType = typeManager.getValueType(primitive, multiValue, hierarchical);
         FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
 
-        String id = getString(node, "id", null);
+        String idString = getString(node, "id", null);
+        SchemaId id = null;
+        if (idString != null)
+            id = new SchemaIdImpl(idString);
         fieldType.setId(id);
 
         // Some sanity checks for version tag fields

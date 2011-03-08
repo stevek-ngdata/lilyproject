@@ -20,11 +20,11 @@ package org.lilyproject.repository.api;
  */
 public class RecordTypeNotFoundException extends RepositoryException {
 
-    private final String id;
+    private final SchemaId id;
     private final QName name;
     private final Long version;
 
-    public RecordTypeNotFoundException(String id, Long version) {
+    public RecordTypeNotFoundException(SchemaId id, Long version) {
         this.id = id;
         this.name = null;
         this.version = version;
@@ -36,7 +36,7 @@ public class RecordTypeNotFoundException extends RepositoryException {
         this.version = version;
     }
     
-    public String getId() {
+    public SchemaId getId() {
         return id;
     }
     

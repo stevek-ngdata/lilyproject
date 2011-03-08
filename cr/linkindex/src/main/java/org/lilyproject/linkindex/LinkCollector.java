@@ -16,6 +16,7 @@
 package org.lilyproject.linkindex;
 
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -23,7 +24,7 @@ import java.util.Set;
 public class LinkCollector {
     private Set<FieldedLink> links = new HashSet<FieldedLink>();
 
-    public void addLink(RecordId target, String fieldTypeId) {
+    public void addLink(RecordId target, SchemaId fieldTypeId) {
         links.add(new FieldedLink(target, fieldTypeId));
     }
 

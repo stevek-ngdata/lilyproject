@@ -41,7 +41,7 @@ public interface TypeManager extends Closeable {
      *
      * <p>This is only a factory method, nothing is created in the repository.
      */
-    RecordType newRecordType(String recordTypeId, QName name) throws TypeException;
+    RecordType newRecordType(SchemaId recordTypeId, QName name) throws TypeException;
     
     /**
      * Creates a RecordType in the repository.
@@ -62,7 +62,7 @@ public interface TypeManager extends Closeable {
      * @throws RecordTypeNotFoundException when the recordType does not exist
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType getRecordTypeById(String id, Long version) throws RecordTypeNotFoundException, TypeException,
+    RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException,
             InterruptedException;
     
     /**
@@ -110,7 +110,7 @@ public interface TypeManager extends Closeable {
      *
      * <p>FieldTypeEntries can be added to {@link RecordType}s.
      */
-    FieldTypeEntry newFieldTypeEntry(String fieldTypeId, boolean mandatory);
+    FieldTypeEntry newFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory);
     
     /**
      * Instantiates a new FieldType object.
@@ -124,7 +124,7 @@ public interface TypeManager extends Closeable {
      *
      * <p>This is only a factory method, nothing is created in the repository.
      */
-    FieldType newFieldType(String id, ValueType valueType, QName name, Scope scope);
+    FieldType newFieldType(SchemaId id, ValueType valueType, QName name, Scope scope);
     
     /**
      * Creates a FieldType in the repository.
@@ -164,7 +164,7 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
+    FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
     
     /**
      * Gets a FieldType from the repository.
@@ -172,7 +172,7 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeById(byte[] id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
+    FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
 
     /**
      * Gets a FieldType from the repository.

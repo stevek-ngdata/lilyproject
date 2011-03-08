@@ -29,9 +29,9 @@ package org.lilyproject.repository.api;
  */
 public interface FieldTypeEntry {
 
-    void setFieldTypeId(String id);
+    void setFieldTypeId(SchemaId id);
 
-    String getFieldTypeId();
+    SchemaId getFieldTypeId();
 
     void setMandatory(boolean mandatory);
 

@@ -16,16 +16,17 @@
 package org.lilyproject.linkindex;
 
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.SchemaId;
 
 /**
  * A link to some record occurring in some field.
  */
 public class FieldedLink {
     private final RecordId recordId;
-    private final String fieldTypeId;
+    private final SchemaId fieldTypeId;
     private final int hash;
 
-    public FieldedLink(RecordId recordId, String fieldTypeId){
+    public FieldedLink(RecordId recordId, SchemaId fieldTypeId){
         this.recordId = recordId;
         this.fieldTypeId = fieldTypeId;
 
@@ -39,7 +40,7 @@ public class FieldedLink {
         return recordId;
     }
 
-    public String getFieldTypeId() {
+    public SchemaId getFieldTypeId() {
         return fieldTypeId;
     }
 

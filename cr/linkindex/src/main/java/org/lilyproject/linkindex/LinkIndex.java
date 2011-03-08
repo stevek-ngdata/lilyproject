@@ -18,9 +18,8 @@ package org.lilyproject.linkindex;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseindex.*;
 import org.lilyproject.linkindex.LinkIndexMetrics.Action;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
 
@@ -199,30 +198,26 @@ public class LinkIndex {
         }
     }
 
-    private IndexEntry createBackwardIndexEntry(String vtag, RecordId target, String sourceField) {
+    private IndexEntry createBackwardIndexEntry(String vtag, RecordId target, SchemaId sourceField) {
         IndexEntry entry = new IndexEntry();
-
-        byte[] sourceFieldBytes = idToBytes(sourceField);
 
         entry.addField("vtag", vtag);
         entry.addField("target", target.toBytes());
-        entry.addField("sourcefield", sourceFieldBytes);
+        entry.addField("sourcefield", sourceField.getBytes());
 
-        entry.addData(SOURCE_FIELD_KEY, sourceFieldBytes);
+        entry.addData(SOURCE_FIELD_KEY, sourceField.getBytes());
 
         return entry;
     }
 
-    private IndexEntry createForwardIndexEntry(String vtag, RecordId source, String sourceField) {
+    private IndexEntry createForwardIndexEntry(String vtag, RecordId source, SchemaId sourceField) {
         IndexEntry entry = new IndexEntry();
-
-        byte[] sourceFieldBytes = idToBytes(sourceField);
 
         entry.addField("vtag", vtag);
         entry.addField("source", source.toBytes());
-        entry.addField("sourcefield", sourceFieldBytes);
+        entry.addField("sourcefield", sourceField.getBytes());
 
-        entry.addData(SOURCE_FIELD_KEY, sourceFieldBytes);
+        entry.addData(SOURCE_FIELD_KEY, sourceField.getBytes());
         entry.addData(VTAG_KEY, Bytes.toBytes(vtag));
 
         return entry;
@@ -232,14 +227,14 @@ public class LinkIndex {
         return getReferrers(record, vtag, null);
     }
 
-    public Set<RecordId> getReferrers(RecordId record, String vtag, String sourceField) throws IOException {
+    public Set<RecordId> getReferrers(RecordId record, String vtag, SchemaId sourceField) throws IOException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
             query.addEqualsCondition("vtag", vtag);
             query.addEqualsCondition("target", record.toBytes());
             if (sourceField != null) {
-                query.addEqualsCondition("sourcefield", idToBytes(sourceField));
+                query.addEqualsCondition("sourcefield", sourceField.getBytes());
             }
     
             Set<RecordId> result = new HashSet<RecordId>();
@@ -269,7 +264,7 @@ public class LinkIndex {
             QueryResult qr = BACKWARD_INDEX.get().performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                String sourceField = idFromBytes(qr.getData(SOURCE_FIELD_KEY));
+                SchemaId sourceField = new SchemaIdImpl(qr.getData(SOURCE_FIELD_KEY));
                 result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -291,7 +286,7 @@ public class LinkIndex {
             QueryResult qr = FORWARD_INDEX.get().performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                String sourceField = idFromBytes(qr.getData(SOURCE_FIELD_KEY));
+                SchemaId sourceField = new SchemaIdImpl(qr.getData(SOURCE_FIELD_KEY));
                 String vtag = Bytes.toString(qr.getData(VTAG_KEY));
                 result.add(new Pair<FieldedLink, String>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
             }
@@ -315,7 +310,7 @@ public class LinkIndex {
             QueryResult qr = FORWARD_INDEX.get().performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
-                String sourceField = idFromBytes(qr.getData(SOURCE_FIELD_KEY));
+                SchemaId sourceField = new SchemaIdImpl(qr.getData(SOURCE_FIELD_KEY));
                 result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
