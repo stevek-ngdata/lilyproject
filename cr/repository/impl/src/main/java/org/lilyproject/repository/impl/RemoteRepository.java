@@ -275,15 +275,15 @@ public class RemoteRepository extends BaseRepository {
         }
     }
     
-    public IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException,
+    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RecordNotFoundException,
             VersionNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
             TypeException {
         try {
-            List<CharSequence> avroFieldIds = null;
+            List<AvroSchemaId> avroFieldIds = null;
             if (fieldIds != null) {
-                avroFieldIds = new ArrayList<CharSequence>(fieldIds.size());
-                for (String fieldId : fieldIds) {
-                    avroFieldIds.add(fieldId);
+                avroFieldIds = new ArrayList<AvroSchemaId>(fieldIds.size());
+                for (SchemaId fieldId : fieldIds) {
+                    avroFieldIds.add(converter.convert(fieldId));
                 }
             }
             return converter.convert(lilyProxy.readWithIds(converter.convert(recordId), converter.convertVersion(version), avroFieldIds));

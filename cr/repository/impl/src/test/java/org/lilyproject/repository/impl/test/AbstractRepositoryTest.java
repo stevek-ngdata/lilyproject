@@ -1130,15 +1130,15 @@ public abstract class AbstractRepositoryTest {
         record = repository.create(record);
 
         IdRecord idRecord = repository.readWithIds(record.getId(), null, null);
-        assertEquals("hello", idRecord.getField(fieldType1.getId().toString()));
-        assertTrue(idRecord.hasField(fieldType1.getId().toString()));
-        assertEquals(new Integer(4), idRecord.getField(fieldType2.getId().toString()));
-        assertTrue(idRecord.hasField(fieldType2.getId().toString()));
+        assertEquals("hello", idRecord.getField(fieldType1.getId()));
+        assertTrue(idRecord.hasField(fieldType1.getId()));
+        assertEquals(new Integer(4), idRecord.getField(fieldType2.getId()));
+        assertTrue(idRecord.hasField(fieldType2.getId()));
 
-        Map<String, Object> fields = idRecord.getFieldsById();
+        Map<SchemaId, Object> fields = idRecord.getFieldsById();
         assertEquals(3, fields.size());
-        assertEquals("hello", fields.get(fieldType1.getId().toString()));
-        assertEquals(new Integer(4), fields.get(fieldType2.getId().toString()));
+        assertEquals("hello", fields.get(fieldType1.getId()));
+        assertEquals(new Integer(4), fields.get(fieldType2.getId()));
 
         assertEquals(record, idRecord.getRecord());
     }

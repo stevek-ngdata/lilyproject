@@ -30,15 +30,15 @@ import java.util.Map;
  * methods defined in this interface is not guaranteed and might produce incorrect results.
  */
 public interface IdRecord extends Record {
-    String getRecordTypeId();
+    SchemaId getRecordTypeId();
 
-    String getRecordTypeId(Scope scope);
+    SchemaId getRecordTypeId(Scope scope);
 
-    Object getField(String fieldId) throws FieldNotFoundException;
+    Object getField(SchemaId fieldId) throws FieldNotFoundException;
 
-    boolean hasField(String fieldId);
+    boolean hasField(SchemaId fieldId);
 
-    Map<String, Object> getFieldsById();
+    Map<SchemaId, Object> getFieldsById();
 
     /**
      * Returns the underlying "normal" record.
@@ -48,5 +48,5 @@ public interface IdRecord extends Record {
     /**
      * To be used by AvroConverter only
      */
-    Map<String, QName> getFieldIdToNameMapping();
+    Map<SchemaId, QName> getFieldIdToNameMapping();
 }

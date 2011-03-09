@@ -97,17 +97,22 @@ public class AvroConverter {
     }
     
     public IdRecord convert(AvroIdRecord avroIdRecord) throws RecordException, TypeException {
-        Map<String, QName> idToQNameMapping = null;
-        if (avroIdRecord.idToQNameMapping != null) {
-            idToQNameMapping = new HashMap<String, QName>();
-            for (Entry<CharSequence, AvroQName> idEntry : avroIdRecord.idToQNameMapping.entrySet()) {
-                idToQNameMapping.put(convert(idEntry.getKey()), convert(idEntry.getValue()));
+        Map<SchemaId, QName> idToQNameMapping = null;
+        // Using two arrays here since avro does only support strings in the keys of a map
+        List<AvroSchemaId> avroIdToQNameMappingIds = avroIdRecord.idToQNameMappingIds;
+        List<AvroQName> avroIdToQNameMappingNames = avroIdRecord.idToQNameMappingNames;
+        if (avroIdToQNameMappingIds != null) {
+            idToQNameMapping = new HashMap<SchemaId, QName>();
+            int i = 0;
+            for (AvroSchemaId avroSchemaId : avroIdToQNameMappingIds) {
+                idToQNameMapping.put(convert(avroSchemaId), convert(avroIdToQNameMappingNames.get(i)));
+                i++;
             }
         }
-        Map<Scope, String> recordTypeIds = null;
+        Map<Scope, SchemaId> recordTypeIds = null;
         if (avroIdRecord.scopeRecordTypeIds == null) {
-            recordTypeIds = new HashMap<Scope, String>();
-            Map<CharSequence, CharSequence> avroRecordTypeIds = avroIdRecord.scopeRecordTypeIds;
+            recordTypeIds = new HashMap<Scope, SchemaId>();
+            Map<CharSequence, AvroSchemaId> avroRecordTypeIds = avroIdRecord.scopeRecordTypeIds;
             for (Scope scope : Scope.values()) {
                 recordTypeIds.put(scope, convert(avroRecordTypeIds.get(new Utf8(scope.name()))));
             }
@@ -196,19 +201,22 @@ public class AvroConverter {
         AvroIdRecord avroIdRecord = new AvroIdRecord();
         avroIdRecord.record = convert(idRecord.getRecord());
      // Fields
-        Map<String, QName> fields = idRecord.getFieldIdToNameMapping();
+        Map<SchemaId, QName> fields = idRecord.getFieldIdToNameMapping();
         if (fields != null) {
-            avroIdRecord.idToQNameMapping = new HashMap<CharSequence, AvroQName>();
-            for (Entry<String, QName> fieldEntry : fields.entrySet()) {
-                avroIdRecord.idToQNameMapping.put(new Utf8(fieldEntry.getKey()), convert(fieldEntry.getValue()));
+            // Using two arrays here since avro does only support strings in the keys of a map
+            avroIdRecord.idToQNameMappingIds = new ArrayList<AvroSchemaId>(fields.size());
+            avroIdRecord.idToQNameMappingNames = new ArrayList<AvroQName>(fields.size());
+            for (Entry<SchemaId, QName> fieldEntry : fields.entrySet()) {
+                avroIdRecord.idToQNameMappingIds.add(convert(fieldEntry.getKey()));
+                avroIdRecord.idToQNameMappingNames.add(convert(fieldEntry.getValue()));
             }
         }
      // Record types
-        avroIdRecord.scopeRecordTypeIds = new HashMap<CharSequence, CharSequence>();
+        avroIdRecord.scopeRecordTypeIds = new HashMap<CharSequence, AvroSchemaId>();
         for (Scope scope : Scope.values()) {
-            String recordTypeId = idRecord.getRecordTypeId(scope);
+            SchemaId recordTypeId = idRecord.getRecordTypeId(scope);
             if (recordTypeId != null) {
-                avroIdRecord.scopeRecordTypeIds.put(new Utf8(scope.name()), recordTypeId);
+                avroIdRecord.scopeRecordTypeIds.put(new Utf8(scope.name()), convert(recordTypeId));
             }
         }
         return avroIdRecord;

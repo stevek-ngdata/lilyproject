@@ -248,7 +248,12 @@ public class IdGeneratorImpl implements IdGenerator {
         }
     }
     
-    public SchemaId getSchemaId(byte[] bytes) {
-        return new SchemaIdImpl(bytes);
+    public SchemaId getSchemaId(byte[] id) {
+        return new SchemaIdImpl(id);
     }
+
+    public SchemaId getSchemaId(String id) {
+        return new SchemaIdImpl(id);
+    }
+
 }

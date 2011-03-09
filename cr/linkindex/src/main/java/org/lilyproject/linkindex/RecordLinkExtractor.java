@@ -29,7 +29,7 @@ public class RecordLinkExtractor {
      */
     public static void extract(IdRecord record, LinkCollector collector, Repository repository)
             throws RepositoryException, InterruptedException {
-        for (Map.Entry<String, Object> field : record.getFieldsById().entrySet()) {
+        for (Map.Entry<SchemaId, Object> field : record.getFieldsById().entrySet()) {
             FieldType fieldType;
             try {
                 fieldType = repository.getTypeManager().getFieldTypeById(field.getKey());

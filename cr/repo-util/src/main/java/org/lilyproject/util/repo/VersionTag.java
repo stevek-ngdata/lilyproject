@@ -87,7 +87,7 @@ public class VersionTag {
     public static Map<String, Long> getTagsById(IdRecord record, TypeManager typeManager) {
         Map<String, Long> vtags = new HashMap<String, Long>();
 
-        for (Map.Entry<String, Object> field : record.getFieldsById().entrySet()) {
+        for (Map.Entry<SchemaId, Object> field : record.getFieldsById().entrySet()) {
             FieldType fieldType;
             try {
                 fieldType = typeManager.getFieldTypeById(field.getKey());
@@ -212,8 +212,9 @@ public class VersionTag {
      */
     public static Long getVersion(RecordId recordId, String vtagId, Repository repository) {
         IdRecord vtagRecord;
+        SchemaId vtagSchemaId = repository.getIdGenerator().getSchemaId(vtagId);
         try {
-            vtagRecord = repository.readWithIds(recordId, null, Collections.singletonList(vtagId));
+            vtagRecord = repository.readWithIds(recordId, null, Collections.singletonList(vtagSchemaId));
         } catch (Exception e) {
             return null;
         }
@@ -236,10 +237,10 @@ public class VersionTag {
             return null;
         }
 
-        if (!vtagRecord.hasField(vtagId))
+        if (!vtagRecord.hasField(vtagSchemaId))
             return null;
 
-        return (Long)vtagRecord.getField(vtagId);
+        return (Long)vtagRecord.getField(vtagSchemaId);
     }
 
     /**
@@ -277,7 +278,7 @@ public class VersionTag {
         return getIdRecord(recordId, vtagId, repository, null);
     }
 
-    public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository, List<String> fieldIds)
+    public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository, List<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
         if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
             // TODO this should include an option to only read non-versioned-scoped data

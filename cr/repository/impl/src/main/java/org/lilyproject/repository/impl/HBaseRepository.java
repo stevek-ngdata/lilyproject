@@ -822,24 +822,24 @@ public class HBaseRepository extends BaseRepository {
         return records;
     }
     
-    public IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException,
+    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
             TypeException, InterruptedException {
         ReadContext readContext = new ReadContext();
 
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromStringIds(fieldIds, fieldTypes);
+        List<FieldType> fields = getFieldTypesFromIds(fieldIds, fieldTypes);
 
         Record record = read(recordId, version, fields, readContext, fieldTypes);
 
-        Map<String, QName> idToQNameMapping = new HashMap<String, QName>();
+        Map<SchemaId, QName> idToQNameMapping = new HashMap<SchemaId, QName>();
         for (FieldType fieldType : readContext.getFieldTypes().values()) {
-            idToQNameMapping.put(fieldType.getId().toString(), fieldType.getName());
+            idToQNameMapping.put(fieldType.getId(), fieldType.getName());
         }
 
-        Map<Scope, String> recordTypeIds = new HashMap<Scope, String>();
+        Map<Scope, SchemaId> recordTypeIds = new HashMap<Scope, SchemaId>();
         for (Map.Entry<Scope, RecordType> entry : readContext.getRecordTypes().entrySet()) {
-            recordTypeIds.put(entry.getKey(), entry.getValue().getId().toString());
+            recordTypeIds.put(entry.getKey(), entry.getValue().getId());
         }
 
         return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);

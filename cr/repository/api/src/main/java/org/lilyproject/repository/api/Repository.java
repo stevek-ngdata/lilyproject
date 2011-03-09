@@ -233,7 +233,7 @@ public interface Repository extends Closeable {
      * @param version version to load. Optional, can be null.
      * @param fieldIds load only the fields with these ids. optional, can be null.
      */
-    IdRecord readWithIds(RecordId recordId, Long version, List<String> fieldIds) throws RecordNotFoundException,
+    IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
             TypeException, InterruptedException;
 

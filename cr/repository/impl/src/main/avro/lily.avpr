@@ -45,12 +45,21 @@
     },
     
     {
+      "name": "AvroSchemaId",
+      "type": "record",
+      "fields": [
+        {"name": "idBytes", "type": ["bytes", "null"]}
+      ]
+    },
+    
+    {
       "name": "AvroIdRecord",
       "type": "record",
       "fields": [
         {"name": "record", "type": "AvroRecord"},
-        {"name": "idToQNameMapping", "type": {"type": "map", "values": ["AvroQName", "null"]}},
-        {"name": "scopeRecordTypeIds", "type": {"type": "map", "values": ["string", "null"]}}
+        {"name": "idToQNameMappingIds", "type": {"type": "array", "items": "AvroSchemaId"}},
+        {"name": "idToQNameMappingNames", "type": {"type": "array", "items": "AvroQName"}},
+        {"name": "scopeRecordTypeIds", "type": {"type": "map", "values": ["AvroSchemaId", "null"]}}
       ]
     },
     
@@ -62,14 +71,6 @@
         {"name": "size", "type": "long"},
         {"name": "name", "type": ["string", "null"]},
         {"name": "value", "type": ["bytes", "null"]}
-      ]
-    },
-    
-    {
-      "name": "AvroSchemaId",
-      "type": "record",
-      "fields": [
-        {"name": "idBytes", "type": ["bytes", "null"]}
       ]
     },
 
@@ -388,7 +389,7 @@
       "request": [
         {"name": "recordId", "type": "bytes"},
         {"name": "version", "type": "long"},
-        {"name": "fieldIds", "type": ["null", {"type": "array", "items": "string"}]}
+        {"name": "fieldIds", "type": ["null", {"type": "array", "items": "AvroSchemaId"}]}
       ],
       "response": "AvroIdRecord",
       "errors": ["AvroRecordNotFoundException", "AvroVersionNotFoundException", "AvroRecordTypeNotFoundException",

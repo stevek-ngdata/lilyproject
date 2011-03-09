@@ -81,5 +81,11 @@ public interface IdGenerator {
      * Creates a SchemaId based on the provided byte[] representation of the id.
      * @return a SchemaId
      */
-    SchemaId getSchemaId(byte[] bytes);
+    SchemaId getSchemaId(byte[] id);
+    
+    /**
+     * Creates a SchemaId based on the provided byte[] representation of the id.
+     * @return a SchemaId
+     */
+    SchemaId getSchemaId(String id);
 }

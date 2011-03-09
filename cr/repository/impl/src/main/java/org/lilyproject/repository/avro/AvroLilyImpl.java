@@ -338,15 +338,15 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
-    public AvroIdRecord readWithIds(ByteBuffer recordId, long avroVersion, List<CharSequence> avroFieldIds)
+    public AvroIdRecord readWithIds(ByteBuffer recordId, long avroVersion, List<AvroSchemaId> avroFieldIds)
             throws AvroRecordNotFoundException, AvroVersionNotFoundException,
             AvroRecordTypeNotFoundException, AvroFieldTypeNotFoundException, AvroRecordException, AvroTypeException,
             AvroGenericException, AvroInterruptedException {
         try {
-            List<String> fieldIds = null;
+            List<SchemaId> fieldIds = null;
             if (avroFieldIds != null) {
-                fieldIds = new ArrayList<String>();
-                for (CharSequence avroFieldId : avroFieldIds) {
+                fieldIds = new ArrayList<SchemaId>();
+                for (AvroSchemaId avroFieldId : avroFieldIds) {
                     fieldIds.add(converter.convert(avroFieldId));
                 }
             }

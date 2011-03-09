@@ -23,24 +23,24 @@ import java.util.Map;
 
 public class IdRecordImpl implements IdRecord {
     private Record record;
-    private Map<String, QName> mapping;
-    private Map<Scope, String> recordTypeIds;
+    private Map<SchemaId, QName> mapping;
+    private Map<Scope, SchemaId> recordTypeIds;
 
-    public IdRecordImpl(Record record, Map<String, QName> idToQNameMapping, Map<Scope, String> recordTypeIds) {
+    public IdRecordImpl(Record record, Map<SchemaId, QName> idToQNameMapping, Map<Scope, SchemaId> recordTypeIds) {
         this.record = record;
         this.mapping = idToQNameMapping;
         this.recordTypeIds = recordTypeIds;
     }
 
-    public Object getField(String fieldId) throws FieldNotFoundException {
+    public Object getField(SchemaId fieldId) throws FieldNotFoundException {
         QName qname = mapping.get(fieldId);
         if (qname == null) {
-            throw new FieldNotFoundException(fieldId);
+            throw new FieldNotFoundException(fieldId.toString());
         }
         return record.getField(qname);
     }
 
-    public boolean hasField(String fieldId) {
+    public boolean hasField(SchemaId fieldId) {
         QName qname = mapping.get(fieldId);
         if (qname == null) {
             return false;
@@ -50,11 +50,11 @@ public class IdRecordImpl implements IdRecord {
         return record.hasField(qname);
     }
 
-    public Map<String, Object> getFieldsById() {
+    public Map<SchemaId, Object> getFieldsById() {
         Map<QName, Object> fields = record.getFields();
-        Map<String, Object> fieldsById = new HashMap<String, Object>(fields.size());
+        Map<SchemaId, Object> fieldsById = new HashMap<SchemaId, Object>(fields.size());
 
-        for (Map.Entry<String, QName> entry : mapping.entrySet()) {
+        for (Map.Entry<SchemaId, QName> entry : mapping.entrySet()) {
             Object value = fields.get(entry.getValue());
             if (value != null) {
                 fieldsById.put(entry.getKey(), value);
@@ -64,15 +64,15 @@ public class IdRecordImpl implements IdRecord {
         return fieldsById;
     }
     
-    public Map<String, QName> getFieldIdToNameMapping() {
+    public Map<SchemaId, QName> getFieldIdToNameMapping() {
         return mapping;
     }
 
-    public String getRecordTypeId() {
+    public SchemaId getRecordTypeId() {
         return recordTypeIds.get(Scope.NON_VERSIONED);
     }
 
-    public String getRecordTypeId(Scope scope) {
+    public SchemaId getRecordTypeId(Scope scope) {
         return recordTypeIds.get(scope);
     }
 
