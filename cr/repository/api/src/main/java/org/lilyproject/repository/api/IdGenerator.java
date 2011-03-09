@@ -16,6 +16,7 @@
 package org.lilyproject.repository.api;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * IdGenerator is the factory to create {@link RecordId}s.
@@ -84,8 +85,17 @@ public interface IdGenerator {
     SchemaId getSchemaId(byte[] id);
     
     /**
-     * Creates a SchemaId based on the provided byte[] representation of the id.
+     * Creates a SchemaId based on the provided String representation of the id.
      * @return a SchemaId
      */
     SchemaId getSchemaId(String id);
+    
+    /**
+     * Creates a SchemaId based on the provided UUID representation of the id.
+     * 
+     * <p>Important : Should only be used in test cases.
+     *  
+     * @return a SchemaId
+     */
+    SchemaId getSchemaId(UUID id);
 }

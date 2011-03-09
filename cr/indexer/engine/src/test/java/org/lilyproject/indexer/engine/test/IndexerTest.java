@@ -1241,7 +1241,7 @@ public class IndexerTest {
         event.setType(type);
 
         for (SchemaId updatedField : updatedFields) {
-            event.addUpdatedField(updatedField.toString());
+            event.addUpdatedField(updatedField);
         }
 
         if (versionCreated != null)
@@ -1279,7 +1279,7 @@ public class IndexerTest {
             
             RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
             try {
-                RecordEvent event = new RecordEvent(message.getPayload());
+                RecordEvent event = new RecordEvent(message.getPayload(), idGenerator);
                 if (expectedEvent == null) {
                     failures++;
                     printSomethingLoad();

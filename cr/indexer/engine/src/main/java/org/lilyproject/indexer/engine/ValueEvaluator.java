@@ -54,7 +54,7 @@ public class ValueEvaluator {
      *
      * @return null if there is no value
      */
-    public List<String> eval(Value valueDef, IdRecord record, Repository repository, String vtag) {
+    public List<String> eval(Value valueDef, IdRecord record, Repository repository, SchemaId vtag) {
         List<IndexValue> indexValues = evalValue(valueDef, record, repository, vtag);
         if (indexValues == null || indexValues.size() == 0)
             return null;
@@ -119,7 +119,7 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IndexValue> evalValue(Value value, IdRecord record, Repository repository, String vtag) {
+    private List<IndexValue> evalValue(Value value, IdRecord record, Repository repository, SchemaId vtag) {
         if (value instanceof FieldValue) {
             return evalFieldValue((FieldValue)value, record, repository, vtag);
         } else if (value instanceof DerefValue) {
@@ -129,7 +129,7 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IndexValue> evalFieldValue(FieldValue value, IdRecord record, Repository repository, String vtag) {
+    private List<IndexValue> evalFieldValue(FieldValue value, IdRecord record, Repository repository, SchemaId vtag) {
         SchemaId fieldId = value.getFieldType().getId();
         if (record.hasField(fieldId)) {
             if (value.getFieldType().getValueType().isMultiValue()) {
@@ -147,7 +147,7 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IndexValue> evalDerefValue(DerefValue deref, IdRecord record, Repository repository, String vtag) {
+    private List<IndexValue> evalDerefValue(DerefValue deref, IdRecord record, Repository repository, SchemaId vtag) {
         FieldType fieldType = deref.getTargetFieldType();
         if (vtag.equals(VersionTag.VERSIONLESS_TAG) && fieldType.getScope() != Scope.NON_VERSIONED) {
             // From a versionless record, it is impossible to deref a versioned field.
@@ -196,7 +196,7 @@ public class ValueEvaluator {
         return result;
     }
 
-    private List<IdRecord> evalFollow(DerefValue deref, Follow follow, IdRecord record, Repository repository, String vtag) {
+    private List<IdRecord> evalFollow(DerefValue deref, Follow follow, IdRecord record, Repository repository, SchemaId vtag) {
         if (follow instanceof FieldFollow) {
             return evalFieldFollow(deref, (FieldFollow)follow, record, repository, vtag);
         } else if (follow instanceof VariantFollow) {
@@ -208,7 +208,7 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IdRecord> evalFieldFollow(DerefValue deref, FieldFollow follow, IdRecord record, Repository repository, String vtag) {
+    private List<IdRecord> evalFieldFollow(DerefValue deref, FieldFollow follow, IdRecord record, Repository repository, SchemaId vtag) {
         FieldType fieldType = follow.getFieldType();
 
         if (!record.hasField(fieldType.getId())) {
@@ -243,7 +243,7 @@ public class ValueEvaluator {
         return null;
     }
 
-    private IdRecord resolveRecordId(RecordId recordId, String vtag, Repository repository) {
+    private IdRecord resolveRecordId(RecordId recordId, SchemaId vtag, Repository repository) {
         try {
             // TODO we could limit this to only load the field necessary for the next follow
             return VersionTag.getIdRecord(recordId, vtag, repository);
@@ -252,7 +252,7 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IdRecord> evalVariantFollow(VariantFollow follow, IdRecord record, Repository repository, String vtag) {
+    private List<IdRecord> evalVariantFollow(VariantFollow follow, IdRecord record, Repository repository, SchemaId vtag) {
         RecordId recordId = record.getId();
 
         Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
@@ -274,7 +274,7 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IdRecord> evalMasterFollow(MasterFollow follow, IdRecord record, Repository repository, String vtag) {
+    private List<IdRecord> evalMasterFollow(MasterFollow follow, IdRecord record, Repository repository, SchemaId vtag) {
         if (record.getId().isMaster())
             return null;
 

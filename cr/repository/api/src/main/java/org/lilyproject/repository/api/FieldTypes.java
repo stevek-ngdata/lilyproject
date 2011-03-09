@@ -12,14 +12,6 @@ public interface FieldTypes {
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
-    
-    /**
-     * Gets a FieldType from the FieldTypes.
-     *
-     * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
-     * @throws RepositoryException when an unexpected exception occurs on the repository
-     */
     FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
     
     /**

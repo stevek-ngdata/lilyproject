@@ -22,7 +22,7 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 public class FieldTypeImpl implements FieldType {
 
     private SchemaId id;
-    private byte[] idQualifier;
+    private byte[] idQualifier; // Storing throug lazy initialization to avoid to re-create it each time.
     private ValueType valueType;
     private QName name;
     private Scope scope;

@@ -35,7 +35,7 @@ public class IdRecordImpl implements IdRecord {
     public Object getField(SchemaId fieldId) throws FieldNotFoundException {
         QName qname = mapping.get(fieldId);
         if (qname == null) {
-            throw new FieldNotFoundException(fieldId.toString());
+            throw new FieldNotFoundException(fieldId);
         }
         return record.getField(qname);
     }

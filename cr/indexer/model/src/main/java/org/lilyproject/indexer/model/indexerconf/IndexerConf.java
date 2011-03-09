@@ -38,7 +38,7 @@ public class IndexerConf {
     private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
     private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
     private Map<SchemaId, List<IndexField>> derefIndexFieldsByField = new HashMap<SchemaId, List<IndexField>>();
-    private Set<String> vtags = new HashSet<String>();
+    private Set<SchemaId> vtags = new HashSet<SchemaId>();
     private Formatters formatters = new Formatters();
 
     protected void addIndexCase(IndexCase indexCase) {
@@ -108,7 +108,7 @@ public class IndexerConf {
     /**
      * Returns the set of all known vtags, thus all the vtags that are relevant to indexing.
      */
-    public Set<String> getVtags() {
+    public Set<SchemaId> getVtags() {
         return vtags;
     }
 

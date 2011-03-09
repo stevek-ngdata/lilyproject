@@ -55,7 +55,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
     public boolean processMessage(RowLogMessage msg) {
         try {
             RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
-            RecordEvent recordEvent = new RecordEvent(msg.getPayload());
+            RecordEvent recordEvent = new RecordEvent(msg.getPayload(), repository.getIdGenerator());
             update(recordId, recordEvent);
         } catch (Exception e) {
             log.error("Error processing event in LinkIndexUpdater", e);
@@ -110,20 +110,20 @@ public class LinkIndexUpdater implements RowLogMessageListener {
     
                     if (hasVersions) {
 
-                        Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
-                        Map<Long, Set<String>> tagsByVersion = VersionTag.tagsByVersion(vtags);
+                        Map<SchemaId, Long> vtags = VersionTag.getTagsById(record, typeManager);
+                        Map<Long, Set<SchemaId>> tagsByVersion = VersionTag.idTagsByVersion(vtags);
     
                         //
                         // First find out for what vtags we need to re-perform the link extraction
                         //
-                        Set<String> vtagsToProcess = new HashSet<String>();
+                        Set<SchemaId> vtagsToProcess = new HashSet<SchemaId>();
     
                         // Modified vtag fields
-                        Set<String> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), typeManager);
+                        Set<SchemaId> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), typeManager);
                         vtagsToProcess.addAll(changedVTags);
     
                         // The vtags of the created/modified version, if any
-                        Set<String> vtagsOfChangedVersion = null;
+                        Set<SchemaId> vtagsOfChangedVersion = null;
                         if (recordEvent.getVersionCreated() != -1) {
                             vtagsOfChangedVersion = tagsByVersion.get(recordEvent.getVersionCreated());
                         } else if (recordEvent.getVersionUpdated() != -1) {
@@ -138,7 +138,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                         // For each of the vtags, perform the link extraction
                         //
                         Map<Long, Set<FieldedLink>> cache = new HashMap<Long, Set<FieldedLink>>();
-                        for (String vtag : vtagsToProcess) {
+                        for (SchemaId vtag : vtagsToProcess) {
                             if (!vtags.containsKey(vtag)) {
                                 // The vtag is not defined on the document: it is a deleted vtag, delete the
                                 // links corresponding to it
@@ -216,11 +216,11 @@ public class LinkIndexUpdater implements RowLogMessageListener {
     /**
      * Lookup name of field type, for use in debug logs. Beware, this might be slow.
      */
-    private String safeLoadTagName(String fieldTypeId) {
+    private String safeLoadTagName(SchemaId fieldTypeId) {
         if (fieldTypeId == null)
             return "null";
         if (fieldTypeId.equals(VersionTag.VERSIONLESS_TAG))
-            return fieldTypeId;
+            return fieldTypeId.toString();
 
         try {
             return typeManager.getFieldTypeById(fieldTypeId).getName().getName();

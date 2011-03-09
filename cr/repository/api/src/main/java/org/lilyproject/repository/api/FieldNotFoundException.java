@@ -18,19 +18,19 @@ package org.lilyproject.repository.api;
 public class FieldNotFoundException extends RepositoryRuntimeException {
 
     private QName fieldName;
-    private String fieldId;
+    private SchemaId fieldId;
 
     public FieldNotFoundException(QName fieldName) {
         this.fieldName = fieldName;
     }
     
-    public FieldNotFoundException(String fieldId) {
+    public FieldNotFoundException(SchemaId fieldId) {
         this.fieldId = fieldId;
     }
 
     @Override
     public String getMessage() {
-        String id = fieldName != null ? fieldName.toString() : fieldId;
+        String id = fieldName != null ? fieldName.toString() : fieldId.toString();
         return "Field <" + id + "> could not be found.";
     }
 }

@@ -556,7 +556,7 @@ public class HBaseRepository extends BaseRepository {
                 
                 changedScopes.add(scope);
 
-                recordEvent.addUpdatedField(fieldType.getId().toString());
+                recordEvent.addUpdatedField(fieldType.getId());
             }
         }
         return changedScopes;
@@ -784,17 +784,6 @@ public class HBaseRepository extends BaseRepository {
         }
         return fields;
     }
-    
-    private List<FieldType> getFieldTypesFromStringIds(List<String> fieldIds, FieldTypes fieldTypes) throws FieldTypeNotFoundException, TypeException, InterruptedException {
-        List<FieldType> fields = null;
-        if (fieldIds != null) {
-            fields = new ArrayList<FieldType>(fieldIds.size());
-            for (String fieldId : fieldIds) {
-                fields.add(fieldTypes.getFieldTypeById(fieldId));
-            }
-        }
-        return fields;
-    }    
     
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
             throws FieldTypeNotFoundException, TypeException, RecordNotFoundException, RecordException,

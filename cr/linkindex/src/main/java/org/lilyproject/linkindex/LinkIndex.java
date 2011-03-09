@@ -76,11 +76,11 @@ public class LinkIndex {
             byte[] sourceAsBytes = sourceRecord.toBytes();
     
             // Read links from the forwards table
-            Set<Pair<FieldedLink, String>> oldLinks = getAllForwardLinks(sourceRecord);
+            Set<Pair<FieldedLink, SchemaId>> oldLinks = getAllForwardLinks(sourceRecord);
     
             // Delete existing entries from the backwards table
             List<IndexEntry> entries = new ArrayList<IndexEntry>(oldLinks.size());
-            for (Pair<FieldedLink, String> link : oldLinks) {
+            for (Pair<FieldedLink, SchemaId> link : oldLinks) {
                 IndexEntry entry = createBackwardIndexEntry(link.getV2(), link.getV1().getRecordId(), link.getV1().getFieldTypeId());
                 entry.setIdentifier(sourceAsBytes);
                 entries.add(entry);
@@ -89,7 +89,7 @@ public class LinkIndex {
     
             // Delete existing entries from the forwards table
             entries.clear();
-            for (Pair<FieldedLink, String> link : oldLinks) {
+            for (Pair<FieldedLink, SchemaId> link : oldLinks) {
                 IndexEntry entry = createForwardIndexEntry(link.getV2(), sourceRecord, link.getV1().getFieldTypeId());
                 entry.setIdentifier(link.getV1().getRecordId().toBytes());
                 entries.add(entry);
@@ -100,7 +100,7 @@ public class LinkIndex {
         }
     }
 
-    public void deleteLinks(RecordId sourceRecord, String vtag) throws IOException {
+    public void deleteLinks(RecordId sourceRecord, SchemaId vtag) throws IOException {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
@@ -134,7 +134,7 @@ public class LinkIndex {
      *
      * @param links if this set is empty, then calling this method is equivalent to calling deleteLinks
      */
-    public void updateLinks(RecordId sourceRecord, String vtag, Set<FieldedLink> links) throws IOException {
+    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws IOException {
         long before = System.currentTimeMillis();
         try {
             // We could simply delete all the old entries using deleteLinks() and then add
@@ -197,10 +197,10 @@ public class LinkIndex {
         }
     }
 
-    private IndexEntry createBackwardIndexEntry(String vtag, RecordId target, SchemaId sourceField) {
+    private IndexEntry createBackwardIndexEntry(SchemaId vtag, RecordId target, SchemaId sourceField) {
         IndexEntry entry = new IndexEntry();
 
-        entry.addField("vtag", vtag);
+        entry.addField("vtag", vtag.getBytes());
         entry.addField("target", target.toBytes());
         entry.addField("sourcefield", sourceField.getBytes());
 
@@ -209,28 +209,28 @@ public class LinkIndex {
         return entry;
     }
 
-    private IndexEntry createForwardIndexEntry(String vtag, RecordId source, SchemaId sourceField) {
+    private IndexEntry createForwardIndexEntry(SchemaId vtag, RecordId source, SchemaId sourceField) {
         IndexEntry entry = new IndexEntry();
 
-        entry.addField("vtag", vtag);
+        entry.addField("vtag", vtag.getBytes());
         entry.addField("source", source.toBytes());
         entry.addField("sourcefield", sourceField.getBytes());
 
         entry.addData(SOURCE_FIELD_KEY, sourceField.getBytes());
-        entry.addData(VTAG_KEY, Bytes.toBytes(vtag));
+        entry.addData(VTAG_KEY, vtag.getBytes());
 
         return entry;
     }
 
-    public Set<RecordId> getReferrers(RecordId record, String vtag) throws IOException {
+    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag) throws IOException {
         return getReferrers(record, vtag, null);
     }
 
-    public Set<RecordId> getReferrers(RecordId record, String vtag, SchemaId sourceField) throws IOException {
+    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag, SchemaId sourceField) throws IOException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
-            query.addEqualsCondition("vtag", vtag);
+            query.addEqualsCondition("vtag", vtag.getBytes());
             query.addEqualsCondition("target", record.toBytes());
             if (sourceField != null) {
                 query.addEqualsCondition("sourcefield", sourceField.getBytes());
@@ -251,12 +251,12 @@ public class LinkIndex {
         }
     }
 
-    public Set<FieldedLink> getFieldedReferrers(RecordId record, String vtag) throws IOException {
+    public Set<FieldedLink> getFieldedReferrers(RecordId record, SchemaId vtag) throws IOException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
             query.addEqualsCondition("target", record.toBytes());
-            query.addEqualsCondition("vtag", vtag);
+            query.addEqualsCondition("vtag", vtag.getBytes());
     
             Set<FieldedLink> result = new HashSet<FieldedLink>();
     
@@ -274,20 +274,20 @@ public class LinkIndex {
         }
     }
 
-    public Set<Pair<FieldedLink, String>> getAllForwardLinks(RecordId record) throws IOException {
+    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(RecordId record) throws IOException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
             query.addEqualsCondition("source", record.toBytes());
 
-            Set<Pair<FieldedLink, String>> result = new HashSet<Pair<FieldedLink, String>>();
+            Set<Pair<FieldedLink, SchemaId>> result = new HashSet<Pair<FieldedLink, SchemaId>>();
     
             QueryResult qr = FORWARD_INDEX.get().performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
-                String vtag = Bytes.toString(qr.getData(VTAG_KEY));
-                result.add(new Pair<FieldedLink, String>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
+                SchemaId vtag = idGenerator.getSchemaId(qr.getData(VTAG_KEY));
+                result.add(new Pair<FieldedLink, SchemaId>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
     
@@ -297,12 +297,12 @@ public class LinkIndex {
         }
     }
 
-    public Set<FieldedLink> getForwardLinks(RecordId record, String vtag) throws IOException {
+    public Set<FieldedLink> getForwardLinks(RecordId record, SchemaId vtag) throws IOException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
             query.addEqualsCondition("source", record.toBytes());
-            query.addEqualsCondition("vtag", vtag);
+            query.addEqualsCondition("vtag", vtag.getBytes());
     
             Set<FieldedLink> result = new HashSet<FieldedLink>();
     
@@ -350,7 +350,7 @@ public class LinkIndex {
         {
             IndexDefinition indexDef = new IndexDefinition("links-backward");
             indexDef.addByteField("target");
-            indexDef.addStringField("vtag");
+            indexDef.addByteField("vtag");
             indexDef.addByteField("sourcefield");
             indexManager.createIndexIfNotExists(indexDef);
         }
@@ -358,7 +358,7 @@ public class LinkIndex {
         {
             IndexDefinition indexDef = new IndexDefinition("links-forward");
             indexDef.addByteField("source");
-            indexDef.addStringField("vtag");
+            indexDef.addByteField("vtag");
             indexDef.addByteField("sourcefield");
             indexManager.createIndexIfNotExists(indexDef);
         }

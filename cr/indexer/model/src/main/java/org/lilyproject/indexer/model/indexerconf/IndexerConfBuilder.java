@@ -96,7 +96,7 @@ public class IndexerConfBuilder {
             boolean indexVersionless = DocumentHelper.getBooleanAttribute(caseEl, "indexVersionless", false);
 
             Map<String, String> varPropsPattern = parseVariantPropertiesPattern(caseEl);
-            Set<String> vtags = parseVersionTags(vtagsSpec);
+            Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
 
             IndexCase indexCase = new IndexCase(recordType, varPropsPattern, vtags, indexVersionless);
             conf.addIndexCase(indexCase);
@@ -221,8 +221,8 @@ public class IndexerConfBuilder {
         return varPropsPattern;
     }
 
-    private Set<String> parseVersionTags(String vtagsSpec) throws IndexerConfException, InterruptedException {
-        Set<String> vtags = new HashSet<String>();
+    private Set<SchemaId> parseVersionTags(String vtagsSpec) throws IndexerConfException, InterruptedException {
+        Set<SchemaId> vtags = new HashSet<SchemaId>();
 
         if (vtagsSpec == null)
             return vtags;
@@ -232,7 +232,7 @@ public class IndexerConfBuilder {
             tag = tag.trim();
             if (tag.length() > 0) {
                 try {
-                    vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId().toString());
+                    vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
                 } catch (FieldTypeNotFoundException e) {
                     throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
                 } catch (TypeException e) {

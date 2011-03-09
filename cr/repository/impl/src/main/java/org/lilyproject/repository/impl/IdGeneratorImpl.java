@@ -17,6 +17,7 @@ package org.lilyproject.repository.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.IdGenerator;
@@ -253,6 +254,10 @@ public class IdGeneratorImpl implements IdGenerator {
     }
 
     public SchemaId getSchemaId(String id) {
+        return new SchemaIdImpl(id);
+    }
+    
+    public SchemaId getSchemaId(UUID id) {
         return new SchemaIdImpl(id);
     }
 

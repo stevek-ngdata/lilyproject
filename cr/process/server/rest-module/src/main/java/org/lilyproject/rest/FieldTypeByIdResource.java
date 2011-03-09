@@ -16,7 +16,6 @@
 package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.tools.import_.core.*;
 
 import javax.ws.rs.*;
@@ -31,7 +30,7 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
     @Produces("application/json")
     public FieldType get(@PathParam("id") String id) {
         try {
-            return repository.getTypeManager().getFieldTypeById(id);
+            return repository.getTypeManager().getFieldTypeById(repository.getIdGenerator().getSchemaId(id));
         } catch (FieldTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -49,7 +48,7 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
         }
         SchemaId schemaId = null;
         if (id != null)
-            schemaId = new SchemaIdImpl(id);
+            schemaId = repository.getIdGenerator().getSchemaId(id);
         fieldType.setId(schemaId);
 
         ImportResult<FieldType> result;

@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.SchemaId;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,10 +31,10 @@ public class IndexCase {
      * values should match.
      */
     private final Map<String, String> variantPropsPattern;
-    private final Set<String> vtags;
+    private final Set<SchemaId> vtags;
     private final boolean indexVersionless;
 
-    public IndexCase(QName recordTypeName, Map<String, String> variantPropsPattern, Set<String> vtags,
+    public IndexCase(QName recordTypeName, Map<String, String> variantPropsPattern, Set<SchemaId> vtags,
             boolean indexVersionless) {
         this.recordTypeName = recordTypeName;
         this.variantPropsPattern = variantPropsPattern;
@@ -71,7 +72,7 @@ public class IndexCase {
     /**
      * Version tags identified by ID.
      */
-    public Set<String> getVersionTags() {
+    public Set<SchemaId> getVersionTags() {
         return vtags;
     }
 

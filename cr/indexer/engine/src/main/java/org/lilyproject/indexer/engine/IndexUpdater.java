@@ -47,12 +47,14 @@ public class IndexUpdater implements RowLogMessageListener {
     private IndexLocker indexLocker;
 
     private Log log = LogFactory.getLog(getClass());
+    private IdGenerator idGenerator;
 
     public IndexUpdater(Indexer indexer, Repository repository,
             LinkIndex linkIndex, IndexLocker indexLocker, IndexUpdaterMetrics metrics) throws RowLogException {
         this.indexer = indexer;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
+        this.idGenerator = repository.getIdGenerator();
         this.linkIndex = linkIndex;
 
         this.indexLocker = indexLocker;
@@ -72,8 +74,8 @@ public class IndexUpdater implements RowLogMessageListener {
         ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(myContextClassLoader);
-            RecordEvent event = new RecordEvent(msg.getPayload());
-            RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
+            RecordEvent event = new RecordEvent(msg.getPayload(), idGenerator);
+            RecordId recordId = idGenerator.fromBytes(msg.getRowKey());
 
             if (log.isDebugEnabled()) {
                 log.debug("Received message: " + event.toJson());
@@ -97,7 +99,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 // After this we can go to update denormalized data
                 updateDenormalizedData(recordId, event, null, null);
             } else {
-                Map<Long, Set<String>> vtagsByVersion;
+                Map<Long, Set<SchemaId>> vtagsByVersion;
                 Map<Scope, Set<FieldType>> updatedFieldsByScope;
 
                 indexLocker.lock(recordId);
@@ -116,8 +118,8 @@ public class IndexUpdater implements RowLogMessageListener {
                     // Read the vtags of the record. Note that while this algorithm is running, the record can meanwhile
                     // undergo changes. However, we continuously work with the snapshot of the vtags mappings read here.
                     // The processing of later events will bring the index up to date with any new changes.
-                    Map<String, Long> vtags = VersionTag.getTagsById(record, typeManager);
-                    vtagsByVersion = VersionTag.tagsByVersion(vtags);
+                    Map<SchemaId, Long> vtags = VersionTag.getTagsById(record, typeManager);
+                    vtagsByVersion = VersionTag.idTagsByVersion(vtags);
 
                     updatedFieldsByScope = getFieldTypeAndScope(event.getUpdatedFields());
 
@@ -142,8 +144,8 @@ public class IndexUpdater implements RowLogMessageListener {
         return true;
     }
 
-    private void handleRecordCreateUpdate(IdRecord record, RecordEvent event, Map<String, Long> vtags,
-            Map<Long, Set<String>> vtagsByVersion, Map<Scope, Set<FieldType>> updatedFieldsByScope) throws Exception {
+    private void handleRecordCreateUpdate(IdRecord record, RecordEvent event, Map<SchemaId, Long> vtags,
+            Map<Long, Set<SchemaId>> vtagsByVersion, Map<Scope, Set<FieldType>> updatedFieldsByScope) throws Exception {
 
         // Determine the IndexCase:
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
@@ -156,7 +158,7 @@ public class IndexUpdater implements RowLogMessageListener {
             // But data from this record might be denormalized into other index entries
             // After this we go to update denormalized data
         } else {
-            Set<String> vtagsToIndex = new HashSet<String>();
+            Set<SchemaId> vtagsToIndex = new HashSet<SchemaId>();
 
             if (event.getType().equals(CREATE)) {
                 // New record: just index everything
@@ -224,7 +226,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
                         long version = event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();
                         if (vtagsByVersion.containsKey(version)) {
-                            Set<String> tmp = new HashSet<String>();
+                            Set<SchemaId> tmp = new HashSet<SchemaId>();
                             tmp.addAll(indexCase.getVersionTags());
                             tmp.retainAll(vtagsByVersion.get(version));
                             vtagsToIndex.addAll(tmp);
@@ -241,10 +243,10 @@ public class IndexUpdater implements RowLogMessageListener {
                 //
                 // Handle changes to vtag fields themselves
                 //
-                Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
+                Set<SchemaId> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
                 // Remove the vtags which are going to be reindexed anyway
                 changedVTagFields.removeAll(vtagsToIndex);
-                for (String vtag : changedVTagFields) {
+                for (SchemaId vtag : changedVTagFields) {
                     if (vtags.containsKey(vtag) && indexCase.getVersionTags().contains(vtag)) {
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s: will index for created or updated vtag %2$s",
@@ -271,7 +273,7 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     private void updateDenormalizedData(RecordId recordId, RecordEvent event,
-            Map<Scope, Set<FieldType>> updatedFieldsByScope, Map<Long, Set<String>> vtagsByVersion) {
+            Map<Scope, Set<FieldType>> updatedFieldsByScope, Map<Long, Set<SchemaId>> vtagsByVersion) {
 
         // This algorithm is designed to first collect all the reindex-work, and then to perform it.
         // Otherwise the same document would be indexed multiple times if it would become invalid
@@ -282,11 +284,11 @@ public class IndexUpdater implements RowLogMessageListener {
         //
 
         // This map will contain all the IndexFields we need to treat, and for each one the vtags to be considered
-        Map<IndexField, Set<String>> indexFieldsVTags = new IdentityHashMap<IndexField, Set<String>>() {
+        Map<IndexField, Set<SchemaId>> indexFieldsVTags = new IdentityHashMap<IndexField, Set<SchemaId>>() {
             @Override
-            public Set<String> get(Object key) {
+            public Set<SchemaId> get(Object key) {
                 if (!this.containsKey(key) && key instanceof IndexField) {
-                    this.put((IndexField)key, new HashSet<String>());
+                    this.put((IndexField)key, new HashSet<SchemaId>());
                 }
                 return super.get(key);
             }
@@ -327,7 +329,7 @@ public class IndexUpdater implements RowLogMessageListener {
             //
             // Determine the vtags of the referrer that we should consider
             //
-            Set<String> referrerVtags = indexFieldsVTags.get(indexField);
+            Set<SchemaId> referrerVtags = indexFieldsVTags.get(indexField);
 
             // we do not know if the referrer has any versions at all, so always add the versionless tag
             referrerVtags.add(VersionTag.VERSIONLESS_TAG);
@@ -339,7 +341,7 @@ public class IndexUpdater implements RowLogMessageListener {
             } else {
                 // Otherwise only the vtags of the created/updated version, if any
                 if (version != -1) {
-                    Set<String> vtags = vtagsByVersion.get(version);
+                    Set<SchemaId> vtags = vtagsByVersion.get(version);
                     if (vtags != null)
                         referrerVtags.addAll(vtags);
                 }
@@ -349,7 +351,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
         // === Case 2 === handle updated/added/removed vtags
 
-        Set<String> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
+        Set<SchemaId> changedVTagFields = VersionTag.filterVTagFields(event.getUpdatedFields(), typeManager);
         if (!changedVTagFields.isEmpty()) {
             // In this case, the IndexFields which we need to handle are those that use fields from:
             //  - the previous version to which the vtag pointed (if it is not a new vtag)
@@ -368,11 +370,11 @@ public class IndexUpdater implements RowLogMessageListener {
         //
 
         // This map holds the referrer records to reindex, and for which versions (vtags) they need to be reindexed.
-        Map<RecordId, Set<String>> referrersVTags = new HashMap<RecordId, Set<String>>() {
+        Map<RecordId, Set<SchemaId>> referrersVTags = new HashMap<RecordId, Set<SchemaId>>() {
             @Override
-            public Set<String> get(Object key) {
+            public Set<SchemaId> get(Object key) {
                 if (!containsKey(key) && key instanceof RecordId) {
-                    put((RecordId)key, new HashSet<String>());
+                    put((RecordId)key, new HashSet<SchemaId>());
                 }
                 return super.get(key);
             }
@@ -382,13 +384,13 @@ public class IndexUpdater implements RowLogMessageListener {
 
         // Run over the IndexFields
         nextIndexField:
-        for (Map.Entry<IndexField, Set<String>> entry : indexFieldsVTags.entrySet()) {
+        for (Map.Entry<IndexField, Set<SchemaId>> entry : indexFieldsVTags.entrySet()) {
             IndexField indexField = entry.getKey();
-            Set<String> referrerVTags = entry.getValue();
+            Set<SchemaId> referrerVTags = entry.getValue();
             DerefValue derefValue = (DerefValue)indexField.getValue();
 
             // Run over the version tags
-            for (String referrerVtag : referrerVTags) {
+            for (SchemaId referrerVtag : referrerVTags) {
                 List<DerefValue.Follow> follows = derefValue.getFollows();
 
                 Set<RecordId> referrers = new HashSet<RecordId>();
@@ -506,9 +508,9 @@ public class IndexUpdater implements RowLogMessageListener {
         // Now re-index all the found referrers
         //
         nextReferrer:
-        for (Map.Entry<RecordId, Set<String>> entry : referrersVTags.entrySet()) {
+        for (Map.Entry<RecordId, Set<SchemaId>> entry : referrersVTags.entrySet()) {
             RecordId referrer = entry.getKey();
-            Set<String> vtagsToIndex = entry.getValue();
+            Set<SchemaId> vtagsToIndex = entry.getValue();
 
             boolean lockObtained = false;
             try {
@@ -536,7 +538,7 @@ public class IndexUpdater implements RowLogMessageListener {
                             indexer.index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
                         }
                     } else {
-                        Map<String, Long> recordVTags = VersionTag.getTagsById(record, typeManager);
+                        Map<SchemaId, Long> recordVTags = VersionTag.getTagsById(record, typeManager);
                         vtagsToIndex.retainAll(indexCase.getVersionTags());
                         // Only keep vtags which exist on the record
                         vtagsToIndex.retainAll(recordVTags.keySet());
@@ -574,13 +576,13 @@ public class IndexUpdater implements RowLogMessageListener {
         return false;
     }
 
-    private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<String> fieldIds) {
+    private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds) {
         Map<Scope, Set<FieldType>> result = new HashMap<Scope, Set<FieldType>>();
         for (Scope scope : Scope.values()) {
             result.put(scope, new HashSet<FieldType>());
         }
 
-        for (String fieldId : fieldIds) {
+        for (SchemaId fieldId : fieldIds) {
             FieldType fieldType;
             try {
                 fieldType = typeManager.getFieldTypeById(fieldId);

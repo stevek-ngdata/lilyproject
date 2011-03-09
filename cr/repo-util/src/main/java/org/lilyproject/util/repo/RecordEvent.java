@@ -19,6 +19,8 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.json.JsonFormat;
 
 import java.io.IOException;
@@ -34,7 +36,7 @@ public class RecordEvent {
     private long versionCreated = -1;
     private long versionUpdated = -1;
     private Type type;
-    private Set<String> updatedFields = new HashSet<String>();
+    private Set<SchemaId> updatedFields = new HashSet<SchemaId>();
     private boolean recordTypeChanged = false;
 
     public enum Type {
@@ -59,7 +61,7 @@ public class RecordEvent {
     /**
      * Creates a record event from the json data supplied as bytes.
      */
-    public RecordEvent(byte[] data) throws IOException {
+    public RecordEvent(byte[] data, IdGenerator idGenerator) throws IOException {
         JsonNode msgData = JsonFormat.deserialize(data);
 
         String messageType = msgData.get("type").getTextValue();
@@ -88,7 +90,7 @@ public class RecordEvent {
         JsonNode updatedFieldsNode = msgData.get("updatedFields");
         if (updatedFieldsNode != null && updatedFieldsNode.size() > 0) {
             for (int i = 0; i < updatedFieldsNode.size(); i++) {
-                updatedFields.add(updatedFieldsNode.get(i).getTextValue());
+                updatedFields.add(idGenerator.getSchemaId(updatedFieldsNode.get(i).getBinaryValue()));
             }
         }
     }
@@ -134,11 +136,11 @@ public class RecordEvent {
      *
      * <p>In case of a delete event, this list is empty.
      */
-    public Set<String> getUpdatedFields() {
+    public Set<SchemaId> getUpdatedFields() {
         return updatedFields;
     }
 
-    public void addUpdatedField(String fieldTypeId) {
+    public void addUpdatedField(SchemaId fieldTypeId) {
         updatedFields.add(fieldTypeId);
     }
 
@@ -150,8 +152,8 @@ public class RecordEvent {
             object.put("type", type.getName());
 
         ArrayNode updatedFieldsNode = object.putArray("updatedFields");
-        for (String updatedField : updatedFields) {
-            updatedFieldsNode.add(updatedField);
+        for (SchemaId updatedField : updatedFields) {
+            updatedFieldsNode.add(updatedField.getBytes());
         }
 
         if (versionUpdated != -1) {

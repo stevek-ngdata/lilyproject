@@ -267,10 +267,6 @@ public abstract class AbstractTypeManager implements TypeManager {
         return getFieldTypesSnapshot().getFieldTypeById(id);
     }
     
-    public FieldType getFieldTypeById(String id) throws FieldTypeNotFoundException {
-        return getFieldTypesSnapshot().getFieldTypeById(id);
-    }
-
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldTypeByName(name);
     }

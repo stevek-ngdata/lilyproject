@@ -40,7 +40,40 @@ public class VersionTag {
     /**
      * A dummy tag used for documents which have no versions, and thus no tagged versions.
      */
-    public static final String VERSIONLESS_TAG = "@@versionless";
+//    public static final String VERSIONLESS_TAG = "@@versionless";
+    public static final SchemaId VERSIONLESS_TAG = new SchemaId() {
+        private byte[] bytes = new byte[]{(byte)-1};
+        
+        public byte[] getBytes() {
+            return bytes;
+        }
+        
+        public String toString() {
+            return "@@versionless";
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + Arrays.hashCode(bytes);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SchemaId other = (SchemaId) obj;
+            if (!Arrays.equals(bytes, other.getBytes()))
+                return false;
+            return true;
+        }
+    };
 
     public static QName qname(String vtag) {
         return new QName(NAMESPACE, vtag);
@@ -51,8 +84,8 @@ public class VersionTag {
      *
      * <p>Note that version numbers do not necessarily correspond to existing versions.
      */
-    public static Map<String, Long> getTagsById(Record record, TypeManager typeManager) {
-        Map<String, Long> vtags = new HashMap<String, Long>();
+    public static Map<SchemaId, Long> getTagsById(Record record, TypeManager typeManager) {
+        Map<SchemaId, Long> vtags = new HashMap<SchemaId, Long>();
 
         for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
             FieldType fieldType;
@@ -72,7 +105,7 @@ public class VersionTag {
             }
 
             if (isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId().toString(), (Long)field.getValue());
+                vtags.put(fieldType.getId(), (Long)field.getValue());
             }
         }
 
@@ -84,8 +117,8 @@ public class VersionTag {
      *
      * <p>Note that version numbers do not necessarily correspond to existing versions.
      */
-    public static Map<String, Long> getTagsById(IdRecord record, TypeManager typeManager) {
-        Map<String, Long> vtags = new HashMap<String, Long>();
+    public static Map<SchemaId, Long> getTagsById(IdRecord record, TypeManager typeManager) {
+        Map<SchemaId, Long> vtags = new HashMap<SchemaId, Long>();
 
         for (Map.Entry<SchemaId, Object> field : record.getFieldsById().entrySet()) {
             FieldType fieldType;
@@ -101,7 +134,7 @@ public class VersionTag {
             }
 
             if (isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId().toString(), (Long)field.getValue());
+                vtags.put(fieldType.getId(), (Long)field.getValue());
             }
         }
 
@@ -161,10 +194,9 @@ public class VersionTag {
     }
     
     /**
-     * Inverts a map containing version by tag to a map containing tags by version. It does not matter if the
-     * tags are identified by name or by ID.
+     * Inverts a map containing version by tag to a map containing name tags by version. 
      */
-    public static Map<Long, Set<String>> tagsByVersion(Map<String, Long> vtags) {
+    public static Map<Long, Set<String>> nameTagsByVersion(Map<String, Long> vtags) {
         Map<Long, Set<String>> result = new HashMap<Long, Set<String>>();
 
         for (Map.Entry<String, Long> entry : vtags.entrySet()) {
@@ -178,13 +210,31 @@ public class VersionTag {
 
         return result;
     }
+    
+    /**
+     * Inverts a map containing version by tag to a map containing id tags by version. 
+     */
+    public static Map<Long, Set<SchemaId>> idTagsByVersion(Map<SchemaId, Long> vtags) {
+        Map<Long, Set<SchemaId>> result = new HashMap<Long, Set<SchemaId>>();
+
+        for (Map.Entry<SchemaId, Long> entry : vtags.entrySet()) {
+            Set<SchemaId> tags = result.get(entry.getValue());
+            if (tags == null) {
+                tags = new HashSet<SchemaId>();
+                result.put(entry.getValue(), tags);
+            }
+            tags.add(entry.getKey());
+        }
+
+        return result;
+    }
 
     /**
      * Filters the given set of fields to only those that are vtag fields.
      */
-    public static Set<String> filterVTagFields(Set<String> fieldIds, TypeManager typeManager) {
-        Set<String> result = new HashSet<String>();
-        for (String field : fieldIds) {
+    public static Set<SchemaId> filterVTagFields(Set<SchemaId> fieldIds, TypeManager typeManager) {
+        Set<SchemaId> result = new HashSet<SchemaId>();
+        for (SchemaId field : fieldIds) {
             try {
                 if (VersionTag.isVersionTag(typeManager.getFieldTypeById(field))) {
                     result.add(field);
@@ -210,11 +260,10 @@ public class VersionTag {
      * @return null if the vtag does not exist, if it is not a valid vtag field, if the record does not exist,
      *         or if the record fails to load.
      */
-    public static Long getVersion(RecordId recordId, String vtagId, Repository repository) {
+    public static Long getVersion(RecordId recordId, SchemaId vtagId, Repository repository) {
         IdRecord vtagRecord;
-        SchemaId vtagSchemaId = repository.getIdGenerator().getSchemaId(vtagId);
         try {
-            vtagRecord = repository.readWithIds(recordId, null, Collections.singletonList(vtagSchemaId));
+            vtagRecord = repository.readWithIds(recordId, null, Collections.singletonList(vtagId));
         } catch (Exception e) {
             return null;
         }
@@ -237,10 +286,10 @@ public class VersionTag {
             return null;
         }
 
-        if (!vtagRecord.hasField(vtagSchemaId))
+        if (!vtagRecord.hasField(vtagId))
             return null;
 
-        return (Long)vtagRecord.getField(vtagSchemaId);
+        return (Long)vtagRecord.getField(vtagId);
     }
 
     /**
@@ -250,7 +299,7 @@ public class VersionTag {
      *
      * <p>The @@versionless version tag is supported.
      */
-    public static Record getRecord(RecordId recordId, String vtagId, Repository repository, List<QName> fieldNames)
+    public static Record getRecord(RecordId recordId, SchemaId vtagId, Repository repository, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
             // TODO this should include an option to only read non-versioned-scoped data
@@ -268,17 +317,17 @@ public class VersionTag {
     /**
      * See {@link #getRecord(org.lilyproject.repository.api.RecordId, String, org.lilyproject.repository.api.Repository, java.util.List)}.
      */
-    public static Record getRecord(RecordId recordId, String vtagId, Repository repository)
+    public static Record getRecord(RecordId recordId, SchemaId vtagId, Repository repository)
             throws RepositoryException, InterruptedException {
         return getRecord(recordId, vtagId, repository, null);
     }
 
-    public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository)
+    public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository)
             throws RepositoryException, IOException, InterruptedException {
         return getIdRecord(recordId, vtagId, repository, null);
     }
 
-    public static IdRecord getIdRecord(RecordId recordId, String vtagId, Repository repository, List<SchemaId> fieldIds)
+    public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository, List<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
         if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
             // TODO this should include an option to only read non-versioned-scoped data

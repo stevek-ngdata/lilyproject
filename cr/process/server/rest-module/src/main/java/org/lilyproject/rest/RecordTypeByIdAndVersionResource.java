@@ -34,7 +34,7 @@ public class RecordTypeByIdAndVersionResource extends RepositoryEnabled {
     @Produces("application/json")
     public RecordType get(@PathParam("id") String id, @PathParam("version") Long version) {
         try {
-            return repository.getTypeManager().getRecordTypeById(new SchemaIdImpl(id), version);
+            return repository.getTypeManager().getRecordTypeById(repository.getIdGenerator().getSchemaId(id), version);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
