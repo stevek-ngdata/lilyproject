@@ -189,7 +189,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
 
     public List<FieldType> getFieldTypesWithoutCache() throws TypeException {
         try {
-            return converter.convertAvroFieldTypes(lilyProxy.getFieldTypes());
+            return converter.convertAvroFieldTypes(lilyProxy.getFieldTypesWithoutCache());
         } catch (AvroTypeException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
@@ -201,7 +201,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
 
     public List<RecordType> getRecordTypesWithoutCache() throws TypeException {
         try {
-            return converter.convertAvroRecordTypes(lilyProxy.getRecordTypes());
+            return converter.convertAvroRecordTypes(lilyProxy.getRecordTypesWithoutCache());
         } catch (AvroTypeException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {

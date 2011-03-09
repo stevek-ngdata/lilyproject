@@ -16,7 +16,9 @@
 package org.lilyproject.repository.api;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 // IMPORTANT:
 //   See the note on the requirement TypeException described in the Repository.java file.
@@ -222,4 +224,8 @@ public interface TypeManager extends Closeable {
      * @return a snapshot of the FieldTypes cache
      */
     FieldTypes getFieldTypesSnapshot();
+
+    List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException, TypeException;
+
+    List<RecordType> getRecordTypesWithoutCache() throws RecordTypeNotFoundException, TypeException;
 }

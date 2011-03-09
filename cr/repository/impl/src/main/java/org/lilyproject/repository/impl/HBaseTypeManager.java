@@ -522,7 +522,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return new FieldTypeImpl(id, valueType, name, scope);
     }
 
-    protected List<FieldType> getFieldTypesWithoutCache() throws IOException, FieldTypeNotFoundException,
+    public List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException,
             TypeException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
         ResultScanner scanner = null;
@@ -532,13 +532,15 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 FieldType fieldType = getFieldTypeByIdWithoutCache(new SchemaIdImpl(result.getRow()));
                 fieldTypes.add(fieldType);
             }
+        } catch (IOException e) {
+            throw new TypeException("Exception occurred while retrieving field types without cache ", e);
         } finally {
             Closer.close(scanner);
         }
         return fieldTypes;
     }
 
-    protected List<RecordType> getRecordTypesWithoutCache() throws IOException, RecordTypeNotFoundException,
+    public List<RecordType> getRecordTypesWithoutCache() throws RecordTypeNotFoundException,
             TypeException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
         ResultScanner scanner = null;
@@ -548,6 +550,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 RecordType recordType = getRecordTypeByIdWithoutCache(new SchemaIdImpl(result.getRow()), null);
                 recordTypes.add(recordType);
             }
+        } catch (IOException e) {
+            throw new TypeException("Exception occurred while retrieving record types without cache ", e);
         } finally {
             Closer.close(scanner);
         }

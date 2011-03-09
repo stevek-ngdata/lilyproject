@@ -326,6 +326,26 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
+    
+    public List<AvroFieldType> getFieldTypesWithoutCache() throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
+        try {
+            return converter.convertFieldTypes(typeManager.getFieldTypesWithoutCache());
+        } catch (FieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (TypeException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    public List<AvroRecordType> getRecordTypesWithoutCache() throws AvroRecordTypeNotFoundException, AvroTypeException, AvroInterruptedException {
+        try {
+            return converter.convertRecordTypes(typeManager.getRecordTypesWithoutCache());
+        } catch (RecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (TypeException e) {
+            throw converter.convert(e);
+        } 
+    }
 
     public List<CharSequence> getVariants(ByteBuffer recordId) throws AvroRepositoryException,
             AvroInterruptedException {

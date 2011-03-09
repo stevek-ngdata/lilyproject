@@ -470,6 +470,19 @@
       "request": [],
       "response": {"type": "array", "items": "AvroRecordType"},
       "errors": ["AvroTypeException", "AvroGenericException", "AvroInterruptedException"]
+    },
+    
+    "getFieldTypesWithoutCache": {
+      "request": [],
+      "response": {"type": "array", "items": "AvroFieldType"},
+      "errors": ["AvroTypeException", "AvroFieldTypeNotFoundException", "AvroGenericException", "AvroInterruptedException"]
+      
+    }, 
+    
+    "getRecordTypesWithoutCache": {
+      "request": [],
+      "response": {"type": "array", "items": "AvroRecordType"},
+      "errors": ["AvroTypeException", "AvroRecordTypeNotFoundException", "AvroGenericException", "AvroInterruptedException"]
     }
  }
 }

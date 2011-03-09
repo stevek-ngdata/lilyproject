@@ -189,8 +189,8 @@ public abstract class AbstractTypeManager implements TypeManager {
         return fieldTypes;
     }
     
-    abstract protected List<FieldType> getFieldTypesWithoutCache() throws IOException, FieldTypeNotFoundException, TypeException;
-    abstract protected List<RecordType> getRecordTypesWithoutCache() throws IOException, RecordTypeNotFoundException, TypeException;
+    abstract public List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException, TypeException;
+    abstract public List<RecordType> getRecordTypesWithoutCache() throws RecordTypeNotFoundException, TypeException;
     
     protected synchronized void updateFieldTypeCache(FieldType fieldType) {
         updatingFieldTypes.update(fieldType);
