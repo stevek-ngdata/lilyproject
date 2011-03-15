@@ -17,7 +17,8 @@ package org.lilyproject.repository.impl.primitivevaluetype;
 
 import java.math.BigDecimal;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
 public class DecimalValueType implements PrimitiveValueType {
@@ -28,12 +29,12 @@ public class DecimalValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public BigDecimal fromBytes(byte[] bytes) {
-        return new BigDecimal(Bytes.toString(bytes));
+    public BigDecimal read(DataInput dataInput) {
+        return new BigDecimal(dataInput.readUTF());
     }
 
-    public byte[] toBytes(Object value) {
-        return Bytes.toBytes(((BigDecimal)value).toString());
+    public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeUTF(((BigDecimal)value).toString());
     }
 
     public Class getType() {

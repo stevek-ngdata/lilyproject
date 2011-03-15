@@ -15,6 +15,8 @@
  */
 package org.lilyproject.repository.api;
 
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.ObjectUtils;
 
@@ -315,78 +317,42 @@ public class Link {
         }
     }
 
-    public byte[] toBytes() {
+    public void write(DataOutput dataOutput) {
         // The bytes format is as follows:
-        // [byte representation of master record id, if not null][args: bytes of the string representation][length of args as a short]
+        // [byte representation of master record id, if not null][args: bytes of the string representation]
 
         byte[] recordIdBytes = masterRecordId == null ? new byte[0] : masterRecordId.toBytes();
-
+        dataOutput.writeInt(recordIdBytes.length);
+        if (recordIdBytes.length > 0) {
+            dataOutput.writeBytes(recordIdBytes);
+        }
+        
         StringBuilder argsBuilder = new StringBuilder();
         argstoString(argsBuilder);
-        byte[] argsBytes;
-        try {
-            argsBytes = argsBuilder.toString().getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-
-
-        if (argsBytes.length > Short.MAX_VALUE) {
-            throw new RuntimeException("Unexpected: unreasonably long link arguments: size does not fit in a short: " +
-                    argsBytes.length);
-        }
-        short argsLength = (short)argsBytes.length;
-
-
-        // Construct the resulting bytes
-        byte[] result = new byte[recordIdBytes.length + argsLength + 2];
-        int pos = 0;
-
-        // Put in the record id (could be zero-length)
-        System.arraycopy(recordIdBytes, 0, result, pos, recordIdBytes.length);
-        pos += recordIdBytes.length;
-
-        // Put in the args (could be zero-length)
-        System.arraycopy(argsBytes, 0, result, pos, argsBytes.length);
-        pos += argsBytes.length;
-
-        // Put in the length of the args
-        byte[] argsLengthBytes = new byte[2];
-        argsLengthBytes[1] = (byte) argsLength;
-        argsLength >>= 8;
-        argsLengthBytes[0] = (byte) argsLength;
-
-        System.arraycopy(argsLengthBytes, 0, result, pos, argsLengthBytes.length);
-
-        return result;
+        dataOutput.writeUTF(argsBuilder.toString());
     }
 
-    public static Link fromBytes(byte[] bytes, IdGenerator idGenerator) {
+    public static Link read(DataInput dataInput, IdGenerator idGenerator) {
         // Format: see toBytes.
 
-        // Read length of the args
-        short argsLength = 0;
-        argsLength ^= bytes[bytes.length - 2] & 0xFF;
-        argsLength <<= 8;
-        argsLength ^= bytes[bytes.length - 1] & 0xFF;
-
-        int recordIdLength = bytes.length - 2 - argsLength;
-
-        if (recordIdLength == 0 && argsLength == 0) {
+        int recordIdLength = dataInput.readInt();
+        byte[] recordIdBytes = null;
+        if (recordIdLength > 0) {
+            recordIdBytes = dataInput.readBytes(recordIdLength);
+        }
+        String args = dataInput.readUTF();
+        
+        if (recordIdLength == 0 && args == null) {
             return new Link();
         }
 
         LinkBuilder builder = Link.newBuilder();
-
         if (recordIdLength > 0) {
-            byte[] recordIdBytes = new byte[recordIdLength];
-            System.arraycopy(bytes, 0, recordIdBytes, 0, recordIdLength);
             RecordId id = idGenerator.fromBytes(recordIdBytes);
             builder.recordId(id);
         }
 
-        if (argsLength > 0) {
-            String args = new String(bytes, recordIdLength, argsLength);
+        if (args != null && args.length() > 0) {
             argsFromString(args, builder, args /* does not matter, should never be invalid */);
         }
 

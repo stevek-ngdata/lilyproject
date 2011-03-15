@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 public class ContainsValueComparator extends WritableByteArrayComparable {
     private byte[] valueTypeAndValue;
+    private int offset;
 
     /**
      * Nullary constructor, for Writable
@@ -40,6 +41,13 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
     }
 
     @Override
+    /**
+     * Checks if a blob key (ourStoreKey) is contained in the blob field (theirValue).
+     * The blob field can be a multivalue and / or hierarchical field.
+     * 
+     * <p>IMPORTANT: This implementation depends on the byte encodings from ValueTypeImpl, BlobValueType and DataOutputImpl.
+     *               Any changes there have an impact on this implementation. 
+     */
     public int compareTo(byte[] theirValue) {
         int valueTypeCode = Bytes.toInt(valueTypeAndValue);
         byte[] ourStoreKey = Bytes.tail(valueTypeAndValue, valueTypeAndValue.length-Bytes.SIZEOF_INT);
@@ -49,26 +57,20 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
             return 0;
         if (theirValue.length < ourStoreKey.length)
             return -1;
-        if (theirValue[0] == (byte)(1)) {
+        if (theirValue[0] == (byte)(1)) { // First byte indicates if it was deleted or not
             return -1;
         }
-        // Multivalue and hierarchical
-        int offset = 1; // First byte indicates if it was deleted or not
+        offset = 1;
         if (2 == valueTypeCode) {
             int compareTo = -1;
-            while (offset < theirValue.length) {
-                int multivalueKeyLength = Bytes.toInt(theirValue, offset); // Length of the next multivalue key
-                offset = offset + Bytes.SIZEOF_INT;
-                int stopIndex = offset + multivalueKeyLength;
-                while (offset < stopIndex) {
-                    int hierarchycalKeyLength = Bytes.toInt(theirValue, offset); // Length of the next hierarchy key
-                    offset = offset + Bytes.SIZEOF_INT;
-                    int valueLength = Bytes.toInt(theirValue, offset); // Length of the blob key
-                    // Don't increase offset here, it's calculated in the hierarchycalKeyLength
-                    compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset + Bytes.SIZEOF_INT, valueLength);
+            int multivalueCount = readInt(theirValue); // Number of elements in the multivalue
+            for (int i = 0; i < multivalueCount; i++) {
+                int hierarchicalCount = readInt(theirValue); // Number of elements in the hierarchy
+                for (int j = 0; j < hierarchicalCount; j++) {
+                    compareTo = compareBlob(ourStoreKey, theirValue);
                     if (0 == compareTo)
                         return 0;
-                    offset = offset + hierarchycalKeyLength;
+                    skipRestOfBlob(theirValue);
                 }
             }
             return compareTo;
@@ -76,20 +78,56 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         // Mutlivalue or hierarchical
         if (1 == valueTypeCode || 1 == valueTypeCode) {
             int compareTo = -1;
-            while (offset < theirValue.length) {
-                int multiValueKeyLength = Bytes.toInt(theirValue, offset); // Length of the next multivalue or hierarchy key
-                offset = offset + Bytes.SIZEOF_INT;
-                int valueLength = Bytes.toInt(theirValue, offset); // Length of the blob key
-             // Don't increase offset here, it's calculated in the multivalueKeyLength
-                compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset + Bytes.SIZEOF_INT, valueLength);
+            int count = readInt(theirValue); // Number of elements in the multivalue or hierarchy
+            for (int i = 0; i < count; i++) {
+                compareTo = compareBlob(ourStoreKey, theirValue);
                 if (0 == compareTo)
                     return 0;
-                offset = offset + multiValueKeyLength;
+                skipRestOfBlob(theirValue);
             }
-            return -1;
+            return compareTo;
         }
-        int valueLength = Bytes.toInt(theirValue, offset); // Length of the blob key, everything beyond that is mediatype, size, filename etc.
-        offset = offset + Bytes.SIZEOF_INT; 
-        return Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset, valueLength);
+        return compareBlob(ourStoreKey, theirValue);
     }
+    
+    /**
+     * Compares the value of the blob with ourStoreKey
+     */
+    private int compareBlob(byte[] ourStoreKey, byte[] theirValue) {
+        int blobValueLength = readVInt(theirValue); // Length of the blob value
+        int compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset , blobValueLength);
+        offset += blobValueLength;
+        return compareTo;
+    }
+    
+    /**
+     * Skips the rest of the blob (media type, blob size, name) and puts the offset to the next value to be read
+     */
+    private void skipRestOfBlob(byte[] theirValue) {
+        int mediaTypeLength = readInt(theirValue); // Length of the blob media type (offset = offset + blobvaluelength_size + blobvalue_size)
+        offset += mediaTypeLength;
+        offset += 8; // Blob size (long)
+        int nameLength = readInt(theirValue); // Length of the blob name (offset = offset + blobvaluelength_size + blobvalue_size + mediaTypeLength_size + mediaType_size + blobsize_long)
+        offset += nameLength;
+    }
+    
+    private int readInt(byte[] bytes) {
+        return ((bytes[offset++] & 0xFF) << 24) | ((bytes[offset++] & 0xFF) << 16)
+        | ((bytes[offset++] & 0xFF) << 8) | (bytes[offset++] & 0xFF);
+    }
+    
+    /**
+     * Reads an int stored in variable-length format. Reads between one and
+     * five bytes. Smaller values take fewer bytes. Negative numbers are not
+     * supported.
+     */
+     public int readVInt(byte[] bytes) {
+         byte b = bytes[offset++];
+         int i = b & 0x7F;
+         for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+             b = bytes[offset++];
+             i |= (b & 0x7F) << shift;
+         }
+         return i;
+     }
 }

@@ -15,7 +15,8 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
 public class DoubleValueType implements PrimitiveValueType {
@@ -26,12 +27,12 @@ public class DoubleValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public Double fromBytes(byte[] bytes) {
-        return Bytes.toDouble(bytes);
+    public Double read(DataInput dataInput) {
+        return dataInput.readDouble();
     }
 
-    public byte[] toBytes(Object value) {
-        return Bytes.toBytes((Double)value);
+    public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeDouble((Double)value);
     }
 
     public Class getType() {

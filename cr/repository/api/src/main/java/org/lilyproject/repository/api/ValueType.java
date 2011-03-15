@@ -17,6 +17,8 @@ package org.lilyproject.repository.api;
 
 import java.util.Set;
 
+import org.lilyproject.bytes.api.DataInput;
+
 /**
  * A value type represents the type of the value of a {@link FieldType}.
  *
@@ -68,7 +70,8 @@ public interface ValueType {
     /**
      * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
      */
-    public Object fromBytes(byte[] value);
+    public Object read(DataInput dataInput);
+    
 
     /**
      * Encodes an object of the type represented by this {@link ValueType} to a byte[].

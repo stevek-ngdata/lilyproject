@@ -1,6 +1,7 @@
 package org.lilyproject.tools.recordrowvisualizer;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
@@ -42,7 +43,7 @@ public class Fields {
                         if (EncodingUtil.isDeletedField(value)) {
                             decodedValue = DELETED;
                         } else {
-                            decodedValue = fieldType.getValueType().fromBytes(EncodingUtil.stripPrefix(value));
+                            decodedValue = fieldType.getValueType().read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
                         }
         
                         columns.put(fieldId, decodedValue);

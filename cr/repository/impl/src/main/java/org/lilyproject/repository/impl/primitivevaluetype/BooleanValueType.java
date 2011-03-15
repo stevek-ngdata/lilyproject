@@ -16,6 +16,8 @@
 package org.lilyproject.repository.impl.primitivevaluetype;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
 public class BooleanValueType implements PrimitiveValueType {
@@ -26,12 +28,12 @@ public class BooleanValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public Boolean fromBytes(byte[] bytes) {
-        return Bytes.toBoolean(bytes);
+    public Boolean read(DataInput dataInput) {
+        return dataInput.readBoolean();
     }
 
-    public byte[] toBytes(Object value) {
-        return Bytes.toBytes((Boolean)value);
+    public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeBoolean((Boolean)value);
     }
 
     public Class getType() {

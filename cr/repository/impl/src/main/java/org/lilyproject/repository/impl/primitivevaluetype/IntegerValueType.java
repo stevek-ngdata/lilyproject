@@ -15,7 +15,8 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
 public class IntegerValueType implements PrimitiveValueType {
@@ -26,12 +27,12 @@ public class IntegerValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public Integer fromBytes(byte[] bytes) {
-        return Bytes.toInt(bytes);
+    public Integer read(DataInput dataInput) {
+        return dataInput.readInt();
     }
 
-    public byte[] toBytes(Object value) {
-        return Bytes.toBytes((Integer)value);
+    public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeInt((Integer)value);
     }
 
     public Class getType() {

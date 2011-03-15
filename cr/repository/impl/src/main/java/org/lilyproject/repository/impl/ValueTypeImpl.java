@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataOutputImpl;
+import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.PrimitiveValueType;
 import org.lilyproject.repository.api.ValueType;
@@ -52,86 +56,81 @@ public class ValueTypeImpl implements ValueType {
         return !multiValue && !hierarchical;
     }
 
-    public Object fromBytes(byte[] bytes) {
+    public Object read(DataInput dataInput) {
         if (isMultiValue()) {
-            return fromMultiValueBytes(bytes);
+            return readMultiValue(dataInput);
         } else if (isHierarchical()) {
-            return fromHierarchicalBytes(bytes);
+            return readHierarchical(dataInput);
         } else {
-            return primitiveValueType.fromBytes(bytes);
+            return primitiveValueType.read(dataInput);
         }
     }
 
-    private List fromMultiValueBytes(byte[] bytes) {
+    private List readMultiValue(DataInput dataInput) {
         List result = new ArrayList();
-        int offset = 0;
-        while (offset < bytes.length) {
-            int valueLenght = Bytes.toInt(bytes, offset, Bytes.SIZEOF_INT);
-            offset = offset + Bytes.SIZEOF_INT;
-            byte[] valueBytes = new byte[valueLenght];
-            Bytes.putBytes(valueBytes, 0, bytes, offset, valueLenght);
-            Object value;
+        int nrOfValues = dataInput.readInt();
+        for (int i = 0 ; i < nrOfValues; i++) {
+            Object value = null;
             if (isHierarchical()) {
-                value = fromHierarchicalBytes(valueBytes);
+                value = readHierarchical(dataInput);
             } else {
-                value = primitiveValueType.fromBytes(valueBytes);
+                value = primitiveValueType.read(dataInput);
             }
             result.add(value);
-            offset = offset + valueLenght;
         }
         return result;
     }
 
-    private HierarchyPath fromHierarchicalBytes(byte[] bytes) {
+    private HierarchyPath readHierarchical(DataInput dataInput) {
         List<Object> result = new ArrayList<Object>();
-        int offset = 0;
-        while (offset < bytes.length) {
-            int valueLenght = Bytes.toInt(bytes, offset, Bytes.SIZEOF_INT);
-            offset = offset + Bytes.SIZEOF_INT;
-            byte[] valueBytes = new byte[valueLenght];
-            Bytes.putBytes(valueBytes, 0, bytes, offset, valueLenght);
-            Object value = primitiveValueType.fromBytes(valueBytes);
-            result.add(value);
-            offset = offset + valueLenght;
+        int nrOfValues = dataInput.readInt();
+        for (int i = 0 ; i < nrOfValues; i++) {
+            result.add(primitiveValueType.read(dataInput));
         }
         return new HierarchyPath(result.toArray(new Object[result.size()]));
     }
 
+    /**
+     * Format of the bytes written
+     * - Multivalue count : int of 4 bytes (if it is multivalue)
+     *     - Hierarchy count : int of 4 bytes (if it is hierarchycal as well)
+     *         - Value bytes
+     * - Hierarchy count : int of 4 bytes (if it is only hierarchycal)
+     *     - Value bytes
+     * - Value bytes (if it is neither multivalue nor hierarchycal)        
+     * 
+     * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
+     */
     public byte[] toBytes(Object value) {
+        DataOutput dataOutput = new DataOutputImpl();
         if (isMultiValue()) {
-            return toMultiValueBytes(value);
+            writeMultiValue(value, dataOutput);
         } else if (isHierarchical()) {
-            return toHierarchyBytes(value);
+            writeHierarchical(value, dataOutput);
         } else {
-            return primitiveValueType.toBytes(value);
+            primitiveValueType.write(value, dataOutput);
         }
+        return dataOutput.toByteArray();
     }
 
-    private byte[] toMultiValueBytes(Object value) {
-        byte[] result;
-        result = new byte[0];
-        for (Object element : ((List<Object>) value)) {
-            byte[] encodedValue;
+    private void writeMultiValue(Object value, DataOutput dataOutput) {
+        List<Object> values = ((List<Object>) value);
+        dataOutput.writeInt(values.size());
+        for (Object element : values) {
             if (isHierarchical()) {
-                encodedValue = toHierarchyBytes(element);
+                writeHierarchical(element, dataOutput);
             } else {
-                encodedValue = primitiveValueType.toBytes(element);
+                primitiveValueType.write(element, dataOutput);
             }
-            result = Bytes.add(result, Bytes.toBytes(encodedValue.length));
-            result = Bytes.add(result, encodedValue);
         }
-        return result;
     }
 
-    private byte[] toHierarchyBytes(Object value) {
-        byte[] result;
-        result = new byte[0];
-        for (Object element : ((HierarchyPath) value).getElements()) {
-            byte[] encodedValue = primitiveValueType.toBytes(element);
-            result = Bytes.add(result, Bytes.toBytes(encodedValue.length));
-            result = Bytes.add(result, encodedValue);
+    private void writeHierarchical(Object value, DataOutput dataOutput) {
+        Object[] elements = ((HierarchyPath) value).getElements();
+        dataOutput.writeInt(elements.length);
+        for (Object element : elements) {
+            primitiveValueType.write(element, dataOutput);
         }
-        return result;
     }
 
     public PrimitiveValueType getPrimitive() {

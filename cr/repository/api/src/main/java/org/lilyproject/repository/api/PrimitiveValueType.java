@@ -15,6 +15,9 @@
  */
 package org.lilyproject.repository.api;
 
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+
 /**
  * Represents the primitive type that can be used for the value of a field. It should be embedded in a
  * {@link ValueType} before using it in a {@link FieldType}.
@@ -38,14 +41,14 @@ public interface PrimitiveValueType {
     String getName();
 
     /**
-     * Decodes a byte[] to an object of the actual type of this primitive value type.
+     * Reads the primitive value from the DataInput.
      */
-    public Object fromBytes(byte[] bytes);
+    public Object read(DataInput dataInput);
 
     /**
-     * Encodes an object of the actual type of this primitive value type to a byte[].
+     * Writes the primitive value to the DataOutput.
      */
-    byte[] toBytes(Object value);
+    public void write(Object value, DataOutput dataOutput);
 
     /**
      * The Java type of the values of this primitive value type.

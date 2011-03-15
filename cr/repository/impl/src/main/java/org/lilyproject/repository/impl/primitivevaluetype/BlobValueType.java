@@ -15,9 +15,9 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import java.util.Arrays;
-
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
@@ -28,60 +28,50 @@ public class BlobValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public Object fromBytes(byte[] bytes) {
-        int offset = 0;
-        int keyLength = Bytes.toInt(bytes);
-        offset = offset + Bytes.SIZEOF_INT;
+    /**
+     * See write for the byte format.
+     */
+    public Object read(DataInput dataInput) {
+        int keyLength = dataInput.readVInt();
         byte[] key = null;
         if (keyLength > 0) {
-            key = Arrays.copyOfRange(bytes, offset, offset + keyLength);
-            offset = offset + keyLength;
+            key = dataInput.readBytes(keyLength);
         }
-        int mediaTypeLength = Bytes.toInt(bytes, offset);
-        offset = offset + Bytes.SIZEOF_INT;
-        String mediaType = Bytes.toString(bytes, offset, mediaTypeLength);
-        offset = offset + mediaTypeLength;
-        Long size = Bytes.toLong(bytes, offset);
-        offset = offset + Bytes.SIZEOF_LONG;
+        String mediaType = dataInput.readUTF();
+        Long size = dataInput.readLong();
         if (size == -1) {
             size = null;
         }
-        int filenameLength = Bytes.toInt(bytes, offset);
-        offset = offset + Bytes.SIZEOF_INT;
-        String filename = null;
-        if (filenameLength > 0) {
-            filename = Bytes.toString(bytes, offset, filenameLength);
-        }
+        String filename = dataInput.readUTF();
         return new Blob(key, mediaType, size, filename);
     }
 
-    public byte[] toBytes(Object value) {
-        byte[] bytes = new byte[0];
+    /**
+     * Format of the bytes written :
+     * - Length of the blob value : int of 4 bytes
+     * - Blob Value
+     * - Blob Media Type : UTF (which starts with an int of 4 bytes indicating its length)
+     * - Blob size : long of 8 bytes
+     * - Blob name : UTF (which starts with an int of 4 bytes indicating its length)
+     * 
+     * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
+     */
+    public void write(Object value, DataOutput dataOutput) {
         Blob blob = (Blob)value;
         byte[] key = blob.getValue();
         if (key == null) {
-            bytes = Bytes.add(bytes, Bytes.toBytes((int)0));
+            dataOutput.writeVInt(0);
         } else {
-            bytes = Bytes.add(bytes, Bytes.toBytes(key.length));
-            bytes = Bytes.add(bytes, key);
+            dataOutput.writeVInt(key.length);
+            dataOutput.writeBytes(key);
         }
-        byte[] mediaTypeBytes = Bytes.toBytes(blob.getMediaType());
-        bytes = Bytes.add(bytes, Bytes.toBytes(mediaTypeBytes.length));
-        bytes = Bytes.add(bytes, mediaTypeBytes);
+        dataOutput.writeUTF(blob.getMediaType());
         Long size = blob.getSize();
         if (size == null) {
             size = Long.valueOf(-1);
         }
-        bytes = Bytes.add(bytes, Bytes.toBytes(size));
-        String filename = blob.getName();
-        if (filename == null) {
-            bytes = Bytes.add(bytes, Bytes.toBytes(Integer.valueOf(0)));
-        } else {
-            byte[] fileNameBytes = Bytes.toBytes(blob.getName());
-            bytes = Bytes.add(bytes, Bytes.toBytes(fileNameBytes.length));
-            bytes = Bytes.add(bytes, fileNameBytes);
-        }
-        return bytes;
+        dataOutput.writeLong(size);
+        dataOutput.writeUTF(blob.getName());
     }
 
     public Class getType() {

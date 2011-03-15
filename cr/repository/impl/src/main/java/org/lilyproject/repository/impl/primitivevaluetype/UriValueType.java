@@ -17,7 +17,8 @@ package org.lilyproject.repository.impl.primitivevaluetype;
 
 import java.net.URI;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
 public class UriValueType implements PrimitiveValueType {
@@ -28,12 +29,12 @@ public class UriValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public URI fromBytes(byte[] bytes) {
-        return URI.create(Bytes.toString(bytes));
+    public URI read(DataInput dataInput) {
+        return URI.create(dataInput.readUTF());
     }
 
-    public byte[] toBytes(Object value) {
-        return Bytes.toBytes(((URI)value).toString());
+    public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeUTF(((URI)value).toString());
     }
 
     public Class getType() {

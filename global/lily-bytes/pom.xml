@@ -20,36 +20,24 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-repository-api</artifactId>
-  <name>Lily: Repository API</name>
+  <artifactId>lily-bytes</artifactId>
+  <name>Lily: Bytes utility classes</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily-repository</artifactId>
+    <artifactId>lily</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <relativePath>../</relativePath>
+    <relativePath>../..</relativePath>
   </parent>
 
   <build>
   </build>
 
   <dependencies>
+    <!-- The goal is to keep the util package mostly dependency-free -->
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-bytes</artifactId>
-    </dependency>
-    
-    <dependency>
-      <!-- Even though the API does not use jodatime directly, jodatime is used for the value objects
-           of the DATE and DATETIME primitive value types, which are built-in value types, so should
-           be available to all API users. -->
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
     </dependency>
   </dependencies>
 

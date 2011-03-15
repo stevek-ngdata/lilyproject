@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
@@ -1014,7 +1015,7 @@ public class HBaseRepository extends BaseRepository {
         FieldType fieldType = fieldTypes.getFieldTypeById(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
         context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
-        Object value = valueType.fromBytes(EncodingUtil.stripPrefix(prefixedValue));
+        Object value = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(prefixedValue)));
         return new Pair<QName, Object>(fieldType.getName(), value);
     }
 
@@ -1150,7 +1151,7 @@ public class HBaseRepository extends BaseRepository {
                                 if (valueType.getPrimitive() instanceof BlobValueType) {
                                     byte[] value = cell.getValue();
                                     if (!isDeleteMarker(value)) {
-                                        Object valueObject = valueType.fromBytes(EncodingUtil.stripPrefix(value));
+                                        Object valueObject = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
                                         try {
                                             Set<BlobReference> referencedBlobs = getReferencedBlobs((FieldTypeImpl)fieldType, valueObject);
                                             blobsToDelete.addAll(referencedBlobs);

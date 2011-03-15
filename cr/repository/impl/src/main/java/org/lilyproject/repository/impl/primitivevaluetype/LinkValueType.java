@@ -15,6 +15,8 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.PrimitiveValueType;
@@ -37,12 +39,12 @@ public class LinkValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public Link fromBytes(byte[] bytes) {
-        return Link.fromBytes(bytes, idGenerator);
+    public Link read(DataInput dataInput) {
+        return Link.read(dataInput, idGenerator);
     }
 
-    public byte[] toBytes(Object value) {
-        return ((Link)value).toBytes();
+    public void write(Object value, DataOutput dataOutput) {
+        ((Link)value).write(dataOutput);
     }
 
     public Class getType() {

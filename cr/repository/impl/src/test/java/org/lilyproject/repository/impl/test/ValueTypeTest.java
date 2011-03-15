@@ -29,6 +29,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.testfw.TestHelper;
 
@@ -168,17 +170,15 @@ public class ValueTypeTest {
             return NAME;
         }
 
-        public Object fromBytes(byte[] bytes) {
-            int x = Bytes.toInt(bytes, 0, Bytes.SIZEOF_INT);
-            int y = Bytes.toInt(bytes, Bytes.SIZEOF_INT, Bytes.SIZEOF_INT);
+        public Object read(DataInput dataInput) {
+            int x = dataInput.readInt();
+            int y = dataInput.readInt();
             return new XYCoordinates(x, y);
         }
 
-        public byte[] toBytes(Object value) {
-            byte[] result = new byte[0];
-            result = Bytes.add(result, Bytes.toBytes(((XYCoordinates) value).getX()));
-            result = Bytes.add(result, Bytes.toBytes(((XYCoordinates) value).getY()));
-            return result;
+        public void write(Object value, DataOutput dataOutput) {
+            dataOutput.writeInt(((XYCoordinates) value).getX());
+            dataOutput.writeInt(((XYCoordinates) value).getY());
         }
 
         public Class getType() {

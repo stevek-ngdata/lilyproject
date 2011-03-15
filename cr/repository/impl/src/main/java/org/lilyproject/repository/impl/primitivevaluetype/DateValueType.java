@@ -15,9 +15,11 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.apache.hadoop.hbase.util.Bytes;
+
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput; 
 import org.lilyproject.repository.api.PrimitiveValueType;
 
 public class DateValueType implements PrimitiveValueType {
@@ -28,13 +30,13 @@ public class DateValueType implements PrimitiveValueType {
         return NAME;
     }
 
-    public LocalDate fromBytes(byte[] bytes) {
-        return new LocalDate(Bytes.toLong(bytes), DateTimeZone.UTC);
+    public LocalDate read(DataInput dataInput) {
+        return new LocalDate(dataInput.readLong(), DateTimeZone.UTC);
     }
 
-    public byte[] toBytes(Object value) {
+    public void write(Object value, DataOutput dataOutput) {
         // Currently we only store the millis, not the chronology.
-        return Bytes.toBytes(((LocalDate)value).toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis());
+        dataOutput.writeLong(((LocalDate)value).toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis());
     }
 
     public Class getType() {

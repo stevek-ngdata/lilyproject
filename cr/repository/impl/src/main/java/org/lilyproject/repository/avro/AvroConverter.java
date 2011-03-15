@@ -30,6 +30,7 @@ import org.apache.avro.util.Utf8;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.bytes.impl.DataInputImpl;
 
 public class AvroConverter {
 
@@ -76,7 +77,7 @@ public class AvroConverter {
             for (AvroField field : avroRecord.fields) {
                 QName name = decodeQName(convert(field.name));
                 ValueType valueType = typeManager.getValueType(convert(field.primitiveType), field.multiValue, field.hierarchical);
-                Object value = valueType.fromBytes(field.value.array());
+                Object value = valueType.read(new DataInputImpl(field.value.array()));
                 record.setField(name, value);
             }
         }
@@ -173,12 +174,7 @@ public class AvroConverter {
             avroField.hierarchical = fieldType.getValueType().isHierarchical();
 
             byte[] value = fieldType.getValueType().toBytes(field.getValue());
-            ByteBuffer byteBuffer = ByteBuffer.allocate(value.length);
-            byteBuffer.mark();
-            byteBuffer.put(value);
-            byteBuffer.reset();
-
-            avroField.value = byteBuffer;
+            avroField.value = ByteBuffer.wrap(value);
 
             avroRecord.fields.add(avroField);
         }
