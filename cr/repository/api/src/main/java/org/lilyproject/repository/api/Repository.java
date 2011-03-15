@@ -226,6 +226,16 @@ public interface Repository extends Closeable {
             VersionNotFoundException, TypeException, InterruptedException;
 
     /**
+     * Reads all versions of a record listed the <code>versions</code>, limited to a subset of the fields.
+     * The returned list of records can be smaller than the number of requested versions if some versions
+     * have a higher number than the highest existing version.
+     * <p>If the given list of fields is empty, all fields will be read.
+     */
+    List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
+            throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
+            VersionNotFoundException, TypeException, InterruptedException;
+    
+    /**
      * Reads a Record and also returns the mapping from QNames to IDs.
      *
      * <p>See {@link IdRecord} for more information.

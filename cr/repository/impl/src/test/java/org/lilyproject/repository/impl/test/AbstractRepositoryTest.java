@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -495,6 +496,32 @@ public abstract class AbstractRepositoryTest {
         assertEquals(2, list.size());
         assertTrue(list.contains(repository.read(record.getId(), 2L)));
         assertTrue(list.contains(repository.read(record.getId(), 3L)));
+    }
+    
+    @Test
+    public void testReadSpecificVersions() throws Exception {
+        Record record = createDefaultRecord();
+        Record updateRecord = record.clone();
+        updateRecord.setField(fieldType1.getName(), "value2");
+        updateRecord.setField(fieldType2.getName(), 789);
+        updateRecord.setField(fieldType3.getName(), false);
+
+        repository.update(updateRecord);
+
+        Record record1 = repository.read(record.getId(), 1L);
+        Record record2 = repository.read(record.getId(), 2L);
+        
+        List<Record> list = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 2L}), null);
+        assertEquals(2, list.size());
+        assertTrue(list.contains(record1));
+        assertTrue(list.contains(record2));
+
+        list = repository.readVersions(record.getId(), new ArrayList<Long>(), null);
+        assertEquals(0, list.size());
+
+        list = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 5L}), null);
+        assertEquals(1, list.size());
+        assertTrue(list.contains(record1));
     }
     
     @Test

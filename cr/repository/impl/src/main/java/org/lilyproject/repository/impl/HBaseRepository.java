@@ -801,13 +801,40 @@ public class HBaseRepository extends BaseRepository {
 
         Result result = getRow(recordId, toVersion, true, fields);
         if (fromVersion < 1L)
-            fromVersion = 1L;
+            fromVersion = 1L; // Put the fromVersion to a sensible value
         Long latestVersion = getLatestVersion(result);
         if (latestVersion < toVersion)
-            toVersion = latestVersion;
+            toVersion = latestVersion; // Limit the toVersion to the highest possible version
         List<Record> records = new ArrayList<Record>();
         for (long version = fromVersion; version <= toVersion; version++) {
             records.add(getRecordFromRowResult(recordId, version, new ReadContext(), result, fieldTypes));
+        }
+        return records;
+    }
+    
+    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
+    throws FieldTypeNotFoundException, TypeException, RecordNotFoundException, RecordException,
+    VersionNotFoundException, RecordTypeNotFoundException, InterruptedException {
+        ArgumentValidator.notNull(recordId, "recordId");
+        ArgumentValidator.notNull(versions, "versions");
+        
+        List<Record> records = new ArrayList<Record>();
+        
+        if (versions.isEmpty())
+            return records;
+
+        Collections.sort(versions);
+        
+        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
+        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
+        
+        
+        Result result = getRow(recordId, versions.get(versions.size()-1), true, fields);
+        Long latestVersion = getLatestVersion(result);
+        for (Long version : versions) {
+            if (version > latestVersion)
+                break; // Stop if the version is higher than the highest existing version
+            records.add(getRecordFromRowResult(recordId, version, new ReadContext(), result, fieldTypes));            
         }
         return records;
     }
@@ -949,7 +976,7 @@ public class HBaseRepository extends BaseRepository {
             return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
 
         } else {
-            // Get on version
+            // Get one version
             NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
             NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions = allVersionsMap
                     .get(RecordCf.DATA.bytes);
@@ -984,29 +1011,37 @@ public class HBaseRepository extends BaseRepository {
         return recordType;
     }
 
+    /**
+     * Extracts the fields for a specific version from the result.
+     */
     private List<Pair<QName, Object>> extractFields(Long version, Result result, ReadContext context, FieldTypes fieldTypes)
             throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException {
-        List<Pair<QName, Object>> fields = new ArrayList<Pair<QName, Object>>();
-        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes);
+        List<Pair<QName, Object>> extractedFields = new ArrayList<Pair<QName, Object>>();
+        
+        // Get a map of all fields with their values for each (cell-)version
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes); 
         if (mapWithVersions != null) {
+            // Iterate over all columns
             for (Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : mapWithVersions.entrySet()) {
-                NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
-                Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(version);
-                if (ceilingEntry != null) {
-                    byte[] key = columnWithAllVersions.getKey();
-                    if (key[0] == RecordColumn.DATA_PREFIX) {
-                        Pair<QName, Object> field = extractField(key, ceilingEntry.getValue(),
-                                context, fieldTypes);
+                // Check if the retrieved column is from a data field, and not a system field
+                byte[] key = columnWithAllVersions.getKey();
+                if (key[0] == RecordColumn.DATA_PREFIX) {
+                    NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
+                    // Get the entry for the version (can be a cell with a lower version number if the field was not changed)
+                    Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(version);
+                    if (ceilingEntry != null) {
+                        // Extract and decode the value of the field
+                        Pair<QName, Object> field = extractField(key, ceilingEntry.getValue(), context, fieldTypes);
                         if (field != null) {
-                            fields.add(field);
+                            extractedFields.add(field);
                         }
                     }
                 }
             }
         }
-        return fields;
+        return extractedFields;
     }
-
+    
     private Pair<QName, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context, FieldTypes fieldTypes)
             throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException {
         if (EncodingUtil.isDeletedField(prefixedValue)) {
