@@ -129,6 +129,40 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
+    
+    public List<AvroRecord> readRecords(List<ByteBuffer> avroRecordIds, List<AvroQName> avroFieldNames)
+            throws AvroRecordTypeNotFoundException, AvroFieldTypeNotFoundException, 
+            AvroVersionNotFoundException, AvroRecordException, AvroTypeException, AvroInterruptedException {
+        List<RecordId> recordIds = null;
+        if (avroRecordIds != null) {
+            recordIds = new ArrayList<RecordId>();
+            for (ByteBuffer avroRecordId: avroRecordIds) {
+                recordIds.add(converter.convertAvroRecordId(avroRecordId));
+            }
+        }
+        List<QName> fieldNames = null;
+        if (avroFieldNames != null) {
+            fieldNames = new ArrayList<QName>();
+            for (AvroQName avroQName : avroFieldNames) {
+                fieldNames.add(converter.convert(avroQName));
+            }
+        }
+        try {
+            return converter.convertRecords(repository.read(recordIds, fieldNames));
+        } catch (RecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (FieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (VersionNotFoundException e) {
+            throw converter.convert(e);
+        } catch (RecordException e) {
+            throw converter.convert(e);
+        } catch (TypeException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
 
     public List<AvroRecord> readVersions(ByteBuffer recordId, long avroFromVersion, long avroToVersion,
             List<AvroQName> avroFieldNames) throws AvroRecordTypeNotFoundException,

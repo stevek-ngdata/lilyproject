@@ -18,6 +18,7 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +28,7 @@ import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
+import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.io.Closer;
 
 // ATTENTION: when adding new methods, do not forget to add handling for UndeclaredThrowableException! This is
@@ -116,6 +118,49 @@ public class RemoteRepository extends BaseRepository {
             RecordTypeNotFoundException, FieldTypeNotFoundException, VersionNotFoundException, RecordException,
             TypeException {
         return read(recordId, null, fieldNames);
+    }
+    
+    public List<Record> read(List<RecordId> recordIds) throws 
+            RecordTypeNotFoundException, FieldTypeNotFoundException, VersionNotFoundException, RecordException,
+            TypeException {
+        return read(recordIds, null);
+    }
+    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws 
+            RecordTypeNotFoundException, FieldTypeNotFoundException, VersionNotFoundException, RecordException,
+            TypeException {
+        ArgumentValidator.notNull(recordIds, "recordIds");
+        if (recordIds == null)
+            return new ArrayList<Record>();
+        try {
+            List<ByteBuffer> avroRecordIds = new ArrayList<ByteBuffer>();
+            for (RecordId recordId : recordIds) {
+                avroRecordIds.add(converter.convert(recordId));
+            }
+            List<AvroQName> avroFieldNames = null;
+            if (fieldNames != null) {
+                avroFieldNames = new ArrayList<AvroQName>(fieldNames.size());
+                for (QName fieldName : fieldNames) {
+                    avroFieldNames.add(converter.convert(fieldName));
+                }
+            }
+            return converter.convertAvroRecords(lilyProxy.readRecords(avroRecordIds, avroFieldNames));
+        } catch (AvroVersionNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroRecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroFieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroRecordException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredRecordThrowable(e);
+        }
     }
 
     public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,

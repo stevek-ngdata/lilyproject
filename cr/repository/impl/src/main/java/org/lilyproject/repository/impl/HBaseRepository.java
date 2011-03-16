@@ -312,7 +312,7 @@ public class HBaseRepository extends BaseRepository {
 
         RecordId recordId = record.getId();
         try {
-            Record originalRecord = read(newRecord.getId(), null, null, new ReadContext(), fieldTypes);
+            Record originalRecord = read(newRecord.getId(), null, null, null, fieldTypes);
 
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
@@ -596,7 +596,7 @@ public class HBaseRepository extends BaseRepository {
             Map<QName, Object> fields = getFieldsToUpdate(record);
             fields = filterMutableFields(fields, fieldTypes);
 
-            Record originalRecord = read(recordId, version, null, new ReadContext(), fieldTypes);
+            Record originalRecord = read(recordId, version, null, null, fieldTypes);
             Map<QName, Object> originalFields = filterMutableFields(originalRecord.getFields(), fieldTypes);
 
             Record originalNextRecord = null;
@@ -746,6 +746,21 @@ public class HBaseRepository extends BaseRepository {
             TypeException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
+    
+    public List<Record> read(List<RecordId> recordIds) throws RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
+            InterruptedException {
+        return read(recordIds, null);
+    }
+
+    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
+            InterruptedException {
+        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
+        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
+
+        return read(recordIds, fields, fieldTypes);
+    }
 
     public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
@@ -759,7 +774,7 @@ public class HBaseRepository extends BaseRepository {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
         List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
 
-        return read(recordId, version, fields, new ReadContext(), fieldTypes);
+        return read(recordId, version, fields, null, fieldTypes);
     }
 
     private List<FieldType> getFieldTypesFromNames(List<QName> fieldNames, FieldTypes fieldTypes) throws FieldTypeNotFoundException,
@@ -805,23 +820,20 @@ public class HBaseRepository extends BaseRepository {
         Long latestVersion = getLatestVersion(result);
         if (latestVersion < toVersion)
             toVersion = latestVersion; // Limit the toVersion to the highest possible version
-        List<Record> records = new ArrayList<Record>();
+        List<Long> versionsToRead = new ArrayList<Long>(); 
         for (long version = fromVersion; version <= toVersion; version++) {
-            records.add(getRecordFromRowResult(recordId, version, new ReadContext(), result, fieldTypes));
+            versionsToRead.add(version);
         }
-        return records;
+        return getRecordsFromRowResult(recordId, versionsToRead, result, fieldTypes);
     }
     
-    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
-    throws FieldTypeNotFoundException, TypeException, RecordNotFoundException, RecordException,
+    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames) throws FieldTypeNotFoundException, TypeException, RecordNotFoundException, RecordException,
     VersionNotFoundException, RecordTypeNotFoundException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(versions, "versions");
         
-        List<Record> records = new ArrayList<Record>();
-        
         if (versions.isEmpty())
-            return records;
+            return new ArrayList<Record>();
 
         Collections.sort(versions);
         
@@ -829,14 +841,18 @@ public class HBaseRepository extends BaseRepository {
         List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
         
         
-        Result result = getRow(recordId, versions.get(versions.size()-1), true, fields);
+        Long highestRequestedVersion = versions.get(versions.size()-1);
+        Result result = getRow(recordId, highestRequestedVersion, true, fields);
         Long latestVersion = getLatestVersion(result);
-        for (Long version : versions) {
-            if (version > latestVersion)
-                break; // Stop if the version is higher than the highest existing version
-            records.add(getRecordFromRowResult(recordId, version, new ReadContext(), result, fieldTypes));            
+        
+        // Drop the versions that are higher than the latestVersion
+        List<Long> validVersions = new ArrayList<Long>();
+        for (int i = 0; i < versions.size(); i++) {
+            if (versions.get(i) > latestVersion)
+                break;
+            validVersions.add(versions.get(i));
         }
-        return records;
+        return getRecordsFromRowResult(recordId, validVersions, result, fieldTypes);
     }
     
     public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RecordNotFoundException,
@@ -873,9 +889,11 @@ public class HBaseRepository extends BaseRepository {
     
             Long latestVersion = getLatestVersion(result);
             if (requestedVersion == null) {
-                requestedVersion = latestVersion;
+                // Latest version can still be null if there are only non-versioned fields in the record
+                requestedVersion = latestVersion; 
             } else {
                 if (latestVersion == null || latestVersion < requestedVersion ) {
+                    // The requested version is higher than the highest existing version
                     throw new VersionNotFoundException(recordId, requestedVersion);
                 }
             }
@@ -884,25 +902,27 @@ public class HBaseRepository extends BaseRepository {
             metrics.report(Action.READ, System.currentTimeMillis() - before);
         }
     }
-
-    private Record getRecordFromRowResult(RecordId recordId, Long requestedVersion, ReadContext readContext,
-            Result result, FieldTypes fieldTypes) throws VersionNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RecordException, TypeException, InterruptedException {
-        Record record = newRecord(recordId);
-        record.setVersion(requestedVersion);
-
-        // Extract the actual fields from the retrieved data
-        if (extractFieldsAndRecordTypes(result, requestedVersion, record, readContext, fieldTypes)) {
-            // Set the recordType explicitly in case only versioned fields were
-            // extracted
-            Pair<SchemaId, Long> recordTypePair = extractRecordType(Scope.NON_VERSIONED, result, null, record);
-            if (recordTypePair != null) {
-                RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
-                record.setRecordType(recordType.getName(), recordType.getVersion());
-                readContext.setRecordTypeId(Scope.NON_VERSIONED, recordType);
+    
+    private List<Record> read(List<RecordId> recordIds, List<FieldType> fields, FieldTypes fieldTypes) 
+            throws RecordTypeNotFoundException, FieldTypeNotFoundException,
+            RecordException, VersionNotFoundException, TypeException, InterruptedException {
+        long before = System.currentTimeMillis();
+        try {
+            ArgumentValidator.notNull(recordIds, "recordIds");
+            List<Record> records = new ArrayList<Record>();
+            if (recordIds.isEmpty())
+                return records;
+        
+            Map<RecordId, Result> results = getRows(recordIds, fields);
+        
+            for (Entry<RecordId, Result> entry : results.entrySet()) {
+                Long version = getLatestVersion(entry.getValue());
+                records.add(getRecordFromRowResult(entry.getKey(), version, null, entry.getValue(), fieldTypes));
             }
+            return records;
+        } finally {
+            metrics.report(Action.READ, System.currentTimeMillis() - before);
         }
-        return record;
     }
 
     private Long getLatestVersion(Result result) {
@@ -947,6 +967,43 @@ public class HBaseRepository extends BaseRepository {
         return result;
     }
     
+ // Retrieves the row from the table and check if it exists and has not been flagged as deleted
+    private Map<RecordId, Result> getRows(List<RecordId> recordIds, List<FieldType> fields)
+            throws RecordException {
+        Map<RecordId, Result> results = new HashMap<RecordId, Result>();
+        
+        try {
+            List<Get> gets = new ArrayList<Get>();
+            for (RecordId recordId : recordIds) {
+                Get get = new Get(recordId.toBytes());
+                // Add the columns for the fields to get
+                addFieldsToGet(get, fields);
+                get.setMaxVersions(1); // Only retrieve the most recent version of each field
+                gets.add(get);
+            }
+
+            // Retrieve the data from the repository
+            int i = 0;
+            for (Result result : recordTable.get(gets)) {
+                if (result == null || result.isEmpty()) {
+                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException
+                    continue;
+                }
+                // Check if the record was deleted
+                byte[] deleted = result.getValue(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
+                if ((deleted == null) || (Bytes.toBoolean(deleted))) {
+                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException
+                    continue;
+                }
+                results.put(recordIds.get(i++), result);
+            } 
+        } catch (IOException e) {
+            throw new RecordException("Exception occurred while retrieving records <" + recordIds
+                    + "> from HBase table", e);
+        }
+        return results;
+    }
+    
     private boolean recordExists(byte[] rowId) throws IOException {
         Get get = new Get(rowId);
         
@@ -964,60 +1021,65 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    private Pair<SchemaId, Long> extractRecordType(Scope scope, Result result, Long version, Record record) {
-        if (version == null) {
-            // Get latest version
-            byte[] idBytes = result.getValue(RecordCf.DATA.bytes,
-                    recordTypeIdColumnNames.get(scope));
-            byte[] versionBytes = result.getValue(RecordCf.DATA.bytes,
-                    recordTypeVersionColumnNames.get(scope));
-            if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
-                return null;
-            return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
-
-        } else {
-            // Get one version
-            NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
-            NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions = allVersionsMap
-                    .get(RecordCf.DATA.bytes);
-            return extractVersionRecordType(version, versionableSystemCFversions, scope);
-        }
+    /**
+     * Extracts the latest record type for a specific scope from the Result.
+     */
+    private Pair<SchemaId, Long> extractLatestRecordType(Scope scope, Result result) {
+        byte[] idBytes = result.getValue(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope));
+        byte[] versionBytes = result.getValue(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope));
+        if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
+            return null; // No record type was found
+        return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
     }
 
-    private Pair<SchemaId, Long> extractVersionRecordType(Long version,
-            NavigableMap<byte[], NavigableMap<Long, byte[]>> versionableSystemCFversions, Scope scope) {
+    /**
+     * Extracts the record type for a specific version and a specific scope
+     */
+    private Pair<SchemaId, Long> extractVersionRecordType(Scope scope, Result result, Long version) {
+        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> allColumnsAllVersionsMap = allVersionsMap
+                .get(RecordCf.DATA.bytes);
+        
         byte[] recordTypeIdColumnName = recordTypeIdColumnNames.get(scope);
         byte[] recordTypeVersionColumnName = recordTypeVersionColumnNames.get(scope);
+        // Get recordTypeId
         Entry<Long, byte[]> idCeilingEntry = null;
-        NavigableMap<Long, byte[]> recordTypeIdMap = versionableSystemCFversions.get(recordTypeIdColumnName);
+        NavigableMap<Long, byte[]> recordTypeIdMap = allColumnsAllVersionsMap.get(recordTypeIdColumnName);
         if (recordTypeIdMap != null) {
             idCeilingEntry = recordTypeIdMap.ceilingEntry(version);
         }
         SchemaId recordTypeId = null;
         if (idCeilingEntry == null)
-            return null;
+            return null; // No record type was found
         recordTypeId = new SchemaIdImpl(idCeilingEntry.getValue());
         
+        // Get recordTypeVersion
         Long recordTypeVersion = null;
         Entry<Long, byte[]> versionCeilingEntry = null;
-        NavigableMap<Long, byte[]> recordTypeVersionMap = versionableSystemCFversions.get(recordTypeVersionColumnName);
+        NavigableMap<Long, byte[]> recordTypeVersionMap = allColumnsAllVersionsMap.get(recordTypeVersionColumnName);
         if (recordTypeVersionMap != null) {
             versionCeilingEntry = recordTypeVersionMap.ceilingEntry(version);
         }
         if (versionCeilingEntry == null)
-            return null;
+            return null; // No record type was found, we should never get here: if there is an id there should also be a version
         recordTypeVersion = Bytes.toLong(versionCeilingEntry.getValue());
         Pair<SchemaId, Long> recordType = new Pair<SchemaId, Long>(recordTypeId, recordTypeVersion);
         return recordType;
     }
 
     /**
-     * Extracts the fields for a specific version from the result.
+     *  Gets the requested version of the record (fields and recordTypes) from the Result object. 
      */
-    private List<Pair<QName, Object>> extractFields(Long version, Result result, ReadContext context, FieldTypes fieldTypes)
-            throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException {
-        List<Pair<QName, Object>> extractedFields = new ArrayList<Pair<QName, Object>>();
-        
+    private Record getRecordFromRowResult(RecordId recordId, Long requestedVersion, ReadContext readContext, Result result, FieldTypes fieldTypes)
+            throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException, RecordTypeNotFoundException {
+        Record record = newRecord(recordId);
+        record.setVersion(requestedVersion);
+        Set<Scope> scopes = new HashSet<Scope>(); // Set of scopes for which a field has been read
+
+        // If the version is null, this means the record has no version an thus only contains non-versioned fields (if any)
+        // All non-versioned fields are stored at version 1, so we extract the fields at version 1
+        Long versionToRead = (requestedVersion == null) ? 1L : requestedVersion;
+
         // Get a map of all fields with their values for each (cell-)version
         NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes); 
         if (mapWithVersions != null) {
@@ -1028,30 +1090,138 @@ public class HBaseRepository extends BaseRepository {
                 if (key[0] == RecordColumn.DATA_PREFIX) {
                     NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
                     // Get the entry for the version (can be a cell with a lower version number if the field was not changed)
-                    Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(version);
+                    Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(versionToRead);
                     if (ceilingEntry != null) {
                         // Extract and decode the value of the field
-                        Pair<QName, Object> field = extractField(key, ceilingEntry.getValue(), context, fieldTypes);
+                        Pair<FieldType, Object> field = extractField(key, ceilingEntry.getValue(), readContext, fieldTypes);
                         if (field != null) {
-                            extractedFields.add(field);
+                            record.setField(field.getV1().getName(), field.getV2());
+                            scopes.add(field.getV1().getScope());
                         }
                     }
                 }
             }
         }
-        return extractedFields;
+        
+        // We're only adding the record types if any fields were read.
+        if (!scopes.isEmpty()) {
+            if (requestedVersion == null) {
+                // There can only be non-versioned fields, so only read the non-versioned record type
+                Pair<SchemaId, Long> recordTypePair = extractLatestRecordType(Scope.NON_VERSIONED, result);
+                if (recordTypePair != null) {
+                    RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                    record.setRecordType(recordType.getName(), recordType.getVersion());
+                    if (readContext != null)
+                        readContext.setRecordTypeId(Scope.NON_VERSIONED, recordType);
+                }            
+            } else {
+                // Get the record type for each scope 
+                // At least the non-versioned record type should be read since that is also the record type of the whole record 
+                scopes.add(Scope.NON_VERSIONED); 
+                for (Scope scope : scopes) {
+                    Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, requestedVersion);
+                    if (recordTypePair != null) {
+                        RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                        record.setRecordType(scope, recordType.getName(), recordType.getVersion());
+                        if (readContext != null)
+                            readContext.setRecordTypeId(scope, recordType);
+                    }
+                }
+            }
+        }
+        
+        return record;
     }
     
-    private Pair<QName, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context, FieldTypes fieldTypes)
+    /**
+     *  Gets the requested version of the record (fields and recordTypes) from the Result object.
+     *  This method is optimized for reading multiple versions.
+     */
+    private List<Record> getRecordsFromRowResult(RecordId recordId, List<Long> requestedVersions, Result result, FieldTypes fieldTypes)
+            throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException, RecordTypeNotFoundException {
+        Map<Long, Record> records = new HashMap<Long, Record>(requestedVersions.size());
+        Map<Long, Set<Scope>> scopes = new HashMap<Long, Set<Scope>>(requestedVersions.size());
+        for (Long requestedVersion : requestedVersions) {
+            Record record = newRecord(recordId);
+            record.setVersion(requestedVersion);
+            records.put(requestedVersion, record);
+            scopes.put(requestedVersion, new HashSet<Scope>());
+        }
+
+        // Get a map of all fields with their values for each (cell-)version
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes); 
+        if (mapWithVersions != null) {
+            
+            // Iterate over all columns
+            for (Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : mapWithVersions.entrySet()) {
+            
+                // Check if the retrieved column is from a data field, and not a system field
+                byte[] key = columnWithAllVersions.getKey();
+                if (key[0] == RecordColumn.DATA_PREFIX) {
+                    NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
+                
+                    // Keep a map with decoded fields to avoid decoding them twice.
+                    // The key of the map is the cell-version, not the (lily-)version of the field we want to read
+                    Map<Long, Pair<FieldType, Object>> decodedFields = new HashMap<Long, Pair<FieldType,Object>>();
+                    for (Long versionToRead : requestedVersions) {
+                        Record record = records.get(versionToRead);
+                        // Get the entry for the version (can be a cell with a lower version number if the field was not changed)
+                        Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(versionToRead);
+                        if (ceilingEntry != null) {
+                            Pair<FieldType, Object> alreadyDecodedField = decodedFields.get(ceilingEntry.getKey());
+                            if (alreadyDecodedField != null) {
+                                // Don't extract it again
+                                record.setField(alreadyDecodedField.getV1().getName(), alreadyDecodedField.getV2());
+                                scopes.get(versionToRead).add(alreadyDecodedField.getV1().getScope());
+                                
+                            } else {
+                                // Extract and decode the value of the field
+                                Pair<FieldType, Object> field = extractField(key, ceilingEntry.getValue(), null, fieldTypes);
+                                if (field != null) {
+                                    record.setField(field.getV1().getName(), field.getV2());
+                                    scopes.get(versionToRead).add(field.getV1().getScope());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Add the record types to the records
+        for (Entry<Long, Record> recordEntry : records.entrySet()) {
+            Set<Scope> scopesForVersion = scopes.get(recordEntry.getKey());
+            
+            // We're only adding the record types if any fields were read.
+            if (!scopesForVersion.isEmpty()) {
+                // Get the record type for each scope 
+
+                // At least the non-versioned record type should be read since that is also the record type of the whole record 
+                scopesForVersion.add(Scope.NON_VERSIONED); 
+                for (Scope scope : scopesForVersion) {
+                    Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, recordEntry.getKey());
+                    if (recordTypePair != null) {
+                        RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                        recordEntry.getValue().setRecordType(scope, recordType.getName(), recordType.getVersion());
+                    }
+                }
+            }
+        }
+        
+        return new ArrayList<Record>(records.values());
+    }
+    
+    private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context, FieldTypes fieldTypes)
             throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException {
         if (EncodingUtil.isDeletedField(prefixedValue)) {
             return null;
         }
         FieldType fieldType = fieldTypes.getFieldTypeById(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
-        context.addFieldType(fieldType);
+        if (context != null) 
+            context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
         Object value = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(prefixedValue)));
-        return new Pair<QName, Object>(fieldType.getName(), value);
+        return new Pair<FieldType, Object>(fieldType, value);
     }
 
     private void addFieldsToGet(Get get, List<FieldType> fields) {
@@ -1075,33 +1245,6 @@ public class HBaseRepository extends BaseRepository {
         get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_VERSION.bytes);
         get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
         get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
-    }
-
-    private boolean extractFieldsAndRecordTypes(Result result, Long version, Record record, ReadContext context, FieldTypes fieldTypes)
-            throws RecordTypeNotFoundException, RecordException, FieldTypeNotFoundException, TypeException,
-            InterruptedException {
-        List<Pair<QName, Object>> fields;
-        if (version == null) {
-            // All non-versioned fields are stored at version 1
-            fields = extractFields(1L, result, context, fieldTypes);
-        } else {
-            fields = extractFields(version, result, context, fieldTypes);
-        }
-        if (fields.isEmpty()) 
-            return false;
-        
-        for (Pair<QName, Object> field : fields) {
-            record.setField(field.getV1(), field.getV2());
-        }
-        for (Scope scope : Scope.values()) {
-            Pair<SchemaId, Long> recordTypePair = extractRecordType(scope, result, version, record);
-            if (recordTypePair != null) {
-                RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
-                record.setRecordType(scope, recordType.getName(), recordType.getVersion());
-                context.setRecordTypeId(scope, recordType);
-            }
-        }
-        return true;
     }
 
     public void delete(RecordId recordId) throws RecordException, RecordNotFoundException, RecordLockedException {

@@ -182,6 +182,8 @@ public interface Repository extends Closeable {
      * Reads a record fully. All the fields of the record will be read.
      *
      * <p>If the record has versions, it is the latest version that will be read.
+     * 
+     * @param recordId the id of the record to read, null is not allowed
      */
     Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
             FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
@@ -195,8 +197,46 @@ public interface Repository extends Closeable {
      *
      * <p>It is not an error if the record would not have a particular field, though it is an error to specify
      * a non-existing field name.
+     * 
+     * @param recordId the id of the record to read, null is not allowed
+     * @param fieldNames list of names of the fields to read or null to read all fields
      */
     Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException, RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
+            InterruptedException;
+    
+    /**
+     * Reads a list of records fully. All the fields of the records will be read.
+     *
+     * <p>If the records have versions, it will be the latest versions that will be read.
+     * 
+     * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
+     * Instead, the returned list will not contain an entry for that requested id. 
+     * 
+     * @param list or recordIds to read, null is not allowed
+     * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
+     */
+    List<Record> read(List<RecordId> recordIds) throws RecordTypeNotFoundException,
+            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
+            InterruptedException;
+
+    /**
+     * Reads a list of records limited to a subset of the fields. Only the fields specified in the fieldNames list will be
+     * included.
+     *
+     * <p>Versioned and versioned-mutable fields will be taken from the latest version.
+     *
+     * <p>It is not an error if the records would not have a particular field, though it is an error to specify
+     * a non-existing field name.
+     * 
+     * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
+     * Instead, the returned list will not contain an entry for that requested id. 
+     *
+     * @param list or recordIds to read, null is not allowed
+     * @param fieldNames list of names of the fields to read or null to read all fields
+     * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
+     */
+    List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RecordTypeNotFoundException,
             FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
             InterruptedException;
 

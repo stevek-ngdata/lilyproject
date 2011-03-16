@@ -511,17 +511,17 @@ public abstract class AbstractRepositoryTest {
         Record record1 = repository.read(record.getId(), 1L);
         Record record2 = repository.read(record.getId(), 2L);
         
-        List<Record> list = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 2L}), null);
-        assertEquals(2, list.size());
-        assertTrue(list.contains(record1));
-        assertTrue(list.contains(record2));
+        List<Record> records = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 2L}), null);
+        assertEquals(2, records.size());
+        assertTrue(records.contains(record1));
+        assertTrue(records.contains(record2));
 
-        list = repository.readVersions(record.getId(), new ArrayList<Long>(), null);
-        assertEquals(0, list.size());
+        records = repository.readVersions(record.getId(), new ArrayList<Long>(), null);
+        assertEquals(0, records.size());
 
-        list = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 5L}), null);
-        assertEquals(1, list.size());
-        assertTrue(list.contains(record1));
+        records = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 5L}), null);
+        assertEquals(1, records.size());
+        assertTrue(records.contains(record1));
     }
     
     @Test
@@ -1411,5 +1411,26 @@ public abstract class AbstractRepositoryTest {
         record = repository.update(record, true, true);
         assertEquals(recordTypeA.getName(), record.getRecordTypeName(Scope.VERSIONED_MUTABLE));
         assertEquals(recordTypeA.getVersion(), record.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
+    }
+    
+    @Test
+    public void testReadMultipleRecords() throws Exception {
+        Record record1 = createDefaultRecord();
+        Record record2 = createDefaultRecord();
+        Record record3 = createDefaultRecord();
+        
+        List<Record> readRecords = repository.read(Arrays.asList(new RecordId[]{record3.getId(), record1.getId()}));
+        
+        assertEquals(2, readRecords.size());
+        assertTrue(readRecords.contains(record1));
+        assertTrue(readRecords.contains(record3));
+        
+        repository.delete(record2.getId());
+        readRecords = repository.read(Arrays.asList(new RecordId[]{record2.getId(), record1.getId()}));
+        assertEquals(1, readRecords.size());
+        assertTrue(readRecords.contains(record1));
+        
+        readRecords = repository.read(Arrays.asList(new RecordId[]{}));
+        assertTrue(readRecords.isEmpty());
     }
 }
