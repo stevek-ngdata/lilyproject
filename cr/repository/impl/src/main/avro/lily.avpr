@@ -371,6 +371,18 @@
       "AvroFieldTypeNotFoundException", "AvroRecordException", "AvroTypeException", "AvroGenericException",
       "AvroInterruptedException"]
      },
+     
+     "readSpecificVersions": {
+      "request": [
+        {"name": "recordId", "type": "bytes"},
+        {"name": "versions", "type": {"type": "array", "items": "long"}},
+        {"name": "fieldNames", "type": ["null", {"type": "array", "items": "AvroQName"}]}
+      ],
+      "response": {"type": "array", "items": "AvroRecord"},
+      "errors": ["AvroRecordNotFoundException", "AvroVersionNotFoundException", "AvroRecordTypeNotFoundException",
+      "AvroFieldTypeNotFoundException", "AvroRecordException", "AvroTypeException", "AvroGenericException",
+      "AvroInterruptedException"]
+     },
 
     "delete": {
       "request": [{"name": "recordId", "type": "bytes"}],

@@ -188,6 +188,40 @@ public class RemoteRepository extends BaseRepository {
             throw handleUndeclaredRecordThrowable(e);
         }
     }
+
+    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
+    throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
+    VersionNotFoundException, TypeException {
+        try {
+            List<AvroQName> avroFieldNames = null;
+            if (fieldNames != null) {
+                avroFieldNames = new ArrayList<AvroQName>(fieldNames.size());
+                for (QName fieldName : fieldNames) {
+                    avroFieldNames.add(converter.convert(fieldName));
+                }
+            }
+            return converter.convertAvroRecords(lilyProxy.readSpecificVersions(converter.convert(recordId), versions, avroFieldNames));
+        } catch (AvroRecordNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroVersionNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroRecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroFieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (AvroRecordException e) {
+            throw converter.convert(e);
+        } catch (AvroTypeException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredRecordThrowable(e);
+        }
+    }
+
     
     public Record update(Record record) throws RecordNotFoundException, InvalidRecordException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordLockedException, RecordException,

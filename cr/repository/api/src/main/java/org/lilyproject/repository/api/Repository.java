@@ -227,9 +227,12 @@ public interface Repository extends Closeable {
 
     /**
      * Reads all versions of a record listed the <code>versions</code>, limited to a subset of the fields.
-     * The returned list of records can be smaller than the number of requested versions if some versions
+     * 
+     * @param recordId id of the record to read
+     * @param versions the list of versions to read, should not contain null values
+     * @param fieldNames list of fields to read, if null all fields will be read
+     * @return a list of records. The list can be smaller than the number of requested versions if some requested versions
      * have a higher number than the highest existing version.
-     * <p>If the given list of fields is empty, all fields will be read.
      */
     List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
             throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,

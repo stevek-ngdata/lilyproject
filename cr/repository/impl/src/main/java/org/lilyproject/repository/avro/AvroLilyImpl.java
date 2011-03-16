@@ -160,6 +160,40 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
+    
+    public List<AvroRecord> readSpecificVersions(ByteBuffer recordId, List<Long> avroVersions,
+            List<AvroQName> avroFieldNames) throws AvroRecordTypeNotFoundException,
+            AvroFieldTypeNotFoundException, AvroRecordNotFoundException, AvroVersionNotFoundException,
+            AvroRecordException, AvroTypeException, AvroInterruptedException {
+        List<QName> fieldNames = null;
+        if (avroFieldNames != null) {
+            fieldNames = new ArrayList<QName>();
+            for (AvroQName avroQName : avroFieldNames) {
+                fieldNames.add(converter.convert(avroQName));
+            }
+        }
+        // The avroVersions are a GenericData$Array which for instance cannot be sorted, so we convert it to an ArrayList
+        List<Long> versions = new ArrayList<Long>(avroVersions.size());
+        versions.addAll(avroVersions);
+        try {
+            return converter.convertRecords(repository.readVersions(converter.convertAvroRecordId(
+                    recordId), versions, fieldNames));
+        } catch (RecordNotFoundException e) {
+            throw converter.convert(e);
+        } catch (RecordTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (FieldTypeNotFoundException e) {
+            throw converter.convert(e);
+        } catch (VersionNotFoundException e) {
+            throw converter.convert(e);
+        } catch (RecordException e) {
+            throw converter.convert(e);
+        } catch (TypeException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
 
     public AvroRecord update(AvroRecord record, boolean updateVersion, boolean useLatestRecordType) throws
             AvroRecordNotFoundException, AvroInvalidRecordException, AvroRecordTypeNotFoundException,
