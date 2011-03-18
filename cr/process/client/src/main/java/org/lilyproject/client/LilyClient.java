@@ -19,12 +19,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,14 +35,7 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.impl.BlobManagerImpl;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.repository.impl.InlineBlobStoreAccess;
-import org.lilyproject.repository.impl.RemoteRepository;
-import org.lilyproject.repository.impl.RemoteTypeManager;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
+import org.lilyproject.repository.impl.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
@@ -75,6 +63,7 @@ public class LilyClient implements Closeable {
     private static final String blobDfsUriPath = "/lily/blobStoresConfig/dfsUri";
     private static final String blobHBaseZkQuorumPath = "/lily/blobStoresConfig/hbaseZkQuorum";
     private static final String blobHBaseZkPortPath = "/lily/blobStoresConfig/hbaseZkPort";
+    private static final String blobStoreAccessConfigPath = "/lily/blobStoresConfig/accessConfig";
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -186,11 +175,19 @@ public class LilyClient implements Closeable {
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(fs, blobRootPath);
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(configuration, true);
         BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-        blobStoreAccessFactory.addBlobStoreAccess(5000, inlineBlobStoreAccess);
-        blobStoreAccessFactory.addBlobStoreAccess(200000, hbaseBlobStoreAccess);
+        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess});
+        
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, getBlobStoreAccessConfig(zk));
         
         return new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, true);
+    }
+    
+    private static BlobStoreAccessConfig getBlobStoreAccessConfig(ZooKeeperItf zk) {
+        try {
+            return new BlobStoreAccessConfig(zk.getData(blobStoreAccessConfigPath, false, new Stat()));
+        } catch (Exception e) {
+            throw new RuntimeException("Blob stores config lookup: failed to get blob store access config from ZooKeeper", e);
+        }
     }
     
     private static URI getDfsUri(ZooKeeperItf zk)  {

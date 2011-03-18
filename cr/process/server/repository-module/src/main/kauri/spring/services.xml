@@ -83,6 +83,8 @@
     </constructor-arg>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="zooKeeper"/>
+    <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
   </bean>
   
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
@@ -120,7 +122,7 @@
     <constructor-arg value="${repository:port}"/>
   </bean>
 
-  <bean class="org.lilyproject.server.modules.repository.ZKPublisher">
+  <bean id="zkPublisher" class="org.lilyproject.server.modules.repository.ZKPublisher">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg>
       <bean factory-bean="address" factory-method="getHostAddress"/>

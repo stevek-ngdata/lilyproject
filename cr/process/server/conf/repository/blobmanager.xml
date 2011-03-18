@@ -15,4 +15,15 @@
         runDelay : The minimal time (in seconds) between two runs of the monitor.
    -->
   <blobIncubatorMonitor minimalAge="3600" monitorDelay="20" runDelay="600"/>
+  
+  <!--  The BlobManager can store blobs in three different BlobStores : "HDFS", "HBASE" and "INLINE"
+        Depending on the size of the blob it is stored on Hdfs, in a dedicated HBase table or inside the blob field of the record.
+        The upper limits for the blob sizes can be configured below.
+        The default blobstore stores all blobs that are bigger than the biggest limit, this a mandatory setting.
+        The other limits are configured by giving the store's "name" and its upper "limit"
+   -->
+  <blobStore default="HDFS">
+    <store name="HBASE" limit="200000"/>
+    <store name="INLINE" limit="5000"/>
+  </blobStore>
 </blobmanager>

@@ -18,10 +18,7 @@ package org.lilyproject.linkindex.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.hadoop.fs.Path;
 import org.junit.AfterClass;
@@ -33,13 +30,7 @@ import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.BlobManagerImpl;
-import org.lilyproject.repository.impl.DFSBlobStoreAccess;
-import org.lilyproject.repository.impl.HBaseRepository;
-import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.*;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
@@ -87,8 +78,11 @@ public class LinkIndexTest {
         IdGenerator idGenerator = new IdGeneratorImpl();
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zk, hbaseTableFactory);
+
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
+        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess});
+        BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
 
         rowLogConfMgr = new RowLogConfigurationManagerImpl(zk);

@@ -40,6 +40,7 @@ public class ZKPublisher {
     private String blobDfsUriPath = lilyPath + "/blobStoresConfig/dfsUri";
     private String blobHBaseZkQuorumPath = lilyPath + "/blobStoresConfig/hbaseZkQuorum";
     private String blobHBaseZkPortPath = lilyPath + "/blobStoresConfig/hbaseZkPort";
+    private String blobStoreAccessConfigPath = lilyPath + "/blobStoresConfig/accessConfig";
     private final String dfsUri;
     private final Configuration hbaseConf;
 
@@ -73,5 +74,9 @@ public class ZKPublisher {
         ZkUtil.createPath(zk, blobDfsUriPath, dfsUri.getBytes());
         ZkUtil.createPath(zk, blobHBaseZkQuorumPath, hbaseConf.get("hbase.zookeeper.quorum").getBytes());
         ZkUtil.createPath(zk, blobHBaseZkPortPath, hbaseConf.get("hbase.zookeeper.property.clientPort").getBytes());
+    }
+    
+    public void publishBlobStoreAccessConfig(byte[] blobStoreAccessConfig) throws InterruptedException, KeeperException {
+        ZkUtil.createPath(zk, blobStoreAccessConfigPath, blobStoreAccessConfig);
     }
 }

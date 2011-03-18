@@ -25,6 +25,8 @@ import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Helper class to instantiate and wire all the repository related services.
@@ -113,19 +115,21 @@ public class RepositorySetup {
 
     private BlobStoreAccessFactory createBlobAccess() throws Exception {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(hbaseProxy.getBlobFS(), new Path("/lily/blobs"));
+        BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(hadoopConf);
+        BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
 
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(dfsBlobStoreAccess);
-
+        BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
+        
         if (hbaseBlobLimit != -1) {
-            BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(hadoopConf);
-            blobStoreAccessFactory.addBlobStoreAccess(hbaseBlobLimit, hbaseBlobStoreAccess);
+            blobStoreAccessConfig.setLimit(hbaseBlobStoreAccess.getId(), hbaseBlobLimit);
         }
 
         if (inlineBlobLimit != -1) {
-            BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
-            blobStoreAccessFactory.addBlobStoreAccess(inlineBlobLimit, inlineBlobStoreAccess);
+            blobStoreAccessConfig.setLimit(inlineBlobStoreAccess.getId(), inlineBlobLimit);
         }
 
+        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess});
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         return blobStoreAccessFactory;
     }
 

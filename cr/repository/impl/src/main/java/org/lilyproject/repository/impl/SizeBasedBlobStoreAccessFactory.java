@@ -15,39 +15,51 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.Collection;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.Map.Entry;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.BlobStoreAccessFactory;
-import org.lilyproject.util.ArgumentValidator;
 
 public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
+    private Log log = LogFactory.getLog(getClass());
 
-    private final SortedMap<Long, BlobStoreAccess> blobStoreAccesses = new TreeMap<Long, BlobStoreAccess>();
+    private final Map<String, BlobStoreAccess> blobStoreAccesses = new HashMap<String, BlobStoreAccess>();
+    private final SortedMap<Long, BlobStoreAccess> usedBlobStoreAccesses = new TreeMap<Long, BlobStoreAccess>();
     
-    public SizeBasedBlobStoreAccessFactory(BlobStoreAccess defaultBlobStoreAccess) {
-        ArgumentValidator.notNull(defaultBlobStoreAccess, "defaultBlobStoreAccess");
-        blobStoreAccesses.put(Long.MAX_VALUE, defaultBlobStoreAccess);
+    public SizeBasedBlobStoreAccessFactory(List<BlobStoreAccess> availableBlobStoreAccesses, BlobStoreAccessConfig blobStoreAccessConfig) {
+        for (BlobStoreAccess blobStoreAccess : availableBlobStoreAccesses) {
+            blobStoreAccesses.put(blobStoreAccess.getId(), blobStoreAccess);
+        }
+        
+        BlobStoreAccess defaultBlobStoreAccess = blobStoreAccesses.get(blobStoreAccessConfig.getDefault());
+        usedBlobStoreAccesses.put(Long.MAX_VALUE, defaultBlobStoreAccess);
+        log.info("Setting default blobstore " + defaultBlobStoreAccess.getId());
+        Map<String, Long> limits = blobStoreAccessConfig.getLimits();
+        for (Entry<String, Long> limit : limits.entrySet()) {
+            addBlobStoreAccess(limit.getValue(), blobStoreAccesses.get(limit.getKey()));
+        }
     }
 
-    public void addBlobStoreAccess(long upperLimit, BlobStoreAccess blobStoreAccess) {
-        blobStoreAccesses.put(upperLimit, blobStoreAccess);
+    private void addBlobStoreAccess(long upperLimit, BlobStoreAccess blobStoreAccess) {
+        usedBlobStoreAccesses.put(upperLimit, blobStoreAccess);
+        log.info("Setting limit "+ upperLimit+ " for blobstore " +blobStoreAccess.getId());
     }
     
     public BlobStoreAccess get(Blob blob) {
         Long size = blob.getSize();
-        for (Long upperLimit: blobStoreAccesses.keySet()) {
+        for (Long upperLimit: usedBlobStoreAccesses.keySet()) {
             if (size <= upperLimit) {
-                 return blobStoreAccesses.get(upperLimit);
+                 return usedBlobStoreAccesses.get(upperLimit);
             }
         }
-        return blobStoreAccesses.get(Long.MAX_VALUE);
+        return usedBlobStoreAccesses.get(Long.MAX_VALUE);
     }
     
     public Collection<BlobStoreAccess> getAll() {
-        return blobStoreAccesses.values();
+        return usedBlobStoreAccesses.values();
     }
 }

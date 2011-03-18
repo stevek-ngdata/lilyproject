@@ -31,7 +31,7 @@ import org.lilyproject.repository.api.BlobStoreAccess;
 
 public class DFSBlobStoreAccess implements BlobStoreAccess {
 
-    private static final String ID = "DFS";
+    private static final String ID = "HDFS";
     
     private final FileSystem fileSystem;
     private final Path rootDir;
