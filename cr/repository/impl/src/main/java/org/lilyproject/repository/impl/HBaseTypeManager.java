@@ -36,6 +36,10 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -46,6 +50,8 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
+
+    private static final Long CONCURRENT_TIMEOUT = 5000L; // The concurrent timeout should be large enough to allow for type caches to be refreshed an a clock skew between the servers
 
     private HTableInterface typeTable;
 
@@ -92,15 +98,22 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             byte[] rowId = id.getBytes();
             // Take a counter on a row with the name as key
             byte[] nameBytes = encodeName(recordType.getName());
-            long concurrentCounter = getTypeTable().incrementColumnValue(nameBytes, TypeCf.DATA.bytes,
-                    TypeColumn.CONCURRENT_COUNTER.bytes, 1);
-
-            if (getRecordTypeFromCache(recordType.getName()) != null)
-                throw new RecordTypeExistsException(recordType);
-
+            
+            // Prepare put
             Put put = new Put(rowId);
             put.add(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes, Bytes.toBytes(recordTypeVersion));
             put.add(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes, nameBytes);
+
+            // Prepare newRecordType
+            newRecordType.setId(id);
+            newRecordType.setVersion(recordTypeVersion);
+
+            // Check for concurrency
+            long now = System.currentTimeMillis();
+            checkConcurrency(recordType.getName(), nameBytes, now);
+            
+            if (getRecordTypeFromCache(recordType.getName()) != null)
+                throw new RecordTypeExistsException(recordType);
 
             Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
             for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
@@ -113,18 +126,15 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                         mixin.getValue()));
             }
 
+            // Put the record type on the table
             getTypeTable().put(put);
-            /*
-            TODO FIXME bogus name reservation code
-            if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
-                    Bytes.toBytes(concurrentCounter), put)) {
-                throw new TypeException("Concurrent create occurred for recordType <" + recordType.getName() + ">");
-            }
-            */
-            newRecordType.setId(id);
-            newRecordType.setVersion(recordTypeVersion);
+            
+            // Refresh the caches
             updateRecordTypeCache(newRecordType.clone());
             notifyCacheInvalidate();
+            
+            // Clear the concurrency timestamp
+            clearConcurrency(nameBytes, now);
         } catch (IOException e) {
             throw new TypeException("Exception occurred while creating recordType <" + recordType.getName()
                     + "> on HBase", e);
@@ -155,15 +165,19 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
         byte[] rowId = id.getBytes();
         try {
-            // Do an exists check first and avoid useless creation of the row
-            // due to an incrementColumnValue call
+
+            // Do an exists check first 
             if (!getTypeTable().exists(new Get(rowId))) {
                 throw new RecordTypeNotFoundException(recordType.getId(), null);
             }
-            // First increment the counter, then read the record type
+            
             byte[] nameBytes = encodeName(recordType.getName());
-            long concurrentCount = getTypeTable().incrementColumnValue(nameBytes, TypeCf.DATA.bytes,
-                    TypeColumn.CONCURRENT_COUNTER.bytes, 1);
+
+            // Check for concurrency
+            long now = System.currentTimeMillis();
+            checkConcurrency(recordType.getName(), nameBytes, now);
+            
+            // Prepare the update
             RecordType latestRecordType = getRecordTypeByIdWithoutCache(id, null);
             Long latestRecordTypeVersion = latestRecordType.getVersion();
             Long newRecordTypeVersion = latestRecordTypeVersion + 1;
@@ -176,21 +190,21 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             boolean nameChanged = updateName(put, recordType, latestRecordType);
 
+            // Update the record type on the table
             if (fieldTypeEntriesChanged || mixinsChanged || nameChanged) {
                 put.add(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes, Bytes.toBytes(newRecordTypeVersion));
                 getTypeTable().put(put);
-                /*
-                TODO FIXME bogus name reservation code
-                getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
-                        Bytes.toBytes(concurrentCount), put);
-                */
                 newRecordType.setVersion(newRecordTypeVersion);
             } else {
                 newRecordType.setVersion(latestRecordTypeVersion);
             }
 
+            // Refresh the caches
             updateRecordTypeCache(newRecordType);
             notifyCacheInvalidate();
+            
+            // Clear the concurrency timestamp
+            clearConcurrency(nameBytes, now);
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating recordType <" + newRecordType.getId()
                     + "> on HBase", e);
@@ -397,36 +411,39 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         try {
             SchemaId id = getValidId();
             byte[] rowId = id.getBytes();
-            // Take a counter on a row with the name as key
             byte[] nameBytes = encodeName(fieldType.getName());
-            long concurrentCounter = getTypeTable().incrementColumnValue(nameBytes, TypeCf.DATA.bytes,
-                    TypeColumn.CONCURRENT_COUNTER.bytes, 1);
 
+            // Prepare the put
+            Put put = new Put(rowId);
+            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes, fieldType.getValueType().toBytes());
+            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes, Bytes
+                    .toBytes(fieldType.getScope().name()));
+            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
+            
+            // Prepare newFieldType
+            newFieldType = fieldType.clone();
+            newFieldType.setId(id);
+
+            // Check for concurrency
+            long now = System.currentTimeMillis();
+            checkConcurrency(fieldType.getName(), nameBytes, now);
+            
+            // Check if there is already a fieldType with this name 
             try {
                 if (getFieldTypesSnapshot().getFieldTypeByName(fieldType.getName()) != null)
                     throw new FieldTypeExistsException(fieldType);
             } catch (FieldTypeNotFoundException ignore) {
             }
 
-            Put put = new Put(rowId);
-            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes, fieldType.getValueType().toBytes());
-            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes, Bytes
-                    .toBytes(fieldType.getScope().name()));
-            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
-
+            // Create the actual field type
             getTypeTable().put(put);
 
-            /*
-            TODO FIXME bogus name reservation code
-            if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
-                    Bytes.toBytes(concurrentCounter), put)) {
-                throw new TypeException("Concurrent create occurred for fieldType <" + fieldType.getName() + ">");
-            }
-            */
-            newFieldType = fieldType.clone();
-            newFieldType.setId(id);
+            // Refresh the caches
             updateFieldTypeCache(newFieldType);
             notifyCacheInvalidate();
+            
+            // Clear the concurrency timestamp
+            clearConcurrency(nameBytes, now);
         } catch (IOException e) {
             throw new TypeException("Exception occurred while creating fieldType <" + fieldType.getName()
                     + "> version: <" + version + "> on HBase", e);
@@ -444,16 +461,19 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             TypeException {
         byte[] rowId = fieldType.getId().getBytes();
         try {
-            // Do an exists check first and avoid useless creation of the row
-            // due to an incrementColumnValue call
+            // Do an exists check first 
             if (!getTypeTable().exists(new Get(rowId))) {
                 throw new FieldTypeNotFoundException(fieldType.getId());
             }
             // First increment the counter on the row with the name as key, then
             // read the field type
             byte[] nameBytes = encodeName(fieldType.getName());
-            long concurrentCounter = getTypeTable().incrementColumnValue(nameBytes, TypeCf.DATA.bytes,
-                    TypeColumn.CONCURRENT_COUNTER.bytes, 1);
+            
+            // Check for concurrency
+            long now = System.currentTimeMillis();
+            checkConcurrency(fieldType.getName(), nameBytes, now);
+            
+            // Prepare the update
             FieldType latestFieldType = getFieldTypeByIdWithoutCache(fieldType.getId());
             if (!fieldType.getValueType().equals(latestFieldType.getValueType())) {
                 throw new FieldTypeUpdateException("Changing the valueType of a fieldType <" + fieldType.getId()
@@ -473,19 +493,19 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                             + "> new<" + fieldType.getName() + ">");
                 } catch (FieldTypeNotFoundException allowed) {
                 }
+                // Update the field type on the table
                 Put put = new Put(rowId);
                 put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
 
                 getTypeTable().put(put);
-
-                /*
-                TODO FIXME bogus name reservation code
-                getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_COUNTER.bytes,
-                        Bytes.toBytes(concurrentCounter), put);
-                */
             }
+            
+            // Refresh the caches
             updateFieldTypeCache(fieldType);
             notifyCacheInvalidate();
+            
+            // Clear the concurrency timestamp
+            clearConcurrency(nameBytes, now);
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating fieldType <" + fieldType.getId() + "> on HBase",
                     e);
@@ -498,6 +518,63 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
         return fieldType.clone();
     }
+
+    /**
+     * Checks if a name for a field type or record type is not being used by some other create or update operation 'at the same time'.
+     * This is to avoid that concurrent updates would result in the same name being used for two different types.
+     * 
+     *  <p>A timestamp 'now' is put in a row with nameBytes as key. As long as this timestamp is present and the timeout (concurrentTimeout)
+     *  has not expired, no other create or update operation can happen with the same name for the type.
+     *  
+     *  <p>When the create or update operation has finished {@link #clearConcurrency(byte[], long)} should be called to clear the timestamp
+     *  and to allow new updates.
+     */
+    private void checkConcurrency(QName name, byte[] nameBytes, long now) throws IOException, TypeException {
+        // Get the timestamp of when the last update happened for the field name
+        byte[] originalTimestampBytes = null;
+        Long originalTimestamp = null;
+        Get get = new Get(nameBytes);
+        get.addColumn(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes);
+        Result result = getTypeTable().get(get);
+        if (result != null && !result.isEmpty()) {
+            originalTimestampBytes = result.getValue(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes);
+            if (originalTimestampBytes != null && originalTimestampBytes.length != 0)
+                originalTimestamp = Bytes.toLong(originalTimestampBytes);
+        }
+        // Check if the timestamp is older than the concurrent timeout
+        // The concurrent timeout should be large enough to allow fieldType caches to be refreshed
+        if (originalTimestamp != null) {
+            if ((originalTimestamp + CONCURRENT_TIMEOUT) >= now) {
+                throw new TypeException("Concurrent create or update occurred for field or record type <" + name + ">");
+            }
+            
+        }
+        // Try to put our own timestamp with a check and put to make sure we're the only one doing this
+        Put put = new Put(nameBytes);
+        put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now));
+        if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, originalTimestampBytes, put)) {
+            throw new TypeException("Concurrent create or update occurred for field or record type <" + name + ">");
+        }
+    }
+    
+    /**
+     * Clears the timestamp from the row with nameBytes as key.
+     * 
+     * <p>This method should be called when a create or update operation has finished to allow new updates to happen before the concurrent timeout would expire.
+     * 
+     * @param now the timestamp that was used when calling {@link #checkConcurrency(QName, byte[], long)} 
+     */
+    private void clearConcurrency(byte[] nameBytes, long now) {
+        Put put = new Put(nameBytes);
+        put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, null);
+        try {
+            // Using check and put to avoid clearing a timestamp that was not ours.
+            getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now), put);
+        } catch (IOException e) {
+            // Ignore, too late to clear the timestamp
+        }
+    }
+
     
     private FieldType getFieldTypeByIdWithoutCache(SchemaId id) throws FieldTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(id, "id");
@@ -558,36 +635,22 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return recordTypes;
     }
 
-    private byte[] encodeName(QName qname) {
-        byte[] encodedName = new byte[0];
+    public static byte[] encodeName(QName qname) {
         String name = qname.getName();
         String namespace = qname.getNamespace();
+        
+        int sizeEstimate = (((name == null) ? 1 : (name.length() * 2)) + ((namespace == null) ? 1 : (namespace.length() * 2)));
+        DataOutput dataOutput = new DataOutputImpl(sizeEstimate);
 
-        if (namespace == null) {
-            encodedName = Bytes.add(encodedName, Bytes.toBytes(0));
-        } else {
-            byte[] namespaceBytes = Bytes.toBytes(namespace);
-            encodedName = Bytes.add(encodedName, Bytes.toBytes(namespaceBytes.length));
-            encodedName = Bytes.add(encodedName, namespaceBytes);
-        }
-        byte[] nameBytes = Bytes.toBytes(name);
-        encodedName = Bytes.add(encodedName, Bytes.toBytes(nameBytes.length));
-        encodedName = Bytes.add(encodedName, nameBytes);
-        return encodedName;
+        dataOutput.writeUTF(namespace);
+        dataOutput.writeUTF(name);
+        return dataOutput.toByteArray();
     }
 
-    private QName decodeName(byte[] bytes) {
-        int offset = 0;
-        String namespace = null;
-        int namespaceLength = Bytes.toInt(bytes);
-        offset = offset + Bytes.SIZEOF_INT;
-        if (namespaceLength > 0) {
-            namespace = Bytes.toString(bytes, offset, namespaceLength);
-        }
-        offset = offset + namespaceLength;
-        int nameLength = Bytes.toInt(bytes, offset, Bytes.SIZEOF_INT);
-        offset = offset + Bytes.SIZEOF_INT;
-        String name = Bytes.toString(bytes, offset, nameLength);
+    public static QName decodeName(byte[] bytes) {
+        DataInput dataInput = new DataInputImpl(bytes);
+        String namespace = dataInput.readUTF();
+        String name = dataInput.readUTF();
         return new QName(namespace, name);
     }
 

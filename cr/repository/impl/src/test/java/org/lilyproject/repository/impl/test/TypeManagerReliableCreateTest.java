@@ -22,30 +22,22 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.FieldTypeExistsException;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.RecordTypeExistsException;
-import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LocalHTable;
+import org.lilyproject.util.hbase.*;
+import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
+import org.lilyproject.util.hbase.LilyHBaseSchema.TypeColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -56,17 +48,11 @@ public class TypeManagerReliableCreateTest {
     private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("data");
     private static final byte[] CONCURRENT_COUNTER_COLUMN_NAME = Bytes.toBytes("cc");
     private static ValueType valueType;
-    private static TypeManager basicTypeManager;
+    private static TypeManager typeManager;
     private static ZooKeeperItf zooKeeper;
     private static HBaseTableFactory hbaseTableFactory;
+    private static HTableInterface typeTable;
 
-    @Test
-    public void dummyTest() {
-        // just to have at least one test here while the rest is commented out, remove this method again once fixed
-    }
-
-    /*
-    TODO FIXME this test relied on incorrect code in TypeManager -- should be reactivated once TypeManager is fixed
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -74,13 +60,14 @@ public class TypeManagerReliableCreateTest {
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
-        basicTypeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
-        valueType = basicTypeManager.getValueType("LONG", false, false);
+        typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
+        typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
+        valueType = typeManager.getValueType("LONG", false, false);
     }
     
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(basicTypeManager);
+        Closer.close(typeManager);
         Closer.close(zooKeeper);
         HBASE_PROXY.stop();
     }
@@ -97,167 +84,98 @@ public class TypeManagerReliableCreateTest {
 
     @Test
     public void testConcurrentRecordCreate() throws Exception {
-        final HTableInterface typeTable = new LocalHTable(HBASE_PROXY.getConf(), Bytes.toBytes("type")) {
-            @Override
-            public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
-                    throws IOException {
-                long incrementColumnValue = super.incrementColumnValue(row, family, qualifier, amount);
-                try {
-                    basicTypeManager.createRecordType(basicTypeManager.newRecordType(new QName("NS", "name")));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    fail();
-                } 
-                return incrementColumnValue;
-            }
-        };
+        QName qName = new QName("NS", "testConcurrentRecordCreate");
         
-        TypeManager typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory) {
-            @Override
-            protected HTableInterface getTypeTable() {
-                return typeTable;
-            }
-        };
+        fakeConcurrentUpdate(qName);
+        
         try {
-            typeManager.createRecordType(typeManager.newRecordType(new QName("NS", "name")));
+            typeManager.createRecordType(typeManager.newRecordType(qName));
             fail();
         } catch (TypeException expected) {
         } catch (RecordTypeExistsException expected) {
             // This will be thrown when the cache of the typeManager was updated as a consequence of the update on basicTypeManager
             // Through ZooKeeper the cache will have been marked as invalidated
         }
-        typeManager.close();
     }
 
     @Test
     public void testConcurrentRecordUpdate() throws Exception {
-        final HTableInterface typeTable = new LocalHTable(HBASE_PROXY.getConf(), Bytes.toBytes("type")) {
-            @Override
-            public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
-                    throws IOException {
-                long incrementColumnValue = super.incrementColumnValue(row, family, qualifier, amount);
-                try {
-                    RecordType recordType = basicTypeManager.getRecordTypeByName(new QName("NS", "name1"), null);
-                    recordType.setName(new QName("NS", "name2"));
-                    basicTypeManager.updateRecordType(recordType);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    fail();
-                } 
-                return incrementColumnValue;
-            }
-        };
+        QName qName1 = new QName("NS", "testConcurrentRecordUpdate1");
+        QName qName2 = new QName("NS", "testConcurrentRecordUpdate2");
         
-        TypeManager typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory) {
-            @Override
-            protected HTableInterface getTypeTable() {
-                return typeTable;
-            }
-        };
-        basicTypeManager.createRecordType(typeManager.newRecordType(new QName("NS", "name1")));
+        RecordType recordType = typeManager.createRecordType(typeManager.newRecordType(qName1));
+        
+        // Fake concurrent update
+        fakeConcurrentUpdate(qName2);
+        
+        recordType.setName(qName2);
         try {
-            typeManager.createRecordType(typeManager.newRecordType(new QName("NS", "name2")));
+            typeManager.updateRecordType(recordType);
             fail();
         } catch (TypeException expected) {
-        } catch (RecordTypeExistsException expected) {
-            // This will be thrown when the cache of the typeManager was updated as a consequence of the update on basicTypeManager
-            // Through ZooKeeper the cache will have been marked as invalidated
         }
-        typeManager.close();
     }
 
+
+    
     @Test
     public void testConcurrentFieldCreate() throws Exception {
-        final HTableInterface typeTable = new LocalHTable(HBASE_PROXY.getConf(), Bytes.toBytes("type")) {
-            @Override
-            public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
-                    throws IOException {
-                long incrementColumnValue = super.incrementColumnValue(row, family, qualifier, amount);
-                try {
-                    basicTypeManager.createFieldType(basicTypeManager.newFieldType(valueType, new QName("NS", "name"), Scope.VERSIONED));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    fail();
-                } 
-                return incrementColumnValue;
-            }
-        };
+        QName qName = new QName("NS", "testConcurrentFieldCreate");
         
-        TypeManager typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory) {
-            @Override
-            protected HTableInterface getTypeTable() {
-                return typeTable;
-            }
-        };
+        fakeConcurrentUpdate(qName);
+        
         try {
-            typeManager.createFieldType(typeManager.newFieldType(valueType, new QName("NS", "name"), Scope.VERSIONED));
+            typeManager.createFieldType(typeManager.newFieldType(valueType, qName, Scope.VERSIONED));
             fail();
         } catch (TypeException expected) {
         } catch (FieldTypeExistsException expected) {
             // This will be thrown when the cache of the typeManager was updated as a consequence of the update on basicTypeManager
             // Through ZooKeeper the cache will have been marked as invalidated
         }
-        typeManager.close();
     }
+    
     
     @Test
     public void testConcurrentFieldUpdate() throws Exception {
-        final HTableInterface typeTable = new LocalHTable(HBASE_PROXY.getConf(), Bytes.toBytes("type")) {
-            @Override
-            public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
-                    throws IOException {
-                long incrementColumnValue = super.incrementColumnValue(row, family, qualifier, amount);
-                try {
-                    FieldType fieldType = basicTypeManager.getFieldTypeByName(new QName("NS", "name1"));
-                    fieldType.setName(new QName("NS", "name2"));
-                    basicTypeManager.updateFieldType(fieldType);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    fail();
-                } 
-                return incrementColumnValue;
-            }
-        };
+        QName qName1 = new QName("NS", "testConcurrentFieldUpdate1");
+        QName qName2 = new QName("NS", "testConcurrentFieldUpdate2");
         
-        TypeManager typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory) {
-            @Override
-            protected HTableInterface getTypeTable() {
-                return typeTable;
-            }
-        };
-        basicTypeManager.createFieldType(typeManager.newFieldType(valueType, new QName("NS", "name1"), Scope.VERSIONED));
+        FieldType createdFieldType = typeManager.createFieldType(typeManager.newFieldType(valueType, qName1, Scope.VERSIONED));
+        
+        fakeConcurrentUpdate(qName2);
+        
+        createdFieldType.setName(qName2);
         try {
-            typeManager.createFieldType(typeManager.newFieldType(valueType, new QName("NS", "name2"), Scope.VERSIONED));
+            typeManager.updateFieldType(createdFieldType);
             fail();
         } catch (TypeException expected) {
-        } catch (FieldTypeExistsException expected) {
-            // This will be thrown when the cache of the typeManager was updated as a consequence of the update on basicTypeManager
-            // Through ZooKeeper the cache will have been marked as invalidated
         }
-        typeManager.close();
+    }
+
+    private void fakeConcurrentUpdate(QName qName) throws IOException {
+        byte[] nameKey = HBaseTypeManager.encodeName(qName);
+        long now = System.currentTimeMillis();
+        Put put = new Put(nameKey);
+        put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now + 6000));
+        typeTable.put(put);
     }
     
     @Test
     public void testGetTypeIgnoresConcurrentCounterRows() throws Exception {
-        HTableInterface typeTable = new LocalHTable(HBASE_PROXY.getConf(), Bytes.toBytes("type"));
-        TypeManager typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
-        UUID id = UUID.randomUUID();
-        byte[] rowId;
-        rowId = new byte[16];
-        Bytes.putLong(rowId, 0, id.getMostSignificantBits());
-        Bytes.putLong(rowId, 8, id.getLeastSignificantBits());
+        SchemaId id = new SchemaIdImpl(UUID.randomUUID());
+        byte[] rowId = id.getBytes();
+        
         typeTable.incrementColumnValue(rowId, DATA_COLUMN_FAMILY, CONCURRENT_COUNTER_COLUMN_NAME, 1);
         try {
-            typeManager.getFieldTypeById(id.toString());
+            typeManager.getFieldTypeById(id);
             fail();
         } catch (FieldTypeNotFoundException expected) {
         }
         try {
-            typeManager.getRecordTypeById(id.toString(), null);
+            typeManager.getRecordTypeById(id, null);
             fail();
         } catch (RecordTypeNotFoundException expected) {
         }
         typeManager.close();
     }
-    */
 }

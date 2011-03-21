@@ -139,7 +139,8 @@ public class LilyHBaseSchema {
         FIELDTYPE_NAME("ft"),
         FIELDTYPE_VALUETYPE("vt"),
         FIELDTYPE_SCOPE("scope"),
-        CONCURRENT_COUNTER("cc");
+        CONCURRENT_COUNTER("cc"),
+        CONCURRENT_TIMESTAMP("cts");
 
         public final byte[] bytes;
         public final String name;
