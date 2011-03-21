@@ -3,7 +3,10 @@ package org.lilyproject.repository.impl;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.SchemaId;
 
 public class SchemaIdImpl implements SchemaId {
@@ -33,19 +36,20 @@ public class SchemaIdImpl implements SchemaId {
     
     public String toString() {
         if (string == null) {
-            if (uuid == null)
-                this.uuid = new UUID(Bytes.toLong(bytes, 0, 8), Bytes.toLong(bytes, 8, 8));
+            if (uuid == null) {
+                DataInput dataInput = new DataInputImpl(bytes);
+                this.uuid = new UUID(dataInput.readLong(), dataInput.readLong());
+            }
             this.string = uuid.toString();
         }
         return string;
     }
     
     private byte[] idToBytes(UUID uuid) {
-        byte[] rowId;
-        rowId = new byte[16];
-        Bytes.putLong(rowId, 0, uuid.getMostSignificantBits());
-        Bytes.putLong(rowId, 8, uuid.getLeastSignificantBits());
-        return rowId;
+        DataOutput dataOutput = new DataOutputImpl(16);
+        dataOutput.writeLong(uuid.getMostSignificantBits());
+        dataOutput.writeLong(uuid.getLeastSignificantBits());
+        return dataOutput.toByteArray();
     }
 
     @Override
