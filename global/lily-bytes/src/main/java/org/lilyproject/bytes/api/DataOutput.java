@@ -85,4 +85,9 @@ public interface DataOutput {
      * Negative numbers are not supported.
      */
     void writeVLong(long i);
+    
+    /**
+     * Returns the current number of bytes in the <code>DataOutput</code>
+     */
+    int getSize();
 }

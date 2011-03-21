@@ -28,7 +28,9 @@ public class DataInputImpl implements DataInput {
     private static final long HALF_MASK = 0x3FFL;
 
     private final byte[] source; // The underlying byte[]
-    private int pos = 0; // Position of the next value to be read 
+    private int startPosition;
+    private int pos; // Position of the next value to be read
+    private int size;
     
     // Character array build while reading a string.
     // The same char array is reused for each read, avoiding to allocated a new array each time.
@@ -42,7 +44,27 @@ public class DataInputImpl implements DataInput {
      */
     public DataInputImpl(byte[] source) {
         this.source = source;
+        this.startPosition = 0;
+        this.pos = 0;
+        this.size = source.length;
     }
+
+    /**
+     * Constructor for the {@link DataInput} based on an existing DataInputImpl.
+     * Its source (the underlying byte[]) is the same as for the given dataInput.
+     * 
+     * @param startPosition position within the source, relative to the startPosition of the given dataInput
+     * @param size the size of the DataInput
+     * The source is a sub-array of the underlying byte[] from which the data will be read,
+     * limited between startPosition en startPosition+length
+     * It should have been created using {@link DataOutputImpl}.
+     */
+    public DataInputImpl(DataInputImpl dataInput, int startPosition, int size) {
+        this.source = dataInput.source;
+        this.pos = dataInput.startPosition + startPosition;
+        this.size = size;
+    }
+
     
     public byte readByte() {
         return source[pos++];
@@ -177,5 +199,17 @@ public class DataInputImpl implements DataInput {
             i |= (b & 0x7FL) << shift;
         }
         return i;
+    }
+    
+    public int getPosition() {
+        return pos;
+    }
+    
+    public void setPosition(int position) {
+        this.pos = position;
+    }
+    
+    public int getSize() {
+        return size;
     }
 }

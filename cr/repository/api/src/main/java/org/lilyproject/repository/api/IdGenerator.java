@@ -18,6 +18,8 @@ package org.lilyproject.repository.api;
 import java.util.Map;
 import java.util.UUID;
 
+import org.lilyproject.bytes.api.DataInput;
+
 /**
  * IdGenerator is the factory to create {@link RecordId}s.
  */
@@ -65,6 +67,13 @@ public interface IdGenerator {
      *              calling {@link RecordId#toBytes()}
      */
     RecordId fromBytes(byte[] bytes);
+
+    /**
+     * Creates a RecordId based on the provided DataInput.
+     *
+     * @param dataInput DataInput based on the well-formed byte representation of the {@link RecordId}
+     */
+    RecordId fromBytes(DataInput dataInput);
 
     /**
      * Creates a RecordId based on the provided String.

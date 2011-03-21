@@ -19,7 +19,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
@@ -86,40 +89,60 @@ public class IdGeneratorImpl implements IdGenerator {
     // An identifier byte is put behind the bytes provided by the RecordId itself
     
     protected byte[] toBytes(UUIDRecordId uuidRecordId) {
-        return toBytes(uuidRecordId.getBasicBytes(), IdIdentifier.UUID.getIdentifierByte());
+        DataOutput dataOutput = new DataOutputImpl(17);
+        writeBytes(uuidRecordId, dataOutput);
+        return dataOutput.toByteArray();
+    }
+
+    protected void writeBytes(UUIDRecordId uuidRecordId, DataOutput dataOutput) {
+        uuidRecordId.writeBasicBytes(dataOutput);
+        dataOutput.writeByte(IdIdentifier.UUID.getIdentifierByte());
     }
     
     protected byte[] toBytes(UserRecordId userRecordId) {
-        return toBytes(userRecordId.getBasicBytes(), IdIdentifier.USER.getIdentifierByte());
+        DataOutput dataOutput = new DataOutputImpl();
+        writeBytes(userRecordId, dataOutput);
+        return dataOutput.toByteArray();
+    }
+    
+    protected void writeBytes(UserRecordId userRecordId, DataOutput dataOutput) {
+        userRecordId.writeBasicBytes(dataOutput);
+        dataOutput.writeByte(IdIdentifier.USER.getIdentifierByte());
     }
     
     protected byte[] toBytes(VariantRecordId variantRecordId) {
-        return toBytes(variantRecordId.getBasicBytes(), IdIdentifier.VARIANT.getIdentifierByte());
+        DataOutput dataOutput = new DataOutputImpl();
+        writeBytes(variantRecordId, dataOutput);
+        return dataOutput.toByteArray();
     }
     
-
-    private byte[] toBytes(byte[] basicBytes, byte identifier) {
-        byte[] bytes = new byte[basicBytes.length+1];
-        Bytes.putBytes(bytes, 0, basicBytes, 0, basicBytes.length);
-        bytes[basicBytes.length] = identifier;
-        return bytes;
+    protected void writeBytes(VariantRecordId variantRecordId, DataOutput dataOutput) {
+        variantRecordId.writeBasicBytes(dataOutput);
+        dataOutput.writeByte(IdIdentifier.VARIANT.getIdentifierByte());
     }
     
     public RecordId fromBytes(byte[] bytes) {
-        byte identifierByte = bytes[bytes.length-1];
+        return fromBytes(new DataInputImpl(bytes));
+    }
+
+    public RecordId fromBytes(DataInput dataInput) {
+        int pos = dataInput.getPosition();
+        dataInput.setPosition(dataInput.getSize()-1);
+        byte identifierByte = dataInput.readByte();
+        dataInput.setPosition(pos);
         IdIdentifier idIdentifier = identifierByteMap.get(new Byte(identifierByte));
         RecordId recordId = null;
         switch (idIdentifier) {
         case UUID:
-            recordId = new UUIDRecordId(Bytes.toLong(bytes, 0, 8), Bytes.toLong(bytes, 8, 8), this);
+            recordId = new UUIDRecordId(new DataInputImpl((DataInputImpl)dataInput, dataInput.getPosition(), dataInput.getSize()-1), this);
             break;
 
         case USER:
-            recordId = new UserRecordId(Bytes.head(bytes, bytes.length-1), this);
+            recordId = new UserRecordId(new DataInputImpl((DataInputImpl)dataInput, dataInput.getPosition(), dataInput.getSize()-1), this);
             break;
             
         case VARIANT:
-            recordId = new VariantRecordId(Bytes.head(bytes, bytes.length-1), this);
+            recordId = new VariantRecordId(new DataInputImpl((DataInputImpl)dataInput, dataInput.getPosition(), dataInput.getSize()-1), this);
             break;
             
         default:
@@ -132,11 +155,19 @@ public class IdGeneratorImpl implements IdGenerator {
     // The prefix string (e.g. "UUID.") is put before the string provided by the recordId itself
     
     protected String toString(UUIDRecordId uuidRecordId) {
-        return IdIdentifier.UUID.name() + "." + uuidRecordId.getBasicString();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(IdIdentifier.UUID.name());
+        stringBuilder.append(".");
+        stringBuilder.append(uuidRecordId.getBasicString());
+        return stringBuilder.toString();
     }
     
     protected String toString(UserRecordId userRecordId) {
-        return IdIdentifier.USER.name() + "." + userRecordId.getBasicString();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(IdIdentifier.USER.name());
+        stringBuilder.append(".");
+        stringBuilder.append(userRecordId.getBasicString());
+        return stringBuilder.toString();
     }
     
     // The variantproperties are appended to the string of the master record

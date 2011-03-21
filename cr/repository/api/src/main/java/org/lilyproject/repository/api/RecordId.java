@@ -17,6 +17,8 @@ package org.lilyproject.repository.api;
 
 import java.util.SortedMap;
 
+import org.lilyproject.bytes.api.DataOutput;
+
 /**
  * The id of a {@link Record}. This uniquely identifies a record.
  *
@@ -45,8 +47,31 @@ public interface RecordId {
      */
     String toString();
 
+    /**
+     * Returns the byte representation of this record id.
+     * 
+     * <p>The format for a master record id is as follows:
+     * 
+     * <pre>{basic byte representation}{identifier byte}</pre>
+     * 
+     * <p>Where the identifier byte is (byte)0 for a USER record id, and (byte)1 for a UUID record id.
+     * 
+     * <p>The format for a variant record id is as follows:
+     * 
+     * <pre>{master record id}{variant properties}{nr of variant properties}{length of master record id}{variant identifier byte}</pre>
+     * 
+     * <p>Where variant properties are UTF encodings for the dimension and dimension value of the variant properties (concatenated),
+     * and the variant identifier byte is (byte)2 .
+     * 
+     * @return
+     */
     byte[] toBytes();
-
+    
+    /**
+     * Writes the bytes to the DataOutput with the same format as for {@link #toBytes()}
+     */
+    void writeBytes(DataOutput dataOutput);
+    
     /**
      * For variants, return the RecordId of the master record, for master records,
      * returns this.

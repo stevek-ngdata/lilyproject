@@ -15,7 +15,8 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.RecordId;
 
 import java.util.Collections;
@@ -25,39 +26,57 @@ import java.util.TreeMap;
 
 public class UserRecordId implements RecordId {
 
-    protected final String recordIdString;
+    protected final String basicRecordIdString;
     protected byte[] recordIdBytes;
+    protected String recordIdString;
     private final IdGeneratorImpl idGenerator;
     
     private static final SortedMap<String, String> EMPTY_SORTED_MAP = Collections.unmodifiableSortedMap(new TreeMap<String, String>());
 
     protected UserRecordId(String recordId, IdGeneratorImpl idGenerator) {
-        this.recordIdString = recordId;
-        recordIdBytes = Bytes.toBytes(recordId);
+        IdGeneratorImpl.checkIdString(recordId, "record id");
+        this.basicRecordIdString = recordId;
         this.idGenerator = idGenerator;
     }
 
-    protected UserRecordId(byte[] recordId, IdGeneratorImpl idGenerator) {
-        recordIdBytes = recordId;
-        recordIdString = Bytes.toString(recordId);
-        IdGeneratorImpl.checkIdString(recordIdString, "record id");
+    protected UserRecordId(DataInput dataInput, IdGeneratorImpl idGenerator) {
+        basicRecordIdString = dataInput.readUTF();
+        IdGeneratorImpl.checkIdString(basicRecordIdString, "record id");
         this.idGenerator = idGenerator;
     }
 
     public byte[] toBytes() {
-        return idGenerator.toBytes(this);
-    }
-
-    public String toString() {
-        return idGenerator.toString(this);
-    }
-    
-    protected byte[] getBasicBytes() {
+        if (recordIdBytes == null) {
+            recordIdBytes = idGenerator.toBytes(this);
+        }
         return recordIdBytes;
     }
     
-    protected String getBasicString() {
+    public void writeBytes(DataOutput dataOutput) {
+        if (recordIdBytes == null) {
+            idGenerator.writeBytes(this, dataOutput);
+        } else {
+            dataOutput.writeBytes(recordIdBytes);
+        }
+    }
+
+    public String toString() {
+        if (recordIdString == null) {
+            recordIdString = idGenerator.toString(this);
+        }
         return recordIdString;
+    }
+    
+    /**
+     * Writes the byte representation of the user record id to the DataOutput, without adding the identifying byte
+     */
+
+    public void writeBasicBytes(DataOutput dataOutput) {
+        dataOutput.writeUTF(basicRecordIdString);
+    }
+    
+    protected String getBasicString() {
+        return basicRecordIdString;
     }
 
     public SortedMap<String, String> getVariantProperties() {
@@ -68,7 +87,7 @@ public class UserRecordId implements RecordId {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((recordIdString == null) ? 0 : recordIdString.hashCode());
+        result = prime * result + ((basicRecordIdString == null) ? 0 : basicRecordIdString.hashCode());
         return result;
     }
 
@@ -81,10 +100,10 @@ public class UserRecordId implements RecordId {
         if (getClass() != obj.getClass())
             return false;
         UserRecordId other = (UserRecordId) obj;
-        if (recordIdString == null) {
-            if (other.recordIdString != null)
+        if (basicRecordIdString == null) {
+            if (other.basicRecordIdString != null)
                 return false;
-        } else if (!recordIdString.equals(other.recordIdString))
+        } else if (!basicRecordIdString.equals(other.basicRecordIdString))
             return false;
         return true;
     }

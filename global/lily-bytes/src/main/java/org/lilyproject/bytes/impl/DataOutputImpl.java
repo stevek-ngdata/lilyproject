@@ -264,4 +264,8 @@ public class DataOutputImpl implements DataOutput {
         }
         writeByteUnsafe((byte) i);
     }
+    
+    public int getSize() {
+        return pos;
+    }
 }

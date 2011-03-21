@@ -70,7 +70,7 @@ public class IdGeneratorImplTest {
         assertEquals(newRecordId, idGenerator.fromString(userRecordIDString));
         
         assertEquals(userRecordIDString, idGenerator.fromString(userRecordIDString).toString());
-        byte[] userRecordIdBytes = new byte[] {97, 85, 115, 101, 114, 73, 100, 0};
+        byte[] userRecordIdBytes = newRecordId.toBytes();
         assertArrayEquals(userRecordIdBytes, idGenerator.fromBytes(userRecordIdBytes).toBytes());
         
         assertEquals(userRecordIDString, idGenerator.fromBytes(userRecordIdBytes).toString());

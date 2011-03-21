@@ -17,12 +17,16 @@ package org.lilyproject.repository.impl;
 
 import java.util.*;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.RecordId;
 
 public class UUIDRecordId implements RecordId {
 
     private UUID uuid;
+    private String basicUUIDString;
+    private String uuidString;
+    private byte[] uuidBytes;
     private final IdGeneratorImpl idGenerator;
 
     private static final SortedMap<String, String> EMPTY_SORTED_MAP = Collections.unmodifiableSortedMap(new TreeMap<String, String>());
@@ -32,14 +36,15 @@ public class UUIDRecordId implements RecordId {
         uuid = UUID.randomUUID();
     }
     
-    protected UUIDRecordId(long mostSigBits, long leastSigBits, IdGeneratorImpl idGenerator) {
+    protected UUIDRecordId(DataInput dataInput, IdGeneratorImpl idGenerator) {
         this.idGenerator = idGenerator;
-        this.uuid = new UUID(mostSigBits, leastSigBits);
+        this.uuid = new UUID(dataInput.readLong(), dataInput.readLong());
     }
 
-    public UUIDRecordId(String uuidString, IdGeneratorImpl idgenerator) {
+    public UUIDRecordId(String basicUUIDString, IdGeneratorImpl idgenerator) {
         this.idGenerator = idgenerator;
-        this.uuid = UUID.fromString(uuidString);
+        this.uuid = UUID.fromString(basicUUIDString);
+        this.basicUUIDString = basicUUIDString;
     }
     
     public UUID getUuid() {
@@ -47,26 +52,44 @@ public class UUIDRecordId implements RecordId {
     }
     
     public String toString() {
-        return idGenerator.toString(this);
+        if (uuidString == null) {
+            uuidString = idGenerator.toString(this);
+        }
+        return uuidString;
     }
     
     public byte[] toBytes() {
-        return idGenerator.toBytes(this);
+        if (uuidBytes == null) {
+            uuidBytes = idGenerator.toBytes(this);
+        }
+        return uuidBytes;
+    }
+    
+    public void writeBytes(DataOutput dataOutput) {
+        if (uuidBytes == null) {
+            idGenerator.writeBytes(this, dataOutput);
+        } else {
+            dataOutput.writeBytes(uuidBytes);
+        }
     }
 
     public SortedMap<String, String> getVariantProperties() {
         return EMPTY_SORTED_MAP;
     }
 
-    protected byte[] getBasicBytes() {
-        byte[] bytes = new byte[16];
-        Bytes.putLong(bytes, 0, uuid.getMostSignificantBits());
-        Bytes.putLong(bytes, 8, uuid.getLeastSignificantBits());
-        return bytes;
+    /**
+     * Writes the byte representation of the uuid to the DataOutput, without adding the identifying byte.
+     */
+    public void writeBasicBytes(DataOutput dataOutput) {
+        dataOutput.writeLong(uuid.getMostSignificantBits());
+        dataOutput.writeLong(uuid.getLeastSignificantBits());
     }
     
     protected String getBasicString() {
-        return uuid.toString();
+        if (basicUUIDString == null) {
+            basicUUIDString = uuid.toString();
+        }
+        return basicUUIDString;
     }
 
     @Override

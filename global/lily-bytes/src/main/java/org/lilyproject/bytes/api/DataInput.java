@@ -13,6 +13,11 @@ public interface DataInput {
     byte[] readBytes(int length);
     
     /**
+     * Reads one byte from the <code>DataInput</code>
+     */
+    byte readByte();
+    
+    /**
      * Reads an integer from the <code>DataInput</code>
      */
     int readInt();
@@ -62,4 +67,19 @@ public interface DataInput {
      * by {@link DataOutput#writeVLong(long)}
      */
     long readVLong();
+    
+    /**
+     * Returns the position in the <code>DataInput</code> from where the next value will be read.
+     */
+    int getPosition();
+    
+    /**
+     * Sets the position in the <code>DataInput</code> from where to read the next value.
+     */
+    void setPosition(int position);
+    
+    /**
+     * Returns the total number of bytes in the <code>DataInput</code>
+     */
+    int getSize();
 }
