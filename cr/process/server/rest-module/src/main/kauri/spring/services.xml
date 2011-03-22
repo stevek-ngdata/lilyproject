@@ -39,7 +39,7 @@
     <constructor-arg ref="module"/>
   </bean>
 
-   <kauri:import-service
+  <kauri:import-service
       id="routingService"
       service="org.kauriproject.routing.RoutingService"/>
 
@@ -57,5 +57,7 @@
       </bean>
     </constructor-arg>
   </bean>
+
+  <kauri:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.IndexerModel"/>
 
 </beans>

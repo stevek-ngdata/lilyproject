@@ -71,6 +71,9 @@
     <constructor-arg ref="zooKeeper"/>
   </bean>
 
+  <kauri:export-service
+      ref="indexerModel" service="org.lilyproject.indexer.model.api.IndexerModel"/>
+
   <bean id="solrClientConfig" class="org.lilyproject.indexer.engine.SolrClientConfig">
     <property name="requestWriter" value="${indexer:solr/requestWriter}"/>
     <property name="responseParser" value="${indexer:solr/responseParser}"/>
