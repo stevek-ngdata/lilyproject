@@ -72,10 +72,9 @@
     <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
-  <bean
-    id="blobManager"
-    class="org.lilyproject.server.modules.repository.BlobManagerSetup"
-    factory-method="get">
+  <bean id="blobManager" factory-bean="blobManagerSetup" factory-method="getBlobManager"/>
+
+  <bean id="blobManagerSetup" class="org.lilyproject.server.modules.repository.BlobManagerSetup">
     <constructor-arg>
       <bean class="java.net.URI">
         <constructor-arg value="${repository:blobFileSystem}"/>
@@ -85,6 +84,7 @@
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
+    <constructor-arg ref="hbaseConf"/>
   </bean>
   
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
@@ -130,8 +130,6 @@
     <constructor-arg>
       <bean factory-bean="avroServer" factory-method="getPort"/>
     </constructor-arg>
-    <constructor-arg value="${repository:blobFileSystem}"/>
-    <constructor-arg ref="hbaseConf"/>
   </bean>
 
   <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">
