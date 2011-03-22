@@ -4,10 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.impl.DataInputImpl;
-import org.lilyproject.bytes.impl.DataOutputImpl;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.json.JsonFormat;
+import org.lilyproject.util.json.JsonUtil;
 
 public class BlobStoreAccessConfig {
 
@@ -15,25 +18,31 @@ public class BlobStoreAccessConfig {
     private Map<String, Long> limits = new HashMap<String, Long>();
 
     public BlobStoreAccessConfig(byte[] encodedConfig) {
-        DataInput dataInput = new DataInputImpl(encodedConfig);
-        this.defaultAccess = dataInput.readUTF();
-        int nrOfLimits = dataInput.readInt();
-        for (int i = 0; i < nrOfLimits; i++) {
-            String name = dataInput.readUTF();
-            Long limit = dataInput.readLong();
-            limits.put(name, limit);
+        JsonNode node = JsonFormat.deserializeSoft(encodedConfig, "BlobStoreAccessConfig");
+
+        defaultAccess = JsonUtil.getString(node, "default");
+
+        ArrayNode limitsNode = JsonUtil.getArray(node, "limits");
+        for (int i = 0; i < limitsNode.size(); i++) {
+            JsonNode limitNode = limitsNode.get(i);
+            String store = JsonUtil.getString(limitNode, "store");
+            long limit = JsonUtil.getLong(limitNode, "limit");
+            limits.put(store, limit);
         }
     }
     
     public byte[] toBytes() {
-        DataOutputImpl dataOutput = new DataOutputImpl();
-        dataOutput.writeUTF(defaultAccess);
-        dataOutput.writeLong(limits.size());
+        ObjectNode node = JsonNodeFactory.instance.objectNode();
+        node.put("default", defaultAccess);
+
+        ArrayNode limitsNode = node.putArray("limits");
         for (Entry<String, Long> limit : limits.entrySet()) {
-            dataOutput.writeUTF(limit.getKey());
-            dataOutput.writeLong(limit.getValue());
+            ObjectNode limitNode = limitsNode.addObject();
+            limitNode.put("store", limit.getKey());
+            limitNode.put("limit", limit.getValue());
         }
-        return dataOutput.toByteArray();
+
+        return JsonFormat.serializeAsBytesSoft(node, "BlobStoreAccessConfig");
     }
 
     public BlobStoreAccessConfig(String defaultAccess) {

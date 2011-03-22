@@ -45,6 +45,19 @@ public class JsonFormat {
         return OBJECT_MAPPER.writeValueAsBytes(jsonNode);
     }
 
+    /**
+     * Variant of serialize that converts the IOException to a RuntimeException.
+     *
+     * @param what a label for what is being serialized, used in the error message
+     */
+    public static byte[] serializeAsBytesSoft(JsonNode jsonNode, String what) {
+        try {
+            return OBJECT_MAPPER.writeValueAsBytes(jsonNode);
+        } catch (IOException e) {
+            throw new RuntimeException("Error serializing " + what + " to JSON.", e);
+        }
+    }
+
     public static JsonNode deserialize(InputStream inputStream) throws IOException {
         JsonParser jp = JSON_FACTORY.createJsonParser(inputStream);
         return jp.readValueAsTree();
@@ -58,6 +71,20 @@ public class JsonFormat {
     public static JsonNode deserialize(byte[] data) throws IOException {
         JsonParser jp = JSON_FACTORY.createJsonParser(data);
         return jp.readValueAsTree();
+    }
+
+    /**
+     * Variant of deserialize that converts the IOException to a RuntimeException.
+     *
+     * @param what a label for what is being deserialized, used in the error message
+     */
+    public static JsonNode deserializeSoft(byte[] data, String what) {
+        try {
+            JsonParser jp = JSON_FACTORY.createJsonParser(data);
+            return jp.readValueAsTree();
+        } catch (IOException e) {
+            throw new RuntimeException("Error deserializing " + what + " from JSON.", e);
+        }
     }
 
     public static JsonNode deserializeNonStd(byte[] data) throws IOException {
