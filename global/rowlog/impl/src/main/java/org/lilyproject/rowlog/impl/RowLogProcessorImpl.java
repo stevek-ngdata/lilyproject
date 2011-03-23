@@ -306,6 +306,14 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 wait(rowLogConfig.getWakeupTimeout());
                             }
                         }
+
+                        // It makes no sense to scan for new messages if the work-queue is still full. The messages
+                        // which would be retrieved by the scan would be messages which are still in the work-queue
+                        // anyway (minus those meanwhile consumed by the listeners). When no listeners are active,
+                        // this can even lead to endless scan-loops (if work-queue-size >= batch-size and # messages
+                        // in queue > work-queue-size). So we'll wait till the work-queue is almost empty.
+                        messagesWorkQueue.waitOnRefillThreshold();
+
                     } catch (InterruptedException e) {
                         return;
                     } catch (RowLogException e) {

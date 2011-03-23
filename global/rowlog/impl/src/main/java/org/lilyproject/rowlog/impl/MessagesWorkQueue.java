@@ -25,7 +25,15 @@ import org.lilyproject.rowlog.api.RowLogMessage;
 
 public class MessagesWorkQueue {
     private BlockingQueue<RowLogMessage> messageQueue = new ArrayBlockingQueue<RowLogMessage>(100);
+
     private Set<RowLogMessage> messagesWorkingOn = Collections.synchronizedSet(new HashSet<RowLogMessage>());
+
+    /**
+     * If the queue contains less than this amount of messages, we'll notify that we want some fresh messages.
+     */
+    private final int refillThreshold = 5;
+
+    private final Object refillTrigger = new Object();
     
     public void offer(RowLogMessage message) throws InterruptedException {
         if (messagesWorkingOn.contains(message)) {
@@ -39,6 +47,13 @@ public class MessagesWorkQueue {
     
     public RowLogMessage take() throws InterruptedException {
         RowLogMessage message = messageQueue.take();
+
+        if (messageQueue.size() <= refillThreshold) {
+            synchronized (refillTrigger) {
+                refillTrigger.notifyAll();
+            }
+        }
+
         synchronized (messagesWorkingOn) {
             if (messageQueue.contains(message)) {
              // Too late, the message has been put on the queue already again after the take() call.                
@@ -57,5 +72,13 @@ public class MessagesWorkQueue {
     
     public int size() {
     	return messageQueue.size();
+    }
+
+    public void waitOnRefillThreshold() throws InterruptedException {
+        synchronized (refillTrigger) {
+            while (messageQueue.size() > refillThreshold) {
+                refillTrigger.wait();
+            }
+        }
     }
 }
