@@ -123,7 +123,7 @@ public interface Repository extends Closeable {
      * <p>The record object you supply as argument will not be modified, it is internally cloned an modified. Currently
      * these modifications are mostly limited to setting the resolved record type and version. The returned record
      * object will never contain any fields you did not specify in the Record object, so you might have to do a read
-     * to see the full record sitution (other fields might have been added by concurrent updates). This will be
+     * to see the full record situation (other fields might have been added by concurrent updates). This will be
      * addressed by issue <a href="http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/93">93<a>.<p>
      *
      * @param updateVersion if true, the version indicated in the record will be updated (i.e. only the mutable fields will be updated)

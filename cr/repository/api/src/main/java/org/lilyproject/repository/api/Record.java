@@ -161,6 +161,11 @@ public interface Record {
 
     /**
      * Gets the lists of fields to delete. Modifying the returned list modifies the state of this Record object.
+     * 
+     * <p>This list will be used by {@link Repository#update(Record)} to delete fields.
+     * 
+     * <p>If a record contains the field both as a normal field and in the list of fields to delete, updating the record
+     * will result in the field to be deleted rather than updated. So, deleting a field takes preference over updating a field.
      */
     List<QName> getFieldsToDelete();
 
