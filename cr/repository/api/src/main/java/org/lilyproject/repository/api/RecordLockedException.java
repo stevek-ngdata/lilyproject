@@ -1,14 +1,24 @@
 package org.lilyproject.repository.api;
 
-public class RecordLockedException extends RepositoryException {
-    private final RecordId recordId;
+import java.util.HashMap;
+import java.util.Map;
 
-    public RecordLockedException(RecordId recordId) {
-        this.recordId = recordId;
+public class RecordLockedException extends RecordException {
+    private String recordId;
+
+    public RecordLockedException(String message, Map<String, String> state) {
+        this.recordId = state.get("recordId");
     }
-
-    public RecordId getRecordId() {
-        return recordId;
+    
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("recordId", recordId);
+        return state;
+    }
+    
+    public RecordLockedException(RecordId recordId) {
+        this.recordId = recordId != null ? recordId.toString() : null;
     }
 
     @Override

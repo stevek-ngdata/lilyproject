@@ -63,24 +63,10 @@ public class RemoteRepository extends BaseRepository {
         return idGenerator;
     }
     
-    public Record create(Record record) throws RecordExistsException, InvalidRecordException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordLockedException, RecordException,
-            TypeException {
+    public Record create(Record record) throws RepositoryException, InterruptedException {
         try {
             return converter.convert(lilyProxy.create(converter.convert(record)));
-        } catch (AvroRecordExistsException e) {
-            throw converter.convert(e);
-        } catch (AvroInvalidRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordLockedException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -91,14 +77,10 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
-    public void delete(RecordId recordId) throws RecordException, RecordNotFoundException, RecordLockedException {
+    public void delete(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
             lilyProxy.delete(converter.convert(recordId));
-        } catch (AvroRecordNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordLockedException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -109,25 +91,18 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
-    public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, VersionNotFoundException, RecordException, TypeException {
+    public Record read(RecordId recordId) throws RepositoryException, InterruptedException {
         return read(recordId, null, null);
     }
 
-    public Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, VersionNotFoundException, RecordException,
-            TypeException {
+    public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
     
-    public List<Record> read(List<RecordId> recordIds) throws 
-            RecordTypeNotFoundException, FieldTypeNotFoundException, VersionNotFoundException, RecordException,
-            TypeException {
+    public List<Record> read(List<RecordId> recordIds) throws RepositoryException, InterruptedException {
         return read(recordIds, null);
     }
-    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws 
-            RecordTypeNotFoundException, FieldTypeNotFoundException, VersionNotFoundException, RecordException,
-            TypeException {
+    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordIds, "recordIds");
         if (recordIds == null)
             return new ArrayList<Record>();
@@ -144,15 +119,7 @@ public class RemoteRepository extends BaseRepository {
                 }
             }
             return converter.convertAvroRecords(lilyProxy.readRecords(avroRecordIds, avroFieldNames));
-        } catch (AvroVersionNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -163,14 +130,11 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
-    public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, VersionNotFoundException, RecordException, TypeException {
+    public Record read(RecordId recordId, Long version) throws RepositoryException, InterruptedException {
         return read(recordId, version, null);
     }
 
-    public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, VersionNotFoundException, RecordException,
-            TypeException {
+    public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
             if (fieldNames != null) {
@@ -180,17 +144,7 @@ public class RemoteRepository extends BaseRepository {
                 }
             }
             return converter.convert(lilyProxy.read(converter.convert(recordId), converter.convertVersion(version), avroFieldNames));
-        } catch (AvroRecordNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroVersionNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -201,9 +155,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
     
-    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
-            throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-            VersionNotFoundException, TypeException {
+    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
             if (fieldNames != null) {
@@ -213,17 +165,7 @@ public class RemoteRepository extends BaseRepository {
                 }
             }
             return converter.convertAvroRecords(lilyProxy.readVersions(converter.convert(recordId), converter.convertVersion(fromVersion), converter.convertVersion(toVersion), avroFieldNames));
-        } catch (AvroRecordNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroVersionNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -235,8 +177,7 @@ public class RemoteRepository extends BaseRepository {
     }
 
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
-    throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-    VersionNotFoundException, TypeException {
+    throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
             if (fieldNames != null) {
@@ -246,17 +187,7 @@ public class RemoteRepository extends BaseRepository {
                 }
             }
             return converter.convertAvroRecords(lilyProxy.readSpecificVersions(converter.convert(recordId), versions, avroFieldNames));
-        } catch (AvroRecordNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroVersionNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -268,34 +199,14 @@ public class RemoteRepository extends BaseRepository {
     }
 
     
-    public Record update(Record record) throws RecordNotFoundException, InvalidRecordException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordLockedException, RecordException,
-            TypeException, VersionNotFoundException, WalProcessingException {
+    public Record update(Record record) throws RepositoryException, InterruptedException {
         return update(record, false, true);
     }
 
-    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws
-            RecordNotFoundException, InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RecordLockedException, VersionNotFoundException, RecordException, TypeException, WalProcessingException {
+    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException, InterruptedException {
         try {
             return converter.convert(lilyProxy.update(converter.convert(record), updateVersion, useLatestRecordType));
-        } catch (AvroRecordNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroInvalidRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordLockedException e) {
-            throw converter.convert(e);
-        } catch (AvroVersionNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
-            throw converter.convert(e);
-        } catch (AvroWalProcessingException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -306,30 +217,14 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
-    public Record createOrUpdate(Record record) throws FieldTypeNotFoundException, RecordException,
-            RecordTypeNotFoundException, RecordLockedException, InvalidRecordException, TypeException,
-            VersionNotFoundException {
+    public Record createOrUpdate(Record record) throws RepositoryException, InterruptedException {
         return createOrUpdate(record, true);
     }
 
-    public Record createOrUpdate(Record record, boolean useLatestRecordType) throws FieldTypeNotFoundException,
-            RecordException, RecordTypeNotFoundException, RecordLockedException, InvalidRecordException, TypeException,
-            VersionNotFoundException {
+    public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException, InterruptedException {
         try {
             return converter.convert(lilyProxy.createOrUpdate(converter.convert(record), useLatestRecordType));
-        } catch (AvroInvalidRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordLockedException e) {
-            throw converter.convert(e);
-        } catch (AvroVersionNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);
@@ -340,7 +235,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
-    public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException {
+    public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroRecordIds(lilyProxy.getVariants(converter.convert(recordId)));
         } catch (AvroRepositoryException e) {
@@ -354,9 +249,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
     
-    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RecordNotFoundException,
-            VersionNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-            TypeException {
+    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException {
         try {
             List<AvroSchemaId> avroFieldIds = null;
             if (fieldIds != null) {
@@ -366,17 +259,7 @@ public class RemoteRepository extends BaseRepository {
                 }
             }
             return converter.convert(lilyProxy.readWithIds(converter.convert(recordId), converter.convertVersion(version), avroFieldIds));
-        } catch (AvroRecordNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroVersionNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroFieldTypeNotFoundException e) {
-            throw converter.convert(e);
-        } catch (AvroRecordException e) {
-            throw converter.convert(e);
-        } catch (AvroTypeException e) {
+        } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
             throw converter.convert(e);

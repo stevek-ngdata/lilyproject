@@ -59,9 +59,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
         return failureCount;
     }
 
-    private void readBlobs(Record readRecord) throws FieldTypeNotFoundException, TypeException, BlobException,
-            BlobNotFoundException, InterruptedException, IOException, RecordNotFoundException,
-            RecordTypeNotFoundException, RecordException, VersionNotFoundException {
+    private void readBlobs(Record readRecord) throws IOException, RepositoryException, InterruptedException {
         Map<QName, Object> readFields = readRecord.getFields();
         for (Entry<QName, Object> entry : readFields.entrySet()) {
             QName fieldName = entry.getKey();

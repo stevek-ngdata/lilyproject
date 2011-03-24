@@ -189,8 +189,8 @@ public abstract class AbstractTypeManager implements TypeManager {
         return fieldTypes;
     }
     
-    abstract public List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException, TypeException;
-    abstract public List<RecordType> getRecordTypesWithoutCache() throws RecordTypeNotFoundException, TypeException;
+    abstract public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
+    abstract public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
     
     protected synchronized void updateFieldTypeCache(FieldType fieldType) {
         updatingFieldTypes.update(fieldType);
@@ -229,7 +229,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordTypeIdCache.get(id);
     }
     
-    public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException {
+    public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
         RecordType recordType = getRecordTypeFromCache(id);
         if (recordType == null) {
@@ -245,7 +245,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordType.clone();
     }
     
-    public RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException {
+    public RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(name, "name");
         RecordType recordType = getRecordTypeFromCache(name);
         if (recordType == null) {
@@ -261,7 +261,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordType.clone();
     }
     
-    abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException;
+    abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
     
     public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldTypeById(id);

@@ -39,23 +39,23 @@ public abstract class BaseRepository implements Repository {
 
     public InputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
     RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-    VersionNotFoundException, TypeException, InterruptedException {
+    VersionNotFoundException, TypeException, RepositoryException, InterruptedException {
         return getInputStream(recordId, null, fieldName, null, null);
     }
 
     public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
             Integer hierarchyIndex) throws BlobNotFoundException, BlobException, RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
-            TypeException, InterruptedException {
+            TypeException, RepositoryException, InterruptedException {
         Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
         return getInputStream(record, fieldName, multivalueIndex, hierarchyIndex);
     }
     
-    public InputStream getInputStream(Record record, QName fieldName) throws FieldTypeNotFoundException, TypeException, BlobException, BlobNotFoundException, InterruptedException {
+    public InputStream getInputStream(Record record, QName fieldName) throws FieldTypeNotFoundException, TypeException, BlobException, BlobNotFoundException, RepositoryException, InterruptedException {
         return getInputStream(record, fieldName, null, null);
     }
     
-    public InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws FieldTypeNotFoundException, TypeException, InterruptedException, BlobException, BlobNotFoundException {
+    public InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws FieldTypeNotFoundException, TypeException, InterruptedException, BlobException, BlobNotFoundException, RepositoryException {
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
         return blobManager.getBlobAccess(record, fieldName, multivalueIndex, hierarchyIndex, fieldType).getInputStream();
     }
@@ -63,7 +63,7 @@ public abstract class BaseRepository implements Repository {
     public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
             Integer hierarchyIndex) throws BlobNotFoundException, BlobException, InterruptedException,
             RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-            VersionNotFoundException, TypeException {
+            VersionNotFoundException, TypeException, RepositoryException {
 
         Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
@@ -74,7 +74,7 @@ public abstract class BaseRepository implements Repository {
 
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
             InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RecordException, VersionNotFoundException, TypeException {
+            RecordException, VersionNotFoundException, TypeException, RepositoryException {
 
         return getBlob(recordId, null, fieldName, null, null);
 

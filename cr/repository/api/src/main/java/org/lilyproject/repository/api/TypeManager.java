@@ -53,8 +53,7 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, TypeException, InterruptedException;
+    RecordType createRecordType(RecordType recordType) throws RepositoryException, InterruptedException;
     
     /**
      * Gets a RecordType from the repository.
@@ -64,8 +63,7 @@ public interface TypeManager extends Closeable {
      * @throws RecordTypeNotFoundException when the recordType does not exist
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException,
-            InterruptedException;
+    RecordType getRecordTypeById(SchemaId id, Long version) throws RepositoryException, InterruptedException;
     
     /**
      * Gets a RecordType from the repository.
@@ -75,8 +73,7 @@ public interface TypeManager extends Closeable {
      * @throws RecordTypeNotFoundException when the recordType does not exist
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException,
-            InterruptedException;
+    RecordType getRecordTypeByName(QName name, Long version) throws RepositoryException, InterruptedException;
 
     /**
      * Updates an existing record type.
@@ -96,14 +93,13 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    RecordType updateRecordType(RecordType recordType) throws  RecordTypeNotFoundException, FieldTypeNotFoundException,
-            TypeException, InterruptedException;
+    RecordType updateRecordType(RecordType recordType) throws  RepositoryException, InterruptedException;
 
     /**
      * Get the list of all record types that exist in the repository. This returns the latest version of
      * each record type. 
      */
-    Collection<RecordType> getRecordTypes() throws TypeException, InterruptedException;
+    Collection<RecordType> getRecordTypes() throws RepositoryException, InterruptedException;
     
     /**
      * Instantiates a new FieldTypeEntry object.
@@ -139,8 +135,7 @@ public interface TypeManager extends Closeable {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      * @throws FieldTypeExistsException 
      */
-    FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException,
-            InterruptedException;
+    FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
 
     /**
      * Updates an existing FieldType.
@@ -157,8 +152,7 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeUpdateException an exception occurred while updating the FieldType 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
-            TypeException, InterruptedException;
+    FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
     
     /**
      * Gets a FieldType from the repository.
@@ -166,7 +160,7 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
+    FieldType getFieldTypeById(SchemaId id) throws RepositoryException, InterruptedException;
     
     /**
      * Gets a FieldType from the repository.
@@ -174,12 +168,12 @@ public interface TypeManager extends Closeable {
      * @throws FieldTypeNotFoundException when no fieldType with the given name exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException, TypeException, InterruptedException;
+    FieldType getFieldTypeByName(QName name) throws RepositoryException, InterruptedException;
 
     /**
      * Gets the list of all field types that exist in the repository.
      */
-    Collection<FieldType> getFieldTypes() throws TypeException, InterruptedException;
+    Collection<FieldType> getFieldTypes() throws RepositoryException, InterruptedException;
 
     /**
      * Provides {@link ValueType} instances. These are used to set to value type of {@link FieldType}s.
@@ -208,7 +202,7 @@ public interface TypeManager extends Closeable {
      * @param multiValue if this {@link ValueType} should represent a multi value field or not
      * @param hierarchical if this{@link ValueType} should represent a {@link HierarchyPath} field or not
      */
-    ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical) throws TypeException;
+    ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical) throws RepositoryException, InterruptedException;
 
     /**
      * Registers custom {@link PrimitiveValueType}s.
@@ -217,7 +211,7 @@ public interface TypeManager extends Closeable {
      * value type if the name corresponds? Does it make sense to allow registering at any time? Probably implies
      * registering on all Lily nodes? This needs more thought.
      */
-    void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) throws TypeException;
+    void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) throws RepositoryException, InterruptedException;
 
     /**
      * Returns a snapshot of the FieldTypes. To be used when a consistent snapshot is needed while performing a CRUD operation.
@@ -225,7 +219,7 @@ public interface TypeManager extends Closeable {
      */
     FieldTypes getFieldTypesSnapshot();
 
-    List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException, TypeException;
+    List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
 
-    List<RecordType> getRecordTypesWithoutCache() throws RecordTypeNotFoundException, TypeException;
+    List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
 }

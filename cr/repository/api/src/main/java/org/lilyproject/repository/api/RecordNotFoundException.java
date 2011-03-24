@@ -15,16 +15,26 @@
  */
 package org.lilyproject.repository.api;
 
-public class RecordNotFoundException extends RepositoryException {
+import java.util.HashMap;
+import java.util.Map;
 
-    private final RecordId recordId;
+public class RecordNotFoundException extends RecordException {
 
-    public RecordNotFoundException(RecordId recordId) {
-        this.recordId = recordId;
+    private String recordId;
+
+    public RecordNotFoundException(String message, Map<String, String> state) {
+        this.recordId = state.get("recordId");
     }
     
-    public RecordId getRecordId() {
-        return recordId;
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("recordId", recordId);
+        return state;
+    }
+    
+    public RecordNotFoundException(RecordId recordId) {
+        this.recordId = recordId != null ? recordId.toString() : null;
     }
     
     @Override

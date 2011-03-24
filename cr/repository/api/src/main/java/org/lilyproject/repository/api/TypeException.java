@@ -15,11 +15,18 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Map;
+
 /**
  * Generic exception for problems occurring during creating, reading, updating or
  * deleting field types or record types.
  */
 public class TypeException extends RepositoryException {
+    
+    public TypeException(String message, Map<String, String> state) {
+        super(message, state);
+    }
+    
     public TypeException() {
         super();
     }

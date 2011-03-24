@@ -91,10 +91,10 @@ public class TypeManagerReliableCreateTest {
         try {
             typeManager.createRecordType(typeManager.newRecordType(qName));
             fail();
-        } catch (TypeException expected) {
         } catch (RecordTypeExistsException expected) {
             // This will be thrown when the cache of the typeManager was updated as a consequence of the update on basicTypeManager
             // Through ZooKeeper the cache will have been marked as invalidated
+        } catch (TypeException expected) {
         }
     }
 
@@ -127,10 +127,10 @@ public class TypeManagerReliableCreateTest {
         try {
             typeManager.createFieldType(typeManager.newFieldType(valueType, qName, Scope.VERSIONED));
             fail();
-        } catch (TypeException expected) {
         } catch (FieldTypeExistsException expected) {
             // This will be thrown when the cache of the typeManager was updated as a consequence of the update on basicTypeManager
             // Through ZooKeeper the cache will have been marked as invalidated
+        } catch (TypeException expected) {
         }
     }
     

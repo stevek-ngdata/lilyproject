@@ -15,27 +15,36 @@
  */
 package org.lilyproject.repository.api;
 
-public class VersionNotFoundException extends RepositoryException {
+import java.util.HashMap;
+import java.util.Map;
 
-    private final RecordId recordId;
-    private final long version;
+public class VersionNotFoundException extends RecordException {
 
+    private String recordId;
+    private Long version;
+
+    public VersionNotFoundException(String message, Map<String, String> state) {
+        this.recordId = state.get("recordId");
+        String version = state.get("version");
+        this.version = version != null ? Long.valueOf(version) : null;
+    }
+    
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("recordId", recordId);
+        state.put("version", version != null ? version.toString() : null);
+        return state;
+    }
+    
     public VersionNotFoundException(RecordId recordId, long version) {
-        this.recordId = recordId;
+        this.recordId = recordId != null ? recordId.toString() : null;
         this.version = version;
-    }
-
-    public RecordId getRecordId() {
-        return recordId;
-    }
-
-    public long getVersion() {
-        return version;
     }
 
     @Override
     public String getMessage() {
-        return "Record '" + recordId + "', version " + version + " not found.";
+        return "Record '" + recordId + "', version '" + version + "' not found.";
     }
 }
 

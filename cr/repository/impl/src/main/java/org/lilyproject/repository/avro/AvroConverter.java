@@ -15,22 +15,17 @@
  */
 package org.lilyproject.repository.avro;
 
+import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.util.Utf8;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
-import org.lilyproject.bytes.impl.DataInputImpl;
 
 public class AvroConverter {
 
@@ -45,7 +40,7 @@ public class AvroConverter {
         this.typeManager = repository.getTypeManager();
     }
     
-    public Record convert(AvroRecord avroRecord) throws RecordException, TypeException {
+    public Record convert(AvroRecord avroRecord) throws RepositoryException, InterruptedException {
         Record record = repository.newRecord();
         // Id
         if (avroRecord.id != null) {
@@ -97,7 +92,7 @@ public class AvroConverter {
         return record;
     }
     
-    public IdRecord convert(AvroIdRecord avroIdRecord) throws RecordException, TypeException {
+    public IdRecord convert(AvroIdRecord avroIdRecord) throws RepositoryException, InterruptedException {
         Map<SchemaId, QName> idToQNameMapping = null;
         // Using two arrays here since avro does only support strings in the keys of a map
         List<AvroSchemaId> avroIdToQNameMappingIds = avroIdRecord.idToQNameMappingIds;
@@ -121,8 +116,7 @@ public class AvroConverter {
         return new IdRecordImpl(convert(avroIdRecord.record), idToQNameMapping, recordTypeIds);
     }
     
-    public AvroRecord convert(Record record) throws AvroFieldTypeNotFoundException, AvroTypeException,
-            AvroInterruptedException {
+    public AvroRecord convert(Record record) throws AvroRepositoryException, AvroInterruptedException {
         AvroRecord avroRecord = new AvroRecord();
         // Id
         RecordId id = record.getId();
@@ -161,9 +155,7 @@ public class AvroConverter {
             FieldType fieldType;
             try {
                 fieldType = typeManager.getFieldTypeByName(field.getKey());
-            } catch (FieldTypeNotFoundException e) {
-                throw convert(e);
-            } catch (TypeException e) {
+            } catch (RepositoryException e) {
                 throw convert(e);
             } catch (InterruptedException e) {
                 throw convert(e);
@@ -192,8 +184,7 @@ public class AvroConverter {
         return avroRecord; 
     }
     
-    public AvroIdRecord convert(IdRecord idRecord) throws AvroFieldTypeNotFoundException, AvroTypeException,
-            AvroInterruptedException {
+    public AvroIdRecord convert(IdRecord idRecord) throws AvroRepositoryException, AvroInterruptedException {
         AvroIdRecord avroIdRecord = new AvroIdRecord();
         avroIdRecord.record = convert(idRecord.getRecord());
      // Fields
@@ -242,7 +233,7 @@ public class AvroConverter {
     }
     
     
-    public FieldType convert(AvroFieldType avroFieldType) throws TypeException {
+    public FieldType convert(AvroFieldType avroFieldType) throws RepositoryException, InterruptedException {
         ValueType valueType = convert(avroFieldType.valueType);
         QName name = convert(avroFieldType.name);
         SchemaId id = convert(avroFieldType.id);
@@ -262,7 +253,7 @@ public class AvroConverter {
         return avroFieldType;
     }
 
-    public RecordType convert(AvroRecordType avroRecordType) throws TypeException {
+    public RecordType convert(AvroRecordType avroRecordType) throws RepositoryException {
         SchemaId recordTypeId = convert(avroRecordType.id);
         QName recordTypeName = convert(avroRecordType.name);
         RecordType recordType = typeManager.newRecordType(recordTypeId, recordTypeName);
@@ -303,7 +294,7 @@ public class AvroConverter {
         return avroRecordType;
     }
 
-    public ValueType convert(AvroValueType valueType) throws TypeException {
+    public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {
         return typeManager.getValueType(convert(valueType.primitiveValueType), valueType.multivalue, valueType.hierarchical);
     }
 
@@ -365,269 +356,42 @@ public class AvroConverter {
     public RemoteException convert(AvroRemoteException exception) {
         return new RemoteException(exception.getMessage(), exception);
     }
-
-    public AvroRecordException convert(RecordException exception) {
-        AvroRecordException avroException = new AvroRecordException();
-        avroException.message = exception.getMessage();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroTypeException convert(TypeException exception) {
-        AvroTypeException avroException = new AvroTypeException();
-        avroException.message = exception.getMessage();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
+    
+    public AvroRepositoryException convert(RepositoryException exception) {
+        AvroRepositoryException avroRepositoryException = new AvroRepositoryException();
+        avroRepositoryException.message = exception.getMessage();
+        avroRepositoryException.remoteCauses = buildCauses(exception);
+        avroRepositoryException.exceptionClass = exception.getClass().getName();
+        Map<String, String> params = exception.getState();
+        if (params != null) {
+            avroRepositoryException.params = new HashMap<CharSequence, CharSequence>();
+            avroRepositoryException.params.putAll(params);
+        }
+        return avroRepositoryException;
     }
     
+    public RepositoryException convert(AvroRepositoryException avroException) {
+        try {
+            Class exceptionClass = Class.forName(convert(avroException.exceptionClass));
+            Map<String, String> params = new HashMap<String, String>();
+            Constructor constructor = exceptionClass.getConstructor(String.class, Map.class);
+            RepositoryException repositoryException = (RepositoryException)constructor.newInstance(convert(avroException.message), params);
+            restoreCauses(avroException.remoteCauses, repositoryException);
+            return repositoryException;
+        } catch (Exception e) {
+            // TODO log a warning
+        }
+        RepositoryException repositoryException = new RepositoryException(convert(avroException.message));
+        restoreCauses(avroException.remoteCauses, repositoryException);
+        return repositoryException;
+    }
+
     public AvroInterruptedException convert(InterruptedException exception) {
         AvroInterruptedException avroException = new AvroInterruptedException();
         avroException.message = exception.getMessage();
         return avroException;
     }
 
-    public AvroBlobNotFoundException convert(BlobNotFoundException exception) {
-        AvroBlobNotFoundException avroException = new AvroBlobNotFoundException();
-        avroException.blob = convert(exception.getBlob());
-        return avroException;
-    }
-
-    public AvroBlobException convert(BlobException exception) {
-        AvroBlobException avroException = new AvroBlobException();
-        avroException.message = exception.getMessage();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroRepositoryException convert(RepositoryException exception) {
-        AvroRepositoryException avroException = new AvroRepositoryException();
-        avroException.message = exception.getMessage();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroFieldTypeExistsException convert(FieldTypeExistsException exception) {
-        AvroFieldTypeExistsException avroFieldTypeExistsException = new AvroFieldTypeExistsException();
-        avroFieldTypeExistsException.fieldType = convert(exception.getFieldType());
-        avroFieldTypeExistsException.remoteCauses = buildCauses(exception);
-        return avroFieldTypeExistsException;
-    }
-
-    public FieldTypeExistsException convert(AvroFieldTypeExistsException avroException) {
-        try {
-            FieldTypeExistsException exception = new FieldTypeExistsException(convert(avroException.fieldType));
-            restoreCauses(avroException.remoteCauses, exception);
-            return exception;
-        } catch (Exception e) {
-            // TODO this is not good, exceptions should never fail to deserialize
-            throw new RuntimeException("Error deserializing exception.", e);
-        }
-    }
-
-    public AvroRecordTypeExistsException convert(RecordTypeExistsException exception) {
-        AvroRecordTypeExistsException avroException = new AvroRecordTypeExistsException();
-        avroException.recordType = convert(exception.getRecordType());
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroRecordTypeNotFoundException convert(RecordTypeNotFoundException exception) {
-        AvroRecordTypeNotFoundException avroException = new AvroRecordTypeNotFoundException();
-        if (exception.getId() != null)
-            avroException.id = convert(exception.getId());
-        if (exception.getName() != null)
-            avroException.name = convert(exception.getName());
-        Long version = exception.getVersion();
-        if (version != null) {
-            avroException.version = version;
-        }
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroFieldTypeNotFoundException convert(FieldTypeNotFoundException exception) {
-        AvroFieldTypeNotFoundException avroException = new AvroFieldTypeNotFoundException();
-        if (exception.getId() != null)
-            avroException.id = convert(exception.getId());
-        if (exception.getName() != null)
-            avroException.name = convert(exception.getName());
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public RecordException convert(AvroRecordException avroException) {
-        RecordException exception = new RecordException(convert(avroException.message));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public BlobException convert(AvroBlobException avroException) {
-        BlobException exception = new BlobException(convert(avroException.message));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public TypeException convert(AvroTypeException avroException) {
-        TypeException exception = new TypeException(convert(avroException.message));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-    
-    public RepositoryException convert(AvroRepositoryException avroException) {
-        RepositoryException exception = new RepositoryException(convert(avroException.message));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public RecordTypeExistsException convert(AvroRecordTypeExistsException avroException) {
-        try {
-            RecordTypeExistsException exception = new RecordTypeExistsException(convert(avroException.recordType));
-            restoreCauses(avroException.remoteCauses, exception);
-            return exception;
-        } catch (Exception e) {
-            // TODO this is not good, exceptions should never fail to deserialize
-            throw new RuntimeException("Error deserializing exception.", e);
-        }
-    }
-
-    public RecordTypeNotFoundException convert(AvroRecordTypeNotFoundException avroException) {
-        RecordTypeNotFoundException exception;
-        if (avroException.id != null) {
-            exception = new RecordTypeNotFoundException(convert(avroException.id), avroException.version);
-        } else {
-            exception = new RecordTypeNotFoundException(convert(avroException.name), avroException.version);
-        }
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public FieldTypeNotFoundException convert(AvroFieldTypeNotFoundException avroException) {
-        FieldTypeNotFoundException exception;
-        if (avroException.id != null) {
-            exception = new FieldTypeNotFoundException(convert(avroException.id));
-        } else {
-            exception = new FieldTypeNotFoundException(convert(avroException.name));
-        }
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public FieldTypeUpdateException convert(AvroFieldTypeUpdateException avroException) {
-        FieldTypeUpdateException exception = new FieldTypeUpdateException(convert(avroException.message));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public AvroFieldTypeUpdateException convert(FieldTypeUpdateException exception) {
-        AvroFieldTypeUpdateException avroException = new AvroFieldTypeUpdateException();
-        avroException.message = exception.getMessage();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroRecordExistsException convert(RecordExistsException exception)
-            throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
-
-        AvroRecordExistsException avroException = new AvroRecordExistsException();
-        avroException.recordId = convert(exception.getRecordId());
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-        
-    }
-
-    public AvroRecordNotFoundException convert(RecordNotFoundException exception)
-            throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
-
-        AvroRecordNotFoundException avroException = new AvroRecordNotFoundException();
-        avroException.recordId = convert(exception.getRecordId());
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroVersionNotFoundException convert(VersionNotFoundException exception)
-            throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
-
-        AvroVersionNotFoundException avroException = new AvroVersionNotFoundException();
-        avroException.recordId = convert(exception.getRecordId());
-        avroException.version = exception.getVersion();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroInvalidRecordException convert(InvalidRecordException exception)
-            throws AvroFieldTypeNotFoundException, AvroTypeException, AvroInterruptedException {
-
-        AvroInvalidRecordException avroException = new AvroInvalidRecordException();
-        avroException.recordId = convert(exception.getRecordId());
-        avroException.message = exception.getMessage();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroRecordLockedException convert(RecordLockedException exception) {
-        AvroRecordLockedException avroException = new AvroRecordLockedException();
-        avroException.recordId = convert(exception.getRecordId());
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-
-    public AvroWalProcessingException convert(WalProcessingException exception) {
-        AvroWalProcessingException avroException = new AvroWalProcessingException();
-        avroException.recordId = convert(exception.getRecordId());
-        avroException.message = exception.getMessage();
-        avroException.remoteCauses = buildCauses(exception);
-        return avroException;
-    }
-    
-    public RecordExistsException convert(AvroRecordExistsException avroException) {
-        RecordExistsException exception = new RecordExistsException(convertAvroRecordId(avroException.recordId));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public RecordNotFoundException convert(AvroRecordNotFoundException avroException) {
-        RecordNotFoundException exception = new RecordNotFoundException(convertAvroRecordId(avroException.recordId));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public VersionNotFoundException convert(AvroVersionNotFoundException avroException) {
-        VersionNotFoundException exception = new VersionNotFoundException(convertAvroRecordId(avroException.recordId),
-                avroException.version);
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public InvalidRecordException convert(AvroInvalidRecordException avroException) {
-        RecordId recordId = avroException.recordId == null ? null : convertAvroRecordId(avroException.recordId);
-        InvalidRecordException exception = new InvalidRecordException(convert(avroException.message), recordId);
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-    
-    public RecordLockedException convert(AvroRecordLockedException avroException) {
-        RecordLockedException exception = new RecordLockedException(convertAvroRecordId(avroException.recordId));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
-
-    public BlobNotFoundException convert(AvroBlobNotFoundException avroException) {
-        try {
-            BlobNotFoundException exception = new BlobNotFoundException(convert(avroException.blob), convert(avroException.message));
-            restoreCauses(avroException.remoteCauses, exception);
-            return exception;
-        } catch (Exception e) {
-            // TODO this is not good, exceptions should never fail to deserialize
-            throw new RuntimeException("Error deserializing exception.", e);
-        }
-    }
-    
-    public WalProcessingException convert(AvroWalProcessingException avroException) {
-        RecordId recordId = avroException.recordId == null ? null : convertAvroRecordId(avroException.recordId);
-        WalProcessingException exception = new WalProcessingException(recordId, convert(avroException.message));
-        restoreCauses(avroException.remoteCauses, exception);
-        return exception;
-    }
 
     public RecordId convertAvroRecordId(ByteBuffer recordId) {
         byte[] bytes = new byte[recordId.remaining()];
@@ -727,7 +491,7 @@ public class AvroConverter {
         return result;
     }
 
-    public List<FieldType> convertAvroFieldTypes(List<AvroFieldType> avroFieldTypes) throws TypeException {
+    public List<FieldType> convertAvroFieldTypes(List<AvroFieldType> avroFieldTypes) throws RepositoryException, InterruptedException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
         for (AvroFieldType avroFieldType : avroFieldTypes) {
             fieldTypes.add(convert(avroFieldType));
@@ -735,7 +499,7 @@ public class AvroConverter {
         return fieldTypes;
     }
 
-    public List<RecordType> convertAvroRecordTypes(List<AvroRecordType> avroRecordTypes) throws TypeException {
+    public List<RecordType> convertAvroRecordTypes(List<AvroRecordType> avroRecordTypes) throws RepositoryException, InterruptedException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
         for (AvroRecordType avroRecordType : avroRecordTypes) {
             recordTypes.add(convert(avroRecordType));
@@ -759,7 +523,7 @@ public class AvroConverter {
         return avroRecordTypes;
     }
     
-    public List<Record> convertAvroRecords(List<AvroRecord> avroRecords) throws RecordException, TypeException {
+    public List<Record> convertAvroRecords(List<AvroRecord> avroRecords) throws RepositoryException, InterruptedException {
         List<Record> records = new ArrayList<Record>();
         for(AvroRecord avroRecord : avroRecords) {
             records.add(convert(avroRecord));
@@ -767,8 +531,7 @@ public class AvroConverter {
         return records;
     }
 
-    public List<AvroRecord> convertRecords(Collection<Record> records) throws AvroFieldTypeNotFoundException,
-            AvroTypeException, AvroInterruptedException {
+    public List<AvroRecord> convertRecords(Collection<Record> records) throws AvroRepositoryException, AvroInterruptedException {
         List<AvroRecord> avroRecords = new ArrayList<AvroRecord>(records.size());
         for (Record record: records) {
             avroRecords.add(convert(record));

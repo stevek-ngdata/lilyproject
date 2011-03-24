@@ -15,30 +15,33 @@
  */
 package org.lilyproject.repository.api;
 
-/**
- *
- */
-public class FieldTypeNotFoundException extends RepositoryException {
+import java.util.HashMap;
+import java.util.Map;
 
-    private final SchemaId id;
-    private final QName name;
+public class FieldTypeNotFoundException extends TypeException {
 
+    private String id = null;
+    private String name = null;
+
+    public FieldTypeNotFoundException(String message, Map<String, String> state) {
+        this.id = state.get("id");
+        this.name = state.get("name");
+    }
+    
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("id", id);
+        state.put("name", name);
+        return state;
+    }
+    
     public FieldTypeNotFoundException(SchemaId id) {
-        this.id = id;
-        this.name = null;
+        this.id = (id != null) ? id.toString() : null;
     }
     
     public FieldTypeNotFoundException(QName name) {
-        this.id = null;
-        this.name = name;
-    }
-
-    public SchemaId getId() {
-        return id;
-    }
-
-    public QName getName() {
-        return name;
+        this.name = (name != null) ? name.toString() : null;
     }
 
     @Override

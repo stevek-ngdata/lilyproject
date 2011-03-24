@@ -15,30 +15,38 @@
  */
 package org.lilyproject.repository.api;
 
-public class InvalidRecordException extends RepositoryException {
+import java.util.HashMap;
+import java.util.Map;
 
-    private final RecordId recordId;
-    private final String message;
+public class InvalidRecordException extends RecordException {
 
-    public InvalidRecordException(String message) {
-        this(message, null);
+    private String recordId;
+    private String info;
+
+    public InvalidRecordException(String message, Map<String, String> state) {
+        this.recordId = state.get("recordId");
+        this.info = state.get("info");
     }
 
-    public InvalidRecordException(String message, RecordId recordId) {
-        this.recordId = recordId;
-        this.message = message;
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("recordId", recordId);
+        state.put("info", info);
+        return state;
     }
-
-    public RecordId getRecordId() {
-        return recordId;
+    
+    public InvalidRecordException(String info, RecordId recordId) {
+        this.recordId = recordId != null ? recordId.toString() : null;
+        this.info = info;
     }
 
     @Override
     public String getMessage() {
         if (recordId != null) {
-            return "Record '" + recordId + "': " + message;
+            return "Record '" + recordId + "': " + info;
         } else {
-            return message;
+            return info;
         }
     }
 

@@ -15,10 +15,15 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Map;
+
 /**
  * An IO exception happened during a blob operation.
  */
 public class IOBlobException extends BlobException {
+    public IOBlobException(String message, Map<String, String> params) {
+        super(message,params);
+    }
     public IOBlobException(Throwable cause) {
         super(cause);
     }

@@ -156,7 +156,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     public RecordType updateRecordType(RecordType recordType) throws RecordTypeNotFoundException,
-            FieldTypeNotFoundException, TypeException {
+            FieldTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordType, "recordType");
         RecordType newRecordType = recordType.clone();
         SchemaId id = newRecordType.getId();
@@ -218,7 +218,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return newRecordType;
     }
 
-    private boolean updateName(Put put, RecordType recordType, RecordType latestRecordType) throws TypeException {
+    private boolean updateName(Put put, RecordType recordType, RecordType latestRecordType) throws TypeException, RepositoryException, InterruptedException {
         if (!recordType.getName().equals(latestRecordType.getName())) {
             try {
                 getRecordTypeByName(recordType.getName(), null);

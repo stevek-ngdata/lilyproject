@@ -98,6 +98,9 @@ public class VersionTag {
             } catch (TypeException e) {
                 // TODO maybe this should rather be thrown?
                 continue;
+            } catch (RepositoryException e) {
+                // TODO maybe this should rather be thrown?
+                continue;
             } catch (InterruptedException e) {
                 // TODO
                 Thread.currentThread().interrupt();
@@ -158,6 +161,9 @@ public class VersionTag {
                 // TODO would be better to do above retrieval based on ID?
                 continue;
             } catch (TypeException e) {
+                // TODO maybe this should rather be thrown?
+                continue;
+            } catch (RepositoryException e) {
                 // TODO maybe this should rather be thrown?
                 continue;
             } catch (InterruptedException e) {
@@ -276,6 +282,9 @@ public class VersionTag {
         } catch (TypeException e) {
             // TODO log this? or throw it?
             return null;
+        } catch (RepositoryException e) {
+            // TODO log this? or throw it?
+            return null;
         } catch (InterruptedException e) {
             // TODO
             Thread.currentThread().interrupt();
@@ -347,7 +356,7 @@ public class VersionTag {
      * Returns true if the Record contains a field that serves as the last version tag.
      */
     public static boolean hasLastVTag(Record record, TypeManager typeManager) throws FieldTypeNotFoundException,
-            TypeException, InterruptedException {
+            TypeException, RepositoryException, InterruptedException {
         for (QName name : record.getFields().keySet()) {
             if (isLastVersionTag(typeManager.getFieldTypeByName(name)))
                 return true;
@@ -359,7 +368,7 @@ public class VersionTag {
      * Returns true if the RecordType or one of its mixins has FieldType defined that serves as last version tag.
      */
     public static boolean hasLastVTag(RecordType recordType, TypeManager typeManager)
-            throws FieldTypeNotFoundException, RecordTypeNotFoundException, TypeException,
+            throws FieldTypeNotFoundException, RecordTypeNotFoundException, TypeException, RepositoryException,
             InterruptedException {
         Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
@@ -377,7 +386,7 @@ public class VersionTag {
     /**
      * Creates the FieldType to serve as last version tag. 
      */
-    public static FieldType createLastVTagType(TypeManager typeManager) throws FieldTypeExistsException, TypeException,
+    public static FieldType createLastVTagType(TypeManager typeManager) throws FieldTypeExistsException, TypeException, RepositoryException, 
             InterruptedException {
         return typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LONG", false, false), qname(LAST), Scope.NON_VERSIONED));
     }
@@ -385,7 +394,7 @@ public class VersionTag {
     /**
      * Returns the FieldType that serves as last version tag if it exists.
      */
-    public static FieldType getLastVTagType(TypeManager typeManager) throws FieldTypeNotFoundException, TypeException,
+    public static FieldType getLastVTagType(TypeManager typeManager) throws FieldTypeNotFoundException, TypeException, RepositoryException,
             InterruptedException {
         return typeManager.getFieldTypeByName(qname(LAST));
     }

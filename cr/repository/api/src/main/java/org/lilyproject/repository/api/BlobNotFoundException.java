@@ -15,35 +15,48 @@
  */
 package org.lilyproject.repository.api;
 
-public class BlobNotFoundException extends RepositoryException {
-    private Blob blob = null;
+import java.util.HashMap;
+import java.util.Map;
 
-    public BlobNotFoundException(Blob blob, String message, Throwable cause) {
-        super(message, cause);
-        this.blob = blob;
+public class BlobNotFoundException extends BlobException {
+    private String blob = null;
+    private String info = null;
+    
+    public BlobNotFoundException(String message, Map<String, String> state) {
+        this.blob = state.get("blob");
+        this.info = state.get("info");
     }
     
-    public BlobNotFoundException(Blob blob, String message) {
-        super(message);
-        this.blob = blob;
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("blob", blob);
+        state.put("info", info);
+        return state;
     }
     
-    public BlobNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+    public BlobNotFoundException(Blob blob, String info, Throwable cause) {
+        super(cause);
+        this.blob = (blob != null) ? blob.toString() : null;
+        this.info = info;
     }
     
-    public BlobNotFoundException(String message) {
-        super(message);
+    public BlobNotFoundException(Blob blob, String info) {
+        this.blob = (blob != null) ? blob.toString() : null;
+        this.info = info;
     }
     
-    public Blob getBlob() {
-        return blob;
+    public BlobNotFoundException(String info) {
+        this.info = info;
     }
-
+    
+    public BlobNotFoundException(String info, Throwable cause) {
+        super(cause);
+        this.info = info;
+    }
+    
     @Override
     public String getMessage() {
-        if (blob != null)
-            return "Blob <" + blob + "> could not be found." + super.getMessage();
-        return super.getMessage();
+        return "Blob <" + blob + "> could not be found: " + info;
     }
 }

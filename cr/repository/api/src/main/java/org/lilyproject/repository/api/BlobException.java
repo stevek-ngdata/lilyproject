@@ -15,10 +15,16 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Map;
+
 /**
  * Generic exception for blob-related errors.
  */
 public class BlobException extends RepositoryException {
+    public BlobException(String message, Map<String, String> params) {
+        super(message, params);
+    }
+    
     public BlobException() {
         super();
     }

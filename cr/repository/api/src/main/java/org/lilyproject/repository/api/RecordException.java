@@ -15,11 +15,17 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Map;
+
 /**
  * Generic exception for problems occurring during creating, reading, updating or
  * deleting records.
  */
 public class RecordException extends RepositoryException {
+    public RecordException(String message, Map<String, String> params) {
+        super(message, params);
+    }
+    
     public RecordException() {
         super();
     }

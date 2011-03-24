@@ -93,7 +93,7 @@ public class AvroConverterTest {
     }
     
     @Test
-    public void testValueType() throws TypeException {
+    public void testValueType() throws Exception {
         PrimitiveValueType primitiveValueType = new StringValueType();
         ValueType valueType = new ValueTypeImpl(primitiveValueType , false, true);
         typeManager.getValueType("STRING", false, true);
@@ -133,7 +133,7 @@ public class AvroConverterTest {
     }
     
     @Test
-    public void testFieldType() throws TypeException {
+    public void testFieldType() throws Exception {
         ValueType valueType = new ValueTypeImpl(new StringValueType(), true, true);
         typeManager.getValueType("STRING", true, true);
         expectLastCall().andReturn(valueType);
@@ -167,7 +167,7 @@ public class AvroConverterTest {
     }
     
     @Test
-    public void testFieldTypeWithoutId() throws TypeException {
+    public void testFieldTypeWithoutId() throws Exception {
         ValueType valueType = new ValueTypeImpl(new StringValueType(), true, true);
         typeManager.getValueType("STRING", true, true);
         expectLastCall().andReturn(valueType);
@@ -197,7 +197,7 @@ public class AvroConverterTest {
     }
     
     @Test
-    public void testEmptyRecordType() throws TypeException {
+    public void testEmptyRecordType() throws Exception {
         QName name = new QName("aNamespace", "aName");
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(id, name);
@@ -224,7 +224,7 @@ public class AvroConverterTest {
     }
     
     @Test
-    public void testRecordTypeVersion() throws TypeException {
+    public void testRecordTypeVersion() throws Exception {
         QName name = new QName("aNamespace", "aName");
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(id, name);
@@ -253,7 +253,7 @@ public class AvroConverterTest {
     }
     
     @Test
-    public void testRecordTypeFieldTypeEntries() throws TypeException {
+    public void testRecordTypeFieldTypeEntries() throws Exception {
         QName name = new QName("aNamespace", "aName");
         SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
@@ -313,7 +313,7 @@ public class AvroConverterTest {
     }
     
     @Test
-    public void testRecordTypeMixins() throws TypeException {
+    public void testRecordTypeMixins() throws Exception {
         QName name = new QName("aNamespace", "aName");
         SchemaId recordTypeId = new SchemaIdImpl(UUID.randomUUID());
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);

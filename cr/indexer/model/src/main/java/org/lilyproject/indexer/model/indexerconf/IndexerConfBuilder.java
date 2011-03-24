@@ -15,16 +15,9 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.*;
-import org.lilyproject.util.repo.VersionTag;
-import org.lilyproject.util.location.LocationAttributes;
-import org.lilyproject.util.xml.DocumentHelper;
-import org.lilyproject.util.xml.LocalXPathExpression;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.*;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.dom.DOMSource;
@@ -32,9 +25,17 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.*;
+
+import org.lilyproject.repository.api.*;
+import org.lilyproject.util.location.LocationAttributes;
+import org.lilyproject.util.repo.VersionTag;
+import org.lilyproject.util.xml.DocumentHelper;
+import org.lilyproject.util.xml.LocalXPathExpression;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 // Terminology: the word "field" is usually used for a field from a repository record, while
 // the term "index field" is usually used for a field in the index, though sometimes these
@@ -235,7 +236,7 @@ public class IndexerConfBuilder {
                     vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
                 } catch (FieldTypeNotFoundException e) {
                     throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
-                } catch (TypeException e) {
+                } catch (RepositoryException e) {
                     throw new IndexerConfException("error loading field type for vtag: " + tag, e);
                 }
             }
@@ -392,7 +393,7 @@ public class IndexerConfBuilder {
             return typeManager.getFieldTypeByName(parsedQName);
         } catch (FieldTypeNotFoundException e) {
             throw new IndexerConfException("unknown field type: " + parsedQName, e);
-        } catch (TypeException e) {
+        } catch (RepositoryException e) {
             throw new IndexerConfException("error loading field type: " + parsedQName, e);
         }
     }

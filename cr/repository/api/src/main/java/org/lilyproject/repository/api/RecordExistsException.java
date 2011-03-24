@@ -15,18 +15,28 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.HashMap;
+import java.util.Map;
 
-public class RecordExistsException extends RepositoryException {
-    private final RecordId recordId;
 
-    public RecordExistsException(RecordId recordId) {
-        this.recordId = recordId;
+public class RecordExistsException extends RecordException {
+    private String recordId;
+
+    public RecordExistsException(String message, Map<String, String> state) {
+        this.recordId = state.get("recordId");
     }
 
-    public RecordId getRecordId() {
-        return recordId;
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("recordId", recordId);
+        return state;
     }
     
+    public RecordExistsException(RecordId recordId) {
+        this.recordId = recordId != null ? recordId.toString() : null;
+    }
+
     @Override
     public String getMessage() {
         return "Record '" + recordId + "' already exists.";

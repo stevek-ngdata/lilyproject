@@ -113,8 +113,6 @@ public class BlobManagerImpl implements BlobManager {
                     registry.delete(blobToDelete);
                 } catch (BlobException e) {
                     log.warn("Failed to remove blobs from the blobstore for record <"+ recordId +">", e);
-                } catch (BlobNotFoundException e) {
-                    log.warn("Failed to remove blobs from the blobstore for record <"+ recordId +">", e);
                 }
             }
         }

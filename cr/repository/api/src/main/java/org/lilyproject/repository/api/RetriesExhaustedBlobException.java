@@ -15,6 +15,9 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * An IO exception happened during a blob operation, the operation was retried but eventually still failed.
  */
@@ -22,6 +25,23 @@ public class RetriesExhaustedBlobException extends BlobException {
     private String operation;
     private int attempts;
     private long duration;
+
+    public RetriesExhaustedBlobException(String message, Map<String, String> state) {
+        this.operation = state.get("operation");
+        String attempts = state.get("attempts");
+        this.attempts = (attempts != null) ? Integer.valueOf(attempts) : null;
+        String duration = state.get("duration");
+        this.duration = (duration != null) ? Long.valueOf(duration) : null;
+    }
+    
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("operation", operation);
+        state.put("attempts", Integer.toString(attempts));
+        state.put("duration", Long.toString(duration));
+        return state;
+    }
 
     public RetriesExhaustedBlobException(String operation, int attempts, long duration, Throwable cause) {
         super(cause);
@@ -34,4 +54,5 @@ public class RetriesExhaustedBlobException extends BlobException {
     public String getMessage() {
         return "Attempted " + operation + " operation " + attempts + " times during " + duration + " ms without success.";
     }
+    
 }

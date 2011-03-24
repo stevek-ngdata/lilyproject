@@ -15,29 +15,32 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- *
- */
-public class RecordTypeExistsException extends RepositoryException {
+public class RecordTypeExistsException extends TypeException {
 
-    private final RecordType recordType;
+    private String recordType;
 
-    public RecordTypeExistsException(RecordType recordType) {
-        this.recordType = recordType;
+    public RecordTypeExistsException(String message, Map<String, String> state) {
+        this.recordType = state.get("recordType");
     }
 
-    public RecordType getRecordType() {
-        return recordType;
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("recordType", recordType);
+        return state;
     }
     
+    public RecordTypeExistsException(RecordType recordType) {
+        this.recordType = recordType != null ? recordType.getName().toString() : null;
+    }
+
     @Override
     public String getMessage() {
         StringBuilder message = new StringBuilder();
-        message.append("RecordType <");
-        message.append(recordType.getName());
-        message.append("> ");
-        message.append("already exists");
+        message.append("RecordType <").append(recordType).append("> ").append("already exists");
         return message.toString();
     }
 }

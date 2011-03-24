@@ -15,10 +15,13 @@
  */
 package org.lilyproject.repository.api;
 
-/**
- *
- */
-public class FieldTypeUpdateException extends RepositoryException {
+import java.util.Map;
+
+public class FieldTypeUpdateException extends TypeException {
+
+    public FieldTypeUpdateException(String message, Map<String, String> params) {
+        super(message, params);
+    }
 
     public FieldTypeUpdateException(String message) {
         super(message);

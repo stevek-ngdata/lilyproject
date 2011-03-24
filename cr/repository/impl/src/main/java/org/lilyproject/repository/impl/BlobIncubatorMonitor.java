@@ -124,6 +124,9 @@ public class BlobIncubatorMonitor {
                 try {
                     try {
                         monitor();
+                    } catch (RepositoryException e) {
+                        log.warn("Failed monitoring BlobIncubatorTable", e);
+                        break;
                     } catch (IOException e) {
                         log.warn("Failed monitoring BlobIncubatorTable", e);
                         break;
@@ -137,7 +140,7 @@ public class BlobIncubatorMonitor {
             }
         }
 
-        public void monitor() throws IOException, InterruptedException {
+        public void monitor() throws IOException, RepositoryException, InterruptedException {
             log.debug("Start run blob incubator monitor");
             long monitorBegin = System.currentTimeMillis();
             Scan scan = new Scan();
@@ -170,7 +173,7 @@ public class BlobIncubatorMonitor {
             log.debug("Stop run blob incubator monitor");
         }
 
-        private void checkResult(Result result) throws IOException, InterruptedException {
+        private void checkResult(Result result) throws IOException, RepositoryException, InterruptedException {
             byte[] recordIdBytes = result.getValue(BlobIncubatorCf.REF.bytes, BlobIncubatorColumn.RECORD.bytes);
             SchemaId recordId = new SchemaIdImpl(recordIdBytes);
             byte[] blobKey = result.getRow();
@@ -229,7 +232,7 @@ public class BlobIncubatorMonitor {
         }
 
         private Result getBlobUsage(byte[] blobKey, SchemaId recordId, SchemaId fieldId) throws FieldTypeNotFoundException,
-                TypeException, InterruptedException, IOException {
+                TypeException, InterruptedException, IOException, RepositoryException {
             FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeById(fieldId);
             ValueType valueType = fieldType.getValueType();
             Get get = new Get(recordId.getBytes());
@@ -254,7 +257,7 @@ public class BlobIncubatorMonitor {
      * Runs the monitor once on the current thread. Should not be called if the cleanup might already be running
      * on another thread (i.e. {@link #start} should not have been called).
      */
-    public void runMonitorOnce() throws IOException, InterruptedException {
+    public void runMonitorOnce() throws IOException, RepositoryException, InterruptedException {
         new MonitorThread().monitor();
     }
 

@@ -915,7 +915,7 @@ public abstract class AbstractBlobStoreTest {
         }
     }
 
-    private Blob writeBlob(byte[] bytes, String mediaType, String name) throws BlobException, InterruptedException,
+    private Blob writeBlob(byte[] bytes, String mediaType, String name) throws BlobException, RepositoryException, InterruptedException,
             IOException {
         Blob blob = new Blob(mediaType, (long) bytes.length, name);
         OutputStream outputStream = repository.getOutputStream(blob);

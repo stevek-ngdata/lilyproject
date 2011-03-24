@@ -15,37 +15,41 @@
  */
 package org.lilyproject.repository.api;
 
-/**
- *
- */
-public class RecordTypeNotFoundException extends RepositoryException {
+import java.util.HashMap;
+import java.util.Map;
 
-    private final SchemaId id;
-    private final QName name;
-    private final Long version;
+public class RecordTypeNotFoundException extends TypeException {
 
+    private String id;
+    private String name;
+    private Long version;
+
+    public RecordTypeNotFoundException(String message, Map<String, String> state) {
+        this.id = state.get("id");
+        this.name = state.get("name");
+        String version = state.get("version");
+        this.version = version != null ? Long.valueOf(version) : null; 
+    }
+    
+    @Override
+    public Map<String, String> getState() {
+        Map<String, String> state = new HashMap<String, String>();
+        state.put("id", id);
+        state.put("name", name);
+        state.put("version", version != null ? version.toString() : null);
+        return state;
+    }
+    
     public RecordTypeNotFoundException(SchemaId id, Long version) {
-        this.id = id;
+        this.id = id != null ? id.toString() : null;
         this.name = null;
         this.version = version;
     }
     
     public RecordTypeNotFoundException(QName name, Long version) {
         this.id = null;
-        this.name = name;
+        this.name = name != null ? name.toString() : null;
         this.version = version;
-    }
-    
-    public SchemaId getId() {
-        return id;
-    }
-    
-    public QName getName() {
-        return name;
-    }
-    
-    public Long getVersion() {
-        return version;
     }
     
     @Override
