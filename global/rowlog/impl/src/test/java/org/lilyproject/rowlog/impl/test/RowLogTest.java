@@ -57,7 +57,7 @@ public class RowLogTest {
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         configurationManager.addRowLog(rowLogId, new RowLogConfig(60000L, true, true, 100L, 500L, 5000L));
-        configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 3, 1);
+        configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
         control = createControl();
         rowTable = RowLogTableUtil.getRowTable(HBASE_PROXY.getConf());
     }
@@ -111,7 +111,7 @@ public class RowLogTest {
         assertNull(rowLog.putMessage(rowKey, null, null, null));
         assertTrue(rowLog.getMessages(rowKey).isEmpty());
         control.verify();
-        configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 3, 1); // Put subscription back for the other tests
+        configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1); // Put subscription back for the other tests
         AbstractRowLogEndToEndTest.waitForSubscription(rowLog, subscriptionId1);
     }
     
@@ -197,13 +197,13 @@ public class RowLogTest {
         
         Object lock = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock);
-        assertTrue(rowLog.unlockMessage(message, subscriptionId1, true, lock));
+        assertTrue(rowLog.unlockMessage(message, subscriptionId1, lock));
         assertFalse(rowLog.isMessageLocked(message, subscriptionId1));
         Object lock2 = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock2);
         control.verify();
         //Cleanup 
-        rowLog.unlockMessage(message, subscriptionId1, true, lock2);
+        rowLog.unlockMessage(message, subscriptionId1, lock2);
     }
     
     @Test
@@ -223,10 +223,10 @@ public class RowLogTest {
         Object lock2 = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock2);
         
-        assertFalse(rowLog.unlockMessage(message, subscriptionId1, true, lock));
+        assertFalse(rowLog.unlockMessage(message, subscriptionId1, lock));
         control.verify();
         //Cleanup
-        rowLog.unlockMessage(message, subscriptionId1, true, lock2);
+        rowLog.unlockMessage(message, subscriptionId1, lock2);
     }
     
     @Test
@@ -234,7 +234,7 @@ public class RowLogTest {
         String subscriptionId2 = "subscriptionId2";
                 
         RowLogConfigurationManagerImpl configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
-        configurationManager.addSubscription(rowLogId, subscriptionId2, Type.Netty, 3, 2);
+        configurationManager.addSubscription(rowLogId, subscriptionId2, Type.Netty, 2);
         long waitUntil = System.currentTimeMillis() + 10000;
         while (waitUntil > System.currentTimeMillis()) {
             if (rowLog.getSubscriptions().size() == 2)
@@ -253,7 +253,7 @@ public class RowLogTest {
         Object lock = rowLog.lockMessage(message, subscriptionId1);
         assertNotNull(lock);
         assertFalse(rowLog.isMessageLocked(message, subscriptionId2));
-        assertTrue(rowLog.unlockMessage(message, subscriptionId1, true, lock));
+        assertTrue(rowLog.unlockMessage(message, subscriptionId1, lock));
         assertFalse(rowLog.isMessageLocked(message, subscriptionId1));
         
         Object lock2 = rowLog.lockMessage(message, subscriptionId2);
@@ -263,7 +263,7 @@ public class RowLogTest {
         
         control.verify();
         //Cleanup 
-        rowLog.unlockMessage(message, subscriptionId2, true, lock2);
+        rowLog.unlockMessage(message, subscriptionId2, lock2);
         configurationManager.removeSubscription(rowLogId, subscriptionId2);
 
         waitUntil = System.currentTimeMillis() + 10000;
@@ -279,7 +279,7 @@ public class RowLogTest {
         String subscriptionId3 = "subscriptionId2";
         
         RowLogConfigurationManagerImpl configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
-        configurationManager.addSubscription(rowLogId, subscriptionId3, Type.VM, 5, 3);
+        configurationManager.addSubscription(rowLogId, subscriptionId3, Type.VM, 3);
         
         long waitUntil = System.currentTimeMillis() + 10000;
         while (waitUntil > System.currentTimeMillis()) {

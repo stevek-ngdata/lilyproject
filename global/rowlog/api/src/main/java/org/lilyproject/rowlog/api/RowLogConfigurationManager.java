@@ -88,10 +88,9 @@ public interface RowLogConfigurationManager {
      * @param rowLogId the id of the rowlog to add the subscription to
      * @param subscriptionId the id of the subscription to add
      * @param type to indicate wether the listeners of the subscription will run locally (VM) or remote (Netty)
-     * @param maxTries the number of times to try processing a message for this subscription before marking it as problematic
      * @param orderNr a number to order the subscription wrt the other subscriptions
      */
-    void addSubscription(String rowLogId, String subscriptionId, Type type, int maxTries, int orderNr) throws KeeperException,
+    void addSubscription(String rowLogId, String subscriptionId, Type type, int orderNr) throws KeeperException,
             InterruptedException, RowLogException;
 
     /**
@@ -102,11 +101,10 @@ public interface RowLogConfigurationManager {
      * @param rowLogId the id of the rowlog to add the subscription to
      * @param subscriptionId the id of the subscription to add
      * @param type to indicate wether the listeners of the subscription will run locally (VM) or remote (Netty)
-     * @param maxTries the number of times to try processing a message for this subscription before marking it as problematic
      * @param orderNr a number to order the subscription wrt the other subscriptions
      * @throws RowLogException thrown when the subscription does not exist
      */
-    void updateSubscription(String rowLogId, String subscriptionId, Type type, int maxTries, int orderNr) throws KeeperException, InterruptedException, RowLogException;
+    void updateSubscription(String rowLogId, String subscriptionId, Type type, int orderNr) throws KeeperException, InterruptedException, RowLogException;
     
     /**
      * Deletes a subscription.

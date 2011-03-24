@@ -40,10 +40,9 @@ public class SubscriptionConverter {
 
     public RowLogSubscription fromJson(String rowLogId, String subscriptionId, ObjectNode node) {
         RowLogSubscription.Type type = RowLogSubscription.Type.valueOf(JsonUtil.getString(node, "type"));
-        int maxTries = JsonUtil.getInt(node, "maxTries");
         int orderNr = JsonUtil.getInt(node, "orderNr");
 
-        return new RowLogSubscription(rowLogId, subscriptionId, type, maxTries, orderNr);
+        return new RowLogSubscription(rowLogId, subscriptionId, type, orderNr);
     }
 
     public byte[] toJsonBytes(RowLogSubscription subscription) {
@@ -59,7 +58,6 @@ public class SubscriptionConverter {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
 
         node.put("type", subscription.getType().toString());
-        node.put("maxTries", subscription.getMaxTries());
         node.put("orderNr", subscription.getOrderNr());
 
         return node;

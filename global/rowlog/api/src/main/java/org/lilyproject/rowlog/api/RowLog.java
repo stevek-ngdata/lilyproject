@@ -146,7 +146,7 @@ public interface RowLog {
      * given lock does not match the lock that is currently on the message 
      * @throws RowLogException
      */
-    boolean unlockMessage(RowLogMessage message, String subscriptionId, boolean realTry, Object lock) throws RowLogException;
+    boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException;
     
     /**
      * Checks if a {@link RowLogMessage} is locked for a certain subscription
@@ -192,31 +192,6 @@ public interface RowLog {
      */
     List<RowLogMessage> getMessages(byte[] rowKey, String ... subscriptionId) throws RowLogException;
 
-    /**
-     * Return all messages that have been marked as problematic for a certain subscription.
-     * <p>Messages have a try count for each subscription for the number of times the message has been 
-     * processed unsuccessfully. This try count is increased either when calling {@link #processMessage(RowLogMessage)}
-     * or {@link #lockMessage(RowLogMessage, String)}. When the try count reaches the maximum allowed
-     * by the subscription it is marked as 'problematic'. Problematic messages are no longer picked up
-     * by a {@link RowLogProcessor}, but can still be processed by calling {@link #processMessage(RowLogMessage)}.
-     * @param subscriptionId the id of the subscription
-     * @return a list of problematic messages
-     * @throws RowLogException
-     */
-    List<RowLogMessage> getProblematic(String subscriptionId) throws RowLogException;
-    
-    /**
-     * Checks if a message has been marked as problematic for a certain subscription.
-     * <p>A message is marked as problematic when its processing has failed the number of times defined in the maxtries of the subscription.
-     * By marking it as problematic it won't be picked up again by the RowLog processor. 
-     * This avoids that a problematic message blocks other messages from being processed. 
-     * @param message the message to check
-     * @param subscriptionId for which subscription to check the message
-     * @return true if the message has been marked as problematic
-     * @throws RowLogException
-     */
-    boolean isProblematic(RowLogMessage message, String subscriptionId) throws RowLogException;
-    
     /**
      * @return the list of subscriptions on the rowlog
      */

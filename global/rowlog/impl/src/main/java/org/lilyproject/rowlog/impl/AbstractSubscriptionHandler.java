@@ -72,15 +72,15 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                         try {
                             Object lock = rowLog.lockMessage(message, subscriptionId);
                             if (lock != null) {
-                                if (!rowLog.isMessageAvailable(message, subscriptionId) || rowLog.isProblematic(message, subscriptionId)) {
-                                    rowLog.unlockMessage(message, subscriptionId, false, lock);
+                                if (!rowLog.isMessageAvailable(message, subscriptionId)) {
+                                    rowLog.unlockMessage(message, subscriptionId, lock);
                                 } else {
                                     if (processMessage(listener, message)) {
                                     	metrics.successRate.inc();
                                         rowLog.messageDone(message, subscriptionId, lock);
                                     } else {
                                     	metrics.failureRate.inc();
-                                        rowLog.unlockMessage(message, subscriptionId, true, lock);
+                                        rowLog.unlockMessage(message, subscriptionId, lock);
                                     }
                                 }
                             } 

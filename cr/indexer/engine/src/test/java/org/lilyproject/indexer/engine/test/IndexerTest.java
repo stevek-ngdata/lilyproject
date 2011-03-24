@@ -168,9 +168,9 @@ public class IndexerTest {
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
-        rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1, 1);
-        rowLogConfMgr.addSubscription("WAL", "IndexUpdater", RowLogSubscription.Type.VM, 1, 2);
-        rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 1, 3);
+        rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
+        rowLogConfMgr.addSubscription("WAL", "IndexUpdater", RowLogSubscription.Type.VM, 2);
+        rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 3);
 
         waitForSubscription(wal, "LinkIndexUpdater");
         waitForSubscription(wal, "IndexUpdater");
@@ -1028,7 +1028,7 @@ public class IndexerTest {
             log.debug("Begin test V71");
             HierarchyPath path1 = new HierarchyPath(blob1dup, blob2);
             HierarchyPath path2 = new HierarchyPath(blob3, blob4);
-            List blobs = Arrays.asList(path1, path2);
+            List<HierarchyPath> blobs = Arrays.asList(path1, path2);
 
             Record record2 = repository.newRecord();
             record2.setRecordType(vRecordType1.getName());

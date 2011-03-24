@@ -78,7 +78,7 @@ public class RowLogShardTest {
     public void testSingleMessage() throws Exception {
         String subscriptionId = "Subscription1";
         rowLog.getSubscriptions();
-        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 3, 1))).anyTimes();
+        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 1))).anyTimes();
         control.replay();
         shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
         RowLogMessageImpl message1 = new RowLogMessageImpl(System.currentTimeMillis(), Bytes.toBytes("row1"), 0L, null, rowLog);
@@ -97,7 +97,7 @@ public class RowLogShardTest {
     public void testMultipleMessages() throws Exception {
         String subscriptionId = "Subscription1";
         rowLog.getSubscriptions();
-        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 3, 1))).anyTimes();
+        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 1))).anyTimes();
         
         control.replay();
         shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
@@ -125,7 +125,7 @@ public class RowLogShardTest {
     public void testBatchSize() throws Exception {
         String subscriptionId = "Subscription1";
         rowLog.getSubscriptions();
-        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 3, 1))).anyTimes();
+        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 1))).anyTimes();
         
         RowLogMessage[] expectedMessages = new RowLogMessage[7];
         control.replay();
@@ -163,8 +163,8 @@ public class RowLogShardTest {
         String subscriptionId2 = "Subscription2";
         rowLog.getSubscriptions();
         expectLastCall().andReturn(asList(
-                new RowLogSubscription("id", subscriptionId1, Type.VM, 3, 1),
-                new RowLogSubscription("id", subscriptionId2, Type.VM, 3, 2))).anyTimes();
+                new RowLogSubscription("id", subscriptionId1, Type.VM, 1),
+                new RowLogSubscription("id", subscriptionId2, Type.VM, 2))).anyTimes();
         
         control.replay();
         shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
@@ -199,7 +199,7 @@ public class RowLogShardTest {
         String subscriptionId1 = "Subscription1";
         String subscriptionId2 = "Subscription2";
         rowLog.getSubscriptions();
-        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId1, Type.VM, 3, 1))).anyTimes();
+        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId1, Type.VM, 1))).anyTimes();
         
         control.replay();
         shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
@@ -215,32 +215,6 @@ public class RowLogShardTest {
         // Cleanup
         shard.removeMessage(message1, subscriptionId1);
         assertTrue(shard.next(subscriptionId1).isEmpty());
-        control.verify();
-    }
-
-    @Test
-    public void testProblematicMessage() throws Exception {
-        String subscriptionId = "Subscription1";
-        rowLog.getSubscriptions();
-        expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 3, 1))).anyTimes();
-        
-        control.replay();
-        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
-        long timestamp1 = System.currentTimeMillis();
-        RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 0L, null, rowLog);
-        shard.putMessage(message1);
-        
-        shard.markProblematic(message1, subscriptionId);
-        
-        List<RowLogMessage> messages = shard.getProblematic(subscriptionId);
-        assertEquals(1, messages.size());
-        assertEquals(message1, messages.get(0));
-        
-        assertTrue(shard.next(subscriptionId).isEmpty());
-        
-        shard.removeProblematicMessage(message1, subscriptionId);
-        assertTrue(shard.getProblematic(subscriptionId).isEmpty());
-        assertTrue(shard.next(subscriptionId).isEmpty());
         control.verify();
     }
 }

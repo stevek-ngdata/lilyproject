@@ -45,7 +45,8 @@ import org.lilyproject.util.io.Closer;
 public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscriptionHandler {
     private ClientBootstrap bootstrap;
     private NioClientSocketChannelFactory channelFactory;
-    private boolean messageProcessSuccess = false;
+    private boolean remoteProcessMessageResult = false;
+    private boolean exceptionCaught = false;
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -55,23 +56,35 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         initBootstrap();
     }
 
+    /**
+     * Processes a message by sending the message to a remote listener.
+     * This method retries until a communication channel has been successfully setup and a result has been received
+     * from the remote listener.
+     */
     protected boolean processMessage(String host, RowLogMessage message) throws InterruptedException {
-        Channel channel = getListenerChannel(host);
-
-        if ((channel != null) && (channel.isConnected())) {
-            channel.write(message);
-            ChannelFuture closeFuture = channel.getCloseFuture();
-            try {
-                // When the channel is closed, this means the messages has been
-                // processed by the remote listener and a result has been
-                // received or an error condition occurred.
-                closeFuture.await();
-            } catch (InterruptedException e) {
-                Closer.close(channel);
-                throw e;
-            }
+        remoteProcessMessageResult = false;
+        exceptionCaught = false;
+        Channel channel = null;
+        while (channel == null || (!channel.isConnected())) {
+            channel = getListenerChannel(host);
         }
-        return messageProcessSuccess;
+
+        channel.write(message);
+        ChannelFuture closeFuture = channel.getCloseFuture();
+        try {
+            // When the channel is closed, this means the messages has been
+            // processed by the remote listener and a result has been
+            // received or an error condition occurred.
+            closeFuture.await();
+        } catch (InterruptedException e) {
+            Closer.close(channel);
+            throw e;
+        }
+        if (exceptionCaught) {
+            // Retry
+            return processMessage(host, message);
+        }
+        return remoteProcessMessageResult;
     }
 
     private void initBootstrap() {
@@ -133,12 +146,13 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
     private class ResultHandler extends SimpleChannelUpstreamHandler {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-            messageProcessSuccess = (Boolean) e.getMessage();
+            remoteProcessMessageResult = (Boolean) e.getMessage();
             Closer.close(e.getChannel());
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+            exceptionCaught = true;
             log.warn("Exception caught in ResultHandler", e.getCause());
             Closer.close(e.getChannel());
         }

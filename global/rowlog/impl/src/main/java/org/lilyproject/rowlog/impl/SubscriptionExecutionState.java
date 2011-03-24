@@ -51,7 +51,6 @@ public class SubscriptionExecutionState {
         if (entry == null) {
             entry = new AvroExecStateEntry();
             entry.done = false;
-            entry.tryCount = 0;
             entries.put(subscriptionId, entry);
         }
         return entry;
@@ -71,29 +70,6 @@ public class SubscriptionExecutionState {
             return entry.done;
         } else {
             return true;
-        }
-    }
-    
-    public void incTryCount(String subscriptionId) {
-        AvroExecStateEntry entry = getEntry(subscriptionId);
-        entry.tryCount = entry.tryCount + 1;
-    }
-    
-    public void decTryCount(String subscriptionId) {
-        AvroExecStateEntry entry = getEntry(subscriptionId);
-        if (entry.tryCount <= 0) {
-            entry.tryCount = 0;
-        } else {
-            entry.tryCount = entry.tryCount - 1;
-        }
-    }
-    
-    public int getTryCount(String subscriptionId) {
-        AvroExecStateEntry entry = entries.get(subscriptionId);
-        if (entry != null) {
-            return entry.tryCount;
-        } else {
-            return 0;
         }
     }
     

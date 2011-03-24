@@ -266,7 +266,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
 
             if (!executionState.getState(subscriptionId)) {
                 boolean done = false;
-                executionState.incTryCount(subscriptionId);
                 RowLogMessageListener listener = RowLogMessageListenerMapping.INSTANCE.get(subscriptionId);
                 if (listener != null) {
                     done = listener.processMessage(message);
@@ -283,7 +282,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 executionState.setState(subscriptionId, done);
                 if (!done) {
                     allDone = false;
-                    checkAndMarkProblematic(message, subscription, executionState);
                     if (rowLogConfig.isRespectOrder()) {
                         break;
                     }
@@ -336,7 +334,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
             SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
             byte[] previousLock = executionState.getLock(subscriptionId);
-            executionState.incTryCount(subscriptionId);
             long now = System.currentTimeMillis();
             if (previousLock == null) {
                 return putLock(message, subscriptionId, rowKey, executionStateQualifier, previousValue, executionState, now, count);
@@ -370,7 +367,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
     
-    public boolean unlockMessage(RowLogMessage message, String subscriptionId, boolean realTry, Object lock) throws RowLogException {
+    public boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
         if (rowLocker != null) { // If rowLocker exists, the lock must be a RowLock
             try {
                 rowLocker.unlockRow((RowLock)lock);
@@ -399,11 +396,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             if (!Bytes.equals((byte[])lock, previousLock)) return false; // The lock was lost  
             
             executionState.setLock(subscriptionId, null);
-            if (realTry) {
-                checkAndMarkProblematic(message, subscription, executionState);
-            } else { 
-                executionState.decTryCount(subscriptionId);
-            }
             Put put = new Put(rowKey);
             put.add(rowLogColumnFamily, execStateQualifier, executionState.toBytes());
             return rowTable.checkAndPut(rowKey, rowLogColumnFamily, execStateQualifier, previousValue, put);
@@ -412,29 +404,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
 
-    private void checkAndMarkProblematic(RowLogMessage message, RowLogSubscription subscription,
-            SubscriptionExecutionState executionState) throws RowLogException {
-        int maxTries = subscription.getMaxTries();
-        RowLogShard rowLogShard = getShard();
-        if (executionState.getTryCount(subscription.getId()) >= maxTries) {
-            if (rowLogConfig.isRespectOrder()) {
-                List<RowLogSubscription> subscriptions = getSubscriptions();
-                Collections.sort(subscriptions);
-                for (RowLogSubscription otherSubscription : subscriptions) {
-                    if (otherSubscription.getOrderNr() >= subscription.getOrderNr()) {
-                        rowLogShard.markProblematic(message, otherSubscription.getId());
-                        log.warn(String.format("Subscription %1$s failed to process message %2$s %3$s times. Respecting subscription order: subscription %4$s has been marked as problematic", 
-                                subscription.getId(), message.toString(), maxTries, otherSubscription.getId()));
-                    }
-                }
-            } else {
-                rowLogShard.markProblematic(message, subscription.getId());
-                log.warn(String.format("Subscription %1$s failed to process message %2$s %3$s times, it has been marked as problematic", 
-                        subscription.getId(), message.toString(), maxTries));
-            }
-        }
-    }
-    
     public boolean isMessageLocked(RowLogMessage message, String subscriptionId) throws RowLogException {
         byte[] rowKey = message.getRowKey();
         byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
@@ -634,14 +603,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             throw new RowLogException("Failed to get messages", e);
         }
         return messages;
-    }
-    
-    public List<RowLogMessage> getProblematic(String subscriptionId) throws RowLogException {
-        return getShard().getProblematic(subscriptionId);
-    }
-    
-    public boolean isProblematic(RowLogMessage message, String subscriptionId) throws RowLogException {
-        return getShard().isProblematic(message, subscriptionId);
     }
     
     /**

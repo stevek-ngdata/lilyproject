@@ -70,7 +70,7 @@ public class Example {
         RowLogMessageListenerMapping.INSTANCE.put("FooBar", new FooBarListener());
         
         // Add a subscription and listener to the configuration manager for the example Rowlog
-        configurationManager.addSubscription("Example", "FooBar", Type.VM, 3, 0);
+        configurationManager.addSubscription("Example", "FooBar", Type.VM, 0);
         configurationManager.addListener("Example", "FooBar", "listener1");
         
         // The WAL use case 

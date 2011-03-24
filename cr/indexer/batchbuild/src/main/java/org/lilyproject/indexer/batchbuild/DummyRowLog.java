@@ -55,7 +55,7 @@ public class DummyRowLog implements RowLog {
         throw new RuntimeException(failMessage);
     }
 
-    public boolean unlockMessage(RowLogMessage message, String subscriptionId, boolean realTry, Object lock) throws RowLogException {
+    public boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
@@ -72,14 +72,6 @@ public class DummyRowLog implements RowLog {
     }
 
     public List<RowLogMessage> getMessages(byte[] rowKey, String... subscriptionId) throws RowLogException {
-        throw new RuntimeException(failMessage);
-    }
-
-    public List<RowLogMessage> getProblematic(String subscriptionId) throws RowLogException {
-        throw new RuntimeException(failMessage);
-    }
-
-    public boolean isProblematic(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 

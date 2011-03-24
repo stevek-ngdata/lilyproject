@@ -100,19 +100,6 @@ public abstract class
     }
 
     @Test(timeout=150000)
-    public void testRemovalFromShardAfterMarkingProblematicFailed() throws Exception {
-        RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
-        
-        shard.markProblematic(message, subscriptionId);
-        shard.putMessage(message);
-
-        processor.start();
-        Thread.sleep(10000);
-        processor.stop();
-        Assert.assertTrue("The message should have been cleaned up since it was already marked as problematic",shard.next(subscriptionId).isEmpty());
-    }
-
-    @Test(timeout=150000)
     public void testAtomicMessage() throws Exception {
         byte[] rowKey = Bytes.toBytes("row1");
         Put put = new Put(rowKey);
@@ -191,28 +178,6 @@ public abstract class
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
         processor.stop();
-        validationListener.validate();
-    }
-
-    @Test(timeout=150000)
-    public void testProblematicMessage() throws Exception {
-        RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row100"), null, null, null);
-        validationListener.messagesToBehaveAsProblematic.add(message);
-        validationListener.expectMessage(message, 3);
-        validationListener.expectMessages(3);
-        processor.start();
-        validationListener.waitUntilMessagesConsumed(120000);
-
-        // After the message is delivered to the listener, the rowlog still has to mark it as problematic.
-        // This happens concurrently with our test code which continues, therefore we poll here until
-        // it is marked as problematic (which might not happen in case of bugs, therefore a timeout).
-        long waitUntil = System.currentTimeMillis() + 120000;
-        while (!rowLog.isProblematic(message, subscriptionId) && System.currentTimeMillis() < waitUntil) {
-            Thread.sleep(1000);
-        }
-
-        processor.stop();
-        Assert.assertTrue(rowLog.isProblematic(message, subscriptionId));
         validationListener.validate();
     }
 

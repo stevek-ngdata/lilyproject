@@ -77,34 +77,4 @@ public interface RowLogShard {
      * Returns the maximum amount of messages that are returned by a call to {@link #next}.
      */
     int getBatchSize();
-
-    /**
-     * Marks a RowLogMessage as problematic for the indicated subscription.
-     * The message won't be returned when {@link #next(String)} is called.
-     * See {@link #nextProblematic(String)}
-     * 
-     * <p>A message should be marked as problematic when it has failed to be processed after multiple retries.  
-     */
-    void markProblematic(RowLogMessage message, String subscription) throws RowLogException;
-    
-    /**
-     * Removes a RowLogMessage from the set of problematic messages.
-     * 
-     * <p>This method does not transform a problematic message back to a normal message.
-     */
-    void removeProblematicMessage(RowLogMessage message, String subscription) throws RowLogException;
-
-    /**
-     * Retrieves the messages that have been marked as problematic for the indicated subscription.
-     * @param subscription the id of the subscription for which the problematic messages should be retrieved
-     * @return all {@link RowLogMessage}s that have been marked as problematic
-     * @throws RowLogException when an unexpected exception occurs
-     */
-    List<RowLogMessage> getProblematic(String subscription) throws RowLogException;
-
-    /**
-     * Checks if a message has been marked as problematic on this shard for a certain subscription.
-     */
-    boolean isProblematic(RowLogMessage message, String subscription) throws RowLogException;
-
 }

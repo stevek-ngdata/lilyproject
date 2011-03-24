@@ -183,7 +183,7 @@ public class IndexerMaster {
                     // due to concurrent operations (e.g. someone deleting this subscription right after we
                     // created it).
                     String subscriptionId = subscriptionId(index.getName());
-                    rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 3, 1);
+                    rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 1);
                     index.setQueueSubscriptionId(subscriptionId);
                     indexerModel.updateIndexInternal(index);
                     log.info("Assigned queue subscription ID '" + subscriptionId + "' to index '" + indexName + "'");

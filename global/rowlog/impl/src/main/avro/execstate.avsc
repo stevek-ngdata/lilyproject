@@ -13,7 +13,6 @@
           "namespace":"org.lilyproject.rowlog.avro",
           "fields": [
             {"name": "done", "type": "boolean"},
-            {"name": "tryCount", "type": "int"},
             {"name": "lock", "type": ["bytes", "null"]}
           ]
         }

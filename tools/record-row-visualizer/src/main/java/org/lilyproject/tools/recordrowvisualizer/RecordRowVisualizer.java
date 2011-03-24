@@ -22,7 +22,6 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
-import org.lilyproject.rowlog.impl.RowLogImpl;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
@@ -34,7 +33,6 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -233,7 +231,6 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
                 ExecutionData data = new ExecutionData();
                 data.subscriptionId = subscriptionId;
-                data.tryCount = state.getTryCount(subscriptionId);
                 data.success = state.getState(subscriptionId);
                 data.lock = BASE64_DECODER.decode(state.getLock(subscriptionId));
                 states.add(data);

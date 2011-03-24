@@ -19,7 +19,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -37,7 +36,7 @@ public class RowLogLocalEndToEndTest extends AbstractRowLogEndToEndTest {
         System.out.println(">>RowLogLocalEndToEndTest#"+name.getMethodName());
         validationListener = new ValidationMessageListener("VML1", subscriptionId, rowLog);
         RowLogMessageListenerMapping.INSTANCE.put(subscriptionId , validationListener);
-        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId,  RowLogSubscription.Type.VM, 3, 1);
+        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId,  RowLogSubscription.Type.VM, 1);
         waitForSubscription(rowLog, subscriptionId);
         rowLogConfigurationManager.addListener(rowLog.getId(), subscriptionId, "listener1");
         t0 = System.currentTimeMillis();
@@ -54,7 +53,7 @@ public class RowLogLocalEndToEndTest extends AbstractRowLogEndToEndTest {
         String subscriptionId2 = "Subscription2";
         validationListener2 = new ValidationMessageListener("VML2", subscriptionId2, rowLog);
         RowLogMessageListenerMapping.INSTANCE.put(subscriptionId2, validationListener2);
-        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.VM, 3, 2);
+        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.VM, 2);
         waitForSubscription(rowLog, subscriptionId2); // Avoid putting messages on the rowlog before all subscriptions are setup
         rowLogConfigurationManager.addListener(rowLog.getId(), subscriptionId2, "Listener2");
         validationListener.expectMessages(10);
@@ -84,7 +83,7 @@ public class RowLogLocalEndToEndTest extends AbstractRowLogEndToEndTest {
         String subscriptionId2 = "Subscription2";
         validationListener2 = new ValidationMessageListener("VML2", subscriptionId2, rowLog);
         RowLogMessageListenerMapping.INSTANCE.put(subscriptionId2, validationListener2);
-        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.VM, 3, 0);
+        rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.VM, 0);
         waitForSubscription(rowLog, subscriptionId2);
         rowLogConfigurationManager.addListener(rowLog.getId(), subscriptionId2, "Listener2");
         int rownr = 222;
@@ -93,18 +92,18 @@ public class RowLogLocalEndToEndTest extends AbstractRowLogEndToEndTest {
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row" + rownr), data, null, null);
         validationListener.expectMessages(1);
         validationListener.expectMessage(message);
-        validationListener2.messagesToBehaveAsProblematic.add(message);
-        validationListener2.expectMessage(message, 3);
-        validationListener2.expectMessages(3);
+        
+        validationListener2.messagesToFail.add(message);
+        validationListener2.expectMessage(message, 2);
+        validationListener2.expectMessages(2);
 
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
         validationListener2.waitUntilMessagesConsumed(120000);
         processor.stop();
         validationListener2.validate();
-     // Assert the message was not processed by subscription1 (last in order) and was marked problematic 
-     // since subscription2 (first in order) became problematic
-        Assert.assertTrue("Expected message <"+message+"> to be problematic for subscription <"+subscriptionId+">", rowLog.isProblematic(message, subscriptionId)); 
+     // Assert the message was not processed by subscription1 (last in order) before subscription2 (first in order) processed it
+        //TODO
         rowLogConfigurationManager.removeListener(rowLog.getId(), subscriptionId2, "Listener2");
         rowLogConfigurationManager.removeSubscription(rowLog.getId(), subscriptionId2);
     } 

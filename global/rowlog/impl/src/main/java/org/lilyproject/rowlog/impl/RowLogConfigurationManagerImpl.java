@@ -152,14 +152,13 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         });
     }
 
-    public synchronized void addSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type,
-            int maxTries, int orderNr) throws KeeperException, InterruptedException, RowLogException {
+    public synchronized void addSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type, int orderNr) throws KeeperException, InterruptedException, RowLogException {
 
         ZkUtil.createPath(zooKeeper, subscriptionsPath(rowLogId));
 
         final String path = subscriptionPath(rowLogId, subscriptionId);
 
-        RowLogSubscription subscription = new RowLogSubscription(rowLogId, subscriptionId, type, maxTries, orderNr);
+        RowLogSubscription subscription = new RowLogSubscription(rowLogId, subscriptionId, type, orderNr);
         final byte[] data = SubscriptionConverter.INSTANCE.toJsonBytes(subscription);
 
         try {
@@ -172,18 +171,18 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             // The subscription already exists. This can be because someone else already created it, but also
             // because of the use of retryOperation.
             // We will try to update the subscription.
-            updateSubscription(rowLogId, subscriptionId, type, maxTries, orderNr);
+            updateSubscription(rowLogId, subscriptionId, type, orderNr);
         }
     }
     
     public synchronized void updateSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type,
-            int maxTries, int orderNr) throws KeeperException, InterruptedException, RowLogException {
+            int orderNr) throws KeeperException, InterruptedException, RowLogException {
         if (!subscriptionExists(rowLogId, subscriptionId))
             throw new RowLogException("Subscription " + subscriptionId + "does not exist for rowlog " + rowLogId);
         
         final String path = subscriptionPath(rowLogId, subscriptionId);
 
-        RowLogSubscription subscription = new RowLogSubscription(rowLogId, subscriptionId, type, maxTries, orderNr);
+        RowLogSubscription subscription = new RowLogSubscription(rowLogId, subscriptionId, type, orderNr);
         final byte[] data = SubscriptionConverter.INSTANCE.toJsonBytes(subscription);
 
         try {

@@ -147,18 +147,18 @@ public class RowLogConfigurationManagerTest {
         callBack.validate();
 
         // Add subscription
-        RowLogSubscription expectedSubscriptionContext = new RowLogSubscription(rowLogId, subscriptionId1, Type.VM, 3, 1);
+        RowLogSubscription expectedSubscriptionContext = new RowLogSubscription(rowLogId, subscriptionId1, Type.VM, 1);
         callBack.expect(Arrays.asList(expectedSubscriptionContext));
-        rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 3, 1);
+        rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
         callBack.validate();
 
-        RowLogSubscription expectedSubscriptionContext2 = new RowLogSubscription(rowLogId, subscriptionId2, Type.Netty, 5, 2);
+        RowLogSubscription expectedSubscriptionContext2 = new RowLogSubscription(rowLogId, subscriptionId2, Type.Netty, 2);
         callBack.expect(Arrays.asList(expectedSubscriptionContext, expectedSubscriptionContext2));
-        rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId2, Type.Netty, 5, 2);
+        rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId2, Type.Netty, 2);
         callBack.validate();
         
         // Update subscription
-        RowLogSubscription expectedSubscriptionContext3 = new RowLogSubscription(rowLogId, subscriptionId1, Type.Netty, 6, 7);
+        RowLogSubscription expectedSubscriptionContext3 = new RowLogSubscription(rowLogId, subscriptionId1, Type.Netty, 7);
         callBack.expect(Arrays.asList(expectedSubscriptionContext2, expectedSubscriptionContext3));
 
         // Remove subscription
@@ -214,7 +214,7 @@ public class RowLogConfigurationManagerTest {
         callBack.validate();
 
         // Add subscription
-        rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 3, 1);
+        rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
         callBack.expect(Collections.EMPTY_LIST);
         callBack.validate();
 

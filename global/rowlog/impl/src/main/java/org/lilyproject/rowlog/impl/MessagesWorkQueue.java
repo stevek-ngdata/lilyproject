@@ -47,7 +47,6 @@ public class MessagesWorkQueue {
     
     public RowLogMessage take() throws InterruptedException {
         RowLogMessage message = messageQueue.take();
-
         if (messageQueue.size() <= refillThreshold) {
             synchronized (refillTrigger) {
                 refillTrigger.notifyAll();

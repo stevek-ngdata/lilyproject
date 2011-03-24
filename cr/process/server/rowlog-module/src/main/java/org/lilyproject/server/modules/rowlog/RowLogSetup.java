@@ -75,7 +75,7 @@ public class RowLogSetup {
         if (linkIdxEnabled) {
             if (!confMgr.subscriptionExists("wal", "LinkIndexUpdater")) {
                 // If the subscription already exists, this method will silently return
-                confMgr.addSubscription("wal", "LinkIndexUpdater", RowLogSubscription.Type.VM, 3, 10);
+                confMgr.addSubscription("wal", "LinkIndexUpdater", RowLogSubscription.Type.VM, 10);
             }
         } else {
             log.info("LinkIndexUpdater is disabled.");
@@ -87,7 +87,7 @@ public class RowLogSetup {
         boolean mqFeederEnabled = rowLogConf.getChild("mqFeeder").getAttributeAsBoolean("enabled", true);
         if (mqFeederEnabled) {
             if (!confMgr.subscriptionExists("wal", "MQFeeder")) {
-                confMgr.addSubscription("wal", "MQFeeder", RowLogSubscription.Type.VM, 3, 20);
+                confMgr.addSubscription("wal", "MQFeeder", RowLogSubscription.Type.VM, 20);
             }
         } else {
             log.info("MQFeeder is disabled.");

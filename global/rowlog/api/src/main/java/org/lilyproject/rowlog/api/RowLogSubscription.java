@@ -24,7 +24,6 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
     private final String rowLogId;
     private final String id;
     private final Type type;
-    private final int maxTries;
     private final int orderNr;
 
     /**
@@ -37,14 +36,12 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
      * @param rowLogId id of the rowlog to which the subscription belongs
      * @param id of the subscription
      * @param type 
-     * @param maxTries the number of tries that are allowed to process a message for this subscription before it is marked as problematic
      * @param orderNr a number defining the subscription's position between the other subscriptions of the rowlog
      */
-    public RowLogSubscription(String rowLogId, String id, Type type, int maxTries, int orderNr) {
+    public RowLogSubscription(String rowLogId, String id, Type type,int orderNr) {
         this.rowLogId = rowLogId;
         this.id = id;
         this.type = type;
-        this.maxTries = maxTries;
         this.orderNr = orderNr;
     }
 
@@ -60,10 +57,6 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
         return type;
     }
     
-    public int getMaxTries() {
-        return maxTries;
-    }
-
     public int getOrderNr() {
         return orderNr;
     }
@@ -74,7 +67,6 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
         int result = 1;
         result = prime * result + ((rowLogId == null) ? 0 : rowLogId.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + maxTries;
         result = prime * result + orderNr;
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
@@ -92,8 +84,6 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
         if (!ObjectUtils.safeEquals(rowLogId, other.rowLogId))
             return false;
         if (!ObjectUtils.safeEquals(id, other.id))
-            return false;
-        if (maxTries != other.maxTries)
             return false;
         if (orderNr != other.orderNr)
             return false;

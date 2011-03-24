@@ -175,7 +175,7 @@ public class RepositorySetup {
     public void setupMessageQueue(boolean withProcessor) throws Exception {
 
         rowLogConfManager.addRowLog("MQ", new RowLogConfig(10000L, false, true, 100L, 0L, 5000L));
-        rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 3, 1);
+        rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 1);
 
         mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
                 LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null);

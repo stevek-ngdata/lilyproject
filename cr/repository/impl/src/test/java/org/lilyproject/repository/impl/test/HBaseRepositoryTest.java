@@ -63,7 +63,7 @@ public class HBaseRepositoryTest extends AbstractRepositoryTest {
     public void testUpdateProcessesRemainingMessages() throws Exception {
         HBaseRepositoryTestConsumer.reset();
         RowLogMessageListenerMapping.INSTANCE.put("TestSubscription", new HBaseRepositoryTestConsumer());
-        repoSetup.getRowLogConfManager().addSubscription("WAL", "TestSubscription", Type.VM, 3, 2);
+        repoSetup.getRowLogConfManager().addSubscription("WAL", "TestSubscription", Type.VM, 2);
         repoSetup.waitForSubscription(repoSetup.getWal(), "TestSubscription");
         
         Record record = repository.newRecord();

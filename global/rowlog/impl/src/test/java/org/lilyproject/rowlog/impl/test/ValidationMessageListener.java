@@ -15,9 +15,9 @@
  */
 package org.lilyproject.rowlog.impl.test;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -31,7 +31,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
 
     private Map<RowLogMessage, Integer> expectedMessages = new HashMap<RowLogMessage, Integer>();
     private Map<RowLogMessage, Integer> processedMessages = new HashMap<RowLogMessage, Integer>();
-    public List<RowLogMessage> messagesToBehaveAsProblematic = new ArrayList<RowLogMessage>();
+    public List<RowLogMessage> messagesToFail = new ArrayList<RowLogMessage>();
     private int count = 0;
     private int numberOfMessagesToBeExpected = 0;
     private final String name;
@@ -64,9 +64,8 @@ public class ValidationMessageListener implements RowLogMessageListener {
         } else {
             processedMessages.put(message, times+1);
         }
-        if (messagesToBehaveAsProblematic.contains(message)) {
+        if (messagesToFail.remove(message))
             return false;
-        }
         return true;
     }
 

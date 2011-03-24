@@ -23,7 +23,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -42,7 +41,6 @@ import org.lilyproject.util.io.Closer;
 
 public class RowLogShardImpl implements RowLogShard {
 
-    private static final byte[] PROBLEMATIC_MARKER = Bytes.toBytes("p");
     private static final byte[] MESSAGES_CF = Bytes.toBytes("messages");
     private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("msg");
     private HTableInterface table;
@@ -85,7 +83,7 @@ public class RowLogShardImpl implements RowLogShard {
     }
 
     private void putMessage(RowLogMessage message, String subscriptionId) throws RowLogException {
-        byte[] rowKey = createRowKey(message, subscriptionId, false);
+        byte[] rowKey = createRowKey(message, subscriptionId);
         Put put = new Put(rowKey);
         put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
         try {
@@ -98,38 +96,19 @@ public class RowLogShardImpl implements RowLogShard {
     }
 
     public void removeMessage(RowLogMessage message, String subscription) throws RowLogException {
-        removeMessage(message, subscription, false);
-    }
-    
-    public void removeProblematicMessage(RowLogMessage message, String subscription) throws RowLogException {
-        removeMessage(message, subscription, true);
-    }
-
-    private void removeMessage(RowLogMessage message, String subscription, boolean problematic) throws RowLogException {
         try {
-            table.delete(new Delete(createRowKey(message, subscription, problematic)));
+            table.delete(new Delete(createRowKey(message, subscription)));
         } catch (IOException e) {
             throw new RowLogException("Failed to remove message from RowLogShard", e);
         }
     }
 
     public List<RowLogMessage> next(String subscription) throws RowLogException {
-        return next(subscription, null, false);
+        return next(subscription, null);
     }
 
     public List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException {
-        return next(subscription, minimalTimestamp, false);
-    }
-    
-    public List<RowLogMessage> next(String subscription, Long minimalTimestamp, boolean problematic) throws RowLogException {
-        byte[] rowPrefix;
-        byte[] subscriptionBytes = Bytes.toBytes(subscription);
-        if (problematic) {
-            rowPrefix = PROBLEMATIC_MARKER;
-            rowPrefix = Bytes.add(rowPrefix, subscriptionBytes);
-        } else {
-            rowPrefix = subscriptionBytes;
-        }
+        byte[] rowPrefix = Bytes.toBytes(subscription);
         byte[] startRow = rowPrefix;
         if (minimalTimestamp != null) 
             startRow = Bytes.add(startRow, Bytes.toBytes(minimalTimestamp));
@@ -144,26 +123,16 @@ public class RowLogShardImpl implements RowLogShard {
             scan.setFilter(new PrefixFilter(rowPrefix));
 
             ResultScanner scanner = table.getScanner(scan);
-            boolean keepScanning = problematic;
-            do {
-                Result[] results = scanner.next(batchSize);
-                if (results.length == 0) {
-                    keepScanning = false;
+            Result[] results = scanner.next(batchSize);
+            for (Result next : results) {
+                byte[] rowKey = next.getRow();
+                if (!Bytes.startsWith(rowKey, rowPrefix)) {
+                    break; // There were no messages for this subscription
                 }
-                for (Result next : results) {
-                    byte[] rowKey = next.getRow();
-                    if (!Bytes.startsWith(rowKey, rowPrefix)) {
-                        keepScanning = false;
-                        break; // There were no messages for this subscription
-                    }
-                    if (problematic) {
-                        rowKey = Bytes.tail(rowKey, rowKey.length - PROBLEMATIC_MARKER.length);
-                    }
-                    byte[] value = next.getValue(MESSAGES_CF, MESSAGE_COLUMN);
-                    byte[] messageId = Bytes.tail(rowKey, rowKey.length - subscriptionBytes.length);
-                    rowLogMessages.add(decodeMessage(messageId, value));
-                }
-            } while(keepScanning);
+                byte[] value = next.getValue(MESSAGES_CF, MESSAGE_COLUMN);
+                byte[] messageId = Bytes.tail(rowKey, rowKey.length - rowPrefix.length);
+                rowLogMessages.add(decodeMessage(messageId, value));
+            }
 
             // The scanner is not closed in a finally block, since when we get an IOException from
             // HBase, it is likely that closing the scanner will give problems too. Not closing
@@ -180,42 +149,12 @@ public class RowLogShardImpl implements RowLogShard {
         return batchSize;
     }
 
-    public void markProblematic(RowLogMessage message, String subscription) throws RowLogException {
-        byte[] rowKey = createRowKey(message, subscription, true);
-        Put put = new Put(rowKey);
-        put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
-        try {
-            table.put(put);
-        } catch (IOException e) {
-            throw new RowLogException("Failed to mark message as problematic", e);
-        }
-        removeMessage(message, subscription, false);
-    }
-
-    public List<RowLogMessage> getProblematic(String subscription) throws RowLogException {
-        return next(subscription, null, true);
-    }
-    
-    public boolean isProblematic(RowLogMessage message, String subscription) throws RowLogException {
-        byte[] rowKey = createRowKey(message, subscription, true);
-        try {
-            return table.exists(new Get(rowKey));
-        } catch (IOException e) {
-            throw new RowLogException("Failed to check if message is problematic", e);
-        }
-    }
-
-    private byte[] createRowKey(RowLogMessage message, String subscription, boolean problematic) {
+    private byte[] createRowKey(RowLogMessage message, String subscription) {
         byte[] rowKey = new byte[0];
-        if (problematic) {
-            rowKey = PROBLEMATIC_MARKER;
-        }
         rowKey = Bytes.add(rowKey, Bytes.toBytes(subscription));
-
         rowKey = Bytes.add(rowKey, Bytes.toBytes(message.getTimestamp()));
         rowKey = Bytes.add(rowKey, Bytes.toBytes(message.getSeqNr()));
         rowKey = Bytes.add(rowKey, message.getRowKey());
-        
         return rowKey;
     }
 

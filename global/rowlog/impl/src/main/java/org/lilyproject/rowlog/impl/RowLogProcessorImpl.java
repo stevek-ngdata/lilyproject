@@ -276,18 +276,14 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 	break; // Rescan the messages since they might have been processed in the meanwhile
                                 
                                 if (!rowLog.isMessageDone(message, subscriptionId)) {
-                                    if (rowLog.isProblematic(message, subscriptionId)) {
-                                        shard.removeMessage(message, subscriptionId);
-                                    } else {
-                                        // The above calls to isMessageDone and isProblematic pass into HBase client code,
-                                        // which, if interrupted, continue what it is doing and does not re-assert
-                                        // the thread's interrupted status. By checking here that stopRequested is false,
-                                        // we are sure that any interruption which comes after is is not ignored.
-                                        // (The above about eating interruption status was true for HBase 0.89 beta
-                                        // of October 2010).
-                                        if (!stopRequested) {
-                                            messagesWorkQueue.offer(message);
-                                        }
+                                    // The above call to isMessageDone pass into HBase client code,
+                                    // which, if interrupted, continue what it is doing and does not re-assert
+                                    // the thread's interrupted status. By checking here that stopRequested is false,
+                                    // we are sure that any interruption which comes after is is not ignored.
+                                    // (The above about eating interruption status was true for HBase 0.89 beta
+                                    // of October 2010).
+                                    if (!stopRequested) {
+                                        messagesWorkQueue.offer(message);
                                     }
                                 }
                             }
