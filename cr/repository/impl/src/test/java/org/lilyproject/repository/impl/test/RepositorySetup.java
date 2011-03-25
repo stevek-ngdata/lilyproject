@@ -32,7 +32,7 @@ import java.util.List;
  * Helper class to instantiate and wire all the repository related services.
  */
 public class RepositorySetup {
-    private final HBaseProxy hbaseProxy = new HBaseProxy();
+    private HBaseProxy hbaseProxy = new HBaseProxy();
     private Configuration hadoopConf;
     private ZooKeeperItf zk;
 
@@ -69,7 +69,6 @@ public class RepositorySetup {
     public void setupCore() throws Exception {
         if (coreSetup)
             return;
-
         hbaseProxy.start();
         hadoopConf = hbaseProxy.getConf();
         zk = ZkUtil.connect(hbaseProxy.getZkConnectString(), 10000);
@@ -143,9 +142,7 @@ public class RepositorySetup {
     }
 
     public void setupRowLogConfigurationManager() throws Exception {
-        if (rowLogConfManager == null) {
-            rowLogConfManager = new RowLogConfigurationManagerImpl(zk);
-        }
+        rowLogConfManager = new RowLogConfigurationManagerImpl(zk);
     }
 
     public void setupRemoteAccess() throws Exception {
@@ -211,6 +208,9 @@ public class RepositorySetup {
 
         Closer.close(zk);
         Closer.close(hbaseProxy);
+        coreSetup = false;
+        repositorySetup = false;
+        typeManagerSetup = false;
     }
 
     public void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
