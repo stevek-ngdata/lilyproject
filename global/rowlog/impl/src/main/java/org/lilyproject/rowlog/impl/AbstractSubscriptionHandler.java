@@ -17,8 +17,7 @@ package org.lilyproject.rowlog.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.*;
 import org.lilyproject.util.Logs;
 
 public abstract class AbstractSubscriptionHandler implements SubscriptionHandler {
@@ -37,7 +36,7 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
         this.metrics = new SubscriptionHandlerMetrics(rowLog.getId()+"_"+subscriptionId);
     }
     
-    protected abstract boolean processMessage(String context, RowLogMessage message) throws InterruptedException;
+    protected abstract boolean processMessage(String context, RowLogMessage message) throws RowLogException, InterruptedException;
     
     protected class Worker implements Runnable {
         private final String subscriptionId;
@@ -75,7 +74,16 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                                 if (!rowLog.isMessageAvailable(message, subscriptionId)) {
                                     rowLog.unlockMessage(message, subscriptionId, lock);
                                 } else {
-                                    if (processMessage(listener, message)) {
+                                    boolean processMessageResult = false; 
+                                    try {
+                                        processMessageResult = processMessage(listener, message);
+                                    } catch (RemoteListenerIOException e) {
+                                        metrics.ioExceptionRate.inc();
+                                        // Logging to info to avoid log-flooding in case of network connection problems
+                                        log.info(String.format("RemoteListenerIOException occurred while processing message %1$s by subscription %2$s of rowLog %3$s", message, subscriptionId, rowLogId), e);
+                                        break;
+                                    }
+                                    if (processMessageResult) {
                                     	metrics.successRate.inc();
                                         rowLog.messageDone(message, subscriptionId, lock);
                                     } else {

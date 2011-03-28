@@ -37,6 +37,7 @@ public class SubscriptionHandlerMetrics implements Updater {
 
     public MetricsTimeVaryingInt successRate = new MetricsTimeVaryingInt("success_rate", registry);
     public MetricsTimeVaryingInt failureRate = new MetricsTimeVaryingInt("failure_rate", registry);
+    public MetricsTimeVaryingInt ioExceptionRate = new MetricsTimeVaryingInt("ioexception_rate", registry);
     public MetricsIntValue queueSize = new MetricsIntValue("queueSize", registry);
 
     public SubscriptionHandlerMetrics(String subscriptionId) {
