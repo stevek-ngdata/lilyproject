@@ -17,26 +17,18 @@ package org.lilyproject.rowlog.impl;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -46,9 +38,10 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
     private ClientBootstrap bootstrap;
     private NioClientSocketChannelFactory channelFactory;
     private boolean remoteProcessMessageResult = false;
-    private boolean exceptionCaught = false;
-
+    private Throwable resultHandlerException = null;
+    private Semaphore semaphore = new Semaphore(0);
     private Log log = LogFactory.getLog(getClass());
+    private Channel channel;
 
     public RemoteListenersSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue,
             RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
@@ -63,28 +56,31 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
      */
     protected boolean processMessage(String host, RowLogMessage message) throws InterruptedException {
         remoteProcessMessageResult = false;
-        exceptionCaught = false;
-        Channel channel = null;
-        while (channel == null || (!channel.isConnected())) {
-            channel = getListenerChannel(host);
-        }
-
-        channel.write(message);
-        ChannelFuture closeFuture = channel.getCloseFuture();
+        resultHandlerException = null;
+        channel = null;
         try {
-            // When the channel is closed, this means the messages has been
-            // processed by the remote listener and a result has been
-            // received or an error condition occurred.
-            closeFuture.await();
+            while (channel == null || (!channel.isConnected())) {
+                channel = getListenerChannel(host);
+            }
+    
+            ChannelFuture writeFuture = channel.write(message);
+            writeFuture.await();
+            semaphore.acquire();
+            if (resultHandlerException != null) {
+                // Retry
+                log.info("Failed to process message. Retrying", resultHandlerException);
+             // We keep retrying, when tackling issue #196 we will probably throw something like a IOException so that
+             // the message can be retried with another listener instead of retrying here forever or until the listener
+             // is unsubscribed.
+                return processMessage(host, message); 
+            }
+            return remoteProcessMessageResult;
         } catch (InterruptedException e) {
-            Closer.close(channel);
+            if (channel != null) {
+                channel.close().awaitUninterruptibly();
+            }
             throw e;
         }
-        if (exceptionCaught) {
-            // Retry
-            return processMessage(host, message);
-        }
-        return remoteProcessMessageResult;
     }
 
     private void initBootstrap() {
@@ -99,7 +95,16 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
             bootstrap.setOption("keepAlive", true);
         }
     }
-
+    
+    @Override
+    public void shutdown() {
+        super.shutdown(); // This will stop all workers
+        semaphore.release(); // We can safely release the semaphore, no worker is waiting on the result of processMessage anymore
+        if (channel != null) {
+            channel.close().awaitUninterruptibly();
+        }
+    }
+    
     private Channel getListenerChannel(String host) throws InterruptedException {
         String listenerHostAndPort[] = host.split(":");
         ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(listenerHostAndPort[0], Integer
@@ -124,22 +129,20 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
 
         public ChannelPipeline getPipeline() {
             ChannelPipeline pipeline = Channels.pipeline();
-            pipeline.addLast("resultDecoder", RESULT_DECODER);
-            pipeline.addLast("resultHandler", remoteListenersSubscriptionHandler.new ResultHandler());
-            pipeline.addLast("messageEncoder", MESSAGE_ENCODER);
+            pipeline.addLast("resultDecoder", RESULT_DECODER); // Read enough bytes and decode the result
+            pipeline.addLast("resultHandler", remoteListenersSubscriptionHandler.new ResultHandler()); // Handle the result
+            pipeline.addLast("messageEncoder", MESSAGE_ENCODER); // Encode and send the RowLogMessage
             return pipeline;
         }
     }
 
-    private static class ResultDecoder extends OneToOneDecoder {
+    private static class ResultDecoder extends FrameDecoder {
         @Override
-        protected Boolean decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
-            ChannelBufferInputStream inputStream = new ChannelBufferInputStream((ChannelBuffer) msg);
-            try {
-                return inputStream.readBoolean();
-            } finally {
-                Closer.close(inputStream);
+        protected Boolean decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+            if (buffer.readableBytes() < Bytes.SIZEOF_BOOLEAN) {
+                return null;
             }
+            return Bytes.toBoolean(buffer.readBytes(Bytes.SIZEOF_BOOLEAN).array()); // Send the result to the ResultHandler
         }
     }
 
@@ -147,30 +150,36 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             remoteProcessMessageResult = (Boolean) e.getMessage();
-            Closer.close(e.getChannel());
+            semaphore.release(); // We received the message, the processMessage call can continue
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-            exceptionCaught = true;
-            log.warn("Exception caught in ResultHandler", e.getCause());
-            Closer.close(e.getChannel());
+            resultHandlerException = e.getCause();
+            semaphore.release(); // An exception occured, the processMessagge call should handle it
+        }
+        
+        @Override
+        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+            semaphore.release(); 
+            super.channelClosed(ctx, e);
         }
     }
 
-    private static class MessageEncoder extends OneToOneEncoder {
+    private static class MessageEncoder extends SimpleChannelDownstreamHandler {
         @Override
-        protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
+        public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             ChannelBufferOutputStream outputStream = null;
             try {
-                RowLogMessage message = (RowLogMessage) msg;
+                RowLogMessage message = (RowLogMessage) e.getMessage();
                 byte[] rowKey = message.getRowKey();
                 byte[] data = message.getData();
-                int capacity = 4 + 8 + rowKey.length + 8 + 4;
+                int msgLength = 8 + 4 + rowKey.length + 8 + 4; // timestamp + rowkey-length + rowkey + seqnr + data-length + data
                 if (data != null)
-                    capacity = capacity + data.length;
-                ChannelBuffer channelBuffer = ChannelBuffers.buffer(capacity);
+                    msgLength = msgLength + data.length;
+                ChannelBuffer channelBuffer = ChannelBuffers.buffer(4 + msgLength);
                 outputStream = new ChannelBufferOutputStream(channelBuffer);
+                outputStream.writeInt(msgLength);
                 outputStream.writeLong(message.getTimestamp());
                 outputStream.writeInt(rowKey.length);
                 outputStream.write(rowKey);
@@ -181,7 +190,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
                 } else {
                     outputStream.writeInt(0);
                 }
-                return channelBuffer;
+                Channels.write(ctx, e.getFuture(), channelBuffer);
             } finally {
                 Closer.close(outputStream);
             }
