@@ -316,7 +316,12 @@ public abstract class AbstractTypeManager implements TypeManager {
         }
         return new ValueTypeImpl(type, multivalue, hierarchy);
     }
-    
+
+    @Override
+    public ValueType getValueType(String primitiveValueTypeName) throws RepositoryException, InterruptedException {
+        return getValueType(primitiveValueTypeName, false, false);
+    }
+
     // TODO get this from some configuration file
     protected void registerDefaultValueTypes() {
         //
