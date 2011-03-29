@@ -850,7 +850,7 @@ public abstract class AbstractRepositoryTest {
     }
     
     @Test
-    public void TestDeleteRecordCleansUpData() throws Exception {
+    public void testDeleteRecordCleansUpData() throws Exception {
         Record record = createDefaultRecord();
         RecordId recordId = record.getId();
         repository.delete(recordId);
@@ -882,6 +882,53 @@ public abstract class AbstractRepositoryTest {
         assertEquals(555, readRecord.getField(fieldType4.getName()));
         assertFalse((Boolean)readRecord.getField(fieldType5.getName()));
         assertEquals("zzz", readRecord.getField(fieldType6.getName()));
+    }
+
+    @Test
+    public void testRecordReincarnationFromVersionedToNonVersioned() throws Exception {
+        QName vfield = new QName("reinc", "vfield");
+        QName nvfield = new QName("reinc", "nvfield");
+
+        FieldType vfieldtype = typeManager.newFieldType(typeManager.getValueType("STRING"), vfield, Scope.VERSIONED);
+        vfieldtype = typeManager.createFieldType(vfieldtype);
+
+        FieldType nvfieldtype = typeManager.newFieldType(typeManager.getValueType("STRING"), nvfield, Scope.NON_VERSIONED);
+        nvfieldtype = typeManager.createFieldType(nvfieldtype);
+
+        RecordType rt = typeManager.newRecordType(new QName("reinc", "rt"));
+        rt.addFieldTypeEntry(vfieldtype.getId(), false);
+        rt.addFieldTypeEntry(vfieldtype.getId(), false);
+        rt = typeManager.createRecordType(rt);
+
+        // Create a record with versions
+        RecordId recordId = repository.getIdGenerator().newRecordId();
+        Record record = repository.newRecord(recordId);
+        record.setRecordType(rt.getName());
+
+        record.setField(vfield, "value 1");
+        record = repository.createOrUpdate(record);
+
+        record.setField(vfield, "value 2");
+        record = repository.createOrUpdate(record);
+
+        assertEquals(2L, record.getVersion().longValue());
+
+        // Delete the record
+        repository.delete(recordId);
+
+        // Re-create the record, this time without versions
+        record = repository.newRecord(recordId);
+        record.setRecordType(rt.getName());
+        record.setField(nvfield, "nv value 1");
+        record = repository.createOrUpdate(record);
+
+        assertEquals(null, record.getVersion());
+
+        // Now add a version again, reusing last value from previously deleted record
+        record.setField(vfield, "value 2");
+        record = repository.createOrUpdate(record);
+
+        assertEquals(3L, record.getVersion().longValue());
     }
 
     @Test
