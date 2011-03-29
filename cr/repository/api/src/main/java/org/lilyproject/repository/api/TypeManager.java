@@ -205,6 +205,11 @@ public interface TypeManager extends Closeable {
     ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical) throws RepositoryException, InterruptedException;
 
     /**
+     * Shortcut for {@link #getValueType(String, boolean, boolean) getValueType(name, false, false)}.
+     */
+    ValueType getValueType(String primitiveValueTypeName) throws RepositoryException, InterruptedException;
+
+    /**
      * Registers custom {@link PrimitiveValueType}s.
      *
      * <p><b>TODO:</b> Maybe this should rather move to an SPI interface? Can this replace a built-in primitive
