@@ -33,12 +33,27 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
         this.rowLogId = rowLog.getId();
         this.subscriptionId = subscriptionId;
         this.messagesWorkQueue = messagesWorkQueue;
-        this.metrics = new SubscriptionHandlerMetrics(rowLog.getId()+"_"+subscriptionId);
+        this.metrics = new SubscriptionHandlerMetrics(rowLog.getId() + "_" + subscriptionId);
+    }
+
+    /**
+     * Called once on the setup of a worker, thus the WorkerDelegate is suited for keeping any
+     * per-worker state. Since a worker only processes one message at a time, this means per-message
+     * (or from an IO point of view, per-request) state.
+     */
+    protected abstract WorkerDelegate createWorkerDelegate(String context);
+
+    protected static interface WorkerDelegate {
+        boolean processMessage(RowLogMessage message) throws RowLogException, InterruptedException;
+
+        /**
+         * Called when the worker is stopped.
+         */
+        void close();
     }
     
-    protected abstract boolean processMessage(String context, RowLogMessage message) throws RowLogException, InterruptedException;
-    
     protected class Worker implements Runnable {
+        private WorkerDelegate delegate;
         private final String subscriptionId;
         private final String listener;
         private Thread thread;
@@ -47,6 +62,7 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
         public Worker(String subscriptionId, String listener) {
             this.subscriptionId = subscriptionId;
             this.listener = listener;
+            this.delegate = createWorkerDelegate(listener);
         }
 
         public void start() {
@@ -59,6 +75,7 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
             thread.interrupt();
             Logs.logThreadJoin(thread);
             thread.join();
+            delegate.close();
         }
 
         public void run() {
@@ -74,9 +91,9 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                                 if (!rowLog.isMessageAvailable(message, subscriptionId)) {
                                     rowLog.unlockMessage(message, subscriptionId, lock);
                                 } else {
-                                    boolean processMessageResult = false; 
+                                    boolean processMessageResult = false;
                                     try {
-                                        processMessageResult = processMessage(listener, message);
+                                        processMessageResult = delegate.processMessage(message);
                                     } catch (RemoteListenerIOException e) {
                                         metrics.ioExceptionRate.inc();
                                         // Logging to info to avoid log-flooding in case of network connection problems

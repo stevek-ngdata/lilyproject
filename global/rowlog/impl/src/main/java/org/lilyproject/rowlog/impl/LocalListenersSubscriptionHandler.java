@@ -23,13 +23,23 @@ public class LocalListenersSubscriptionHandler extends AbstractListenersSubscrip
             RowLogConfigurationManager rowLogConfigurationManager) {
         super(subscriptionId, messagesWorkQueue, rowLog, rowLogConfigurationManager);
     }
-    
-    protected boolean processMessage(String listenerId, RowLogMessage message) throws InterruptedException {
-        RowLogMessageListener listener = RowLogMessageListenerMapping.INSTANCE.get(subscriptionId);
-        if (listener == null)
-            return false;
-        return listener.processMessage(message);
+
+    @Override
+    protected WorkerDelegate createWorkerDelegate(String context) {
+        return new LocalWorkerDelegate();
     }
-    
-    
+
+    private class LocalWorkerDelegate implements WorkerDelegate {
+        @Override
+        public boolean processMessage(RowLogMessage message) throws RowLogException, InterruptedException {
+            RowLogMessageListener listener = RowLogMessageListenerMapping.INSTANCE.get(subscriptionId);
+            if (listener == null)
+                return false;
+            return listener.processMessage(message);
+        }
+
+        @Override
+        public void close() {
+        }
+    }
 }

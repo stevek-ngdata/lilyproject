@@ -16,6 +16,8 @@
 package org.lilyproject.rowlog.impl;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
@@ -29,20 +31,14 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogMessage;
-import org.lilyproject.rowlog.api.RemoteListenerIOException;
+import org.lilyproject.rowlog.api.*;
 import org.lilyproject.util.io.Closer;
 
 public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscriptionHandler {
+    private Log log = LogFactory.getLog(getClass());
     private ClientBootstrap bootstrap;
     private NioClientSocketChannelFactory channelFactory;
-    private Boolean remoteProcessMessageResult = null;
-    private Throwable resultHandlerException = null;
-    private Semaphore semaphore = new Semaphore(0);
-    private Log log = LogFactory.getLog(getClass());
-    private Channel channel = null;
+    private Map<Integer, RemoteWorkerDelegate> workerDelegates = new ConcurrentHashMap<Integer, RemoteWorkerDelegate>();
 
     public RemoteListenersSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue,
             RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
@@ -50,105 +46,164 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         initBootstrap();
     }
 
-    /**
-     * Processes a message by sending the message to a remote listener.
-     * This method retries until a communication channel has been successfully setup and a result has been received
-     * from the remote listener.
-     */
-    protected boolean processMessage(String host, RowLogMessage message) throws RemoteListenerIOException, InterruptedException {
-        return processMessage(host, message, 4);
+    @Override
+    protected WorkerDelegate createWorkerDelegate(String host) {
+        return new RemoteWorkerDelegate(host);
     }
-    
-    
-    private boolean processMessage(String host, RowLogMessage message, int triesRemaining) throws RemoteListenerIOException, InterruptedException {
-        remoteProcessMessageResult = null;
-        resultHandlerException = null;
-        try {
-            if (channel == null || (!channel.isConnected())) {
-                channel = getListenerChannel(host);
-            }
-    
-            ChannelFuture writeFuture = channel.write(message);
-            writeFuture.await();
-            semaphore.acquire();
-            if (remoteProcessMessageResult == null || resultHandlerException != null) {
+
+    private class RemoteWorkerDelegate implements WorkerDelegate {
+        private Boolean remoteProcessMessageResult = null;
+        private Throwable resultHandlerException = null;
+        private Semaphore semaphore = new Semaphore(0);
+        private Channel channel = null;
+        private String host;
+
+        public RemoteWorkerDelegate(String host) {
+            this.host = host;
+            initBootstrap();
+        }
+
+        private Channel getListenerChannel(String host) throws RemoteListenerIOException, InterruptedException {
+            return getListenerChannel(host, 9);
+        }
+
+        private Channel getListenerChannel(String host, int triesRemaining) throws RemoteListenerIOException, InterruptedException {
+            String listenerHostAndPort[] = host.split(":");
+            ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(listenerHostAndPort[0],
+                    Integer.valueOf(listenerHostAndPort[1])));
+            connectFuture.await();
+            if (connectFuture.isSuccess()) {
+                return connectFuture.getChannel();
+            } else {
                 if (triesRemaining > 0) {
-                    // Retry
-                    log.info("Failed to process message. Retries remaining : " + triesRemaining, resultHandlerException);
                     Thread.sleep(10);
-                    return processMessage(host, message, triesRemaining-1);
+                    return getListenerChannel(host, triesRemaining - 1);
                 } else {
-                    throw new RemoteListenerIOException("Failure in sending message '"+message+"' to remote listener on host '" +host+"'", resultHandlerException);
+                    throw new RemoteListenerIOException("Failed to connect channel to remote listener on host '" + host + "'");
                 }
             }
-            return remoteProcessMessageResult;
-        } catch (InterruptedException e) {
+        }
+
+        /**
+         * Processes a message by sending the message to a remote listener.
+         * This method retries until a communication channel has been successfully setup and a result has been received
+         * from the remote listener.
+         */
+        @Override
+        public boolean processMessage(RowLogMessage message) throws RowLogException, InterruptedException {
+            return processMessage(message, 4);
+        }
+
+        public boolean processMessage(RowLogMessage message, int triesRemaining) throws RowLogException,
+                InterruptedException {
+
+            remoteProcessMessageResult = null;
+            resultHandlerException = null;
+            try {
+                if (channel == null || (!channel.isConnected())) {
+                    channel = getListenerChannel(host);
+                }
+
+                // We can associate 'this' directly with the channel, as we never handle more than one
+                // message at a time over a channel. If this ever changes, we should rather generate a per-request ID
+                workerDelegates.put(channel.getId(), this);
+
+                ChannelFuture writeFuture = channel.write(message);
+                writeFuture.await();
+                semaphore.acquire();
+                if (remoteProcessMessageResult == null || resultHandlerException != null) {
+                    if (triesRemaining > 0) {
+                        // Retry
+                        if (log.isInfoEnabled()) {
+                            log.info("Failed to process message. Retries remaining : " + triesRemaining,
+                                    resultHandlerException);
+                        }
+                        Thread.sleep(10);
+                        return processMessage(message, triesRemaining - 1);
+                    } else {
+                        throw new RemoteListenerIOException("Failure in sending message '" + message +
+                                "' to remote listener on host '" + host + "'", resultHandlerException);
+                    }
+                }
+
+                return remoteProcessMessageResult;
+            } catch (InterruptedException e) {
+                if (channel != null) {
+                    channel.close().awaitUninterruptibly();
+                }
+                throw e;
+            } finally {
+                if (channel != null) {
+                    workerDelegates.remove(channel.getId());
+                }
+            }
+        }
+
+        @Override
+        public void close() {
             if (channel != null) {
                 channel.close().awaitUninterruptibly();
             }
-            throw e;
         }
+
     }
+
+    private RemoteWorkerDelegate getWorkerDelegate(ChannelHandlerContext ctx) {
+        return workerDelegates.get(ctx.getChannel().getId());
+    }
+
 
     private void initBootstrap() {
         if (bootstrap == null) {
             if (channelFactory == null) {
-                channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors
-                        .newCachedThreadPool());
+                channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
+                        Executors.newCachedThreadPool());
             }
             bootstrap = new ClientBootstrap(channelFactory);
-            bootstrap.setPipelineFactory(new ChannelPipelineFactoryImplementation(this));
+            bootstrap.setPipelineFactory(new ChannelPipelineFactoryImplementation());
             bootstrap.setOption("tcpNoDelay", true);
             bootstrap.setOption("keepAlive", true);
         }
     }
-    
-    @Override
-    public void shutdown() {
-        super.shutdown(); // This will stop all workers first
-        if (channel != null) {
-            channel.close().awaitUninterruptibly();
-        }
-        semaphore.release(); // We can safely release the semaphore, no worker is waiting on the result of processMessage anymore
-    }
-    
-    private Channel getListenerChannel(String host) throws RemoteListenerIOException, InterruptedException {
-        return getListenerChannel(host, 9);
-    }
-    
-    private Channel getListenerChannel(String host, int triesRemaining) throws RemoteListenerIOException, InterruptedException {
-        String listenerHostAndPort[] = host.split(":");
-        ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(listenerHostAndPort[0], Integer
-                .valueOf(listenerHostAndPort[1])));
-        connectFuture.await();
-        if (connectFuture.isSuccess()) {
-            return connectFuture.getChannel();
-        } else {
-            if (triesRemaining > 0) {
-                Thread.sleep(10);
-                return getListenerChannel(host, triesRemaining - 1);
-            } else {
-                throw new RemoteListenerIOException("Failed to connect channel to remote listener on host '" + host + "'");
-            }
-        }
-    }
 
-    private static final class ChannelPipelineFactoryImplementation implements ChannelPipelineFactory {
-        private static final ResultDecoder RESULT_DECODER = new ResultDecoder();
-        private static final MessageEncoder MESSAGE_ENCODER = new MessageEncoder();
-        private final RemoteListenersSubscriptionHandler remoteListenersSubscriptionHandler;
-
-        public ChannelPipelineFactoryImplementation(
-                RemoteListenersSubscriptionHandler remoteListenersSubscriptionHandler) {
-                    this.remoteListenersSubscriptionHandler = remoteListenersSubscriptionHandler;
-        }
+    private final class ChannelPipelineFactoryImplementation implements ChannelPipelineFactory {
+        private final ResultDecoder RESULT_DECODER = new ResultDecoder();
+        private final MessageEncoder MESSAGE_ENCODER = new MessageEncoder();
 
         public ChannelPipeline getPipeline() {
             ChannelPipeline pipeline = Channels.pipeline();
             pipeline.addLast("resultDecoder", RESULT_DECODER); // Read enough bytes and decode the result
-            pipeline.addLast("resultHandler", remoteListenersSubscriptionHandler.new ResultHandler()); // Handle the result
+            pipeline.addLast("resultHandler", new ResultHandler()); // Handle the result
             pipeline.addLast("messageEncoder", MESSAGE_ENCODER); // Encode and send the RowLogMessage
             return pipeline;
+        }
+    }
+
+    private class ResultHandler extends SimpleChannelUpstreamHandler {
+
+        @Override
+        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+            RemoteWorkerDelegate worker = getWorkerDelegate(ctx);
+            worker.remoteProcessMessageResult = (Boolean) e.getMessage();
+            worker.semaphore.release(); // We received the message, the processMessage call can continue
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+            RemoteWorkerDelegate worker = getWorkerDelegate(ctx);
+            if (worker != null) {
+                worker.resultHandlerException = e.getCause();
+                worker.semaphore.release(); // An exception occurred, the processMessage call should handle it
+            }
+        }
+
+        @Override
+        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+            RemoteWorkerDelegate worker = getWorkerDelegate(ctx);
+            if (worker != null) {
+                worker.semaphore.release(); // The remoteProcessMessageResult will still be null
+                super.channelClosed(ctx, e);
+            }
         }
     }
 
@@ -159,26 +214,6 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
                 return null;
             }
             return Bytes.toBoolean(buffer.readBytes(Bytes.SIZEOF_BOOLEAN).array()); // Send the result to the ResultHandler
-        }
-    }
-
-    private class ResultHandler extends SimpleChannelUpstreamHandler {
-        @Override
-        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-            remoteProcessMessageResult = (Boolean) e.getMessage();
-            semaphore.release(); // We received the message, the processMessage call can continue
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-            resultHandlerException = e.getCause();
-            semaphore.release(); // An exception occured, the processMessagge call should handle it
-        }
-        
-        @Override
-        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-            semaphore.release(); // The remoteProcessMessageResult will still be null
-            super.channelClosed(ctx, e);
         }
     }
 
