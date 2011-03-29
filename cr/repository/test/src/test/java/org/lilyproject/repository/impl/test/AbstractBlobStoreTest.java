@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 public abstract class AbstractBlobStoreTest {

@@ -69,6 +69,7 @@
     <module>cr/indexer</module>
     <module>cr/linkindex</module>
     <module>cr/repo-util</module>
+    <module>cr/repo-test-fw</module>
     <module>cr/hbase-ext</module>
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
@@ -120,6 +121,12 @@
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repo-util</artifactId>
         <version>1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-repo-test-fw</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>

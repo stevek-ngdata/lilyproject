@@ -32,7 +32,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -57,46 +56,29 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
-import org.lilyproject.rowlock.RowLocker;
+import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
-import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
-import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
-import org.lilyproject.util.zookeeper.ZkUtil;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 // To run this test from an IDE, set a property solr.war pointing to the SOLR war
 
 public class IndexerTest {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
-    private static ZooKeeperItf zk;
+    private final static RepositorySetup repoSetup = new RepositorySetup();
     private static IndexerConf INDEXER_CONF;
     private static SolrTestingUtility SOLR_TEST_UTIL;
-    private static HBaseRepository repository;
+    private static Repository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
     private static SolrServers solrServers;
-    private static RowLogConfigurationManager rowLogConfMgr;
 
     private static FieldType liveTag;
     private static FieldType previewTag;
@@ -126,7 +108,6 @@ public class IndexerTest {
     private static MessageVerifier messageVerifier = new MessageVerifier();
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
-    private static HBaseTableFactory hbaseTableFactory;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -135,32 +116,18 @@ public class IndexerTest {
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
                 "org.lilyproject.rowlog.impl.RowLogImpl");
 
-        HBASE_PROXY.start();
         SOLR_TEST_UTIL.start();
 
-        zk = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
+        repoSetup.setupMessageQueue(false, true);
 
-        idGenerator = new IdGeneratorImpl();
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
-        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zk, hbaseTableFactory);
-        
-        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess});
-        BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
+        repository = repoSetup.getRepository();
+        typeManager = repoSetup.getTypeManager();
+        idGenerator = repository.getIdGenerator();
 
-        rowLogConfMgr = new RowLogConfigurationManagerImpl(zk);
-        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
-        RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
-        RowLog wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                RecordCf.ROWLOG.bytes, RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker);
-        RowLogShard walShard = new RowLogShardImpl("WS1", HBASE_PROXY.getConf(), wal, 100);
-        wal.registerShard(walShard);
-        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-        repository = new HBaseRepository(typeManager, idGenerator, wal, HBASE_PROXY.getConf(), hbaseTableFactory, blobManager);
-
-        IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
-        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
+        IndexManager.createIndexMetaTableIfNotExists(repoSetup.getHadoopConf());
+        IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
         LinkIndex.createIndexes(indexManager);
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
@@ -168,33 +135,33 @@ public class IndexerTest {
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
+        RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
         rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
-        rowLogConfMgr.addSubscription("WAL", "IndexUpdater", RowLogSubscription.Type.VM, 2);
-        rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 3);
+        rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 2);
 
-        waitForSubscription(wal, "LinkIndexUpdater");
-        waitForSubscription(wal, "IndexUpdater");
-        waitForSubscription(wal, "MessageVerifier");
+        repoSetup.waitForSubscription(repoSetup.getWal(), "LinkIndexUpdater");
+        repoSetup.waitForSubscription(repoSetup.getWal(), "MessageVerifier");
+
+        rowLogConfMgr.addSubscription("MQ", "IndexUpdater", RowLogSubscription.Type.VM, 1);
+
+        repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
 
         solrServers = SolrServers.createForOneShard(SOLR_TEST_UTIL.getUri());
-        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream("org/lilyproject/indexer/engine/test/indexerconf1.xml"), repository);
-        IndexLocker indexLocker = new IndexLocker(zk);
+        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream(
+                "org/lilyproject/indexer/engine/test/indexerconf1.xml"), repository);
+        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk());
         Indexer indexer = new Indexer(INDEXER_CONF, repository, solrServers, indexLocker, new IndexerMetrics("test"));
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
-                indexLocker, new IndexUpdaterMetrics("test")));
+                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
+
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(typeManager);
-        Closer.close(repository);
-        Closer.close(rowLogConfMgr);
-        Closer.close(zk);
-
-        HBASE_PROXY.stop();
+        repoSetup.stop();
 
         if (SOLR_TEST_UTIL != null)
             SOLR_TEST_UTIL.stop();
@@ -1207,7 +1174,8 @@ public class IndexerTest {
         return ClientUtils.escapeQueryChars(input);
     }
 
-    private void commitIndex() throws IOException, SolrServerException {
+    private void commitIndex() throws Exception {
+        repoSetup.processMQ();
         solrServers.commit(true, true);
     }
 
@@ -1316,23 +1284,5 @@ public class IndexerTest {
                 System.err.println("!!");
             }
         }
-    }
-
-
-    public static void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
-        boolean subscriptionKnown = false;
-        int timeOut = 10000;
-        long waitUntil = System.currentTimeMillis() + 10000;
-        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
-            for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
-                if (subscriptionId.equals(subscription.getId())) {
-                    subscriptionKnown = true;
-                    break;
-                }
-            }
-            Thread.sleep(10);
-        }
-        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
-                subscriptionKnown);
     }
 }

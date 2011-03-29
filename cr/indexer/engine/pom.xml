@@ -123,7 +123,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-impl</artifactId>
+      <artifactId>lily-repo-test-fw</artifactId>
       <scope>test</scope>
     </dependency>
 

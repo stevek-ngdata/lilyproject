@@ -15,23 +15,26 @@
  */
 package org.lilyproject.repository.impl.test;
 
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.testfw.TestHelper;
 
-public class TypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTest {
+public class AvroTypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTest {
 
     private static final RepositorySetup repoSetup = new RepositorySetup();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        avro = true;
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupTypeManager();
-        typeManager = repoSetup.getTypeManager();
+        repoSetup.setupRepository(false);
+        repoSetup.setupRemoteAccess();
+
+        typeManager = repoSetup.getRemoteTypeManager();
     }
 
     @AfterClass
@@ -46,4 +49,5 @@ public class TypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTest {
     @After
     public void tearDown() throws Exception {
     }
+
 }

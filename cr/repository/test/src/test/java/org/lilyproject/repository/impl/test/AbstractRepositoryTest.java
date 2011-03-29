@@ -34,6 +34,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.repo.VersionTag;
 
 public abstract class AbstractRepositoryTest {

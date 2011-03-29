@@ -21,9 +21,12 @@ import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
 
+import java.awt.image.IndexColorModel;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,13 +39,15 @@ public class RecordEvent {
     private long versionCreated = -1;
     private long versionUpdated = -1;
     private Type type;
-    private Set<SchemaId> updatedFields = new HashSet<SchemaId>();
+    private Set<SchemaId> updatedFields;
     private boolean recordTypeChanged = false;
+    private Set<SchemaId> vtagsToIndex;
 
     public enum Type {
         CREATE("repo:record-created"),
         UPDATE("repo:record-updated"),
-        DELETE("repo:record-deleted");
+        DELETE("repo:record-deleted"),
+        INDEX("repo:index");
 
         private String name;
 
@@ -71,6 +76,8 @@ public class RecordEvent {
             type = Type.DELETE;
         } else if (messageType.equals(Type.UPDATE.getName())) {
             type = Type.UPDATE;
+        } else if (messageType.equals(Type.INDEX.getName())) {
+            type = Type.INDEX;
         } else {
             throw new RuntimeException("Unexpected kind of message type: " + messageType);
         }
@@ -90,7 +97,14 @@ public class RecordEvent {
         JsonNode updatedFieldsNode = msgData.get("updatedFields");
         if (updatedFieldsNode != null && updatedFieldsNode.size() > 0) {
             for (int i = 0; i < updatedFieldsNode.size(); i++) {
-                updatedFields.add(idGenerator.getSchemaId(updatedFieldsNode.get(i).getBinaryValue()));
+                addUpdatedField(idGenerator.getSchemaId(updatedFieldsNode.get(i).getBinaryValue()));
+            }
+        }
+
+        JsonNode vtagsToIndexNode = msgData.get("vtagsToIndex");
+        if (vtagsToIndexNode != null && vtagsToIndexNode.size() > 0) {
+            for (int i = 0; i < vtagsToIndexNode.size(); i++) {
+                addVTagToIndex(VersionTag.getSchemaId(vtagsToIndexNode.get(i).getBinaryValue(), idGenerator));
             }
         }
     }
@@ -137,11 +151,25 @@ public class RecordEvent {
      * <p>In case of a delete event, this list is empty.
      */
     public Set<SchemaId> getUpdatedFields() {
-        return updatedFields;
+        return updatedFields != null ? updatedFields : Collections.<SchemaId>emptySet();
     }
 
     public void addUpdatedField(SchemaId fieldTypeId) {
+        if (updatedFields == null) {
+            updatedFields = new HashSet<SchemaId>();
+        }
         updatedFields.add(fieldTypeId);
+    }
+
+    public Set<SchemaId> getVtagsToIndex() {
+        return vtagsToIndex;
+    }
+
+    public void addVTagToIndex(SchemaId vtag) {
+        if (vtagsToIndex == null) {
+            vtagsToIndex = new HashSet<SchemaId>();
+        }
+        vtagsToIndex.add(vtag);
     }
 
     public ObjectNode toJson() {
@@ -151,9 +179,11 @@ public class RecordEvent {
         if (type != null)
             object.put("type", type.getName());
 
-        ArrayNode updatedFieldsNode = object.putArray("updatedFields");
-        for (SchemaId updatedField : updatedFields) {
-            updatedFieldsNode.add(updatedField.getBytes());
+        if (updatedFields != null && updatedFields.size() > 0) {
+            ArrayNode updatedFieldsNode = object.putArray("updatedFields");
+            for (SchemaId updatedField : updatedFields) {
+                updatedFieldsNode.add(updatedField.getBytes());
+            }
         }
 
         if (versionUpdated != -1) {
@@ -166,6 +196,13 @@ public class RecordEvent {
 
         if (recordTypeChanged) {
             object.put("recordTypeChanged", true);
+        }
+
+        if (vtagsToIndex != null && vtagsToIndex.size() > 0) {
+            ArrayNode vtagsToIndexNode = object.putArray("vtagsToIndex");
+            for (SchemaId vtag : vtagsToIndex) {
+                vtagsToIndexNode.add(vtag.getBytes());
+            }
         }
 
         return object;
@@ -201,7 +238,10 @@ public class RecordEvent {
         if (other.versionUpdated != this.versionUpdated)
             return false;
 
-        if (!other.updatedFields.equals(this.updatedFields))
+        if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields))
+            return false;
+
+        if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))
             return false;
 
         return true;

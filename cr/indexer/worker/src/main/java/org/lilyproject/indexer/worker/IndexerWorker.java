@@ -172,7 +172,8 @@ public class IndexerWorker {
             Indexer indexer = new Indexer(indexerConf, repository, solrServers, indexLocker, indexerMetrics);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
-            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, updaterMetrics);
+            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,
+                    updaterMetrics);
 
             List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
 

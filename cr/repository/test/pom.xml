@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /*
- * Copyright 2010 Outerthought bvba
+ * Copyright 2011 Outerthought bvba
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,50 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-repository</artifactId>
-  <packaging>pom</packaging>
-  <name>Lily: Repository</name>
+  <artifactId>lily-repository-impl-test</artifactId>
+  <name>Lily: Repository IMPL: Tests</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily</artifactId>
+    <artifactId>lily-repository</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <relativePath>../..</relativePath>
+    <relativePath>../</relativePath>
   </parent>
 
-  <modules>
-    <module>api</module>
-    <module>impl</module>
-    <module>test</module>
-  </modules>
+  <build>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repo-test-fw</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymockclassextension</artifactId>
+    </dependency>
+  </dependencies>
 
 </project>

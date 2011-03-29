@@ -101,32 +101,6 @@
       <artifactId>commons-codec</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-impl</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymock</artifactId>
-    </dependency>    
-
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymockclassextension</artifactId>
-    </dependency>    
-
   </dependencies>
   
   <build>

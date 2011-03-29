@@ -20,12 +20,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.testfw.TestHelper;
 
-/**
- *
- */
-public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordTypeTest {
+public class TypeManagerFieldTypeTest extends AbstractTypeManagerFieldTypeTest {
 
     private static final RepositorySetup repoSetup = new RepositorySetup();
 
@@ -33,17 +31,14 @@ public class AvroTypeManagerRecordTypeTest extends AbstractTypeManagerRecordType
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         repoSetup.setupCore();
-        repoSetup.setupRepository(false);
-        repoSetup.setupRemoteAccess();
-        typeManager = repoSetup.getRemoteTypeManager();
-        setupFieldTypes();
+        repoSetup.setupTypeManager();
+        typeManager = repoSetup.getTypeManager();
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         repoSetup.stop();
     }
- 
 
     @Before
     public void setUp() throws Exception {

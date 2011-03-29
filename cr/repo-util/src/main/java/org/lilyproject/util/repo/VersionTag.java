@@ -79,6 +79,14 @@ public class VersionTag {
         return new QName(NAMESPACE, vtag);
     }
 
+    public static SchemaId getSchemaId(byte[] vtag, IdGenerator idGenerator) {
+        if (Arrays.equals(vtag, VERSIONLESS_TAG.getBytes())) {
+            return VERSIONLESS_TAG;
+        } else {
+            return idGenerator.getSchemaId(vtag);
+        }
+    }
+
     /**
      * Returns the vtags of a record, the key in the map is the field type ID of the vtag field, not its name.
      *
@@ -324,7 +332,7 @@ public class VersionTag {
     }
 
     /**
-     * See {@link #getRecord(org.lilyproject.repository.api.RecordId, String, org.lilyproject.repository.api.Repository, java.util.List)}.
+     * See {@link #getRecord(org.lilyproject.repository.api.RecordId, SchemaId, org.lilyproject.repository.api.Repository, java.util.List)}.
      */
     public static Record getRecord(RecordId recordId, SchemaId vtagId, Repository repository)
             throws RepositoryException, InterruptedException {
