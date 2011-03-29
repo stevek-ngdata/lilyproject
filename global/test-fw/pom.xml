@@ -140,6 +140,9 @@ chdir /d %CWD%
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-cli-fw</artifactId>
+      <!-- cli-fw is only needed when running standalone, not when this project is reused
+           as library. -->
+      <optional>true</optional>
     </dependency>
 
     <dependency>

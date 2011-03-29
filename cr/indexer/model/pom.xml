@@ -67,6 +67,12 @@
     </dependency>
 
     <dependency>
+      <!-- Currently only here to get the logging deps in -->
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-testfw</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-repository-impl</artifactId>
       <scope>test</scope>
