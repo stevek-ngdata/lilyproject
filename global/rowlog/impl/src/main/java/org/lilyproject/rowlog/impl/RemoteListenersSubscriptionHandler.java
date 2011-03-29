@@ -42,7 +42,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
     private Throwable resultHandlerException = null;
     private Semaphore semaphore = new Semaphore(0);
     private Log log = LogFactory.getLog(getClass());
-    private Channel channel;
+    private Channel channel = null;
 
     public RemoteListenersSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue,
             RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
@@ -63,7 +63,6 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
     private boolean processMessage(String host, RowLogMessage message, int triesRemaining) throws RemoteListenerIOException, InterruptedException {
         remoteProcessMessageResult = null;
         resultHandlerException = null;
-        channel = null;
         try {
             if (channel == null || (!channel.isConnected())) {
                 channel = getListenerChannel(host);
