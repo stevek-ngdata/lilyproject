@@ -568,19 +568,15 @@ public class IndexUpdater implements RowLogMessageListener {
 
             IndexCase indexCase = indexer.getConf().getIndexCase(record.getRecordTypeName(), record.getId().getVariantProperties());
             if (indexCase == null) {
-                System.out.println("foo 1");
                 return;
             }
 
             try {
                 if (record.getVersion() == null) {
-                    System.out.println("foo 2");
                     if (indexCase.getIndexVersionless() && vtagsToIndex.contains(VersionTag.VERSIONLESS_TAG)) {
-                        System.out.println("foo 3");
                         indexer.index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
                     }
                 } else {
-                    System.out.println("foo 4");
                     Map<SchemaId, Long> recordVTags = VersionTag.getTagsById(record, typeManager);
                     vtagsToIndex.retainAll(indexCase.getVersionTags());
                     // Only keep vtags which exist on the record
