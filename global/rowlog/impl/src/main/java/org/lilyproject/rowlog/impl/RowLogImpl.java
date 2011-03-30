@@ -371,36 +371,37 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         if (rowLocker != null) { // If rowLocker exists, the lock must be a RowLock
             try {
                 rowLocker.unlockRow((RowLock)lock);
+                return true;
             } catch (IOException e) {
                 throw new RowLogException("Failed to unlock message", e);
             }
-        }
-        
-        // Else, the lock is a lock in the executionState
-        RowLogSubscription subscription = subscriptions.get(subscriptionId);
-        if (subscription == null)
-            throw new RowLogException("Failed to unlock message, subscription " + subscriptionId + " no longer exists for rowlog " + this.getId());
-        byte[] rowKey = message.getRowKey();
-        byte[] execStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
-        Get get = new Get(rowKey);
-        get.addColumn(rowLogColumnFamily, execStateQualifier);
-        Result result;
-        try {
-            result = rowTable.get(get);
-            
-            if (result.isEmpty()) return false; // The execution state does not exist anymore, thus no lock to unlock
-            
-            byte[] previousValue = result.getValue(rowLogColumnFamily, execStateQualifier);
-            SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
-            byte[] previousLock = executionState.getLock(subscriptionId);
-            if (!Bytes.equals((byte[])lock, previousLock)) return false; // The lock was lost  
-            
-            executionState.setLock(subscriptionId, null);
-            Put put = new Put(rowKey);
-            put.add(rowLogColumnFamily, execStateQualifier, executionState.toBytes());
-            return rowTable.checkAndPut(rowKey, rowLogColumnFamily, execStateQualifier, previousValue, put);
-        } catch (IOException e) {
-            throw new RowLogException("Failed to unlock message", e);
+        } else { // Else, the lock is a lock in the executionState
+            RowLogSubscription subscription = subscriptions.get(subscriptionId);
+            if (subscription == null)
+                throw new RowLogException("Failed to unlock message, subscription " + subscriptionId +
+                        " no longer exists for rowlog " + this.getId());
+            byte[] rowKey = message.getRowKey();
+            byte[] execStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
+            Get get = new Get(rowKey);
+            get.addColumn(rowLogColumnFamily, execStateQualifier);
+            Result result;
+            try {
+                result = rowTable.get(get);
+
+                if (result.isEmpty()) return false; // The execution state does not exist anymore, thus no lock to unlock
+
+                byte[] previousValue = result.getValue(rowLogColumnFamily, execStateQualifier);
+                SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
+                byte[] previousLock = executionState.getLock(subscriptionId);
+                if (!Bytes.equals((byte[])lock, previousLock)) return false; // The lock was lost
+
+                executionState.setLock(subscriptionId, null);
+                Put put = new Put(rowKey);
+                put.add(rowLogColumnFamily, execStateQualifier, executionState.toBytes());
+                return rowTable.checkAndPut(rowKey, rowLogColumnFamily, execStateQualifier, previousValue, put);
+            } catch (IOException e) {
+                throw new RowLogException("Failed to unlock message", e);
+            }
         }
     }
 
