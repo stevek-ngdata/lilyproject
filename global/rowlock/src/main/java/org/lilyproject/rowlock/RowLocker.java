@@ -23,7 +23,7 @@ public interface RowLocker {
      */
     RowLock lockRow(byte[] rowKey, long timeout) throws IOException, InterruptedException;
 
-    void unlockRow(RowLock lock) throws IOException;
+    boolean unlockRow(RowLock lock) throws IOException;
 
     boolean isLocked(byte[] rowKey) throws IOException;
 

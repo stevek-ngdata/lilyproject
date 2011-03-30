@@ -87,11 +87,11 @@ public class HBaseRowLocker implements RowLocker {
         return null;
     }
 
-    public void unlockRow(RowLock lock) throws IOException {
+    public boolean unlockRow(RowLock lock) throws IOException {
         byte[] rowKey = lock.getRowKey();
         Put put = new Put(rowKey);
         put.add(family, qualifier, 1L, Bytes.toBytes(-1L));
-        table.checkAndPut(rowKey, family, qualifier, lock.getPermit(), put); // If it fails, we already lost the lock
+        return table.checkAndPut(rowKey, family, qualifier, lock.getPermit(), put); // If it fails, we already lost the lock
     }
     
     public boolean isLocked(byte[] rowKey) throws IOException {
