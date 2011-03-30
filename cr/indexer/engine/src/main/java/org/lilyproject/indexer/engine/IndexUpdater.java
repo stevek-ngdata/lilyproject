@@ -22,14 +22,18 @@ import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.rowlock.RowLock;
+import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.util.ObjectUtils;
 
+import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 import java.io.IOException;
@@ -47,6 +51,7 @@ public class IndexUpdater implements RowLogMessageListener {
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
     private RowLog rowLog;
+    private RowLocker rowLocker;
 
     private Log log = LogFactory.getLog(getClass());
     private IdGenerator idGenerator;
@@ -56,7 +61,8 @@ public class IndexUpdater implements RowLogMessageListener {
      * @param rowLog this should be the message queue
      */
     public IndexUpdater(Indexer indexer, Repository repository,
-            LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics) throws RowLogException {
+            LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics,
+            HBaseTableFactory hbaseTableFactory) throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
@@ -68,6 +74,8 @@ public class IndexUpdater implements RowLogMessageListener {
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
 
         this.metrics = metrics;
+
+        rowLocker = new RowLocker(getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
     }
 
     public boolean processMessage(RowLogMessage msg) {
@@ -536,13 +544,24 @@ public class IndexUpdater implements RowLogMessageListener {
             }
 
             // TODO how will this behave if the row was meanwhile deleted?
-            // TODO current implementation requires to lock the row for correct behavior
+            // TODO consider avoiding the need for row-locking
+            byte[] referrerKey = referrer.toBytes();
+            RowLock lock = null;
             try {
-
+               lock = rowLocker.lockRow(referrerKey);
                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null);
             } catch (Exception e) {
                 // TODO
                 e.printStackTrace();
+            } finally {
+                if (lock != null) {
+                    try {
+                        rowLocker.unlockRow(lock);
+                    } catch (Exception e) {
+                        // TODO
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }

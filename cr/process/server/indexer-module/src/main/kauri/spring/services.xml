@@ -63,6 +63,8 @@
       id="lilyInfo"
       service="org.lilyproject.util.LilyInfo"/>
 
+  <kauri:import-service id="hbaseTableFactory" service="org.lilyproject.util.hbase.HBaseTableFactory"/>
+
   <bean id="hbaseConf"
       factory-bean="hadoopConfFactory"
       factory-method="getHBaseConf"/>
@@ -107,6 +109,7 @@
     <constructor-arg ref="rowLogConfigurationMgr"/>
     <constructor-arg value="${indexer:listenersPerIndex}"/>
     <constructor-arg ref="solrClientConfig"/>
+    <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
 </beans>

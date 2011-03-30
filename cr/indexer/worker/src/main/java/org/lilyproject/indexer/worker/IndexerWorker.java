@@ -39,6 +39,7 @@ import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.impl.RemoteListenerHandler;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.ObjectUtils;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -93,12 +94,14 @@ public class IndexerWorker {
     private HttpClient httpClient;
 
     private MultiThreadedHttpConnectionManager connectionManager;
+
+    private HBaseTableFactory hbaseTableFactory;
     
     private final Log log = LogFactory.getLog(getClass());
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
             Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, int listenersPerIndex,
-            SolrClientConfig solrClientConfig)
+            SolrClientConfig solrClientConfig, HBaseTableFactory hbaseTableFactory)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException {
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -108,6 +111,7 @@ public class IndexerWorker {
         this.rowLogConfMgr = rowLogConfMgr;
         this.listenersPerIndex = listenersPerIndex;
         this.solrClientConfig = solrClientConfig;
+        this.hbaseTableFactory = hbaseTableFactory;
     }
 
     @PostConstruct
@@ -173,7 +177,7 @@ public class IndexerWorker {
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,
-                    updaterMetrics);
+                    updaterMetrics, hbaseTableFactory);
 
             List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
 
