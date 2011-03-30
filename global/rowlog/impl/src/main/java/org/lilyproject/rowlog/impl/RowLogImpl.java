@@ -382,7 +382,8 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     public boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
         if (rowLocker != null) { // If rowLocker exists, the lock must be a RowLock
             try {
-                return rowLocker.unlockRow((RowLock)lock);
+                rowLocker.unlockRow((RowLock)lock);
+                return true;
             } catch (IOException e) {
                 throw new RowLogException("Failed to unlock message", e);
             }
