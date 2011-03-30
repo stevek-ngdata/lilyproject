@@ -86,7 +86,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
 
         /**
          * Processes a message by sending the message to a remote listener.
-         * This method retries until a communication channel has been successfully setup and a result has been received
+         * This method retries (5 times) until a communication channel has been successfully setup and a result has been received
          * from the remote listener.
          */
         @Override

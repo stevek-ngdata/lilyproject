@@ -43,7 +43,7 @@ public class RowLogSetup {
     private final Configuration hbaseConf;
     private final ZooKeeperItf zk;
     private RowLogImpl messageQueue;
-    private RowLogImpl writeAheadLog;
+    private WalRowLog writeAheadLog;
     private RowLogProcessorElection messageQueueProcessorLeader;
     private RowLogProcessorElection writeAheadLogProcessorLeader;
     private Thread walProcessorStartupThread;
@@ -104,11 +104,12 @@ public class RowLogSetup {
         RowLogShard mqShard = new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100, hbaseTableFactory);
         messageQueue.registerShard(mqShard);
 
-        writeAheadLog = new RowLogImpl("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
+        writeAheadLog = new WalRowLog("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
                 RecordColumn.WAL_PREFIX, confMgr, rowLocker);
         RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);
         writeAheadLog.registerShard(walShard);
 
+        RowLogMessageListenerMapping.INSTANCE.put("WAL", new WalListener(writeAheadLog));
         RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
 
         // Start the message queue processor
@@ -131,7 +132,7 @@ public class RowLogSetup {
         // Start the wal processor
         boolean walProcEnabled = rowLogConf.getChild("walProcessor").getAttributeAsBoolean("enabled", true);
         if (walProcEnabled) {
-            writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, new RowLogProcessorImpl(writeAheadLog, confMgr), lilyInfo);
+            writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, new WalProcessor(writeAheadLog, confMgr), lilyInfo);
             // The WAL processor should only be started once the LinkIndexUpdater listener is available
             walProcessorStartupThread = new Thread(new DelayedWALProcessorStartup());
             walProcessorStartupThread.start();

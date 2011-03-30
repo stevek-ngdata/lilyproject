@@ -21,6 +21,8 @@ import static org.easymock.EasyMock.isA;
 import static org.easymock.classextension.EasyMock.createControl;
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -38,6 +40,7 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+
 public class RowLogTest {
     private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     private static RowLogConfigurationManager configurationManager;
@@ -49,6 +52,7 @@ public class RowLogTest {
     private static String rowLogId = "RowLogTest";
     private static ZooKeeperItf zooKeeper;
     private RowLogShard shard;
+    private static List<String> subscriptionIds;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -58,6 +62,7 @@ public class RowLogTest {
         configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         configurationManager.addRowLog(rowLogId, new RowLogConfig(60000L, true, true, 100L, 500L, 5000L));
         configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
+        subscriptionIds = Arrays.asList(new String[]{subscriptionId1});
         control = createControl();
         rowTable = RowLogTableUtil.getRowTable(HBASE_PROXY.getConf());
     }
@@ -84,7 +89,7 @@ public class RowLogTest {
     
     @Test
     public void testPutMessage() throws Exception {
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         control.replay();
         rowLog.registerShard(shard);
         byte[] rowKey = Bytes.toBytes("row1");
@@ -117,7 +122,7 @@ public class RowLogTest {
     
     @Test
     public void testMultipleMessages() throws Exception {
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         expectLastCall().times(3);
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId1));
         
@@ -142,14 +147,14 @@ public class RowLogTest {
         control.replay();
         try {
             rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
-            fail("Expected a MessageQueueException since no shards are registered");
+            fail("Expected a RowLogException since no shards are registered");
         } catch (RowLogException expected) {
         }
         
         RowLogMessage message = new RowLogMessageImpl(System.currentTimeMillis(), Bytes.toBytes("row1"), 0L, null, rowLog);
         try {
             rowLog.messageDone(message , subscriptionId1, null);
-            fail("Expected a MessageQueueException since no shards are registered");
+            fail("Expected a RowLogException since no shards are registered");
         } catch (RowLogException expected) {
         }
         // Cleanup
@@ -160,7 +165,7 @@ public class RowLogTest {
     @Test
     public void testMessageConsumed() throws Exception {
 
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId1));
         
         control.replay();
@@ -175,7 +180,7 @@ public class RowLogTest {
     
     @Test
     public void testLockMessage() throws Exception {
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         
         control.replay();
         rowLog.registerShard(shard);
@@ -189,7 +194,7 @@ public class RowLogTest {
     
     @Test
     public void testUnlockMessage() throws Exception {
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         
         control.replay();
         rowLog.registerShard(shard);
@@ -210,7 +215,7 @@ public class RowLogTest {
     public void testLockTimeout() throws Exception {
         configurationManager.updateRowLog(rowLogId, new RowLogConfig(1L, true, false, 0L, 5000L, 5000L));
 
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         
         control.replay();
         rowLog.registerShard(shard);
@@ -241,8 +246,9 @@ public class RowLogTest {
                 break;
         }
         assertEquals(2L, rowLog.getSubscriptions().size());
-        
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        List<String> ids = new ArrayList<String>(subscriptionIds);
+        ids.add(subscriptionId2);
+        shard.putMessage(isA(RowLogMessage.class), eq(ids));
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId2));
         control.replay();
 
@@ -276,7 +282,7 @@ public class RowLogTest {
     
     @Test
     public void testgetMessages() throws Exception {
-        String subscriptionId3 = "subscriptionId2";
+        String subscriptionId3 = "subscriptionId3";
         
         RowLogConfigurationManagerImpl configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         configurationManager.addSubscription(rowLogId, subscriptionId3, Type.VM, 3);
@@ -288,8 +294,9 @@ public class RowLogTest {
         }
         
         assertEquals(2, rowLog.getSubscriptions().size());
-        
-        shard.putMessage(isA(RowLogMessage.class), eq(rowLog.getSubscriptions()));
+        List<String> ids = new ArrayList<String>(subscriptionIds);
+        ids.add(subscriptionId3);
+        shard.putMessage(isA(RowLogMessage.class), eq(ids));
         expectLastCall().times(2);
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId1));
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId3));

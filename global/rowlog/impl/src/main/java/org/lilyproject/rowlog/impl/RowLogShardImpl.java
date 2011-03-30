@@ -76,9 +76,9 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
 
-    public void putMessage(RowLogMessage message, List<RowLogSubscription> subscriptions) throws RowLogException {
-        for (RowLogSubscription subscription : subscriptions) {
-            putMessage(message, subscription.getId());
+    public void putMessage(RowLogMessage message, List<String> subscriptionIds) throws RowLogException {
+        for (String subscriptionId : subscriptionIds) {
+            putMessage(message, subscriptionId);
         }
     }
 

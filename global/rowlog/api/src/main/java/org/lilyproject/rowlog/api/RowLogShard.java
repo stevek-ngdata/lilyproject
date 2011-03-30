@@ -35,7 +35,7 @@ public interface RowLogShard {
      * @param message the {@link RowLogMessage} to be put on the table
      * @throws RowLogException when an unexpected exception occurs
      */
-    void putMessage(RowLogMessage message, List<RowLogSubscription> subscriptions) throws RowLogException;
+    void putMessage(RowLogMessage message, List<String> subscriptionIds) throws RowLogException;
     
     /**
      * Puts a RowLogMessage onto the table.

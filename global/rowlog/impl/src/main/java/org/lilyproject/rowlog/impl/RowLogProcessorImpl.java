@@ -42,9 +42,9 @@ import org.lilyproject.util.Logs;
 
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
     private volatile boolean stop = true;
-    private final RowLog rowLog;
+    protected final RowLog rowLog;
     private final RowLogShard shard;
-    private final Map<String, SubscriptionThread> subscriptionThreads = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
+    protected final Map<String, SubscriptionThread> subscriptionThreads = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
     private RowLogConfigurationManager rowLogConfigurationManager;
     private Log log = LogFactory.getLog(getClass());
     private long lastNotify = -1;
@@ -78,14 +78,26 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     public synchronized void start() throws InterruptedException {
         if (stop) {
             stop = false;
-            rowLogConfigurationManager.addRowLogObserver(rowLog.getId(), this);
-            synchronized (initialRowLogConfigLoaded) {
-                while(!initialRowLogConfigLoaded.get()) {
-                    initialRowLogConfigLoaded.wait();
-                }
+            initializeRowLogConfig();
+            initializeSubscriptions();
+            initializeNotifyObserver();
+        }
+    }
+
+    private void initializeNotifyObserver() {
+        rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), shard.getId(), this);
+    }
+
+    protected void initializeSubscriptions() {
+        rowLogConfigurationManager.addSubscriptionsObserver(rowLog.getId(), this);
+    }
+
+    private void initializeRowLogConfig() throws InterruptedException {
+        rowLogConfigurationManager.addRowLogObserver(rowLog.getId(), this);
+        synchronized (initialRowLogConfigLoaded) {
+            while(!initialRowLogConfigLoaded.get()) {
+                initialRowLogConfigLoaded.wait();
             }
-            rowLogConfigurationManager.addSubscriptionsObserver(rowLog.getId(), this);
-            rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), shard.getId(), this);
         }
     }
 
@@ -119,7 +131,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         }
     }
 
-    private SubscriptionThread startSubscriptionThread(RowLogSubscription subscription) {
+    protected SubscriptionThread startSubscriptionThread(RowLogSubscription subscription) {
         SubscriptionThread subscriptionThread = new SubscriptionThread(subscription);
         subscriptionThread.start();
         return subscriptionThread;
@@ -137,12 +149,13 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
     public synchronized void stop() {
         stop = true;
-        rowLogConfigurationManager.removeRowLogObserver(rowLog.getId(), this);
-        synchronized (initialRowLogConfigLoaded) {
-            initialRowLogConfigLoaded.set(false);
-        }
-        rowLogConfigurationManager.removeSubscriptionsObserver(rowLog.getId(), this);
-        rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), shard.getId());
+        stopRowLogConfig();
+        stopSubscriptions();
+        stopNotifyObserver();
+        stopSubscriptionThreads();
+    }
+
+    private void stopSubscriptionThreads() {
         Collection<SubscriptionThread> threadsToStop;
         synchronized (subscriptionThreads) {
             threadsToStop = new ArrayList<SubscriptionThread>(subscriptionThreads.values());
@@ -166,8 +179,23 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         }
     }
 
-    public boolean isRunning(int consumerId) {
-        return subscriptionThreads.get(consumerId) != null;
+    private void stopNotifyObserver() {
+        rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), shard.getId());
+    }
+
+    protected void stopSubscriptions() {
+        rowLogConfigurationManager.removeSubscriptionsObserver(rowLog.getId(), this);
+    }
+
+    private void stopRowLogConfig() {
+        rowLogConfigurationManager.removeRowLogObserver(rowLog.getId(), this);
+        synchronized (initialRowLogConfigLoaded) {
+            initialRowLogConfigLoaded.set(false);
+        }
+    }
+
+    public boolean isRunning(int subscriptionId) {
+        return subscriptionThreads.get(subscriptionId) != null;
     }
     
     /**
@@ -189,7 +217,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     	}
     }
 
-    private class SubscriptionThread extends Thread {
+    protected class SubscriptionThread extends Thread {
         private long lastWakeup;
         private ProcessorMetrics metrics;
         private volatile boolean stopRequested = false; // do not rely only on Thread.interrupt since some libraries eat interruptions

@@ -39,13 +39,13 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     private static final byte PL_BYTE = (byte)1;
     private static final byte ES_BYTE = (byte)2;
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
-    private RowLogShard shard; // TODO: We only work with one shard for now
+    protected RowLogShard shard; // TODO: We only work with one shard for now
     private final HTableInterface rowTable;
     private final byte[] rowLogColumnFamily;
     private RowLogConfig rowLogConfig;
     
     private Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
-    private final String id;
+    protected final String id;
     private RowLogProcessorNotifier processorNotifier = null;
     private Log log = LogFactory.getLog(getClass());
     private RowLogConfigurationManager rowLogConfigurationManager;
@@ -162,8 +162,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     }
 
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws InterruptedException, RowLogException {
-        RowLogShard shard = getShard(); // Fail fast if no shards are registered
-        
         try {
             // Take current snapshot of the subscriptions so that shard.putMessage and initializeSubscriptions
             // use the exact same set of subscriptions.
@@ -176,16 +174,25 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                     
             RowLogMessage message = new RowLogMessageImpl(now, rowKey, seqnr, data, this);
 
-            shard.putMessage(message, subscriptions);
+            putMessageOnShard(message, subscriptions);
             initializeSubscriptions(message, put, subscriptions);
 
             if (rowLogConfig.isEnableNotify()) {
-                processorNotifier.notifyProcessor(id, shard.getId());
+                processorNotifier.notifyProcessor(id, getShard().getId());
             }
             return message;
         } catch (IOException e) {
             throw new RowLogException("Failed to put message on RowLog", e);
         }
+    }
+
+    protected void putMessageOnShard(RowLogMessage message, List<RowLogSubscription> subscriptions)
+            throws RowLogException {
+        List<String> subscriptionIds = new ArrayList<String>(subscriptions.size());
+        for (RowLogSubscription subscription : subscriptions) {
+            subscriptionIds.add(subscription.getId());
+        }
+        getShard().putMessage(message, subscriptionIds);
     }
 
     
@@ -225,11 +232,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             boolean allDone = processMessage(message, executionState);
             
             if (allDone) {
-                if (rowLocker != null) {
-                    return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, (RowLock)lock);
-                } else {
-                    return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue);
-                }
+                return handleAllDone(message, rowKey, executionStateQualifier, previousValue, lock);
             } else {
                 if (rowLocker != null) {
                     updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, (RowLock)lock);
@@ -240,6 +243,15 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             }
         } catch (IOException e) {
             throw new RowLogException("Failed to process message", e);
+        }
+    }
+
+    protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier,
+            byte[] previousValue, Object lock) throws RowLogException, IOException {
+        if (rowLocker != null) {
+            return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, (RowLock)lock);
+        } else {
+            return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue);
         }
     }
 
@@ -286,7 +298,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                         break;
                     }
                 } else {
-                    shard.removeMessage(message, subscriptionId);
+                    removeMessageFromShard(message, subscriptionId);
                 }
             }
         }
@@ -370,8 +382,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     public boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
         if (rowLocker != null) { // If rowLocker exists, the lock must be a RowLock
             try {
-                rowLocker.unlockRow((RowLock)lock);
-                return true;
+                return rowLocker.unlockRow((RowLock)lock);
             } catch (IOException e) {
                 throw new RowLogException("Failed to unlock message", e);
             }
@@ -433,7 +444,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     }
     
     private boolean messageDoneRowLocked(RowLogMessage message, String subscriptionId, RowLock rowLock) throws RowLogException {
-        RowLogShard shard = getShard(); // Fail fast if no shards are registered
         byte[] rowKey = message.getRowKey();
         byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
@@ -446,13 +456,13 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 executionState.setState(subscriptionId, true);
                 executionState.setLock(subscriptionId, null);
                 if (executionState.allDone()) {
-                    removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, rowLock);
+                    handleAllDone(message, rowKey, executionStateQualifier, previousValue, rowLock);
                 } else {
                     if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, rowLock))
                         return false;
                 }
             }
-            shard.removeMessage(message, subscriptionId);
+            removeMessageFromShard(message, subscriptionId);
             return true;
         } catch (IOException e) {
             throw new RowLogException("Failed to put message to done", e);
@@ -464,7 +474,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         if (count >= 10) {
             return false;
         }
-        RowLogShard shard = getShard(); // Fail fast if no shards are registered
         byte[] rowKey = message.getRowKey();
         byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
@@ -480,18 +489,22 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 executionState.setState(subscriptionId, true);
                 executionState.setLock(subscriptionId, null);
                 if (executionState.allDone()) {
-                    removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue);
+                    handleAllDone(message, rowKey, executionStateQualifier, previousValue, lock);
                 } else {
                     if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue)) {
                         return messageDone(message, subscriptionId, lock, count+1); // Retry
                     }
                 }
             }
-            shard.removeMessage(message, subscriptionId);
+            removeMessageFromShard(message, subscriptionId);
             return true;
         } catch (IOException e) {
             throw new RowLogException("Failed to put message to done", e);
         }
+    }
+ 
+    protected void removeMessageFromShard(RowLogMessage message, String subscriptionId) throws RowLogException {
+        getShard().removeMessage(message, subscriptionId);
     }
     
     public boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
@@ -567,13 +580,13 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     }
     
     // For now we work with only one shard
-    private RowLogShard getShard() throws RowLogException {
+    protected RowLogShard getShard() throws RowLogException {
         if (shard == null) {
             throw new RowLogException("No shards registerd");
         }
         return shard;
     }
-
+    
     public List<RowLogMessage> getMessages(byte[] rowKey, String ... subscriptionIds) throws RowLogException {
         List<RowLogMessage> messages = new ArrayList<RowLogMessage>();
         Get get = new Get(rowKey);
@@ -620,11 +633,15 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         try {
             result = rowTable.get(get);
             if (result.isEmpty()) {
-                shard.removeMessage(message, subscriptionId);
+                removeOrphanMessageFromShard(message, subscriptionId);
             }
         } catch (IOException e) {
             throw new RowLogException("Failed to check is message "+message+" is orphaned for subscription " + subscriptionId, e);
         }
+    }
+    
+    protected void removeOrphanMessageFromShard(RowLogMessage message, String subscriptionId) throws RowLogException {
+        removeMessageFromShard(message, subscriptionId);
     }
     
     public void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
