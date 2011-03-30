@@ -67,6 +67,11 @@ public class HBaseRowLocker implements RowLocker {
                 return rowLock;
             }
         }
+
+        if (metrics != null) {
+            metrics.contentions.inc();
+        }
+
         return null;
     }
 
@@ -76,9 +81,6 @@ public class HBaseRowLocker implements RowLocker {
             RowLock rowLock = lockRow(rowKey);
             if (rowLock != null) {
                 return rowLock;
-            }
-            if (metrics != null) {
-                metrics.contentions.inc();
             }
             Thread.sleep(200);
         }
