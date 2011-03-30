@@ -6,15 +6,11 @@
     <!--
        | Configuration of the HTTP connector that serves the REST interface.
        -->
-    <!--
-      About port numbers: the below will try to use port 8888, if it is not available, it will use
-      the next port available.
-      This configuration is useful during development to be able to start multiple Lily nodes
-      on one host, without port conflicts, and without resorting to arbitrary ephemeral port numbers.
-      To use a fixed port, remove the suggestedPort attribute and set the port to the desired value.
-    -->
-    <serverConnector protocols="HTTP" port="0" suggestedPort="8888" suggestedPortAlt="sequential"
-         conf:inheritKey="string(@name)">
+    <!-- To be able to start multiple lily servers on one host without having to make different
+         configurations, you can either set the port to 0 to use an ephemeral port, or you
+         can make it more deterministic with a configuration like this:
+         port="0" suggestedPort="12060" suggestedPortAlt="sequential" -->
+    <serverConnector protocols="HTTP" port="12060" conf:inheritKey="string(@name)">
       <!--
         The full list of parameters that can be used here can be found in the Javadoc
         of the class org.restlet.ext.jetty.HttpServerHelper and its parent class.
