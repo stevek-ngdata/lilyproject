@@ -35,9 +35,12 @@ import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.rowlock.HBaseRowLocker;
+import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -49,6 +52,8 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> {
     private IdGenerator idGenerator;
@@ -83,7 +88,9 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             RowLog wal = new DummyRowLog("The write ahead log should not be called from within MapReduce jobs.");
             
             BlobManager blobManager = LilyClient.getBlobManager(zk);
-            repository = new HBaseRepository(typeManager, idGenerator, wal, conf, hbaseTableFactory, blobManager);
+            RowLocker rowLocker = new HBaseRowLocker(getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
+                    RecordColumn.LOCK.bytes, 10000);
+            repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
 
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), repository);

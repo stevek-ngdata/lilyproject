@@ -35,6 +35,7 @@ import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
+import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
@@ -67,8 +68,8 @@ public class HBaseRepository extends BaseRepository {
     private Log log = LogFactory.getLog(getClass());
     private RepositoryMetrics metrics;
 
-    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator,
-            RowLog wal, Configuration configuration, HBaseTableFactory hbaseTableFactory, BlobManager blobManager) throws IOException {
+    public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, RowLog wal,
+            HBaseTableFactory hbaseTableFactory, BlobManager blobManager, RowLocker rowLocker) throws IOException {
         super(typeManager, blobManager);
 
         this.idGenerator = idGenerator;
@@ -83,7 +84,7 @@ public class HBaseRepository extends BaseRepository {
         recordTypeVersionColumnNames.put(Scope.VERSIONED, RecordColumn.VERSIONED_RT_VERSION.bytes);
         recordTypeVersionColumnNames.put(Scope.VERSIONED_MUTABLE, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
 
-        rowLocker = new RowLocker(recordTable, RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
+        this.rowLocker = rowLocker;
         metrics = new RepositoryMetrics("hbaserepository");
     }
 

@@ -20,18 +20,28 @@ import java.io.IOException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
-public class RowLocker {
+public class HBaseRowLocker implements RowLocker {
 
     private final HTableInterface table;
     private final byte[] family;
     private final byte[] qualifier;
     private final long timeout;
+    private final RowLockerMetrics metrics;
 
-    public RowLocker(HTableInterface table, byte[] family, byte[] qualifier, long timeout) {
+    public HBaseRowLocker(HTableInterface table, byte[] family, byte[] qualifier, long timeout) {
+        this(table, family, qualifier, timeout, null);
+    }
+
+    public HBaseRowLocker(HTableInterface table, String family, String qualifier, long timeout, RowLockerMetrics metrics) {
+        this(table, Bytes.toBytes(family), Bytes.toBytes(qualifier), timeout, metrics);
+    }
+
+    public HBaseRowLocker(HTableInterface table, byte[] family, byte[] qualifier, long timeout, RowLockerMetrics metrics) {
         this.table = table;
         this.family = family;
         this.qualifier = qualifier;
         this.timeout = timeout;
+        this.metrics = metrics;
     }
     
     public RowLock lockRow(byte[] rowKey) throws IOException {
@@ -56,6 +66,21 @@ public class RowLocker {
             if (table.checkAndPut(rowKey, family, qualifier, previousPermit, put)) {
                 return rowLock;
             }
+        }
+        return null;
+    }
+
+    public RowLock lockRow(byte[] rowKey, long timeout) throws IOException, InterruptedException {
+        long tryUntil = System.currentTimeMillis() + timeout;
+        while (System.currentTimeMillis() < tryUntil) {
+            RowLock rowLock = lockRow(rowKey);
+            if (rowLock != null) {
+                return rowLock;
+            }
+            if (metrics != null) {
+                metrics.contentions.inc();
+            }
+            Thread.sleep(200);
         }
         return null;
     }

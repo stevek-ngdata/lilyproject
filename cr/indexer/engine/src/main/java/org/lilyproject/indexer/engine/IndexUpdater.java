@@ -17,6 +17,7 @@ package org.lilyproject.indexer.engine;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
@@ -26,14 +27,12 @@ import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.util.ObjectUtils;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 import static org.lilyproject.util.repo.RecordEvent.Type.*;
 
 import java.io.IOException;
@@ -62,7 +61,7 @@ public class IndexUpdater implements RowLogMessageListener {
      */
     public IndexUpdater(Indexer indexer, Repository repository,
             LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics,
-            HBaseTableFactory hbaseTableFactory) throws RowLogException, IOException {
+            RowLocker rowLocker) throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
@@ -74,8 +73,7 @@ public class IndexUpdater implements RowLogMessageListener {
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
 
         this.metrics = metrics;
-
-        rowLocker = new RowLocker(getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
+        this.rowLocker = rowLocker;
     }
 
     public boolean processMessage(RowLogMessage msg) {
@@ -548,7 +546,13 @@ public class IndexUpdater implements RowLogMessageListener {
             byte[] referrerKey = referrer.toBytes();
             RowLock lock = null;
             try {
-               lock = rowLocker.lockRow(referrerKey);
+               lock = rowLocker.lockRow(referrerKey, 60000);
+                if (lock == null) {
+                    // TODO maybe add a metric so that this can be monitored?
+                    log.error("Could not lock row to put index message on its queue, will skip it. Row: " +
+                            Bytes.toStringBinary(referrerKey));
+                    continue;
+                }
                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null);
             } catch (Exception e) {
                 // TODO

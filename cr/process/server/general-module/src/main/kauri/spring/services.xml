@@ -43,6 +43,8 @@
   
   <kauri:export-service ref="lilyInfo" service="org.lilyproject.util.LilyInfo"/>
 
+  <kauri:export-service ref="rowLocker" service="org.lilyproject.rowlock.RowLocker"/>
+
   <bean id="hbaseConfiguration"
       class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl">
     <constructor-arg><kauri:conf path="hbase"/></constructor-arg>
@@ -108,6 +110,21 @@
     <property name="server">
       <bean class="java.lang.management.ManagementFactory" factory-method="getPlatformMBeanServer"/>
     </property>
+  </bean>
+
+  <bean id="rowLockerMetrics" class="org.lilyproject.rowlock.RowLockerMetrics" destroy-method="shutdown">
+  </bean>
+
+  <bean id="rowLocker" class="org.lilyproject.rowlock.HBaseRowLocker">
+    <constructor-arg>
+      <bean class="org.lilyproject.util.hbase.LilyHBaseSchema" factory-method="getRecordTable">
+        <constructor-arg ref="hbaseTableFactory"/>
+      </bean>
+    </constructor-arg>
+    <constructor-arg value="data"/>
+    <constructor-arg value="lock"/>
+    <constructor-arg value="10000"/>
+    <constructor-arg ref="rowLockerMetrics"/>
   </bean>
 
 </beans>

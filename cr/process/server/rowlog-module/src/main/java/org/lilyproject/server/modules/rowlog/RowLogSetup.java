@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.kauriproject.conf.Conf;
+import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
@@ -49,15 +50,17 @@ public class RowLogSetup {
     private final HBaseTableFactory hbaseTableFactory;
     private final Conf rowLogConf;
     private final LilyInfo lilyInfo;
+    private final RowLocker rowLocker;
     private final Log log = LogFactory.getLog(getClass());
 
     public RowLogSetup(RowLogConfigurationManager confMgr, ZooKeeperItf zk, Configuration hbaseConf,
-            HBaseTableFactory hbaseTableFactory, Conf rowLogConf, LilyInfo lilyInfo) {
+            HBaseTableFactory hbaseTableFactory, Conf rowLogConf, RowLocker rowLocker, LilyInfo lilyInfo) {
         this.confMgr = confMgr;
         this.zk = zk;
         this.hbaseConf = hbaseConf;
         this.hbaseTableFactory = hbaseTableFactory;
         this.rowLogConf = rowLogConf;
+        this.rowLocker = rowLocker;
         this.lilyInfo = lilyInfo;
     }
 
@@ -101,7 +104,6 @@ public class RowLogSetup {
         RowLogShard mqShard = new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100, hbaseTableFactory);
         messageQueue.registerShard(mqShard);
 
-        RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
         writeAheadLog = new RowLogImpl("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
                 RecordColumn.WAL_PREFIX, confMgr, rowLocker);
         RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);

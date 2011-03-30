@@ -33,8 +33,8 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLock;
-import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
 
@@ -80,7 +80,7 @@ public class RowLockerTest {
     
     @Test
     public void testLockUnlock() throws IOException {
-        RowLocker locker = new RowLocker(table, family, qualifier, 600000L);
+        HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 600000L);
         byte[] rowKey = Bytes.toBytes("testLockUnlock");
         RowLock lock = locker.lockRow(rowKey);
         assertFalse(lock == null);
@@ -91,7 +91,7 @@ public class RowLockerTest {
 
     @Test
     public void testLockTwice() throws IOException {
-        RowLocker locker = new RowLocker(table, family, qualifier, 600000L);
+        HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 600000L);
         byte[] rowKey = Bytes.toBytes("testLockTwice");
         RowLock lock = locker.lockRow(rowKey);
         assertFalse(lock == null);
@@ -103,7 +103,7 @@ public class RowLockerTest {
     
     @Test
     public void testLockTimesOut() throws Exception {
-        RowLocker locker = new RowLocker(table, family, qualifier, 1L);
+        HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 1L);
         byte[] rowKey = Bytes.toBytes("testLockTimesOut");
         RowLock lock = locker.lockRow(rowKey);
         assertFalse(lock == null);
@@ -115,7 +115,7 @@ public class RowLockerTest {
 
     @Test
     public void testPut() throws IOException {
-        RowLocker locker = new RowLocker(table, family, qualifier, 60000L);
+        HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 60000L);
         byte[] rowKey = Bytes.toBytes("testPut");
         RowLock lock1 = locker.lockRow(rowKey);
         locker.unlockRow(lock1);
@@ -130,7 +130,7 @@ public class RowLockerTest {
     
     @Test
     public void testPutLockOtherRow() throws IOException {
-        RowLocker locker = new RowLocker(table, family, qualifier, 60000L);
+        HBaseRowLocker locker = new HBaseRowLocker(table, family, qualifier, 60000L);
         RowLock lock = locker.lockRow(Bytes.toBytes("testPutLockOtherRow"));
         Put put = new Put(Bytes.toBytes("testPutLockOtherRow2"));
         put.add(family, Bytes.toBytes("testQualifier"), Bytes.toBytes("testValue"));

@@ -63,6 +63,13 @@
     <attribute name="blobIncubator.servers" value="localhost:8649"/>
     -->
 
+    <attribute name="rowLocker.class" value="org.apache.hadoop.metrics.spi.NullContextWithUpdateThread"/>
+    <attribute name="rowLocker.period" value="15"/>
+    <!--
+    <attribute name="rowLocker.class" value="org.apache.hadoop.metrics.ganglia.GangliaContext31"/>
+    <attribute name="rowLocker.servers" value="localhost:8649"/>
+    -->
+
     <!--
     <attribute name="jvm.class" value="org.apache.hadoop.metrics.ganglia.GangliaContext31"/>
     <attribute name="jvm.period" value="15"/>

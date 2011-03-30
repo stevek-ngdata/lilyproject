@@ -11,6 +11,7 @@ import org.lilyproject.repository.avro.AvroLily;
 import org.lilyproject.repository.avro.AvroLilyImpl;
 import org.lilyproject.repository.avro.LilySpecificResponder;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
@@ -40,6 +41,7 @@ public class RepositorySetup {
 
     private RowLogConfigurationManagerImpl rowLogConfManager;
 
+    private RowLocker rowLocker;
     private IdGenerator idGenerator;
     private HBaseTypeManager typeManager;
     private RemoteTypeManager remoteTypeManager;
@@ -75,6 +77,9 @@ public class RepositorySetup {
 
         hbaseTableFactory = new HBaseTableFactoryImpl(hadoopConf);
 
+        rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
+                RecordColumn.LOCK.bytes, 10000);
+
         coreSetup = true;
     }
 
@@ -99,7 +104,7 @@ public class RepositorySetup {
 
         if (withWal) {
             setupRowLogConfigurationManager();
-            RowLocker rowLocker = new RowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
+            HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
             rowLogConfManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
             wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
                     LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker);
@@ -107,7 +112,7 @@ public class RepositorySetup {
             wal.registerShard(walShard);
         }
 
-        repository = new HBaseRepository(typeManager, idGenerator, wal, hadoopConf, hbaseTableFactory, blobManager);
+        repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
 
         repositorySetup = true;
     }
@@ -311,4 +316,7 @@ public class RepositorySetup {
         return remoteBlobManager;
     }
 
+    public RowLocker getRowLocker() {
+        return rowLocker;
+    }
 }

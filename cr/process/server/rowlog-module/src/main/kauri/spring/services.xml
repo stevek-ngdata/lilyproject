@@ -34,6 +34,10 @@
       id="lilyInfo"
       service="org.lilyproject.util.LilyInfo"/>
 
+  <kauri:import-service
+      id="rowLocker"
+      service="org.lilyproject.rowlock.RowLocker"/>
+
   <kauri:export-service
       ref="rowLogConfigurationMgr"
       service="org.lilyproject.rowlog.api.RowLogConfigurationManager"/>
@@ -60,6 +64,7 @@
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg><kauri:conf path="rowlog"/></constructor-arg>
+    <constructor-arg ref="rowLocker"/>
     <constructor-arg ref="lilyInfo"/>
   </bean>
 
