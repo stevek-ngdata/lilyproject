@@ -35,7 +35,7 @@
 
            When using custom record IDs, either use 1 initial region, or specify custom split keys.
       -->
-      <regionCount>20</regionCount>
+      <regionCount>1</regionCount>
       <splitKeys></splitKeys>
 
     </splits>
@@ -63,7 +63,7 @@
 
   <table name="links-forward">
     <splits>
-      <regionCount>20</regionCount>
+      <regionCount>1</regionCount>
       <splitKeys></splitKeys>
       <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null -->
       <splitKeyPrefix>\x00</splitKeyPrefix>
@@ -72,7 +72,7 @@
 
   <table name="links-backward">
     <splits>
-      <regionCount>20</regionCount>
+      <regionCount>1</regionCount>
       <splitKeys></splitKeys>
       <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null -->
       <splitKeyPrefix>\x00</splitKeyPrefix>
@@ -81,7 +81,7 @@
   
   <table name="blobincubator">
     <splits>
-      <regionCount>20</regionCount>
+      <regionCount>1</regionCount>
       <splitKeys></splitKeys>
     </splits>
   </table>

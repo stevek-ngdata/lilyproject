@@ -106,7 +106,6 @@ public class KauriTestUtility {
     public ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
         confDirs.add(confDir);
-        confDirs.add(new File(getBasedir() + serverProcessSrcDir + "quick-conf"));
         confDirs.add(new File(getBasedir() + serverProcessSrcDir + "conf"));
         return new ConfManagerImpl(confDirs);
     }
