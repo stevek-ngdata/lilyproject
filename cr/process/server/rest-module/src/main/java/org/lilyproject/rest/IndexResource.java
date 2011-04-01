@@ -18,7 +18,9 @@ package org.lilyproject.rest;
 import java.io.IOException;
 import java.util.Collection;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -26,12 +28,21 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.zookeeper.KeeperException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexConcurrentModificationException;
 import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexModelException;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
-import org.lilyproject.indexer.model.api.IndexerModel;
+import org.lilyproject.indexer.model.api.IndexUpdateException;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+import org.lilyproject.indexer.model.api.IndexValidityException;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.util.json.JsonFormat;
+import org.lilyproject.util.zookeeper.ZkLockException;
 import org.restlet.representation.StringRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -39,7 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class IndexResource {
 	
 	@Autowired
-	protected IndexerModel model;
+    protected WriteableIndexerModel model;
 
     @GET
     @Produces("application/json")
@@ -66,6 +77,56 @@ public class IndexResource {
     	json.put("config", index.getConfiguration());
 		
     	return Response.ok(new StringRepresentation(new String(JsonFormat.serializeAsBytes(json)))).build();
+    }
+    
+    @PUT
+    @Path("{name}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public IndexDefinition put(@PathParam("name") String indexName, ObjectNode json) throws Exception {
+    	IndexDefinition index = model.getMutableIndex(indexName);
+    	
+        IndexGeneralState generalState = json.has("generalState") ? IndexGeneralState.valueOf(json.get("generalState").getTextValue()):null;
+        IndexUpdateState updateState = json.has("updateState") ? IndexUpdateState.valueOf(json.get("updateState").getTextValue()):null;
+        IndexBatchBuildState buildState = json.has("buildState") ? IndexBatchBuildState.valueOf(json.get("buildState").getTextValue()):null;
+
+
+    	String lock = model.lockIndex(indexName);
+        try {
+
+            boolean changes = false;
+
+            if (generalState != null && generalState != index.getGeneralState()) {
+                index.setGeneralState(generalState);
+                changes = true;
+            }
+
+            if (updateState != null && updateState != index.getUpdateState()) {
+                index.setUpdateState(updateState);
+                changes = true;
+            }
+
+            if (buildState != null && buildState != index.getBatchBuildState()) {
+                index.setBatchBuildState(buildState);
+                changes = true;
+            }
+
+            if (changes) {
+                model.updateIndex(index, lock);
+                //System.out.println("Index updated: " + indexName);
+            } else {
+                //System.out.println("Index already matches the specified settings, did not update it.");
+            }
+
+
+        } finally {
+            // In case we requested deletion of an index, it might be that the lock is already removed
+            // by the time we get here as part of the index deletion.
+            boolean ignoreMissing = generalState != null && generalState == IndexGeneralState.DELETE_REQUESTED;
+            model.unlockIndex(lock, ignoreMissing);
+        }
+        
+        return index;
     }
 
 }

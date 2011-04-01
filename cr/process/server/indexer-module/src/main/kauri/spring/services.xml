@@ -76,7 +76,7 @@
   </bean>
 
   <kauri:export-service
-      ref="indexerModel" service="org.lilyproject.indexer.model.api.IndexerModel"/>
+      ref="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
   <bean id="solrClientConfig" class="org.lilyproject.indexer.engine.SolrClientConfig">
     <property name="requestWriter" value="${indexer:solr/requestWriter}"/>

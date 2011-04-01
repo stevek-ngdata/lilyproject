@@ -58,6 +58,6 @@
     </constructor-arg>
   </bean>
 
-  <kauri:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.IndexerModel"/>
+  <kauri:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
 </beans>
