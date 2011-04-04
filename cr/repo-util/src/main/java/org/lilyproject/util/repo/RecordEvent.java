@@ -104,7 +104,7 @@ public class RecordEvent {
         JsonNode vtagsToIndexNode = msgData.get("vtagsToIndex");
         if (vtagsToIndexNode != null && vtagsToIndexNode.size() > 0) {
             for (int i = 0; i < vtagsToIndexNode.size(); i++) {
-                addVTagToIndex(VersionTag.getSchemaId(vtagsToIndexNode.get(i).getBinaryValue(), idGenerator));
+                addVTagToIndex(idGenerator.getSchemaId(vtagsToIndexNode.get(i).getBinaryValue()));
             }
         }
     }

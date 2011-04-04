@@ -149,10 +149,6 @@ public class ValueEvaluator {
 
     private List<IndexValue> evalDerefValue(DerefValue deref, IdRecord record, Repository repository, SchemaId vtag) {
         FieldType fieldType = deref.getTargetFieldType();
-        if (vtag.equals(VersionTag.VERSIONLESS_TAG) && fieldType.getScope() != Scope.NON_VERSIONED) {
-            // From a versionless record, it is impossible to deref a versioned field.
-            return null;
-        }
 
         List<IdRecord> records = new ArrayList<IdRecord>();
         records.add(record);
@@ -212,14 +208,6 @@ public class ValueEvaluator {
         FieldType fieldType = follow.getFieldType();
 
         if (!record.hasField(fieldType.getId())) {
-            return null;
-        }
-
-        if (vtag.equals(VersionTag.VERSIONLESS_TAG) && fieldType.getScope() != Scope.NON_VERSIONED) {
-            // From a versionless record, it is impossible to deref a versioned field.
-            // This explicit check could be removed if in case of the versionless vtag we only read
-            // the non-versioned fields of the record. However, it is not possible to do this right
-            // now with the repository API.
             return null;
         }
 

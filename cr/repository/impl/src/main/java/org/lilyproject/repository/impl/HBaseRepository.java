@@ -417,11 +417,6 @@ public class HBaseRepository extends BaseRepository {
             if (version != null) {
                 byte[] versionBytes = Bytes.toBytes(version);
                 put.add(RecordCf.DATA.bytes, RecordColumn.VERSION.bytes, 1L, versionBytes);
-                if (VersionTag.hasLastVTag(recordType, typeManager) || VersionTag.hasLastVTag(record, typeManager) || VersionTag.hasLastVTag(originalRecord, typeManager)) {
-                    FieldTypeImpl lastVTagType = (FieldTypeImpl)VersionTag.getLastVTagType(typeManager);
-                    put.add(RecordCf.DATA.bytes, lastVTagType.getQualifier(), 1L, encodeFieldValue(lastVTagType, version));
-                    record.setField(lastVTagType.getName(), version);
-                }
             }
             validateRecord(record, originalRecord, recordType, fieldTypes);
 

@@ -1,7 +1,6 @@
 {
   namespaces: {
-    "org.lilyproject.mail": "m",
-    "org.lilyproject.vtag": "vtag"
+    "org.lilyproject.mail": "m"
   },
   fieldTypes: [
     {
@@ -53,11 +52,6 @@
       name: "m$message",
       valueType: { primitive: "LINK" },
       scope: "versioned"
-    },
-    {
-      name: "vtag$last",
-      valueType: { primitive: "LONG" },
-      scope: "non_versioned"
     }
   ],
   recordTypes: [
@@ -66,8 +60,7 @@
       fields: [
         {name: "m$to" },
         {name: "m$subject" },
-        {name: "m$parts" },
-        {name: "vtag$last" }
+        {name: "m$parts" }
       ]
     },
     {
@@ -75,8 +68,7 @@
       fields: [
         {name: "m$mediaType" },
         {name: "m$content" },
-        {name: "m$message" },
-        {name: "vtag$last" }
+        {name: "m$message" }
       ]
     }
   ]

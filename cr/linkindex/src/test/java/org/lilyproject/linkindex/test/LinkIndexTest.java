@@ -20,9 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.*;
 
-import org.apache.hadoop.fs.Path;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hbaseindex.IndexManager;
@@ -31,39 +29,20 @@ import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.*;
-import org.lilyproject.rowlock.HBaseRowLocker;
-import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfig;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
-import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
-import org.lilyproject.util.zookeeper.ZkUtil;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class LinkIndexTest {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
-    private static ZooKeeperItf zk;
-    private static RowLogConfigurationManager rowLogConfMgr;
+    private final static RepositorySetup repoSetup = new RepositorySetup();
 
     private static TypeManager typeManager;
-    private static HBaseRepository repository;
+    private static Repository repository;
     private static IdGenerator ids;
     private static LinkIndex linkIndex;
-    private static HBaseTableFactory hbaseTableFactory;
 
     private SchemaId field1 = new SchemaIdImpl(UUID.randomUUID());
 
@@ -71,49 +50,28 @@ public class LinkIndexTest {
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging("org.lilyproject.linkindex", "org.lilyproject.rowlog.impl.RowLogImpl");
 
-        HBASE_PROXY.start();
-        zk = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
+        repoSetup.setupCore();
+        repoSetup.setupRepository(true);
 
-        IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
-
-        IdGenerator idGenerator = new IdGeneratorImpl();
-        hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
-        typeManager = new HBaseTypeManager(idGenerator, HBASE_PROXY.getConf(), zk, hbaseTableFactory);
-
-        BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess});
-        BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
-        BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
-
-        rowLogConfMgr = new RowLogConfigurationManagerImpl(zk);
-        rowLogConfMgr.addRowLog("WAL", new RowLogConfig(10000L, true, false, 0L, 5000L, 5000L));
-        
-        RowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
-        RowLog wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
-                RecordCf.ROWLOG.bytes, RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker);
-        RowLogShard walShard = new RowLogShardImpl("WS1", HBASE_PROXY.getConf(), wal, 100);
-        wal.registerShard(walShard);
-        repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
+        typeManager = repoSetup.getTypeManager();
+        repository = repoSetup.getRepository();
         ids = repository.getIdGenerator();
-        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
+
+        IndexManager.createIndexMetaTableIfNotExists(repoSetup.getHadoopConf());
+        IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
         LinkIndex.createIndexes(indexManager);
         linkIndex = new LinkIndex(indexManager, repository);
 
-        rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
+        repoSetup.getRowLogConfManager().addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
 
-        waitForSubscription(wal, "LinkIndexUpdater");
+        repoSetup.waitForSubscription(repoSetup.getWal(), "LinkIndexUpdater");
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(typeManager);
-        Closer.close(repository);
-        Closer.close(rowLogConfMgr);
-        Closer.close(zk);
-        HBASE_PROXY.stop();
+        Closer.close(repoSetup);
     }
 
     @Test
@@ -184,6 +142,8 @@ public class LinkIndexTest {
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedMutableFt.getId(), false));
         recordType = typeManager.createRecordType(recordType);
 
+        SchemaId lastVTag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
+
         //
         // Link extraction from a record without versions
         //
@@ -193,46 +153,16 @@ public class LinkIndexTest {
             record.setField(nonVersionedFt.getName(), new Link(ids.newRecordId("foo1")));
             record = repository.create(record);
 
-            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), VersionTag.VERSIONLESS_TAG);
+            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
             assertEquals(1, referrers.size());
             assertTrue(referrers.contains(record.getId()));
 
-            referrers = linkIndex.getReferrers(ids.newRecordId("bar1"), VersionTag.VERSIONLESS_TAG);
+            referrers = linkIndex.getReferrers(ids.newRecordId("bar1"), lastVTag);
             assertEquals(0, referrers.size());
 
             // Now perform an update so that there is a version
             record.setField(versionedFt.getName(), Arrays.asList(new Link(ids.newRecordId("foo2")), new Link(ids.newRecordId("foo3"))));
             record = repository.update(record);
-
-//            recordEvent = new RecordEvent();
-//            recordEvent.setVersionCreated(record.getVersion());
-//            recordEvent.addUpdatedField(versionedFt.getId());
-//            message = new TestQueueMessage(EventType.EVENT_RECORD_UPDATED, record.getId(), recordEvent.toJsonBytes());
-//            queue.broadCastMessage(message);
-//
-//            // Since there is a version but no vtag yet, there should be nothing in the link index for this record
-//            referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), VersionTag.VERSIONLESS_TAG);
-//            assertEquals(0, referrers.size());
-//
-//            assertEquals(0, linkIndex.getAllForwardLinks(record.getId()).size());
-
         }
-    }
-
-    public static void waitForSubscription(RowLog rowLog, String subscriptionId) throws InterruptedException {
-        boolean subscriptionKnown = false;
-        int timeOut = 10000;
-        long waitUntil = System.currentTimeMillis() + 10000;
-        while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
-            for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
-                if (subscriptionId.equals(subscription.getId())) {
-                    subscriptionKnown = true;
-                    break;
-                }
-            }
-            Thread.sleep(10);
-        }
-        Assert.assertTrue("Subscription '" + subscriptionId + "' not known to rowlog within timeout " + timeOut + "ms",
-                subscriptionKnown);
     }
 }

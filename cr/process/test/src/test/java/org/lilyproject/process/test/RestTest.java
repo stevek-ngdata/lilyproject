@@ -854,17 +854,11 @@ public class RestTest {
         Response response = post(BASE_URI + "/schema/fieldTypeById", body);
         assertStatus(Status.SUCCESS_CREATED, response);
 
-        // Create 'last' vtag field
-        body = json("{action: 'create', fieldType: {name: 'v$last', valueType: { primitive: 'LONG' }, " +
-                "scope: 'non_versioned', namespaces: { 'org.lilyproject.vtag': 'v' } } }");
-        response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
-
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Title version 1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.vtagtest", body);
         assertStatus(Status.SUCCESS_CREATED, response);
 
-        body = json("{ type: 'b$book', fields: { 'b$title' : 'Title version 2', 'v$active': 1, 'v$last': 2 }, " +
+        body = json("{ type: 'b$book', fields: { 'b$title' : 'Title version 2', 'v$active': 1 }, " +
                 "namespaces : { 'org.lilyproject.resttest': 'b', 'org.lilyproject.vtag': 'v' } }");
         response = put(BASE_URI + "/record/USER.vtagtest", body);
         assertStatus(Status.SUCCESS_OK, response);

@@ -1,8 +1,7 @@
 /* Sample/test data to try the lily-record-row tool. */
 {
   namespaces: {
-    "org.lilyproject.rr": "r",
-    "org.lilyproject.vtag": "vtag"
+    "org.lilyproject.rr": "r"
   },
   fieldTypes: [
     {
@@ -24,11 +23,6 @@
       name: "r$field4",
       valueType: { primitive: "STRING" },
       scope: "versioned"
-    },
-    {
-      name: "vtag$last",
-      valueType: { primitive: "LONG" },
-      scope: "non_versioned"
     }
   ],
   recordTypes: [
@@ -37,8 +31,7 @@
       fields: [
         {name: "r$field1" },
         {name: "r$field2" },
-        {name: "r$field3" },
-        {name: "vtag$last", mandatory: false }
+        {name: "r$field3" }
       ]
     }
   ],

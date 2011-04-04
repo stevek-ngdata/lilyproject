@@ -2,8 +2,9 @@
 <indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2">
 
   <cases>
-    <case recordType="ns:NVRecordType1" variant="*" vtags="live" indexVersionless="true"/>
-    <case recordType="ns2:VRecordType1" variant="*" vtags="live,preview,latest" indexVersionless="true"/>
+    <case recordType="ns:NVRecordType1" variant="*" vtags="live,nonversioned"/>
+    <case recordType="ns2:VRecordType1" variant="*" vtags="live,preview,latest,nonversioned"/>
+    <case recordType="ns2:LastRecordType" variant="*" vtags="last"/>
   </cases>
 
   <formatters>

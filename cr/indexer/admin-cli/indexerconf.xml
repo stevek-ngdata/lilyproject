@@ -2,7 +2,7 @@
 <indexer xmlns:foo="foo">
     <!--
   <cases>
-    <case recordType="foo:Book" variant="*" vtags="live" indexVersionless="true"/>
+    <case recordType="foo:Book" variant="*" vtags="live"/>
   </cases>
 
   <indexFields>

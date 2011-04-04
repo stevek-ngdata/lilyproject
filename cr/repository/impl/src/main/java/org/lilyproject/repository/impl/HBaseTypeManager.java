@@ -47,6 +47,7 @@ import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeColumn;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class HBaseTypeManager extends AbstractTypeManager implements TypeManager {
@@ -59,7 +60,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     private boolean cacheInvalidationEnabled = true;
 
     public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper, HBaseTableFactory hbaseTableFactory)
-            throws IOException, InterruptedException, KeeperException {
+            throws IOException, InterruptedException, KeeperException, RepositoryException {
         super(zooKeeper);
         log = LogFactory.getLog(getClass());
         this.idGenerator = idGenerator;
@@ -67,6 +68,15 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         this.typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         registerDefaultValueTypes();
         setupCaches();
+
+        // The 'last' vtag should always exist in the system (at least, for everything index-related). Therefore we
+        // create it here.
+        try {
+            FieldType fieldType = newFieldType(getValueType("LONG"), VersionTag.LAST, Scope.NON_VERSIONED);
+            createFieldType(fieldType);
+        } catch (FieldTypeExistsException e) {
+            // ok
+        }
     }
     
     protected void cacheInvalidationReconnected() throws InterruptedException {

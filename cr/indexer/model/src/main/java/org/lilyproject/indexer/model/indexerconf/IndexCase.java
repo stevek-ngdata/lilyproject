@@ -32,14 +32,11 @@ public class IndexCase {
      */
     private final Map<String, String> variantPropsPattern;
     private final Set<SchemaId> vtags;
-    private final boolean indexVersionless;
 
-    public IndexCase(QName recordTypeName, Map<String, String> variantPropsPattern, Set<SchemaId> vtags,
-            boolean indexVersionless) {
+    public IndexCase(QName recordTypeName, Map<String, String> variantPropsPattern, Set<SchemaId> vtags) {
         this.recordTypeName = recordTypeName;
         this.variantPropsPattern = variantPropsPattern;
         this.vtags = vtags;
-        this.indexVersionless = indexVersionless;
     }
 
     public boolean match(QName recordTypeName, Map<String, String> varProps) {
@@ -74,9 +71,5 @@ public class IndexCase {
      */
     public Set<SchemaId> getVersionTags() {
         return vtags;
-    }
-
-    public boolean getIndexVersionless() {
-        return indexVersionless;
     }
 }

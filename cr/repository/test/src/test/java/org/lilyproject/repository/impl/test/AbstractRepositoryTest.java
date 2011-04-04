@@ -35,7 +35,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.util.repo.VersionTag;
 
 public abstract class AbstractRepositoryTest {
 
@@ -53,7 +52,6 @@ public abstract class AbstractRepositoryTest {
     private static FieldType fieldType4;
     private static FieldType fieldType5;
     private static FieldType fieldType6;
-    private static FieldType lastVTag;
     protected static RecordType recordType1;
     private static RecordType recordType1B;
     private static RecordType recordType2;
@@ -84,8 +82,6 @@ public abstract class AbstractRepositoryTest {
         fieldType5 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName(namespace, "field5"), Scope.VERSIONED));
         fieldType6 = typeManager.createFieldType(typeManager
                 .newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field6"), Scope.VERSIONED_MUTABLE));
-        
-        lastVTag = VersionTag.createLastVTagType(typeManager);
     }
 
     private static void setupRecordTypes() throws Exception {
@@ -93,7 +89,6 @@ public abstract class AbstractRepositoryTest {
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
-        recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(lastVTag.getId(), false));
         recordType1 = typeManager.createRecordType(recordType1);
 
         recordType1B = recordType1.clone();
@@ -431,7 +426,6 @@ public abstract class AbstractRepositoryTest {
 
         record.setRecordType(recordType1B.getName(), recordType1B.getVersion());
         record.setField(fieldType1.getName(), "value2");
-        record.setField(lastVTag.getName(), 2L);
         assertEquals(record, repository.read(record.getId(), 1L));
         
         try {
@@ -551,7 +545,8 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadSpecificFields() throws Exception {
         Record record = createDefaultRecord();
-        Record readRecord = repository.read(record.getId(), Arrays.asList(new QName[] { lastVTag.getName(), fieldType1.getName(), fieldType2.getName(), fieldType3.getName() }));
+        Record readRecord = repository.read(record.getId(), Arrays.asList(fieldType1.getName(), fieldType2.getName(),
+                fieldType3.getName()));
         assertEquals(repository.read(record.getId()), readRecord);
     }
 
@@ -628,18 +623,17 @@ public abstract class AbstractRepositoryTest {
         assertEquals(recordType2.getName(), updatedRecord.getRecordTypeName(Scope.VERSIONED_MUTABLE));
         assertEquals(recordType2.getVersion(), updatedRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
 
-        assertEquals(4, updatedRecord.getFields().size());
+        assertEquals(3, updatedRecord.getFields().size());
 
         Record readRecord = repository.read(record.getId());
         // Nothing got deleted
-        assertEquals(7, readRecord.getFields().size());
+        assertEquals(6, readRecord.getFields().size());
         assertEquals("value1", readRecord.getField(fieldType1.getName()));
         assertEquals(1024, readRecord.getField(fieldType4.getName()));
         assertEquals(123, readRecord.getField(fieldType2.getName()));
         assertFalse((Boolean) readRecord.getField(fieldType5.getName()));
         assertTrue((Boolean) readRecord.getField(fieldType3.getName()));
         assertEquals("value2", readRecord.getField(fieldType6.getName()));
-        assertEquals(2L, readRecord.getField(lastVTag.getName()));
     }
 
     @Test
@@ -647,12 +641,11 @@ public abstract class AbstractRepositoryTest {
         Record record = createDefaultRecord();
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(record.getRecordTypeName());
-        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName(), fieldType2.getName(), fieldType3.getName()}));
+        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName(), fieldType2.getName(), fieldType3.getName()));
 
         repository.update(deleteRecord);
         Record readRecord = repository.read(record.getId());
-        assertEquals(1, readRecord.getFields().size());
-        assertEquals(2L, readRecord.getField(lastVTag.getName()));
+        assertEquals(0, readRecord.getFields().size());
     }
 
     @Test
@@ -701,7 +694,7 @@ public abstract class AbstractRepositoryTest {
 
         Record readRecord = repository.read(record.getId());
         assertEquals(Long.valueOf(2), readRecord.getVersion());
-        assertEquals(6, readRecord.getFields().size());
+        assertEquals(5, readRecord.getFields().size());
         try {
             if (avro)
                 System.out.println("Expecting FieldNotFoundException"); 
@@ -717,7 +710,7 @@ public abstract class AbstractRepositoryTest {
 
         readRecord = repository.read(record.getId());
         assertEquals(Long.valueOf(3), readRecord.getVersion());
-        assertEquals(4, readRecord.getFields().size());
+        assertEquals(3, readRecord.getFields().size());
         assertEquals(2222, readRecord.getField(fieldType4.getName()));
         assertEquals(false, readRecord.getField(fieldType5.getName()));
         assertEquals("value2", readRecord.getField(fieldType6.getName()));
@@ -1211,7 +1204,7 @@ public abstract class AbstractRepositoryTest {
         assertTrue(idRecord.hasField(fieldType2.getId()));
 
         Map<SchemaId, Object> fields = idRecord.getFieldsById();
-        assertEquals(3, fields.size());
+        assertEquals(2, fields.size());
         assertEquals("hello", fields.get(fieldType1.getId()));
         assertEquals(new Integer(4), fields.get(fieldType2.getId()));
 
@@ -1248,7 +1241,7 @@ public abstract class AbstractRepositoryTest {
         record = repository.read(record.getId(), 1L);
         assertEquals(new Long(1), record.getVersion());
         assertTrue(record.hasField(fieldType2.getName()));
-        assertEquals(3, record.getFields().size());
+        assertEquals(2, record.getFields().size());
 
         try {
             if (avro)
@@ -1259,49 +1252,7 @@ public abstract class AbstractRepositoryTest {
             // expected
         }
     }
-    
-    @Test
-    public void testLastVTagNotDefinedInRecordType() throws Exception {
-        Record record = repository.newRecord();
-        record.setRecordType(recordType2.getName());
-        record.setField(fieldType5.getName(), false);
-        record = repository.create(record);
 
-        try {
-            if (avro)
-                System.out.println("Expecting FieldNotFoundException");
-            record.getField(lastVTag.getName());
-            fail();
-        } catch (FieldNotFoundException expected) {
-        }
-        
-        record = repository.newRecord(record.getId());
-        record.setRecordType(recordType2.getName());
-        record.setField(fieldType5.getName(), true);
-        record.setField(lastVTag.getName(), 3L);  // The given value will be ignored
-        record = repository.update(record);
-        
-        assertEquals(Long.valueOf(2), record.getField(lastVTag.getName()));
-        
-        record = repository.newRecord(record.getId());
-        record.setField(fieldType5.getName(), false);
-        record = repository.update(record);
-        
-        assertEquals(Long.valueOf(3), record.getField(lastVTag.getName()));
-
-        record = repository.newRecord(record.getId());
-        record.setField(lastVTag.getName(), 2L);
-        record = repository.update(record);
-        // The last version tag is always updated by the system, even if its the only field set by the user to be updated
-        assertEquals(Long.valueOf(3), record.getField(lastVTag.getName()));
-        
-        record = repository.newRecord(record.getId());
-        record.addFieldsToDelete(Arrays.asList(new QName[]{lastVTag.getName(), fieldType5.getName()}));
-        record = repository.update(record);
-        // The record still has a version even though there are no longer any versioned fields on it
-        assertEquals(Long.valueOf(4), record.getField(lastVTag.getName())); 
-    }
-    
     @Test
     public void testValidateCreate() throws Exception {
         Record record = repository.newRecord();

@@ -1,8 +1,7 @@
 {
   namespaces: {
     /* Declaration of namespace prefixes. */
-    "org.lilyproject.bookssample": "b",
-    "org.lilyproject.vtag": "vtag"
+    "org.lilyproject.bookssample": "b"
   },
   fieldTypes: [
     {
@@ -36,13 +35,6 @@
       name: "b$bio",
       valueType: { primitive: "STRING" },
       scope: "versioned"
-    },
-    {
-      /* vtag fields are fields that point to specific versions. Indexing of
-         versioned records is done based on these vtags. */
-      name: "vtag$last",
-      valueType: { primitive: "LONG" },
-      scope: "non_versioned"
     }
   ],
   recordTypes: [
@@ -52,16 +44,14 @@
         {name: "b$title", mandatory: true },
         {name: "b$pages", mandatory: false },
         {name: "b$language", mandatory: false },
-        {name: "b$authors", mandatory: false },
-        {name: "vtag$last", mandatory: false }
+        {name: "b$authors", mandatory: false }
       ]
     },
     {
       name: "b$Author",
       fields: [
         {name: "b$name", mandatory: true },
-        {name: "b$bio", mandatory: false },
-        {name: "vtag$last", mandatory: false }
+        {name: "b$bio", mandatory: false }
       ]
     }
   ],

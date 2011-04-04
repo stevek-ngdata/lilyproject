@@ -17,6 +17,7 @@
             <xs:attribute name="recordType" type="xs:string" use="required"/>
             <xs:attribute name="vtags" type="xs:string" use="optional"/>
             <xs:attribute name="variant" type="xs:string" use="optional"/>
+            <!-- Deprecated attribute, left here not to break existing schemas -->
             <xs:attribute name="indexVersionless" type="xs:boolean" use="optional"/>
           </xs:complexType>
         </xs:element>

@@ -4,8 +4,7 @@
   failuresFile: "failures.log",
 
   namespaces: {
-    "org.lilyproject.tools.tester": "tester",
-    "org.lilyproject.vtag": "vtag"
+    "org.lilyproject.tools.tester": "tester"
   },
   
   /* Record spaces :
@@ -132,11 +131,6 @@
       name: "tester$field11",
       valueType: { "primitive": "BLOB" },
       scope: "versioned"
-    },
-    {
-      name: "vtag$last",
-      valueType: { "primitive": "LONG" },
-      scope: "non_versioned"
     }
   ],
 

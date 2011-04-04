@@ -320,27 +320,6 @@ public class LinkIndex {
         }
     }
 
-    private String formatVariantProps(SortedMap<String, String> props) {
-        if (props.isEmpty())
-            return null;
-
-        // This string-formatting logic is similar to what is in VariantRecordId, which at the time of
-        // this writing was decided to keep private.
-        boolean first = true;
-        StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, String> prop : props.entrySet()) {
-            if (!first) {
-                builder.append(":");
-            }
-            builder.append(prop.getKey());
-            builder.append(",");
-            builder.append(prop.getValue());
-            first = false;
-        }
-
-        return builder.toString();
-    }
-
     public static void createIndexes(IndexManager indexManager) throws IOException, InterruptedException {
         // About the structure of these indexes:
         //  - the vtag comes after the recordid because this way we can delete all
@@ -362,19 +341,5 @@ public class LinkIndex {
             indexDef.addByteField("sourcefield");
             indexManager.createIndexIfNotExists(indexDef);
         }
-    }
-
-    private byte[] idToBytes(String id) {
-        UUID uuid = UUID.fromString(id);
-        byte[] rowId;
-        rowId = new byte[16];
-        Bytes.putLong(rowId, 0, uuid.getMostSignificantBits());
-        Bytes.putLong(rowId, 8, uuid.getLeastSignificantBits());
-        return rowId;
-    }
-
-    private String idFromBytes(byte[] bytes) {
-        UUID uuid = new UUID(Bytes.toLong(bytes, 0, 8), Bytes.toLong(bytes, 8, 8));
-        return uuid.toString();
     }
 }

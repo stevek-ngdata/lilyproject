@@ -25,7 +25,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.util.repo.VersionTag;
+import org.lilyproject.util.repo.VTaggedRecord;
 
 import java.io.IOException;
 import java.util.*;
@@ -73,8 +73,8 @@ public class Indexer {
     public void index(RecordId recordId) throws RepositoryException, IOException,
             SolrServerException, ShardSelectorException, InterruptedException {
 
-        IdRecord record = repository.readWithIds(recordId, null, null);
-        Map<SchemaId, Long> vtags = VersionTag.getTagsById(record, typeManager);
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, repository);
+        IdRecord record = vtRecord.getNonVersionedRecord();
 
         IndexCase indexCase = conf.getIndexCase(record.getRecordTypeName(), record.getId().getVariantProperties());
         if (indexCase == null) {
@@ -82,24 +82,9 @@ public class Indexer {
         }
 
         Set<SchemaId> vtagsToIndex = new HashSet<SchemaId>();
-        setIndexAllVTags(vtagsToIndex, vtags, indexCase, record);
+        setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
 
-        index(record, vtagsToIndex, vtags);
-    }
-
-    protected void index(IdRecord record, Set<SchemaId> vtagsToIndex, Map<SchemaId, Long> vtags)
-            throws IOException, SolrServerException, RepositoryException, ShardSelectorException, InterruptedException {
-        if (vtagsToIndex.contains(VersionTag.VERSIONLESS_TAG)) {
-            // Usually when the @@versionless vtag should be indexed, the vtagsToIndex set will
-            // not contain any other tags.
-            // It could be that there are other tags however: for example if someone added and removed
-            // vtag fields to the (versionless) document.
-            // If we would ever support deleting of versions, then it could also be the case,
-            // but then we'll have to extend this to delete these old versions from the index.
-            index(record, Collections.singleton(VersionTag.VERSIONLESS_TAG));
-        } else {
-            indexRecord(record.getId(), vtagsToIndex, vtags);
-        }
+        index(vtRecord, vtagsToIndex);
     }
 
     /**
@@ -109,18 +94,19 @@ public class Indexer {
      *
      * @param vtagsToIndex all vtags for which to index the record, not all vtags need to exist on the record,
      *                     but this should only contain appropriate vtags as defined by the IndexCase for this record.
-     * @param vtags the actual vtag mappings of the record
      */
-    protected void indexRecord(RecordId recordId, Set<SchemaId> vtagsToIndex, Map<SchemaId, Long> vtags)
-            throws IOException, SolrServerException, FieldTypeNotFoundException, RepositoryException,
-            RecordTypeNotFoundException, ShardSelectorException, InterruptedException {
+    protected void index(VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex)
+            throws IOException, SolrServerException, RepositoryException, ShardSelectorException, InterruptedException {
+
+        RecordId recordId = vtRecord.getNonVersionedRecord().getId();
+
         // One version might have multiple vtags, so to index we iterate the version numbers
         // rather than the vtags
-        Map<Long, Set<SchemaId>> vtagsToIndexByVersion = getVtagsByVersion(vtagsToIndex, vtags);
+        Map<Long, Set<SchemaId>> vtagsToIndexByVersion = getVtagsByVersion(vtagsToIndex, vtRecord.getVTags());
         for (Map.Entry<Long, Set<SchemaId>> entry : vtagsToIndexByVersion.entrySet()) {
             IdRecord version = null;
             try {
-                version = repository.readWithIds(recordId, entry.getKey(), null);
+                version = vtRecord.getIdRecord(entry.getKey());
             } catch (VersionNotFoundException e) {
                 // TODO
             } catch (RecordNotFoundException e) {
@@ -201,10 +187,6 @@ public class Indexer {
             solrDoc.setField("@@key", getIndexId(record.getId(), vtag));
             solrDoc.setField("@@vtag", vtag.toString());
 
-            if (vtag.equals(VersionTag.VERSIONLESS_TAG)) {
-                solrDoc.setField("@@versionless", "true");
-            }
-
             solrServers.getSolrServer(record.getId()).add(solrDoc);
             metrics.adds.inc();
 
@@ -253,15 +235,12 @@ public class Indexer {
         return result;
     }
 
-    protected void setIndexAllVTags(Set<SchemaId> vtagsToIndex, Map<SchemaId, Long> vtags, IndexCase indexCase, Record record) {
-        if (record.getVersion() != null) {
-            Set<SchemaId> tmp = new HashSet<SchemaId>();
-            tmp.addAll(indexCase.getVersionTags());
-            tmp.retainAll(vtags.keySet()); // only keep the vtags which exist in the document
-            vtagsToIndex.addAll(tmp);
-        } else if (indexCase.getIndexVersionless()) {
-            vtagsToIndex.add(VersionTag.VERSIONLESS_TAG);
-        }
+    protected void setIndexAllVTags(Set<SchemaId> vtagsToIndex, IndexCase indexCase, VTaggedRecord vtRecord)
+            throws InterruptedException, RepositoryException {
+        Set<SchemaId> tmp = new HashSet<SchemaId>();
+        tmp.addAll(indexCase.getVersionTags());
+        tmp.retainAll(vtRecord.getVTags().keySet()); // only keep the vtags which exist in the document
+        vtagsToIndex.addAll(tmp);
     }
 
     protected String getIndexId(RecordId recordId, SchemaId vtag) {
@@ -274,8 +253,6 @@ public class Indexer {
     protected String safeLoadTagName(SchemaId fieldTypeId) {
         if (fieldTypeId == null)
             return "null";
-        if (fieldTypeId.equals(VersionTag.VERSIONLESS_TAG))
-            return fieldTypeId.toString();
 
         try {
             return typeManager.getFieldTypeById(fieldTypeId).getName().getName();

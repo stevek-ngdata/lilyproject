@@ -41,7 +41,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hbaseindex.IndexManager;
@@ -57,7 +56,6 @@ import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -80,8 +78,10 @@ public class IndexerTest {
     private static IdGenerator idGenerator;
     private static SolrServers solrServers;
 
+    private static FieldType nvTag;
     private static FieldType liveTag;
     private static FieldType previewTag;
+    private static FieldType latestTag;
     private static FieldType lastTag;
 
     private static FieldType nvfield1;
@@ -108,6 +108,7 @@ public class IndexerTest {
     private static MessageVerifier messageVerifier = new MessageVerifier();
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
+    private static RecordType lastRecordType;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -187,6 +188,12 @@ public class IndexerTest {
         // Version tag fields
         //
 
+        lastTag = typeManager.getFieldTypeByName(VersionTag.LAST);
+
+        QName nvTagName = new QName(VersionTag.NAMESPACE, "nonversioned");
+        nvTag = typeManager.newFieldType(longValueType, nvTagName, Scope.NON_VERSIONED);
+        nvTag = typeManager.createFieldType(nvTag);
+
         QName liveTagName = new QName(VersionTag.NAMESPACE, "live");
         liveTag = typeManager.newFieldType(longValueType, liveTagName, Scope.NON_VERSIONED);
         liveTag = typeManager.createFieldType(liveTag);
@@ -197,11 +204,11 @@ public class IndexerTest {
 
         // Note: tag 'last' was renamed to 'latest' because there is now built-in behaviour for the tag named 'last'
         QName lastTagName = new QName(VersionTag.NAMESPACE, "latest");
-        lastTag = typeManager.newFieldType(longValueType, lastTagName, Scope.NON_VERSIONED);
-        lastTag = typeManager.createFieldType(lastTag);
+        latestTag = typeManager.newFieldType(longValueType, lastTagName, Scope.NON_VERSIONED);
+        latestTag = typeManager.createFieldType(latestTag);
 
         //
-        // Schema types for the versionless test
+        // Schema types for the nonversioned test
         //
 
         QName field1Name = new QName(NS, "nv_field1");
@@ -223,7 +230,7 @@ public class IndexerTest {
         nvRecordType1 = typeManager.newRecordType(new QName(NS, "NVRecordType1"));
         nvRecordType1.addFieldTypeEntry(nvfield1.getId(), false);
         nvRecordType1.addFieldTypeEntry(liveTag.getId(), false);
-        nvRecordType1.addFieldTypeEntry(lastTag.getId(), false);
+        nvRecordType1.addFieldTypeEntry(latestTag.getId(), false);
         nvRecordType1.addFieldTypeEntry(previewTag.getId(), false);
         nvRecordType1.addFieldTypeEntry(nvLinkField1.getId(), false);
         nvRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
@@ -271,7 +278,7 @@ public class IndexerTest {
         vRecordType1 = typeManager.newRecordType(new QName(NS2, "VRecordType1"));
         vRecordType1.addFieldTypeEntry(vfield1.getId(), false);
         vRecordType1.addFieldTypeEntry(liveTag.getId(), false);
-        vRecordType1.addFieldTypeEntry(lastTag.getId(), false);
+        vRecordType1.addFieldTypeEntry(latestTag.getId(), false);
         vRecordType1.addFieldTypeEntry(previewTag.getId(), false);
         vRecordType1.addFieldTypeEntry(vLinkField1.getId(), false);
         vRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
@@ -283,14 +290,22 @@ public class IndexerTest {
         vRecordType1.addFieldTypeEntry(vDateField.getId(), false);
         vRecordType1.addFieldTypeEntry(vIntHierField.getId(), false);
         vRecordType1 = typeManager.createRecordType(vRecordType1);
+
+        //
+        // Schema types for testing last tag
+        //
+        lastRecordType = typeManager.newRecordType(new QName(NS2, "LastRecordType"));
+        lastRecordType.addFieldTypeEntry(vfield1.getId(), false);
+        lastRecordType.addFieldTypeEntry(nvfield1.getId(), false);
+        lastRecordType = typeManager.createRecordType(lastRecordType);
     }
 
     @Test
-    public void testIndexerVersionless() throws Exception {
+    public void testIndexerNonVersioned() throws Exception {
         messageVerifier.init();
 
         //
-        // Basic, versionless, create-update-delete
+        // Basic create-update-delete
         //
         {
             // Create a record
@@ -298,7 +313,8 @@ public class IndexerTest {
             Record record = repository.newRecord();
             record.setRecordType(nvRecordType1.getName());
             record.setField(nvfield1.getName(), "apple");
-            expectEvent(CREATE, record.getId(), nvfield1.getId());
+            record.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record.getId(), nvfield1.getId(), nvTag.getId());
             record = repository.create(record);
 
             commitIndex();
@@ -323,7 +339,7 @@ public class IndexerTest {
             verifyResultCount("nv_field1:pear", 1);
             verifyResultCount("nv_field1:apple", 0);
 
-            // Add a vtag field. For versionless records, this should have no effect
+            // Add a vtag field pointing to a version. For versionless records, this should have no effect
             log.debug("Begin test NV4");
             record.setField(liveTag.getName(), new Long(1));
             expectEvent(UPDATE, record.getId(), liveTag.getId());
@@ -350,13 +366,15 @@ public class IndexerTest {
             Record record1 = repository.newRecord();
             record1.setRecordType(nvRecordType1.getName());
             record1.setField(nvfield1.getName(), "pear");
-            expectEvent(CREATE, record1.getId(), nvfield1.getId());
+            record1.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record1.getId(), nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             Record record2 = repository.newRecord();
             record2.setRecordType(nvRecordType1.getName());
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
-            expectEvent(CREATE, record2.getId(), nvLinkField1.getId());
+            record2.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
             record2 = repository.create(record2);
 
             commitIndex();
@@ -372,14 +390,16 @@ public class IndexerTest {
             Record masterRecord = repository.newRecord();
             masterRecord.setRecordType(nvRecordType1.getName());
             masterRecord.setField(nvfield1.getName(), "yellow");
-            expectEvent(CREATE, masterRecord.getId(), nvfield1.getId());
+            masterRecord.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, masterRecord.getId(), nvfield1.getId(), nvTag.getId());
             masterRecord = repository.create(masterRecord);
 
             RecordId var1Id = idGenerator.newRecordId(masterRecord.getId(), Collections.singletonMap("lang", "en"));
             Record var1Record = repository.newRecord(var1Id);
             var1Record.setRecordType(nvRecordType1.getName());
             var1Record.setField(nvfield1.getName(), "green");
-            expectEvent(CREATE, var1Id, nvfield1.getId());
+            var1Record.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, var1Id, nvfield1.getId(), nvTag.getId());
             repository.create(var1Record);
 
             Map<String, String> varProps = new HashMap<String, String>();
@@ -389,7 +409,8 @@ public class IndexerTest {
             Record var2Record = repository.newRecord(var2Id);
             var2Record.setRecordType(nvRecordType1.getName());
             var2Record.setField(nvfield2.getName(), "blue");
-            expectEvent(CREATE, var2Id, nvfield2.getId());
+            var2Record.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, var2Id, nvfield2.getId(), nvTag.getId());
             repository.create(var2Record);
 
             commitIndex();
@@ -407,7 +428,8 @@ public class IndexerTest {
             Record record1 = repository.newRecord(idGenerator.newRecordId("boe"));
             record1.setRecordType(nvRecordType1.getName());
             record1.setField(nvfield1.getName(), "cumcumber");
-            expectEvent(CREATE, record1.getId(), nvfield1.getId());
+            record1.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record1.getId(), nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             // Create a record which will contain denormalized data through linking
@@ -415,7 +437,8 @@ public class IndexerTest {
             record2.setRecordType(nvRecordType1.getName());
             record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
             record2.setField(nvfield1.getName(), "mushroom");
-            expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvfield1.getId());
+            record2.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvfield1.getId(), nvTag.getId());
             record2 = repository.create(record2);
 
             // Create a record which will contain denormalized data through master-dereferencing
@@ -423,7 +446,8 @@ public class IndexerTest {
             Record record3 = repository.newRecord(record3Id);
             record3.setRecordType(nvRecordType1.getName());
             record3.setField(nvfield1.getName(), "eggplant");
-            expectEvent(CREATE, record3.getId(), nvfield1.getId());
+            record3.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record3.getId(), nvfield1.getId(), nvTag.getId());
             record3 = repository.create(record3);
 
             // Create a record which will contain denormalized data through variant-dereferencing
@@ -434,7 +458,8 @@ public class IndexerTest {
             Record record4 = repository.newRecord(record4Id);
             record4.setRecordType(nvRecordType1.getName());
             record4.setField(nvfield1.getName(), "broccoli");
-            expectEvent(CREATE, record4.getId(), nvfield1.getId());
+            record4.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record4.getId(), nvfield1.getId(), nvTag.getId());
             record4 = repository.create(record4);
 
             commitIndex();
@@ -554,8 +579,8 @@ public class IndexerTest {
             log.debug("Begin test V5");
             record.setField(liveTag.getName(), new Long(1));
             record.setField(previewTag.getName(), new Long(2));
-            record.setField(lastTag.getName(), new Long(2));
-            expectEvent(UPDATE, record.getId(), liveTag.getId(), previewTag.getId(), lastTag.getId());
+            record.setField(latestTag.getName(), new Long(2));
+            expectEvent(UPDATE, record.getId(), liveTag.getId(), previewTag.getId(), latestTag.getId());
             record = repository.update(record);
 
             commitIndex();
@@ -563,7 +588,7 @@ public class IndexerTest {
             verifyResultCount("v_field1:pear", 2);
 
             verifyResultCount("+v_field1:pear +@@vtag:" + qesc(previewTag.getId().toString()), 1);
-            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(lastTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(latestTag.getId().toString()), 1);
             verifyResultCount("+v_field1:pear +@@vtag:" + qesc(liveTag.getId().toString()), 0);
             verifyResultCount("+v_field1:apple +@@vtag:" + qesc(liveTag.getId().toString()), 1);
         }
@@ -660,21 +685,21 @@ public class IndexerTest {
 
             // Now do something similar with a 3th version, but first update record2 and then record1
             log.debug("Begin test V10");
-            record2.setField(lastTag.getName(), Long.valueOf(1));
-            expectEvent(UPDATE, record2.getId(), lastTag.getId());
+            record2.setField(latestTag.getName(), Long.valueOf(1));
+            expectEvent(UPDATE, record2.getId(), latestTag.getId());
             record2 = repository.update(record2);
 
             record1.setField(vfield1.getName(), "kiwi");
-            record1.setField(lastTag.getName(), Long.valueOf(3));
-            expectEvent(UPDATE, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
+            record1.setField(latestTag.getName(), Long.valueOf(3));
+            expectEvent(UPDATE, record1.getId(), 3L, null, vfield1.getId(), latestTag.getId());
             record1 = repository.update(record1);
 
             commitIndex();
-            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(lastTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(latestTag.getId().toString()), 1);
             verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId().toString()), 1);
             verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
             verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(liveTag.getId().toString()), 0);
-            verifyResultCount("+v_field1:kiwi +@@vtag:" + qesc(lastTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:kiwi +@@vtag:" + qesc(latestTag.getId().toString()), 1);
             verifyResultCount("+v_field1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
 
             // Perform updates to record3 and check if denorm'ed data in record4 follows
@@ -708,76 +733,45 @@ public class IndexerTest {
         }
 
         //
-        // Test deref from a versionless record to versioned field
+        // Test that when using vtag pointing to version '0', versioned content is not accessible
         //
         {
+            // Plain (without deref)
             log.debug("Begin test V14");
             Record record1 = repository.newRecord();
             record1.setRecordType(vRecordType1.getName());
+            record1.setField(nvfield1.getName(), "rollerblades");
             record1.setField(vfield1.getName(), "bicycle");
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            record1.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record1.getId(), 1L, null, nvfield1.getId(), vfield1.getId(), liveTag.getId(),
+                    nvTag.getId());
             record1 = repository.create(record1);
 
+            commitIndex();
+            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +nv_field1:rollerblades", 1);
+            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +v_field1:bicycle", 0);
+            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +nv_field1:rollerblades", 1);
+            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +v_field1:bicycle", 1);
+
+            // With deref
+            log.debug("Begin test V15");
             Record record2 = repository.newRecord();
             record2.setRecordType(vRecordType1.getName());
             record2.setField(nvLinkField2.getName(), new Link(record1.getId()));
-            expectEvent(CREATE, record2.getId(), nvLinkField2.getId());
+            record2.setField(nvTag.getName(), 0L);
+            record2.setField(liveTag.getName(), 0L);
+            expectEvent(CREATE, record2.getId(), nvLinkField2.getId(), nvTag.getId(), liveTag.getId());
             record2 = repository.create(record2);
 
-            // A versionless record cannot contain derefed data from a versioned field, since it does
-            // not know at what version to look
             commitIndex();
-            verifyResultCount("nv_v_deref:bicycle", 0);
-
-            // Now give record2 a version and vtag
-            log.debug("Begin test V15");
-            record2.setField(vfield1.getName(), "boat");
-            record2.setField(liveTag.getName(), 1L);
-            expectEvent(UPDATE, record2.getId(), 1L, null, vfield1.getId(), liveTag.getId());
-            record2 = repository.update(record2);
-
-            commitIndex();
-            verifyResultCount("nv_v_deref:bicycle", 1);
-
-            // Give record1 some more versions with vtags
-            log.debug("Begin test V16");
-            record1.setField(vfield1.getName(), "train");
-            record1.setField(previewTag.getName(), Long.valueOf(2));
-            expectEvent(UPDATE, record1.getId(), 2L, null, vfield1.getId(), previewTag.getId());
-            record1 = repository.update(record1);
-
-            record1.setField(vfield1.getName(), "car");
-            record1.setField(lastTag.getName(), Long.valueOf(3));
-            expectEvent(UPDATE, record1.getId(), 3L, null, vfield1.getId(), lastTag.getId());
-            record1 = repository.update(record1);
-
-            commitIndex();
-            verifyResultCount("nv_v_deref:bicycle", 1);
-            verifyResultCount("nv_v_deref:train", 0);
-            verifyResultCount("nv_v_deref:car", 0);
-
-            // Give record2 some more versions with vtags
-            log.debug("Begin test V17");
-            record2.setField(vfield1.getName(), "airplane");
-            record2.setField(previewTag.getName(), 2L);
-            expectEvent(UPDATE, record2.getId(), 2L, null, vfield1.getId(), previewTag.getId());
-            record2 = repository.update(record2);
-
-            record2.setField(vfield1.getName(), "hovercraft");
-            record2.setField(lastTag.getName(), 3L);
-            expectEvent(UPDATE, record2.getId(), 3L, null, vfield1.getId(), lastTag.getId());
-            record2 = repository.update(record2);
-
-            commitIndex();
-            verifyResultCount("nv_v_deref:bicycle", 1);
-            verifyResultCount("nv_v_deref:train", 1);
-            verifyResultCount("nv_v_deref:car", 1);
+            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +nv_v_deref:bicycle", 0);
+            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +nv_v_deref:bicycle", 1);
         }
 
         //
         // Test deref from a versionless record via a versioned field to a non-versioned field.
-        // From the moment a versioned field is in the deref chain, when the vtag is versionless,
+        // From the moment a versioned field is in the deref chain, when the vtag points to version 0,
         // the deref should evaluate to null.
         //
         {
@@ -785,39 +779,43 @@ public class IndexerTest {
             Record record1 = repository.newRecord();
             record1.setRecordType(vRecordType1.getName());
             record1.setField(nvfield1.getName(), "Brussels");
-            expectEvent(CREATE, record1.getId(), (Long)null, null, nvfield1.getId());
+            record1.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record1.getId(), (Long)null, null, nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             Record record2 = repository.newRecord();
             record2.setRecordType(vRecordType1.getName());
             record2.setField(vLinkField1.getName(), new Link(record1.getId()));
-            record2.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), liveTag.getId());
+            record2.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record2.getId(), 1L, null, vLinkField1.getId(), nvTag.getId());
             record2 = repository.create(record2);
 
             Record record3 = repository.newRecord();
             record3.setRecordType(vRecordType1.getName());
             record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
-            expectEvent(CREATE, record3.getId(), (Long)null, null, nvLinkField2.getId());
+            record3.setField(nvTag.getName(), 0L);
+            expectEvent(CREATE, record3.getId(), (Long)null, null, nvLinkField2.getId(), nvTag.getId());
             record3 = repository.create(record3);
 
             commitIndex();
-            verifyResultCount("nv_v_nv_deref:Brussels", 0);
+            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +nv_v_nv_deref:Brussels", 0);
 
-            // Give a version to the versionless records
+            // Give the records a live tag
             log.debug("Begin test V19");
-            record3.setField(vfield1.getName(), "Ghent");
-            record3.setField(liveTag.getName(), 1L);
-            expectEvent(UPDATE, record3.getId(), 1L, null, vfield1.getId(), liveTag.getId());
-            record3 = repository.update(record3);
-
-            record1.setField(vfield1.getName(), "Antwerp");
-            record1.setField(liveTag.getName(), 1L);
-            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId(), liveTag.getId());
+            record1.setField(liveTag.getName(), 0L);
+            expectEvent(UPDATE, record1.getId(), liveTag.getId());
             record1 = repository.update(record1);
 
+            record2.setField(liveTag.getName(), 1L);
+            expectEvent(UPDATE, record2.getId(), liveTag.getId());
+            record2 = repository.update(record2);
+
+            record3.setField(liveTag.getName(), 0L);
+            expectEvent(UPDATE, record3.getId(), liveTag.getId());
+            record3 = repository.update(record3);
+
             commitIndex();
-            verifyResultCount("nv_v_nv_deref:Brussels", 1);
+            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +nv_v_nv_deref:Brussels", 1);
         }
 
         //
@@ -1082,28 +1080,6 @@ public class IndexerTest {
             verifyResultCount("v_deref1:mars", 1);
         }
 
-        // Test that when a record moves from versionless to having versions, its versionless index entry gets removed.
-        // This would fail if the 'versionCreated' is not in the record event.
-        {
-            log.debug("Begin test V110");
-            Record record1 = repository.newRecord();
-            record1.setRecordType(vRecordType1.getName());
-            record1.setField(nvfield1.getName(), "road");
-            expectEvent(CREATE, record1.getId(), nvfield1.getId());
-            record1 = repository.create(record1);
-
-            commitIndex();
-            verifyResultCount("+nv_field1:road +@@versionless:true", 1);
-
-            record1.setField(vfield1.getName(), "cloud");
-            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId());
-            record1 = repository.update(record1);
-
-            commitIndex();
-            verifyResultCount("+nv_field1:road +@@versionless:true", 0);
-
-        }
-
         // Test that the index is updated when a version is created, in absence of changes to the vtag fields.
         // This would fail if the 'versionCreated' is not in the record event.
         {
@@ -1139,6 +1115,30 @@ public class IndexerTest {
 
             commitIndex();
             verifyResultCount("v_field1:floor", 1);
+        }
+
+        //
+        // Test the automatic vtag 'last', which is a virtual vtag which always points to the last version
+        // of any record, without having to add it to the record or record type.
+        //
+        {
+            log.debug("Begin test V140");
+            Record record1 = repository.newRecord();
+            record1.setRecordType(lastRecordType.getName());
+            record1.setField(nvfield1.getName(), "north");
+            expectEvent(CREATE, record1.getId(), nvfield1.getId());
+            record1 = repository.create(record1);
+
+            commitIndex();
+            verifyResultCount("+@@vtag:" + qesc(lastTag.getId().toString()) + " +nv_field1:north", 1);
+
+            record1.setField(vfield1.getName(), "south");
+            expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId());
+            record1 = repository.update(record1);
+
+            commitIndex();
+            verifyResultCount("+@@vtag:" + qesc(lastTag.getId().toString()) + " +nv_field1:north", 1);
+            verifyResultCount("+@@vtag:" + qesc(lastTag.getId().toString()) + " +v_field1:south", 1);
         }
 
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());

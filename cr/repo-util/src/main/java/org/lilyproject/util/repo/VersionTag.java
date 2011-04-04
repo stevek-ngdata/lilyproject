@@ -20,7 +20,6 @@ import org.lilyproject.repository.api.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Version tag related utilities.
@@ -35,157 +34,10 @@ public class VersionTag {
     /**
      * Name for the field type that serves as last version tag.
      */
-    public static final String LAST = "last";
-    
-    /**
-     * A dummy tag used for documents which have no versions, and thus no tagged versions.
-     */
-//    public static final String VERSIONLESS_TAG = "@@versionless";
-    public static final SchemaId VERSIONLESS_TAG = new SchemaId() {
-        private byte[] bytes = new byte[]{(byte)-1};
-        
-        public byte[] getBytes() {
-            return bytes;
-        }
-        
-        public String toString() {
-            return "@@versionless";
-        }
-        
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + Arrays.hashCode(bytes);
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            SchemaId other = (SchemaId) obj;
-            if (!Arrays.equals(bytes, other.getBytes()))
-                return false;
-            return true;
-        }
-    };
+    public static final QName LAST = new QName(NAMESPACE, "last");
 
     public static QName qname(String vtag) {
         return new QName(NAMESPACE, vtag);
-    }
-
-    public static SchemaId getSchemaId(byte[] vtag, IdGenerator idGenerator) {
-        if (Arrays.equals(vtag, VERSIONLESS_TAG.getBytes())) {
-            return VERSIONLESS_TAG;
-        } else {
-            return idGenerator.getSchemaId(vtag);
-        }
-    }
-
-    /**
-     * Returns the vtags of a record, the key in the map is the field type ID of the vtag field, not its name.
-     *
-     * <p>Note that version numbers do not necessarily correspond to existing versions.
-     */
-    public static Map<SchemaId, Long> getTagsById(Record record, TypeManager typeManager) {
-        Map<SchemaId, Long> vtags = new HashMap<SchemaId, Long>();
-
-        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeByName(field.getKey());
-            } catch (FieldTypeNotFoundException e) {
-                // A field whose field type does not exist: skip it
-                // TODO would be better to do above retrieval based on ID?
-                continue;
-            } catch (TypeException e) {
-                // TODO maybe this should rather be thrown?
-                continue;
-            } catch (RepositoryException e) {
-                // TODO maybe this should rather be thrown?
-                continue;
-            } catch (InterruptedException e) {
-                // TODO
-                Thread.currentThread().interrupt();
-                continue;
-            }
-
-            if (isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId(), (Long)field.getValue());
-            }
-        }
-
-        return vtags;
-    }
-
-    /**
-     * Returns the vtags of a record, the key in the map is the field type ID of the vtag field, not its name.
-     *
-     * <p>Note that version numbers do not necessarily correspond to existing versions.
-     */
-    public static Map<SchemaId, Long> getTagsById(IdRecord record, TypeManager typeManager) {
-        Map<SchemaId, Long> vtags = new HashMap<SchemaId, Long>();
-
-        for (Map.Entry<SchemaId, Object> field : record.getFieldsById().entrySet()) {
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeById(field.getKey());
-            } catch (FieldTypeNotFoundException e) {
-                // A field whose field type does not exist: skip it
-                continue;
-            } catch (Exception e) {
-                // Other problem loading field type: skip it
-                // TODO log this also as an error
-                continue;
-            }
-
-            if (isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId(), (Long)field.getValue());
-            }
-        }
-
-        return vtags;
-    }
-
-    /**
-     * Returns the vtags of a record, the key in the map is the name of the vtag field (without namespace).
-     *
-     * <p>Note that version numbers do not necessarily correspond to existing versions.
-     */
-    public static Map<String, Long> getTagsByName(Record record, TypeManager typeManager) {
-        Map<String, Long> vtags = new HashMap<String, Long>();
-
-        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeByName(field.getKey());
-            } catch (FieldTypeNotFoundException e) {
-                // A field whose field type does not exist: skip it
-                // TODO would be better to do above retrieval based on ID?
-                continue;
-            } catch (TypeException e) {
-                // TODO maybe this should rather be thrown?
-                continue;
-            } catch (RepositoryException e) {
-                // TODO maybe this should rather be thrown?
-                continue;
-            } catch (InterruptedException e) {
-                // TODO
-                Thread.currentThread().interrupt();
-                continue;
-            }
-
-            if (isVersionTag(fieldType)) {
-                vtags.put(fieldType.getName().getName(), (Long)field.getValue());
-            }
-        }
-
-        return vtags;
     }
 
     /**
@@ -196,51 +48,9 @@ public class VersionTag {
         return (namespace != null && namespace.equals(NAMESPACE)
                 && fieldType.getScope() == Scope.NON_VERSIONED
                 && fieldType.getValueType().isPrimitive()
-                && fieldType.getValueType().getPrimitive().getName().equals("LONG"));
-    }
-
-    /**
-     * Returns true if the given FieldType is the last-version tag.
-     */
-    public static boolean isLastVersionTag(FieldType fieldType) {
-        return (isVersionTag(fieldType)
-                && fieldType.getName().getName().equals(LAST));
-    }
-    
-    /**
-     * Inverts a map containing version by tag to a map containing name tags by version. 
-     */
-    public static Map<Long, Set<String>> nameTagsByVersion(Map<String, Long> vtags) {
-        Map<Long, Set<String>> result = new HashMap<Long, Set<String>>();
-
-        for (Map.Entry<String, Long> entry : vtags.entrySet()) {
-            Set<String> tags = result.get(entry.getValue());
-            if (tags == null) {
-                tags = new HashSet<String>();
-                result.put(entry.getValue(), tags);
-            }
-            tags.add(entry.getKey());
-        }
-
-        return result;
-    }
-    
-    /**
-     * Inverts a map containing version by tag to a map containing id tags by version. 
-     */
-    public static Map<Long, Set<SchemaId>> idTagsByVersion(Map<SchemaId, Long> vtags) {
-        Map<Long, Set<SchemaId>> result = new HashMap<Long, Set<SchemaId>>();
-
-        for (Map.Entry<SchemaId, Long> entry : vtags.entrySet()) {
-            Set<SchemaId> tags = result.get(entry.getValue());
-            if (tags == null) {
-                tags = new HashSet<SchemaId>();
-                result.put(entry.getValue(), tags);
-            }
-            tags.add(entry.getKey());
-        }
-
-        return result;
+                && fieldType.getValueType().getPrimitive().getName().equals("LONG")
+                && !fieldType.getName().getName().equals("last")); /* filter out 'last' vtag, it should not be
+                                                                      custom assigned */
     }
 
     /**
@@ -261,149 +71,79 @@ public class VersionTag {
         }
         return result;
     }
-    
-    /**
-     * Resolves a vtag to a version number for some record.
-     *
-     * <p>It does not assume the vtag exists, is really a vtag field, etc.
-     *
-     * <p>It should not be called for the @@versionless tag, since that cannot be resolved to a version number.
-     *
-     * <p>If the specified record would not exist, you will get an {@link RecordTypeNotFoundException}.
-     *
-     * @return null if the vtag does not exist, if it is not a valid vtag field, if the record does not exist,
-     *         or if the record fails to load.
-     */
-    public static Long getVersion(RecordId recordId, SchemaId vtagId, Repository repository) {
-        IdRecord vtagRecord;
-        try {
-            vtagRecord = repository.readWithIds(recordId, null, Collections.singletonList(vtagId));
-        } catch (Exception e) {
-            return null;
-        }
-
-        FieldType fieldType;
-        try {
-            fieldType = repository.getTypeManager().getFieldTypeById(vtagId);
-        } catch (FieldTypeNotFoundException e) {
-            return null;
-        } catch (TypeException e) {
-            // TODO log this? or throw it?
-            return null;
-        } catch (RepositoryException e) {
-            // TODO log this? or throw it?
-            return null;
-        } catch (InterruptedException e) {
-            // TODO
-            Thread.currentThread().interrupt();
-            return null;
-        }
-
-        if (!VersionTag.isVersionTag(fieldType)) {
-            return null;
-        }
-
-        if (!vtagRecord.hasField(vtagId))
-            return null;
-
-        return (Long)vtagRecord.getField(vtagId);
-    }
-
-    /**
-     * Get the version of a record as specified by the version tag.
-     *
-     * <p>Returns null if the version tag would not exist or point to a non-existing version.
-     *
-     * <p>The @@versionless version tag is supported.
-     */
-    public static Record getRecord(RecordId recordId, SchemaId vtagId, Repository repository, List<QName> fieldNames)
-            throws RepositoryException, InterruptedException {
-        if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
-            // TODO this should include an option to only read non-versioned-scoped data
-            return repository.read(recordId);
-        } else {
-            Long version = getVersion(recordId, vtagId, repository);
-            if (version == null) {
-                return null;
-            }
-
-            return repository.read(recordId, version, fieldNames);
-        }
-    }
-
-    /**
-     * See {@link #getRecord(org.lilyproject.repository.api.RecordId, SchemaId, org.lilyproject.repository.api.Repository, java.util.List)}.
-     */
-    public static Record getRecord(RecordId recordId, SchemaId vtagId, Repository repository)
-            throws RepositoryException, InterruptedException {
-        return getRecord(recordId, vtagId, repository, null);
-    }
 
     public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository)
             throws RepositoryException, IOException, InterruptedException {
-        return getIdRecord(recordId, vtagId, repository, null);
+
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, repository);
+        return vtRecord.getIdRecord(vtagId);
     }
 
-    public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository, List<SchemaId> fieldIds)
+    /**
+     * Returns null if the vtag does not exist or is not defined for the record.
+     */
+    public static Record getRecord(RecordId recordId, String vtag, List<QName> fields, Repository repository)
             throws RepositoryException, InterruptedException {
-        if (vtagId.equals(VersionTag.VERSIONLESS_TAG)) {
-            // TODO this should include an option to only read non-versioned-scoped data
-            return repository.readWithIds(recordId, null, null);
+
+        QName vtagName = new QName(NAMESPACE, vtag);
+        Record record = repository.read(recordId);
+
+        long version;
+        if (vtag.equals("last")) {
+            // we loaded the last version
+            if (fields != null) {
+                filterFields(record, new HashSet<QName>(fields));
+            }
+            return record;
+        } else if (!record.hasField(vtagName)) {
+            return null;
         } else {
-            Long version = getVersion(recordId, vtagId, repository);
-            if (version == null) {
-                return null;
+            version = (Long)record.getField(vtagName);
+
+            if (version == 0) {
+                reduceToNonVersioned(record, fields != null ? new HashSet<QName>(fields) : null,
+                        repository.getTypeManager());
+            } else {
+                record = repository.read(recordId, version, fields);
             }
 
-            return repository.readWithIds(recordId, version, fieldIds);
+            return record;
         }
     }
 
-    
     /**
-     * Returns true if the Record contains a field that serves as the last version tag.
+     * Removes any versioned information from the supplied record object.
      */
-    public static boolean hasLastVTag(Record record, TypeManager typeManager) throws FieldTypeNotFoundException,
-            TypeException, RepositoryException, InterruptedException {
-        for (QName name : record.getFields().keySet()) {
-            if (isLastVersionTag(typeManager.getFieldTypeByName(name)))
-                return true;
+    public static void reduceToNonVersioned(Record record, Set<QName> fields, TypeManager typeManager)
+            throws RepositoryException, InterruptedException {
+
+        if (record.getVersion() == null) {
+            // The record has no versions so there should be no versioned fields in it
+            return;
         }
-        return false;
-    }
-    
-    /**
-     * Returns true if the RecordType or one of its mixins has FieldType defined that serves as last version tag.
-     */
-    public static boolean hasLastVTag(RecordType recordType, TypeManager typeManager)
-            throws FieldTypeNotFoundException, RecordTypeNotFoundException, TypeException, RepositoryException,
-            InterruptedException {
-        Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
-        for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
-            if (isLastVersionTag(typeManager.getFieldTypeById(fieldTypeEntry.getFieldTypeId())))
-                    return true;
+
+        Iterator<Map.Entry<QName, Object>> fieldsIt = record.getFields().entrySet().iterator();
+        while (fieldsIt.hasNext()) {
+            Map.Entry<QName, Object> entry = fieldsIt.next();
+            if (fields != null && !fields.contains(entry.getKey())) {
+                fieldsIt.remove();
+            } else if (typeManager.getFieldTypeByName(entry.getKey()).getScope() != Scope.NON_VERSIONED) {
+                fieldsIt.remove();
+            }
         }
-        Map<SchemaId, Long> mixins = recordType.getMixins();
-        for (Entry<SchemaId, Long> entry : mixins.entrySet()) {
-            if (hasLastVTag(typeManager.getRecordTypeById(entry.getKey(), entry.getValue()), typeManager))
-                return true;
-        }
-        return false;
+
+        // Remove versioned record type info
+        record.setRecordType(Scope.VERSIONED, null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, null, null);
     }
 
-    /**
-     * Creates the FieldType to serve as last version tag. 
-     */
-    public static FieldType createLastVTagType(TypeManager typeManager) throws FieldTypeExistsException, TypeException, RepositoryException, 
-            InterruptedException {
-        return typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LONG", false, false), qname(LAST), Scope.NON_VERSIONED));
-    }
-    
-    /**
-     * Returns the FieldType that serves as last version tag if it exists.
-     */
-    public static FieldType getLastVTagType(TypeManager typeManager) throws FieldTypeNotFoundException, TypeException, RepositoryException,
-            InterruptedException {
-        return typeManager.getFieldTypeByName(qname(LAST));
+    private static void filterFields(Record record, Set<QName> fields) {
+        Iterator<Map.Entry<QName, Object>> fieldsIt = record.getFields().entrySet().iterator();
+        while (fieldsIt.hasNext()) {
+            Map.Entry<QName, Object> entry = fieldsIt.next();
+            if (!fields.contains(entry.getKey())) {
+                fieldsIt.remove();
+            }
+        }
     }
 }

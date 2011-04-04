@@ -22,6 +22,7 @@ import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.rowlog.api.*;
 
 import javax.annotation.PostConstruct;
@@ -41,7 +42,8 @@ public class LinkIndexUpdaterSetup {
     }
 
     @PostConstruct
-    public void start() throws InterruptedException, KeeperException, IOException, RowLogException, IndexNotFoundException {
+    public void start() throws InterruptedException, KeeperException, IOException, RowLogException,
+            IndexNotFoundException, RepositoryException {
         // The registration of the subscription for the link index happens in the rowlog module,
         // to be sure it is already installed before the repository is started.
 
