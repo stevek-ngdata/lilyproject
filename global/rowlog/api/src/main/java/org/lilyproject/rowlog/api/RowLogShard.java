@@ -45,8 +45,6 @@ public interface RowLogShard {
     /**
      * Removes the RowLogMessage from the table for the indicated subscription.
      * 
-     * <p>This also removes any messages that might have been marked as problematic.
-     * 
      * @param message the {@link RowLogMessage} to be removed from the table
      * @param subscription the id of the subscription for which the message needs to be removed
      * @throws RowLogException when an unexpected exception occurs

@@ -109,7 +109,7 @@ public class RowLogSetup {
         RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);
         writeAheadLog.registerShard(walShard);
 
-        RowLogMessageListenerMapping.INSTANCE.put("WAL", new WalListener(writeAheadLog));
+        RowLogMessageListenerMapping.INSTANCE.put(WalListener.ID, new WalListener(writeAheadLog, rowLocker));
         RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
 
         // Start the message queue processor

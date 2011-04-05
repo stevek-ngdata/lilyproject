@@ -1,13 +1,14 @@
 package org.lilyproject.rowlog.impl;
 
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogSubscription;
+import java.util.List;
+
+import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 
 /**
  * The WalProcessor is an optimized version of the RowLogProcessor for the WAL use case.
  * 
- * <p>This WalProcessor should be used together with the {@link WalRowLog} and {@link WalListener} 
+ * <p>This WalProcessor should be used together with the {@link WalRowLog}, {@link WalListener} and {@link WalSubscriptionHandler} 
  *
  * <p>The WalProcessor is optimized to only look on the rowlog shard for messages of the meta subscription id 'WAL'.
  * <br>Instead of starting a SubscriptionThread for each subscription which in their turn would each scan themselves for their messages
@@ -29,9 +30,13 @@ public class WalProcessor extends RowLogProcessorImpl {
      */
     @Override
     protected void initializeSubscriptions() {
-        RowLogSubscription walSubscription = new RowLogSubscription(rowLog.getId(), WalRowLog.WAL_SUBSCRIPTIONID, Type.VM, 1);
+        RowLogSubscription walSubscription = new RowLogSubscription(rowLog.getId(), WalRowLog.WAL_SUBSCRIPTIONID, Type.WAL, 1);
         SubscriptionThread subscriptionThread = startSubscriptionThread(walSubscription);
         subscriptionThreads.put(walSubscription.getId(), subscriptionThread);
+    }
+    
+    @Override
+    public synchronized void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
     }
     
     /**
@@ -39,5 +44,10 @@ public class WalProcessor extends RowLogProcessorImpl {
      */
     @Override
     protected void stopSubscriptions() {
+    }
+    
+    @Override
+    protected boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
+        return false;
     }
 }

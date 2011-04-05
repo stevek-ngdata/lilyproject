@@ -1,6 +1,7 @@
 package org.lilyproject.repotestfw;
 
 import org.apache.hadoop.hbase.client.Put;
+import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlog.api.*;
 
 import java.util.ArrayList;
@@ -57,28 +58,13 @@ public class ManualProcessRowLog implements RowLog {
     }
 
     @Override
-    public boolean processMessage(RowLogMessage message, Object lock) throws RowLogException, InterruptedException {
+    public boolean processMessage(RowLogMessage message, RowLock lock) throws RowLogException, InterruptedException {
         return delegate.processMessage(message, lock);
     }
 
     @Override
-    public Object lockMessage(RowLogMessage message, String subscriptionId) throws RowLogException {
-        return delegate.lockMessage(message, subscriptionId);
-    }
-
-    @Override
-    public boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
-        return delegate.unlockMessage(message, subscriptionId, lock);
-    }
-
-    @Override
-    public boolean isMessageLocked(RowLogMessage message, String subscriptionId) throws RowLogException {
-        return delegate.isMessageLocked(message, subscriptionId);
-    }
-
-    @Override
-    public boolean messageDone(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
-        return delegate.messageDone(message, subscriptionId, lock);
+    public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException, InterruptedException {
+        return delegate.messageDone(message, subscriptionId);
     }
 
     @Override

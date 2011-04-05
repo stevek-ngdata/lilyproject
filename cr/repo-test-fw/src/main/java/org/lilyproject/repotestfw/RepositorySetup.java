@@ -106,7 +106,7 @@ public class RepositorySetup {
             setupRowLogConfigurationManager();
             HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
             rowLogConfManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
-            wal = new RowLogImpl("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
+            wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
                     LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker);
             RowLogShard walShard = new RowLogShardImpl("WS1", hadoopConf, wal, 100);
             wal.registerShard(walShard);

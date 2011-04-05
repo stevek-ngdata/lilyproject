@@ -28,8 +28,9 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
 
     /**
      * The type of a subscription defines if the listeners of a subscription run locally (VM) or remote (Netty) 
+     * The WAL type is a special type that should only be used for the {@link WalProcessor}
      */
-    public enum Type {VM, Netty}
+    public enum Type {VM, Netty, WAL}
     
     /**
      * Constructor

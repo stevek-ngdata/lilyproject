@@ -232,7 +232,6 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 ExecutionData data = new ExecutionData();
                 data.subscriptionId = subscriptionId;
                 data.success = state.getState(subscriptionId);
-                data.lock = BASE64_DECODER.decode(state.getLock(subscriptionId));
                 states.add(data);
             }
 

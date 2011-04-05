@@ -5,13 +5,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
 
 /**
  * The WalRowLog is an optimized version of the RowLog for the WAL use case. 
  *
- * <p>This WalRowLog should be used together with the {@link WalProcessor} and {@link WalListener} 
+ * <p>This WalRowLog should be used together with the {@link WalProcessor}, {@link WalListener} and {@link WalSubscriptionHandler} 
  *
  * <p>It optimizes by putting only one message on the RowLogShard which represents all subscriptions together.
  * And this message is only removed once the message has been processed for all registered subscriptions.
@@ -54,8 +55,7 @@ public class WalRowLog extends RowLogImpl {
      * When the message has been processed for all subscriptions (and only then), we can remove the 'meta' message from the rowlog shard.
      */
     @Override
-    protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier,
-            byte[] previousValue, Object lock) throws IOException, RowLogException {
+    protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier, byte[] previousValue, RowLock lock) throws IOException, RowLogException {
         // Remove the 'meta' message
         getShard().removeMessage(message, WAL_SUBSCRIPTIONID);
         // Also make sure the execution state and payload are removed from the row-local queue
@@ -63,10 +63,28 @@ public class WalRowLog extends RowLogImpl {
     }
     
     /**
-     * For orphan messages the single 'meta' message can be safely removed.
+     * The WalListener will have updated the execution state of the subscriptions it processed
+     */
+    @Override
+    public boolean messageDone(RowLogMessage message, String subscriptionId) {
+        // The 'meta' message has been removed by the handleAllDone call.
+        return true;
+    }
+    
+    /**
+     * The message for the meta wal subscription are always orphan, so we don't remove them 
      */
     @Override
     protected void removeOrphanMessageFromShard(RowLogMessage message, String subscriptionId) throws RowLogException {
-        getShard().removeMessage(message, WAL_SUBSCRIPTIONID);
+    }
+    
+    /**
+     * This method is only called from the SubscriptionHandler.
+     * In case of the WalProcessor, the only subscriptionHandler will be the on for the 'meta' subscription.
+     * For these messages we should always return true. 
+     */
+    @Override
+    public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
+        return true;
     }
 }

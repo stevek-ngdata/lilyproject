@@ -61,7 +61,7 @@ public abstract class AbstractListenersSubscriptionHandler extends AbstractSubsc
         }
     }
 
-    private void listenerRegistered(String listener) {
+    protected void listenerRegistered(String listener) {
         submitWorker(listener);
     }
 
@@ -71,7 +71,7 @@ public abstract class AbstractListenersSubscriptionHandler extends AbstractSubsc
         listeners.put(listener, worker);
     }
 
-    private void listenerUnregistered(String listenerId) {
+    protected void listenerUnregistered(String listenerId) {
         Worker worker = listeners.get(listenerId);
         if (worker != null) {
             try {

@@ -237,7 +237,12 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                 
             case Netty:
                 subscriptionHandler = new RemoteListenersSubscriptionHandler(subscription.getId(),  messagesWorkQueue, rowLog, rowLogConfigurationManager);
+                break;
 
+            case WAL:
+                subscriptionHandler = new WalSubscriptionHandler(subscription.getId(), messagesWorkQueue, rowLog, rowLogConfigurationManager);
+                break;
+                
             default:
                 break;
             }
@@ -303,16 +308,15 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 if (checkMinimalProcessDelay(message))
                                 	break; // Rescan the messages since they might have been processed in the meanwhile
                                 
-                                if (!rowLog.isMessageDone(message, subscriptionId)) {
+                                if (!isMessageDone(message, subscriptionId)) {
                                     // The above call to isMessageDone pass into HBase client code,
                                     // which, if interrupted, continue what it is doing and does not re-assert
                                     // the thread's interrupted status. By checking here that stopRequested is false,
                                     // we are sure that any interruption which comes after is is not ignored.
                                     // (The above about eating interruption status was true for HBase 0.89 beta
                                     // of October 2010).
-                                    if (!stopRequested) {
+                                    if (!stopRequested) 
                                         messagesWorkQueue.offer(message);
-                                    }
                                 }
                             }
                         }
@@ -372,7 +376,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                     wait(waitAtLeastUntil - now);
                 }
                 return true;
-   	}
+            }
         	return false;
         }
     }
@@ -385,5 +389,9 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                 initialRowLogConfigLoaded.notifyAll();
             }
         }
+    }
+    
+    protected boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
+        return rowLog.isMessageDone(message, subscriptionId);
     }
 }

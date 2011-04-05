@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.batchbuild;
 
 import org.apache.hadoop.hbase.client.Put;
+import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlog.api.*;
 
 import java.util.List;
@@ -47,23 +48,11 @@ public class DummyRowLog implements RowLog {
         throw new RuntimeException(failMessage);
     }
 
-    public boolean processMessage(RowLogMessage message, Object rowLock) throws RowLogException {
+    public boolean processMessage(RowLogMessage message, RowLock rowLock) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    public Object lockMessage(RowLogMessage message, String subscriptionId) throws RowLogException {
-        throw new RuntimeException(failMessage);
-    }
-
-    public boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
-        throw new RuntimeException(failMessage);
-    }
-
-    public boolean isMessageLocked(RowLogMessage message, String subscriptionId) throws RowLogException {
-        throw new RuntimeException(failMessage);
-    }
-
-    public boolean messageDone(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
+    public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 

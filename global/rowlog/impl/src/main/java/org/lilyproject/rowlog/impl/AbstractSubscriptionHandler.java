@@ -86,27 +86,26 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                     message = messagesWorkQueue.take();
                     if (message != null) {
                         try {
-                            Object lock = rowLog.lockMessage(message, subscriptionId);
-                            if (lock != null) {
-                                if (!rowLog.isMessageAvailable(message, subscriptionId)) {
-                                    rowLog.unlockMessage(message, subscriptionId, lock);
+                            // We removed taking the lock here
+                            // A rowlock should be taken by the WalListener or the HBaseRepository methods so that they don't interfere
+                            // Taking a lock in the execution state is not needed since :
+                            //   1) there is currently only one rowlog processor
+                            //   2) the messagesWorkQueue take() and done() calls make sure messages for the same row are not given to multiple listeners at the same time
+                            if (rowLog.isMessageAvailable(message, subscriptionId)) {
+                                boolean processMessageResult = false;
+                                try {
+                                    processMessageResult = delegate.processMessage(message);
+                                } catch (RemoteListenerIOException e) {
+                                    metrics.ioExceptionRate.inc();
+                                    // Logging to info to avoid log-flooding in case of network connection problems
+                                    log.info(String.format("RemoteListenerIOException occurred while processing message %1$s by subscription %2$s of rowLog %3$s", message, subscriptionId, rowLogId), e);
+                                    break;
+                                }
+                                if (processMessageResult) {
+                                	metrics.successRate.inc();
+                                    rowLog.messageDone(message, subscriptionId);
                                 } else {
-                                    boolean processMessageResult = false;
-                                    try {
-                                        processMessageResult = delegate.processMessage(message);
-                                    } catch (RemoteListenerIOException e) {
-                                        metrics.ioExceptionRate.inc();
-                                        // Logging to info to avoid log-flooding in case of network connection problems
-                                        log.info(String.format("RemoteListenerIOException occurred while processing message %1$s by subscription %2$s of rowLog %3$s", message, subscriptionId, rowLogId), e);
-                                        break;
-                                    }
-                                    if (processMessageResult) {
-                                    	metrics.successRate.inc();
-                                        rowLog.messageDone(message, subscriptionId, lock);
-                                    } else {
-                                    	metrics.failureRate.inc();
-                                        rowLog.unlockMessage(message, subscriptionId, lock);
-                                    }
+                                	metrics.failureRate.inc();
                                 }
                             } 
                         } catch (InterruptedException e) {

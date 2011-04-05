@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
@@ -35,7 +34,6 @@ import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
-import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;

@@ -144,9 +144,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         return seqnr;
     }
 
-    
-    
-
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
         byte[] rowKey = message.getRowKey();
         byte[] qualifier = payloadQualifier(message.getSeqNr(), message.getTimestamp());
@@ -212,7 +209,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
 
-    public boolean processMessage(RowLogMessage message, Object lock) throws RowLogException, InterruptedException {
+    public boolean processMessage(RowLogMessage message, RowLock lock) throws RowLogException, InterruptedException {
         if (message == null)
             return true;
         byte[] rowKey = message.getRowKey();
@@ -235,7 +232,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 return handleAllDone(message, rowKey, executionStateQualifier, previousValue, lock);
             } else {
                 if (rowLocker != null) {
-                    updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, (RowLock)lock);
+                    updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, lock);
                 } else {
                     updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue);
                 }
@@ -246,10 +243,9 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
 
-    protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier,
-            byte[] previousValue, Object lock) throws RowLogException, IOException {
-        if (rowLocker != null) {
-            return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, (RowLock)lock);
+    protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier, byte[] previousValue, RowLock lock) throws RowLogException, IOException {
+        if (lock != null) {
+            return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, lock);
         } else {
             return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue);
         }
@@ -315,132 +311,27 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
     
-    public Object lockMessage(RowLogMessage message, String subscriptionId) throws RowLogException {
-        if (rowLocker != null)
-            return lockRow(message); // Take a lock on the row
-        return lockMessage(message, subscriptionId, 0); // Take a lock in the executionState
-    }
-    
-    private RowLock lockRow(RowLogMessage message) throws RowLogException {
-        try {
-            return rowLocker.lockRow(message.getRowKey());
-        } catch (IOException e) {
-            throw new RowLogException("Failed to lock message", e);
-        }
-    }
-    
-    // Lock the message at executionState
-    private byte[] lockMessage(RowLogMessage message, String subscriptionId, int count) throws RowLogException {
-        if (count >= 10) {
-            return null;
-        }
-        byte[] rowKey = message.getRowKey();
-        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
-        Get get = new Get(rowKey);
-        get.addColumn(rowLogColumnFamily, executionStateQualifier);
-        try {
-            Result result = rowTable.get(get);
-            if (result.isEmpty()) {
-                return null;
+    public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException, InterruptedException {
+        if (rowLocker != null) { // If the rowLocker exists the lock should be a RowLock
+            RowLock rowLock = null;
+            try {
+                rowLock = rowLocker.lockRow(message.getRowKey());
+            } catch (IOException e) {
+                log.debug("Exception occured while trying to take lock, retrying", e);
+                // retry
             }
-            byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
-            SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
-            byte[] previousLock = executionState.getLock(subscriptionId);
-            long now = System.currentTimeMillis();
-            if (previousLock == null) {
-                return putLock(message, subscriptionId, rowKey, executionStateQualifier, previousValue, executionState, now, count);
-            } else {
-                long previousTimestamp = Bytes.toLong(previousLock);
-                if (previousTimestamp + rowLogConfig.getLockTimeout() < now) {
-                    return putLock(message, subscriptionId, rowKey, executionStateQualifier, previousValue, executionState, now, count);
-                } else {
-                    return null;
+            while (rowLock == null) {
+                Thread.sleep(10);
+                try {
+                    rowLock = rowLocker.lockRow(message.getRowKey());
+                } catch (IOException e) {
+                    log.debug("Exception occured while trying to take lock, retrying", e);
+                    // retry
                 }
             }
-        } catch (IOException e) {
-            throw new RowLogException("Failed to lock message", e);
+            return messageDoneRowLocked(message, subscriptionId, rowLock);
         }
-    }
-
-    private byte[] putLock(RowLogMessage message, String subscriptionId, byte[] rowKey, byte[] executionStateQualifier, byte[] previousValue,
-            SubscriptionExecutionState executionState, long now, int count) throws RowLogException {
-        byte[] lock = Bytes.toBytes(now);
-        executionState.setLock(subscriptionId, lock);
-        Put put = new Put(rowKey);
-        put.add(rowLogColumnFamily, executionStateQualifier, executionState.toBytes());
-        try {
-            if (!rowTable.checkAndPut(rowKey, rowLogColumnFamily, executionStateQualifier, previousValue, put)) {
-                return lockMessage(message, subscriptionId, count+1); // Retry
-            } else {
-                return lock;
-            }
-        } catch (IOException e) {
-            return lockMessage(message, subscriptionId, count+1); // Retry
-        }
-    }
-    
-    public boolean unlockMessage(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
-        if (rowLocker != null) { // If rowLocker exists, the lock must be a RowLock
-            try {
-                return rowLocker.unlockRow((RowLock)lock);
-            } catch (IOException e) {
-                throw new RowLogException("Failed to unlock message", e);
-            }
-        } else { // Else, the lock is a lock in the executionState
-            RowLogSubscription subscription = subscriptions.get(subscriptionId);
-            if (subscription == null)
-                throw new RowLogException("Failed to unlock message, subscription " + subscriptionId +
-                        " no longer exists for rowlog " + this.getId());
-            byte[] rowKey = message.getRowKey();
-            byte[] execStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
-            Get get = new Get(rowKey);
-            get.addColumn(rowLogColumnFamily, execStateQualifier);
-            Result result;
-            try {
-                result = rowTable.get(get);
-
-                if (result.isEmpty()) return false; // The execution state does not exist anymore, thus no lock to unlock
-
-                byte[] previousValue = result.getValue(rowLogColumnFamily, execStateQualifier);
-                SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
-                byte[] previousLock = executionState.getLock(subscriptionId);
-                if (!Bytes.equals((byte[])lock, previousLock)) return false; // The lock was lost
-
-                executionState.setLock(subscriptionId, null);
-                Put put = new Put(rowKey);
-                put.add(rowLogColumnFamily, execStateQualifier, executionState.toBytes());
-                return rowTable.checkAndPut(rowKey, rowLogColumnFamily, execStateQualifier, previousValue, put);
-            } catch (IOException e) {
-                throw new RowLogException("Failed to unlock message", e);
-            }
-        }
-    }
-
-    public boolean isMessageLocked(RowLogMessage message, String subscriptionId) throws RowLogException {
-        byte[] rowKey = message.getRowKey();
-        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
-        Get get = new Get(rowKey);
-        get.addColumn(rowLogColumnFamily, executionStateQualifier);
-        try {
-            Result result = rowTable.get(get);
-            if (result.isEmpty()) return false;
-            
-            SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(result.getValue(rowLogColumnFamily, executionStateQualifier));
-            byte[] lock = executionState.getLock(subscriptionId);
-            if (lock == null) return false;
-        
-            return (Bytes.toLong(lock) + rowLogConfig.getLockTimeout() > System.currentTimeMillis());
-        } catch (IOException e) {
-            throw new RowLogException("Failed to check if message is locked", e);
-        }
-    }
-    
-    public boolean messageDone(RowLogMessage message, String subscriptionId, Object lock) throws RowLogException {
-        if (rowLocker != null) { // If the rowLocker exists the lock should be a RowLock
-            return messageDoneRowLocked(message, subscriptionId, (RowLock)lock);
-        }
-        // else, the lock is an executionState level lock
-        return messageDone(message, subscriptionId, (byte[])lock, 0); 
+        return messageDone(message, subscriptionId, 0); 
     }
     
     private boolean messageDoneRowLocked(RowLogMessage message, String subscriptionId, RowLock rowLock) throws RowLogException {
@@ -454,7 +345,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
                 SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
                 executionState.setState(subscriptionId, true);
-                executionState.setLock(subscriptionId, null);
                 if (executionState.allDone()) {
                     handleAllDone(message, rowKey, executionStateQualifier, previousValue, rowLock);
                 } else {
@@ -470,7 +360,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     
     }
     
-    private boolean messageDone(RowLogMessage message, String subscriptionId, byte[] lock, int count) throws RowLogException {
+    private boolean messageDone(RowLogMessage message, String subscriptionId, int count) throws RowLogException {
         if (count >= 10) {
             return false;
         }
@@ -483,16 +373,12 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             if (!result.isEmpty()) {
                 byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
                 SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
-                if (!Bytes.equals(lock,executionState.getLock(subscriptionId))) {
-                    return false; // Not owning the lock
-                }
                 executionState.setState(subscriptionId, true);
-                executionState.setLock(subscriptionId, null);
                 if (executionState.allDone()) {
-                    handleAllDone(message, rowKey, executionStateQualifier, previousValue, lock);
+                    handleAllDone(message, rowKey, executionStateQualifier, previousValue, null);
                 } else {
                     if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue)) {
-                        return messageDone(message, subscriptionId, lock, count+1); // Retry
+                        return messageDone(message, subscriptionId, count+1); // Retry
                     }
                 }
             }

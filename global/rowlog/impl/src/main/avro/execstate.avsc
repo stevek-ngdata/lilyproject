@@ -12,8 +12,7 @@
           "name": "AvroExecStateEntry",
           "namespace":"org.lilyproject.rowlog.avro",
           "fields": [
-            {"name": "done", "type": "boolean"},
-            {"name": "lock", "type": ["bytes", "null"]}
+            {"name": "done", "type": "boolean"}
           ]
         }
       }

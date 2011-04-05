@@ -17,7 +17,6 @@ package org.lilyproject.rowlog.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -73,19 +72,6 @@ public class SubscriptionExecutionState {
         }
     }
     
-    public void setLock(String subscriptionId, byte[] lock) {
-        getEntry(subscriptionId).lock = lock == null ? null : ByteBuffer.wrap(lock);
-    }
-    
-    public byte[] getLock(String subscriptionId) {
-        AvroExecStateEntry entry = entries.get(subscriptionId);
-        if (entry != null) {
-            return entry.lock == null ? null : entry.lock.array();
-        } else {
-            return null;
-        }
-    }
-
     private static final SpecificDatumWriter<AvroExecState> STATE_WRITER =
             new SpecificDatumWriter<AvroExecState>(AvroExecState.class);
 

@@ -38,7 +38,7 @@ import org.lilyproject.rowlog.api.*;
 
 public class RemoteListenerHandler {
     private final Log log = LogFactory.getLog(getClass());
-    private final RowLogMessageListener consumer;
+    private final RowLogMessageListener rowLogMessageListener;
     private ServerBootstrap bootstrap;
     private final RowLog rowLog;
     private Channel channel;
@@ -47,11 +47,11 @@ public class RemoteListenerHandler {
     private final String subscriptionId;
     private final RowLogConfigurationManager rowLogConfMgr;
 
-    public RemoteListenerHandler(RowLog rowLog, String subscriptionId, RowLogMessageListener consumer,
+    public RemoteListenerHandler(RowLog rowLog, String subscriptionId, RowLogMessageListener rowLogMessageListener,
             RowLogConfigurationManager rowLogConfMgr) throws RowLogException {
         this.rowLog = rowLog;
         this.subscriptionId = subscriptionId;
-        this.consumer = consumer;
+        this.rowLogMessageListener = rowLogMessageListener;
         this.rowLogConfMgr = rowLogConfMgr;
         bootstrap = new ServerBootstrap(
                 new NioServerSocketChannelFactory(
@@ -163,7 +163,7 @@ public class RemoteListenerHandler {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             RowLogMessage message = (RowLogMessage)e.getMessage();
-            boolean result = consumer.processMessage(message);
+            boolean result = rowLogMessageListener.processMessage(message);
             writeResult(e.getChannel(), result, message);
         }
 
