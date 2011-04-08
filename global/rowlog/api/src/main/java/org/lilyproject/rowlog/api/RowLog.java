@@ -84,9 +84,16 @@ public interface RowLog {
      * @throws RowLogException
      */
     byte[] getPayload(RowLogMessage message) throws RowLogException;
+
     /**
      * Puts a new message on the RowLog. This will add a new message on a {@link RowLogShard} 
      * and put the payload and an execution state on the HBase row this message is about.
+     *
+     * <p>When used as MQ, this method may be called without taking a lock on the row. However, in such case
+     * there is no guarantee that the messages will be delivered in sequence number order. You can however combine
+     * both: use row-locking for the messages which should be mutually ordered, and skip the lock for
+     * messages for which it doesn't matter. Other calls like {@link #getMessages} will also be influenced by this.
+     *
      * @param rowKey the HBase row the message is related to
      * @param data some informative data to be put on the message
      * @param payload the information needed by a {@link RowLogMessageListener} to be able to process the message
@@ -110,7 +117,7 @@ public interface RowLog {
      * tries has been reached for a consumer, the message is marked as problematic for that consumer. A {@link RowLogProcessor}
      * will no longer pick up the message for that consumer. 
      * @param message a {@link RowLogMessage} to be processed
-     * @param if the row related to this message was locked with a Rowlock, this lock should be given
+     * @param lock if the row related to this message was locked with a Rowlock, this lock should be given
      * @return true if all consumers have processed the {@link RowLogMessage} successfully
      * @throws RowLogException
      */
@@ -141,7 +148,12 @@ public interface RowLog {
     /**
      * Return all messages that still exist for the row, or if one or more subscriptions is given, 
      * only the messages that are still open for one or more of those subscriptions.
-     * <p>This call ignores if messages have been marked as problematic.
+     *
+     * <p>If messages are put on this rowlog without using a rowlock, than there is no guarantee
+     * about the messages which will be present in the returned list at a given instant in time.
+     * For example, a call could return the messages with sequence number 5,6 and 8, and a later
+     * call could then return the message with sequence number 7.
+     *
      * @param rowKey the row for which to return the messages
      * @param subscriptionId one or more subscriptions for which to return the messages that are open
      * @return a list of (open)messages of the row

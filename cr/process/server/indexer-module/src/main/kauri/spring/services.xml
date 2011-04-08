@@ -63,10 +63,6 @@
       id="lilyInfo"
       service="org.lilyproject.util.LilyInfo"/>
 
-  <kauri:import-service
-      id="rowLocker"
-      service="org.lilyproject.rowlock.RowLocker"/>
-
   <bean id="hbaseConf"
       factory-bean="hadoopConfFactory"
       factory-method="getHBaseConf"/>
@@ -111,7 +107,6 @@
     <constructor-arg ref="rowLogConfigurationMgr"/>
     <constructor-arg value="${indexer:listenersPerIndex}"/>
     <constructor-arg ref="solrClientConfig"/>
-    <constructor-arg ref="rowLocker"/>
   </bean>
 
 </beans>

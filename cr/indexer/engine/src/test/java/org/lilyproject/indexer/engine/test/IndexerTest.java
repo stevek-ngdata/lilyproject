@@ -155,7 +155,7 @@ public class IndexerTest {
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
-                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), repoSetup.getRowLocker()));
+                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
 
     }

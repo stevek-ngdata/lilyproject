@@ -122,26 +122,8 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         this.shard = null;
     }
     
-    private long putPayload(byte[] rowKey, byte[] payload, long timestamp, Put put) throws IOException {
-        Get get = new Get(rowKey);
-        get.addColumn(rowLogColumnFamily, seqNrQualifier);
-        Result result = rowTable.get(get);
-        byte[] value = result.getValue(rowLogColumnFamily, seqNrQualifier);
-        long seqnr = -1;
-        if (value != null) {
-            seqnr = Bytes.toLong(value);
-        }
-        seqnr++;
-        if (put != null) {
-            put.add(rowLogColumnFamily, seqNrQualifier, Bytes.toBytes(seqnr));
-            put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
-        } else {
-            put = new Put(rowKey);
-            put.add(rowLogColumnFamily, seqNrQualifier, Bytes.toBytes(seqnr));
-            put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
-            rowTable.put(put);
-        }
-        return seqnr;
+    private void putPayload(long seqnr, byte[] payload, long timestamp, Put put) throws IOException {
+        put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
     }
 
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
@@ -165,14 +147,31 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             List<RowLogSubscription> subscriptions = getSubscriptions();
             if (subscriptions.isEmpty()) 
                 return null;
-            
+
+            // Get a sequence number for this new message
+            long seqnr = rowTable.incrementColumnValue(rowKey, rowLogColumnFamily, seqNrQualifier, 1L);
+
+            // Create Put object if not supplied
+            boolean ownPut = false;
+            if (put == null) {
+                put = new Put(rowKey);
+                ownPut = true;
+            }
+
             long now = System.currentTimeMillis();
-            long seqnr = putPayload(rowKey, payload, now, put);
+
+            putPayload(seqnr, payload, now, put);
                     
             RowLogMessage message = new RowLogMessageImpl(now, rowKey, seqnr, data, this);
 
             putMessageOnShard(message, subscriptions);
+
             initializeSubscriptions(message, put, subscriptions);
+
+            // If the Put was not supplied by the user, apply it now
+            if (ownPut) {
+                rowTable.put(put);
+            }
 
             if (rowLogConfig.isEnableNotify()) {
                 processorNotifier.notifyProcessor(id, getShard().getId());
@@ -200,13 +199,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             executionState.setState(subscription.getId(), false);
         }
         byte[] qualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
-        if (put != null) {
-            put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
-        } else {
-            put = new Put(message.getRowKey());
-            put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
-            rowTable.put(put);
-        }
+        put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
     }
 
     public boolean processMessage(RowLogMessage message, RowLock lock) throws RowLogException, InterruptedException {

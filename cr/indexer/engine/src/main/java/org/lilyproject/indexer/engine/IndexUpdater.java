@@ -17,13 +17,11 @@ package org.lilyproject.indexer.engine;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -50,7 +48,6 @@ public class IndexUpdater implements RowLogMessageListener {
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
     private RowLog rowLog;
-    private RowLocker rowLocker;
 
     private Log log = LogFactory.getLog(getClass());
     private IdGenerator idGenerator;
@@ -60,8 +57,8 @@ public class IndexUpdater implements RowLogMessageListener {
      * @param rowLog this should be the message queue
      */
     public IndexUpdater(Indexer indexer, Repository repository,
-            LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics,
-            RowLocker rowLocker) throws RowLogException, IOException {
+            LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics)
+            throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
@@ -73,7 +70,6 @@ public class IndexUpdater implements RowLogMessageListener {
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
 
         this.metrics = metrics;
-        this.rowLocker = rowLocker;
     }
 
     public boolean processMessage(RowLogMessage msg) {
@@ -524,30 +520,11 @@ public class IndexUpdater implements RowLogMessageListener {
             }
 
             // TODO how will this behave if the row was meanwhile deleted?
-            // TODO consider avoiding the need for row-locking
-            byte[] referrerKey = referrer.toBytes();
-            RowLock lock = null;
             try {
-               lock = rowLocker.lockRow(referrerKey, 60000);
-                if (lock == null) {
-                    // TODO maybe add a metric so that this can be monitored?
-                    log.error("Could not lock row to put index message on its queue, will skip it. Row: " +
-                            Bytes.toStringBinary(referrerKey));
-                    continue;
-                }
                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null);
             } catch (Exception e) {
                 // TODO
                 e.printStackTrace();
-            } finally {
-                if (lock != null) {
-                    try {
-                        rowLocker.unlockRow(lock);
-                    } catch (Exception e) {
-                        // TODO
-                        e.printStackTrace();
-                    }
-                }
             }
         }
     }
