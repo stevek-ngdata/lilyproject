@@ -42,7 +42,6 @@ public class LinkIndexUpdater implements RowLogMessageListener {
     private Repository repository;
     private TypeManager typeManager;
     private LinkIndex linkIndex;
-    private SchemaId lastVtag;
 
     private Log log = LogFactory.getLog(getClass());
     private LinkIndexUpdaterMetrics metrics;
@@ -52,7 +51,6 @@ public class LinkIndexUpdater implements RowLogMessageListener {
         this.typeManager = repository.getTypeManager();
         this.linkIndex = linkIndex;
         metrics = new LinkIndexUpdaterMetrics("linkIndexUpdater");
-        lastVtag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
     }
 
     public boolean processMessage(RowLogMessage msg) {
