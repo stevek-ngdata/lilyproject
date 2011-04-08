@@ -96,7 +96,6 @@
    <field name="@@key" type="string" indexed="true" stored="true" required="true"/>
    <field name="@@id" type="string" indexed="true" stored="true" required="true"/>
    <field name="@@vtag" type="string" indexed="true" stored="true" required="true"/>
-   <field name="@@versionless" type="string" indexed="true" stored="true" required="false"/>
 
    <!-- Your own fields -->
    <field name="t$field1" type="text" indexed="true" stored="true" required="false"/>
