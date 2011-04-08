@@ -142,7 +142,7 @@ public class Tester extends BaseRepositoryTestTool {
         finishMetrics();
         
         System.out.println("Test done.");
-        return 1;
+        return 0;
     }
 
     private int dumpSampleConfig() throws IOException {
