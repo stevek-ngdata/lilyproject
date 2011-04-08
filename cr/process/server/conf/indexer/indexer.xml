@@ -11,6 +11,20 @@
   -->
   <listenersPerIndex>3</listenersPerIndex>
 
+  <!--
+    Should a lock be taken so that the same record cannot be indexed concurrently by different
+    indexers? This locking is based on ZooKeeper.
+
+    We removed most cases where this locking was necessary (to assure newer content was not
+    overwritten with older content in the index). The only case where there is still a need
+    for this lock (to avoid the possibility of overwriting newer indexed data with older) is
+    when performing a full rebuild of an index for which incremental indexing is also
+    enabled. But in that case, the chance for contention seems to be quite small, so it
+    seems like overkill to permanently perform locking for this purpose. We hope to eventually
+    have another solution for this case, so that this locking becomes completely unnecessary.
+  -->
+  <enableLocking>false</enableLocking>
+
   <solr>
     <requestWriter>org.apache.solr.client.solrj.impl.BinaryRequestWriter</requestWriter>
     <!--

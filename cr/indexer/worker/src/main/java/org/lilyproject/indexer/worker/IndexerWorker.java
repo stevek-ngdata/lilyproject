@@ -81,6 +81,8 @@ public class IndexerWorker {
 
     private final SolrClientConfig solrClientConfig;
 
+    private final boolean enableLocking;
+
     private IndexerModelListener listener = new MyListener();
 
     private Map<String, IndexUpdaterHandle> indexUpdaters = new HashMap<String, IndexUpdaterHandle>();
@@ -99,7 +101,7 @@ public class IndexerWorker {
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
             Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, int listenersPerIndex,
-            SolrClientConfig solrClientConfig)
+            SolrClientConfig solrClientConfig, boolean enableLocking)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException {
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -109,6 +111,7 @@ public class IndexerWorker {
         this.rowLogConfMgr = rowLogConfMgr;
         this.listenersPerIndex = listenersPerIndex;
         this.solrClientConfig = solrClientConfig;
+        this.enableLocking = enableLocking;
     }
 
     @PostConstruct
@@ -168,7 +171,7 @@ public class IndexerWorker {
             checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
 
             SolrServers solrServers = new SolrServers(index.getSolrShards(), shardSelector, httpClient, solrClientConfig);
-            IndexLocker indexLocker = new IndexLocker(zk);
+            IndexLocker indexLocker = new IndexLocker(zk, enableLocking);
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
             Indexer indexer = new Indexer(indexerConf, repository, solrServers, indexLocker, indexerMetrics);
 

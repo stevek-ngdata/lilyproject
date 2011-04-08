@@ -70,7 +70,7 @@ public class IndexLockerTest {
 
     @Test
     public void testObtainAndReleaseLock() throws Exception {
-        IndexLocker indexLocker = new IndexLocker(ZK);
+        IndexLocker indexLocker = new IndexLocker(ZK, true);
         RecordId recordId1 = new IdGeneratorImpl().newRecordId();
         RecordId recordId2 = new IdGeneratorImpl().newRecordId();
 
@@ -127,7 +127,7 @@ public class IndexLockerTest {
 
     @Test
     public void testLockConcurrencyOnSameRecord() throws Exception {
-        IndexLocker indexLocker = new IndexLocker(ZK);
+        IndexLocker indexLocker = new IndexLocker(ZK, true);
         RecordId recordId = new IdGeneratorImpl().newRecordId();
 
         List<Info> infos = new ArrayList<Info>();

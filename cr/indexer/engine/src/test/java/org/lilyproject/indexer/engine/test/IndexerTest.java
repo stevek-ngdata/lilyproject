@@ -150,7 +150,7 @@ public class IndexerTest {
         solrServers = SolrServers.createForOneShard(SOLR_TEST_UTIL.getUri());
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream(
                 "org/lilyproject/indexer/engine/test/indexerconf1.xml"), repository);
-        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk());
+        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
         Indexer indexer = new Indexer(INDEXER_CONF, repository, solrServers, indexLocker, new IndexerMetrics("test"));
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));

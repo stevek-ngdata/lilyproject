@@ -45,18 +45,37 @@ import java.util.Arrays;
 // node for each record within ZK. Therefore, the lock is simply obtained by creating a node for
 // the record within ZK. If this succeeds, you have the lock, if this fails because the node already
 // exist, you have to wait a bit and retry.
+//
+// Update April 2011: due to a combination of changes (the RowLog now guarantees that it does not
+// deliver two messages for the same row and subscription concurrently, and the IndexUpdater does not reindex
+// denormalized data immediately but by pushing messages on the queue again), the index lock has
+// become mostly unnecessary. There is still one case left where it is important (= where there
+// can be concurrent indexing of the same record), and that is when doing a full index rebuild
+// while also having incremental indexing enabled. In such case, the chance for conflicts will
+// be much lower than in the case of reindexing of denormalized data, so one might prefer the
+// higher performance (and less ZooKeeper stressing) obtained by disabling this index locking.
+//
+// Update April 2011: this locking should really be a lock per index, not a global
+// index lock for each record, which would lower chances of contention when having multiple
+// indexes defined. Will leave it like this though since I'd rather see the need for this locking
+// removed altogether.
 
 public class IndexLocker {
     private ZooKeeperItf zk;
     private int waitBetweenTries = 20;
     private int maxWaitTime = 20000;
+    /**
+     * Flag to allow globally disabling the index locking.
+     */
+    private boolean enabled = true;
 
     private Log log = LogFactory.getLog(getClass());
 
     private static final String LOCK_PATH = "/lily/indexer/recordlock";        
 
-    public IndexLocker(ZooKeeperItf zk) throws InterruptedException, KeeperException {
+    public IndexLocker(ZooKeeperItf zk, boolean enabled) throws InterruptedException, KeeperException {
         this.zk = zk;
+        this.enabled = enabled;
         ZkUtil.createPath(zk, LOCK_PATH);
     }
 
@@ -76,6 +95,10 @@ public class IndexLocker {
      * @throws IndexLockTimeoutException if the lock could not be obtained within the given timeout.
      */
     public void lock(RecordId recordId) throws IndexLockException {
+        if (!enabled) {
+            return;
+        }
+
         if (zk.isCurrentThreadEventThread()) {
             throw new RuntimeException("IndexLocker should not be used from within the ZooKeeper event thread.");
         }
@@ -140,6 +163,10 @@ public class IndexLocker {
             throw new RuntimeException("IndexLocker should not be used from within the ZooKeeper event thread.");
         }
 
+        if (!enabled) {
+            return;
+        }
+
         final String lockPath = getPath(recordId);
 
         // The below loop is because, even if our thread is interrupted, we still want to remove the lock.
@@ -179,6 +206,10 @@ public class IndexLocker {
     }
 
     public void unlockLogFailure(final RecordId recordId) {
+        if (!enabled) {
+            return;
+        }
+
         try {
             unlock(recordId);
         } catch (Throwable t) {
@@ -190,6 +221,10 @@ public class IndexLocker {
             KeeperException {
         if (zk.isCurrentThreadEventThread()) {
             throw new RuntimeException("IndexLocker should not be used from within the ZooKeeper event thread.");
+        }
+
+        if (!enabled) {
+            return true;
         }
 
         final String lockPath = getPath(recordId);

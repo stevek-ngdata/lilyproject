@@ -66,6 +66,8 @@ public class IndexerMaster {
 
     private final SolrClientConfig solrClientConfig;
 
+    private final boolean enableLocking;
+
     private LeaderElection leaderElection;
 
     private IndexerModelListener listener = new MyListener();
@@ -82,7 +84,8 @@ public class IndexerMaster {
 
     public IndexerMaster(ZooKeeperItf zk , WriteableIndexerModel indexerModel, Configuration mapReduceConf,
             Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString, int zkSessionTimeout,
-            RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig) {
+            RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
+            boolean enableLocking) {
         this.zk = zk;
         this.indexerModel = indexerModel;
         this.mapReduceConf = mapReduceConf;
@@ -93,6 +96,7 @@ public class IndexerMaster {
         this.rowLogConfMgr = rowLogConfMgr;
         this.lilyInfo = lilyInfo;
         this.solrClientConfig = solrClientConfig;
+        this.enableLocking = enableLocking;
     }
 
     @PostConstruct
@@ -228,7 +232,7 @@ public class IndexerMaster {
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsBatchBuildStart(index)) {
                     Job job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
-                            zkConnectString, zkSessionTimeout, solrClientConfig);
+                            zkConnectString, zkSessionTimeout, solrClientConfig, enableLocking);
 
                     ActiveBatchBuildInfo jobInfo = new ActiveBatchBuildInfo();
                     jobInfo.setSubmitTime(System.currentTimeMillis());

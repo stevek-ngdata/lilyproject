@@ -44,8 +44,8 @@ public class BatchIndexBuilder {
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf,
-            Configuration hbaseConf, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig)
-            throws Exception {
+            Configuration hbaseConf, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
+            boolean enableLocking) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
         Job job = new Job(conf);
@@ -117,6 +117,11 @@ public class BatchIndexBuilder {
         if (solrConfig.getResponseParser() != null) {
             job.getConfiguration().set("org.lilyproject.indexer.batchbuild.responseparser", solrConfig.getResponseParser());
         }
+
+        //
+        // Other props
+        //
+        job.getConfiguration().set("org.lilyproject.indexer.batchbuild.enableLocking", String.valueOf(enableLocking));
 
         job.submit();
 

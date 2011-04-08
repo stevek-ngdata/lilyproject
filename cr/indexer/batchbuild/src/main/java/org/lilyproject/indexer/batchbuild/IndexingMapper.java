@@ -124,7 +124,9 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
 
             SolrServers solrServers = new SolrServers(solrShards, shardSelector, httpClient, solrConfig);
 
-            indexLocker = new IndexLocker(zk);
+            boolean enableLocking = Boolean.parseBoolean(jobConf.get("org.lilyproject.indexer.batchbuild.enableLocking"));
+
+            indexLocker = new IndexLocker(zk, enableLocking);
 
             indexer = new Indexer(indexerConf, repository, solrServers, indexLocker, new IndexerMetrics("dummy"));
 
