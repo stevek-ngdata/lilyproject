@@ -138,6 +138,12 @@ public interface TypeManager extends Closeable {
     FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
 
     /**
+     * Shortcut to create a field type without first creating the FieldType object.
+     */
+    FieldType createFieldType(ValueType valueType, QName name, Scope scope) throws RepositoryException,
+            InterruptedException;
+
+    /**
      * Updates an existing FieldType.
      *
      * <p>You can provide any FieldType object as argument, either retrieved via {@link #getFieldTypeByName} or

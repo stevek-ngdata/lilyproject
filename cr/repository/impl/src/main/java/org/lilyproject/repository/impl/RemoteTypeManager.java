@@ -122,6 +122,12 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
+    public FieldType createFieldType(ValueType valueType, QName name, Scope scope) throws RepositoryException,
+            InterruptedException {
+        return createFieldType(newFieldType(valueType, name, scope));
+    }
+
     public FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
         try {
             AvroFieldType avroFieldType = converter.convert(fieldType);

@@ -413,6 +413,12 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return new FieldTypeEntryImpl(fieldTypeId, mandatory);
     }
 
+    @Override
+    public FieldType createFieldType(ValueType valueType, QName name, Scope scope) throws RepositoryException,
+            InterruptedException {
+        return createFieldType(newFieldType(valueType, name, scope));
+    }
+
     public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException {
         ArgumentValidator.notNull(fieldType, "fieldType");
 
