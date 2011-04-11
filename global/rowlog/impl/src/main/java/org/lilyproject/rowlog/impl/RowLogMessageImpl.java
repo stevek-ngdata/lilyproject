@@ -28,6 +28,7 @@ public class RowLogMessageImpl implements RowLogMessage {
     private final byte[] data;
     private final RowLog rowLog;
     private final long timestamp;
+    private byte[] payload = null;
 
     public RowLogMessageImpl(long timestamp, byte[] rowKey, long seqnr, byte[] data, RowLog rowLog) {
         this.timestamp = timestamp;
@@ -42,7 +43,9 @@ public class RowLogMessageImpl implements RowLogMessage {
     }
 
     public byte[] getPayload() throws RowLogException {
-        return rowLog.getPayload(this);
+        if (payload == null)
+            this.payload = rowLog.getPayload(this);
+        return payload;
     }
 
     public byte[] getRowKey() {

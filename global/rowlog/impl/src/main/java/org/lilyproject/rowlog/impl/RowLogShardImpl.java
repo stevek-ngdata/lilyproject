@@ -108,25 +108,29 @@ public class RowLogShardImpl implements RowLogShard {
      * per batch. 
      */
     public void removeMessage(RowLogMessage message, String subscription) throws RowLogException {
-        messagesToDelete.add(new Delete(createRowKey(message, subscription)));
+        synchronized (messagesToDelete) {
+            messagesToDelete.add(new Delete(createRowKey(message, subscription)));
+        }
         if (messagesToDelete.size() >= batchSize || (lastDelete + 300000 < System.currentTimeMillis())) {
             deleteMessages();
         }
     }
 
     private void deleteMessages() throws RowLogException {
-        List<Delete> deletes;
+        List<Delete> deletes = null;
         synchronized (messagesToDelete) {
-            deletes = new ArrayList<Delete>(messagesToDelete);
-            messagesToDelete.clear();
+            if (!messagesToDelete.isEmpty()) {
+                deletes = new ArrayList<Delete>(messagesToDelete);
+                messagesToDelete.clear();
+            }
+            lastDelete = System.currentTimeMillis();
         }
         try {
-            table.delete(deletes);
+            if ((deletes != null) && !deletes.isEmpty()) // Avoid unnecessary deletes
+                table.delete(deletes);
         } catch (IOException e) {
             throw new RowLogException("Failed to remove messages from RowLogShard", e);
         }
-        lastDelete = System.currentTimeMillis();
-        messagesToDelete.clear();
     }
 
     public List<RowLogMessage> next(String subscription) throws RowLogException {
