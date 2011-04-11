@@ -47,6 +47,8 @@ public class RowLogShardImpl implements RowLogShard {
     private final RowLog rowLog;
     private final String id;
     private final int batchSize;
+    private List<Delete> messagesToDelete;
+    private long lastDelete;
 
     public RowLogShardImpl(String id, Configuration hbaseConf, RowLog rowLog, int batchSize) throws IOException {
         this(id, hbaseConf, rowLog, batchSize, new HBaseTableFactoryImpl(hbaseConf));
@@ -64,6 +66,9 @@ public class RowLogShardImpl implements RowLogShard {
         tableDescriptor.addFamily(new HColumnDescriptor(MESSAGES_CF));
 
         table = tableFactory.getTable(tableDescriptor);
+        
+        this.messagesToDelete = new ArrayList<Delete>(batchSize);
+        this.lastDelete = System.currentTimeMillis();
     }
 
     public String getId() {
@@ -95,12 +100,33 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
 
+    /**
+     * Removing a message is batched. 
+     * A message will only be removed, either when the batchSize is reached, the last time messages were removed was 5 minutes ago
+     * or new batch of messages is requested from the shard. See {@link #next(String, Long)}.
+     * In case many messages are being processed, this will reduce the number of delete calls on the HBase table to approximately 1
+     * per batch. 
+     */
     public void removeMessage(RowLogMessage message, String subscription) throws RowLogException {
-        try {
-            table.delete(new Delete(createRowKey(message, subscription)));
-        } catch (IOException e) {
-            throw new RowLogException("Failed to remove message from RowLogShard", e);
+        messagesToDelete.add(new Delete(createRowKey(message, subscription)));
+        if (messagesToDelete.size() >= batchSize || (lastDelete + 300000 < System.currentTimeMillis())) {
+            deleteMessages();
         }
+    }
+
+    private void deleteMessages() throws RowLogException {
+        List<Delete> deletes;
+        synchronized (messagesToDelete) {
+            deletes = new ArrayList<Delete>(messagesToDelete);
+            messagesToDelete.clear();
+        }
+        try {
+            table.delete(deletes);
+        } catch (IOException e) {
+            throw new RowLogException("Failed to remove messages from RowLogShard", e);
+        }
+        lastDelete = System.currentTimeMillis();
+        messagesToDelete.clear();
     }
 
     public List<RowLogMessage> next(String subscription) throws RowLogException {
@@ -108,6 +134,8 @@ public class RowLogShardImpl implements RowLogShard {
     }
 
     public List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException {
+        // Before collecting a new batch of messages, any outstanding deletes are executed first. 
+        deleteMessages();
         byte[] rowPrefix = Bytes.toBytes(subscription);
         byte[] startRow = rowPrefix;
         if (minimalTimestamp != null) 

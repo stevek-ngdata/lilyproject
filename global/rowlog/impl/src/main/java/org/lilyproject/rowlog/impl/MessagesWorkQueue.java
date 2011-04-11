@@ -15,7 +15,6 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
