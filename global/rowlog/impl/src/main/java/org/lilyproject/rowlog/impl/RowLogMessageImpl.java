@@ -31,13 +31,18 @@ public class RowLogMessageImpl implements RowLogMessage {
     private byte[] payload = null;
 
     public RowLogMessageImpl(long timestamp, byte[] rowKey, long seqnr, byte[] data, RowLog rowLog) {
+        this(timestamp, rowKey, seqnr, data, null, rowLog);
+    }
+    
+    public RowLogMessageImpl(long timestamp, byte[] rowKey, long seqnr, byte[] data, byte[] payload, RowLog rowLog) {
         this.timestamp = timestamp;
         this.rowKey = rowKey;
         this.seqnr = seqnr;
         this.data = data;
+        this.payload = payload;
         this.rowLog = rowLog;
     }
-    
+
     public byte[] getData() {
         return data;
     }

@@ -162,7 +162,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
 
             putPayload(seqnr, payload, now, put);
                     
-            RowLogMessage message = new RowLogMessageImpl(now, rowKey, seqnr, data, this);
+            RowLogMessage message = new RowLogMessageImpl(now, rowKey, seqnr, data, payload, this);
 
             putMessageOnShard(message, subscriptions);
 
