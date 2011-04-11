@@ -105,7 +105,7 @@ public class RepositorySetup {
         if (withWal) {
             setupRowLogConfigurationManager();
             HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
-            rowLogConfManager.addRowLog("WAL", new RowLogConfig(10000L, true, false, 100L, 5000L, 5000L));
+            rowLogConfManager.addRowLog("WAL", new RowLogConfig(true, false, 100L, 5000L, 5000L));
             wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
                     LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker);
             RowLogShard walShard = new RowLogShardImpl("WS1", hadoopConf, wal, 100);
@@ -186,7 +186,7 @@ public class RepositorySetup {
      */
     public void setupMessageQueue(boolean withProcessor, boolean withManualProcessing) throws Exception {
 
-        rowLogConfManager.addRowLog("MQ", new RowLogConfig(10000L, false, true, 100L, 0L, 5000L));
+        rowLogConfManager.addRowLog("MQ", new RowLogConfig(false, true, 100L, 0L, 5000L));
         rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 1);
 
         mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,

@@ -2,7 +2,6 @@ package org.lilyproject.rowlog.api;
 
 public class RowLogConfig {
 
-    private long lockTimeout;
     private boolean respectOrder;
     private boolean enableNotify;
     private long notifyDelay;
@@ -20,21 +19,12 @@ public class RowLogConfig {
      * @param minimalProcessDelay the minimal age a messages needs to have before a processor will pick it up for processing
      * @param wakeupTimeout the maximum time to wait before checking for new messages in case notify messages are missed notifying is disabled
      */
-    public RowLogConfig(long lockTimeout, boolean respsectOrder, boolean enableNotify, long notifyDelay, long minimalProcessDelay, long wakeupTimeout) {
-        this.lockTimeout = lockTimeout;
+    public RowLogConfig(boolean respsectOrder, boolean enableNotify, long notifyDelay, long minimalProcessDelay, long wakeupTimeout) {
         this.respectOrder = respsectOrder;
         this.enableNotify = enableNotify;
         this.notifyDelay = notifyDelay;
         this.minimalProcessDelay = minimalProcessDelay;
         this.wakeupTimeout = wakeupTimeout;
-    }
-
-    public long getLockTimeout() {
-        return lockTimeout;
-    }
-    
-    public void setLockTimeout(long lockTimeout) {
-        this.lockTimeout = lockTimeout;
     }
 
     public boolean isRespectOrder() {
@@ -82,7 +72,6 @@ public class RowLogConfig {
         final int prime = 31;
         int result = 1;
         result = prime * result + (enableNotify ? 1231 : 1237);
-        result = prime * result + (int) (lockTimeout ^ (lockTimeout >>> 32));
         result = prime * result + (int) (minimalProcessDelay ^ (minimalProcessDelay >>> 32));
         result = prime * result + (int) (notifyDelay ^ (notifyDelay >>> 32));
         result = prime * result + (int) (wakeupTimeout ^ (wakeupTimeout >>> 32));
@@ -101,8 +90,6 @@ public class RowLogConfig {
         RowLogConfig other = (RowLogConfig) obj;
         if (enableNotify != other.enableNotify)
             return false;
-        if (lockTimeout != other.lockTimeout)
-            return false;
         if (minimalProcessDelay != other.minimalProcessDelay)
             return false;
         if (notifyDelay != other.notifyDelay)
@@ -116,7 +103,7 @@ public class RowLogConfig {
 
     @Override
     public String toString() {
-        return "RowLogConfig [lockTimeout=" + lockTimeout + ", respectOrder=" + respectOrder + ", enableNotify="
+        return "RowLogConfig [respectOrder=" + respectOrder + ", enableNotify="
                 + enableNotify + ", notifyDelay=" + notifyDelay + ", minimalProcessDelay=" + minimalProcessDelay + ", wakeupTimeout=" + wakeupTimeout +"]";
     }
 }
