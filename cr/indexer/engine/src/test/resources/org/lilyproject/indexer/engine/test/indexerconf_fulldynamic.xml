@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
+
+  <cases>
+    <!-- TODO we need a way to have a dynamic mapping here too -->
+    <case recordType="dyn1:RecordType" variant="*" vtags="last"/>
+  </cases>
+
+  <dynamicFields>
+    <!--
+       A dynamic field without any match condition will match anything.
+       It is allowed to specify extractContent always, it will only do anything in case of blob fields.
+    -->
+    <dynamicField name="fulldyn_${name}_${primitiveTypeLC}${multiValue?_mv}" extractContent="true"/>
+  </dynamicFields>
+
+</indexer>
