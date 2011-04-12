@@ -34,6 +34,7 @@
   <modules>
     <module>api</module>
     <module>impl</module>
+    <module>admin-cli</module>
   </modules>
 
 </project>

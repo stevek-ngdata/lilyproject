@@ -124,6 +124,25 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         });
     }
     
+    public Map<String, RowLogConfig> getRowLogs() throws KeeperException, InterruptedException {
+        Map<String, RowLogConfig> rowLogs = new HashMap<String, RowLogConfig>();
+        List<String> rowLogIds = zooKeeper.retryOperation(new ZooKeeperOperation<List<String>>() {
+            public List<String> execute() throws KeeperException, InterruptedException {
+                return zooKeeper.getChildren(rowLogPath, false);
+            }
+        });
+        
+        for (final String rowLogId : rowLogIds) {
+            byte[] data = zooKeeper.retryOperation(new ZooKeeperOperation<byte[]>() {
+                public byte[] execute() throws KeeperException, InterruptedException {
+                    return zooKeeper.getData(rowLogPath(rowLogId), false, null);
+                }
+            });
+            rowLogs.put(rowLogId, RowLogConfigConverter.INSTANCE.fromJsonBytes(rowLogId, data));
+        }
+        return rowLogs;
+    }
+    
     public void addRowLogObserver(String rowLogId, RowLogObserver observer) {
         observerSupport.addRowLogObserver(rowLogId, observer);
     }
@@ -258,6 +277,33 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         return true;
     }
     
+    public List<RowLogSubscription> getSubscriptions(final String rowLogId) throws KeeperException, InterruptedException {
+        List<RowLogSubscription> subscriptions = new ArrayList<RowLogSubscription>();
+        Boolean subscriptionsExist = zooKeeper.retryOperation(new ZooKeeperOperation<Boolean>() {
+            public Boolean execute() throws KeeperException, InterruptedException {
+                return zooKeeper.exists(subscriptionsPath(rowLogId), false) != null;
+            }
+        });
+        if (!subscriptionsExist)
+            return subscriptions;
+        
+        List<String> subscriptionIds = zooKeeper.retryOperation(new ZooKeeperOperation<List<String>>() {
+            public List<String> execute() throws KeeperException, InterruptedException {
+                return zooKeeper.getChildren(subscriptionsPath(rowLogId), false);
+            }
+        });
+        
+        for (final String subscriptionId : subscriptionIds) {
+            byte[] data = zooKeeper.retryOperation(new ZooKeeperOperation<byte[]>() {
+                public byte[] execute() throws KeeperException, InterruptedException {
+                    return zooKeeper.getData(subscriptionPath(rowLogId, subscriptionId), false, null);
+                }
+            });
+            subscriptions.add(SubscriptionConverter.INSTANCE.fromJsonBytes(rowLogId, subscriptionId, data));
+        }
+        return subscriptions;
+    }
+    
     // Listeners
 
     public void addListenersObserver(String rowLogId, String subscriptionId, ListenersObserver observer) {
@@ -299,6 +345,17 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         } catch (KeeperException.NoNodeException ignore) {
             // Silently ignore. Might occur because we use retryOperation.
         }
+    }
+    
+    public List<String> getListeners(final String rowLogId, final String subscriptionId) throws KeeperException, InterruptedException  {
+        List<String> listenerIds = zooKeeper.retryOperation(new ZooKeeperOperation<List<String>>() {
+            public List<String> execute() throws KeeperException, InterruptedException {
+                return zooKeeper.getChildren(subscriptionPath(rowLogId, subscriptionId), false);
+            }
+        });
+        if (listenerIds == null)
+            return new ArrayList<String>();
+        else return listenerIds;
     }
     
     // Processor Notify

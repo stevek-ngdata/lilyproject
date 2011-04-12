@@ -16,10 +16,7 @@
 package org.lilyproject.rowlog.impl.test;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -82,29 +79,46 @@ public class RowLogConfigurationManagerTest {
         callBack.validate();
 
         // Add rowlog
-        callBack.expect(new RowLogConfig(true, true, 100L, 5000L, 5000L));
-        rowLogConfigurationManager.addRowLog(rowLogId, new RowLogConfig(true, true, 100L, 5000L, 5000L));
+        RowLogConfig rowLogConfig = new RowLogConfig(true, true, 100L, 5000L, 5000L);
+        callBack.expect(rowLogConfig);
+        rowLogConfigurationManager.addRowLog(rowLogId, rowLogConfig);
         callBack.validate();
+        Map<String, RowLogConfig> rowLogs = rowLogConfigurationManager.getRowLogs();
+        Assert.assertEquals(1, rowLogs.size());
+        Assert.assertEquals(rowLogConfig, rowLogs.get(rowLogId));
         
         RowLogCallBack callBack2 = new RowLogCallBack();
-        callBack2.expect(new RowLogConfig(true, true, 100L, 5000L, 5000L));
-        rowLogConfigurationManager.addRowLog(rowLogId2, new RowLogConfig(true, true, 100L, 5000L, 5000L));
+        RowLogConfig rowLogConfig2 = new RowLogConfig(true, true, 100L, 5000L, 2000L);
+        callBack2.expect(rowLogConfig2);
+        rowLogConfigurationManager.addRowLog(rowLogId2, rowLogConfig2);
         rowLogConfigurationManager.addRowLogObserver(rowLogId2, callBack2);
         callBack2.validate();
+        rowLogs = rowLogConfigurationManager.getRowLogs();
+        Assert.assertEquals(2, rowLogs.size());
+        Assert.assertEquals(rowLogConfig, rowLogs.get(rowLogId));
+        Assert.assertEquals(rowLogConfig2, rowLogs.get(rowLogId2));
         
         // Update rowlog
-        callBack.expect(new RowLogConfig(false, true, 200L, 9L, 5000L));
-        rowLogConfigurationManager.updateRowLog(rowLogId, new RowLogConfig(false, true, 200L, 9L, 5000L));
+        RowLogConfig rowLogConfig1b = new RowLogConfig(false, true, 200L, 9L, 5000L);
+        callBack.expect(rowLogConfig1b);
+        rowLogConfigurationManager.updateRowLog(rowLogId, rowLogConfig1b);
         callBack.validate();
+        rowLogs = rowLogConfigurationManager.getRowLogs();
+        Assert.assertEquals(2, rowLogs.size());
+        Assert.assertEquals(rowLogConfig1b, rowLogs.get(rowLogId));
+        Assert.assertEquals(rowLogConfig2, rowLogs.get(rowLogId2));
         
         // Remove rowlog
         callBack.expect(null);
         rowLogConfigurationManager.removeRowLog(rowLogId);
         callBack.validate();
+        rowLogs = rowLogConfigurationManager.getRowLogs();
+        Assert.assertEquals(1, rowLogs.size());
+        Assert.assertEquals(rowLogConfig2, rowLogs.get(rowLogId2));
         
         // RowLogId2 was not updated nor removed
-        callBack2.expect(new RowLogConfig(true, true, 100L, 5000L, 5000L));
-        callBack2.validate(); 
+        callBack2.expect(rowLogConfig2);
+        callBack2.validate();
     }
     
     private class RowLogCallBack implements RowLogObserver {

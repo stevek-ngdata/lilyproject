@@ -15,6 +15,9 @@
  */
 package org.lilyproject.rowlog.api;
 
+import java.util.List;
+import java.util.Map;
+
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 
@@ -57,6 +60,8 @@ public interface RowLogConfigurationManager {
     void removeRowLog(String rowLogId) throws KeeperException, InterruptedException, RowLogException;
     
     boolean rowLogExists(String rowLogId) throws InterruptedException, KeeperException;
+    
+    Map<String, RowLogConfig> getRowLogs() throws KeeperException, InterruptedException;
     
     /**
      * Add a new rowlog observer. After registration, the observer will asynchronously be called to
@@ -117,6 +122,8 @@ public interface RowLogConfigurationManager {
 
     boolean subscriptionExists(String rowLogId, String subscriptionId) throws InterruptedException, KeeperException;
 
+    List<RowLogSubscription>  getSubscriptions(String rowLogId) throws KeeperException, InterruptedException;
+    
     /**
      * Add a new subscriptions observer. After registration, the observer will asynchronously be called to
      * report the initial set of subscriptions.
@@ -159,6 +166,8 @@ public interface RowLogConfigurationManager {
      */
     void removeListener(String rowLogId, String subscriptionId, String listenerId) throws RowLogException, InterruptedException, KeeperException;
 
+    List<String> getListeners(final String rowLogId, final String subscriptionId) throws KeeperException, InterruptedException;
+    
     /**
      * Notify the processor that a new message has been put on the rowlog.
      * <p>If the processor was in a wait mode, it will wake up and check the rowlog for new messages.
