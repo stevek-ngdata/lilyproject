@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
+
+  <cases>
+    <case recordType="dyn1:RecordType" variant="*" vtags="last"/>
+  </cases>
+
+  <indexFields>
+    <!-- versioned mutable scope -->
+    <indexField name="field11_string">
+      <value>
+        <field name="dyn2:field11"/>
+      </value>
+    </indexField>
+  </indexFields>
+
+  <dynamicFields>
+    <dynamicField matchNamespace="org.lilyproject.indexer.test.dyn1"
+        name="dyn1_${name}_${primitiveTypeLC}${multiValue?_mv}"/>
+
+    <dynamicField matchName="name_*"
+        name="nameMatch_${nameMatch}_${primitiveTypeLC}${multiValue?_mv}"/>
+
+    <dynamicField matchName="scope_*" matchScope="NON_VERSIONED"
+        name="scopeMatch_${nameMatch}_${primitiveTypeLC}${multiValue?_mv}"/>
+
+    <!-- Just as an extra, the following rule test the ability to specify the namespace prefix
+         instead of the namespace. -->
+    <dynamicField matchNamespace="dyn2" matchType="DATE" matchMultiValue="false"
+        name="typeMatch_${name}_${primitiveTypeLC}"/>
+
+    <dynamicField matchName="mv_*" matchMultiValue="true"
+        name="multiValueMatch_${nameMatch}_${primitiveTypeLC}_mv"/>
+
+    <dynamicField matchName="hier_*" matchHierarchical="true"
+        name="hierarchicalMatch_${nameMatch}${hierarchical?_hier}_literal"/>
+
+    <!-- versioned mutable scope -->
+    <dynamicField matchName="field12" matchHierarchical="false" matchMultiValue="false"
+        name="field12_string"/>
+
+    <!-- blob field without extractContent -->
+    <dynamicField matchName="field13" matchType="BLOB" matchHierarchical="false" matchMultiValue="false"
+        name="field13_string"/>
+
+    <!-- blob field with extractContent -->
+    <dynamicField matchName="field14" matchType="BLOB" matchHierarchical="false" matchMultiValue="false"
+        name="field14_string" extractContent="true"/>
+  </dynamicFields>
+
+</indexer>

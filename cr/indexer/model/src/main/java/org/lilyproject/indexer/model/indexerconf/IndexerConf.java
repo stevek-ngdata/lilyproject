@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.SchemaId;
 
@@ -37,6 +38,7 @@ public class IndexerConf {
     private List<IndexField> indexFields = new ArrayList<IndexField>();
     private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
     private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
+    private List<DynamicIndexField> dynamicFields = new ArrayList<DynamicIndexField>();
     private Map<SchemaId, List<IndexField>> derefIndexFieldsByField = new HashMap<SchemaId, List<IndexField>>();
     private Set<SchemaId> vtags = new HashSet<SchemaId>();
     private Formatters formatters = new Formatters();
@@ -83,11 +85,33 @@ public class IndexerConf {
         }
     }
 
+    protected void addDynamicIndexField(DynamicIndexField field) {
+        dynamicFields.add(field);
+    }
+
+    public List<DynamicIndexField> getDynamicFields() {
+        return dynamicFields;
+    }
+
     /**
      * Checks if the supplied field type is used by one of the indexField's.
      */
-    public boolean isIndexFieldDependency(SchemaId fieldTypeId) {
-        return repoFieldDependencies.contains(fieldTypeId);
+    public boolean isIndexFieldDependency(FieldType fieldType) {
+        boolean staticFieldMatch = repoFieldDependencies.contains(fieldType.getId());
+
+        if (staticFieldMatch) {
+            return true;
+        }
+
+        // If there are lots of dynamic index fields, or lots of fields which are not indexed at all (thus
+        // leading to lots of invocations of this method), than maybe we need to review this for performance.
+        for (DynamicIndexField field : dynamicFields) {
+            if (field.matches(fieldType).match) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

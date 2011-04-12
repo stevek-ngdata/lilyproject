@@ -20,9 +20,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
-import org.lilyproject.indexer.model.indexerconf.IndexCase;
-import org.lilyproject.indexer.model.indexerconf.IndexField;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
+import org.lilyproject.indexer.model.indexerconf.*;
+import org.lilyproject.indexer.model.indexerconf.DynamicIndexField.DynamicIndexFieldMatch;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.VTaggedRecord;
@@ -136,7 +135,8 @@ public class Indexer {
      * @param record the correct version of the record, which has the versionTag applied to it
      * @param vtags the version tags under which to index
      */
-    protected void index(IdRecord record, Set<SchemaId> vtags) throws IOException, SolrServerException, ShardSelectorException {
+    protected void index(IdRecord record, Set<SchemaId> vtags) throws IOException, SolrServerException,
+            ShardSelectorException, RepositoryException, InterruptedException {
 
         verifyLock(record.getId());
 
@@ -152,12 +152,49 @@ public class Indexer {
             SolrInputDocument solrDoc = new SolrInputDocument();
 
             boolean valueAdded = false;
+
+            // By convention/definition, we first evaluate the static index fields and then the dynamic ones
+
+            //
+            // 1: evaluate the static index fields
+            //
             for (IndexField indexField : conf.getIndexFields()) {
                 List<String> values = valueEvaluator.eval(indexField.getValue(), record, repository, vtag);
                 if (values != null) {
                     for (String value : values) {
                         solrDoc.addField(indexField.getName(), value);
                         valueAdded = true;
+                    }
+                }
+            }
+
+            //
+            // 2: evaluate dynamic index fields
+            //
+            if (!conf.getDynamicFields().isEmpty()) {
+                for (Map.Entry<SchemaId, Object> field : record.getFieldsById().entrySet()) {
+                    FieldType fieldType = typeManager.getFieldTypeById(field.getKey());
+                    for (DynamicIndexField dynField : conf.getDynamicFields()) {
+                        DynamicIndexFieldMatch match = dynField.matches(fieldType);
+                        if (match.match) {
+                            String fieldName = evalName(dynField, match, fieldType);
+
+                            System.out.println("Adding dynamic field " + fieldName);
+
+                            List<String> values = valueEvaluator.format(record, fieldType, dynField.extractContext(),
+                                    dynField.getFormatter(), repository);
+
+                            if (values != null) { // while field will always be there, formatter or content extraction
+                                                  // can make it empty
+                                for (String value : values) {
+                                    solrDoc.addField(fieldName, value);
+                                    valueAdded = true;
+                                }
+                            }
+
+                            // Dynamic fields: stop on the first match
+                            break;
+                        }
                     }
                 }
             }
@@ -194,6 +231,26 @@ public class Indexer {
                 log.debug(String.format("Record %1$s, vtag %2$s: indexed", record.getId(), safeLoadTagName(vtag)));
             }
         }
+    }
+
+    private String evalName(DynamicIndexField dynField, DynamicIndexFieldMatch match, FieldType fieldType) {
+        // Calculate the name, then add the value
+        Map<String, Object> nameContext = new HashMap<String, Object>();
+        nameContext.put("namespace", fieldType.getName().getName());
+        nameContext.put("name", fieldType.getName().getName());
+        ValueType valueType = fieldType.getValueType();
+        nameContext.put("primitiveType", valueType.getPrimitive().getName());
+        nameContext.put("primitiveTypeLC", valueType.getPrimitive().getName().toLowerCase());
+        nameContext.put("multiValue", valueType.isMultiValue());
+        nameContext.put("hierarchical", valueType.isHierarchical());
+        if (match.nameMatch != null) {
+            nameContext.put("nameMatch", match.nameMatch);
+        }
+        if (match.namespaceMatch != null) {
+            nameContext.put("namespaceMatch", match.namespaceMatch);
+        }
+        String fieldName = dynField.getNameTemplate().format(nameContext);
+        return fieldName;
     }
 
     /**

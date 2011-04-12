@@ -170,6 +170,10 @@ public class IndexUpdater implements RowLogMessageListener {
             // The record should not be indexed
             // But data from this record might be denormalized into other index entries
             // After this we go to update denormalized data
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Record %1$s: no index case found, record will not be indexed.",
+                        record.getId()));
+            }
         } else {
             Set<SchemaId> vtagsToIndex = new HashSet<SchemaId>();
 
@@ -583,7 +587,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
     private boolean atLeastOneUsedInIndex(Set<FieldType> fieldTypes) {
         for (FieldType type : fieldTypes) {
-            if (indexer.getConf().isIndexFieldDependency(type.getId())) {
+            if (indexer.getConf().isIndexFieldDependency(type)) {
                 return true;
             }
         }

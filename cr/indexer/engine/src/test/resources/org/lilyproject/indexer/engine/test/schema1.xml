@@ -120,6 +120,13 @@
 
    <field name="year" type="int" indexed="true" stored="true" required="false"/>
    <field name="inthierarchy" type="string" indexed="true" stored="true" required="false"/>
+
+   <dynamicField name="*_string" type="text" indexed="true" stored="true"/>
+   <dynamicField name="*_blob" type="text" indexed="true" stored="true"/>
+   <dynamicField name="*_literal" type="string" indexed="true" stored="true"/>
+   <dynamicField name="*_string_mv" type="text" indexed="true" stored="true" multiValued="true"/>
+   <dynamicField name="*_long" type="long" indexed="true" stored="true"/>
+   <dynamicField name="*_date" type="date" indexed="true" stored="true"/>
  </fields>
 
  <!-- Field to use to determine and enforce document uniqueness.

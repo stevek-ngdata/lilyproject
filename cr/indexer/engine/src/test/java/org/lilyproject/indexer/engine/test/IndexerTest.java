@@ -77,6 +77,7 @@ public class IndexerTest {
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
     private static SolrServers solrServers;
+    private static LinkIndex linkIndex;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -102,6 +103,8 @@ public class IndexerTest {
 
     private static final String NS = "org.lilyproject.indexer.test";
     private static final String NS2 = "org.lilyproject.indexer.test.2";
+    private static final String DYN_NS1 = "org.lilyproject.indexer.test.dyn1";
+    private static final String DYN_NS2 = "org.lilyproject.indexer.test.dyn2";
 
     private static Log log = LogFactory.getLog(IndexerTest.class);
 
@@ -131,7 +134,7 @@ public class IndexerTest {
         IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
         LinkIndex.createIndexes(indexManager);
-        LinkIndex linkIndex = new LinkIndex(indexManager, repository);
+        linkIndex = new LinkIndex(indexManager, repository);
 
         // Field types should exist before the indexer conf is loaded
         setupSchema();
@@ -148,16 +151,11 @@ public class IndexerTest {
         repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
 
         solrServers = SolrServers.createForOneShard(SOLR_TEST_UTIL.getUri());
-        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getClassLoader().getResourceAsStream(
-                "org/lilyproject/indexer/engine/test/indexerconf1.xml"), repository);
-        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        Indexer indexer = new Indexer(INDEXER_CONF, repository, solrServers, indexLocker, new IndexerMetrics("test"));
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
-        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
-                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
 
+        changeIndexUpdater("indexerconf1.xml");
     }
 
     @AfterClass
@@ -166,6 +164,15 @@ public class IndexerTest {
 
         if (SOLR_TEST_UTIL != null)
             SOLR_TEST_UTIL.stop();
+    }
+
+    public static void changeIndexUpdater(String confName) throws Exception {
+        INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
+        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
+        Indexer indexer = new Indexer(INDEXER_CONF, repository, solrServers, indexLocker, new IndexerMetrics("test"));
+
+        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
+                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
     }
 
     private static void setupSchema() throws Exception {
@@ -515,8 +522,7 @@ public class IndexerTest {
 
             // Delete record 1: index of record 2 should be updated
             log.debug("Begin test NV13");
-            expectEvent(DELETE, record1.getId());
-            repository.delete(record1.getId());
+            expectEvent(DELETE, record1.getId());            repository.delete(record1.getId());
 
             commitIndex();
             verifyResultCount("nv_deref1:tomato", 0);
@@ -970,11 +976,11 @@ public class IndexerTest {
         //
         {
             log.debug("Begin test V70");
-            Blob blob1 = createBlob("org/lilyproject/indexer/engine/test/blob1_msword.doc", "application/msword", "blob1_msword.doc");
-            Blob blob1dup = createBlob("org/lilyproject/indexer/engine/test/blob1_msword.doc", "application/msword", "blob1_msword.doc");
-            Blob blob2 = createBlob("org/lilyproject/indexer/engine/test/blob2.pdf", "application/pdf", "blob2.pdf");
-            Blob blob3 = createBlob("org/lilyproject/indexer/engine/test/blob3_oowriter.odt", "application/vnd.oasis.opendocument.text", "blob3_oowriter.odt");
-            Blob blob4 = createBlob("org/lilyproject/indexer/engine/test/blob4_excel.xls", "application/excel", "blob4_excel.xls");
+            Blob blob1 = createBlob("blob1_msword.doc", "application/msword", "blob1_msword.doc");
+            Blob blob1dup = createBlob("blob1_msword.doc", "application/msword", "blob1_msword.doc");
+            Blob blob2 = createBlob("blob2.pdf", "application/pdf", "blob2.pdf");
+            Blob blob3 = createBlob("blob3_oowriter.odt", "application/vnd.oasis.opendocument.text", "blob3_oowriter.odt");
+            Blob blob4 = createBlob("blob4_excel.xls", "application/excel", "blob4_excel.xls");
 
             // Single-valued blob field
             Record record1 = repository.newRecord();
@@ -1144,6 +1150,210 @@ public class IndexerTest {
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }
 
+    @Test
+    public void testDynamicFields() throws Exception {
+        messageVerifier.init();
+
+        //
+        // Create schema
+        //
+        ValueType stringValueType = typeManager.getValueType("STRING");
+        ValueType longValueType = typeManager.getValueType("LONG");
+        ValueType mvStringValueType = typeManager.getValueType("STRING", true, false);
+        ValueType hierStringValueType = typeManager.getValueType("STRING", false, true);
+        ValueType dateValueType = typeManager.getValueType("DATE");
+        ValueType blobValueType = typeManager.getValueType("BLOB");
+
+        FieldType field1 = typeManager.createFieldType(stringValueType, new QName(DYN_NS1, "field1"), Scope.VERSIONED);
+
+        FieldType field2 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field2"), Scope.VERSIONED);
+
+        FieldType field3 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "name_field3"), Scope.VERSIONED);
+
+        FieldType field4 = typeManager.createFieldType(longValueType, new QName(DYN_NS2, "name_field4"), Scope.VERSIONED);
+
+        FieldType field5 = typeManager.createFieldType(mvStringValueType, new QName(DYN_NS2, "name_field5"), Scope.VERSIONED);
+
+        FieldType field6 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "scope_field6"), Scope.VERSIONED);
+
+        FieldType field7 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "scope_field7"), Scope.NON_VERSIONED);
+
+        FieldType field8 = typeManager.createFieldType(dateValueType, new QName(DYN_NS2, "field8"), Scope.VERSIONED);
+
+        FieldType field9 = typeManager.createFieldType(mvStringValueType, new QName(DYN_NS2, "mv_field9"), Scope.VERSIONED);
+
+        FieldType field10 = typeManager.createFieldType(hierStringValueType, new QName(DYN_NS2, "hier_field10"), Scope.VERSIONED);
+
+        FieldType field11 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field11"), Scope.VERSIONED_MUTABLE);
+
+        FieldType field12 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field12"), Scope.VERSIONED_MUTABLE);
+
+        FieldType field13 = typeManager.createFieldType(blobValueType, new QName(DYN_NS2, "field13"), Scope.VERSIONED);
+
+        FieldType field14 = typeManager.createFieldType(blobValueType, new QName(DYN_NS2, "field14"), Scope.VERSIONED);
+
+        RecordType rt = typeManager.newRecordType(new QName(DYN_NS1, "RecordType"));
+        // It's not necessary to add the fields
+        rt = typeManager.createRecordType(rt);
+
+        changeIndexUpdater("indexerconf_dynfields.xml");
+
+        //
+        // Test various matching options
+        //
+        {
+            log.debug("Begin test V300");
+            // Create a record
+            Record record = repository.newRecord();
+            record.setRecordType(rt.getName());
+
+            // namespace match fields
+            record.setField(field1.getName(), "vector");
+            record.setField(field2.getName(), "circle");
+            // name match fields
+            record.setField(field3.getName(), "sphere");
+            record.setField(field4.getName(), new Long(983));
+            record.setField(field5.getName(), Arrays.asList("prism", "cone"));
+            // scope match fields
+            record.setField(field6.getName(), "polygon");
+            record.setField(field7.getName(), "polyhedron");
+            // type match fields
+            record.setField(field8.getName(), new LocalDate(2011, 4, 11));
+            // multi-value match fields
+            record.setField(field9.getName(), Arrays.asList("decagon", "dodecahedron"));
+            // hierarchical match fields
+            record.setField(field10.getName(), new HierarchyPath("triangle", "knot"));
+
+            expectEvent(CREATE, record.getId(), 1L, null, field1.getId(), field2.getId(), field3.getId(),
+                    field4.getId(), field5.getId(), field6.getId(), field7.getId(), field8.getId(), field9.getId(),
+                    field10.getId());
+            record = repository.create(record);
+
+            commitIndex();
+
+            // Verify only the field from the matched namespace was indexed
+            verifyResultCount("dyn1_field1_string:vector", 1);
+            verifyResultCount("dyn1_field2_string:circle", 0);
+
+            // Verify name-based match
+            verifyResultCount("nameMatch_field3_string:sphere", 1);
+            verifyResultCount("nameMatch_field4_long:983", 1);
+            verifyResultCount("nameMatch_field5_string_mv:prism", 1);
+            verifyResultCount("nameMatch_field5_string_mv:cone", 1);
+
+            // Verify scope-based match
+            verifyResultCount("scopeMatch_field6_string:polygon", 0);
+            verifyResultCount("scopeMatch_field7_string:polyhedron", 1);
+
+            // Verify type-based match
+            verifyResultCount("typeMatch_field8_date:\"2011-04-11T00:00:00Z/DAY\"", 1);
+
+            // Verify multi-value based match
+            verifyResultCount("multiValueMatch_field9_string_mv:decagon", 1);
+
+            // Verify hierarchical based match
+            verifyResultCount("hierarchicalMatch_field10_hier_literal:\"/triangle/knot\"", 1);
+        }
+
+        //
+        // Test that index is updated when fields change, without any change to vtags. This verifies
+        // that the logic which verifies whether any reindexing needs to be done takes dynamic fields
+        // into account.
+        //
+        {
+            log.debug("Begin test V301");
+            Record record = repository.newRecord();
+            record.setRecordType(rt.getName());
+
+            record.setField(field11.getName(), "parallelepiped");
+            record.setField(field12.getName(), "rectangle");
+
+            expectEvent(CREATE, record.getId(), 1L, null, field11.getId(), field12.getId());
+            record = repository.create(record);
+
+            commitIndex();
+
+            verifyResultCount("field11_string:parallelepiped", 1);
+            verifyResultCount("field12_string:rectangle", 1);
+
+            // Update only the dynamically indexed field
+            record.setField(field12.getName(), "square");
+            expectEvent(UPDATE, record.getId(), null, 1L, field12.getId());
+            record = repository.update(record, true, true);
+            commitIndex();
+            verifyResultCount("field12_string:square", 1);
+
+            // Update only the statically indexed field
+            record.setField(field11.getName(), "square");
+            expectEvent(UPDATE, record.getId(), null, 1L, field11.getId());
+            record = repository.update(record, true, true);
+            commitIndex();
+            verifyResultCount("field11_string:square", 1);
+        }
+
+        //
+        // Test blobs
+        //
+        {
+            log.debug("Begin test V302");
+
+            Record record = repository.newRecord();
+            record.setRecordType(rt.getName());
+
+            Blob blob1 = createBlob("blob2.pdf", "application/pdf", "blob2.pdf");
+            Blob blob2 = createBlob("blob2.pdf", "application/pdf", "blob2.pdf");
+
+            record.setField(field13.getName(), blob1);
+            record.setField(field14.getName(), blob2);
+
+            expectEvent(CREATE, record.getId(), 1L, null, field13.getId(), field14.getId());
+            record = repository.create(record);
+
+            commitIndex();
+
+            // extractContent is not enabled for field13, search on content should not find anything
+            verifyResultCount("field13_string:tired", 0);
+
+            // extractContent is enabled for field14
+            verifyResultCount("field14_string:tired", 1);
+        }
+
+        //
+        // Attention: we change the indexerconf here
+        //
+        changeIndexUpdater("indexerconf_fulldynamic.xml");
+
+        //
+        // Test a 'fully dynamic' mapping
+        //
+        {
+            log.debug("Begin test V302");
+
+            Record record = repository.newRecord();
+            record.setRecordType(rt.getName());
+
+            Blob blob = createBlob("blob2.pdf", "application/pdf", "blob2.pdf");
+
+            record.setField(field1.getName(), "gauss");
+            record.setField(field2.getName(), "hilbert");
+            record.setField(field4.getName(), new Long(1024));
+            record.setField(field14.getName(), blob);
+
+            expectEvent(CREATE, record.getId(), 1L, null, field1.getId(), field2.getId(), field4.getId(),
+                    field14.getId());
+            record = repository.create(record);
+
+            commitIndex();
+
+            verifyResultCount("fulldyn_field1_string:gauss", 1);
+            verifyResultCount("fulldyn_field2_string:hilbert", 1);
+            verifyResultCount("fulldyn_name_field4_long:1024", 1);
+            verifyResultCount("fulldyn_field14_blob:conversations", 1);
+        }
+
+        assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
+    }
+
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
         byte[] mswordblob = readResource(resource);
 
@@ -1159,7 +1369,7 @@ public class IndexerTest {
     }
 
     private byte[] readResource(String path) throws IOException {
-        InputStream mswordblob = getClass().getClassLoader().getResourceAsStream(path);
+        InputStream mswordblob = getClass().getResourceAsStream(path);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int read;

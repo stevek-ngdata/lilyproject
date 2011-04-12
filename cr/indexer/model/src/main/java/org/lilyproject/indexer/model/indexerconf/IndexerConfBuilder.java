@@ -50,6 +50,9 @@ public class IndexerConfBuilder {
     private static LocalXPathExpression INDEX_FIELDS =
             new LocalXPathExpression("/indexer/indexFields/indexField");
 
+    private static LocalXPathExpression DYNAMIC_INDEX_FIELDS =
+            new LocalXPathExpression("/indexer/dynamicFields/dynamicField");
+
     private Document doc;
 
     private IndexerConf conf;
@@ -82,6 +85,7 @@ public class IndexerConfBuilder {
             buildCases();
             buildFormatters();
             buildIndexFields();
+            buildDynamicFields();
         } catch (Exception e) {
             throw new IndexerConfException("Error in the configuration.", e);
         }
@@ -254,6 +258,91 @@ public class IndexerConfBuilder {
 
             IndexField indexField = new IndexField(name, value);
             conf.addIndexField(indexField);
+        }
+    }
+
+    private void buildDynamicFields() throws Exception {
+        List<Element> fields = DYNAMIC_INDEX_FIELDS.get().evalAsNativeElementList(doc);
+        for (Element fieldEl : fields) {
+            String matchNamespaceAttr = DocumentHelper.getAttribute(fieldEl, "matchNamespace", false);
+            String matchNameAttr = DocumentHelper.getAttribute(fieldEl, "matchName", false);
+            String matchTypeAttr = DocumentHelper.getAttribute(fieldEl, "matchType", false);
+            Boolean matchMultiValue = DocumentHelper.getBooleanAttribute(fieldEl, "matchMultiValue", null);
+            Boolean matchHierarchical = DocumentHelper.getBooleanAttribute(fieldEl, "matchHierarchical", null);
+            String matchScopeAttr = DocumentHelper.getAttribute(fieldEl, "matchScope", false);
+            String nameAttr = DocumentHelper.getAttribute(fieldEl, "name", true);
+
+            WildcardPattern matchNamespace = null;
+            if (matchNamespaceAttr != null) {
+                // If the matchNamespace attr does not contain a wildcard expression, and its value
+                // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
+                if (!WildcardPattern.isWildcardExpression(matchNamespaceAttr)) {
+                    String uri = fieldEl.lookupNamespaceURI(matchNamespaceAttr);
+                    if (uri != null)
+                        matchNamespaceAttr = uri;
+                }
+                matchNamespace = new WildcardPattern(matchNamespaceAttr);
+            }
+
+            WildcardPattern matchName = null;
+            if (matchNameAttr != null) {
+                matchName = new WildcardPattern(matchNameAttr);
+            }
+
+            Set<String> matchTypes = null;
+            if (matchTypeAttr != null) {
+                matchTypes = new HashSet<String>();
+                String[] types = matchTypeAttr.split(",");
+                for (String type : types) {
+                    matchTypes.add(type.toUpperCase());
+                }
+                if (matchTypes.isEmpty()) {
+                    matchTypes = null;
+                }
+            }
+
+            Set<Scope> matchScopes = null;
+            if (matchScopeAttr != null) {
+                matchScopes = new HashSet<Scope>();
+                String[] scopes = matchScopeAttr.split(",");
+                for (String scope : scopes) {
+                    matchScopes.add(Scope.valueOf(scope));
+                }
+                if (matchScopes.isEmpty()) {
+                    matchScopes = null;
+                }
+            }
+
+            Set<String> variables = new HashSet<String>();
+            variables.add("namespace");
+            variables.add("name");
+            variables.add("primitiveType");
+            variables.add("primitiveTypeLC");
+            variables.add("multiValue");
+            variables.add("hierarchical");
+            if (matchName != null && matchName.hasWildcard())
+                variables.add("nameMatch");
+            if (matchNamespace != null && matchNamespace.hasWildcard())
+                variables.add("namespaceMatch");
+
+            Set<String> booleanVariables = new HashSet<String>();
+            booleanVariables.add("multiValue");
+            booleanVariables.add("hierarchical");
+
+            NameTemplate name = new NameTemplate(nameAttr, variables, booleanVariables);
+
+            boolean extractContent = DocumentHelper.getBooleanAttribute(fieldEl, "extractContent", false);
+            String formatter = DocumentHelper.getAttribute(fieldEl, "formatter", false);
+            if (formatter != null && !conf.getFormatters().hasFormatter(formatter)) {
+                throw new IndexerConfException("Formatter does not exist: " + formatter + " at " +
+                        LocationAttributes.getLocationString(fieldEl));
+            }
+
+            DynamicIndexField field = new DynamicIndexField(matchNamespace, matchName, matchTypes, matchMultiValue,
+                    matchHierarchical, matchScopes, name, extractContent, formatter);
+
+            System.out.println("Adding a dynamic field");
+            conf.addDynamicIndexField(field);
         }
     }
 

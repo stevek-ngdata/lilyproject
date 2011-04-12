@@ -3,9 +3,10 @@
   <xs:element name="indexer">
     <xs:complexType>
       <xs:all minOccurs="0">
-        <xs:element ref="cases" minOccurs="0"/>
-        <xs:element ref="formatters" minOccurs="0"/>
-        <xs:element ref="indexFields" minOccurs="0"/>
+        <xs:element minOccurs="0" ref="cases"/>
+        <xs:element minOccurs="0" ref="formatters"/>
+        <xs:element minOccurs="0" ref="indexFields"/>
+        <xs:element minOccurs="0" ref="dynamicFields"/>
       </xs:all>
     </xs:complexType>
   </xs:element>
@@ -66,11 +67,30 @@
                     </xs:element>
                   </xs:choice>
                   <xs:attribute name="extractContent" type="xs:string" use="optional"/>
-                  <xs:attribute name="formatter" type="xs:string" use="optional"/>                  
+                  <xs:attribute name="formatter" type="xs:string" use="optional"/>
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
             <xs:attribute name="name" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="dynamicFields">
+    <xs:complexType>
+      <xs:sequence maxOccurs="unbounded" minOccurs="0">
+        <xs:element name="dynamicField">
+          <xs:complexType>
+            <xs:attribute name="matchNamespace" type="xs:string"/>
+            <xs:attribute name="matchName" type="xs:string"/>
+            <xs:attribute name="matchType" type="xs:string"/>
+            <xs:attribute name="matchMultiValue" type="xs:string"/>
+            <xs:attribute name="matchHierarchical" type="xs:string"/>
+            <xs:attribute name="matchScope" type="xs:string"/>
+            <xs:attribute name="name" type="xs:string"/>
+            <xs:attribute name="extractContent" type="xs:string"/>
+            <xs:attribute name="formatter" type="xs:string"/>
           </xs:complexType>
         </xs:element>
       </xs:sequence>

@@ -64,7 +64,39 @@ public class ValueEvaluator {
         }
 
         ValueType valueType = valueDef.getValueType();
-        Formatter formatter = valueDef.getFormatter() != null ? conf.getFormatters().getFormatter(valueDef.getFormatter()) : conf.getFormatters().getFormatter(valueType);
+        Formatter formatter = valueDef.getFormatter() != null ?
+                conf.getFormatters().getFormatter(valueDef.getFormatter()) : conf.getFormatters().getFormatter(valueType);
+
+        return formatter.format(indexValues, valueType);
+    }
+
+    /**
+     * Direct 'evaluation' (content extraction, formatting) of a given field from a record. Should only be
+     * called if the field is present in the record.
+     */
+    public List<String> format(IdRecord record, FieldType fieldType, boolean extractContent, String formatterName,
+            Repository repository) {
+        Object value = record.getField(fieldType.getId());
+
+        List<IndexValue> indexValues;
+
+        if (fieldType.getValueType().isMultiValue()) {
+            List<Object> values = (List<Object>)value;
+            indexValues = new ArrayList<IndexValue>(values.size());
+            for (int i = 0; i < values.size(); i++) {
+                indexValues.add(new IndexValue(record, fieldType, i, values.get(i)));
+            }
+        } else {
+            indexValues = Collections.singletonList(new IndexValue(record, fieldType, value));
+        }
+
+        if (fieldType.getValueType().getPrimitive().getName().equals("BLOB") && extractContent) {
+            return extractContent(indexValues, repository);
+        }
+
+        ValueType valueType = fieldType.getValueType();
+        Formatter formatter = formatterName != null ?
+                conf.getFormatters().getFormatter(formatterName) : conf.getFormatters().getFormatter(valueType);
 
         return formatter.format(indexValues, valueType);
     }
@@ -79,17 +111,20 @@ public class ValueEvaluator {
             if (indexValue.fieldType.getValueType().isHierarchical()) {
                 Object[] hierValue = ((HierarchyPath)indexValue.value).getElements();
                 for (int i = 0; i < hierValue.length; i++) {
-                    extractContent(hierValue[i], indexValue.record, indexValue.fieldType, indexValue.multiValueIndex, i, result, repository);
+                    extractContent(hierValue[i], indexValue.record, indexValue.fieldType, indexValue.multiValueIndex,
+                            i, result, repository);
                 }
             } else {
-                extractContent(indexValue.value, indexValue.record, indexValue.fieldType, indexValue.multiValueIndex, null, result, repository);
+                extractContent(indexValue.value, indexValue.record, indexValue.fieldType, indexValue.multiValueIndex,
+                        null, result, repository);
             }
         }
 
         return result.isEmpty() ? null : result;
     }
 
-    private void extractContent(Object value, Record record, FieldType fieldType, Integer multiValueIndex, Integer hierIndex, List<String> result, Repository repository) {
+    private void extractContent(Object value, Record record, FieldType fieldType, Integer multiValueIndex,
+            Integer hierIndex, List<String> result, Repository repository) {
         Blob blob = (Blob)value;
         InputStream is = null;
         try {

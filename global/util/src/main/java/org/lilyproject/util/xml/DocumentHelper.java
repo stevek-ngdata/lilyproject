@@ -112,6 +112,14 @@ public class DocumentHelper {
             return value.equalsIgnoreCase("true");
     }
 
+    public static Boolean getBooleanAttribute(Element element, String name, Boolean defaultValue) throws Exception {
+        String value = element.getAttribute(name);
+        if (value.equals(""))
+            return defaultValue;
+        else
+            return value.equalsIgnoreCase("true");
+    }
+
     public static int getIntegerAttribute(Element element, String name) throws Exception {
         if (!element.hasAttribute(name)) {
             throw new LocatedException("Missing attribute " + name + " on element " + element.getLocalName(), LocationAttributes.getLocation(element));

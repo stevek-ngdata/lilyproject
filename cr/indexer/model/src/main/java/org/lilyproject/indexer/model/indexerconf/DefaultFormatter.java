@@ -47,6 +47,7 @@ public class DefaultFormatter implements Formatter {
                 formattedPath.append("/");
                 formattedPath.append(formatPrimitiveValue(item, valueType));
             }
+            result.add(formattedPath.toString());
         } else {
             result.add(formatPrimitiveValue(indexValue.value, valueType));
         }
