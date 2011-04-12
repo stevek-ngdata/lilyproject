@@ -43,10 +43,13 @@ public class ValueEvaluator {
 
     private IndexerConf conf;
 
+    private SystemFields systemFields;
+
     private Parser tikaParser = new AutoDetectParser();
 
     public ValueEvaluator(IndexerConf conf) {
         this.conf = conf;
+        this.systemFields = conf.getSystemFields();
     }
 
     /**
@@ -54,7 +57,9 @@ public class ValueEvaluator {
      *
      * @return null if there is no value
      */
-    public List<String> eval(Value valueDef, IdRecord record, Repository repository, SchemaId vtag) {
+    public List<String> eval(Value valueDef, IdRecord record, Repository repository, SchemaId vtag)
+            throws RepositoryException, InterruptedException {
+
         List<IndexValue> indexValues = evalValue(valueDef, record, repository, vtag);
         if (indexValues == null || indexValues.size() == 0)
             return null;
@@ -154,9 +159,10 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IndexValue> evalValue(Value value, IdRecord record, Repository repository, SchemaId vtag) {
+    private List<IndexValue> evalValue(Value value, IdRecord record, Repository repository, SchemaId vtag)
+            throws RepositoryException, InterruptedException {
         if (value instanceof FieldValue) {
-            return evalFieldValue((FieldValue)value, record, repository, vtag);
+            return evalFieldValue((FieldValue)value, record, repository);
         } else if (value instanceof DerefValue) {
             return evalDerefValue((DerefValue)value, record, repository, vtag);
         } else {
@@ -164,25 +170,57 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IndexValue> evalFieldValue(FieldValue value, IdRecord record, Repository repository, SchemaId vtag) {
-        SchemaId fieldId = value.getFieldType().getId();
-        if (record.hasField(fieldId)) {
-            if (value.getFieldType().getValueType().isMultiValue()) {
-                List<Object> values = (List<Object>)record.getField(fieldId);
-                List<IndexValue> result = new ArrayList<IndexValue>(values.size());
-                for (int i = 0; i < values.size(); i++) {
-                    result.add(new IndexValue(record, value.getFieldType(), i, values.get(i)));
-                }
-                return result;
-            } else {
-                return Collections.singletonList(new IndexValue(record, value.getFieldType(), record.getField(fieldId)));
-            }
-        } else {
-            return null;
-        }
+    private List<IndexValue> evalFieldValue(FieldValue value, IdRecord record, Repository repository)
+            throws RepositoryException, InterruptedException {
+        return getValue(record, value.getFieldType(), null, repository.getTypeManager());
     }
 
-    private List<IndexValue> evalDerefValue(DerefValue deref, IdRecord record, Repository repository, SchemaId vtag) {
+    /**
+     *
+     * @param indexValues optional, if supplied values will be added to this list, otherwise a new list
+     *                    will be created and returned
+     * @return null if there's no value
+     */
+    private List<IndexValue> getValue(IdRecord record, FieldType fieldType, List<IndexValue> indexValues,
+            TypeManager typeManager) throws RepositoryException, InterruptedException {
+
+        Object value;
+
+        List<IndexValue> result;
+
+        if (systemFields.isSystemField(fieldType.getId())) {
+            value = systemFields.eval(record, fieldType, typeManager);
+        } else if (record.hasField(fieldType.getId())) {
+            value = record.getField(fieldType.getId());
+        } else {
+            value = null;
+        }
+
+        if (value == null) {
+            return null;
+        }
+
+        if (fieldType.getValueType().isMultiValue()) {
+            List<Object> values = (List<Object>)value;
+            result = indexValues != null ? indexValues : new ArrayList<IndexValue>(values.size());
+            for (int i = 0; i < values.size(); i++) {
+                result.add(new IndexValue(record, fieldType, i, values.get(i)));
+            }
+            return result;
+        } else {
+            if (indexValues != null) {
+                indexValues.add(new IndexValue(record, fieldType, value));
+                result = indexValues;
+            } else {
+                result = Collections.singletonList(new IndexValue(record, fieldType, value));
+            }
+        }
+
+        return result;
+    }
+
+    private List<IndexValue> evalDerefValue(DerefValue deref, IdRecord record, Repository repository, SchemaId vtag)
+            throws RepositoryException, InterruptedException {
         FieldType fieldType = deref.getTargetFieldType();
 
         List<IdRecord> records = new ArrayList<IdRecord>();
@@ -206,19 +244,7 @@ public class ValueEvaluator {
 
         List<IndexValue> result = new ArrayList<IndexValue>();
         for (IdRecord item : records) {
-            if (item.hasField(fieldType.getId())) {
-                Object value = item.getField(fieldType.getId());
-                if (value != null) {
-                    if (deref.getTargetField().getValueType().isMultiValue()) {
-                        List<Object> multiValues = (List<Object>)value;
-                        for (int r = 0; r < multiValues.size(); r++) {
-                            result.add(new IndexValue(item, fieldType, r, multiValues.get(r)));
-                        }
-                    } else {
-                        result.add(new IndexValue(item, fieldType, value));
-                    }
-                }
-            }
+            getValue(item, fieldType, result, repository.getTypeManager());
         }
 
         if (result.isEmpty())

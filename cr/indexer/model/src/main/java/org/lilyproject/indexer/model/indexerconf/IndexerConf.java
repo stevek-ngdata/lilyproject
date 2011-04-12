@@ -42,6 +42,7 @@ public class IndexerConf {
     private Map<SchemaId, List<IndexField>> derefIndexFieldsByField = new HashMap<SchemaId, List<IndexField>>();
     private Set<SchemaId> vtags = new HashSet<SchemaId>();
     private Formatters formatters = new Formatters();
+    private SystemFields systemFields;
 
     protected void addIndexCase(IndexCase indexCase) {
         indexCases.add(indexCase);
@@ -138,5 +139,13 @@ public class IndexerConf {
 
     public Formatters getFormatters() {
         return formatters;
+    }
+
+    public SystemFields getSystemFields() {
+        return systemFields;
+    }
+
+    public void setSystemFields(SystemFields systemFields) {
+        this.systemFields = systemFields;
     }
 }

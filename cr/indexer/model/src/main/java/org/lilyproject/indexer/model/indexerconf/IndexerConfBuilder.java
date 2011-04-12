@@ -58,7 +58,10 @@ public class IndexerConfBuilder {
     private IndexerConf conf;
 
     private Repository repository;
+
     private TypeManager typeManager;
+
+    private SystemFields systemFields;
 
     private IndexerConfBuilder() {
         // prevents instantiation
@@ -79,7 +82,9 @@ public class IndexerConfBuilder {
         this.doc = doc;
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
+        this.systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
         this.conf = new IndexerConf();
+        this.conf.setSystemFields(systemFields);
 
         try {
             buildCases();
@@ -341,7 +346,6 @@ public class IndexerConfBuilder {
             DynamicIndexField field = new DynamicIndexField(matchNamespace, matchName, matchTypes, matchMultiValue,
                     matchHierarchical, matchScopes, name, extractContent, formatter);
 
-            System.out.println("Adding a dynamic field");
             conf.addDynamicIndexField(field);
         }
     }
@@ -474,16 +478,15 @@ public class IndexerConfBuilder {
         return new QName(uri, localName);
     }
 
-    private FieldType getFieldType(String qname, Element contextEl) throws IndexerConfException, InterruptedException {
+    private FieldType getFieldType(String qname, Element contextEl) throws IndexerConfException, InterruptedException,
+            RepositoryException {
         QName parsedQName = parseQName(qname, contextEl);
 
-        try {
-            return typeManager.getFieldTypeByName(parsedQName);
-        } catch (FieldTypeNotFoundException e) {
-            throw new IndexerConfException("unknown field type: " + parsedQName, e);
-        } catch (RepositoryException e) {
-            throw new IndexerConfException("error loading field type: " + parsedQName, e);
+        if (systemFields.isSystemField(parsedQName)) {
+            return systemFields.get(parsedQName);
         }
+
+        return typeManager.getFieldTypeByName(parsedQName);
     }
 
     private void validate(Document document) throws IndexerConfException {

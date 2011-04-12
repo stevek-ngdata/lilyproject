@@ -154,8 +154,6 @@ public class IndexerTest {
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
-
-        changeIndexUpdater("indexerconf1.xml");
     }
 
     @AfterClass
@@ -309,6 +307,8 @@ public class IndexerTest {
 
     @Test
     public void testIndexerNonVersioned() throws Exception {
+        changeIndexUpdater("indexerconf1.xml");
+
         messageVerifier.init();
 
         //
@@ -534,6 +534,8 @@ public class IndexerTest {
 
     @Test
     public void testIndexerWithVersioning() throws Exception {
+        changeIndexUpdater("indexerconf1.xml");
+
         messageVerifier.init();
 
         //
@@ -1350,6 +1352,163 @@ public class IndexerTest {
             verifyResultCount("fulldyn_name_field4_long:1024", 1);
             verifyResultCount("fulldyn_field14_blob:conversations", 1);
         }
+
+        assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
+    }
+
+    @Test
+    public void testSystemFields() throws Exception {
+        messageVerifier.init();
+
+        //
+        // Create schema
+        //
+        log.debug("Begin test V401");
+        ValueType stringValueType = typeManager.getValueType("STRING");
+        ValueType linkValueType = typeManager.getValueType("LINK");
+
+        FieldType field1 = typeManager.createFieldType(stringValueType, new QName(NS, "sf_field1"), Scope.VERSIONED);
+
+        FieldType field2 = typeManager.createFieldType(linkValueType, new QName(NS, "sf_field2"), Scope.VERSIONED);
+
+        RecordType mixin1 = typeManager.newRecordType(new QName(NS, "sf_mixin1"));
+        mixin1 = typeManager.createRecordType(mixin1);
+
+        RecordType mixin2 = typeManager.newRecordType(new QName(NS, "sf_mixin2"));
+        mixin2 = typeManager.createRecordType(mixin2);
+
+        // Create a record type with two versions
+        RecordType rt = typeManager.newRecordType(new QName(NS, "sf_rt"));
+        rt.addFieldTypeEntry(field1.getId(), false);
+        rt.addFieldTypeEntry(field2.getId(), false);
+        rt.addMixin(mixin1.getId());
+        rt = typeManager.createRecordType(rt);
+
+        rt.addMixin(mixin2.getId(), mixin2.getVersion());
+        rt = typeManager.updateRecordType(rt);
+
+        //
+        // Change indexer conf
+        //
+        log.debug("Begin test V402");
+        changeIndexUpdater("indexerconf_sysfields.xml");
+
+        //
+        // Create content
+        //
+
+        // Create a record that uses version 1 of the record type
+        log.debug("Begin test V403");
+        Record record1 = repository.newRecord(idGenerator.newRecordId());
+        record1.setRecordType(rt.getName(), 1L);
+        record1.setField(field1.getName(), "acute");
+        expectEvent(CREATE, record1.getId(), 1L, null, field1.getId());
+        record1 = repository.createOrUpdate(record1);
+
+        // Create a record that uses version 2 of the record type
+        log.debug("Begin test V405");
+        Record record2 = repository.newRecord(idGenerator.newRecordId());
+        record2.setRecordType(rt.getName(), 2L);
+        record2.setField(field1.getName(), "obtuse");
+        expectEvent(CREATE, record2.getId(), 1L, null, field1.getId());
+        record2 = repository.createOrUpdate(record2);
+
+        // Create a record which links to one of the other records
+        log.debug("Begin test V406");
+        Record record3 = repository.newRecord(idGenerator.newRecordId());
+        record3.setRecordType(rt.getName());
+        record3.setField(field2.getName(), new Link(record2.getId()));
+        expectEvent(CREATE, record3.getId(), 1L, null, field2.getId());
+        record3 = repository.createOrUpdate(record3);
+
+        //
+        // Test searches
+        //
+        commitIndex();
+
+        log.debug("Begin test V407");
+
+        verifyResultCount("sf_field1_string:acute", 1);
+        verifyResultCount("sf_field1_string:obtuse", 1);
+
+        // recordType
+        verifyResultCount("+sf_field1_string:acute +recordType_literal:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordType_literal:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt"), 1);
+
+        // recordTypeWithVersion
+        verifyResultCount("+sf_field1_string:acute +recordTypeWithVersion_literal:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt:1"), 1);
+        verifyResultCount("+sf_field1_string:acute +recordTypeWithVersion_literal:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt:2"), 0);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeWithVersion_literal:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt:2"), 1);
+
+        // recordTypeName
+        verifyResultCount("+sf_field1_string:acute +recordTypeName_literal:" + qesc("sf_rt"), 1);
+
+        // recordTypeNamespace
+        verifyResultCount("+sf_field1_string:acute +recordTypeNamespace_literal:" +
+                qesc("org.lilyproject.indexer.test"), 1);
+
+        // recordTypeVersion
+        verifyResultCount("+sf_field1_string:acute +recordTypeVersion_literal:1", 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeVersion_literal:2", 1);
+
+        // mixins
+        verifyResultCount("+sf_field1_string:acute +mixins_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin1"), 1);
+        verifyResultCount("+sf_field1_string:acute +mixins_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin2"), 0);
+        verifyResultCount("+sf_field1_string:acute +mixins_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt"), 0);
+
+        verifyResultCount("+sf_field1_string:obtuse +mixins_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +mixins_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin2"), 1);
+
+        // mixinsWithVersion
+        verifyResultCount("+sf_field1_string:acute +mixinsWithVersion_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin1:1"), 1);
+
+        // mixinNames
+        verifyResultCount("+sf_field1_string:obtuse +mixinNames_literal_mv:" + qesc("sf_mixin1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +mixinNames_literal_mv:" + qesc("sf_mixin2"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +mixinNames_literal_mv:" + qesc("sf_mixin_not_existing"), 0);
+
+        // mixinNamespaces
+        verifyResultCount("+sf_field1_string:obtuse +mixinNamespaces_literal_mv:" +
+                qesc("org.lilyproject.indexer.test"), 1);
+
+        // recordTypes (record type + mixins)
+        verifyResultCount("+sf_field1_string:acute +recordTypes_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin1"), 1);
+        verifyResultCount("+sf_field1_string:acute +recordTypes_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin2"), 0);
+        verifyResultCount("+sf_field1_string:acute +recordTypes_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt"), 1);
+
+        // recordTypesWithVersion
+        verifyResultCount("+sf_field1_string:obtuse +recordTypesWithVersion_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin1:1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypesWithVersion_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_mixin2:1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypesWithVersion_literal_mv:" +
+                qesc("{org.lilyproject.indexer.test}sf_rt:2"), 1);
+
+        // recordTypeNames
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_mixin1"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_mixin2"), 1);
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeNames_literal_mv:" + qesc("sf_rt"), 1);
+
+        // recordTypeNamespaces
+        verifyResultCount("+sf_field1_string:obtuse +recordTypeNamespaces_literal_mv:" +
+                qesc("org.lilyproject.indexer.test"), 1);
+
+        // record type via deref
+        verifyResultCount("+recordType_deref_literal:" + qesc("{org.lilyproject.indexer.test}sf_rt"), 1);
 
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }

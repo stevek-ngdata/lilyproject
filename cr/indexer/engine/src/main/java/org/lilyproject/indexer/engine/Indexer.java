@@ -179,8 +179,6 @@ public class Indexer {
                         if (match.match) {
                             String fieldName = evalName(dynField, match, fieldType);
 
-                            System.out.println("Adding dynamic field " + fieldName);
-
                             List<String> values = valueEvaluator.format(record, fieldType, dynField.extractContext(),
                                     dynField.getFormatter(), repository);
 
@@ -223,6 +221,11 @@ public class Indexer {
             solrDoc.setField("@@id", record.getId().toString());
             solrDoc.setField("@@key", getIndexId(record.getId(), vtag));
             solrDoc.setField("@@vtag", vtag.toString());
+
+            // Can be useful during development
+            // if (log.isDebugEnabled()) {
+            //    log.debug("Constructed SOLR doc: " + solrDoc);
+            //}
 
             solrServers.getSolrServer(record.getId()).add(solrDoc);
             metrics.adds.inc();
