@@ -553,6 +553,8 @@ public class IndexerTest {
 
             commitIndex();
             verifyResultCount("v_field1:apple", 1);
+            verifyResultCount("+v_field1:apple +@@version:1", 1);
+            verifyResultCount("+v_field1:apple +@@version:2", 0);
 
             // Update the record, this will create a new version, but we leave the live version tag pointing to version 1
             log.debug("Begin test V2");
@@ -595,10 +597,10 @@ public class IndexerTest {
             verifyResultCount("v_field1:apple", 1);
             verifyResultCount("v_field1:pear", 2);
 
-            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(previewTag.getId().toString()), 1);
-            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(latestTag.getId().toString()), 1);
-            verifyResultCount("+v_field1:pear +@@vtag:" + qesc(liveTag.getId().toString()), 0);
-            verifyResultCount("+v_field1:apple +@@vtag:" + qesc(liveTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:pear +@@vtagId:" + qesc(previewTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:pear +@@vtagId:" + qesc(latestTag.getId().toString()), 1);
+            verifyResultCount("+v_field1:pear +@@vtagId:" + qesc(liveTag.getId().toString()), 0);
+            verifyResultCount("+v_field1:apple +@@vtagId:" + qesc(liveTag.getId().toString()), 1);
         }
 
         //
@@ -684,11 +686,11 @@ public class IndexerTest {
             record2 = repository.update(record2);
 
             commitIndex();
-            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId().toString()), 1);
-            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(liveTag.getId().toString()), 0);
+            verifyResultCount("+v_deref1:strawberries +@@vtagId:" + qesc(previewTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:strawberries +@@vtagId:" + qesc(liveTag.getId().toString()), 0);
             verifyResultCount("+v_deref1:strawberries", 1);
-            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
-            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(previewTag.getId().toString()), 0);
+            verifyResultCount("+v_deref1:fig +@@vtagId:" + qesc(liveTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:fig +@@vtagId:" + qesc(previewTag.getId().toString()), 0);
             verifyResultCount("+v_deref1:fig", 1);
 
             // Now do something similar with a 3th version, but first update record2 and then record1
@@ -703,12 +705,12 @@ public class IndexerTest {
             record1 = repository.update(record1);
 
             commitIndex();
-            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(latestTag.getId().toString()), 1);
-            verifyResultCount("+v_deref1:strawberries +@@vtag:" + qesc(previewTag.getId().toString()), 1);
-            verifyResultCount("+v_deref1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
-            verifyResultCount("+v_deref1:kiwi +@@vtag:" + qesc(liveTag.getId().toString()), 0);
-            verifyResultCount("+v_field1:kiwi +@@vtag:" + qesc(latestTag.getId().toString()), 1);
-            verifyResultCount("+v_field1:fig +@@vtag:" + qesc(liveTag.getId().toString()), 1);
+            verifyResultCount("+v_deref1:kiwi +@@vtag:latest", 1);
+            verifyResultCount("+v_deref1:strawberries +@@vtag:preview", 1);
+            verifyResultCount("+v_deref1:fig +@@vtag:live", 1);
+            verifyResultCount("+v_deref1:kiwi +@@vtag:live", 0);
+            verifyResultCount("+v_field1:kiwi +@@vtag:latest", 1);
+            verifyResultCount("+v_field1:fig +@@vtag:live", 1);
 
             // Perform updates to record3 and check if denorm'ed data in record4 follows
             log.debug("Begin test V11");
@@ -757,10 +759,10 @@ public class IndexerTest {
             record1 = repository.create(record1);
 
             commitIndex();
-            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +nv_field1:rollerblades", 1);
-            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +v_field1:bicycle", 0);
-            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +nv_field1:rollerblades", 1);
-            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +v_field1:bicycle", 1);
+            verifyResultCount("+@@vtagId:" + qesc(nvTag.getId().toString()) + " +nv_field1:rollerblades", 1);
+            verifyResultCount("+@@vtagId:" + qesc(nvTag.getId().toString()) + " +v_field1:bicycle", 0);
+            verifyResultCount("+@@vtagId:" + qesc(liveTag.getId().toString()) + " +nv_field1:rollerblades", 1);
+            verifyResultCount("+@@vtagId:" + qesc(liveTag.getId().toString()) + " +v_field1:bicycle", 1);
 
             // With deref
             log.debug("Begin test V15");
@@ -773,8 +775,8 @@ public class IndexerTest {
             record2 = repository.create(record2);
 
             commitIndex();
-            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +nv_v_deref:bicycle", 0);
-            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +nv_v_deref:bicycle", 1);
+            verifyResultCount("+@@vtagId:" + qesc(nvTag.getId().toString()) + " +nv_v_deref:bicycle", 0);
+            verifyResultCount("+@@vtagId:" + qesc(liveTag.getId().toString()) + " +nv_v_deref:bicycle", 1);
         }
 
         //
@@ -806,7 +808,7 @@ public class IndexerTest {
             record3 = repository.create(record3);
 
             commitIndex();
-            verifyResultCount("+@@vtag:" + qesc(nvTag.getId().toString()) + " +nv_v_nv_deref:Brussels", 0);
+            verifyResultCount("+@@vtagId:" + qesc(nvTag.getId().toString()) + " +nv_v_nv_deref:Brussels", 0);
 
             // Give the records a live tag
             log.debug("Begin test V19");
@@ -823,7 +825,7 @@ public class IndexerTest {
             record3 = repository.update(record3);
 
             commitIndex();
-            verifyResultCount("+@@vtag:" + qesc(liveTag.getId().toString()) + " +nv_v_nv_deref:Brussels", 1);
+            verifyResultCount("+@@vtagId:" + qesc(liveTag.getId().toString()) + " +nv_v_nv_deref:Brussels", 1);
         }
 
         //
@@ -1138,15 +1140,15 @@ public class IndexerTest {
             record1 = repository.create(record1);
 
             commitIndex();
-            verifyResultCount("+@@vtag:" + qesc(lastTag.getId().toString()) + " +nv_field1:north", 1);
+            verifyResultCount("+@@vtagId:" + qesc(lastTag.getId().toString()) + " +nv_field1:north", 1);
 
             record1.setField(vfield1.getName(), "south");
             expectEvent(UPDATE, record1.getId(), 1L, null, vfield1.getId());
             record1 = repository.update(record1);
 
             commitIndex();
-            verifyResultCount("+@@vtag:" + qesc(lastTag.getId().toString()) + " +nv_field1:north", 1);
-            verifyResultCount("+@@vtag:" + qesc(lastTag.getId().toString()) + " +v_field1:south", 1);
+            verifyResultCount("+@@vtagId:" + qesc(lastTag.getId().toString()) + " +nv_field1:north", 1);
+            verifyResultCount("+@@vtag:last +v_field1:south", 1);
         }
 
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());

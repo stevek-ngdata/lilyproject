@@ -124,7 +124,7 @@ public class Indexer {
                             " entries for vtags %3$s", recordId, entry.getKey(), vtagSetToNameString(entry.getValue())));
                 }
             } else {
-                index(version, entry.getValue());
+                index(version, entry.getKey(), entry.getValue());
             }
         }
     }
@@ -133,9 +133,11 @@ public class Indexer {
      * The actual indexing: maps record fields to index fields, and send to SOLR.
      *
      * @param record the correct version of the record, which has the versionTag applied to it
+     * @param version version of the record, for the nonversioned case this is 0 so is not necessarily the same as
+     *                record.getVersion().
      * @param vtags the version tags under which to index
      */
-    protected void index(IdRecord record, Set<SchemaId> vtags) throws IOException, SolrServerException,
+    protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws IOException, SolrServerException,
             ShardSelectorException, RepositoryException, InterruptedException {
 
         verifyLock(record.getId());
@@ -220,7 +222,9 @@ public class Indexer {
 
             solrDoc.setField("@@id", record.getId().toString());
             solrDoc.setField("@@key", getIndexId(record.getId(), vtag));
-            solrDoc.setField("@@vtag", vtag.toString());
+            solrDoc.setField("@@vtagId", vtag.toString());
+            solrDoc.setField("@@vtag", typeManager.getFieldTypeById(vtag).getName().getName());
+            solrDoc.setField("@@version", String.valueOf(version));
 
             // Can be useful during development
             // if (log.isDebugEnabled()) {

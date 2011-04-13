@@ -94,7 +94,9 @@
  <fields>
    <field name="@@key" type="string" indexed="true" stored="true" required="true"/>
    <field name="@@id" type="string" indexed="true" stored="true" required="true"/>
-   <field name="@@vtag" type="string" indexed="true" stored="true" required="true"/>
+   <field name="@@vtagId" type="string" indexed="true" stored="true"/>
+   <field name="@@vtag" type="string" indexed="true" stored="true"/>
+   <field name="@@version" type="long" indexed="true" stored="true"/>
 
    <field name="nv_field1" type="text" indexed="true" stored="true" required="false"/>
    <field name="nv_deref1" type="text" indexed="true" stored="true" required="false"/>
