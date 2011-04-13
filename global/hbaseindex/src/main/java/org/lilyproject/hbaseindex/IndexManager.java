@@ -60,9 +60,6 @@ public class IndexManager {
     /**
      * Creates a new index.
      *
-     * <p>This first creates the HBase table for this index, then adds the index
-     * definition to the indexmeta table.
-     *
      * @throws IndexExistsException if an index with the same name already exists
      */
     public synchronized Index getIndex(IndexDefinition indexDef) throws IOException, InterruptedException {
@@ -137,9 +134,7 @@ public class IndexManager {
     /**
      * Deletes an index.
      *
-     * <p>This removes the index definition from the index meta table, disables the
-     * index table and deletes it. If this would fail in between any of these operations,
-     * it is up to the administrator to perform the remaining work.
+     * <p>This disables the index table and deletes it.
      *
      * @throws IndexNotFoundException if the index does not exist.
      */

@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * Allows to query an index, and add entries to it or remove entries from it.
  *
- * <p>An Index instance can be obtained from {@link IndexManager#getIndex}.
+ * <p>An Index instance can be obtained from {@link IndexManager#getIndex(String)}.
  *
  */
 public class Index {

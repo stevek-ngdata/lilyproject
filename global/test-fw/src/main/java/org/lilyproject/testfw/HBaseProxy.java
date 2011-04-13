@@ -51,7 +51,6 @@ public class HBaseProxy {
 
     private static Set<String> RETAIN_TABLES = new HashSet<String>();
     static {
-        RETAIN_TABLES.add("indexmeta");
     }
 
     private static Map<String, byte[]> DEFAULT_TIMESTAMP_REUSING_TABLES = new HashMap<String, byte[]>();

@@ -8,24 +8,22 @@
 <p>The goal of this library is to hide the details of playing with HBase's byte[] row keys
   to construct indexes. Actually pushing data towards the index is not handled by this package.</p>
 
-<p>Some background on the indexing approach in this package can be found in
-  <a href="http://brunodumon.wordpress.com/2010/02/17/building-indexes-using-hbase-mapping-strings-numbers-and-dates-onto-bytes/"
-          >this blog post</a>.</p>
+<p>For more information also see
+  <a href="http://www.lilyproject.org/lily/about/playground/hbaseindexes.html"
+          >this web page</a>.</p>
 
 <h1>General</h1>
 
 <p>Each index corresponds to one HBase table.</p>
 
-<p>The configuration of the indexes is stored in an HBase table, by
-  default called "indexmeta".</p>
+<p>The definition of an index is stored as json in a property LILY_INDEX in the
+  HBase table descriptor (you can see this e.g. in the HBase web ui).</p>
 
 <h1>Usage</h1>
 
 <h2>Creating (defining) an index</h2>
 
 <pre>
-  // If you do not want to use "indexmeta" for the index meta table name,
-  // you can supply an additional argument to IndexManager
   IndexManager indexManager = new IndexManager(hbaseConf);
 
   IndexDefinition indexDef = new IndexDefinition("myindex");
@@ -34,7 +32,7 @@
 
   indexDef.addIntegerField("myIntField");
 
-  indexManager.createIndex(indexDef);
+  Index index = indexManager.getIndex(indexDef);
 </pre>
 
 <p>Once created, the structure of an index cannot be changed.</p>
