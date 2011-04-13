@@ -4,21 +4,10 @@
     <case recordType="b:Book" variant="*" vtags="last"/>
   </cases>
 
-  <indexFields>
-    <indexField name="title">
-      <value>
-        <field name="b:title"/>
-      </value>
-    </indexField>
+  <fields>
+    <field name="title" value="b:title"/>
 
-    <indexField name="authors">
-      <value>
-        <deref>
-          <follow field="b:authors"/>
-          <field name="b:name"/>
-        </deref>
-      </value>
-    </indexField>
-  </indexFields>
+    <field name="authors" value="b:authors=>b:name"/>
+  </fields>
 
 </indexer>

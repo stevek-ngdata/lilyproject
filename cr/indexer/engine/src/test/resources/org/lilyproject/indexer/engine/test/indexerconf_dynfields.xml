@@ -5,14 +5,10 @@
     <case recordType="dyn1:RecordType" variant="*" vtags="last"/>
   </cases>
 
-  <indexFields>
+  <fields>
     <!-- versioned mutable scope -->
-    <indexField name="field11_string">
-      <value>
-        <field name="dyn2:field11"/>
-      </value>
-    </indexField>
-  </indexFields>
+    <field name="field11_string" value="dyn2:field11"/>
+  </fields>
 
   <dynamicFields>
     <dynamicField matchNamespace="org.lilyproject.indexer.test.dyn1"

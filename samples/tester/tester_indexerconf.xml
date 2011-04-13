@@ -4,66 +4,26 @@
     <case recordType="t:TesterRecordType" variant="*" vtags="last"/>
   </cases>
 
-  <indexFields>
-    <indexField name="t$field1">
-      <value>
-        <field name="t:field1"/>
-      </value>
-    </indexField>
+  <fields>
+    <field name="t$field1" value="t:field1"/>
 
-    <indexField name="t$field2">
-      <value>
-        <field name="t:field2"/>
-      </value>
-    </indexField>
+    <field name="t$field2" value="t:field2"/>
 
-    <indexField name="t$field3">
-      <value>
-        <field name="t:field3"/>
-      </value>
-    </indexField>
+    <field name="t$field3" value="t:field3"/>
 
-    <indexField name="t$field4">
-      <value>
-        <field name="t:field4"/>
-      </value>
-    </indexField>
+    <field name="t$field4" value="t:field4"/>
 
-    <indexField name="t$field5">
-      <value>
-        <field name="t:field5"/>
-      </value>
-    </indexField>
+    <field name="t$field5" value="t:field5"/>
 
-    <indexField name="t$field6">
-      <value>
-        <field name="t:field6"/>
-      </value>
-    </indexField>
+    <field name="t$field6" value="t:field6"/>
 
-    <indexField name="t$field7">
-      <value>
-        <field name="t:field7"/>
-      </value>
-    </indexField>
+    <field name="t$field7" value="t:field7"/>
 
-    <indexField name="t$field8">
-      <value>
-        <field name="t:field8"/>
-      </value>
-    </indexField>
+    <field name="t$field8" value="t:field8"/>
 
-    <indexField name="t$field9">
-      <value>
-        <field name="t:field9"/>
-      </value>
-    </indexField>
+    <field name="t$field9" value="t:field9"/>
 
-    <indexField name="t$field10">
-      <value>
-        <field name="t:field10"/>
-      </value>
-    </indexField>
-  </indexFields>
+    <field name="t$field10" value="t:field10"/>
+  </fields>
 
 </indexer>

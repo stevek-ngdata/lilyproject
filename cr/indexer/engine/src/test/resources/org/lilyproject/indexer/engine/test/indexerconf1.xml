@@ -18,183 +18,75 @@
     <formatter name="year" class="org.lilyproject.indexer.engine.test.DateYearFormatter"/>
   </formatters>
 
-  <indexFields>
+  <fields>
 
     <!--
        | These fields are about non-versioned things (nv_ prefix)
        -->
-    <indexField name="nv_field1">
-      <value>
-        <field name="ns:nv_field1"/>
-      </value>
-    </indexField>
 
-    <indexField name="nv_deref1">
-      <value>
-        <deref>
-          <follow field="ns:nv_linkfield1"/>
-          <field name="ns:nv_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="nv_field1" value="ns:nv_field1"/>
 
-    <indexField name="nv_deref2">
-      <value>
-        <deref>
-          <follow variant="-lang,-branch"/>
-          <field name="ns:nv_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="nv_deref1" value="ns:nv_linkfield1=>ns:nv_field1"/>
 
-    <indexField name="nv_deref3">
-      <value>
-        <deref>
-          <follow variant="master"/>
-          <field name="ns:nv_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="nv_deref2" value="-lang,-branch=>ns:nv_field1"/>
 
-    <indexField name="nv_deref4">
-      <value>
-        <deref>
-          <follow variant="-branch"/>
-          <field name="ns:nv_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="nv_deref3" value="master=>ns:nv_field1"/>
+
+    <field name="nv_deref4" value="-branch=>ns:nv_field1"/>
 
     <!--
        | These fields are about versioned things (v_ prefix)
        -->
-    <indexField name="v_field1">
-      <value>
-        <field name="ns2:v_field1"/>
-      </value>
-    </indexField>
 
-    <indexField name="v_deref1">
-      <value>
-        <deref>
-          <follow field="ns2:v_linkfield1"/>
-          <field name="ns2:v_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="v_field1" value="ns2:v_field1"/>
 
-    <indexField name="v_deref2">
-      <value>
-        <deref>
-          <follow variant="-lang,-branch"/>
-          <field name="ns2:v_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="v_deref1" value="ns2:v_linkfield1=>ns2:v_field1"/>
 
-    <indexField name="v_deref3">
-      <value>
-        <deref>
-          <follow variant="master"/>
-          <field name="ns2:v_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="v_deref2" value="-lang,-branch=>ns2:v_field1"/>
 
-    <indexField name="v_deref4">
-      <value>
-        <deref>
-          <follow variant="-branch"/>
-          <field name="ns2:v_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="v_deref3" value="master=>ns2:v_field1"/>
+
+    <field name="v_deref4" value="-branch=>ns2:v_field1"/>
 
     <!--
        | Mixed versioned & non-versioned usage.
        -->
 
-    <indexField name="nv_v_deref">
-      <value>
-        <deref>
-          <follow field="ns:nv_linkfield2"/>
-          <field name="ns2:v_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="nv_v_deref" value="ns:nv_linkfield2=>ns2:v_field1"/>
 
-    <indexField name="nv_v_nv_deref">
-      <value>
-        <deref>
-          <follow field="ns:nv_linkfield2"/>
-          <follow field="ns2:v_linkfield1"/>
-          <field name="ns:nv_field1"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="nv_v_nv_deref" value="ns:nv_linkfield2=>ns2:v_linkfield1=>ns:nv_field1"/>
 
     <!--
        | Multi-value fields
        -->
 
-    <indexField name="v_string_mv">
-      <value>
-        <field name="ns2:v_string_mv_field"/>
-      </value>
-    </indexField>
+    <field name="v_string_mv" value="ns2:v_string_mv_field"/>
 
     <!--
        | Non-string value types
        -->
 
-    <indexField name="v_long">
-      <value>
-        <field name="ns2:v_long_field"/>
-      </value>
-    </indexField>
+    <field name="v_long" value="ns2:v_long_field"/>
 
-    <indexField name="v_date">
-      <value>
-        <field name="ns2:v_date_field"/>
-      </value>
-    </indexField>
+    <field name="v_date" value="ns2:v_date_field"/>
 
-    <indexField name="v_datetime">
-      <value>
-        <field name="ns2:v_datetime_field"/>
-      </value>
-    </indexField>
+    <field name="v_datetime" value="ns2:v_datetime_field"/>
 
     <!--
        | Blobs.
        -->
 
-    <indexField name="v_blob">
-      <value extractContent="true">
-        <field name="ns2:v_blob_field"/>
-      </value>
-    </indexField>
+    <field name="v_blob" value="ns2:v_blob_field" extractContent="true"/>
 
-    <indexField name="v_blob">
-      <value extractContent="true">
-        <field name="ns2:v_blob_mv_hier_field"/>
-      </value>
-    </indexField>
+    <field name="v_blob" value="ns2:v_blob_mv_hier_field" extractContent="true"/>
 
     <!--
        | Formatters
        -->
-    <indexField name="year">
-      <value formatter="year">
-        <field name="ns2:v_datetime_field"/>
-      </value>
-    </indexField>
 
-    <indexField name="inthierarchy">
-      <value>
-        <field name="ns2:v_int_hier_field"/>
-      </value>
-    </indexField>
-  </indexFields>
+    <field name="year" value="ns2:v_datetime_field" formatter="year"/>
+
+    <field name="inthierarchy" value="ns2:v_int_hier_field"/>
+  </fields>
 
 </indexer>

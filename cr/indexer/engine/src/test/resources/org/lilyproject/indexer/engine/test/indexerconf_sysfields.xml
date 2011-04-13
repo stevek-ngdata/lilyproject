@@ -1,104 +1,40 @@
 <?xml version="1.0"?>
-<indexer xmlns:ns="org.lilyproject.indexer.test"
-         xmlns:sys="org.lilyproject.system">
+<indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:sys="org.lilyproject.system">
 
   <cases>
     <case recordType="ns:sf_rt" variant="*" vtags="last"/>
   </cases>
 
-  <indexFields>
-    <indexField name="sf_field1_string">
-      <value>
-        <field name="ns:sf_field1"/>
-      </value>
-    </indexField>
+  <fields>
+    <field name="sf_field1_string" value="ns:sf_field1"/>
 
-    <indexField name="recordType_deref_literal">
-      <value>
-        <deref>
-          <follow field="ns:sf_field2"/>
-          <field name="sys:recordType"/>
-        </deref>
-      </value>
-    </indexField>
+    <field name="recordType_deref_literal" value="ns:sf_field2=>sys:recordType"/>
 
-    <indexField name="recordType_literal">
-      <value>
-        <field name="sys:recordType"/>
-      </value>
-    </indexField>
+    <field name="recordType_literal" value="sys:recordType"/>
 
-    <indexField name="recordTypeWithVersion_literal">
-      <value>
-        <field name="sys:recordTypeWithVersion"/>
-      </value>
-    </indexField>
+    <field name="recordTypeWithVersion_literal" value="sys:recordTypeWithVersion"/>
 
-    <indexField name="recordTypeName_literal">
-      <value>
-        <field name="sys:recordTypeName"/>
-      </value>
-    </indexField>
+    <field name="recordTypeName_literal" value="sys:recordTypeName"/>
 
-    <indexField name="recordTypeNamespace_literal">
-      <value>
-        <field name="sys:recordTypeNamespace"/>
-      </value>
-    </indexField>
+    <field name="recordTypeNamespace_literal" value="sys:recordTypeNamespace"/>
 
-    <indexField name="recordTypeVersion_literal">
-      <value>
-        <field name="sys:recordTypeVersion"/>
-      </value>
-    </indexField>
+    <field name="recordTypeVersion_literal" value="sys:recordTypeVersion"/>
 
-    <indexField name="mixins_literal_mv">
-      <value>
-        <field name="sys:mixins"/>
-      </value>
-    </indexField>
+    <field name="mixins_literal_mv" value="sys:mixins"/>
 
-    <indexField name="mixinsWithVersion_literal_mv">
-      <value>
-        <field name="sys:mixinsWithVersion"/>
-      </value>
-    </indexField>
+    <field name="mixinsWithVersion_literal_mv" value="sys:mixinsWithVersion"/>
 
-    <indexField name="mixinNames_literal_mv">
-      <value>
-        <field name="sys:mixinNames"/>
-      </value>
-    </indexField>
+    <field name="mixinNames_literal_mv" value="sys:mixinNames"/>
 
-    <indexField name="mixinNamespaces_literal_mv">
-      <value>
-        <field name="sys:mixinNamespaces"/>
-      </value>
-    </indexField>
+    <field name="mixinNamespaces_literal_mv" value="sys:mixinNamespaces"/>
 
-    <indexField name="recordTypes_literal_mv">
-      <value>
-        <field name="sys:recordTypes"/>
-      </value>
-    </indexField>
+    <field name="recordTypes_literal_mv" value="sys:recordTypes"/>
 
-    <indexField name="recordTypesWithVersion_literal_mv">
-      <value>
-        <field name="sys:recordTypesWithVersion"/>
-      </value>
-    </indexField>
+    <field name="recordTypesWithVersion_literal_mv" value="sys:recordTypesWithVersion"/>
 
-    <indexField name="recordTypeNames_literal_mv">
-      <value>
-        <field name="sys:recordTypeNames"/>
-      </value>
-    </indexField>
+    <field name="recordTypeNames_literal_mv" value="sys:recordTypeNames"/>
 
-    <indexField name="recordTypeNamespaces_literal_mv">
-      <value>
-        <field name="sys:recordTypeNamespaces"/>
-      </value>
-    </indexField>
-  </indexFields>
+    <field name="recordTypeNamespaces_literal_mv" value="sys:recordTypeNamespaces"/>
+  </fields>
 
 </indexer>

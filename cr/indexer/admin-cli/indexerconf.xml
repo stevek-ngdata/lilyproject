@@ -5,13 +5,9 @@
     <case recordType="foo:Book" variant="*" vtags="live"/>
   </cases>
 
-  <indexFields>
-    <indexField name="title">
-      <value>
-        <field name="foo:title"/>
-      </value>
-    </indexField>
-  </indexFields>
+  <fields>
+    <field name="title" value="foo:title"/>
+  </fields>
   -->
 
 </indexer>

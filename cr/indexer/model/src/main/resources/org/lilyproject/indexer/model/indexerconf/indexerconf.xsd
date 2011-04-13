@@ -5,7 +5,7 @@
       <xs:all minOccurs="0">
         <xs:element minOccurs="0" ref="cases"/>
         <xs:element minOccurs="0" ref="formatters"/>
-        <xs:element minOccurs="0" ref="indexFields"/>
+        <xs:element minOccurs="0" ref="fields"/>
         <xs:element minOccurs="0" ref="dynamicFields"/>
       </xs:all>
     </xs:complexType>
@@ -42,36 +42,15 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-  <xs:element name="indexFields">
+  <xs:element name="fields">
     <xs:complexType>
       <xs:sequence>
-        <xs:element maxOccurs="unbounded" minOccurs="0" name="indexField">
+        <xs:element maxOccurs="unbounded" minOccurs="0" name="field">
           <xs:complexType>
-            <xs:sequence>
-              <xs:element name="value">
-                <xs:complexType>
-                  <xs:choice>
-                    <xs:element ref="field"/>
-                    <xs:element name="deref">
-                      <xs:complexType>
-                        <xs:sequence>
-                          <xs:element maxOccurs="unbounded" minOccurs="1" name="follow">
-                            <xs:complexType>
-                              <xs:attribute name="field" type="xs:string" use="optional"/>
-                              <xs:attribute name="variant" type="xs:string" use="optional"/>
-                            </xs:complexType>
-                          </xs:element>
-                          <xs:element maxOccurs="1" minOccurs="1" ref="field"/>
-                        </xs:sequence>
-                      </xs:complexType>
-                    </xs:element>
-                  </xs:choice>
-                  <xs:attribute name="extractContent" type="xs:string" use="optional"/>
-                  <xs:attribute name="formatter" type="xs:string" use="optional"/>
-                </xs:complexType>
-              </xs:element>
-            </xs:sequence>
             <xs:attribute name="name" type="xs:string" use="required"/>
+            <xs:attribute name="value" type="xs:string" use="required"/>
+            <xs:attribute name="extractContent" type="xs:string" use="optional"/>
+            <xs:attribute name="formatter" type="xs:string" use="optional"/>
           </xs:complexType>
         </xs:element>
       </xs:sequence>

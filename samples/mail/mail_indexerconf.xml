@@ -4,21 +4,10 @@
     <case recordType="m:Part" variant="*" vtags="last"/>
   </cases>
 
-  <indexFields>
-    <indexField name="content">
-      <value extractContent="true">
-        <field name="m:content"/>
-      </value>
-    </indexField>
+  <fields>
+    <field name="content" value="m:content" extractContent="true"/>
 
-    <indexField name="subject">
-      <value>
-        <deref>
-          <follow field="m:message"/>
-          <field name="m:subject"/>
-        </deref>
-      </value>
-    </indexField>
-  </indexFields>
+    <field name="subject" value="m:message=>m:subject"/>
+  </fields>
 
 </indexer>
