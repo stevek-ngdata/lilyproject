@@ -56,6 +56,14 @@
               <basename>lily-list-rowlogs</basename>
               <mainClass>org.lilyproject.rowlog.admin.cli.ListRowLogsCli</mainClass>
             </script>
+            <script>
+              <basename>lily-update-rowlog</basename>
+              <mainClass>org.lilyproject.rowlog.admin.cli.UpdateRowLogCli</mainClass>
+            </script>
+            <script>
+              <basename>lily-update-subscription</basename>
+              <mainClass>org.lilyproject.rowlog.admin.cli.UpdateSubscriptionCli</mainClass>
+            </script>
           </scripts>
         </configuration>
         <executions>

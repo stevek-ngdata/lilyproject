@@ -23,8 +23,8 @@ import org.lilyproject.util.ObjectUtils;
 public class RowLogSubscription implements Comparable<RowLogSubscription> {
     private final String rowLogId;
     private final String id;
-    private final Type type;
-    private final int orderNr;
+    private Type type;
+    private int orderNr;
 
     /**
      * The type of a subscription defines if the listeners of a subscription run locally (VM) or remote (Netty) 
@@ -61,7 +61,7 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
     public int getOrderNr() {
         return orderNr;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;

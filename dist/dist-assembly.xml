@@ -208,6 +208,26 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file-->
+    <file>
+      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-rowlog</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <!--file>
+      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-rowlog.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
+    <file>
+      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-subscription</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <!--file>
+      <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-subscription.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
 
     <!-- Launch hadoop -->
     <file>

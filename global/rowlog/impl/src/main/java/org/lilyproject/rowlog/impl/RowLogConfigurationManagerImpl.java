@@ -197,7 +197,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
     public synchronized void updateSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type,
             int orderNr) throws KeeperException, InterruptedException, RowLogException {
         if (!subscriptionExists(rowLogId, subscriptionId))
-            throw new RowLogException("Subscription " + subscriptionId + "does not exist for rowlog " + rowLogId);
+            throw new RowLogException("Subscription '" + subscriptionId + "' does not exist for rowlog '" + rowLogId + "'");
         
         final String path = subscriptionPath(rowLogId, subscriptionId);
 
@@ -212,7 +212,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
                 }
             });
         } catch (KeeperException.NoNodeException e) {
-            throw new RowLogException("Subscription " + subscriptionId + "does not exist for rowlog " + rowLogId);
+            throw new RowLogException("Subscription '" + subscriptionId + "' does not exist for rowlog '" + rowLogId + "'");
         }
     }
     
