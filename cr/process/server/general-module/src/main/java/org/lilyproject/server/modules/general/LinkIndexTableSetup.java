@@ -20,8 +20,6 @@ public class LinkIndexTableSetup {
 
     @PostConstruct
     public void init() throws IOException, InterruptedException {
-        IndexManager.createIndexMetaTableIfNotExists(hbaseConf);
-        IndexManager indexManager = new IndexManager(hbaseConf, IndexManager.DEFAULT_META_TABLE, tableFactory);
-        LinkIndex.createIndexes(indexManager);
+        IndexManager indexManager = new IndexManager(hbaseConf, tableFactory);
     }
 }

@@ -16,6 +16,10 @@ public interface HBaseTableFactory {
      */
     HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException;
 
+    /**
+     * @param create if false, table will not be automatically created, TableNotFoundException will be thrown
+     *               instead.
+     */
     HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException;
 
     /**

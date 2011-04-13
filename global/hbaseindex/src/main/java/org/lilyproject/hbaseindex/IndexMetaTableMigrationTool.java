@@ -1,0 +1,69 @@
+package org.lilyproject.hbaseindex;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.hbase.LocalHTable;
+
+/**
+ * Simple migration tool to migrate from the situation where we stored the index definition (json) in a separate
+ * index meta table to the situation where we store the index definition in a custom attribute on the
+ * hbase table descriptor.
+ */
+public class IndexMetaTableMigrationTool {
+    public static void main(String[] args) throws Exception {
+        String zkConnect = System.getProperty("zookeeper");
+        String metaTable = System.getProperty("table");
+
+        System.out.println("Using zookeeper connect string " + zkConnect);
+        System.out.println("Using index meta table " + metaTable);
+
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", zkConnect);
+
+        HTableInterface table = new LocalHTable(conf, metaTable);
+
+        HBaseAdmin admin = new HBaseAdmin(conf);
+
+        ResultScanner scanner = table.getScanner(Bytes.toBytes("meta"));
+
+        Result result;
+        while ((result = scanner.next()) != null) {
+            byte[] tableName = result.getRow();
+            String tableNameString = Bytes.toString(result.getRow());
+
+            HTableDescriptor tableDescr;
+            try {
+                tableDescr = admin.getTableDescriptor(tableName);
+            } catch (TableNotFoundException e) {
+                System.out.println("Skipping non-existing index table: " + tableNameString);
+                continue;
+            }
+
+            byte[] json = result.getValue(Bytes.toBytes("meta"), Bytes.toBytes("conf"));
+            if (json == null) {
+                System.out.println("Did not find KV containing index definition, skipping row: " + result.getRow());
+                continue;
+            }
+
+            tableDescr.setValue(Bytes.toBytes("LILY_INDEX"), json);
+
+            System.out.println("Disabling index table " + tableNameString);
+            admin.disableTable(tableName);
+            System.out.println("Storing index meta on index table " + tableNameString);
+            admin.modifyTable(tableName, tableDescr);
+            System.out.println("Enabling index table " + tableNameString);
+            admin.enableTable(tableName);
+            System.out.println("--");
+        }
+
+        System.out.println("After verifying that everything is correctly performed,");
+        System.out.println("you may delete the index meta table.");
+    }
+}

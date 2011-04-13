@@ -38,8 +38,6 @@ public class IndexTest {
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
         HBASE_PROXY.start();
-
-        IndexManager.createIndexMetaTableIfNotExists(HBASE_PROXY.getConf());
     }
 
     @AfterClass
@@ -54,8 +52,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         // Create a few index entries, inserting them in non-sorted order
         String[] values = {"d", "a", "c", "e", "b"};
@@ -81,8 +78,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         ByteIndexFieldDefinition fieldDef = indexDef.addByteField("field1");
         fieldDef.setLength(3);
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         // Create a few index entries, inserting them in non-sorted order
         byte[][] values = {Bytes.toBytes("aaa"), Bytes.toBytes("aab")};
@@ -107,8 +103,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         final int COUNT = 1000;
         final int MAXVALUE = Integer.MAX_VALUE;
@@ -145,8 +140,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addLongField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         long values[] = {Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE};
         for (long value : values) {
@@ -174,8 +168,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addFloatField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         float[] values = {55.45f, 63.88f, 55.46f, 55.47f, -0.3f};
 
@@ -200,9 +193,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         DateTimeIndexFieldDefinition fieldDef = indexDef.addDateTimeField("field1");
         fieldDef.setPrecision(DateTimeIndexFieldDefinition.Precision.DATETIME_NOMILLIS);
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         Date[] values = {
                 new GregorianCalendar(2010, 1, 15, 14, 5, 0).getTime(),
@@ -232,8 +223,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addDecimalField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         String[] values = {"33.66", "-1", "-3.00007E77"};
 
@@ -267,9 +257,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         // Create a few index entries, inserting them in non-sorted order
         String[] values = {"a", "a", "a", "a", "b", "c", "d"};
@@ -297,9 +285,7 @@ public class IndexTest {
         indexDef.addIntegerField("field1");
         indexDef.addStringField("field2");
 
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         IndexEntry entry = new IndexEntry();
         entry.addField("field1", 10);
@@ -339,9 +325,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         // Add the entry
         IndexEntry entry = new IndexEntry();
@@ -376,9 +360,7 @@ public class IndexTest {
         indexDef.addStringField("field1");
         indexDef.addStringField("field2");
 
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         IndexEntry entry = new IndexEntry();
         entry.addField("field1", "foobar");
@@ -433,7 +415,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("foo");
-        indexManager.createIndexIfNotExists(indexDef);
+        indexManager.getIndex(indexDef);
 
         indexManager.getIndex(INDEX_NAME);
 
@@ -456,7 +438,7 @@ public class IndexTest {
         indexDef.addStringField("stringfield");
         indexDef.addFloatField("floatfield");
 
-        indexManager.createIndexIfNotExists(indexDef);
+        indexManager.getIndex(indexDef);
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
@@ -502,9 +484,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
 
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         String[] values = {"baard", "boer", "beek", "kanaal", "paard"};
 
@@ -534,9 +514,7 @@ public class IndexTest {
         indexDef.addIntegerField("field2");
         indexDef.addStringField("field3");
 
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         for (int i = 0; i < 3; i++) {
             IndexEntry entry = new IndexEntry();
@@ -635,9 +613,7 @@ public class IndexTest {
         indexDef.addStringField("field1");
         indexDef.addIntegerField("field2");
 
-        indexManager.createIndexIfNotExists(indexDef);
-
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         //
         // Index entry checks
@@ -687,7 +663,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         try {
-            indexManager.createIndexIfNotExists(indexDef);
+            indexManager.getIndex(indexDef);
             fail("Exception expected.");
         } catch (IllegalArgumentException e) {}
     }    
@@ -699,8 +675,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         int[] values = {1, 2, 3, 4};
         for (int value : values) {
@@ -746,8 +721,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addIntegerField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         Integer[] values = {Integer.MIN_VALUE, 1, 2, Integer.MAX_VALUE, null};
         for (int i = 0; i < values.length; i++) {
@@ -788,8 +762,7 @@ public class IndexTest {
         indexDef.setIdentifierOrder(Order.DESCENDING);
         IntegerIndexFieldDefinition fieldDef = indexDef.addIntegerField("field1");
         fieldDef.setOrder(Order.DESCENDING);
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         Integer[] values = {1, 2, 2, 3, null};
         for (int i = 0; i < values.length; i++) {
@@ -822,8 +795,7 @@ public class IndexTest {
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         IntegerIndexFieldDefinition fieldDef = indexDef.addIntegerField("field1");
         fieldDef.setOrder(Order.DESCENDING);
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         Integer[] values = {1, 1, 2, 2};
         for (int i = 0; i < values.length; i++) {
@@ -850,8 +822,7 @@ public class IndexTest {
         indexDef.setIdentifierOrder(Order.DESCENDING);
         StringIndexFieldDefinition fieldDef = indexDef.addStringField("field1");
         fieldDef.setOrder(Order.DESCENDING);
-        indexManager.createIndexIfNotExists(indexDef);
-        Index index = indexManager.getIndex(INDEX_NAME);
+        Index index = indexManager.getIndex(indexDef);
 
         String[] values = {"a", "ab", "abc", "b"};
         for (int i = 0; i < values.length; i++) {
@@ -890,7 +861,7 @@ public class IndexTest {
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
         indexDef.addStringField("field1");
-        indexManager.createIndexIfNotExists(indexDef);
+        indexManager.getIndex(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
         String[] values = new String[] {"foo", "bar"};

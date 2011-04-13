@@ -57,10 +57,8 @@ public class LinkIndexTest {
         repository = repoSetup.getRepository();
         ids = repository.getIdGenerator();
 
-        IndexManager.createIndexMetaTableIfNotExists(repoSetup.getHadoopConf());
         IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
-        LinkIndex.createIndexes(indexManager);
         linkIndex = new LinkIndex(indexManager, repository);
 
         repoSetup.getRowLogConfManager().addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);

@@ -130,10 +130,8 @@ public class IndexerTest {
         typeManager = repoSetup.getTypeManager();
         idGenerator = repository.getIdGenerator();
 
-        IndexManager.createIndexMetaTableIfNotExists(repoSetup.getHadoopConf());
         IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
 
-        LinkIndex.createIndexes(indexManager);
         linkIndex = new LinkIndex(indexManager, repository);
 
         // Field types should exist before the indexer conf is loaded

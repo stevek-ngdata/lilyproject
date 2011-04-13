@@ -44,11 +44,20 @@ public class LinkIndex {
         metrics = new LinkIndexMetrics("linkIndex");
         this.idGenerator = repository.getIdGenerator();
 
+        // About the structure of these indexes:
+        //  - the vtag comes after the recordid because this way we can delete all
+        //    entries for a record without having to know the vtags under which they occur
+        //  - the sourcefield will often by optional in queries, that's why it comes last
+
         FORWARD_INDEX = new ThreadLocal<Index>() {
             @Override
             protected Index initialValue() {
                 try {
-                    return indexManager.getIndex("links-forward");
+                    IndexDefinition indexDef = new IndexDefinition("links-forward");
+                    indexDef.addByteField("source");
+                    indexDef.addByteField("vtag");
+                    indexDef.addByteField("sourcefield");
+                    return indexManager.getIndex(indexDef);
                 } catch (Exception e) {
                     throw new RuntimeException("Error accessing forward links index.", e);
                 }
@@ -59,12 +68,20 @@ public class LinkIndex {
             @Override
             protected Index initialValue() {
                 try {
-                    return indexManager.getIndex("links-backward");
+                    IndexDefinition indexDef = new IndexDefinition("links-backward");
+                    indexDef.addByteField("target");
+                    indexDef.addByteField("vtag");
+                    indexDef.addByteField("sourcefield");
+                    return indexManager.getIndex(indexDef);
                 } catch (Exception e) {
                     throw new RuntimeException("Error accessing backward links index.", e);
                 }
             }
         };
+
+        // Do a get now to be sure the indexes exist or can be successfully created
+        FORWARD_INDEX.get();
+        BACKWARD_INDEX.get();
     }
 
     /**
@@ -317,29 +334,6 @@ public class LinkIndex {
             return result;
         } finally {
             metrics.report(Action.GET_FW_LINKS, System.currentTimeMillis() - before);
-        }
-    }
-
-    public static void createIndexes(IndexManager indexManager) throws IOException, InterruptedException {
-        // About the structure of these indexes:
-        //  - the vtag comes after the recordid because this way we can delete all
-        //    entries for a record without having to know the vtags under which they occur
-        //  - the sourcefield will often by optional in queries, that's why it comes last
-
-        {
-            IndexDefinition indexDef = new IndexDefinition("links-backward");
-            indexDef.addByteField("target");
-            indexDef.addByteField("vtag");
-            indexDef.addByteField("sourcefield");
-            indexManager.createIndexIfNotExists(indexDef);
-        }
-
-        {
-            IndexDefinition indexDef = new IndexDefinition("links-forward");
-            indexDef.addByteField("source");
-            indexDef.addByteField("vtag");
-            indexDef.addByteField("sourcefield");
-            indexManager.createIndexIfNotExists(indexDef);
         }
     }
 }

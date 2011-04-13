@@ -78,8 +78,6 @@ public class HbaseIndexPerfTest extends BaseTestTool {
 
         Configuration hbaseConf = getHBaseConf();
 
-        IndexManager.createIndexMetaTableIfNotExists(hbaseConf);
-
         IndexManager indexMgr = new IndexManager(hbaseConf);
 
         String indexName = "perftest1";
@@ -88,7 +86,7 @@ public class HbaseIndexPerfTest extends BaseTestTool {
         indexDef.addStringField("word");
         indexDef.addLongField("number");
 
-        indexMgr.createIndexIfNotExists(indexDef);
+        index = indexMgr.getIndex(indexDef);
 
         initialInserts = Util.getIntOption(cmd, initialInsertOption, 5000000);
         initialInsertsBatchSize = Util.getIntOption(cmd, initialInsertBatchOption, 300);
@@ -96,8 +94,6 @@ public class HbaseIndexPerfTest extends BaseTestTool {
 
         System.out.println("Will insert " + initialInserts + " index entries in batches of " + initialInsertBatchOption);
         System.out.println("Will then perform " + loops + " tests on it");
-
-        index = indexMgr.getIndex(indexName);
 
         setupMetrics();
 
