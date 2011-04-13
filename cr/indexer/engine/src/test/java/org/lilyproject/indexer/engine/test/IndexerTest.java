@@ -1387,6 +1387,11 @@ public class IndexerTest {
         rt.addMixin(mixin2.getId(), mixin2.getVersion());
         rt = typeManager.updateRecordType(rt);
 
+        RecordType rt2 = typeManager.newRecordType(new QName(NS, "sf_rt2"));
+        rt2.addFieldTypeEntry(field1.getId(), false);
+        rt2.addFieldTypeEntry(field2.getId(), false);
+        rt2 = typeManager.createRecordType(rt2);
+
         //
         // Change indexer conf
         //
@@ -1510,6 +1515,35 @@ public class IndexerTest {
         // record type via deref
         verifyResultCount("+recordType_deref_literal:" + qesc("{org.lilyproject.indexer.test}sf_rt"), 1);
 
+        // Update record 2, can't verify anything immediately, this is just to check denormalized
+        // update of expressions pointing to the fake system fields does not give problems
+        log.debug("Begin test V408");
+        record2.setField(field1.getName(), "obtuse2");
+        expectEvent(UPDATE, record2.getId(), 2L, null, field1.getId());
+        record2 = repository.createOrUpdate(record2);
+
+        // Change record type of record 2. The denormalized reference of it stored in the index entry
+        // of record 3 will not be updated as this is currently not supported.
+        log.debug("Begin test V409");
+        record2 = repository.newRecord(record2.getId());
+        record2.setRecordType(rt2.getName());
+        record2.setField(field1.getName(), "obtuse3"); // currently can't only change record type, so touch field as well
+        expectEvent(UPDATE, record2.getId(), 3L, null, true, field1.getId());
+        record2 = repository.update(record2);
+
+        commitIndex();
+
+        // Deref field still contains old record type
+        verifyResultCount("+recordType_deref_literal:" + qesc("{org.lilyproject.indexer.test}sf_rt"), 1);
+
+        // Touch record 3 and retest
+        record3.setField(field1.getName(), "right");
+        expectEvent(UPDATE, record3.getId(), 2L, null, field1.getId());
+        record3 = repository.update(record3);
+
+        commitIndex();
+        verifyResultCount("+recordType_deref_literal:" + qesc("{org.lilyproject.indexer.test}sf_rt2"), 1);
+
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }
 
@@ -1569,7 +1603,11 @@ public class IndexerTest {
 
     private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
             SchemaId... updatedFields) {
+        expectEvent(type, recordId, versionCreated, versionUpdated, false, updatedFields);
+    }
 
+    private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
+            boolean recordTypeChanged, SchemaId... updatedFields) {
         RecordEvent event = new RecordEvent();
 
         event.setType(type);
@@ -1583,6 +1621,9 @@ public class IndexerTest {
 
         if (versionUpdated != null)
             event.setVersionUpdated(versionUpdated);
+
+        if (recordTypeChanged)
+            event.setRecordTypeChanged(recordTypeChanged);
 
         messageVerifier.setExpectedEvent(recordId, event);
     }

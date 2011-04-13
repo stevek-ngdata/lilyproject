@@ -74,15 +74,18 @@ public class IndexerConf {
             repoFieldDependencies.add(fieldDep);
 
         if (indexField.getValue() instanceof DerefValue) {
-            derefIndexFields.add(indexField);
+            FieldType targetField = ((DerefValue)indexField.getValue()).getTargetField();
+            if (!systemFields.isSystemField(targetField.getId())) {
+                derefIndexFields.add(indexField);
 
-            SchemaId fieldId = ((DerefValue)indexField.getValue()).getTargetField().getId();
-            List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
-            if (fields == null) {
-                fields = new ArrayList<IndexField>();
-                derefIndexFieldsByField.put(fieldId, fields);
+                SchemaId fieldId = targetField.getId();
+                List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
+                if (fields == null) {
+                    fields = new ArrayList<IndexField>();
+                    derefIndexFieldsByField.put(fieldId, fields);
+                }
+                fields.add(indexField);
             }
-            fields.add(indexField);
         }
     }
 
