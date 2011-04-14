@@ -19,12 +19,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <version.hbase>0.90.1-CDH3B4</version.hbase>
+    <version.hbase>0.90.1-cdh3u0</version.hbase>
     <!-- When changing the hbase version, also change the hadoop and zookeeper version below to match
          what is in HBase's pom.xml -->
 
-    <version.hadoop>0.20.2-CDH3B4</version.hadoop>
-    <version.zookeeper>3.3.2</version.zookeeper>
+    <version.hadoop>0.20.2-cdh3u0</version.hadoop>
+    <version.zookeeper>3.3.3</version.zookeeper>
     <version.maven>2.0.9</version.maven>
     <version.solr>1.4.1</version.solr>
 
