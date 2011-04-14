@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <indexer xmlns:b="org.lilyproject.bookssample">
-  <cases>
-    <case recordType="b:Book" variant="*" vtags="last"/>
-  </cases>
+  <records>
+    <record matchNamespace="b" matchName="Book" matchVariant="*" vtags="last"/>
+  </records>
 
   <fields>
     <field name="title" value="b:title"/>

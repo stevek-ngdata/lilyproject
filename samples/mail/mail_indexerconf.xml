@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <indexer xmlns:m="org.lilyproject.mail">
-  <cases>
-    <case recordType="m:Part" variant="*" vtags="last"/>
-  </cases>
+  <records>
+    <record matchNamespace="m" matchName="Part" matchVariant="*" vtags="last"/>
+  </records>
 
   <fields>
     <field name="content" value="m:content" extractContent="true"/>

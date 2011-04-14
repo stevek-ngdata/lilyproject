@@ -52,6 +52,25 @@ public class WildcardPattern {
     }
 
     /**
+     * A match which doesn't bother to compute and return the text matched by the wildcard.
+     */
+    public boolean lightMatch(String input) {
+        boolean result;
+        switch (type) {
+            case STARTS_WITH:
+                result = input.startsWith(string);
+                break;
+            case ENDS_WITH:
+                result = input.endsWith(string);
+                break;
+            default:
+                result = input.equals(string);
+                break;
+        }
+        return result;
+    }
+
+    /**
      * Returns true if the pattern actually contains a wildcard, thus when on successful match there will be
      * a value available that was matched by the wildcard.
      */

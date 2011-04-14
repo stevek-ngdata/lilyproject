@@ -3,23 +3,22 @@
   <xs:element name="indexer">
     <xs:complexType>
       <xs:all minOccurs="0">
-        <xs:element minOccurs="0" ref="cases"/>
+        <xs:element minOccurs="0" ref="records"/>
         <xs:element minOccurs="0" ref="formatters"/>
         <xs:element minOccurs="0" ref="fields"/>
         <xs:element minOccurs="0" ref="dynamicFields"/>
       </xs:all>
     </xs:complexType>
   </xs:element>
-  <xs:element name="cases">
+  <xs:element name="records">
     <xs:complexType>
       <xs:sequence>
-        <xs:element maxOccurs="unbounded" minOccurs="0" name="case">
+        <xs:element maxOccurs="unbounded" minOccurs="0" name="record">
           <xs:complexType>
-            <xs:attribute name="recordType" type="xs:string" use="required"/>
+            <xs:attribute name="matchNamespace" type="xs:string" use="optional"/>
+            <xs:attribute name="matchName" type="xs:string" use="optional"/>
+            <xs:attribute name="matchVariant" type="xs:string" use="optional"/>
             <xs:attribute name="vtags" type="xs:string" use="optional"/>
-            <xs:attribute name="variant" type="xs:string" use="optional"/>
-            <!-- Deprecated attribute, left here not to break existing schemas -->
-            <xs:attribute name="indexVersionless" type="xs:boolean" use="optional"/>
           </xs:complexType>
         </xs:element>
       </xs:sequence>

@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:sys="org.lilyproject.system">
 
-  <cases>
-    <case recordType="ns:sf_rt" variant="*" vtags="last"/>
-  </cases>
+  <records>
+    <record matchNamespace="ns" matchName="sf_rt" matchVariant="*" vtags="last"/>
+  </records>
 
   <fields>
     <field name="sf_field1_string" value="ns:sf_field1"/>

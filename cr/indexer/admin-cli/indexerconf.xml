@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <indexer xmlns:foo="foo">
     <!--
-  <cases>
-    <case recordType="foo:Book" variant="*" vtags="live"/>
-  </cases>
+  <records>
+    <record matchNamespace="foo" matchName="Book" matchVariant="*" vtags="live"/>
+  </records>
 
   <fields>
     <field name="title" value="foo:title"/>

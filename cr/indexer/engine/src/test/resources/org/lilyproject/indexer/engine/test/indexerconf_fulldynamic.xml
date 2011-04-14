@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
 
-  <cases>
-    <!-- TODO we need a way to have a dynamic mapping here too -->
-    <case recordType="dyn1:RecordType" variant="*" vtags="last"/>
-  </cases>
+  <records>
+    <!-- A record tag without any match condition will match all records. -->
+    <record vtags="last"/>
+  </records>
 
   <dynamicFields>
     <!--

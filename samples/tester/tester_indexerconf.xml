@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <indexer xmlns:t="org.lilyproject.tools.tester">
-  <cases>
-    <case recordType="t:TesterRecordType" variant="*" vtags="last"/>
-  </cases>
+  <records>
+    <record matchNamespace="t" matchName="TesterRecordType" matchVariant="*" vtags="last"/>
+  </records>
 
   <fields>
     <field name="t$field1" value="t:field1"/>

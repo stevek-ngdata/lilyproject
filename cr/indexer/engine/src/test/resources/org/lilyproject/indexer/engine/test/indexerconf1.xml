@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2">
 
-  <cases>
-    <case recordType="ns:NVRecordType1" variant="*" vtags="live,nonversioned"/>
-    <case recordType="ns2:VRecordType1" variant="*" vtags="live,preview,latest,nonversioned"/>
-    <case recordType="ns2:LastRecordType" variant="*" vtags="last"/>
-  </cases>
+  <records>
+    <record matchNamespace="ns" matchName="NVRecordType1" matchVariant="*" vtags="live,nonversioned"/>
+    <record matchNamespace="ns2" matchName="VRecordType1" matchVariant="*" vtags="live,preview,latest,nonversioned"/>
+    <record matchNamespace="ns2" matchName="LastRecordType" matchVariant="*" vtags="last"/>
+  </records>
 
   <formatters>
     <formatter class="org.lilyproject.indexer.engine.test.IntegerHierarchyUnderscoreFormatter"/>

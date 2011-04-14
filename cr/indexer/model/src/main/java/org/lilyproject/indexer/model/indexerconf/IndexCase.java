@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class IndexCase {
-    private final QName recordTypeName;
+    private final WildcardPattern recordTypeNamespace;
+    private final WildcardPattern recordTypeName;
+
     /**
      * The variant properties the record should have. Evaluation rules: a key named
      * "*" (star symbol) is a wildcard meaning that any variant dimensions not specified
@@ -33,15 +35,22 @@ public class IndexCase {
     private final Map<String, String> variantPropsPattern;
     private final Set<SchemaId> vtags;
 
-    public IndexCase(QName recordTypeName, Map<String, String> variantPropsPattern, Set<SchemaId> vtags) {
+    public IndexCase(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName,
+            Map<String, String> variantPropsPattern, Set<SchemaId> vtags) {
+        this.recordTypeNamespace = recordTypeNamespace;
         this.recordTypeName = recordTypeName;
         this.variantPropsPattern = variantPropsPattern;
         this.vtags = vtags;
     }
 
     public boolean match(QName recordTypeName, Map<String, String> varProps) {
-        if (!this.recordTypeName.equals(recordTypeName))
+        if (this.recordTypeNamespace != null && !this.recordTypeNamespace.lightMatch(recordTypeName.getNamespace())) {
             return false;
+        }
+
+        if (this.recordTypeName != null && !this.recordTypeName.lightMatch(recordTypeName.getName())) {
+            return false;
+        }
 
         if (variantPropsPattern.size() != varProps.size() && !variantPropsPattern.containsKey("*")) {
             return false;

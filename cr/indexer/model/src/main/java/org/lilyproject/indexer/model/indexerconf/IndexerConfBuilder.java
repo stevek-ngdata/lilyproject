@@ -43,7 +43,7 @@ import org.xml.sax.SAXParseException;
 // are also just called field.
 public class IndexerConfBuilder {
     private static LocalXPathExpression INDEX_CASES =
-            new LocalXPathExpression("/indexer/cases/case");
+            new LocalXPathExpression("/indexer/records/record");
 
     private static LocalXPathExpression FORMATTERS =
             new LocalXPathExpression("/indexer/formatters/formatter");
@@ -102,13 +102,34 @@ public class IndexerConfBuilder {
     private void buildCases() throws Exception {
         List<Element> cases = INDEX_CASES.get().evalAsNativeElementList(doc);
         for (Element caseEl : cases) {
-            QName recordType = parseQName(DocumentHelper.getAttribute(caseEl, "recordType", true), caseEl);
+            WildcardPattern matchNamespace = null;
+            WildcardPattern matchName = null;
+
+            String matchNamespaceAttr = DocumentHelper.getAttribute(caseEl, "matchNamespace", false);
+
+            if (matchNamespaceAttr != null) {
+                // If the matchNamespace attr does not contain a wildcard expression, and its value
+                // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
+                if (!WildcardPattern.isWildcardExpression(matchNamespaceAttr)) {
+                    String uri = caseEl.lookupNamespaceURI(matchNamespaceAttr);
+                    if (uri != null)
+                        matchNamespaceAttr = uri;
+                }
+                matchNamespace = new WildcardPattern(matchNamespaceAttr);
+            }
+
+            String matchNameAttr = DocumentHelper.getAttribute(caseEl, "matchName", false);
+
+            if (matchNameAttr != null) {
+                matchName = new WildcardPattern(matchNameAttr);
+            }
+
             String vtagsSpec = DocumentHelper.getAttribute(caseEl, "vtags", false);
 
             Map<String, String> varPropsPattern = parseVariantPropertiesPattern(caseEl);
             Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
 
-            IndexCase indexCase = new IndexCase(recordType, varPropsPattern, vtags);
+            IndexCase indexCase = new IndexCase(matchNamespace, matchName, varPropsPattern, vtags);
             conf.addIndexCase(indexCase);
         }
     }
@@ -201,7 +222,7 @@ public class IndexerConfBuilder {
     }
 
     private Map<String, String> parseVariantPropertiesPattern(Element caseEl) throws Exception {
-        String variant = DocumentHelper.getAttribute(caseEl, "variant", false);
+        String variant = DocumentHelper.getAttribute(caseEl, "matchVariant", false);
 
         Map<String, String> varPropsPattern = new HashMap<String, String>();
 
@@ -217,7 +238,7 @@ public class IndexerConfBuilder {
                     String propName = prop.substring(0, eqPos);
                     String propValue = prop.substring(eqPos + 1);
                     if (propName.equals("*")) {
-                        throw new IndexerConfException(String.format("Error in variant attribute: the character '*' " +
+                        throw new IndexerConfException(String.format("Error in matchVariant attribute: the character '*' " +
                                 "can only be used as wildcard, not as variant dimension name, attribute = %1$s, at: %2$s",
                                 variant, LocationAttributes.getLocation(caseEl)));
                     }
