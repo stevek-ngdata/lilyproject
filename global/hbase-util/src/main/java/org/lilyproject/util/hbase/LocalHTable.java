@@ -61,58 +61,70 @@ public class LocalHTable extends ThreadLocal<HTable> implements HTableInterface 
         this.tableName = tableName;
     }
 
-    public LocalHTable(Configuration conf, String tableName) {
+    public LocalHTable(Configuration conf, String tableName) throws IOException {
         this.conf = conf;
         this.tableName = Bytes.toBytes(tableName);
+        // Create an instance for the current thread now, so that this would fail immediately if
+        // e.g. the table does not exist or the connection cannot be made.
+        set(new HTable(conf, tableName));
     }
 
-    @Override
-    protected HTable initialValue() {
+    private HTable getTableSilent() {
         try {
-            return new HTable(conf, tableName);
+            return getTable();
         } catch (IOException e) {
             throw new RuntimeException("Error getting HTable.", e);
         }
     }
 
+    private HTable getTable() throws IOException {
+        // Note that since this is about thread locals, we don't any synchronization
+        HTable table = get();
+        if (table == null) {
+            table = new HTable(conf, tableName);
+            set(table);
+        }
+        return table;
+    }
+
     public byte[] getTableName() {
-        return get().getTableName();
+        return getTableSilent().getTableName();
     }
 
     public Configuration getConfiguration() {
-        return get().getConfiguration();
+        return getTableSilent().getConfiguration();
     }
 
     public HTableDescriptor getTableDescriptor() throws IOException {
-        return get().getTableDescriptor();
+        return getTable().getTableDescriptor();
     }
 
     public boolean exists(Get get) throws IOException {
-        return get().exists(get);
+        return getTable().exists(get);
     }
 
     public Result get(Get get) throws IOException {
-        return get().get(get);
+        return getTable().get(get);
     }
 
     public Result getRowOrBefore(byte[] row, byte[] family) throws IOException {
-        return get().getRowOrBefore(row, family);
+        return getTable().getRowOrBefore(row, family);
     }
 
     public ResultScanner getScanner(Scan scan) throws IOException {
-        return get().getScanner(scan);
+        return getTable().getScanner(scan);
     }
 
     public ResultScanner getScanner(byte[] family) throws IOException {
-        return get().getScanner(family);
+        return getTable().getScanner(family);
     }
 
     public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
-        return get().getScanner(family, qualifier);
+        return getTable().getScanner(family, qualifier);
     }
 
     public void put(Put put) throws IOException {
-        HTable table = get();
+        HTable table = getTable();
         try {
             table.put(put);
         } finally {
@@ -123,66 +135,66 @@ public class LocalHTable extends ThreadLocal<HTable> implements HTableInterface 
     }
 
     public void put(List<Put> puts) throws IOException {
-        get().put(puts);
+        getTable().put(puts);
     }
 
     public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) throws IOException {
-        return get().checkAndPut(row, family, qualifier, value, put);
+        return getTable().checkAndPut(row, family, qualifier, value, put);
     }
 
     public void delete(Delete delete) throws IOException {
-        get().delete(delete);
+        getTable().delete(delete);
     }
 
     public void delete(List<Delete> deletes) throws IOException {
-        get().delete(deletes);
+        getTable().delete(deletes);
     }
 
     public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
-        return get().checkAndDelete(row, family, qualifier, value, delete);
+        return getTable().checkAndDelete(row, family, qualifier, value, delete);
     }
 
     public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) throws IOException {
-        return get().incrementColumnValue(row, family, qualifier, amount);
+        return getTable().incrementColumnValue(row, family, qualifier, amount);
     }
 
     public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL) throws IOException {
-        return get().incrementColumnValue(row, family, qualifier, amount, writeToWAL);
+        return getTable().incrementColumnValue(row, family, qualifier, amount, writeToWAL);
     }
 
     public boolean isAutoFlush() {
-        return get().isAutoFlush();
+        return getTableSilent().isAutoFlush();
     }
 
     public void flushCommits() throws IOException {
-        get().flushCommits();
+        getTable().flushCommits();
     }
 
     public void close() throws IOException {
-        get().close();
+        getTable().close();
     }
 
     public RowLock lockRow(byte[] row) throws IOException {
-        return get().lockRow(row);
+        return getTable().lockRow(row);
     }
 
     public void unlockRow(RowLock rl) throws IOException {
-        get().unlockRow(rl);
+        getTable().unlockRow(rl);
     }
 
     public void batch(List<Row> actions, Object[] results) throws IOException, InterruptedException {
-        get().batch(actions, results);
+        getTable().batch(actions, results);
     }
 
     public Object[] batch(List<Row> actions) throws IOException, InterruptedException {
-        return get().batch(actions);
+        return getTable().batch(actions);
     }
 
     public Result[] get(List<Get> gets) throws IOException {
-        return get().get(gets);
+        return getTable().get(gets);
     }
 
     public Result increment(Increment increment) throws IOException {
-        return get().increment(increment);
+        return getTable().increment(increment);
     }
 }
