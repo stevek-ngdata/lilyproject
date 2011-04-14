@@ -164,7 +164,7 @@ public class HBaseMetrics {
 
         table.fullSepLine();
         table.crossColumn("HBase version: " + clusterStatus.getHBaseVersion());
-        table.crossColumn("# regions in transation: " + clusterStatus.getRegionsInTransition().size());
+        table.crossColumn("# regions in transition: " + clusterStatus.getRegionsInTransition().size());
         table.crossColumn("The information below is from summarizing HBaseAdmin.ClusterStatus (= only online regions)");
         table.columnSepLine();
         table.titles();
