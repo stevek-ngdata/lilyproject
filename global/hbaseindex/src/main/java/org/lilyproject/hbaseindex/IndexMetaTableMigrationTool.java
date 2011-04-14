@@ -65,5 +65,7 @@ public class IndexMetaTableMigrationTool {
 
         System.out.println("After verifying that everything is correctly performed,");
         System.out.println("you may delete the index meta table.");
+
+        scanner.close();
     }
 }

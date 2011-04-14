@@ -126,6 +126,7 @@ public class HBaseMetrics {
             }
 
             entry.getValue().rows = rowCount;
+            scanner.close();
             table.close();
         }
 

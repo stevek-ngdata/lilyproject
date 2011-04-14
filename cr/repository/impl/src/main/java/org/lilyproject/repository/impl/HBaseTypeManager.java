@@ -618,7 +618,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     public List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException,
             TypeException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
-        ResultScanner scanner = null;
+        ResultScanner scanner;
         try {
             scanner = getTypeTable().getScanner(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes);
             for (Result result : scanner) {
@@ -627,16 +627,16 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
         } catch (IOException e) {
             throw new TypeException("Exception occurred while retrieving field types without cache ", e);
-        } finally {
-            Closer.close(scanner);
         }
+        Closer.close(scanner);
+
         return fieldTypes;
     }
 
     public List<RecordType> getRecordTypesWithoutCache() throws RecordTypeNotFoundException,
             TypeException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
-        ResultScanner scanner = null;
+        ResultScanner scanner;
         try {
             scanner = getTypeTable().getScanner(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
             for (Result result : scanner) {
@@ -645,9 +645,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
         } catch (IOException e) {
             throw new TypeException("Exception occurred while retrieving record types without cache ", e);
-        } finally {
-            Closer.close(scanner);
         }
+        Closer.close(scanner);
+
         return recordTypes;
     }
 

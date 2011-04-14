@@ -158,6 +158,7 @@ public class HadoopLauncher extends BaseCliTool {
         HTable t = new HTable(c, HConstants.META_TABLE_NAME);
         ResultScanner s = t.getScanner(new Scan());
         while (s.next() != null) continue;
+        s.close();
 
         return this.hbaseCluster;
     }

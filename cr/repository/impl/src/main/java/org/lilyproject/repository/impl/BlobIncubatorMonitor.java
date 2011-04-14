@@ -17,6 +17,7 @@ import org.lilyproject.util.Logs;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.*;
 
 import static org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
@@ -169,6 +170,7 @@ public class BlobIncubatorMonitor {
                     }
                 }
             }
+            Closer.close(scanner);
             metrics.runDuration.inc(System.currentTimeMillis() - monitorBegin);
             log.debug("Stop run blob incubator monitor");
         }

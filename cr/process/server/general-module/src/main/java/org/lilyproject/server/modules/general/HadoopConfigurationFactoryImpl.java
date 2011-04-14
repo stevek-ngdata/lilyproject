@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.kauriproject.conf.Conf;
+import org.lilyproject.util.io.Closer;
 
 public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactory {
     private Conf hbaseConf;
@@ -77,6 +78,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
         ResultScanner s = table.getScanner(new Scan());
         while (s.next() != null) {
         }
+        Closer.close(s);
 
         long duration = System.currentTimeMillis() - before;
         if (duration > 1000) {
