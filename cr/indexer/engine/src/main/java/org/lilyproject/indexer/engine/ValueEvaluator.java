@@ -22,6 +22,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.sax.WriteOutContentHandler;
 import org.lilyproject.indexer.model.indexerconf.*;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.Follow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.FieldFollow;
@@ -132,11 +133,13 @@ public class ValueEvaluator {
             Integer hierIndex, List<String> result, Repository repository) {
         Blob blob = (Blob)value;
         InputStream is = null;
+
+        // TODO make write limit configurable
+        WriteOutContentHandler woh = new WriteOutContentHandler(500 * 1000); // 500K limit (Tika default: 100K)
+        BodyContentHandler ch = new BodyContentHandler(woh);
+
         try {
             is = repository.getInputStream(record, fieldType.getName(), multiValueIndex, hierIndex);
-
-            // TODO make write limit configurable
-            BodyContentHandler ch = new BodyContentHandler();
 
             Metadata metadata = new Metadata();
             metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());
@@ -146,17 +149,25 @@ public class ValueEvaluator {
             ParseContext parseContext = new ParseContext();
 
             tikaParser.parse(is, ch, metadata, parseContext);
-
-            String text = ch.toString();
-            if (text.length() > 0)
-                result.add(text);
-
         } catch (Throwable t) {
-            log.error("Error extracting blob content. Field '" + fieldType.getName() + "', record '"
-                    + record.getId() + "'.", t);
+            if (woh.isWriteLimitReached(t)) {
+                // ok, we'll just add use the partial result
+                if (log.isInfoEnabled()) {
+                    log.info("Blob extraction: write limit reached. Field '" + fieldType.getName() + "', record '"
+                            + record.getId() + "'.");
+                }
+            } else {
+                log.error("Error extracting blob content. Field '" + fieldType.getName() + "', record '"
+                        + record.getId() + "'.", t);
+                return;
+            }
         } finally {
             Closer.close(is);
         }
+
+        String text = ch.toString();
+        if (text.length() > 0)
+            result.add(text);
     }
 
     private List<IndexValue> evalValue(Value value, IdRecord record, Repository repository, SchemaId vtag)
