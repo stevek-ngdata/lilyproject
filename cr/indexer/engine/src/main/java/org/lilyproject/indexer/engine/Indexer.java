@@ -39,18 +39,18 @@ public class Indexer {
     private IndexerConf conf;
     private Repository repository;
     private TypeManager typeManager;
-    private SolrServers solrServers;
+    private SolrShardManager solrShardMgr;
     private IndexLocker indexLocker;
     private ValueEvaluator valueEvaluator;
     private IndexerMetrics metrics;
 
     private Log log = LogFactory.getLog(getClass());
 
-    public Indexer(IndexerConf conf, Repository repository, SolrServers solrServers, IndexLocker indexLocker,
+    public Indexer(IndexerConf conf, Repository repository, SolrShardManager solrShardMgr, IndexLocker indexLocker,
             IndexerMetrics metrics) {
         this.conf = conf;
         this.repository = repository;
-        this.solrServers = solrServers;
+        this.solrShardMgr = solrShardMgr;
         this.indexLocker = indexLocker;
         this.typeManager = repository.getTypeManager();
         this.valueEvaluator = new ValueEvaluator(conf);
@@ -115,7 +115,7 @@ public class Indexer {
             if (version == null) {
                 for (SchemaId vtag : entry.getValue()) {
                     verifyLock(recordId);
-                    solrServers.getSolrServer(recordId).deleteById(getIndexId(recordId, vtag));
+                    solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(recordId, vtag));
                     metrics.deletesById.inc();
                 }
 
@@ -208,7 +208,7 @@ public class Indexer {
                 // because with deref-expressions we are never sure) that we did.
 
                 // There can be a previous entry in the index which we should try to delete
-                solrServers.getSolrServer(record.getId()).deleteById(getIndexId(record.getId(), vtag));
+                solrShardMgr.getSolrClient(record.getId()).deleteById(getIndexId(record.getId(), vtag));
                 metrics.deletesById.inc();
                 
                 if (log.isDebugEnabled()) {
@@ -231,7 +231,7 @@ public class Indexer {
             //    log.debug("Constructed SOLR doc: " + solrDoc);
             //}
 
-            solrServers.getSolrServer(record.getId()).add(solrDoc);
+            solrShardMgr.getSolrClient(record.getId()).add(solrDoc);
             metrics.adds.inc();
 
             if (log.isDebugEnabled()) {
@@ -265,9 +265,10 @@ public class Indexer {
      *
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      */
-    public void delete(RecordId recordId) throws IOException, SolrServerException, ShardSelectorException {
+    public void delete(RecordId recordId) throws IOException, SolrServerException, ShardSelectorException,
+            InterruptedException {
         verifyLock(recordId);
-        solrServers.getSolrServer(recordId).deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(recordId.toString()));
+        solrShardMgr.getSolrClient(recordId).deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(recordId.toString()));
         metrics.deletesByQuery.inc();
     }
 
@@ -275,9 +276,10 @@ public class Indexer {
      *
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      */
-    public void delete(RecordId recordId, SchemaId vtag) throws IOException, SolrServerException, ShardSelectorException {
+    public void delete(RecordId recordId, SchemaId vtag) throws IOException, SolrServerException,
+            ShardSelectorException, InterruptedException {
         verifyLock(recordId);
-        solrServers.getSolrServer(recordId).deleteById(getIndexId(recordId, vtag));
+        solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(recordId, vtag));
         metrics.deletesByQuery.inc();
     }
 

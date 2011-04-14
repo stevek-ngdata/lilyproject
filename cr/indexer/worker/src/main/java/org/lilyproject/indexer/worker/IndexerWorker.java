@@ -33,7 +33,6 @@ import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -170,10 +169,11 @@ public class IndexerWorker {
 
             checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
 
-            SolrServers solrServers = new SolrServers(index.getSolrShards(), shardSelector, httpClient, solrClientConfig);
+            SolrShardManager solrShardMgr = new SolrShardManager(index.getSolrShards(), shardSelector, httpClient,
+                    solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, enableLocking);
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
-            Indexer indexer = new Indexer(indexerConf, repository, solrServers, indexLocker, indexerMetrics);
+            Indexer indexer = new Indexer(indexerConf, repository, solrShardMgr, indexLocker, indexerMetrics);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,

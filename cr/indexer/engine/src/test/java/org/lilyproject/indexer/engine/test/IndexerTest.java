@@ -44,12 +44,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.indexer.engine.IndexLocker;
-import org.lilyproject.indexer.engine.IndexUpdater;
-import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
-import org.lilyproject.indexer.engine.Indexer;
-import org.lilyproject.indexer.engine.IndexerMetrics;
-import org.lilyproject.indexer.engine.SolrServers;
+import org.lilyproject.indexer.engine.*;
+import org.lilyproject.indexer.engine.SolrShardManager;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.linkindex.LinkIndex;
@@ -76,7 +72,7 @@ public class IndexerTest {
     private static Repository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
-    private static SolrServers solrServers;
+    private static SolrShardManager solrShardManager;
     private static LinkIndex linkIndex;
 
     private static FieldType nvTag;
@@ -148,7 +144,7 @@ public class IndexerTest {
 
         repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
 
-        solrServers = SolrServers.createForOneShard(SOLR_TEST_UTIL.getUri());
+        solrShardManager = SolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
@@ -165,7 +161,7 @@ public class IndexerTest {
     public static void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        Indexer indexer = new Indexer(INDEXER_CONF, repository, solrServers, indexLocker, new IndexerMetrics("test"));
+        Indexer indexer = new Indexer(INDEXER_CONF, repository, solrShardManager, indexLocker, new IndexerMetrics("test"));
 
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
                 indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
@@ -1579,14 +1575,14 @@ public class IndexerTest {
 
     private void commitIndex() throws Exception {
         repoSetup.processMQ();
-        solrServers.commit(true, true);
+        solrShardManager.commit(true, true);
     }
 
     private void verifyResultCount(String query, int count) throws SolrServerException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
         solrQuery.set("rows", 5000);
-        QueryResponse response = solrServers.query(solrQuery);
+        QueryResponse response = solrShardManager.query(solrQuery);
         if (count != response.getResults().size()) {
             System.out.println("The query result contains a wrong number of documents, here is the result:");
             for (int i = 0; i < response.getResults().size(); i++) {

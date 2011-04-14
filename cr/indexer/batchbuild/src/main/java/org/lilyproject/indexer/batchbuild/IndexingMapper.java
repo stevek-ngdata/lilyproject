@@ -40,7 +40,6 @@ import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -122,13 +121,13 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
             solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
 
-            SolrServers solrServers = new SolrServers(solrShards, shardSelector, httpClient, solrConfig);
+            SolrShardManager solrShardMgr = new SolrShardManager(solrShards, shardSelector, httpClient, solrConfig);
 
             boolean enableLocking = Boolean.parseBoolean(jobConf.get("org.lilyproject.indexer.batchbuild.enableLocking"));
 
             indexLocker = new IndexLocker(zk, enableLocking);
 
-            indexer = new Indexer(indexerConf, repository, solrServers, indexLocker, new IndexerMetrics("dummy"));
+            indexer = new Indexer(indexerConf, repository, solrShardMgr, indexLocker, new IndexerMetrics("dummy"));
 
             int workers = getIntProp("org.lilyproject.indexer.batchbuild.threads", 5, jobConf);
             
