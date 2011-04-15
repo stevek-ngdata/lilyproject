@@ -21,8 +21,6 @@ import java.util.Map;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.rest.RowLogConfigWriter;
-import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.tools.import_.json.EntityReader;
 import org.lilyproject.tools.import_.json.EntityWriter;
 import org.lilyproject.tools.import_.json.FieldTypeReader;
