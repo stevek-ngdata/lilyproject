@@ -40,10 +40,12 @@ public class WalListener implements RowLogMessageListener {
             log.info("Failed to process message '" + message + "'", e);
             return false;
         } finally {
-            try {
-                rowLocker.unlockRow(rowLock);
-            } catch (IOException e) {
-                log.info("Failed to unlock row after processing message '" + message + "'", e);
+            if (rowLock != null) {
+                try {
+                    rowLocker.unlockRow(rowLock);
+                } catch (IOException e) {
+                    log.info("Failed to unlock row after processing message '" + message + "'", e);
+                }
             }
         }
     }
