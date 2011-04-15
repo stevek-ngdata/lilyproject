@@ -31,6 +31,8 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ArrayNode;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.Repository;
@@ -39,6 +41,7 @@ import org.lilyproject.repository.impl.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.DfsUri;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
@@ -61,8 +64,7 @@ public class LilyClient implements Closeable {
     private RetryConf retryConf = new RetryConf();
     private static final String nodesPath = "/lily/repositoryNodes";
     private static final String blobDfsUriPath = "/lily/blobStoresConfig/dfsUri";
-    private static final String blobHBaseZkQuorumPath = "/lily/blobStoresConfig/hbaseZkQuorum";
-    private static final String blobHBaseZkPortPath = "/lily/blobStoresConfig/hbaseZkPort";
+    private static final String blobHBaseConfigPath = "/lily/blobStoresConfig/hbaseConfig";
     private static final String blobStoreAccessConfigPath = "/lily/blobStoresConfig/accessConfig";
 
     private Log log = LogFactory.getLog(getClass());
@@ -163,9 +165,7 @@ public class LilyClient implements Closeable {
     }
     
     public static BlobManager getBlobManager(ZooKeeperItf zk) throws IOException {
-        Configuration configuration = HBaseConfiguration.create();
-        configuration.set("hbase.zookeeper.quorum", getBlobHBaseZkQuorum(zk));
-        configuration.set("hbase.zookeeper.property.clientPort", getBlobHBaseZkPort(zk));
+        Configuration configuration = getBlobHBaseConfiguration(zk);
         HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
         
         URI dfsUri = getDfsUri(zk);
@@ -198,22 +198,23 @@ public class LilyClient implements Closeable {
         }
     }
 
-    private static String getBlobHBaseZkQuorum(ZooKeeperItf zk) {
+    private static Configuration getBlobHBaseConfiguration(ZooKeeperItf zk) {
         try {
-            return new String(zk.getData(blobHBaseZkQuorumPath, false, new Stat()));
+            Configuration configuration = HBaseConfiguration.create();
+            byte[] data = zk.getData(blobHBaseConfigPath, false, new Stat());
+            ArrayNode propertiesNode = (ArrayNode)JsonFormat.deserializeSoft(data, "Blob HBase configuration");
+            for (JsonNode jsonNode : propertiesNode) {
+                ArrayNode propertyNode = (ArrayNode)jsonNode;
+                String propertyName = propertyNode.get(0).getTextValue();
+                String propertyValue = propertyNode.get(1).getTextValue();
+                configuration.set(propertyName, propertyValue);
+            }
+            return configuration;
         } catch (Exception e) {
-            throw new RuntimeException("Blob stores config lookup: failed to get HBase ZooKeeper quorum from ZooKeeper", e);
+            throw new RuntimeException("Blob stores config lookup: failed to get HBase configuration from ZooKeeper", e);
         }
     }
-
-    private static String getBlobHBaseZkPort(ZooKeeperItf zk) {
-        try {
-            return new String(zk.getData(blobHBaseZkPortPath, false, new Stat()));
-        } catch (Exception e) {
-            throw new RuntimeException("Blob stores config lookup: failed to get HBase ZooKeeper port from ZooKeeper", e);
-        }
-    }
-
+    
     private InetSocketAddress parseAddressAndPort(String addressAndPort) {
         int colonPos = addressAndPort.indexOf(":");
         if (colonPos == -1) {

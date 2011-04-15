@@ -19,16 +19,20 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.JsonNodeFactory;
 import org.kauriproject.conf.Conf;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
+import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.DfsUri;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -36,8 +40,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class BlobManagerSetup {
     private final String lilyPath = "/lily";
     private final String blobDfsUriPath = lilyPath + "/blobStoresConfig/dfsUri";
-    private final String blobHBaseZkQuorumPath = lilyPath + "/blobStoresConfig/hbaseZkQuorum";
-    private final String blobHBaseZkPortPath = lilyPath + "/blobStoresConfig/hbaseZkPort";
+    private final String blobHBaseConfigPath = lilyPath + "/blobStoresConfig/hbaseConfig";
     private final String blobStoreAccessConfigPath = lilyPath + "/blobStoresConfig/accessConfig";
 
     private BlobManager blobManager;
@@ -75,14 +78,22 @@ public class BlobManagerSetup {
         return blobManager;
     }
 
-    private void publishBlobAccessParams(ZooKeeperItf zk, String dfsUri, Configuration hbaseConf) throws InterruptedException,
+    private void publishBlobAccessParams(ZooKeeperItf zk, String dfsUri, Configuration hbaseConf) throws IOException, InterruptedException,
             KeeperException, UnsupportedEncodingException {
         // The below serves as a stop-gap solution for the blob configuration: we store the information in ZK
         // that clients need to know how to access the blob store locations, but the actual setup of the
         // BlobStoreAccessFactory is currently hardcoded
         ZkUtil.createPath(zk, blobDfsUriPath, dfsUri.getBytes("UTF-8"));
-        ZkUtil.createPath(zk, blobHBaseZkQuorumPath, hbaseConf.get("hbase.zookeeper.quorum").getBytes());
-        ZkUtil.createPath(zk, blobHBaseZkPortPath, hbaseConf.get("hbase.zookeeper.property.clientPort").getBytes());
+        ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
+        Iterator<Entry<String, String>> iterator = hbaseConf.iterator();
+        while (iterator.hasNext()) {
+            Entry<String, String> propertyEntry = iterator.next();
+            ArrayNode propertyNode = JsonNodeFactory.instance.arrayNode();
+            propertyNode.add(propertyEntry.getKey());
+            propertyNode.add(propertyEntry.getValue());
+            propertiesNode.add(propertyNode);
+        }
+        ZkUtil.createPath(zk, blobHBaseConfigPath, JsonFormat.serializeAsBytes(propertiesNode));
     }
 
     public void publishBlobStoreAccessConfig(ZooKeeperItf zk, byte[] blobStoreAccessConfig) throws InterruptedException,
