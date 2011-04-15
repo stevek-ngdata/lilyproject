@@ -34,6 +34,11 @@ public class RetryingSolrClient {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            // In case of failures, we keep retrying indefinitely, rather than given up after a certain number
+            // of attempts. This is on purpose: the goal is that the IndexUpdater's (MQ listeners) would block
+            // until SOLR becomes available. The only other alternative they have is to log the error and accept
+            // the next message, but then an index update would have been lost and we'd be back in the same
+            // situation anyway.
             int attempt = 0;
             while (true) {
                 try {
