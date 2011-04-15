@@ -225,8 +225,10 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 return handleAllDone(message, rowKey, executionStateQualifier, previousValue, lock);
             } else {
                 if (rowLocker != null) {
+                    // TODO (bruno) return value is ignored, is this ok?
                     updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, lock);
                 } else {
+                    // TODO (bruno) return value is ignored, is this ok?
                     updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue);
                 }
                 return false;
@@ -310,7 +312,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             try {
                 rowLock = rowLocker.lockRow(message.getRowKey());
             } catch (IOException e) {
-                log.debug("Exception occured while trying to take lock, retrying", e);
+                log.debug("Exception occurred while trying to take lock, retrying", e);
                 // retry
             }
             while (rowLock == null) {
@@ -318,7 +320,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 try {
                     rowLock = rowLocker.lockRow(message.getRowKey());
                 } catch (IOException e) {
-                    log.debug("Exception occured while trying to take lock, retrying", e);
+                    log.debug("Exception occurred while trying to take lock, retrying", e);
                     // retry
                 }
             }
@@ -368,6 +370,8 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
                 executionState.setState(subscriptionId, true);
                 if (executionState.allDone()) {
+                    // TODO (bruno) return value is ignored here, is this fine? Probably yes since everyone else
+                    // is done with this row (unless more than one can come to this conclusion at the same time)
                     handleAllDone(message, rowKey, executionStateQualifier, previousValue, null);
                 } else {
                     if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue)) {
