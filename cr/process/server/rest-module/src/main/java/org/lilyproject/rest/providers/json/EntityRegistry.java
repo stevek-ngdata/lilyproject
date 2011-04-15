@@ -15,13 +15,22 @@
  */
 package org.lilyproject.rest.providers.json;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.tools.import_.json.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.lilyproject.rest.RowLogConfigWriter;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.tools.import_.json.EntityReader;
+import org.lilyproject.tools.import_.json.EntityWriter;
+import org.lilyproject.tools.import_.json.FieldTypeReader;
+import org.lilyproject.tools.import_.json.FieldTypeWriter;
+import org.lilyproject.tools.import_.json.RecordReader;
+import org.lilyproject.tools.import_.json.RecordTypeReader;
+import org.lilyproject.tools.import_.json.RecordTypeWriter;
+import org.lilyproject.tools.import_.json.RecordWriter;
 
 public class EntityRegistry {
     protected static Map<Class, RegistryEntry> SUPPORTED_TYPES;

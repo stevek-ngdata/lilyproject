@@ -28,21 +28,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.zookeeper.KeeperException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
-import org.lilyproject.indexer.model.api.IndexConcurrentModificationException;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexGeneralState;
-import org.lilyproject.indexer.model.api.IndexModelException;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
-import org.lilyproject.indexer.model.api.IndexUpdateException;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
-import org.lilyproject.indexer.model.api.IndexValidityException;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.util.json.JsonFormat;
-import org.lilyproject.util.zookeeper.ZkLockException;
 import org.restlet.representation.StringRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 

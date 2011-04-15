@@ -59,5 +59,7 @@
   </bean>
 
   <kauri:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
+  
+  <kauri:import-service id="rowLogConfigurationMgr" service="org.lilyproject.rowlog.api.RowLogConfigurationManager"/>
 
 </beans>
