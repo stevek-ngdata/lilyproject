@@ -44,12 +44,6 @@ public class ListRowLogsCli extends BaseRowLogAdminCli {
                 System.out.println("  + Wakeup timeout: " + rowLogConfig.getWakeupTimeout());
                 System.out.println();
                 List<RowLogSubscription> subscriptions = rowLogConfigurationManager.getSubscriptions(rowLog.getKey());
-                Collections.sort(subscriptions, new Comparator<RowLogSubscription>() {
-                    @Override
-                    public int compare(RowLogSubscription o1, RowLogSubscription o2) {
-                        return new Integer(o1.getOrderNr()).compareTo(new Integer(o2.getOrderNr()));
-                    }
-                });
                 System.out.println("  Number of subscriptions: " + subscriptions.size());
                 for (RowLogSubscription subscription : subscriptions) {
                     System.out.println("  " + subscription.getId());

@@ -807,7 +807,8 @@ public class HBaseRepository extends BaseRepository {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
         List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
 
-        Result result = getRow(recordId, toVersion, true, fields);
+        int numberOfVersionsToRetrieve = (int)(toVersion - fromVersion + 1);
+        Result result = getRow(recordId, toVersion, numberOfVersionsToRetrieve, fields);
         if (fromVersion < 1L)
             fromVersion = 1L; // Put the fromVersion to a sensible value
         Long latestVersion = getLatestVersion(result);
@@ -833,9 +834,10 @@ public class HBaseRepository extends BaseRepository {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
         List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
         
-        
+        Long lowestRequestedVersion = versions.get(0);
         Long highestRequestedVersion = versions.get(versions.size()-1);
-        Result result = getRow(recordId, highestRequestedVersion, true, fields);
+        int numberOfVersionsToRetrieve = (int)(highestRequestedVersion - lowestRequestedVersion + 1);
+        Result result = getRow(recordId, highestRequestedVersion, numberOfVersionsToRetrieve, fields);
         Long latestVersion = getLatestVersion(result);
         
         // Drop the versions that are higher than the latestVersion
@@ -878,7 +880,7 @@ public class HBaseRepository extends BaseRepository {
         try {
             ArgumentValidator.notNull(recordId, "recordId");
     
-            Result result = getRow(recordId, requestedVersion, false, fields);
+            Result result = getRow(recordId, requestedVersion, 1, fields);
     
             Long latestVersion = getLatestVersion(result);
             if (requestedVersion == null) {
@@ -925,7 +927,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
     // Retrieves the row from the table and check if it exists and has not been flagged as deleted
-    private Result getRow(RecordId recordId, Long version, boolean multipleVersions, List<FieldType> fields)
+    private Result getRow(RecordId recordId, Long version, int numberOfVersions, List<FieldType> fields)
             throws RecordNotFoundException, RecordException {
         Result result;
         Get get = new Get(recordId.toBytes());
@@ -936,11 +938,7 @@ public class HBaseRepository extends BaseRepository {
             
             if (version != null)
                 get.setTimeRange(0, version+1); // Only retrieve data within this timerange
-            if (multipleVersions) {
-                get.setMaxVersions(); // Get all versions
-            } else {
-                get.setMaxVersions(1); // Only retrieve the most recent version of each field
-            }
+            get.setMaxVersions(numberOfVersions); 
             
             // Retrieve the data from the repository
             result = recordTable.get(get);

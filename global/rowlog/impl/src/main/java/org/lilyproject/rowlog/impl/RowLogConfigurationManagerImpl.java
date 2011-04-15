@@ -15,14 +15,7 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.PreDestroy;
 
@@ -285,7 +278,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             }
         });
         if (!subscriptionsExist)
-            return subscriptions;
+            return subscriptions; // Return an empty list
         
         List<String> subscriptionIds = zooKeeper.retryOperation(new ZooKeeperOperation<List<String>>() {
             public List<String> execute() throws KeeperException, InterruptedException {
@@ -301,6 +294,8 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             });
             subscriptions.add(SubscriptionConverter.INSTANCE.fromJsonBytes(rowLogId, subscriptionId, data));
         }
+        // Sort the subscriptions before returning
+        Collections.sort(subscriptions);
         return subscriptions;
     }
     
