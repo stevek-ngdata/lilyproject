@@ -47,7 +47,7 @@ public class RowLogShardImpl implements RowLogShard {
     private final RowLog rowLog;
     private final String id;
     private final int batchSize;
-    private List<Delete> messagesToDelete;
+    private final List<Delete> messagesToDelete;
     private long lastDelete;
 
     public RowLogShardImpl(String id, Configuration hbaseConf, RowLog rowLog, int batchSize) throws IOException {
@@ -147,6 +147,7 @@ public class RowLogShardImpl implements RowLogShard {
         try {
             List<RowLogMessage> rowLogMessages = new ArrayList<RowLogMessage>();
             Scan scan = new Scan(startRow);
+            scan.setCaching(batchSize);
             if (minimalTimestamp != null)
                 scan.setTimeRange(minimalTimestamp, Long.MAX_VALUE);
             scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
@@ -155,13 +156,17 @@ public class RowLogShardImpl implements RowLogShard {
             scan.setFilter(new PrefixFilter(rowPrefix));
 
             ResultScanner scanner = table.getScanner(scan);
-            Result[] results = scanner.next(batchSize);
-            for (Result next : results) {
-                byte[] rowKey = next.getRow();
+
+            for (int i = 0; i < batchSize; i++) {
+                Result result = scanner.next();
+                if (result == null)
+                    break;
+
+                byte[] rowKey = result.getRow();
                 if (!Bytes.startsWith(rowKey, rowPrefix)) {
                     break; // There were no messages for this subscription
                 }
-                byte[] value = next.getValue(MESSAGES_CF, MESSAGE_COLUMN);
+                byte[] value = result.getValue(MESSAGES_CF, MESSAGE_COLUMN);
                 byte[] messageId = Bytes.tail(rowKey, rowKey.length - rowPrefix.length);
                 rowLogMessages.add(decodeMessage(messageId, value));
             }
