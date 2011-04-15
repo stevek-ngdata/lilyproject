@@ -177,7 +177,7 @@ public class RemoteListenerHandler {
         
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-            log.warn("Exception in MessageHandler while processing message, "+ e.getCause());
+            log.warn("Exception in MessageHandler while processing message", e.getCause());
             // We won't retry sending the result to avoid exception-loops
             // Instead, close the channel so that the client channel gets closed as well.
             // The client (RemoteListenersSubscriptionHandler) will then retry to set up the channel and send the message 

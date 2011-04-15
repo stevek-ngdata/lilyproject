@@ -264,7 +264,8 @@ public class ValueEvaluator {
         return result;
     }
 
-    private List<IdRecord> evalFollow(DerefValue deref, Follow follow, IdRecord record, Repository repository, SchemaId vtag) {
+    private List<IdRecord> evalFollow(DerefValue deref, Follow follow, IdRecord record, Repository repository,
+            SchemaId vtag) throws RepositoryException, InterruptedException {
         if (follow instanceof FieldFollow) {
             return evalFieldFollow(deref, (FieldFollow)follow, record, repository, vtag);
         } else if (follow instanceof VariantFollow) {
@@ -276,7 +277,9 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IdRecord> evalFieldFollow(DerefValue deref, FieldFollow follow, IdRecord record, Repository repository, SchemaId vtag) {
+    private List<IdRecord> evalFieldFollow(DerefValue deref, FieldFollow follow, IdRecord record, Repository repository,
+            SchemaId vtag) throws RepositoryException, InterruptedException {
+
         FieldType fieldType = follow.getFieldType();
 
         if (!record.hasField(fieldType.getId())) {
@@ -303,16 +306,24 @@ public class ValueEvaluator {
         return null;
     }
 
-    private IdRecord resolveRecordId(RecordId recordId, SchemaId vtag, Repository repository) {
+    private IdRecord resolveRecordId(RecordId recordId, SchemaId vtag, Repository repository)
+            throws RepositoryException, InterruptedException {
         try {
-            // TODO we could limit this to only load the field necessary for the next follow
+            // TODO we could limit this to only load the field necessary for the next follow in case this is not
+            //      the last follow
             return VersionTag.getIdRecord(recordId, vtag, repository);
-        } catch (Exception e) {
+        } catch (RecordNotFoundException e) {
+            // It's ok for a link to point to a non-existing record
+            return null;
+        } catch (VersionNotFoundException e) {
+            // It's ok for a link to point to a non-existing record
             return null;
         }
     }
 
-    private List<IdRecord> evalVariantFollow(VariantFollow follow, IdRecord record, Repository repository, SchemaId vtag) {
+    private List<IdRecord> evalVariantFollow(VariantFollow follow, IdRecord record, Repository repository,
+            SchemaId vtag) throws RepositoryException, InterruptedException {
+
         RecordId recordId = record.getId();
 
         Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
@@ -329,12 +340,18 @@ public class ValueEvaluator {
         try {
             IdRecord lessDimensionedRecord = VersionTag.getIdRecord(resolvedRecordId, vtag, repository);
             return lessDimensionedRecord == null ? null : Collections.singletonList(lessDimensionedRecord);
-        } catch (Exception e) {
+        } catch (RecordNotFoundException e) {
+            // It's ok that the variant does not exist
+            return null;
+        } catch (VersionNotFoundException e) {
+            // It's ok that the variant does not exist
             return null;
         }
     }
 
-    private List<IdRecord> evalMasterFollow(MasterFollow follow, IdRecord record, Repository repository, SchemaId vtag) {
+    private List<IdRecord> evalMasterFollow(MasterFollow follow, IdRecord record, Repository repository, SchemaId vtag)
+            throws RepositoryException, InterruptedException {
+
         if (record.getId().isMaster())
             return null;
 
@@ -343,7 +360,11 @@ public class ValueEvaluator {
         try {
             IdRecord master = VersionTag.getIdRecord(masterId, vtag, repository);
             return master == null ? null : Collections.singletonList(master);
-        } catch (Exception e) {
+        } catch (RecordNotFoundException e) {
+            // It's ok that the master does not exist
+            return null;
+        } catch (VersionNotFoundException e) {
+            // It's ok that the master does not exist
             return null;
         }
     }

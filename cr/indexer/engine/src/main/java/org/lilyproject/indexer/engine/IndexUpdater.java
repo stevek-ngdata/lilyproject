@@ -17,12 +17,14 @@ package org.lilyproject.indexer.engine;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
+import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.linkindex.LinkIndex;
+import org.lilyproject.linkindex.LinkIndexException;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.util.repo.RecordEvent;
@@ -36,12 +38,43 @@ import static org.lilyproject.util.repo.RecordEvent.Type.*;
 import java.io.IOException;
 import java.util.*;
 
+
+//
+// About the exception handling strategy
+// =====================================
+//
+// When some exception occurs, we can handle it in several ways:
+//
+//  * ignore it:
+//       this is suitable for to be expected exceptions, such as a RecordNotFoundException. Such cases are part of
+//       the normal flow and don't need to be logged. This does require putting catch blocks where needed.
+//
+//  * block:
+//       this is what we do in case SOLR is not reachable. It doesn't make sense to skip such error, since we'll
+//       run into the same problem with the next message. Therefore, we wait and retry (indefinitely) until it
+//       succeeds. A metric should be augmented so that the admin can be aware this is happening.
+//
+//       Note that we don't retry in case operations fail due to HBase IO problems, since the HBase client libraries
+//       internally do already extensive retryal of operations.
+//
+//  * skip:
+//       this is basically the same as the next case, except that it happens somewhere in a loop where we can still
+//       meaningfully try to continue with the next iteration. In such case, the error should be logged and metrics
+//       augmented, just as for the 'fail' case.
+//
+//  * fail:
+//       this is for all other exceptions. The indexing of the record failed, which means the index of that record
+//       will not have been updated, or that the update of the denormalized index data did not happen. In such case
+//       we should clearly log this, and augment some metric so that the admin can know about it.
+//
+// Also be careful to let InterruptedException pass through (or to reset the interrupted flag).
+//
+
 /**
  * Updates the index in response to repository events.
  */
 public class IndexUpdater implements RowLogMessageListener {
     private Repository repository;
-    private TypeManager typeManager;
     private LinkIndex linkIndex;
     private Indexer indexer;
     private IndexUpdaterMetrics metrics;
@@ -61,7 +94,6 @@ public class IndexUpdater implements RowLogMessageListener {
             throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
-        this.typeManager = repository.getTypeManager();
         this.idGenerator = repository.getIdGenerator();
         this.linkIndex = linkIndex;
         this.indexLocker = indexLocker;
@@ -72,18 +104,21 @@ public class IndexUpdater implements RowLogMessageListener {
         this.metrics = metrics;
     }
 
-    public boolean processMessage(RowLogMessage msg) {
+    public boolean processMessage(RowLogMessage msg) throws InterruptedException {
         long before = System.currentTimeMillis();
 
         // During the processing of this message, we switch the context class loader to the one
         // of the Kauri module to which the index updater belongs. This is necessary for Tika
         // to find its parser implementations.
 
+        RecordEvent event = null;
+        RecordId recordId = null;
+
         ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(myContextClassLoader);
-            RecordEvent event = new RecordEvent(msg.getPayload(), idGenerator);
-            RecordId recordId = idGenerator.fromBytes(msg.getRowKey());
+            event = new RecordEvent(msg.getPayload(), idGenerator);
+            recordId = idGenerator.fromBytes(msg.getRowKey());
 
             if (log.isDebugEnabled()) {
                 log.debug("Received message: " + event.toJson());
@@ -119,9 +154,10 @@ public class IndexUpdater implements RowLogMessageListener {
                 indexLocker.lock(recordId);
                 try {
                     try {
-                        // Read the vtags of the record. Note that while this algorithm is running, the record can meanwhile
-                        // undergo changes. However, we continuously work with the snapshot of the vtags mappings read here.
-                        // The processing of later events will bring the index up to date with any new changes.
+                        // Read the vtags of the record. Note that while this algorithm is running, the record can
+                        // meanwhile undergo changes. However, we continuously work with the snapshot of the vtags
+                        // mappings read here. The processing of later events will bring the index up to date with
+                        // any new changes.
                         vtRecord = new VTaggedRecord(recordId, event, null, repository);
                     } catch (RecordNotFoundException e) {
                         // The record has been deleted in the meantime.
@@ -140,11 +176,15 @@ public class IndexUpdater implements RowLogMessageListener {
                         vtRecord.getModifiedVTags());
             }
 
-
+        } catch (InterruptedException e) {
+            throw e;
         } catch (Exception e) {
-            // TODO
-            //  TODO if the error is an IndexLockException: indexing can be retried later thus rather return false
-            log.error("Error processing event in indexer.", e);
+            if (recordId != null) {
+                String eventType = event != null && event.getType() != null ? event.getType().toString() : "(unknown)";
+                log.error("Failure in IndexUpdater. Record '" + recordId + "', event type " + eventType, e);
+            } else {
+                log.error("Failure in IndexUpdater. Failed before/while reading payload.", e);
+            }
         } finally {
             long after = System.currentTimeMillis();
             metrics.updates.inc(after - before);
@@ -279,7 +319,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
     private void updateDenormalizedData(RecordId recordId, RecordEvent event,
             Map<Scope, Set<FieldType>> updatedFieldsByScope, Map<Long, Set<SchemaId>> vtagsByVersion,
-            Set<SchemaId> changedVTagFields) {
+            Set<SchemaId> changedVTagFields) throws RepositoryException, InterruptedException, LinkIndexException {
 
         // This algorithm is designed to first collect all the reindex-work, and then to perform it.
         // Otherwise the same document would be indexed multiple times if it would become invalid
@@ -406,13 +446,8 @@ public class IndexUpdater implements RowLogMessageListener {
                     if (follow instanceof DerefValue.FieldFollow) {
                         SchemaId fieldId = ((DerefValue.FieldFollow)follow).getFieldId();
                         for (RecordId referrer : referrers) {
-                            try {
-                                Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);
-                                newReferrers.addAll(linkReferrers);
-                            } catch (IOException e) {
-                                // TODO
-                                e.printStackTrace();
-                            }
+                            Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);
+                            newReferrers.addAll(linkReferrers);
                         }
                     } else if (follow instanceof DerefValue.VariantFollow) {
                         DerefValue.VariantFollow varFollow = (DerefValue.VariantFollow)follow;
@@ -434,13 +469,7 @@ public class IndexUpdater implements RowLogMessageListener {
                             }
 
                             //
-                            Set<RecordId> variants;
-                            try {
-                                variants = repository.getVariants(referrer);
-                            } catch (Exception e) {
-                                // TODO we should probably throw this higher up and let it be handled there
-                                throw new RuntimeException(e);
-                            }
+                            Set<RecordId> variants = repository.getVariants(referrer);
 
                             nextVariant:
                             for (RecordId variant : variants) {
@@ -468,18 +497,7 @@ public class IndexUpdater implements RowLogMessageListener {
                         for (RecordId referrer : referrers) {
                             // A MasterFollow can only point to masters
                             if (referrer.isMaster()) {
-                                Set<RecordId> variants;
-                                try {
-                                    variants = repository.getVariants(referrer);
-                                } catch (RepositoryException e) {
-                                    // TODO we should probably throw this higher up and let it be handled there
-                                    throw new RuntimeException(e);
-                                } catch (InterruptedException e) {
-                                    // TODO we should probably throw this higher up and let it be handled there
-                                    Thread.currentThread().interrupt();
-                                    throw new RuntimeException(e);
-                                }
-
+                                Set<RecordId> variants = repository.getVariants(referrer);
                                 variants.remove(referrer);
                                 newReferrers.addAll(variants);
                             }
@@ -527,8 +545,9 @@ public class IndexUpdater implements RowLogMessageListener {
             try {
                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null);
             } catch (Exception e) {
-                // TODO
-                e.printStackTrace();
+                // We failed to put the message: this is pretty important since it means the record's index
+                // won't get updated, therefore log as error, but after this we continue with the next one.
+                log.error("Error putting index message on queue of record " + referrer, e);
             }
         }
     }
@@ -536,7 +555,8 @@ public class IndexUpdater implements RowLogMessageListener {
     /**
      * Index a record for all the specified vtags.
      */
-    private void index(RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException {
+    private void index(RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,
+            IOException, SolrServerException, ShardSelectorException, IndexLockException {
         boolean lockObtained = false;
         try {
             indexLocker.lock(recordId);
@@ -546,32 +566,25 @@ public class IndexUpdater implements RowLogMessageListener {
             try {
                 vtRecord = new VTaggedRecord(recordId, repository);
             } catch (RecordNotFoundException e) {
-                // TODO
-                e.printStackTrace();
+                // can't index what doesn't exist
                 return;
             }
 
             IdRecord record = vtRecord.getNonVersionedRecord();
 
-            IndexCase indexCase = indexer.getConf().getIndexCase(record.getRecordTypeName(), record.getId().getVariantProperties());
+            IndexCase indexCase = indexer.getConf().getIndexCase(record.getRecordTypeName(),
+                    record.getId().getVariantProperties());
+
             if (indexCase == null) {
                 return;
             }
 
-            try {
-                // Only keep vtags which should be indexed
-                vtagsToIndex.retainAll(indexCase.getVersionTags());
-                // Only keep vtags which exist on the record
-                vtagsToIndex.retainAll(vtRecord.getVTags().keySet());
+            // Only keep vtags which should be indexed
+            vtagsToIndex.retainAll(indexCase.getVersionTags());
+            // Only keep vtags which exist on the record
+            vtagsToIndex.retainAll(vtRecord.getVTags().keySet());
 
-                indexer.index(vtRecord, vtagsToIndex);
-            } catch (Exception e) {
-                // TODO handle this
-                e.printStackTrace();
-            }
-        } catch (IndexLockException e) {
-            // TODO handle this
-            e.printStackTrace();
+            indexer.index(vtRecord, vtagsToIndex);
         } finally {
             if (lockObtained) {
                 indexLocker.unlockLogFailure(recordId);
@@ -592,27 +605,5 @@ public class IndexUpdater implements RowLogMessageListener {
             }
         }
         return false;
-    }
-
-    private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds) {
-        Map<Scope, Set<FieldType>> result = new HashMap<Scope, Set<FieldType>>();
-        for (Scope scope : Scope.values()) {
-            result.put(scope, new HashSet<FieldType>());
-        }
-
-        for (SchemaId fieldId : fieldIds) {
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeById(fieldId);
-            } catch (FieldTypeNotFoundException e) {
-                continue;
-            } catch (Exception e) {
-                // TODO not sure what to do in these kinds of situations
-                throw new RuntimeException(e);
-            }
-            result.get(fieldType.getScope()).add(fieldType);
-        }
-
-        return result;
     }
 }

@@ -87,7 +87,7 @@ public class LinkIndex {
     /**
      * Deletes all links of a record, irrespective of the vtag.
      */
-    public void deleteLinks(RecordId sourceRecord) throws IOException {
+    public void deleteLinks(RecordId sourceRecord) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
@@ -112,12 +112,16 @@ public class LinkIndex {
                 entries.add(entry);
             }
             FORWARD_INDEX.get().removeEntries(entries);
+        } catch (LinkIndexException e) {
+            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "'", e);
+        } catch (IOException e) {
+            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "'", e);
         } finally {
             metrics.report(Action.DELETE_LINKS, System.currentTimeMillis() - before);
         }
     }
 
-    public void deleteLinks(RecordId sourceRecord, SchemaId vtag) throws IOException {
+    public void deleteLinks(RecordId sourceRecord, SchemaId vtag) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
@@ -142,6 +146,10 @@ public class LinkIndex {
                 entries.add(entry);
             }
             FORWARD_INDEX.get().removeEntries(entries);
+        } catch (LinkIndexException e) {
+            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "', vtag '" + vtag + "'", e);
+        } catch (IOException e) {
+            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "', vtag '" + vtag + "'", e);
         } finally {
             metrics.report(Action.DELETE_LINKS_VTAG, System.currentTimeMillis() - before);
         }
@@ -151,7 +159,7 @@ public class LinkIndex {
      *
      * @param links if this set is empty, then calling this method is equivalent to calling deleteLinks
      */
-    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws IOException {
+    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             // We could simply delete all the old entries using deleteLinks() and then add
@@ -209,6 +217,9 @@ public class LinkIndex {
                 BACKWARD_INDEX.get().removeEntries(bkwdEntries);
                 FORWARD_INDEX.get().removeEntries(fwdEntries);
             }
+        } catch (IOException e) {
+            throw new LinkIndexException("Error updating links for record '" + sourceRecord + "', vtag '" +
+                    vtag + "'", e);
         } finally {
             metrics.report(Action.UPDATE_LINKS, System.currentTimeMillis() - before);
         }
@@ -239,11 +250,11 @@ public class LinkIndex {
         return entry;
     }
 
-    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag) throws IOException {
+    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag) throws LinkIndexException {
         return getReferrers(record, vtag, null);
     }
 
-    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag, SchemaId sourceField) throws IOException {
+    public Set<RecordId> getReferrers(RecordId record, SchemaId vtag, SchemaId sourceField) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -263,12 +274,15 @@ public class LinkIndex {
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
     
             return result;
+        } catch (IOException e) {
+            throw new LinkIndexException("Error getting referrers for record '" + record + "', vtag '" + vtag +
+                "', field '" + sourceField + "'", e);
         } finally {
             metrics.report(Action.GET_REFERRERS, System.currentTimeMillis() - before);
         }
     }
 
-    public Set<FieldedLink> getFieldedReferrers(RecordId record, SchemaId vtag) throws IOException {
+    public Set<FieldedLink> getFieldedReferrers(RecordId record, SchemaId vtag) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -286,12 +300,14 @@ public class LinkIndex {
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
     
             return result;
+        } catch (IOException e) {
+            throw new LinkIndexException("Error getting referrers for record '" + record + "', vtag '" + vtag + "'", e);
         } finally {
             metrics.report(Action.GET_FIELDED_REFERRERS, System.currentTimeMillis() - before);
         }
     }
 
-    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(RecordId record) throws IOException {
+    public Set<Pair<FieldedLink, SchemaId>> getAllForwardLinks(RecordId record) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -309,12 +325,14 @@ public class LinkIndex {
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
     
             return result;
+        } catch (IOException e) {
+            throw new LinkIndexException("Error getting forward links for record '" + record + "'", e);
         } finally {
             metrics.report(Action.GET_ALL_FW_LINKS, System.currentTimeMillis() - before);
         }
     }
 
-    public Set<FieldedLink> getForwardLinks(RecordId record, SchemaId vtag) throws IOException {
+    public Set<FieldedLink> getForwardLinks(RecordId record, SchemaId vtag) throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
@@ -332,6 +350,9 @@ public class LinkIndex {
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
     
             return result;
+        } catch (IOException e) {
+            throw new LinkIndexException("Error getting forward links for record '" + record + "', vtag '" +
+                    vtag + "'", e);
         } finally {
             metrics.report(Action.GET_FW_LINKS, System.currentTimeMillis() - before);
         }

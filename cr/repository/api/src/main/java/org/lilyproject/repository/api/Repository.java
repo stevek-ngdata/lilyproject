@@ -364,7 +364,8 @@ public interface Repository extends Closeable {
      *
      * @param recordId typically a master record id, if you specify a variant record id, its master will automatically
      *                 be used
-     * @return the set of variants, including the master record id.
+     * @return the set of variants, including the master record id. Returns an empty list if the record would not
+     *         exist.
      */
     Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException;
 

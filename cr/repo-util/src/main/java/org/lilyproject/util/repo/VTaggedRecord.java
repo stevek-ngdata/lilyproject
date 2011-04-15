@@ -36,7 +36,8 @@ public class VTaggedRecord {
         this(recordId, null, repository);
     }
 
-    public VTaggedRecord(RecordId recordId, FieldFilter fieldFilter, Repository repository) throws RepositoryException, InterruptedException {
+    public VTaggedRecord(RecordId recordId, FieldFilter fieldFilter, Repository repository) throws RepositoryException,
+            InterruptedException {
         this(recordId, null, fieldFilter, repository);
     }
 
@@ -91,10 +92,6 @@ public class VTaggedRecord {
                 fieldType = typeManager.getFieldTypeById(field.getKey());
             } catch (FieldTypeNotFoundException e) {
                 // A field whose field type does not exist: skip it
-                continue;
-            } catch (RepositoryException e) {
-                // Other problem loading field type: skip it
-                // TODO log this also as an error
                 continue;
             }
 
@@ -249,6 +246,7 @@ public class VTaggedRecord {
             try {
                 fieldType = typeManager.getFieldTypeById(fieldId);
             } catch (FieldTypeNotFoundException e) {
+                // A field whose field type does not exist: skip it
                 continue;
             }
             if (fieldFilter.accept(fieldType)) {

@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.*;
 
 
-// IMPORTANT: each call to solrServer should be followed by a corresponding metrics update.
+// IMPORTANT: each call to solrClient should be followed by a corresponding metrics update.
 
 /**
  * The Indexer adds records to, or removes records from, the index.
@@ -107,12 +107,14 @@ public class Indexer {
             try {
                 version = vtRecord.getIdRecord(entry.getKey());
             } catch (VersionNotFoundException e) {
-                // TODO
+                // ok
             } catch (RecordNotFoundException e) {
-                // TODO handle this differently from version not found
+                // ok
             }
 
             if (version == null) {
+                // If the version does not exist, we pro-actively delete it, though the IndexUpdater should
+                // do this any way when it later receives a message about the delete.
                 for (SchemaId vtag : entry.getValue()) {
                     verifyLock(recordId);
                     solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(recordId, vtag));

@@ -15,10 +15,8 @@
  */
 package org.lilyproject.util.repo;
 
-import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -56,24 +54,23 @@ public class VersionTag {
     /**
      * Filters the given set of fields to only those that are vtag fields.
      */
-    public static Set<SchemaId> filterVTagFields(Set<SchemaId> fieldIds, TypeManager typeManager) {
+    public static Set<SchemaId> filterVTagFields(Set<SchemaId> fieldIds, TypeManager typeManager)
+            throws RepositoryException, InterruptedException {
         Set<SchemaId> result = new HashSet<SchemaId>();
         for (SchemaId field : fieldIds) {
             try {
-                if (VersionTag.isVersionTag(typeManager.getFieldTypeById(field))) {
+                if (isVersionTag(typeManager.getFieldTypeById(field))) {
                     result.add(field);
                 }
             } catch (FieldTypeNotFoundException e) {
                 // ignore, if it does not exist, it can't be a version tag
-            } catch (Throwable t) {
-                LogFactory.getLog(VersionTag.class).error("Error loading field type to find out if it is a vtag field.", t);
             }
         }
         return result;
     }
 
     public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository)
-            throws RepositoryException, IOException, InterruptedException {
+            throws RepositoryException, InterruptedException {
 
         VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, repository);
         return vtRecord.getIdRecord(vtagId);
