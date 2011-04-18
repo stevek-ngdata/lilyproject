@@ -108,13 +108,12 @@ public class IndexManager {
      * @throws IndexNotFoundException if the index does not exist
      */
     public Index getIndex(String name) throws IOException, IndexNotFoundException {
+        HTableInterface table;
         try {
-            hbaseAdmin.getTableDescriptor(Bytes.toBytes(name));
+            table = new LocalHTable(hbaseConf, name);
         } catch (TableNotFoundException e) {
             throw new IndexNotFoundException(name);
         }
-
-        HTableInterface table = new LocalHTable(hbaseConf, name);
 
         return instantiateIndex(name, table);
     }
