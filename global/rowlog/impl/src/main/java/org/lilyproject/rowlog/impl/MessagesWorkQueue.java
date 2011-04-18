@@ -16,18 +16,32 @@
 package org.lilyproject.rowlog.impl;
 
 import java.util.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.util.ByteArrayKey;
 
 public class MessagesWorkQueue {
-private static final int MAX_MESSAGES = 100;
+    private static final int MAX_MESSAGES = 100;
 
     private final List<RowLogMessage> messageList = new ArrayList<RowLogMessage>(MAX_MESSAGES);
     
     private final Set<RowLogMessage> messagesWorkingOn = new HashSet<RowLogMessage>();
+
     private final Set<ByteArrayKey> rowsWorkingOn = new HashSet<ByteArrayKey>();
-    
+
+    /**
+     * This lock must be obtained by anyone modifying the above lists, or of course when waiting/signalling
+     * the conditions associated with this lock.
+     */
+    private final Lock lock = new ReentrantLock();
+
+    private final Condition notFull  = lock.newCondition();
+
+    private final Condition notEmpty = lock.newCondition();
+
     /**
      * If the queue contains less than this amount of messages, we'll notify that we want some fresh messages.
      */
@@ -36,12 +50,15 @@ private static final int MAX_MESSAGES = 100;
     private final Object refillTrigger = new Object();
 
     public void offer(RowLogMessage message) throws InterruptedException {
-        synchronized (messageList) {
+        lock.lock();
+        try {
             while (messageList.size() >= MAX_MESSAGES) {
-                messageList.wait();
+                notFull.await();
             }
             messageList.add(message);
-            messageList.notifyAll();
+            notEmpty.signal();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -49,10 +66,11 @@ private static final int MAX_MESSAGES = 100;
      * Calling take() should always be matched by corresponding done() call.
      */
     public RowLogMessage take() throws InterruptedException {
-        synchronized (messageList) {
+        lock.lock();
+        try {
             while (true) {
                 while (messageList.isEmpty()) {
-                    messageList.wait();
+                    notEmpty.await();
                 }
 
                 Iterator<RowLogMessage> messages = messageList.iterator();
@@ -61,12 +79,12 @@ private static final int MAX_MESSAGES = 100;
                     ByteArrayKey row = new ByteArrayKey(message.getRowKey());
                     if (messagesWorkingOn.contains(message)) {
                         messages.remove();
-                        messageList.notifyAll();
+                        notFull.signal();
                     } else if (!rowsWorkingOn.contains(row)) {
                         messages.remove();
+                        notFull.signal();
                         messagesWorkingOn.add(message);
                         rowsWorkingOn.add(row);
-                        messageList.notifyAll();
                         if (messageList.size() <= refillThreshold) {
                             synchronized (refillTrigger) {
                                 refillTrigger.notifyAll();
@@ -77,17 +95,22 @@ private static final int MAX_MESSAGES = 100;
                 }
 
                 // The messages list is not empty, but only contains messages for rows on which we are already working
-                messageList.wait();
+                notEmpty.await();
             }
+        } finally {
+            lock.unlock();
         }
     }
     
     public void done(RowLogMessage message) {
-        synchronized (messageList) {
+        lock.lock();
+        try {
             messagesWorkingOn.remove(message);
             if (rowsWorkingOn.remove(new ByteArrayKey(message.getRowKey()))) {
-                messageList.notifyAll();
+                notEmpty.signal();
             }
+        } finally {
+            lock.unlock();
         }
     }
     
