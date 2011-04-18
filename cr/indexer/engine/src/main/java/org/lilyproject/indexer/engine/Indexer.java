@@ -228,11 +228,11 @@ public class Indexer {
             }
 
 
-            solrDoc.setField("@@id", record.getId().toString());
-            solrDoc.setField("@@key", getIndexId(record.getId(), vtag));
-            solrDoc.setField("@@vtagId", vtag.toString());
-            solrDoc.setField("@@vtag", typeManager.getFieldTypeById(vtag).getName().getName());
-            solrDoc.setField("@@version", String.valueOf(version));
+            solrDoc.setField("lily.id", record.getId().toString());
+            solrDoc.setField("lily.key", getIndexId(record.getId(), vtag));
+            solrDoc.setField("lily.vtagId", vtag.toString());
+            solrDoc.setField("lily.vtag", typeManager.getFieldTypeById(vtag).getName().getName());
+            solrDoc.setField("lily.version", String.valueOf(version));
 
             // Can be useful during development
             // if (log.isDebugEnabled()) {
@@ -276,7 +276,7 @@ public class Indexer {
     public void delete(RecordId recordId) throws IOException, SolrServerException, ShardSelectorException,
             InterruptedException {
         verifyLock(recordId);
-        solrShardMgr.getSolrClient(recordId).deleteByQuery("@@id:" + ClientUtils.escapeQueryChars(recordId.toString()));
+        solrShardMgr.getSolrClient(recordId).deleteByQuery("lily.id:" + ClientUtils.escapeQueryChars(recordId.toString()));
         metrics.deletesByQuery.inc();
     }
 

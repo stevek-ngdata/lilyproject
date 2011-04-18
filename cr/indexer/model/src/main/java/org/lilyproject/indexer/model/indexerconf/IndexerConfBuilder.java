@@ -373,8 +373,8 @@ public class IndexerConfBuilder {
     }
 
     private void validateName(String name) throws IndexerConfException {
-        if (name.startsWith("@@")) {
-            throw new IndexerConfException("names starting with @@ are reserved for internal uses. Name: " + name);
+        if (name.startsWith("lily.")) {
+            throw new IndexerConfException("names starting with 'lily.' are reserved for internal uses. Name: " + name);
         }
     }
 
