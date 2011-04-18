@@ -23,10 +23,10 @@ import org.lilyproject.util.ByteArrayKey;
 public class MessagesWorkQueue {
 private static final int MAX_MESSAGES = 100;
 
-    private List<RowLogMessage> messageList = new ArrayList<RowLogMessage>(MAX_MESSAGES);
+    private final List<RowLogMessage> messageList = new ArrayList<RowLogMessage>(MAX_MESSAGES);
     
-    private Set<RowLogMessage> messagesWorkingOn = new HashSet<RowLogMessage>();
-    private Set<ByteArrayKey> rowsWorkingOn = new HashSet<ByteArrayKey>();
+    private final Set<RowLogMessage> messagesWorkingOn = new HashSet<RowLogMessage>();
+    private final Set<ByteArrayKey> rowsWorkingOn = new HashSet<ByteArrayKey>();
     
     /**
      * If the queue contains less than this amount of messages, we'll notify that we want some fresh messages.
@@ -37,28 +37,31 @@ private static final int MAX_MESSAGES = 100;
 
     public void offer(RowLogMessage message) throws InterruptedException {
         synchronized (messageList) {
-            if (messageList.size() >= MAX_MESSAGES) {
+            while (messageList.size() >= MAX_MESSAGES) {
                 messageList.wait();
-                offer(message);
-            } else {
-                messageList.add(message);
-                messageList.notifyAll();
             }
+            messageList.add(message);
+            messageList.notifyAll();
         }
     }
-    
+
+    /**
+     * Calling take() should always be matched by corresponding done() call.
+     */
     public RowLogMessage take() throws InterruptedException {
         synchronized (messageList) {
-            if (messageList.size() == 0) {
-                messageList.wait();
-                return take();
-            } else {
+            while (true) {
+                while (messageList.isEmpty()) {
+                    messageList.wait();
+                }
+
                 Iterator<RowLogMessage> messages = messageList.iterator();
                 while (messages.hasNext()) {
                     RowLogMessage message = messages.next();
                     ByteArrayKey row = new ByteArrayKey(message.getRowKey());
                     if (messagesWorkingOn.contains(message)) {
                         messages.remove();
+                        messageList.notifyAll();
                     } else if (!rowsWorkingOn.contains(row)) {
                         messages.remove();
                         messagesWorkingOn.add(message);
@@ -72,8 +75,9 @@ private static final int MAX_MESSAGES = 100;
                         return message;
                     }
                 }
+
+                // The messages list is not empty, but only contains messages for rows on which we are already working
                 messageList.wait();
-                return take();
             }
         }
     }
@@ -81,7 +85,9 @@ private static final int MAX_MESSAGES = 100;
     public void done(RowLogMessage message) {
         synchronized (messageList) {
             messagesWorkingOn.remove(message);
-            rowsWorkingOn.remove(new ByteArrayKey(message.getRowKey()));            
+            if (rowsWorkingOn.remove(new ByteArrayKey(message.getRowKey()))) {
+                messageList.notifyAll();
+            }
         }
     }
     
