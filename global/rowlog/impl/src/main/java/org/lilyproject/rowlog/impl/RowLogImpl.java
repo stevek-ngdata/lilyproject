@@ -238,11 +238,16 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
 
-    protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier, byte[] previousValue, RowLock lock) throws RowLogException, IOException {
+    protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier,
+            byte[] previousValue, RowLock lock) throws RowLogException, IOException {
+
         if (lock != null) {
-            return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue, lock);
+            return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(),
+                    message.getTimestamp()), lock);
         } else {
-            return removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(), message.getTimestamp()), previousValue);
+            removeExecutionStateAndPayload(rowKey, executionStateQualifier, payloadQualifier(message.getSeqNr(),
+                    message.getTimestamp()));
+            return true;
         }
     }
 
@@ -370,12 +375,10 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
                 executionState.setState(subscriptionId, true);
                 if (executionState.allDone()) {
-                    // TODO (bruno) return value is ignored here, is this fine? Probably yes since everyone else
-                    // is done with this row (unless more than one can come to this conclusion at the same time)
                     handleAllDone(message, rowKey, executionStateQualifier, previousValue, null);
                 } else {
                     if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue)) {
-                        return messageDone(message, subscriptionId, count+1); // Retry
+                        return messageDone(message, subscriptionId, count + 1); // Retry
                     }
                 }
             }
@@ -448,14 +451,16 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         return rowLocker.put(put, rowLock);
     }
 
-    private boolean removeExecutionStateAndPayload(byte[] rowKey, byte[] executionStateQualifier, byte[] payloadQualifier, byte[] previousValue) throws IOException {
+    private void removeExecutionStateAndPayload(byte[] rowKey, byte[] executionStateQualifier, byte[] payloadQualifier)
+            throws IOException {
         Delete delete = new Delete(rowKey); 
         delete.deleteColumns(rowLogColumnFamily, executionStateQualifier);
         delete.deleteColumns(rowLogColumnFamily, payloadQualifier);
-        return rowTable.checkAndDelete(rowKey, rowLogColumnFamily, executionStateQualifier, previousValue, delete);
+        rowTable.delete(delete);
     }
 
-    private boolean removeExecutionStateAndPayload(byte[] rowKey, byte[] executionStateQualifier, byte[] payloadQualifier, byte[] previousValue, RowLock rowLock) throws IOException {
+    private boolean removeExecutionStateAndPayload(byte[] rowKey, byte[] executionStateQualifier,
+            byte[] payloadQualifier, RowLock rowLock) throws IOException {
         Delete delete = new Delete(rowKey); 
         delete.deleteColumns(rowLogColumnFamily, executionStateQualifier);
         delete.deleteColumns(rowLogColumnFamily, payloadQualifier);
