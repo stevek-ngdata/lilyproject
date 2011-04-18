@@ -221,9 +221,9 @@ public class Tester extends BaseRepositoryTestTool {
         records = new RecordSpaces(recordSpacesNode);
     }
     
-    private void openStreams(JsonNode configNode) throws FileNotFoundException {
+    private void openStreams(JsonNode configNode) throws IOException, FileNotFoundException {
         failuresFileName = JsonUtil.getString(configNode, "failuresFile");
-        errorStream = new PrintStream(new File(failuresFileName));
+        errorStream = new PrintStream(Util.getOutputFileRollOldOne(failuresFileName));
         errorStream.print(new DateTime() + " Opening file");
     }
 
