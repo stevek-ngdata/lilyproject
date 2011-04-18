@@ -27,6 +27,10 @@ import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
 
 import javax.management.ObjectName;
 
+// TODO: I think we can drop these metrics as these can be collected from SOLR too.
+// TODO: If we would keep them, it would be best to call this from a wrapper on SolrClient, to avoid having to
+//       call these directly from Indexer.
+
 public class IndexerMetrics implements Updater {
     private final String indexName;
     private final MetricsRegistry registry = new MetricsRegistry();

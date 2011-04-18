@@ -182,8 +182,10 @@ public class IndexUpdater implements RowLogMessageListener {
             if (recordId != null) {
                 String eventType = event != null && event.getType() != null ? event.getType().toString() : "(unknown)";
                 log.error("Failure in IndexUpdater. Record '" + recordId + "', event type " + eventType, e);
+                metrics.errors.inc();
             } else {
                 log.error("Failure in IndexUpdater. Failed before/while reading payload.", e);
+                metrics.errors.inc();
             }
         } finally {
             long after = System.currentTimeMillis();
@@ -548,6 +550,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.
                 log.error("Error putting index message on queue of record " + referrer, e);
+                metrics.errors.inc();
             }
         }
     }

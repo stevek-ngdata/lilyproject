@@ -21,6 +21,13 @@
     <attribute name="indexer.servers" value="localhost:8649"/>
     -->
 
+    <attribute name="solrClient.class" value="org.apache.hadoop.metrics.spi.NullContextWithUpdateThread"/>
+    <attribute name="solrClient.period" value="15"/>
+    <!--
+    <attribute name="solrClient.class" value="org.apache.hadoop.metrics.ganglia.GangliaContext31"/>
+    <attribute name="solrClient.servers" value="localhost:8649"/>
+    -->
+
     <attribute name="indexUpdater.class" value="org.apache.hadoop.metrics.spi.NullContextWithUpdateThread"/>
     <attribute name="indexUpdater.period" value="15"/>
     <!--

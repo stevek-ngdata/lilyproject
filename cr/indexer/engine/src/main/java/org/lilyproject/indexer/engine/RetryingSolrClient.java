@@ -18,18 +18,20 @@ import java.net.UnknownHostException;
  */
 public class RetryingSolrClient {
 
-    public static SolrClient create(SolrClient solrClient) {
-        RetryingSolrClientInvocationHandler handler = new RetryingSolrClientInvocationHandler(solrClient);
+    public static SolrClient wrap(SolrClient solrClient, SolrClientMetrics metrics) {
+        RetryingSolrClientInvocationHandler handler = new RetryingSolrClientInvocationHandler(solrClient, metrics);
         return (SolrClient)Proxy.newProxyInstance(SolrClient.class.getClassLoader(), new Class[] { SolrClient.class },
                 handler);
     }
 
     private static class RetryingSolrClientInvocationHandler implements InvocationHandler {
         private SolrClient solrClient;
+        private SolrClientMetrics metrics;
         private Log log = LogFactory.getLog("org.lilyproject.indexer.solrconnection");
 
-        public RetryingSolrClientInvocationHandler(SolrClient solrClient) {
+        public RetryingSolrClientInvocationHandler(SolrClient solrClient, SolrClientMetrics metrics) {
             this.solrClient = solrClient;
+            this.metrics = metrics;
         }
 
         @Override
@@ -75,6 +77,7 @@ public class RetryingSolrClient {
                         throw throwable;
                     }
                 }
+                metrics.retries.inc();
                 attempt++;
             }
         }

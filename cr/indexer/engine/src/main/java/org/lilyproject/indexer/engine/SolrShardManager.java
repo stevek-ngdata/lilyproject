@@ -39,18 +39,18 @@ import java.util.*;
 public class SolrShardManager {
     /** Key = shard name, Value = SOLR URL */
     private Map<String, String> shards;
-    private Map<String, SolrClient> shardConnections;
+    private Map<String, SolrClientHandle> shardConnections;
     private ShardSelector selector;
     private HttpClient httpClient;
     private RequestWriter requestWriter;
     private ResponseParser responseParser;
 
-    public SolrShardManager(Map<String, String> shards, ShardSelector selector, HttpClient httpClient,
+    public SolrShardManager(String indexName, Map<String, String> shards, ShardSelector selector, HttpClient httpClient,
             SolrClientConfig solrClientConfig) throws MalformedURLException {
-        this(shards, selector, httpClient, solrClientConfig, false);
+        this(indexName, shards, selector, httpClient, solrClientConfig, false);
     }
 
-    public SolrShardManager(Map<String, String> shards, ShardSelector selector, HttpClient httpClient,
+    public SolrShardManager(String indexName, Map<String, String> shards, ShardSelector selector, HttpClient httpClient,
             SolrClientConfig solrClientConfig, boolean blockOnIOProblem) throws MalformedURLException {
         this.shards = shards;
         this.selector = selector;
@@ -76,7 +76,7 @@ public class SolrShardManager {
             this.responseParser = new BinaryResponseParser();
         }
 
-        init(blockOnIOProblem);
+        init(indexName, blockOnIOProblem);
     }
 
     /**
@@ -87,7 +87,7 @@ public class SolrShardManager {
         SortedMap<String, String> shards = new TreeMap<String, String>();
         shards.put("shard1", uri);
         ShardSelector selector = DefaultShardSelectorBuilder.createDefaultSelector(shards);
-        return new SolrShardManager(shards, selector, new HttpClient(new MultiThreadedHttpConnectionManager()),
+        return new SolrShardManager("dummy", shards, selector, new HttpClient(new MultiThreadedHttpConnectionManager()),
                 new SolrClientConfig());
     }
 
@@ -96,8 +96,8 @@ public class SolrShardManager {
      */
     public void commit(boolean waitFlush, boolean waitSearcher) throws IOException, SolrServerException,
             InterruptedException {
-        for (SolrClient server : shardConnections.values()) {
-            server.commit(waitFlush, waitSearcher);
+        for (SolrClientHandle client : shardConnections.values()) {
+            client.solrClient.commit(waitFlush, waitSearcher);
         }
     }
 
@@ -105,25 +105,44 @@ public class SolrShardManager {
      * This method is only meant for use by test cases. Currently queries the first shard only.
      */
     public QueryResponse query(SolrQuery query) throws SolrServerException, InterruptedException {
-        return shardConnections.values().iterator().next().query(query);
+        return shardConnections.values().iterator().next().solrClient.query(query);
     }
 
-    private void init(boolean blockOnIOProblem) throws MalformedURLException {
-        shardConnections = new HashMap<String, SolrClient>();
+    private void init(String indexName, boolean blockOnIOProblem) throws MalformedURLException {
+        shardConnections = new HashMap<String, SolrClientHandle>();
         for (Map.Entry<String, String> shard : shards.entrySet()) {
             CommonsHttpSolrServer solr = new CommonsHttpSolrServer(shard.getValue(), httpClient);
             solr.setRequestWriter(requestWriter);
             solr.setParser(responseParser);
+            SolrClientMetrics metrics = new SolrClientMetrics(indexName, shard.getKey());
             SolrClient solrClient = new SolrClientImpl(solr, shard.getValue());
             if (blockOnIOProblem) {
-                solrClient = RetryingSolrClient.create(solrClient);
+                solrClient = RetryingSolrClient.wrap(solrClient, metrics);
             }
-            shardConnections.put(shard.getKey(), solrClient);
+            shardConnections.put(shard.getKey(), new SolrClientHandle(solrClient, metrics));
         }
     }
 
     public SolrClient getSolrClient(RecordId recordId) throws ShardSelectorException {
         String shardName = selector.getShard(recordId);
-        return shardConnections.get(shardName);
+        return shardConnections.get(shardName).solrClient;
+    }
+
+    private static final class SolrClientHandle {
+        SolrClient solrClient;
+        SolrClientMetrics solrClientMetrics;
+
+        public SolrClientHandle(SolrClient solrClient, SolrClientMetrics metrics) {
+            this.solrClient = solrClient;
+            this.solrClientMetrics = metrics;
+        }
+    }
+
+    public void shutdown() {
+        if (shardConnections != null) {
+            for (SolrClientHandle client : shardConnections.values()) {
+                client.solrClientMetrics.shutdown();
+            }
+        }
     }
 }

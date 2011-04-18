@@ -158,7 +158,8 @@ public class IndexerWorker {
     private void addIndexUpdater(IndexDefinition index) {
         IndexUpdaterHandle handle = null;
         try {
-            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()), repository);
+            IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
+                    repository);
 
             ShardSelector shardSelector;
             if (index.getShardingConfiguration() == null) {
@@ -169,8 +170,8 @@ public class IndexerWorker {
 
             checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
 
-            SolrShardManager solrShardMgr = new SolrShardManager(index.getSolrShards(), shardSelector, httpClient,
-                    solrClientConfig, true);
+            SolrShardManager solrShardMgr = new SolrShardManager(index.getName(), index.getSolrShards(), shardSelector,
+                    httpClient, solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, enableLocking);
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
             Indexer indexer = new Indexer(indexerConf, repository, solrShardMgr, indexLocker, indexerMetrics);
@@ -187,7 +188,7 @@ public class IndexerWorker {
                 listenerHandlers.add(handler);
             }
 
-            handle = new IndexUpdaterHandle(index, listenerHandlers, indexerMetrics, updaterMetrics);
+            handle = new IndexUpdaterHandle(index, listenerHandlers, solrShardMgr, indexerMetrics, updaterMetrics);
             handle.start();
 
             indexUpdaters.put(index.getName(), handle);
@@ -280,13 +281,15 @@ public class IndexerWorker {
     private class IndexUpdaterHandle {
         private IndexDefinition indexDef;
         private List<RemoteListenerHandler> listenerHandlers;
+        private SolrShardManager solrShardMgr;
         private IndexerMetrics indexerMetrics;
         private IndexUpdaterMetrics updaterMetrics;
 
         public IndexUpdaterHandle(IndexDefinition indexDef, List<RemoteListenerHandler> listenerHandlers,
-                IndexerMetrics indexerMetrics, IndexUpdaterMetrics updaterMetrics) {
+                SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics, IndexUpdaterMetrics updaterMetrics) {
             this.indexDef = indexDef;
             this.listenerHandlers = listenerHandlers;
+            this.solrShardMgr = solrShardMgr;
             this.indexerMetrics = indexerMetrics;
             this.updaterMetrics = updaterMetrics;
         }
@@ -301,6 +304,7 @@ public class IndexerWorker {
             for (RemoteListenerHandler handler : listenerHandlers) {
                 handler.stop();
             }
+            Closer.close(solrShardMgr);
             Closer.close(indexerMetrics);
             Closer.close(updaterMetrics);
         }

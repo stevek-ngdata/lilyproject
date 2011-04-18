@@ -21,6 +21,7 @@ import org.apache.hadoop.metrics.MetricsUtil;
 import org.apache.hadoop.metrics.Updater;
 import org.apache.hadoop.metrics.util.MetricsBase;
 import org.apache.hadoop.metrics.util.MetricsRegistry;
+import org.apache.hadoop.metrics.util.MetricsTimeVaryingLong;
 import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
 import org.lilyproject.util.hbase.metrics.MBeanUtil;
 import org.lilyproject.util.hbase.metrics.MetricsDynamicMBeanBase;
@@ -35,6 +36,12 @@ public class IndexUpdaterMetrics implements Updater {
     private final IndexerMetricsMBean mbean;
 
     public MetricsTimeVaryingRate updates = new MetricsTimeVaryingRate("updates", registry);
+
+    /**
+     * This metric is incremented for all unusual errors, that is errors which prevented the index from being
+     * updated.
+     * */
+    public MetricsTimeVaryingLong errors = new MetricsTimeVaryingLong("errors", registry);
 
     public IndexUpdaterMetrics(String indexName) {
         this.indexName = indexName;
