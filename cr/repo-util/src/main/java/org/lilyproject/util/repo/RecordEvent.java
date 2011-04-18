@@ -41,6 +41,9 @@ public class RecordEvent {
     private Type type;
     private Set<SchemaId> updatedFields;
     private boolean recordTypeChanged = false;
+    /** For index-type events: name of the index for which this event matters. */
+    private String indexName;
+    /** For index-type events: affected vtags */
     private Set<SchemaId> vtagsToIndex;
 
     public enum Type {
@@ -99,6 +102,10 @@ public class RecordEvent {
             for (int i = 0; i < updatedFieldsNode.size(); i++) {
                 addUpdatedField(idGenerator.getSchemaId(updatedFieldsNode.get(i).getBinaryValue()));
             }
+        }
+
+        if (msgData.get("index") != null) {
+            indexName = msgData.get("index").getValueAsText();
         }
 
         JsonNode vtagsToIndexNode = msgData.get("vtagsToIndex");
@@ -161,6 +168,14 @@ public class RecordEvent {
         updatedFields.add(fieldTypeId);
     }
 
+    public String getIndexName() {
+        return indexName;
+    }
+
+    public void setIndexName(String indexName) {
+        this.indexName = indexName;
+    }
+
     public Set<SchemaId> getVtagsToIndex() {
         return vtagsToIndex;
     }
@@ -196,6 +211,10 @@ public class RecordEvent {
 
         if (recordTypeChanged) {
             object.put("recordTypeChanged", true);
+        }
+
+        if (indexName != null) {
+            object.put("index", indexName);
         }
 
         if (vtagsToIndex != null && vtagsToIndex.size() > 0) {
@@ -239,6 +258,9 @@ public class RecordEvent {
             return false;
 
         if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields))
+            return false;
+
+        if (!ObjectUtils.safeEquals(other.indexName, this.indexName))
             return false;
 
         if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))

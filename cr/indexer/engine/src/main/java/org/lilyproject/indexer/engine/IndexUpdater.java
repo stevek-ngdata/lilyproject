@@ -125,12 +125,16 @@ public class IndexUpdater implements RowLogMessageListener {
             }
 
             if (event.getType().equals(INDEX)) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("Record %1$s: reindex requested for these vtags: %2$s", recordId,
-                            indexer.vtagSetToNameString(event.getVtagsToIndex())));
-                }
+                boolean forUs = indexer.getIndexName().equals(event.getIndexName());
 
-                index(recordId, event.getVtagsToIndex());
+                if (forUs) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("Record %1$s: reindex requested for these vtags: %2$s", recordId,
+                                indexer.vtagSetToNameString(event.getVtagsToIndex())));
+                    }
+
+                    index(recordId, event.getVtagsToIndex());
+                }
             } else if (event.getType().equals(DELETE)) {
                 // For deleted records, we cannot determine the record type, so we do not know if there was
                 // an applicable index case, so we always perform a delete.
@@ -539,6 +543,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
             RecordEvent payload = new RecordEvent();
             payload.setType(INDEX);
+            payload.setIndexName(indexer.getIndexName());
             for (SchemaId vtag : vtagsToIndex) {
                 payload.addVTagToIndex(vtag);
             }

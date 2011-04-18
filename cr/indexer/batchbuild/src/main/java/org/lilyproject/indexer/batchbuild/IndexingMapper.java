@@ -121,14 +121,17 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
             solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
 
-            SolrShardManager solrShardMgr = new SolrShardManager("batchjob", solrShards, shardSelector, httpClient,
+            String indexName = "batchjob"; // we should pass on the real index name.
+
+            SolrShardManager solrShardMgr = new SolrShardManager(indexName, solrShards, shardSelector, httpClient,
                     solrConfig);
 
             boolean enableLocking = Boolean.parseBoolean(jobConf.get("org.lilyproject.indexer.batchbuild.enableLocking"));
 
             indexLocker = new IndexLocker(zk, enableLocking);
 
-            indexer = new Indexer(indexerConf, repository, solrShardMgr, indexLocker, new IndexerMetrics("batchjob"));
+            indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
+                    new IndexerMetrics(indexName));
 
             int workers = getIntProp("org.lilyproject.indexer.batchbuild.threads", 5, jobConf);
             

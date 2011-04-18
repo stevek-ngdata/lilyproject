@@ -36,6 +36,7 @@ import java.util.*;
  * The Indexer adds records to, or removes records from, the index.
  */
 public class Indexer {
+    private String indexName;
     private IndexerConf conf;
     private Repository repository;
     private TypeManager typeManager;
@@ -46,8 +47,9 @@ public class Indexer {
 
     private Log log = LogFactory.getLog(getClass());
 
-    public Indexer(IndexerConf conf, Repository repository, SolrShardManager solrShardMgr, IndexLocker indexLocker,
-            IndexerMetrics metrics) {
+    public Indexer(String indexName, IndexerConf conf, Repository repository, SolrShardManager solrShardMgr,
+            IndexLocker indexLocker, IndexerMetrics metrics) {
+        this.indexName = indexName;
         this.conf = conf;
         this.repository = repository;
         this.solrShardMgr = solrShardMgr;
@@ -59,6 +61,10 @@ public class Indexer {
 
     public IndexerConf getConf() {
         return conf;
+    }
+
+    public String getIndexName() {
+        return indexName;
     }
 
     /**

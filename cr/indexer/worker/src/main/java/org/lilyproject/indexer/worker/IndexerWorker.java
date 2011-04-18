@@ -174,7 +174,8 @@ public class IndexerWorker {
                     httpClient, solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, enableLocking);
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
-            Indexer indexer = new Indexer(indexerConf, repository, solrShardMgr, indexLocker, indexerMetrics);
+            Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
+                    indexerMetrics);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,

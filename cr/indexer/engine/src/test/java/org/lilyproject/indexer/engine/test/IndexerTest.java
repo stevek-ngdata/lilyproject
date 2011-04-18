@@ -161,7 +161,8 @@ public class IndexerTest {
     public static void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        Indexer indexer = new Indexer(INDEXER_CONF, repository, solrShardManager, indexLocker, new IndexerMetrics("test"));
+        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
+                new IndexerMetrics("test"));
 
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
                 indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
