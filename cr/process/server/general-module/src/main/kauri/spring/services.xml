@@ -83,11 +83,6 @@
     </constructor-arg>
   </bean>
 
-  <bean class="org.lilyproject.server.modules.general.LinkIndexTableSetup">
-    <constructor-arg ref="hbaseConf"/>
-    <constructor-arg ref="hbaseTableFactory"/>
-  </bean>
-
   <bean id="connectionDisposer"
         class="org.lilyproject.server.modules.general.HBaseConnectionDisposer">
   </bean>
