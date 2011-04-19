@@ -31,7 +31,6 @@ import org.lilyproject.indexer.model.api.IndexDefinition;
 
 /**
  * MessageBodyWriter for writing IndexDefinition instances 
- * @author karel
  */
 @Provider
 public class IndexDefinitionMessageBodyWriter implements MessageBodyWriter<IndexDefinition> {

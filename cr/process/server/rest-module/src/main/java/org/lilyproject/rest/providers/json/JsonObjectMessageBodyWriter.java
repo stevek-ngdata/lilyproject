@@ -31,7 +31,6 @@ import org.codehaus.jackson.node.ObjectNode;
 
 /**
  * MessageBodyWriter for writing json output (ObjectNode) instances 
- * @author karel
  */
 @Provider
 public class JsonObjectMessageBodyWriter implements MessageBodyWriter<ObjectNode> {
