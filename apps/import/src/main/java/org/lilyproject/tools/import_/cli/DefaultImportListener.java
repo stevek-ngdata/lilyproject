@@ -17,8 +17,6 @@ package org.lilyproject.tools.import_.cli;
 
 import java.io.PrintStream;
 
-import org.lilyproject.repository.api.SchemaId;
-
 public class DefaultImportListener implements ImportListener {
     private PrintStream out;
 

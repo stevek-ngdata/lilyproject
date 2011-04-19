@@ -7,9 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
-import org.lilyproject.clientmetrics.Metrics;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.Repository;
 
 public class TestActionFactory {
 

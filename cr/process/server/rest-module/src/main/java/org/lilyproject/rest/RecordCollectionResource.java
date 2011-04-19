@@ -16,7 +16,6 @@
 package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RepositoryException;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;

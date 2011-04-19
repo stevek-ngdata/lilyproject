@@ -18,7 +18,6 @@ package org.lilyproject.rest;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
-import org.lilyproject.repository.api.RepositoryException;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

@@ -24,7 +24,6 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Various tests that check whether the comparison of the binary representations

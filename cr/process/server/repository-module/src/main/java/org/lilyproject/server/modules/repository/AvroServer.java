@@ -15,7 +15,6 @@
  */
 package org.lilyproject.server.modules.repository;
 
-import org.apache.avro.ipc.HttpServer;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;

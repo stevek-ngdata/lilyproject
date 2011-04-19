@@ -24,7 +24,6 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
 
-import java.awt.image.IndexColorModel;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;

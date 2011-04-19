@@ -17,7 +17,6 @@ package org.lilyproject.rest.providers.json;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.*;
 import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.JsonFormatException;

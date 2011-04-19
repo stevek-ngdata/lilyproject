@@ -16,8 +16,6 @@
 package org.lilyproject.linkindex;
 
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.api.FieldTypeNotFoundException;
-import org.lilyproject.repository.api.RepositoryException;
 
 import java.util.List;
 import java.util.Map;

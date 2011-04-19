@@ -16,16 +16,10 @@
 package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.*;
-import org.lilyproject.tools.import_.core.ImportMode;
-import org.lilyproject.tools.import_.core.ImportResult;
-import org.lilyproject.tools.import_.core.ImportResultType;
-import org.lilyproject.tools.import_.core.RecordImport;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 
-import java.net.URI;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;

@@ -17,8 +17,6 @@ package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.TypeException;
-import org.lilyproject.repository.impl.SchemaIdImpl;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

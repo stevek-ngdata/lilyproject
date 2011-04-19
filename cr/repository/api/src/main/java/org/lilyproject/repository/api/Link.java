@@ -20,7 +20,6 @@ import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.ObjectUtils;
 
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**

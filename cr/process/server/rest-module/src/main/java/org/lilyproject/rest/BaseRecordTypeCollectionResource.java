@@ -17,7 +17,6 @@ package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RecordTypeExistsException;
-import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.TypeManager;
 
 import javax.ws.rs.GET;

@@ -15,7 +15,6 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;

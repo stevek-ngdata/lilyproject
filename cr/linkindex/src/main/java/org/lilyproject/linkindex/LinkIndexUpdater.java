@@ -21,7 +21,6 @@ import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VTaggedRecord;
-import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 

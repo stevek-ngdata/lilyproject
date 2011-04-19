@@ -2,7 +2,6 @@ package org.lilyproject.clientmetrics;
 
 import org.lilyproject.util.io.Closer;
 
-import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;

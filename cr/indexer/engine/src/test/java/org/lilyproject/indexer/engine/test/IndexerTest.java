@@ -45,7 +45,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.indexer.engine.*;
-import org.lilyproject.indexer.engine.SolrShardManager;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.linkindex.LinkIndex;

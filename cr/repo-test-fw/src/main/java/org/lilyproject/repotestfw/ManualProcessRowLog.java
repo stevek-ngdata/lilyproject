@@ -5,7 +5,6 @@ import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlog.api.*;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**

@@ -1,10 +1,8 @@
 package org.lilyproject.tools.recordrowvisualizer;
 
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.EncodingUtil;
-import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 

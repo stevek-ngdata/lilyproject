@@ -18,7 +18,6 @@ package org.lilyproject.rest;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RecordTypeNotFoundException;
-import org.lilyproject.repository.api.TypeException;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

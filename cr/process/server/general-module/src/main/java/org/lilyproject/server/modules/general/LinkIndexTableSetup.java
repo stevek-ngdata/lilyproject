@@ -2,9 +2,7 @@ package org.lilyproject.server.modules.general;
 
 import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.TableConfig;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
