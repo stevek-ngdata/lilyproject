@@ -28,18 +28,19 @@ import java.util.Map;
 public class RecordWriter implements EntityWriter<Record> {
     public static RecordWriter INSTANCE = new RecordWriter();
 
-    public ObjectNode toJson(Record record, Repository repository) throws RepositoryException, InterruptedException {
+    public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,
+            InterruptedException {
         Namespaces namespaces = new Namespaces();
 
-        ObjectNode recordNode = toJson(record, namespaces, repository);
+        ObjectNode recordNode = toJson(record, options, namespaces, repository);
 
         recordNode.put("namespaces", NamespacesConverter.toJson(namespaces));
 
         return recordNode;
     }
 
-    public ObjectNode toJson(Record record, Namespaces namespaces, Repository repository) throws RepositoryException,
-            InterruptedException {
+    public ObjectNode toJson(Record record, WriteOptions options, Namespaces namespaces, Repository repository)
+            throws RepositoryException, InterruptedException {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode recordNode = factory.objectNode();
 
@@ -68,7 +69,11 @@ public class RecordWriter implements EntityWriter<Record> {
         Map<QName, Object> fields = record.getFields();
         if (fields.size() > 0) {
             ObjectNode fieldsNode = recordNode.putObject("fields");
-            ObjectNode schemaNode = recordNode.putObject("schema");
+
+            ObjectNode schemaNode = null;
+            if (options.getIncludeSchema()) {
+                schemaNode = recordNode.putObject("schema");
+            }
 
             for (Map.Entry<QName, Object> field : fields.entrySet()) {
                 FieldType fieldType = repository.getTypeManager().getFieldTypeByName(field.getKey());
@@ -78,7 +83,9 @@ public class RecordWriter implements EntityWriter<Record> {
                 fieldsNode.put(fieldName, valueToJson(field.getValue(), fieldType));
 
                 // schema entry
-                schemaNode.put(fieldName, FieldTypeWriter.toJson(fieldType, namespaces, false));
+                if (schemaNode != null) {
+                    schemaNode.put(fieldName, FieldTypeWriter.toJson(fieldType, namespaces, false));
+                }
             }
         }
 

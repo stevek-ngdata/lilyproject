@@ -17,6 +17,7 @@ package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.RecordTypeNotFoundException;
+import org.lilyproject.repository.api.SchemaId;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -30,9 +31,11 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 public class RecordTypeByIdAndVersionResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
-    public RecordType get(@PathParam("id") String id, @PathParam("version") Long version) {
+    public Entity<RecordType> get(@PathParam("id") String id, @PathParam("version") Long version) {
         try {
-            return repository.getTypeManager().getRecordTypeById(repository.getIdGenerator().getSchemaId(id), version);
+            SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
+            RecordType recordType = repository.getTypeManager().getRecordTypeById(schemaId, version);
+            return Entity.create(recordType);
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {

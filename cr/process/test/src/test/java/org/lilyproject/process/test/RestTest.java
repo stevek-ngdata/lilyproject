@@ -330,6 +330,21 @@ public class RestTest {
         response = get(BASE_URI + "/record/USER.faster_fishing");
         assertStatus(Status.SUCCESS_OK, response);
 
+        // Verify content
+        JsonNode json = readJson(response.getEntity());
+        assertEquals(1L, json.get("fields").size());
+        assertNull(json.get("schema")); // schema info should not be included by default
+
+        // Read the record with schema info
+        response = get(BASE_URI + "/record/USER.faster_fishing?schema=true");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Verify content
+        json = readJson(response.getEntity());
+        assertEquals(1L, json.get("fields").size());
+        assertNotNull(json.get("schema"));
+        assertEquals(1L, json.get("schema").size());
+
         // Read the record as specific version
         response = get(BASE_URI + "/record/USER.faster_fishing/version/1");
         assertStatus(Status.SUCCESS_OK, response);
@@ -347,7 +362,7 @@ public class RestTest {
         response = post(BASE_URI + "/record/USER.faster_fishing", body);
         assertStatus(Status.SUCCESS_OK, response);
 
-        JsonNode json = readJson(response.getEntity());
+        json = readJson(response.getEntity());
         assertEquals(2L, json.get("version").getLongValue());
 
         response = get(BASE_URI + "/record/USER.faster_fishing/version/2");

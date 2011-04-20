@@ -37,11 +37,11 @@ public class RecordResource extends RepositoryEnabled {
 
     @GET
     @Produces("application/json")
-    public Record get(@PathParam("id") String id, @Context UriInfo uriInfo) {
+    public Entity<Record> get(@PathParam("id") String id, @Context UriInfo uriInfo) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
         try {
-            return repository.read(recordId, fieldQNames);
+            return Entity.create(repository.read(recordId, fieldQNames), uriInfo);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -52,7 +52,7 @@ public class RecordResource extends RepositoryEnabled {
     @PUT
     @Produces("application/json")
     @Consumes("application/json")
-    public Response put(@PathParam("id") String id, Record record) {
+    public Response put(@PathParam("id") String id, Record record, @Context UriInfo uriInfo) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
@@ -78,11 +78,11 @@ public class RecordResource extends RepositoryEnabled {
         switch (resultType) {
             case CREATED:
                 URI uri = UriBuilder.fromResource(RecordResource.class).build(record.getId());
-                response = Response.created(uri).entity(record).build();
+                response = Response.created(uri).entity(Entity.create(record, uriInfo)).build();
                 break;
             case UPDATED:
             case UP_TO_DATE:
-                response = Response.ok(record).build();
+                response = Response.ok(Entity.create(record, uriInfo)).build();
                 break;
             default:
                 throw new RuntimeException("Unexpected import result type: " + resultType);
@@ -94,7 +94,7 @@ public class RecordResource extends RepositoryEnabled {
     @POST
     @Produces("application/json")
     @Consumes("application/json")
-    public Response post(@PathParam("id") String id, PostAction<Record> postAction) {
+    public Response post(@PathParam("id") String id, PostAction<Record> postAction, @Context UriInfo uriInfo) {
         if (!postAction.getAction().equals("update")) {
             throw new ResourceException("Unsupported POST action: " + postAction.getAction(), BAD_REQUEST.getStatusCode());
         }
@@ -126,7 +126,7 @@ public class RecordResource extends RepositoryEnabled {
                 throw new ResourceException("Record not found: " + recordId, NOT_FOUND.getStatusCode());
             case UPDATED:
             case UP_TO_DATE:
-                response = Response.ok(record).build();
+                response = Response.ok(Entity.create(record, uriInfo)).build();
                 break;
             default:
                 throw new RuntimeException("Unexpected import result type: " + resultType);

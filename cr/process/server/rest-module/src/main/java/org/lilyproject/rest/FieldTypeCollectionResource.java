@@ -36,7 +36,7 @@ public class FieldTypeCollectionResource extends BaseFieldTypeCollectionResource
         URI uri = UriBuilder.fromResource(FieldTypeResource.class).
                 queryParam("ns.n", fieldType.getName().getNamespace()).
                 build("n$" + fieldType.getName().getName());
-        return Response.created(uri).entity(fieldType).build();
+        return Response.created(uri).entity(Entity.create(fieldType)).build();
     }
 
 }

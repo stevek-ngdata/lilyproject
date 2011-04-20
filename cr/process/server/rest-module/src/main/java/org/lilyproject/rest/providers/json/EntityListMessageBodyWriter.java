@@ -23,6 +23,7 @@ import org.lilyproject.rest.EntityList;
 import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
 import org.lilyproject.tools.import_.json.EntityWriter;
+import org.lilyproject.tools.import_.json.WriteOptions;
 import org.lilyproject.util.json.JsonFormat;
 
 import javax.ws.rs.WebApplicationException;
@@ -74,8 +75,8 @@ public class EntityListMessageBodyWriter extends RepositoryEnabled implements Me
             ArrayNode resultsNode = listNode.putArray("results");
 
             EntityWriter writer = getEntityWriter(genericType);
-            for (Object entity : entityList.getItems()) {
-                resultsNode.add(writer.toJson(entity, repository));
+            for (Object entity : entityList.getEntities()) {
+                resultsNode.add(writer.toJson(entity, entityList.getWriteOptions(), repository));
             }
 
             JsonFormat.serialize(listNode, new CloseShieldOutputStream(entityStream));

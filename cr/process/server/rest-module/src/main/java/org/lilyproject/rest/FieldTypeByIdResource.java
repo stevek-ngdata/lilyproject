@@ -28,9 +28,10 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
 
     @GET
     @Produces("application/json")
-    public FieldType get(@PathParam("id") String id) {
+    public Entity<FieldType> get(@PathParam("id") String id) {
         try {
-            return repository.getTypeManager().getFieldTypeById(repository.getIdGenerator().getSchemaId(id));
+            SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
+            return Entity.create(repository.getTypeManager().getFieldTypeById(schemaId));
         } catch (FieldTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -67,7 +68,7 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
         switch (resultType) {
             case UPDATED:
             case UP_TO_DATE:
-                response = Response.ok(fieldType).build();
+                response = Response.ok(Entity.create(fieldType)).build();
                 break;
             case CANNOT_UPDATE_DOES_NOT_EXIST:
                 throw new ResourceException("Field type not found: " + id, NOT_FOUND.getStatusCode());

@@ -24,17 +24,17 @@ import org.lilyproject.repository.api.ValueType;
 public class FieldTypeWriter implements EntityWriter<FieldType> {
     public static EntityWriter<FieldType> INSTANCE = new FieldTypeWriter();
 
-    public ObjectNode toJson(FieldType fieldType, Repository repository) {
+    public ObjectNode toJson(FieldType fieldType, WriteOptions options, Repository repository) {
         Namespaces namespaces = new Namespaces();
 
-        ObjectNode fieldNode = toJson(fieldType, namespaces, repository);
+        ObjectNode fieldNode = toJson(fieldType, options, namespaces, repository);
 
         fieldNode.put("namespaces", NamespacesConverter.toJson(namespaces));
 
         return fieldNode;
     }
 
-    public ObjectNode toJson(FieldType fieldType, Namespaces namespaces, Repository repository) {
+    public ObjectNode toJson(FieldType fieldType, WriteOptions options, Namespaces namespaces, Repository repository) {
         return toJson(fieldType, namespaces, true);
     }
 

@@ -15,16 +15,33 @@
  */
 package org.lilyproject.rest;
 
+import org.lilyproject.tools.import_.json.WriteOptions;
+
+import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 
 public class EntityList<T> {
-    private Collection<T> records;
+    private Collection<T> entities;
+    private WriteOptions writeOptions;
 
-    public EntityList(Collection<T> records) {
-        this.records = records;
+    public EntityList(Collection<T> entities) {
+        this(entities, WriteOptions.INSTANCE);
     }
 
-    public Collection<T> getItems() {
-        return records;
+    public EntityList(Collection<T> entities, WriteOptions writeOptions) {
+        this.entities = entities;
+        this.writeOptions = writeOptions;
+    }
+
+    public Collection<T> getEntities() {
+        return entities;
+    }
+
+    public WriteOptions getWriteOptions() {
+        return writeOptions;
+    }
+
+    public static <F> EntityList<F> create(Collection<F> entities, UriInfo uriInfo) {
+        return new EntityList<F>(entities, ResourceClassUtil.getWriteOptions(uriInfo));
     }
 }

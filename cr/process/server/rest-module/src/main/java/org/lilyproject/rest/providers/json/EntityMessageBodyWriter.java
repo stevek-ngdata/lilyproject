@@ -16,8 +16,11 @@
 package org.lilyproject.rest.providers.json;
 
 import org.apache.commons.io.output.CloseShieldOutputStream;
+import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.rest.Entity;
 import org.lilyproject.rest.RepositoryEnabled;
 import org.lilyproject.rest.ResourceException;
+import org.lilyproject.tools.import_.json.EntityWriter;
 import org.lilyproject.util.json.JsonFormat;
 
 import javax.ws.rs.WebApplicationException;
@@ -32,29 +35,27 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 @Provider
-public class EntityMessageBodyWriter extends RepositoryEnabled implements MessageBodyWriter<Object> {
+public class EntityMessageBodyWriter extends RepositoryEnabled implements MessageBodyWriter<Entity> {
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-            for (Class clazz : EntityRegistry.SUPPORTED_TYPES.keySet()) {
-                if (clazz.isAssignableFrom(type))
-                    return true;
-            }
-        }
-        return false;
+        return type.equals(Entity.class) && mediaType.equals(MediaType.APPLICATION_JSON_TYPE);
     }
 
-    public long getSize(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+    public long getSize(Entity o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return -1;
     }
 
-    public void writeTo(Object object, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+    public void writeTo(Entity object, Class<?> type, Type genericType, Annotation[] annotations,
+            MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
+            throws IOException, WebApplicationException {
         try {
-            JsonFormat.serialize(EntityRegistry.findWriter(object.getClass()).toJson(object, repository),
-                    new CloseShieldOutputStream(entityStream));
+            EntityWriter writer = EntityRegistry.findWriter(object.getEntity().getClass());
+            ObjectNode json = writer.toJson(object.getEntity(), object.getWriteOptions(), repository);
+            JsonFormat.serialize(json, new CloseShieldOutputStream(entityStream));
         } catch (Throwable e) {
             // We catch every throwable, since otherwise no one does it and we will not have any trace
             // of Errors that happened.
-            throw new ResourceException("Error serializing entity.", e, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            throw new ResourceException("Error serializing entity.", e,
+                    Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }
 }

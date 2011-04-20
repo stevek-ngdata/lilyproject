@@ -36,7 +36,7 @@ public class RecordTypeCollectionResource extends BaseRecordTypeCollectionResour
         URI uri = UriBuilder.fromResource(RecordTypeResource.class).
                 queryParam("ns.n", recordType.getName().getNamespace()).
                 build("n$" + recordType.getName().getName());
-        return Response.created(uri).entity(recordType).build();
+        return Response.created(uri).entity(Entity.create(recordType)).build();
     }
 
 }

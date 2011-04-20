@@ -16,6 +16,7 @@
 package org.lilyproject.rest;
 
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.tools.import_.json.WriteOptions;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
@@ -71,6 +72,17 @@ public class ResourceClassUtil {
         } catch (NumberFormatException e) {
             throw new ResourceException("Request parameter '" + name + "' does not contain an integer: '" + value +
                     "'.", BAD_REQUEST.getStatusCode());
+        }
+    }
+
+    public static WriteOptions getWriteOptions(UriInfo uriInfo) {
+        String includeSchema = uriInfo.getQueryParameters().getFirst("schema");
+        if (includeSchema != null && includeSchema.equalsIgnoreCase("true")) {
+            WriteOptions options = new WriteOptions();
+            options.setIncludeSchema(true);
+            return options;
+        } else {
+            return WriteOptions.INSTANCE;
         }
     }
 }

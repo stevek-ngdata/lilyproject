@@ -28,9 +28,10 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
 
     @GET
     @Produces("application/json")
-    public RecordType get(@PathParam("id") String id) {
+    public Entity<RecordType> get(@PathParam("id") String id) {
         try {
-            return repository.getTypeManager().getRecordTypeById(repository.getIdGenerator().getSchemaId(id), null);
+            SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
+            return Entity.create(repository.getTypeManager().getRecordTypeById(schemaId, null));
         } catch (RecordTypeNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
@@ -64,7 +65,7 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
         switch (resultType) {
             case UPDATED:
             case UP_TO_DATE:
-                response = Response.ok(recordType).build();
+                response = Response.ok(Entity.create(recordType)).build();
                 break;
             case CANNOT_UPDATE_DOES_NOT_EXIST:
                 throw new ResourceException("Record type not found: " + id, NOT_FOUND.getStatusCode());

@@ -32,7 +32,7 @@ public class FieldTypeByIdCollectionResource extends BaseFieldTypeCollectionReso
     public Response post(PostAction<FieldType> postAction) {
         FieldType fieldType = processPost(postAction);
         URI uri = UriBuilder.fromResource(FieldTypeByIdResource.class).build(fieldType.getId());
-        return Response.created(uri).entity(fieldType).build();
+        return Response.created(uri).entity(Entity.create(fieldType)).build();
     }
 
 }

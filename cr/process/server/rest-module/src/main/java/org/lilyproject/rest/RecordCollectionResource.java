@@ -18,8 +18,10 @@ package org.lilyproject.rest;
 import org.lilyproject.repository.api.Record;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
 
@@ -32,7 +34,7 @@ public class RecordCollectionResource extends RepositoryEnabled {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response post(PostAction<Record> postAction) {
+    public Response post(PostAction<Record> postAction, @Context UriInfo uriInfo) {
         if (!postAction.getAction().equals("create")) {
             throw new ResourceException("Unsupported POST action: " + postAction.getAction(), BAD_REQUEST.getStatusCode());
         }
@@ -43,7 +45,7 @@ public class RecordCollectionResource extends RepositoryEnabled {
             // TODO record we respond with should be full record or be limited to user-specified field list
             record = repository.create(record);
             URI uri = UriBuilder.fromResource(RecordResource.class).build(record.getId());
-            return Response.created(uri).entity(record).build();
+            return Response.created(uri).entity(Entity.create(record, uriInfo)).build();
         } catch (Exception e) {
             throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
         }

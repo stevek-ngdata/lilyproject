@@ -31,7 +31,7 @@ public class RecordTypeByIdCollectionResource extends BaseRecordTypeCollectionRe
     public Response post(PostAction<RecordType> postAction) {
         RecordType recordType = processPost(postAction);
         URI uri = UriBuilder.fromResource(RecordTypeByIdResource.class).build(recordType.getId());
-        return Response.created(uri).entity(recordType).build();
+        return Response.created(uri).entity(Entity.create(recordType)).build();
     }
 
 }

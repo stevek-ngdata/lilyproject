@@ -42,7 +42,7 @@ public class RecordVersionCollectionResource extends RepositoryEnabled {
         List<Record> records;
         try {
             records = repository.readVersions(recordId, startIndex, startIndex + maxResults - 1, fieldQNames);
-            return new EntityList<Record>(records);
+            return EntityList.create(records, uriInfo);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {

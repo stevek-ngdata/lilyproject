@@ -18,7 +18,9 @@ package org.lilyproject.rest;
 import org.lilyproject.repository.api.*;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -29,10 +31,11 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 public class RecordByVersionResource extends RepositoryEnabled {
     @GET
     @Produces("application/json")
-    public Record get(@PathParam("id") String id, @PathParam("version") Long version) {
+    public Entity<Record> get(@PathParam("id") String id, @PathParam("version") Long version,
+            @Context UriInfo uriInfo) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
         try {
-            return repository.read(recordId, version);
+            return Entity.create(repository.read(recordId, version), uriInfo);
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (VersionNotFoundException e) {
@@ -45,7 +48,8 @@ public class RecordByVersionResource extends RepositoryEnabled {
     @PUT
     @Produces("application/json")
     @Consumes("application/json")
-    public Response put(@PathParam("id") String id, @PathParam("version") Long version, Record record) {
+    public Response put(@PathParam("id") String id, @PathParam("version") Long version, Record record,
+            @Context UriInfo uriInfo) {
         RecordId recordId = repository.getIdGenerator().fromString(id);
 
         if (record.getId() != null && !record.getId().equals(recordId)) {
@@ -75,7 +79,7 @@ public class RecordByVersionResource extends RepositoryEnabled {
         }
 
         // TODO record we respond with should be full record or be limited to user-specified field list
-        Response response = Response.ok(record).build();
+        Response response = Response.ok(Entity.create(record, uriInfo)).build();
 
         return response;
     }

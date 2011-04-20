@@ -25,21 +25,22 @@ import java.util.Map;
 public class RecordTypeWriter implements EntityWriter<RecordType> {
     public static EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();
 
-    public ObjectNode toJson(RecordType recordType, Repository repository) {
+    public ObjectNode toJson(RecordType recordType, WriteOptions options, Repository repository) {
         Namespaces namespaces = new Namespaces();
 
-        ObjectNode rtNode = toJson(recordType, namespaces, repository);
+        ObjectNode rtNode = toJson(recordType, options, namespaces, repository);
 
         rtNode.put("namespaces", NamespacesConverter.toJson(namespaces));
 
         return rtNode;
     }
 
-    public ObjectNode toJson(RecordType recordType, Namespaces namespaces, Repository repository) {
-        return toJson(recordType, namespaces, true);
+    public ObjectNode toJson(RecordType recordType, WriteOptions options, Namespaces namespaces, Repository repository) {
+        return toJson(recordType, options, namespaces, true);
     }
 
-    public static ObjectNode toJson(RecordType recordType, Namespaces namespaces, boolean includeName) {
+    public static ObjectNode toJson(RecordType recordType, WriteOptions options, Namespaces namespaces,
+            boolean includeName) {
         ObjectNode rtNode = JsonNodeFactory.instance.objectNode();
 
         rtNode.put("id", recordType.getId().toString());

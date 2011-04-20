@@ -35,7 +35,7 @@ public class RecordByVtagResource extends RepositoryEnabled {
 
     @GET
     @Produces("application/json")
-    public Record get(@PathParam("id") String id, @PathParam("vtag") String vtag, @Context UriInfo uriInfo) {
+    public Entity<Record> get(@PathParam("id") String id, @PathParam("vtag") String vtag, @Context UriInfo uriInfo) {
         List<QName> fieldQNames = ResourceClassUtil.parseFieldList(uriInfo);
 
         RecordId recordId = repository.getIdGenerator().fromString(id);
@@ -55,7 +55,7 @@ public class RecordByVtagResource extends RepositoryEnabled {
         } catch (Exception e) {
             throw new ResourceException("Error loading record.", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
-        return record;
+        return Entity.create(record, uriInfo);
 
     }
 
