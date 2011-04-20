@@ -48,7 +48,7 @@ public class RecordReader implements EntityReader<Record> {
 
         String id = getString(node, "id", null);
         if (id != null) {
-            record.setId(repository.getIdGenerator().newRecordId(id));
+            record.setId(repository.getIdGenerator().fromString(id));
         }
 
         JsonNode typeNode = node.get("type");

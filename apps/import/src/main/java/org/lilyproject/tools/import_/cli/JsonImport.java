@@ -202,6 +202,11 @@ public class JsonImport {
 
         Record record = RecordReader.INSTANCE.fromJson((ObjectNode)node, namespaces, repository);
 
+        // Create-or-update requires client to specify the ID
+        if (record.getId() == null) {
+            record.setId(repository.getIdGenerator().newRecordId());
+        }
+
         ImportResult<Record> result = RecordImport.importRecord(record, ImportMode.CREATE_OR_UPDATE, repository);
         record = result.getEntity();
 

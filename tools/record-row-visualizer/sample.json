@@ -38,7 +38,7 @@
   records: [
     {
       type: "r$TestType",
-      id: "rr1",
+      id: "USER.rr1",
       fields: {
         "r$field1": "field 1 v1",
         "r$field3": ["val1", "val2", "val3"]
@@ -46,7 +46,7 @@
     },
     {
       type: "r$TestType",
-      id: "rr1",
+      id: "USER.rr1",
       fields: {
         "r$field2": 1
       },
@@ -54,14 +54,14 @@
     },
     {
       type: "r$TestType",
-      id: "rr1",
+      id: "USER.rr1",
       fields: {
         "r$field2": 2
       }
     },
     {
       type: "r$TestType",
-      id: "rr1",
+      id: "USER.rr1",
       fields: {
         "r$field1": "field 1 v2",
         /* this is to illustrate that an unchanged field is not stored twice */
@@ -70,14 +70,14 @@
     },
     {
       type: "r$TestType",
-      id: "rr1",
+      id: "USER.rr1",
       /* this is to illustrate that, at the time of this writing, delete markers
          are stored even for fields that were never part of the record.*/
       fieldsToDelete: ["r$field1", "r$field2", "r$field3", "r$field4"]
     },
     {
       type: "r$TestType",
-      id: "rr1",
+      id: "USER.rr1",
       fields: {
         "r$field1": "field 1 v3"
       },

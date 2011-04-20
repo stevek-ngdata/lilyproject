@@ -46,6 +46,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class RestTest {
     private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
@@ -321,7 +322,7 @@ public class RestTest {
         response = post(BASE_URI + "/schema/recordTypeById", body);
         assertStatus(Status.SUCCESS_CREATED, response);
 
-        // Create a record
+        // Create a record using PUT and a user ID
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Faster Fishing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.faster_fishing", body);
         assertStatus(Status.SUCCESS_CREATED, response);
@@ -358,7 +359,8 @@ public class RestTest {
         assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
 
         // Update the record
-        body = json("{ action: 'update', record: { type: 'b$book', fields: { 'b$title' : 'Faster Fishing (new)' }, namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+        body = json("{ action: 'update', record: { type: 'b$book', fields: { 'b$title' : 'Faster Fishing (new)' }, " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/USER.faster_fishing", body);
         assertStatus(Status.SUCCESS_OK, response);
 
@@ -368,8 +370,23 @@ public class RestTest {
         response = get(BASE_URI + "/record/USER.faster_fishing/version/2");
         assertStatus(Status.SUCCESS_OK, response);
 
+        // Update the record, specify the ID both in URI and json
+        body = json("{ action: 'update', record: { id: 'USER.faster_fishing', type: 'b$book', " +
+                "fields: { 'b$title' : 'Faster Fishing (new 2)' }, " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/record/USER.faster_fishing", body);
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Update the record, specify the ID both in URI and json but both different -- should be a bad request
+        body = json("{ action: 'update', record: { id: 'USER.faster_fishing_smth', type: 'b$book', " +
+                "fields: { 'b$title' : 'Faster Fishing (new 2)' }, " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/record/USER.faster_fishing", body);
+        assertStatus(Status.CLIENT_ERROR_BAD_REQUEST, response);
+
         // Update a record which does not exist, should fail
-        body = json("{ action: 'update', record: { type: 'b$book', fields: { 'b$title' : 'Faster Fishing (new)' }, namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+        body = json("{ action: 'update', record: { type: 'b$book', fields: { 'b$title' : 'Faster Fishing (new 3)' }, " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
         response = post(BASE_URI + "/record/USER.non_existing_record", body);
         assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
 
@@ -383,6 +400,32 @@ public class RestTest {
 
         // Verify delete is idempotent
         response = delete(BASE_URI + "/record/USER.faster_fishing");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Create a record using PUT and a client-specified UUID
+        UUID uuid = UUID.randomUUID();
+        body = json("{ type: 'b$book', fields: { 'b$title' : 'Title 1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        response = put(BASE_URI + "/record/UUID." + uuid.toString(), body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        response = get(BASE_URI + "/record/UUID." + uuid.toString());
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Create a record using POST and a client-specified UUID
+        uuid = UUID.randomUUID();
+        body = json("{ action: 'create', record: { id: 'UUID." + uuid.toString() + "', type: 'b$book', " +
+                "fields: { 'b$title' : 'Title 1' }, namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/record", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        response = get(BASE_URI + "/record/UUID." + uuid.toString());
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Update this record, specify the ID both in URI and json
+        body = json("{ action: 'update', record: { id: 'UUID." + uuid.toString() + "', type: 'b$book', " +
+                "fields: { 'b$title' : 'Title 1 (new)' }, " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/record/UUID." + uuid.toString(), body);
         assertStatus(Status.SUCCESS_OK, response);
     }
 
