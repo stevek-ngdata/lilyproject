@@ -35,15 +35,29 @@
     <constructor-arg ref="confRegistry"/>
   </bean>
 
-  <kauri:export-service ref="hbaseConfiguration" service="org.lilyproject.server.modules.general.HadoopConfigurationFactory"/>
+  <kauri:export-service
+      ref="hbaseConfiguration"
+      service="org.lilyproject.server.modules.general.HadoopConfigurationFactory"/>
 
-  <kauri:export-service ref="zooKeeper" service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
+  <kauri:export-service
+      ref="zooKeeper"
+      service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
 
-  <kauri:export-service ref="hbaseTableFactory" service="org.lilyproject.util.hbase.HBaseTableFactory"/>
+  <kauri:export-service
+      ref="hbaseTableFactory"
+      service="org.lilyproject.util.hbase.HBaseTableFactory"/>
   
-  <kauri:export-service ref="lilyInfo" service="org.lilyproject.util.LilyInfo"/>
+  <kauri:export-service
+      ref="lilyInfo"
+      service="org.lilyproject.util.LilyInfo"/>
 
-  <kauri:export-service ref="rowLocker" service="org.lilyproject.rowlock.RowLocker"/>
+  <kauri:export-service
+      ref="rowLocker"
+      service="org.lilyproject.rowlock.RowLocker"/>
+
+  <kauri:export-service
+      ref="networkItfInfo"
+      service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
   <bean id="hbaseConfiguration"
       class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl">
@@ -56,6 +70,11 @@
   <bean id="metrics"
       class="org.lilyproject.server.modules.general.Metrics">
     <constructor-arg><kauri:conf path="metrics"/></constructor-arg>
+  </bean>
+
+  <bean id="networkItfInfo" class="org.lilyproject.server.modules.general.NetworkInterfaceInfoImpl">
+    <constructor-arg value="${dns:interface}"/>
+    <constructor-arg value="${dns:nameserver}"/>
   </bean>
 
   <bean id="zooKeeper"

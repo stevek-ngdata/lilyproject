@@ -63,6 +63,10 @@
       id="lilyInfo"
       service="org.lilyproject.util.LilyInfo"/>
 
+  <kauri:import-service
+      id="networkItfInfo"
+      service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
+
   <bean id="hbaseConf"
       factory-bean="hadoopConfFactory"
       factory-method="getHBaseConf"/>
@@ -97,6 +101,7 @@
     <constructor-arg ref="lilyInfo"/>
     <constructor-arg ref="solrClientConfig"/>
     <constructor-arg value="${indexer:enableLocking}"/>
+    <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
   </bean>
   
   <bean id="indexerWorker" class="org.lilyproject.indexer.worker.IndexerWorker">

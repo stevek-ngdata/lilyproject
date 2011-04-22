@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.server.modules.repository;
+package org.lilyproject.server.modules.general;
 
 import org.apache.hadoop.net.DNS;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-public class AddressResolver {
+public class NetworkInterfaceInfoImpl implements NetworkInterfaceInfo {
     private String interface_;
     private String nameserver;
     
     private String hostName;
     private String hostAddress;
 
-    public AddressResolver(String interface_, String nameserver) throws UnknownHostException {
+    public NetworkInterfaceInfoImpl(String interface_, String nameserver) throws UnknownHostException {
         hostName = DNS.getDefaultHost(interface_, nameserver);
         hostAddress = new InetSocketAddress(hostName, 1).getAddress().getHostAddress();
     }
