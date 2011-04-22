@@ -114,6 +114,7 @@
     <constructor-arg value="${indexer:listenersPerIndex}"/>
     <constructor-arg ref="solrClientConfig"/>
     <constructor-arg value="${indexer:enableLocking}"/>
+    <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
   </bean>
 
 </beans>

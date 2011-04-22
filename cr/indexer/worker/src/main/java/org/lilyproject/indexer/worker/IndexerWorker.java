@@ -82,6 +82,8 @@ public class IndexerWorker {
 
     private final boolean enableLocking;
 
+    private final String hostName;
+
     private IndexerModelListener listener = new MyListener();
 
     private Map<String, IndexUpdaterHandle> indexUpdaters = new HashMap<String, IndexUpdaterHandle>();
@@ -100,7 +102,7 @@ public class IndexerWorker {
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
             Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, int listenersPerIndex,
-            SolrClientConfig solrClientConfig, boolean enableLocking)
+            SolrClientConfig solrClientConfig, boolean enableLocking, String hostName)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException {
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -111,6 +113,7 @@ public class IndexerWorker {
         this.listenersPerIndex = listenersPerIndex;
         this.solrClientConfig = solrClientConfig;
         this.enableLocking = enableLocking;
+        this.hostName = hostName;
     }
 
     @PostConstruct
@@ -185,7 +188,7 @@ public class IndexerWorker {
 
             for (int i = 0; i < listenersPerIndex; i++) {
                 RemoteListenerHandler handler = new RemoteListenerHandler(rowLog, index.getQueueSubscriptionId(),
-                        indexUpdater, rowLogConfMgr);
+                        indexUpdater, rowLogConfMgr, hostName);
                 listenerHandlers.add(handler);
             }
 

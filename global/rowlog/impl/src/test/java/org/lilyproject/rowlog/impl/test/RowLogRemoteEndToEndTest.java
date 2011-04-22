@@ -37,7 +37,8 @@ public class RowLogRemoteEndToEndTest extends AbstractRowLogEndToEndTest {
         subscriptionId = "Test";
         rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId,  RowLogSubscription.Type.Netty, 1);
         waitForSubscription(rowLog, subscriptionId);
-        remoteListener = new RemoteListenerHandler(rowLog, subscriptionId, validationListener, rowLogConfigurationManager);
+        remoteListener = new RemoteListenerHandler(rowLog, subscriptionId, validationListener,
+                rowLogConfigurationManager, "localhost");
         remoteListener.start();
     }
 
@@ -56,7 +57,8 @@ public class RowLogRemoteEndToEndTest extends AbstractRowLogEndToEndTest {
         ValidationMessageListener validationListener2 = new ValidationMessageListener("VML2", subscriptionId2, rowLog);
         rowLogConfigurationManager.addSubscription(rowLog.getId(), subscriptionId2, RowLogSubscription.Type.Netty,  2);
         waitForSubscription(rowLog, subscriptionId2);
-        RemoteListenerHandler remoteListener2 = new RemoteListenerHandler(rowLog, subscriptionId2, validationListener2, rowLogConfigurationManager);
+        RemoteListenerHandler remoteListener2 = new RemoteListenerHandler(rowLog, subscriptionId2, validationListener2,
+                rowLogConfigurationManager, "localhost");
         remoteListener2.start();
         validationListener.expectMessages(10);
         validationListener2.expectMessages(10);

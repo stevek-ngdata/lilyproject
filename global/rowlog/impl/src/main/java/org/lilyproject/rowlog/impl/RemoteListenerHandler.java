@@ -15,9 +15,7 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
@@ -46,13 +44,15 @@ public class RemoteListenerHandler {
     private String listenerId;
     private final String subscriptionId;
     private final RowLogConfigurationManager rowLogConfMgr;
+    private final String hostName;
 
     public RemoteListenerHandler(RowLog rowLog, String subscriptionId, RowLogMessageListener rowLogMessageListener,
-            RowLogConfigurationManager rowLogConfMgr) throws RowLogException {
+            RowLogConfigurationManager rowLogConfMgr, String hostName) throws RowLogException {
         this.rowLog = rowLog;
         this.subscriptionId = subscriptionId;
         this.rowLogMessageListener = rowLogMessageListener;
         this.rowLogConfMgr = rowLogConfMgr;
+        this.hostName = hostName;
         bootstrap = new ServerBootstrap(
                 new NioServerSocketChannelFactory(
                         Executors.newCachedThreadPool(),
@@ -73,13 +73,6 @@ public class RemoteListenerHandler {
     }
     
     public void start() throws RowLogException, InterruptedException, KeeperException {
-        InetAddress inetAddress;
-        try {
-            inetAddress = InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            throw new RowLogException("Failed to start remote listener", e);
-        }
-        String hostName = inetAddress.getHostName();
         InetSocketAddress inetSocketAddress = new InetSocketAddress(hostName, 0);
         channel = bootstrap.bind(inetSocketAddress);
         allChannels.add(channel);
