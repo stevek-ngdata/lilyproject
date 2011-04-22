@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Random;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
@@ -164,6 +165,7 @@ public class ValueTypeTest {
     }
 
     private class XYPrimitiveValueType implements PrimitiveValueType {
+        private Random random = new Random();
 
         private final String NAME = "XY";
 
@@ -171,15 +173,33 @@ public class ValueTypeTest {
             return NAME;
         }
 
-        public Object read(DataInput dataInput) {
-            int x = dataInput.readInt();
-            int y = dataInput.readInt();
+        public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException {
+            byte encodingVersion = dataInput.readByte();
+            int x;
+            int y;
+            if ((byte)1 == encodingVersion) {
+                x = dataInput.readInt();
+                y = dataInput.readInt();
+            } else if ((byte)2 == encodingVersion) {
+                y = dataInput.readInt();
+                x = dataInput.readInt();
+            } else {
+                throw new UnknownValueTypeEncodingException(NAME, encodingVersion);
+            }
             return new XYCoordinates(x, y);
         }
 
         public void write(Object value, DataOutput dataOutput) {
-            dataOutput.writeInt(((XYCoordinates) value).getX());
-            dataOutput.writeInt(((XYCoordinates) value).getY());
+            if (random.nextBoolean()) {
+                dataOutput.writeByte((byte)1); // encoding version 1 
+                dataOutput.writeInt(((XYCoordinates) value).getX());
+                dataOutput.writeInt(((XYCoordinates) value).getY());
+            } else {
+                dataOutput.writeByte((byte)2); // encoding version 2
+                dataOutput.writeInt(((XYCoordinates) value).getY());
+                dataOutput.writeInt(((XYCoordinates) value).getX());
+                
+            }
         }
 
         public Class getType() {
@@ -202,6 +222,11 @@ public class ValueTypeTest {
 
         public int getY() {
             return y;
+        }
+        
+        @Override
+        public String toString() {
+            return "["+x+","+y+"]";
         }
 
         @Override

@@ -31,10 +31,13 @@ public class DateValueType implements PrimitiveValueType {
     }
 
     public LocalDate read(DataInput dataInput) {
+        // Read the encoding version byte, but ignore it for the moment since there is only one encoding
+        dataInput.readByte();
         return new LocalDate(dataInput.readLong(), DateTimeZone.UTC);
     }
 
     public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeByte((byte)1); // Encoding version 1
         // Currently we only store the millis, not the chronology.
         dataOutput.writeLong(((LocalDate)value).toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis());
     }

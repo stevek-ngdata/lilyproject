@@ -8,6 +8,16 @@ import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 
+/**
+ * Command-line command to update the properties of a subscription.
+ * 
+ * <p>Only the properties of the subscription can be updated this way, not the listeners
+ * that are registered to the subscritpion.
+ * 
+ * <p>The properties that can be changed are:
+ * <br>- subscription type : the type of the subscription VM (in-vm) or Netty (remote)
+ * <br>- order nr : the order nr of the subscription wrt the other subscriptions of the same rowlog
+ */
 public class UpdateSubscriptionCli extends BaseRowLogAdminCli {
     @Override
     protected String getCmdName() {

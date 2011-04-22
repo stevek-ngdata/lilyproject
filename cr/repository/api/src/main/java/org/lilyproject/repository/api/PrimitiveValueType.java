@@ -42,8 +42,9 @@ public interface PrimitiveValueType {
 
     /**
      * Reads the primitive value from the DataInput.
+     * @throws UnknownValueTypeEncodingException 
      */
-    public Object read(DataInput dataInput);
+    public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException;
 
     /**
      * Writes the primitive value to the DataOutput.

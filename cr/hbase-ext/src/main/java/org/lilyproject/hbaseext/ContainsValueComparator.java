@@ -94,6 +94,7 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
      * Compares the value of the blob with ourStoreKey
      */
     private int compareBlob(byte[] ourStoreKey, byte[] theirValue) {
+        offset++; // Skip the encoding byte. Currently there is only one encoding version so we can ignore it.
         int blobValueLength = readVInt(theirValue); // Length of the blob value
         int compareTo = Bytes.compareTo(ourStoreKey, 0, ourStoreKey.length, theirValue, offset , blobValueLength);
         offset += blobValueLength;

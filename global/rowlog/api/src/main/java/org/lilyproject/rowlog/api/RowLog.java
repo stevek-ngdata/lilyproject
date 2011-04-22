@@ -38,23 +38,22 @@ import org.lilyproject.rowlock.RowLock;
  * if a message is stored on one or another shard.
  * (Note: the use of more than one shard is still to be implemented.) 
  * 
- * <P> For each shard, a {@link RowLogProcessor} can be started. This processor will, for each consumer, pick the next
- * message to be consumed and feed it to the {@link RowLogMessageListener} for processing. Since messages are distributed
+ * <P> For each shard, a {@link RowLogProcessor} can be started. This processor will, for each subscription, pick the next
+ * message to be processed and feed it to the {@link RowLogMessageListener} for processing. Since messages are distributed
  * over several shards and each shard has its own processor, it can happen that the order in which the messages have been
- * put on the RowLog is not respected when they are sent to the consumers for processing. See below, on how to deal with
+ * put on the RowLog is not respected when they are sent to the listeners for processing. See below, on how to deal with
  * this.
  *  
  * <p> On top of this, a 'payload' and 'execution state' is stored for each message in the same row to which the message relates,
  * next to the row's 'main data'.
- * The payload contains all data that is needed by a consumer to be able to process a message.
- * The execution state indicates for a message which consumers have processed the message and which consumers still need to process it.
+ * The payload contains all data that is needed by the listeners of a subscription to be able to process a message.
+ * The execution state indicates for which subscriptions the message has been processed and which subscriptions still need to process it.
  * 
  * <p> All messages related to a certain row are given a sequence number in the order in which they are put on the RowLog.
  * This sequence number is used when storing the payload and execution state on the HBase row. 
  * This enables a {@link RowLogMessageListener} to check if the message it is requested to process is the oldest
  * message to be processed for the row or if there are other messages to be processed for the row. It can then choose
  * to, for instance, process an older message first or even bundle the processing of multiple messages together.
- * (Note: utility methods to enable this behavior are still to be implemented on the RowLog.)    
  */
 public interface RowLog {
     
@@ -79,7 +78,7 @@ public interface RowLog {
      * Retrieves the payload of a {@link RowLogMessage} from the RowLog.
      * The preferred way to get the payload for a message is to request this through the message itself 
      * with the call {@link RowLogMessage#getPayload()} .
-     * @param message a {link RowLogMessage}
+     * @param message a {@link RowLogMessage}
      * @return the payload of the message
      * @throws RowLogException
      */
@@ -113,33 +112,33 @@ public interface RowLog {
      * This method can be called independently from a {@link RowLogProcessor} and can be used for instance when a message
      * needs to be processed immediately after it has been put on the RowLog instead of waiting for a {@link RowLogProcessor}
      * to pick it up and process it.
-     * <p>This call increases the try count of the message for each registered consumer. If the maximum allowed number of
-     * tries has been reached for a consumer, the message is marked as problematic for that consumer. A {@link RowLogProcessor}
-     * will no longer pick up the message for that consumer. 
+     * <p>When the message has been processed successfully for all subscriptions it will be removed from the rowlog and true
+     * will be returned. Note: it is the listener's responsibility to handle any failures while processing a message. If a
+     * message is not processed by a listener is will remain on the rowlog an will be offered again to the listeners for 
+     * processing the next time the processor encounters it. 
      * @param message a {@link RowLogMessage} to be processed
-     * @param lock if the row related to this message was locked with a Rowlock, this lock should be given
-     * @return true if all consumers have processed the {@link RowLogMessage} successfully
-     * @throws RowLogException
+     * @param lock if the row related to this message was locked with a Rowlock this lock should be given
+     * @return true if all subscriptions have processed the {@link RowLogMessage} successfully
      */
     boolean processMessage(RowLogMessage message, RowLock lock) throws RowLogException, InterruptedException;
     
     /**
-     * Indicates that a {@link RowLogMessage} is done for a certain subscription
-     * and should not be processed anymore. This will remove the message for a certain subscription from the {@link RowLogShard} 
+     * Indicates that a {@link RowLogMessage} is done for a certain {@link RowLogSubscription}
+     * and should not be processed anymore. This will remove the message for that subscription from the {@link RowLogShard} 
      * and update the execution state of this message on the row. When the execution state for all subscriptions is put to
-     * done, the payload and execution state will be removed from the row.
+     * done, the messsage will have been removed from the shard for each subscription, and the payload and execution state 
+     * will be removed from the row.
      * @param message the {@link RowLogMessage} to be put to done for a certain subscription
      * @param subscriptionId the id of the subscription for which to put the message to done
      * @return true if the message has been successfully put to done
-     * @throws RowLogException
-     * @throws InterruptedException 
      */
     boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException, InterruptedException;
     
     /**
      * Checks if the message is done for a certain subscription.
+     * <p>This will investigate the execution state of the message to check if the message has been processed.
      * @param message the message to check
-     * @param subscriptionId for which subscription to check the message
+     * @param subscriptionId id of the subscription for which to check the message
      * @return true of the message is done
      * @throws RowLogException
      */
@@ -149,7 +148,7 @@ public interface RowLog {
      * Return all messages that still exist for the row, or if one or more subscriptions is given, 
      * only the messages that are still open for one or more of those subscriptions.
      *
-     * <p>If messages are put on this rowlog without using a rowlock, than there is no guarantee
+     * <p>If messages are put on this rowlog without using a rowlock, then there is no guarantee
      * about the messages which will be present in the returned list at a given instant in time.
      * For example, a call could return the messages with sequence number 5,6 and 8, and a later
      * call could then return the message with sequence number 7.
@@ -173,8 +172,9 @@ public interface RowLog {
 
     /**
      * Checks if a message is available for processing for a certain subscription.
-     * <p>A message will not be available if it is either already done, marked as problematic, 
-     * or the message needs to be processed by another subscription first in case of order-preserving subscriptions.
+     * <p>A message will not be available if it is either already done, 
+     * or the message needs to be processed by another subscription first in case the rowlog should
+     * preserve the order of the subscription.
      * @param message the message to check
      * @param subscriptionId for which subscription to check the message
      * @return true if the message is available

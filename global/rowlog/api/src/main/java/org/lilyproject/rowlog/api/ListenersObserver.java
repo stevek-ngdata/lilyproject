@@ -17,6 +17,16 @@ package org.lilyproject.rowlog.api;
 
 import java.util.List;
 
+/**
+ * A listener observer is interested in getting notified when the set of listeners
+ * of a subscription has changed.
+ * 
+ * <p>The {@link RowLogConfigurationManager} performs the task of calling the {@link #listenersChanged(List)}
+ * method when the set of listeners has changed.
+ * 
+ * <p>This observer should be registered with the {@link RowLogConfigurationManager} by calling
+ * {@link RowLogConfigurationManager#addListenersObserver(String, String, ListenersObserver)} 
+ */
 public interface ListenersObserver {
 
     /**

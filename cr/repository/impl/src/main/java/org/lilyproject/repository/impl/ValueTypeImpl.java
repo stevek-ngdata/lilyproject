@@ -26,9 +26,7 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.hbaseext.ContainsValueComparator;
-import org.lilyproject.repository.api.HierarchyPath;
-import org.lilyproject.repository.api.PrimitiveValueType;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
 public class ValueTypeImpl implements ValueType {
@@ -56,7 +54,7 @@ public class ValueTypeImpl implements ValueType {
         return !multiValue && !hierarchical;
     }
 
-    public Object read(DataInput dataInput) {
+    public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException {
         if (isMultiValue()) {
             return readMultiValue(dataInput);
         } else if (isHierarchical()) {
@@ -66,7 +64,7 @@ public class ValueTypeImpl implements ValueType {
         }
     }
 
-    private List readMultiValue(DataInput dataInput) {
+    private List readMultiValue(DataInput dataInput) throws UnknownValueTypeEncodingException {
         List result = new ArrayList();
         int nrOfValues = dataInput.readInt();
         for (int i = 0 ; i < nrOfValues; i++) {
@@ -81,7 +79,7 @@ public class ValueTypeImpl implements ValueType {
         return result;
     }
 
-    private HierarchyPath readHierarchical(DataInput dataInput) {
+    private HierarchyPath readHierarchical(DataInput dataInput) throws UnknownValueTypeEncodingException {
         List<Object> result = new ArrayList<Object>();
         int nrOfValues = dataInput.readInt();
         for (int i = 0 ; i < nrOfValues; i++) {

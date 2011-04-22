@@ -1426,6 +1426,7 @@ public class HBaseRepository extends BaseRepository {
             } else {
                 valueToCompare = Bytes.toBytes(0);
             }
+            // Note, if a encoding of the BlobValueType is added, this might have to change.
             valueToCompare = Bytes.add(valueToCompare, blobReference.getBlob().getValue());
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);

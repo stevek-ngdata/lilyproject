@@ -6,6 +6,20 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.lilyproject.rowlog.api.RowLogConfig;
 
+/**
+ * Command-line command to update the properties of a rowlog.
+ * 
+ * <p>Only the properties of the rowlog can be updated this way, not the subscriptions
+ * that are registered for the rowlog.
+ * 
+ * <p>The properties that can be changed are:
+ * <br>- respect order : if the order of the subscriptions needs to be respected
+ * <br>- notify enabled : if the processor needs to be notified when a new message is put on the rowlog
+ * <br>- notify delay : the minimal time between notifications sent to the rowlog
+ * <br>- minimal process delay : the minimal age a message should have before the processor will process it
+ * <br>- wakeup timeout : the time the processor waits (in case no notification was received) 
+ * before checking if there are new messages available
+ */
 public class UpdateRowLogCli extends BaseRowLogAdminCli {
     @Override
     protected String getCmdName() {

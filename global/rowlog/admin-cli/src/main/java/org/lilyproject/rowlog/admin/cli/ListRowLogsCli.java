@@ -8,6 +8,12 @@ import org.apache.commons.cli.Option;
 import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 
+/**
+ * Command-line command to show all known rowlogs.
+ * 
+ * <p>For each rowlog its properties are shown and a list of the registered subscriptions is shown.
+ * <br>For each subscription its properties are shown and a list of the registered listeners.
+ */
 public class ListRowLogsCli extends BaseRowLogAdminCli {
 
     @Override

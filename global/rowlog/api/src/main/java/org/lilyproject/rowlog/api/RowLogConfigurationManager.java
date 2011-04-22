@@ -59,8 +59,16 @@ public interface RowLogConfigurationManager {
      */
     void removeRowLog(String rowLogId) throws KeeperException, InterruptedException, RowLogException;
     
+    /**
+     * Checks if a rowlog with the given id is known by the configuration manager.
+     */
     boolean rowLogExists(String rowLogId) throws InterruptedException, KeeperException;
     
+    /**
+     * Gets the rowlog configurations that are known by the configuration manager.
+     * 
+     * @return a map with as key the rowlog id and as value the {@link RowLogConfig} 
+     */
     Map<String, RowLogConfig> getRowLogs() throws KeeperException, InterruptedException;
     
     /**
@@ -69,6 +77,9 @@ public interface RowLogConfigurationManager {
      */
     void addRowLogObserver(String rowLogId, RowLogObserver observer);
 
+    /**
+     * Removes a {@link RowLogObserver} from the configuration manager. 
+     */
     void removeRowLogObserver(String rowLogId, RowLogObserver observer);
 
     
@@ -112,7 +123,7 @@ public interface RowLogConfigurationManager {
     void updateSubscription(String rowLogId, String subscriptionId, Type type, int orderNr) throws KeeperException, InterruptedException, RowLogException;
     
     /**
-     * Deletes a subscription.
+     * Removes a subscription.
      *
      * <p>This method blocks if the ZK connection is down.
      *
@@ -120,31 +131,49 @@ public interface RowLogConfigurationManager {
      */
     void removeSubscription(String rowLogId, String subscriptionId) throws InterruptedException, KeeperException, RowLogException;
 
+    /**
+     * Checks if a subscription with the given id exists for the given rowlog.
+     * 
+     * @param rowLogId id of the rowlog
+     * @param subscriptionId id of the subscription to check
+     */
     boolean subscriptionExists(String rowLogId, String subscriptionId) throws InterruptedException, KeeperException;
 
+    /**
+     * Retrieves the list of subscriptions registered for a certain rowlog.
+     */
     List<RowLogSubscription>  getSubscriptions(String rowLogId) throws KeeperException, InterruptedException;
     
     /**
-     * Add a new subscriptions observer. After registration, the observer will asynchronously be called to
+     * Add a new {@link SubscriptionsObserver}. After registration, the observer will asynchronously be called to
      * report the initial set of subscriptions.
      */
     void addSubscriptionsObserver(String rowLogId, SubscriptionsObserver observer);
 
+    /**
+     * Removes a {@link SubscriptionsObserver} from the configuration manager.
+     */
     void removeSubscriptionsObserver(String rowLogId, SubscriptionsObserver observer);
 
     /**
-     * Add a new listeners observer. After registration, the observer will asynchronously be called to
+     * Add a new {@link ListenersObserver}. After registration, the observer will asynchronously be called to
      * report the initial set of listeners.
      */
     void addListenersObserver(String rowLogId, String subscriptionId, ListenersObserver observer);
 
+    /**
+     * Removes a {@link ListenersObserver} from the configuration manager.
+     */
     void removeListenersObserver(String rowLogId, String subscriptionId, ListenersObserver observer);
 
     /**
-     * Add a new processor notify obeserver.
+     * Add a new {@link ProcessorNotifyObserver}.
      */
     void addProcessorNotifyObserver(String rowLogId, String shardId, ProcessorNotifyObserver observer);
     
+    /**
+     * Removes a {@link ProcessorNotifyObserver} from the configuration manager. 
+     */
     void removeProcessorNotifyObserver(String rowLogId, String shardId);
     
     /**
@@ -166,6 +195,12 @@ public interface RowLogConfigurationManager {
      */
     void removeListener(String rowLogId, String subscriptionId, String listenerId) throws RowLogException, InterruptedException, KeeperException;
 
+    /**
+     *  Retrieves the list of listeners that are registered for a certain subscription of a certain rowlog.
+     *  
+     *  @param rowLogId the id of the rowlog
+     *  @param subscriptionId the id of the subscription
+     */
     List<String> getListeners(final String rowLogId, final String subscriptionId) throws KeeperException, InterruptedException;
     
     /**

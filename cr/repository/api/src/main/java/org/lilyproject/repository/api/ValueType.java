@@ -69,8 +69,9 @@ public interface ValueType {
 
     /**
      * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
+     * @throws UnknownValueTypeEncodingException 
      */
-    public Object read(DataInput dataInput);
+    public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException;
     
 
     /**

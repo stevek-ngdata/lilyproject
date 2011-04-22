@@ -28,10 +28,13 @@ public class StringValueType implements PrimitiveValueType {
     }
 
     public String read(DataInput dataInput) {
+        // Read the encoding version byte, but ignore it for the moment since there is only one encoding
+        dataInput.readByte();
         return dataInput.readUTF();
     }
     
     public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeByte((byte)1); // Encoding version 1
         dataOutput.writeUTF((String)value);
     }
 

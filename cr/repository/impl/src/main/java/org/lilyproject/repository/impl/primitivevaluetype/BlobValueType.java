@@ -32,6 +32,8 @@ public class BlobValueType implements PrimitiveValueType {
      * See write for the byte format.
      */
     public Object read(DataInput dataInput) {
+        // Read the encoding version byte, but ignore it for the moment since there is only one encoding
+        dataInput.readByte();
         int keyLength = dataInput.readVInt();
         byte[] key = null;
         if (keyLength > 0) {
@@ -57,6 +59,7 @@ public class BlobValueType implements PrimitiveValueType {
      * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
      */
     public void write(Object value, DataOutput dataOutput) {
+        dataOutput.writeByte((byte)1); // Encoding version 1
         Blob blob = (Blob)value;
         byte[] key = blob.getValue();
         if (key == null) {
