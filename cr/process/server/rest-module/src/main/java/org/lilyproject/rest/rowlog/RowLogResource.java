@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.rest;
+package org.lilyproject.rest.rowlog;
 
 import java.util.Iterator;
 import java.util.List;
@@ -35,7 +35,7 @@ import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Path("rowlog")
+@Path("")
 public class RowLogResource {
 	
 	@Autowired

@@ -47,13 +47,39 @@
       id="repository"
       service="org.lilyproject.repository.api.Repository"/>
 
-  <kauri:export-restservice ref="main"/>
+  <kauri:export-restservice name="repository" ref="repositoryRouter"/>
+  <kauri:export-restservice name="rowlog" ref="rowlogRouter"/>
+  <kauri:export-restservice name="index" ref="indexRouter"/>
 
-  <bean id="main" factory-bean="routingService" factory-method="createRouter">
+  <bean id="repositoryRouter" factory-bean="routingService" factory-method="createRouter">
     <constructor-arg ref="restletContext"/>
     <constructor-arg ref="module"/>
     <constructor-arg>
       <bean class="org.kauriproject.routing.RoutingConfig">
+        <property name="configPath" value="repository-router.groovy"/>
+        <property name="fallBackToDefault" value="false"/>
+      </bean>
+    </constructor-arg>
+  </bean>
+
+  <bean id="rowlogRouter" factory-bean="routingService" factory-method="createRouter">
+    <constructor-arg ref="restletContext"/>
+    <constructor-arg ref="module"/>
+    <constructor-arg>
+      <bean class="org.kauriproject.routing.RoutingConfig">
+        <property name="configPath" value="rowlog-router.groovy"/>
+        <property name="fallBackToDefault" value="false"/>
+      </bean>
+    </constructor-arg>
+  </bean>
+
+  <bean id="indexRouter" factory-bean="routingService" factory-method="createRouter">
+    <constructor-arg ref="restletContext"/>
+    <constructor-arg ref="module"/>
+    <constructor-arg>
+      <bean class="org.kauriproject.routing.RoutingConfig">
+        <property name="configPath" value="index-router.groovy"/>
+        <property name="fallBackToDefault" value="false"/>
       </bean>
     </constructor-arg>
   </bean>

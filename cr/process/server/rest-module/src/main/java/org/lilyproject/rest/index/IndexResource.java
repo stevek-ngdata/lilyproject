@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.rest;
+package org.lilyproject.rest.index;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -40,7 +40,7 @@ import org.lilyproject.util.json.JsonFormat;
 import org.restlet.representation.StringRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Path("index")
+@Path("")
 public class IndexResource {
 	
 	@Autowired
