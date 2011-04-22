@@ -33,8 +33,6 @@ public class RestPerfTest extends BaseTestTool {
     private int iterations;
 
     private Option iterationsOption;
-    private Option initialInsertBatchOption;
-    private Option loopsOption;
 
     public static void main(String[] args) throws Exception {
         new RestPerfTest().start(args);
