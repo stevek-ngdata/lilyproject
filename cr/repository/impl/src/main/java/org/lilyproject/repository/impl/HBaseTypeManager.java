@@ -76,6 +76,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             createFieldType(fieldType);
         } catch (FieldTypeExistsException e) {
             // ok
+        } catch (ConcurrentUpdateTypeException e) {
+            // ok, another lily-server is starting up and doing the same thing
         }
     }
     
@@ -440,16 +442,16 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             newFieldType = fieldType.clone();
             newFieldType.setId(id);
 
-            // Check for concurrency
-            long now = System.currentTimeMillis();
-            checkConcurrency(fieldType.getName(), nameBytes, now);
-            
             // Check if there is already a fieldType with this name 
             try {
                 if (getFieldTypesSnapshot().getFieldTypeByName(fieldType.getName()) != null)
                     throw new FieldTypeExistsException(fieldType);
             } catch (FieldTypeNotFoundException ignore) {
             }
+
+            // Check for concurrency
+            long now = System.currentTimeMillis();
+            checkConcurrency(fieldType.getName(), nameBytes, now);
 
             // Create the actual field type
             getTypeTable().put(put);
@@ -545,7 +547,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
      *  <p>When the create or update operation has finished {@link #clearConcurrency(byte[], long)} should be called to clear the timestamp
      *  and to allow new updates.
      */
-    private void checkConcurrency(QName name, byte[] nameBytes, long now) throws IOException, TypeException {
+    private void checkConcurrency(QName name, byte[] nameBytes, long now) throws IOException, ConcurrentUpdateTypeException {
         // Get the timestamp of when the last update happened for the field name
         byte[] originalTimestampBytes = null;
         Long originalTimestamp = null;
@@ -561,7 +563,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         // The concurrent timeout should be large enough to allow fieldType caches to be refreshed
         if (originalTimestamp != null) {
             if ((originalTimestamp + CONCURRENT_TIMEOUT) >= now) {
-                throw new TypeException("Concurrent create or update occurred for field or record type <" + name + ">");
+                throw new ConcurrentUpdateTypeException(name.getName());
             }
             
         }
@@ -569,7 +571,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         Put put = new Put(nameBytes);
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now));
         if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, originalTimestampBytes, put)) {
-            throw new TypeException("Concurrent create or update occurred for field or record type <" + name + ">");
+            throw new ConcurrentUpdateTypeException(name.getName());
         }
     }
     
