@@ -174,7 +174,8 @@ public class IndexDefinitionConverter {
             buildNode.put("submitTime", buildInfo.getSubmitTime());
             buildNode.put("success", buildInfo.getSuccess());
             buildNode.put("jobState", buildInfo.getJobState());
-            buildNode.put("trackingUrl", buildInfo.getTrackingUrl());
+            if (buildInfo.getTrackingUrl() != null)
+                buildNode.put("trackingUrl", buildInfo.getTrackingUrl());
             ObjectNode countersNode = buildNode.putObject("counters");
             for (Map.Entry<String, Long> counter : buildInfo.getCounters().entrySet()) {
                 countersNode.put(counter.getKey(), counter.getValue());

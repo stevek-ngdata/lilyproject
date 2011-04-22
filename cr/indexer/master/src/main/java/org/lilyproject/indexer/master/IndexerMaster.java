@@ -68,6 +68,8 @@ public class IndexerMaster {
 
     private final boolean enableLocking;
 
+    private final String hostName;
+
     private LeaderElection leaderElection;
 
     private IndexerModelListener listener = new MyListener();
@@ -85,7 +87,7 @@ public class IndexerMaster {
     public IndexerMaster(ZooKeeperItf zk , WriteableIndexerModel indexerModel, Configuration mapReduceConf,
             Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString, int zkSessionTimeout,
             RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
-            boolean enableLocking) {
+            boolean enableLocking, String hostName) {
         this.zk = zk;
         this.indexerModel = indexerModel;
         this.mapReduceConf = mapReduceConf;
@@ -97,6 +99,7 @@ public class IndexerMaster {
         this.lilyInfo = lilyInfo;
         this.solrClientConfig = solrClientConfig;
         this.enableLocking = enableLocking;
+        this.hostName = hostName;
     }
 
     @PostConstruct
@@ -231,20 +234,43 @@ public class IndexerMaster {
                 // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsBatchBuildStart(index)) {
-                    Job job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
-                            zkConnectString, zkSessionTimeout, solrClientConfig, enableLocking);
+                    Job job = null;
+                    boolean jobStarted;
+                    try {
+                        job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
+                                zkConnectString, zkSessionTimeout, solrClientConfig, enableLocking);
+                        jobStarted = true;
+                    } catch (Throwable t) {
+                        jobStarted = false;
+                        log.error("Error trying to start index build job for index " + indexName, t);
+                    }
 
-                    ActiveBatchBuildInfo jobInfo = new ActiveBatchBuildInfo();
-                    jobInfo.setSubmitTime(System.currentTimeMillis());
-                    jobInfo.setJobId(job.getJobID().toString());
-                    jobInfo.setTrackingUrl(job.getTrackingURL());
-                    index.setActiveBatchBuildInfo(jobInfo);
+                    if (jobStarted) {
+                        ActiveBatchBuildInfo jobInfo = new ActiveBatchBuildInfo();
+                        jobInfo.setSubmitTime(System.currentTimeMillis());
+                        jobInfo.setJobId(job.getJobID().toString());
+                        jobInfo.setTrackingUrl(job.getTrackingURL());
+                        index.setActiveBatchBuildInfo(jobInfo);
 
-                    index.setBatchBuildState(IndexBatchBuildState.BUILDING);
+                        index.setBatchBuildState(IndexBatchBuildState.BUILDING);
 
-                    indexerModel.updateIndexInternal(index);
+                        indexerModel.updateIndexInternal(index);
 
-                    log.info("Started index build job for index " + indexName + ", job ID =  " + jobInfo.getJobId());
+                        log.info("Started index build job for index " + indexName + ", job ID =  " + jobInfo.getJobId());
+                    } else {
+                        // The job failed to start. To test this case, configure an incorrect jobtracker address.
+                        BatchBuildInfo jobInfo = new BatchBuildInfo();
+                        jobInfo.setJobId("failed-" + System.currentTimeMillis());
+                        jobInfo.setSubmitTime(System.currentTimeMillis());
+                        jobInfo.setJobState("failed to start, check logs on " + hostName);
+                        jobInfo.setSuccess(false);
+
+                        index.setLastBatchBuildInfo(jobInfo);
+                        index.setBatchBuildState(IndexBatchBuildState.INACTIVE);
+
+                        indexerModel.updateIndexInternal(index);
+                    }
+
                 }
             } finally {
                 indexerModel.unlockIndex(lock);
