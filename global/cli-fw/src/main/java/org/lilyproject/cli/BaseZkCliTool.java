@@ -29,6 +29,8 @@ public abstract class BaseZkCliTool extends BaseCliTool {
 
     protected String zkConnectionString;
 
+    protected int zkSessionTimeout = 40000;
+
     protected Option zkOption;
 
     @Override

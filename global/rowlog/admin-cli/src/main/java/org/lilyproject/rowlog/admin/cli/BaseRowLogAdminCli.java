@@ -219,7 +219,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
         if (result != 0)
             return result;
         
-        final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, 10000);
+        final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
         
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zk);
         

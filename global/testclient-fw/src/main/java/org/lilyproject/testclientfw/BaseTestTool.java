@@ -230,7 +230,7 @@ public abstract class BaseTestTool extends BaseZkCliTool {
 
     protected ZooKeeperItf getZooKeeper() throws IOException {
         if (zk == null) {
-            zk = new StateWatchingZooKeeper(zkConnectionString, 10000);
+            zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
         }
         return zk;
     }
