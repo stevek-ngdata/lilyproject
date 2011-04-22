@@ -16,13 +16,13 @@
 builder.representations {
   exceptions {
     exception {
-      jsonStatus()
+      jsonStatus2()
     }
   }
 
   errors {
     error {
-      jsonStatus()
+      jsonStatus2()
     }
   }
 }
