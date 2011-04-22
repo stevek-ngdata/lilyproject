@@ -47,6 +47,11 @@ public class RetryingSolrClient {
                     return method.invoke(solrClient, args);
                 } catch (InvocationTargetException ite) {
                     Throwable throwable = ite.getTargetException();
+                    Throwable originalThrowable = throwable;
+
+                    if (throwable instanceof SolrClientException) {
+                        throwable = throwable.getCause();
+                    }
 
                     Throwable cause = throwable.getCause();
 
@@ -61,7 +66,7 @@ public class RetryingSolrClient {
                                     "ms and retry (attempt " + attempt + ")");
                             Thread.sleep(pause);
                         } else {
-                            throw throwable;
+                            throw originalThrowable;
                         }
                     } else if (cause != null && cause instanceof UnknownHostException) {
                         int pause = getBackOff(attempt);
@@ -74,7 +79,7 @@ public class RetryingSolrClient {
                                 ". Will sleep " + pause + "ms and retry (attempt " + attempt + ")");
                         Thread.sleep(pause);
                     } else {
-                        throw throwable;
+                        throw originalThrowable;
                     }
                 }
                 metrics.retries.inc();

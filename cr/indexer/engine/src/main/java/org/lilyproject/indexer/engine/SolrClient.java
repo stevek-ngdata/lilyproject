@@ -1,12 +1,10 @@
 package org.lilyproject.indexer.engine;
 
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.SolrParams;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,21 +24,21 @@ public interface SolrClient {
     //
     //
 
-    UpdateResponse add(SolrInputDocument doc) throws SolrServerException, IOException, InterruptedException;
+    UpdateResponse add(SolrInputDocument doc) throws SolrClientException, InterruptedException;
 
-    UpdateResponse add(Collection<SolrInputDocument> docs) throws SolrServerException, IOException,
+    UpdateResponse add(Collection<SolrInputDocument> docs) throws SolrClientException,
             InterruptedException;
 
-    UpdateResponse deleteById(String id) throws SolrServerException, IOException, InterruptedException;
+    UpdateResponse deleteById(String id) throws SolrClientException, InterruptedException;
 
-    UpdateResponse deleteById(List<String> ids) throws SolrServerException, IOException, InterruptedException;
+    UpdateResponse deleteById(List<String> ids) throws SolrClientException, InterruptedException;
 
-    UpdateResponse deleteByQuery(String query) throws SolrServerException, IOException, InterruptedException;
+    UpdateResponse deleteByQuery(String query) throws SolrClientException, InterruptedException;
 
-    UpdateResponse commit(boolean waitFlush, boolean waitSearcher) throws SolrServerException, IOException,
+    UpdateResponse commit(boolean waitFlush, boolean waitSearcher) throws SolrClientException,
             InterruptedException;
 
-    UpdateResponse commit() throws SolrServerException, IOException, InterruptedException;
+    UpdateResponse commit() throws SolrClientException, InterruptedException;
 
-    QueryResponse query(SolrParams params) throws SolrServerException, InterruptedException;
+    QueryResponse query(SolrParams params) throws SolrClientException, InterruptedException;
 }

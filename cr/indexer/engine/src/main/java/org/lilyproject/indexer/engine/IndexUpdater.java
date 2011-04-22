@@ -564,7 +564,7 @@ public class IndexUpdater implements RowLogMessageListener {
      * Index a record for all the specified vtags.
      */
     private void index(RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,
-            IOException, SolrServerException, ShardSelectorException, IndexLockException {
+            SolrClientException, ShardSelectorException, IndexLockException {
         boolean lockObtained = false;
         try {
             indexLocker.lock(recordId);

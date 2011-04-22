@@ -1578,7 +1578,7 @@ public class IndexerTest {
         solrShardManager.commit(true, true);
     }
 
-    private void verifyResultCount(String query, int count) throws SolrServerException, InterruptedException {
+    private void verifyResultCount(String query, int count) throws SolrClientException, InterruptedException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
         solrQuery.set("rows", 5000);

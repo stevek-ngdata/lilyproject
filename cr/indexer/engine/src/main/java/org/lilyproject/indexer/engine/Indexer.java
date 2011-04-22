@@ -75,8 +75,8 @@ public class Indexer {
      *
      * @param recordId
      */
-    public void index(RecordId recordId) throws RepositoryException, IOException,
-            SolrServerException, ShardSelectorException, InterruptedException {
+    public void index(RecordId recordId) throws RepositoryException, SolrClientException,
+            ShardSelectorException, InterruptedException {
 
         VTaggedRecord vtRecord = new VTaggedRecord(recordId, repository);
         IdRecord record = vtRecord.getNonVersionedRecord();
@@ -101,7 +101,7 @@ public class Indexer {
      *                     but this should only contain appropriate vtags as defined by the IndexCase for this record.
      */
     protected void index(VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex)
-            throws IOException, SolrServerException, RepositoryException, ShardSelectorException, InterruptedException {
+            throws RepositoryException, ShardSelectorException, InterruptedException, SolrClientException {
 
         RecordId recordId = vtRecord.getNonVersionedRecord().getId();
 
@@ -145,8 +145,8 @@ public class Indexer {
      *                record.getVersion().
      * @param vtags the version tags under which to index
      */
-    protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws IOException, SolrServerException,
-            ShardSelectorException, RepositoryException, InterruptedException {
+    protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws ShardSelectorException,
+            RepositoryException, InterruptedException, SolrClientException {
 
         verifyLock(record.getId());
 
@@ -273,7 +273,7 @@ public class Indexer {
      *
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      */
-    public void delete(RecordId recordId) throws IOException, SolrServerException, ShardSelectorException,
+    public void delete(RecordId recordId) throws SolrClientException, ShardSelectorException,
             InterruptedException {
         verifyLock(recordId);
         solrShardMgr.getSolrClient(recordId).deleteByQuery("lily.id:" + ClientUtils.escapeQueryChars(recordId.toString()));
@@ -284,8 +284,8 @@ public class Indexer {
      *
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      */
-    public void delete(RecordId recordId, SchemaId vtag) throws IOException, SolrServerException,
-            ShardSelectorException, InterruptedException {
+    public void delete(RecordId recordId, SchemaId vtag) throws SolrClientException, ShardSelectorException,
+            InterruptedException {
         verifyLock(recordId);
         solrShardMgr.getSolrClient(recordId).deleteById(getIndexId(recordId, vtag));
         metrics.deletesByQuery.inc();

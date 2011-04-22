@@ -94,8 +94,7 @@ public class SolrShardManager {
     /**
      * This method is only meant for use by test cases.
      */
-    public void commit(boolean waitFlush, boolean waitSearcher) throws IOException, SolrServerException,
-            InterruptedException {
+    public void commit(boolean waitFlush, boolean waitSearcher) throws SolrClientException, InterruptedException {
         for (SolrClientHandle client : shardConnections.values()) {
             client.solrClient.commit(waitFlush, waitSearcher);
         }
@@ -104,7 +103,7 @@ public class SolrShardManager {
     /**
      * This method is only meant for use by test cases. Currently queries the first shard only.
      */
-    public QueryResponse query(SolrQuery query) throws SolrServerException, InterruptedException {
+    public QueryResponse query(SolrQuery query) throws SolrClientException, InterruptedException {
         return shardConnections.values().iterator().next().solrClient.query(query);
     }
 
