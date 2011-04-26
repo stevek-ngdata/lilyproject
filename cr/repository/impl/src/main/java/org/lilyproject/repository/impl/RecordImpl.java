@@ -21,13 +21,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.ObjectUtils;
 
 public class RecordImpl implements Record {
     private RecordId id;
     private Map<QName, Object> fields = new HashMap<QName, Object>();
     private List<QName> fieldsToDelete = new ArrayList<QName>();
-    private Map<Scope, QName> recordTypeNames = new HashMap<Scope, QName>();
-    private Map<Scope, Long> recordTypeVersions = new HashMap<Scope, Long>();
+    private Map<Scope, RecordTypeRef> recordTypes = new HashMap<Scope, RecordTypeRef>();
     private Long version;
     private ResponseStatus responseStatus;
     
@@ -80,16 +80,17 @@ public class RecordImpl implements Record {
     }
     
     public void setRecordType(Scope scope, QName name, Long version) {
-        recordTypeNames.put(scope, name);
-        recordTypeVersions.put(scope, version);
+        recordTypes.put(scope, new RecordTypeRef(name, version));
     }
     
     public QName getRecordTypeName(Scope scope) {
-        return recordTypeNames.get(scope);
+        RecordTypeRef ref = recordTypes.get(scope);
+        return ref != null ? ref.name : null;
     }
     
     public Long getRecordTypeVersion(Scope scope) {
-        return recordTypeVersions.get(scope);
+        RecordTypeRef ref = recordTypes.get(scope);
+        return ref != null ? ref.version : null;
     }
     
     public void setField(QName name, Object value) {
@@ -145,8 +146,7 @@ public class RecordImpl implements Record {
         RecordImpl record = new RecordImpl();
         record.id = id;
         record.version = version;
-        record.recordTypeNames.putAll(recordTypeNames);
-        record.recordTypeVersions.putAll(recordTypeVersions);
+        record.recordTypes.putAll(recordTypes);
         record.fields.putAll(fields);
         record.fieldsToDelete.addAll(fieldsToDelete);
         // the ResponseStatus is not cloned, on purpose
@@ -160,8 +160,7 @@ public class RecordImpl implements Record {
         result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         result = prime * result + ((fieldsToDelete == null) ? 0 : fieldsToDelete.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((recordTypeNames == null) ? 0 : recordTypeNames.hashCode());
-        result = prime * result + ((recordTypeVersions == null) ? 0 : recordTypeVersions.hashCode());
+        result = prime * result + ((recordTypes == null) ? 0 : recordTypes.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
         return result;
     }
@@ -173,17 +172,10 @@ public class RecordImpl implements Record {
 
         RecordImpl other = (RecordImpl) obj;
 
-        if (recordTypeNames == null) {
-            if (other.recordTypeNames != null)
+        if (recordTypes == null) {
+            if (other.recordTypes != null)
                 return false;
-        } else if (!recordTypeNames.equals(other.recordTypeNames)) {
-            return false;
-        }
-        
-        if (recordTypeVersions == null) {
-            if (other.recordTypeVersions != null)
-                return false;
-        } else if (!recordTypeVersions.equals(other.recordTypeVersions)) {
+        } else if (!recordTypes.equals(other.recordTypes)) {
             return false;
         }
 
@@ -227,8 +219,8 @@ public class RecordImpl implements Record {
             return false;
         }
 
-        QName nonVersionedRT1 = recordTypeNames.get(Scope.NON_VERSIONED);
-        QName nonVersionedRT2 = other.recordTypeNames.get(Scope.NON_VERSIONED);
+        QName nonVersionedRT1 = getRecordTypeName(Scope.NON_VERSIONED);
+        QName nonVersionedRT2 = other.getRecordTypeName(Scope.NON_VERSIONED);
 
         if (nonVersionedRT1 != null && nonVersionedRT2 != null && !nonVersionedRT1.equals(nonVersionedRT2)) {
             return false;
@@ -239,8 +231,45 @@ public class RecordImpl implements Record {
 
     @Override
     public String toString() {
-        return "RecordImpl [id=" + id + ", version=" + version + ", recordTypeNames=" + recordTypeNames
-                        + ", recordTypeVersions=" + recordTypeVersions + ", fields=" + fields + ", fieldsToDelete="
+        return "RecordImpl [id=" + id + ", version=" + version + ", recordTypes=" + recordTypes
+                        + ", fields=" + fields + ", fieldsToDelete="
                         + fieldsToDelete + "]";
+    }
+
+    private static final class RecordTypeRef {
+        // This object is immutable on purpose (see record clone)
+        final QName name;
+        final Long version;
+
+        public RecordTypeRef(QName name, Long version) {
+            this.name = name;
+            this.version = version;
+        }
+
+        @Override
+        public String toString() {
+            return name + ":" + version;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((name == null) ? 0 : name.hashCode());
+            result = prime * result + ((version == null) ? 0 : version.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            RecordTypeRef other = (RecordTypeRef) obj;
+            return ObjectUtils.safeEquals(name, other.name) && ObjectUtils.safeEquals(version, other.version);
+        }
     }
 }
