@@ -32,6 +32,8 @@ public class ShardingKey {
 
     private KeyType keyType;
 
+    private final MessageDigest mdAlgorithm;
+
     enum KeyType { STRING, LONG }
 
     private ShardingKey(ShardingKeyValue value, boolean hash, int modulus, KeyType keyType) {
@@ -39,6 +41,11 @@ public class ShardingKey {
         this.hash = hash;
         this.modulus = modulus;
         this.keyType = keyType;
+        try {
+            mdAlgorithm = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static ShardingKey recordIdShardingKey(boolean hash, int modulus, KeyType keyType) {
@@ -57,9 +64,7 @@ public class ShardingKey {
         Object key = value.getValue(recordId);
 
         if (hash) {
-            long hash = hash(key.toString());
-
-            key = hash;
+            key = hash(key.toString());
         }
 
         switch (keyType) {
@@ -86,16 +91,17 @@ public class ShardingKey {
         return (Comparable)key;
     }
 
-    private static long hash(String key) throws ShardSelectorException {
+    private long hash(String key) throws ShardSelectorException {
         try {
-            MessageDigest mdAlgorithm = MessageDigest.getInstance("MD5");
-            mdAlgorithm.update(key.getBytes("UTF-8"));
-            byte[] digest = mdAlgorithm.digest();
+            // Cloning message digest rather than looking it up each time
+            MessageDigest md = (MessageDigest)mdAlgorithm.clone();
+            byte[] digest = md.digest(key.getBytes("UTF-8"));
             return ((digest[0] & 0xFF) << 8) + ((digest[1] & 0xFF));
-        } catch (NoSuchAlgorithmException e) {
-            throw new ShardSelectorException("Error calculating hash.", e);
         } catch (UnsupportedEncodingException e) {
             throw new ShardSelectorException("Error calculating hash.", e);
+        } catch (CloneNotSupportedException e) {
+            // Sun's MD5 supports cloning, so we don't expect this to happen
+            throw new RuntimeException(e);
         }
     }
 
