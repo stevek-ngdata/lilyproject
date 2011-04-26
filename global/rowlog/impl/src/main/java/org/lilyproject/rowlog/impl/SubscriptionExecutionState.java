@@ -83,7 +83,7 @@ public class SubscriptionExecutionState {
         state.timestamp = timestamp;
         state.entries = entries;
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream(400);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
         BinaryEncoder encoder = new BinaryEncoder(os);
         try {
             // First write a version number to support future evolution of the serialization format
