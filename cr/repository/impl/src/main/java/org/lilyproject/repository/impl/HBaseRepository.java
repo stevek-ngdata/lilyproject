@@ -358,7 +358,7 @@ public class HBaseRepository extends BaseRepository {
         RowLogMessage walMessage;
         walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
         if (!rowLocker.put(put, rowLock)) {
-            throw new RecordException("Exception occurred while putting updated record <" + recordId + "> on HBase table");
+            throw new RecordException("Invalid or expired lock trying to put record <" + recordId + "> on HBase table");
         }
 
         if (walMessage != null) {
