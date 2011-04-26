@@ -214,6 +214,10 @@ public class VTaggedRecord {
             RepositoryException {
 
         Long version = getVTags().get(vtagId);
+        if (version == null) {
+            return null;
+        }
+
         return getIdRecord(version, fields);
     }
 
