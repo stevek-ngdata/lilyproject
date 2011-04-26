@@ -155,20 +155,31 @@ public class LinkIndex {
         }
     }
 
+    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
+        updateLinks(sourceRecord, vtag, links, false);
+    }
+
     /**
      *
      * @param links if this set is empty, then calling this method is equivalent to calling deleteLinks
+     * @param isNewRecord if this is a new record, then we can skip querying the existing links, thus gaining some time.
      */
-    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links) throws LinkIndexException {
+    public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links, boolean isNewRecord)
+            throws LinkIndexException {
         long before = System.currentTimeMillis();
         try {
             // We could simply delete all the old entries using deleteLinks() and then add
             // all new entries, but instead we find out what actually needs adding or removing and only
             // perform that. This is to avoid running into problems due to http://search-hadoop.com/m/rNnhN15Xecu
             // (= delete and put within the same millisecond).
-            byte[] sourceAsBytes = sourceRecord.toBytes();
-    
-            Set<FieldedLink> oldLinks = getForwardLinks(sourceRecord, vtag);
+
+            Set<FieldedLink> oldLinks = isNewRecord ?
+                    Collections.<FieldedLink>emptySet() : getForwardLinks(sourceRecord, vtag);
+
+            if (links.isEmpty() && oldLinks.isEmpty()) {
+                // No links to add, no links to remove
+                return;
+            }
     
             // Find out what changed
             Set<FieldedLink> removedLinks = new HashSet<FieldedLink>(oldLinks);
@@ -177,6 +188,7 @@ public class LinkIndex {
             addedLinks.removeAll(oldLinks);
     
             // Apply added links
+            byte[] sourceAsBytes = sourceRecord.toBytes();
             List<IndexEntry> fwdEntries = null;
             List<IndexEntry> bkwdEntries = null;
             if (addedLinks.size() > 0) {

@@ -85,6 +85,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                     log.debug("Record " + recordId + " : delete event : deleted extracted links.");
                 }
             } else if (recordEvent.getType().equals(CREATE) || recordEvent.getType().equals(UPDATE)) {
+                boolean isNewRecord = recordEvent.getType().equals(CREATE);
 
                 VTaggedRecord vtRecord;
                 try {
@@ -136,7 +137,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                             links = extractLinks(recordId, version, vtRecord);
                             cache.put(version, links);
                         }
-                        linkIndex.updateLinks(recordId, vtag, links);
+                        linkIndex.updateLinks(recordId, vtag, links, isNewRecord);
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s, vtag %2$s : extracted links count : %3$s",
                                     recordId, safeLoadTagName(vtag), links.size()));
