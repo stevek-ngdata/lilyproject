@@ -159,12 +159,13 @@ public class IndexLocker {
 
     public void unlock(final RecordId recordId) throws IndexLockException, InterruptedException,
             KeeperException {
-        if (zk.isCurrentThreadEventThread()) {
-            throw new RuntimeException("IndexLocker should not be used from within the ZooKeeper event thread.");
-        }
 
         if (!enabled) {
             return;
+        }
+
+        if (zk.isCurrentThreadEventThread()) {
+            throw new RuntimeException("IndexLocker should not be used from within the ZooKeeper event thread.");
         }
 
         final String lockPath = getPath(recordId);
@@ -219,12 +220,13 @@ public class IndexLocker {
 
     public boolean hasLock(final RecordId recordId) throws IndexLockException, InterruptedException,
             KeeperException {
-        if (zk.isCurrentThreadEventThread()) {
-            throw new RuntimeException("IndexLocker should not be used from within the ZooKeeper event thread.");
-        }
 
         if (!enabled) {
             return true;
+        }
+
+        if (zk.isCurrentThreadEventThread()) {
+            throw new RuntimeException("IndexLocker should not be used from within the ZooKeeper event thread.");
         }
 
         final String lockPath = getPath(recordId);
