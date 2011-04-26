@@ -15,10 +15,7 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ObjectUtils;
@@ -27,7 +24,7 @@ public class RecordImpl implements Record {
     private RecordId id;
     private Map<QName, Object> fields = new HashMap<QName, Object>();
     private List<QName> fieldsToDelete = new ArrayList<QName>();
-    private Map<Scope, RecordTypeRef> recordTypes = new HashMap<Scope, RecordTypeRef>();
+    private Map<Scope, RecordTypeRef> recordTypes = new EnumMap<Scope, RecordTypeRef>(Scope.class);
     private Long version;
     private ResponseStatus responseStatus;
     
@@ -127,7 +124,9 @@ public class RecordImpl implements Record {
     }
 
     public void addFieldsToDelete(List<QName> names) {
-        fieldsToDelete.addAll(names);
+        if (!names.isEmpty()) {
+            fieldsToDelete.addAll(names);
+        }
     }
 
     public void removeFieldsToDelete(List<QName> names) {

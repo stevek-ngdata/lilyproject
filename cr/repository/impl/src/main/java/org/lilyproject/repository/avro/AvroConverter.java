@@ -107,7 +107,7 @@ public class AvroConverter {
         }
         Map<Scope, SchemaId> recordTypeIds = null;
         if (avroIdRecord.scopeRecordTypeIds == null) {
-            recordTypeIds = new HashMap<Scope, SchemaId>();
+            recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
             Map<CharSequence, AvroSchemaId> avroRecordTypeIds = avroIdRecord.scopeRecordTypeIds;
             for (Scope scope : Scope.values()) {
                 recordTypeIds.put(scope, convert(avroRecordTypeIds.get(new Utf8(scope.name()))));

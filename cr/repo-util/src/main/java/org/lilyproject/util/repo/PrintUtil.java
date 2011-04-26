@@ -33,7 +33,7 @@ public class PrintUtil {
         TypeManager typeManager = repository.getTypeManager();
 
         // Group the fields per scope
-        Map<Scope, Map<QName, Object>> fieldsByScope = new HashMap<Scope, Map<QName, Object>>();
+        Map<Scope, Map<QName, Object>> fieldsByScope = new EnumMap<Scope, Map<QName, Object>>(Scope.class);
         Map<QName, Object> undeterminedFields = new TreeMap<QName, Object>(QNAME_COMP);
 
         for (Scope scope : Scope.values()) {
@@ -122,7 +122,7 @@ public class PrintUtil {
         List<SchemaId> failedFieldTypes = new ArrayList<SchemaId>();
 
         Map<Scope, List<Pair<FieldTypeEntry, FieldType>>> fieldTypeEntriesByScope =
-                new HashMap<Scope, List<Pair<FieldTypeEntry, FieldType>>>();
+                new EnumMap<Scope, List<Pair<FieldTypeEntry, FieldType>>>(Scope.class);
         for (Scope scope : Scope.values()) {
             fieldTypeEntriesByScope.put(scope, new ArrayList<Pair<FieldTypeEntry, FieldType>>());
         }

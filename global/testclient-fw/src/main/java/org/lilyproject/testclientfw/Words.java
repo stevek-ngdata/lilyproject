@@ -3,10 +3,7 @@ package org.lilyproject.testclientfw;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Words {
     public enum WordList {
@@ -22,7 +19,7 @@ public class Words {
         }
     };
 
-    private static Map<WordList, List<String>> WORDS = new HashMap<WordList, List<String>>(100000);
+    private static Map<WordList, List<String>> WORDS = new EnumMap<WordList, List<String>>(WordList.class);
 
     static {
         try {

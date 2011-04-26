@@ -17,6 +17,7 @@ package org.lilyproject.repository.impl;
 
 import org.lilyproject.repository.api.*;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,7 +168,7 @@ public class IdRecordImpl implements IdRecord {
     public IdRecord clone() {
         Record recordClone = this.record.clone();
         IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
-                new HashMap<Scope, SchemaId>(recordTypeIds));
+                new EnumMap<Scope, SchemaId>(recordTypeIds));
         return clone;
     }
 

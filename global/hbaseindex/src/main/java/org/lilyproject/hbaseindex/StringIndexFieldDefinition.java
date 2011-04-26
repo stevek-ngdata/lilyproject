@@ -22,6 +22,7 @@ import org.lilyproject.util.LocaleHelper;
 import java.io.UnsupportedEncodingException;
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
 
     private static Map<ByteEncodeMode, StringEncoder> ENCODERS;
     static {
-        ENCODERS = new HashMap<ByteEncodeMode, StringEncoder>();
+        ENCODERS = new EnumMap<ByteEncodeMode, StringEncoder>(ByteEncodeMode.class);
         ENCODERS.put(ByteEncodeMode.UTF8, new Utf8StringEncoder());
         ENCODERS.put(ByteEncodeMode.ASCII_FOLDING, new AsciiFoldingStringEncoder());
         ENCODERS.put(ByteEncodeMode.COLLATOR, new CollatorStringEncoder());

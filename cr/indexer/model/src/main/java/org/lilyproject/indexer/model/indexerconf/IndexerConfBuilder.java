@@ -330,7 +330,7 @@ public class IndexerConfBuilder {
 
             Set<Scope> matchScopes = null;
             if (matchScopeAttr != null) {
-                matchScopes = new HashSet<Scope>();
+                matchScopes = EnumSet.noneOf(Scope.class);
                 String[] scopes = matchScopeAttr.split(",");
                 for (String scope : scopes) {
                     matchScopes.add(Scope.valueOf(scope));

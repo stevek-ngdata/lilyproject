@@ -270,7 +270,7 @@ public class VTaggedRecord {
     private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
 
-        Map<Scope, Set<FieldType>> result = new HashMap<Scope, Set<FieldType>>();
+        Map<Scope, Set<FieldType>> result = new EnumMap<Scope, Set<FieldType>>(Scope.class);
         for (Scope scope : Scope.values()) {
             result.put(scope, new HashSet<FieldType>());
         }

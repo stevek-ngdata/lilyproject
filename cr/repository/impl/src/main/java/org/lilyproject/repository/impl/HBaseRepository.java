@@ -57,8 +57,8 @@ public class HBaseRepository extends BaseRepository {
  
     private HTableInterface recordTable;
     private final IdGenerator idGenerator;
-    private Map<Scope, byte[]> recordTypeIdColumnNames = new HashMap<Scope, byte[]>();
-    private Map<Scope, byte[]> recordTypeVersionColumnNames = new HashMap<Scope, byte[]>();
+    private Map<Scope, byte[]> recordTypeIdColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
+    private Map<Scope, byte[]> recordTypeVersionColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
     private RowLog wal;
     private RowLocker rowLocker;
     
@@ -455,7 +455,7 @@ public class HBaseRepository extends BaseRepository {
     private Set<Scope> calculateChangedFields(Record record, Record originalRecord, RecordType recordType,
             Long version, Put put, RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, FieldTypes fieldTypes) throws InterruptedException, FieldTypeNotFoundException, TypeException, BlobException, RecordTypeNotFoundException, RecordException, RepositoryException {
         Map<QName, Object> originalFields = originalRecord.getFields();
-        Set<Scope> changedScopes = new HashSet<Scope>();
+        Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
         
         Map<QName, Object> fields = getFieldsToUpdate(record);
         
@@ -506,7 +506,7 @@ public class HBaseRepository extends BaseRepository {
     // Checks for each field if it is different from its previous value and indeed needs to be updated.
     private Set<Scope> calculateUpdateFields(Map<QName, Object> fields, Map<QName, Object> originalFields, Map<QName, Object> originalNextFields,
             Long version, Put put, RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean mutableUpdate, FieldTypes fieldTypes) throws InterruptedException, FieldTypeNotFoundException, TypeException, BlobException, RecordTypeNotFoundException, RecordException {
-        Set<Scope> changedScopes = new HashSet<Scope>();
+        Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
             Object newValue = field.getValue();
@@ -864,7 +864,7 @@ public class HBaseRepository extends BaseRepository {
             idToQNameMapping.put(fieldType.getId(), fieldType.getName());
         }
 
-        Map<Scope, SchemaId> recordTypeIds = new HashMap<Scope, SchemaId>();
+        Map<Scope, SchemaId> recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
         for (Map.Entry<Scope, RecordType> entry : readContext.getRecordTypes().entrySet()) {
             recordTypeIds.put(entry.getKey(), entry.getValue().getId());
         }
@@ -1064,7 +1064,7 @@ public class HBaseRepository extends BaseRepository {
             throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException, RecordTypeNotFoundException, RepositoryException {
         Record record = newRecord(recordId);
         record.setVersion(requestedVersion);
-        Set<Scope> scopes = new HashSet<Scope>(); // Set of scopes for which a field has been read
+        Set<Scope> scopes = EnumSet.noneOf(Scope.class); // Set of scopes for which a field has been read
 
         // If the version is null, this means the record has no version an thus only contains non-versioned fields (if any)
         // All non-versioned fields are stored at version 1, so we extract the fields at version 1
@@ -1135,7 +1135,7 @@ public class HBaseRepository extends BaseRepository {
             Record record = newRecord(recordId);
             record.setVersion(requestedVersion);
             records.put(requestedVersion, record);
-            scopes.put(requestedVersion, new HashSet<Scope>());
+            scopes.put(requestedVersion, EnumSet.noneOf(Scope.class));
         }
 
         // Get a map of all fields with their values for each (cell-)version
@@ -1505,8 +1505,8 @@ public class HBaseRepository extends BaseRepository {
 
     private static class ReadContext {
         private Map<SchemaId, FieldType> fieldTypes = new HashMap<SchemaId, FieldType>();
-        private Map<Scope, RecordType> recordTypes = new HashMap<Scope, RecordType>();
-        private Set<Scope> scopes = new HashSet<Scope>();
+        private Map<Scope, RecordType> recordTypes = new EnumMap<Scope, RecordType>(Scope.class);
+        private Set<Scope> scopes = EnumSet.noneOf(Scope.class);
 
         public void addFieldType(FieldType fieldType) {
             fieldTypes.put(fieldType.getId(), fieldType);
