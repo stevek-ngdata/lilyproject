@@ -49,4 +49,6 @@ public interface IdRecord extends Record {
      * To be used by AvroConverter only
      */
     Map<SchemaId, QName> getFieldIdToNameMapping();
+
+    IdRecord clone();
 }

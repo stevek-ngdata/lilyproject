@@ -134,7 +134,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                         if (cache.containsKey(version)) {
                             links = cache.get(version);
                         } else {
-                            links = extractLinks(recordId, version, vtRecord);
+                            links = extractLinks(vtRecord, version);
                             cache.put(version, links);
                         }
                         linkIndex.updateLinks(recordId, vtag, links, isNewRecord);
@@ -152,19 +152,15 @@ public class LinkIndexUpdater implements RowLogMessageListener {
         }
     }
 
-    private Set<FieldedLink> extractLinks(RecordId recordId, Long version, VTaggedRecord vtRecord) {
+    private Set<FieldedLink> extractLinks(VTaggedRecord vtRecord, Long version) {
         long before = System.currentTimeMillis();
         try {
             Set<FieldedLink> links;
             IdRecord versionRecord = null;
-            if (version == 0L) {
-                versionRecord = vtRecord.getNonVersionedRecord();
-            } else {
-                try {
-                    versionRecord = repository.readWithIds(recordId, version, null);
-                } catch (RecordNotFoundException e) {
-                    // vtag points to a non-existing record
-                }
+            try {
+                versionRecord = vtRecord.getIdRecord(version);
+            } catch (RecordNotFoundException e) {
+                // vtag points to a non-existing record
             }
 
             if (versionRecord == null) {
@@ -179,7 +175,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
             // A vtag pointing to a non-existing version, nothing unusual.
             return Collections.emptySet();
         } catch (Throwable t) {
-            log.error("Error extracting links from record " + recordId, t);
+            log.error("Error extracting links from record " + vtRecord.getId(), t);
         } finally {
             metrics.report(Action.EXTRACT, System.currentTimeMillis() - before);
         }

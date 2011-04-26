@@ -164,8 +164,11 @@ public class IdRecordImpl implements IdRecord {
         record.setResponseStatus(status);
     }
 
-    public Record clone() {
-        throw new UnsupportedOperationException("IdRecordImpl does not support cloning.");
+    public IdRecord clone() {
+        Record recordClone = this.record.clone();
+        IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
+                new HashMap<Scope, SchemaId>(recordTypeIds));
+        return clone;
     }
 
     @Override

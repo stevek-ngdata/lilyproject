@@ -17,7 +17,6 @@ package org.lilyproject.indexer.engine;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
@@ -200,7 +199,6 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     private void handleRecordCreateUpdate(VTaggedRecord vtRecord) throws Exception {
-        IdRecord record = vtRecord.getNonVersionedRecord();
         RecordEvent event = vtRecord.getRecordEvent();
         Map<Scope, Set<FieldType>> updatedFieldsByScope = vtRecord.getUpdatedFieldsByScope();
         Map<Long, Set<SchemaId>> vtagsByVersion = vtRecord.getVTagsByVersion();
@@ -209,8 +207,8 @@ public class IndexUpdater implements RowLogMessageListener {
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
         //  This makes that the indexing behavior of all versions is equal, and can be changed (the
         //  record type of the versioned scope is immutable).
-        IndexCase indexCase = indexer.getConf().getIndexCase(record.getRecordTypeName(),
-                record.getId().getVariantProperties());
+        IndexCase indexCase = indexer.getConf().getIndexCase(vtRecord.getRecord().getRecordTypeName(),
+                vtRecord.getId().getVariantProperties());
 
         if (indexCase == null) {
             // The record should not be indexed
@@ -218,7 +216,7 @@ public class IndexUpdater implements RowLogMessageListener {
             // After this we go to update denormalized data
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Record %1$s: no index case found, record will not be indexed.",
-                        record.getId()));
+                        vtRecord.getId()));
             }
         } else {
             Set<SchemaId> vtagsToIndex = new HashSet<SchemaId>();
@@ -233,11 +231,11 @@ public class IndexUpdater implements RowLogMessageListener {
 
                 // Delete everything: we do not know the previous record type, so we do not know what
                 // version tags were indexed, so we simply delete everything
-                indexer.delete(record.getId());
+                indexer.delete(vtRecord.getId());
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s: deleted existing entries from index (if present) " +
-                            "because of record type change", record.getId()));
+                            "because of record type change", vtRecord.getId()));
                 }
 
                 // Reindex all needed vtags
@@ -255,7 +253,7 @@ public class IndexUpdater implements RowLogMessageListener {
                         // After this we go to the treatment of changed vtag fields
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
-                                    record.getId()));
+                                    vtRecord.getId()));
                         }
                     }
                 }
@@ -284,7 +282,7 @@ public class IndexUpdater implements RowLogMessageListener {
                             if (log.isDebugEnabled()) {
                                 log.debug(String.format("Record %1$s: versioned(-mutable) fields changed, will " +
                                         "index for all tags of modified version %2$s that require indexing: %3$s",
-                                        record.getId(), version, indexer.vtagSetToNameString(vtagsToIndex)));
+                                        vtRecord.getId(), version, indexer.vtagSetToNameString(vtagsToIndex)));
                             }
                         }
                     }
@@ -301,15 +299,15 @@ public class IndexUpdater implements RowLogMessageListener {
                     if (vtags.containsKey(vtag) && indexCase.getVersionTags().contains(vtag)) {
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s: will index for created or updated vtag %2$s",
-                                    record.getId(), indexer.safeLoadTagName(vtag)));
+                                    vtRecord.getId(), indexer.safeLoadTagName(vtag)));
                         }
                         vtagsToIndex.add(vtag);
                     } else {
                         // The vtag does not exist anymore on the document, or does not need to be indexed: delete from index
-                        indexer.delete(record.getId(), vtag);
+                        indexer.delete(vtRecord.getId(), vtag);
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("Record %1$s: deleted from index for deleted vtag %2$s",
-                                    record.getId(), indexer.safeLoadTagName(vtag)));
+                                    vtRecord.getId(), indexer.safeLoadTagName(vtag)));
                         }
                     }
                 }
@@ -578,7 +576,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 return;
             }
 
-            IdRecord record = vtRecord.getNonVersionedRecord();
+            IdRecord record = vtRecord.getRecord();
 
             IndexCase indexCase = indexer.getConf().getIndexCase(record.getRecordTypeName(),
                     record.getId().getVariantProperties());

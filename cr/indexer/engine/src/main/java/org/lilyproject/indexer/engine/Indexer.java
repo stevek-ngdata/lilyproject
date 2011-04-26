@@ -17,7 +17,6 @@ package org.lilyproject.indexer.engine;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
 import org.lilyproject.indexer.model.indexerconf.*;
@@ -26,7 +25,6 @@ import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.VTaggedRecord;
 
-import java.io.IOException;
 import java.util.*;
 
 
@@ -79,7 +77,7 @@ public class Indexer {
             ShardSelectorException, InterruptedException {
 
         VTaggedRecord vtRecord = new VTaggedRecord(recordId, repository);
-        IdRecord record = vtRecord.getNonVersionedRecord();
+        IdRecord record = vtRecord.getRecord();
 
         IndexCase indexCase = conf.getIndexCase(record.getRecordTypeName(), record.getId().getVariantProperties());
         if (indexCase == null) {
@@ -103,7 +101,7 @@ public class Indexer {
     protected void index(VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex)
             throws RepositoryException, ShardSelectorException, InterruptedException, SolrClientException {
 
-        RecordId recordId = vtRecord.getNonVersionedRecord().getId();
+        RecordId recordId = vtRecord.getId();
 
         // One version might have multiple vtags, so to index we iterate the version numbers
         // rather than the vtags

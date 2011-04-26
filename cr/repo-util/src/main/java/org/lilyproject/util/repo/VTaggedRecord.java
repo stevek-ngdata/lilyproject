@@ -12,9 +12,14 @@ import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 public class VTaggedRecord {
 
     /**
-     * The record object containing only the non-versioned fields.
+     * The record containing the last version (or none if non-versioned fields only).
      */
     private IdRecord record;
+
+    /**
+     * The record object containing only the non-versioned fields.
+     */
+    private IdRecord nonVersionedRecord;
 
     private Map<SchemaId, Long> vtags;
 
@@ -48,15 +53,38 @@ public class VTaggedRecord {
         typeManager = repository.getTypeManager();
 
         // Load the last version of the record to get vtag and non-versioned fields information
+        // We will also reuse this record object in case the last version or the non-versioned data is needed,
+        // to avoid extra gets on HBase.
         record = repository.readWithIds(recordId, null, null);
-        reduceToNonVersioned(record, typeManager);
 
         this.recordEvent = recordEvent;
         this.fieldFilter = fieldFilter != null ? fieldFilter : PASS_ALL_FIELD_FILTER;
     }
 
-    public IdRecord getNonVersionedRecord() {
+    public RecordId getId() {
+        return record.getId();
+    }
+
+    /**
+     * Returns the record object of the last version of the record, or the non-versioned record object if the
+     * record has no versions.
+     */
+    public IdRecord getRecord() {
         return record;
+    }
+
+    public IdRecord getNonVersionedRecord() throws RepositoryException, InterruptedException {
+        if (nonVersionedRecord == null) {
+            if (record.getVersion() == null) {
+                // record has no version, so no versioned fields, so no cloning necessary
+                this.nonVersionedRecord = record;
+            } else {
+                IdRecord nonVersionedRecord = record.clone();
+                reduceToNonVersioned(nonVersionedRecord, typeManager);
+                this.nonVersionedRecord = nonVersionedRecord;
+            }
+        }
+        return nonVersionedRecord;
     }
 
 
@@ -186,20 +214,22 @@ public class VTaggedRecord {
             RepositoryException {
 
         Long version = getVTags().get(vtagId);
-        if (version == null) {
-            return null;
-        } else if (version == 0L) {
-            return getNonVersionedRecord();
-        } else {
-            return repository.readWithIds(record.getId(), version, fields);
-        }
+        return getIdRecord(version, fields);
     }
 
     public IdRecord getIdRecord(long version) throws InterruptedException, RepositoryException {
+        return getIdRecord(version, null);
+    }
+
+    public IdRecord getIdRecord(long version, List<SchemaId> fields) throws InterruptedException, RepositoryException {
+        // TODO in case of the cached copies, we should filter the fields to the requested fields (not used anywhere
+        // at the time of this writing)
         if (version == 0L) {
             return getNonVersionedRecord();
+        } else if (version == record.getVersion()) {
+            return record;
         } else {
-            return repository.readWithIds(record.getId(), version, null);
+            return repository.readWithIds(record.getId(), version, fields);
         }
     }
 
