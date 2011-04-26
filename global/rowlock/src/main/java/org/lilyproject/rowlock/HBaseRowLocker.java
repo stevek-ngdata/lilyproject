@@ -45,25 +45,29 @@ public class HBaseRowLocker implements RowLocker {
     }
     
     public RowLock lockRow(byte[] rowKey) throws IOException {
-        long now = System.currentTimeMillis();
+        RowLock rowLock = lockRow(rowKey, null);
+        if (rowLock != null) {
+            return rowLock;
+        }
+
+        // Already locked: check if the existing lock is expired
         Get get = new Get(rowKey);
         get.addColumn(family, qualifier);
-        
+
         Result result = table.get(get);
         byte[] previousPermit = null;
         long previousTimestamp = -1L;
         if (result != null && !result.isEmpty()) {
             previousPermit = result.getValue(family, qualifier);
-            if (previousPermit != null) {
+            if (previousPermit != null && previousPermit.length > 0) {
                 RowLock previousRowLock = new RowLock(rowKey, previousPermit);
                 previousTimestamp = previousRowLock.getTimestamp();
             }
         }
-        if ((previousTimestamp == -1) || (previousTimestamp + timeout  < now)) {
-            Put put = new Put(rowKey);
-            RowLock rowLock = RowLock.createRowLock(rowKey);
-            put.add(family, qualifier, 1L, rowLock.getPermit());
-            if (table.checkAndPut(rowKey, family, qualifier, previousPermit, put)) {
+
+        if ((previousTimestamp == -1) || (previousTimestamp + timeout  < System.currentTimeMillis())) {
+            rowLock = lockRow(rowKey, previousPermit);
+            if (rowLock != null) {
                 return rowLock;
             }
         }
@@ -72,6 +76,18 @@ public class HBaseRowLocker implements RowLocker {
             metrics.contentions.inc();
         }
 
+        return null;
+    }
+
+    private RowLock lockRow(byte[] rowKey, byte[] previousPermit) throws IOException {
+        RowLock rowLock = RowLock.createRowLock(rowKey);
+        Put put = new Put(rowKey);
+        put.add(family, qualifier, 1L, rowLock.getPermit());
+        // checkAndPut treats both null and empty byte array the same, so this works regardless of whether the
+        // row is brand new or not.
+        if (table.checkAndPut(rowKey, family, qualifier, previousPermit, put)) {
+            return rowLock;
+        }
         return null;
     }
 
@@ -90,7 +106,7 @@ public class HBaseRowLocker implements RowLocker {
     public boolean unlockRow(RowLock lock) throws IOException {
         byte[] rowKey = lock.getRowKey();
         Put put = new Put(rowKey);
-        put.add(family, qualifier, 1L, Bytes.toBytes(-1L));
+        put.add(family, qualifier, 1L, null);
         return table.checkAndPut(rowKey, family, qualifier, lock.getPermit(), put); // If it fails, we already lost the lock
     }
     
@@ -103,13 +119,12 @@ public class HBaseRowLocker implements RowLocker {
         if (result.isEmpty()) return false;
         
         byte[] previousPermit = result.getValue(family, qualifier);
-        if (previousPermit == null) return false;
+        if (previousPermit == null || previousPermit.length == 0) return false;
         
         RowLock previousRowLock = new RowLock(rowKey, previousPermit);
         long previousTimestamp = previousRowLock.getTimestamp();
-        if (previousTimestamp + timeout < now) return false;
-        
-        return true;
+        return previousTimestamp + timeout >= now;
+
     }
     
     public boolean put(Put put, RowLock lock) throws IOException {
