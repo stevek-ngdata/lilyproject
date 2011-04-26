@@ -92,9 +92,7 @@ public class RowLogShardImpl implements RowLogShard {
         Put put = new Put(rowKey);
         put.add(MESSAGES_CF, MESSAGE_COLUMN, encodeMessage(message));
         try {
-            if (!table.checkAndPut(rowKey, MESSAGES_CF, MESSAGE_COLUMN, null, put)) {
-                throw new RowLogException("Failed to put message on RowLogShard: concurrent update");
-            }
+            table.put(put);
         } catch (IOException e) {
             throw new RowLogException("Failed to put message on RowLogShard", e);
         }
