@@ -43,15 +43,15 @@ public class IdGeneratorImpl implements IdGenerator {
             return identifierByte;
         }
     }
-    
-    private static Map<Byte, IdIdentifier> identifierByteMap = new HashMap<Byte, IdIdentifier>();
+
+    private static IdIdentifier[] IDENTIFIERS;
     static {
-        for (IdIdentifier identifier : IdIdentifier.values()) {
-            identifierByteMap.put(new Byte(identifier.getIdentifierByte()), identifier);
-        }
-        
+        IDENTIFIERS = new IdIdentifier[3];
+        IDENTIFIERS[0] = IdIdentifier.USER;
+        IDENTIFIERS[1] = IdIdentifier.UUID;
+        IDENTIFIERS[2] = IdIdentifier.VARIANT;
     }
-    
+
     public RecordId newRecordId() {
         return new UUIDRecordId(this);
     }
@@ -126,26 +126,33 @@ public class IdGeneratorImpl implements IdGenerator {
     }
 
     public RecordId fromBytes(DataInput dataInput) {
+        // Read the identifier byte at the end of the input
         int pos = dataInput.getPosition();
-        dataInput.setPosition(dataInput.getSize()-1);
+        int size = dataInput.getSize();
+        dataInput.setPosition(size - 1);
         byte identifierByte = dataInput.readByte();
         dataInput.setPosition(pos);
-        IdIdentifier idIdentifier = identifierByteMap.get(new Byte(identifierByte));
+
+        // Virtually remove the identifier byte from the input
+        dataInput.setSize(size - 1);
+
+        IdIdentifier idIdentifier = IDENTIFIERS[identifierByte];
         RecordId recordId = null;
         switch (idIdentifier) {
         case UUID:
-            recordId = new UUIDRecordId(new DataInputImpl((DataInputImpl)dataInput, dataInput.getPosition(), dataInput.getSize()-1), this);
+            recordId = new UUIDRecordId(dataInput, this);
             break;
 
         case USER:
-            recordId = new UserRecordId(new DataInputImpl((DataInputImpl)dataInput, dataInput.getPosition(), dataInput.getSize()-1), this);
+            recordId = new UserRecordId(dataInput, this);
             break;
             
         case VARIANT:
-            recordId = new VariantRecordId(new DataInputImpl((DataInputImpl)dataInput, dataInput.getPosition(), dataInput.getSize()-1), this);
+            recordId = new VariantRecordId(dataInput, this);
             break;
             
         default:
+            // will already have failed on the IDENTIFIERS array lookup above
             break;
         }
         return recordId;
