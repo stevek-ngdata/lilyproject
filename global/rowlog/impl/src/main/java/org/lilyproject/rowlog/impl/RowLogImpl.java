@@ -44,7 +44,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     private final byte[] rowLogColumnFamily;
     private RowLogConfig rowLogConfig;
     
-    private Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
+    private final Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
     protected final String id;
     private RowLogProcessorNotifier processorNotifier = null;
     private Log log = LogFactory.getLog(getClass());
@@ -255,15 +255,13 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
 
     private boolean processMessage(RowLogMessage message, SubscriptionExecutionState executionState) throws RowLogException, InterruptedException {
         boolean allDone = true;
-        List<RowLogSubscription> subscriptionsSnapshot = getSubscriptions();
+        RowLogSubscription[] subscriptions = getSubscriptionsAsArray();
         if (rowLogConfig.isRespectOrder()) {
-            Collections.sort(subscriptionsSnapshot);
+            Arrays.sort(subscriptions);
         }
 
-        List<RowLogSubscription> subscriptions = getSubscriptions();
-
         if (log.isDebugEnabled()) {
-            log.debug("Processing msg '" + formatId(message) + "' nr of subscriptions: " + subscriptions.size());
+            log.debug("Processing msg '" + formatId(message) + "' nr of subscriptions: " + subscriptions.length);
         }
 
         for (RowLogSubscription subscription : subscriptions) {
@@ -313,6 +311,12 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         }
     }
     
+    public RowLogSubscription[] getSubscriptionsAsArray() {
+        synchronized (subscriptions) {
+            return (RowLogSubscription[])subscriptions.values().toArray();
+        }
+    }
+
     public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException, InterruptedException {
         if (rowLocker != null) { // If the rowLocker exists the lock should be a RowLock
             RowLock rowLock = null;
@@ -428,8 +432,8 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             return false;
         }
         if (rowLogConfig.isRespectOrder()) {
-            List<RowLogSubscription> subscriptions = getSubscriptions();
-            Collections.sort(subscriptions);
+            RowLogSubscription[] subscriptions = getSubscriptionsAsArray();
+            Arrays.sort(subscriptions);
             for (RowLogSubscription subscriptionContext : subscriptions) {
                 if (subscriptionId.equals(subscriptionContext.getId()))
                     break;

@@ -161,9 +161,14 @@ public interface RowLog {
     List<RowLogMessage> getMessages(byte[] rowKey, String ... subscriptionId) throws RowLogException;
 
     /**
-     * @return the list of subscriptions on the rowlog
+     * @return copy of the list of subscriptions on the rowlog
      */
     List<RowLogSubscription> getSubscriptions();
+
+    /**
+     * @return copy of the list of subscriptions on the rowlog
+     */
+    RowLogSubscription[] getSubscriptionsAsArray();
 
     /**
      * @return the list of registered shards on the rowlog
