@@ -194,10 +194,12 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     
     private void initializeSubscriptions(RowLogMessage message, Put put, List<RowLogSubscription> subscriptions)
             throws IOException {
-        SubscriptionExecutionState executionState = new SubscriptionExecutionState(message.getTimestamp());
-        for (RowLogSubscription subscription : subscriptions) {
-            executionState.setState(subscription.getId(), false);
+        String[] subscriptionIds = new String[subscriptions.size()];
+        for (int i = 0; i < subscriptions.size(); i++) {
+            subscriptionIds[i] = subscriptions.get(i).getId();
         }
+        SubscriptionExecutionState executionState = new SubscriptionExecutionState(message.getTimestamp(),
+                subscriptionIds);
         byte[] qualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
     }

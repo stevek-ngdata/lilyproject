@@ -15,116 +15,102 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
-import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.rowlog.avro.AvroExecState;
-import org.lilyproject.rowlog.avro.AvroExecStateEntry;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 
 public class SubscriptionExecutionState {
 
     private final long timestamp;
+    private final String[] subscriptionIds;
+    private final boolean[] doneFlags;
 
-    private final Map<CharSequence, AvroExecStateEntry> entries = new HashMap<CharSequence, AvroExecStateEntry>();
+    private static final byte FORMAT_VERSION = 1;
 
-    private static final short FORMAT_VERSION = 1;
-
-    public SubscriptionExecutionState(long timestamp) {
+    public SubscriptionExecutionState(long timestamp, String[] subscriptionIds) {
         this.timestamp = timestamp;
+        this.subscriptionIds = subscriptionIds;
+        this.doneFlags = new boolean[subscriptionIds.length];
     }
     
+    public SubscriptionExecutionState(long timestamp, String[] subscriptionIds, boolean[] doneFlags) {
+        this.timestamp = timestamp;
+        this.subscriptionIds = subscriptionIds;
+        this.doneFlags = doneFlags;
+    }
+
     public long getTimestamp() {
         return timestamp;
     }
 
-    public AvroExecStateEntry getEntry(String subscriptionId) {
-        AvroExecStateEntry entry = entries.get(subscriptionId);
-        if (entry == null) {
-            entry = new AvroExecStateEntry();
-            entry.done = false;
-            entries.put(subscriptionId, entry);
-        }
-        return entry;
-    }
-
-    public Set<CharSequence> getSubscriptionIds() {
-        return entries.keySet();
+    public String[] getSubscriptionIds() {
+        return subscriptionIds;
     }
 
     public void setState(String subscriptionId, boolean state) {
-        getEntry(subscriptionId).done = state;
+        for (int i = 0; i < subscriptionIds.length; i++) {
+            if (subscriptionIds[i].equals(subscriptionId)) {
+                doneFlags[i] = state;
+                return;
+            }
+        }
+        // We should never get here, since getState() returns true for unknown subscriptions
+        throw new RuntimeException("setState called for undefined subscription: " + subscriptionId);
     }
     
     public boolean getState(String subscriptionId) {
-        AvroExecStateEntry entry = entries.get(subscriptionId);
-        if (entry != null) {
-            return entry.done;
-        } else {
-            return true;
+        for (int i = 0; i < subscriptionIds.length; i++) {
+            if (subscriptionIds[i].equals(subscriptionId)) {
+                return doneFlags[i];
+            }
         }
+        return true;
     }
-    
-    private static final SpecificDatumWriter<AvroExecState> STATE_WRITER =
-            new SpecificDatumWriter<AvroExecState>(AvroExecState.class);
-
-    private static final SpecificDatumReader<AvroExecState> STATE_READER =
-            new SpecificDatumReader<AvroExecState>(AvroExecState.class);
 
     public byte[] toBytes() {
-        AvroExecState state = new AvroExecState();
-        state.timestamp = timestamp;
-        state.entries = entries;
+        DataOutput dataOutput = new DataOutputImpl();
+        // First write a version number to support future evolution of the serialization format
+        dataOutput.writeByte(FORMAT_VERSION);
+        dataOutput.writeLong(timestamp);
+        dataOutput.writeVInt(subscriptionIds.length);
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BinaryEncoder encoder = new BinaryEncoder(os);
-        try {
-            // First write a version number to support future evolution of the serialization format
-            os.write(Bytes.toBytes(FORMAT_VERSION));
-
-            STATE_WRITER.write(state, encoder);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        for (int i = 0; i < subscriptionIds.length; i++) {
+            dataOutput.writeUTF(subscriptionIds[i]);
+            dataOutput.writeBoolean(doneFlags[i]);
         }
 
-        return os.toByteArray();
-    }
-
-    private void setEntries(Map<CharSequence, AvroExecStateEntry> entries) {
-        // The reason for copying over the entries, rather than simply assigning the full Map, is that
-        // the Map created by Avro will contain Utf8 objects as key.
-        for (Map.Entry<CharSequence, AvroExecStateEntry> entry : entries.entrySet()) {
-            this.entries.put(entry.getKey().toString(), entry.getValue());
-        }
+        return dataOutput.toByteArray();
     }
 
     public static SubscriptionExecutionState fromBytes(byte[] bytes) throws IOException {
-        short version = Bytes.toShort(bytes, 0, 2);
+        DataInput input = new DataInputImpl(bytes);
+        byte version = input.readByte();
 
         if (version != FORMAT_VERSION) {
-            throw new RuntimeException("Unsupported subscription execution state serialized format version: " + version);
+            throw new RuntimeException("Unsupported subscription execution state serialized format version: " +
+                    (short)version);
         }
 
-        AvroExecState state = STATE_READER.read(null,
-                DecoderFactory.defaultFactory().createBinaryDecoder(bytes, 2, bytes.length - 2, null));
+        long timestamp = input.readLong();
+        int size = input.readVInt();
 
-        SubscriptionExecutionState result = new SubscriptionExecutionState(state.timestamp);
+        String[] subscriptionIds = new String[size];
+        boolean[] doneFlags = new boolean[size];
 
-        result.setEntries(state.entries);
+        for (int i = 0; i < size; i++) {
+            subscriptionIds[i] = input.readUTF();
+            doneFlags[i] = input.readBoolean();
+        }
 
-        return result;
+        return new SubscriptionExecutionState(timestamp, subscriptionIds, doneFlags);
     }
 
     public boolean allDone() {
-        for (AvroExecStateEntry entry : entries.values()) {
-            if (!entry.done)
+        for (int i = 0; i < doneFlags.length; i++) {
+            if (!doneFlags[i])
                 return false;
         }
         return true;
