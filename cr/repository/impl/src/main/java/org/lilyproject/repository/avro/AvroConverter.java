@@ -87,9 +87,13 @@ public class AvroConverter {
             record.addFieldsToDelete(fieldsToDelete);
         }
 
-        record.setResponseStatus(avroRecord.responseStatus);
+        record.setResponseStatus(convert(avroRecord.responseStatus));
         
         return record;
+    }
+
+    public ResponseStatus convert(AvroResponseStatus status) {
+        return status == null ? null : ResponseStatus.values()[status.ordinal()];
     }
     
     public IdRecord convert(AvroIdRecord avroIdRecord) throws RepositoryException, InterruptedException {
@@ -179,9 +183,13 @@ public class AvroConverter {
         }
 
         // Response status
-        avroRecord.responseStatus = record.getResponseStatus();
+        avroRecord.responseStatus = convert(record.getResponseStatus());
 
         return avroRecord; 
+    }
+
+    public AvroResponseStatus convert(ResponseStatus status) {
+        return status == null ? null : AvroResponseStatus.values()[status.ordinal()];
     }
     
     public AvroIdRecord convert(IdRecord idRecord) throws AvroRepositoryException, AvroInterruptedException {
@@ -238,9 +246,13 @@ public class AvroConverter {
         QName name = convert(avroFieldType.name);
         SchemaId id = convert(avroFieldType.id);
         if (id != null) {
-            return typeManager.newFieldType(id, valueType, name, avroFieldType.scope);
+            return typeManager.newFieldType(id, valueType, name, convert(avroFieldType.scope));
         }
-        return typeManager.newFieldType(valueType, name, avroFieldType.scope);
+        return typeManager.newFieldType(valueType, name, convert(avroFieldType.scope));
+    }
+
+    public Scope convert(AvroScope scope) {
+        return scope == null ? null : Scope.values()[scope.ordinal()];
     }
 
     public AvroFieldType convert(FieldType fieldType) {
@@ -249,8 +261,12 @@ public class AvroConverter {
         avroFieldType.id = convert(fieldType.getId());
         avroFieldType.name = convert(fieldType.getName());
         avroFieldType.valueType = convert(fieldType.getValueType());
-        avroFieldType.scope = fieldType.getScope();
+        avroFieldType.scope = convert(fieldType.getScope());
         return avroFieldType;
+    }
+
+    public AvroScope convert(Scope scope) {
+        return scope == null ? null : AvroScope.values()[scope.ordinal()];
     }
 
     public RecordType convert(AvroRecordType avroRecordType) throws RepositoryException {

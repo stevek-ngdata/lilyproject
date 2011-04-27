@@ -37,7 +37,7 @@
         {"name": "fields", "type": {"type": "array", "items": "AvroField"}},
         {"name": "fieldsToDelete", "type": {"type": "array", "items": "string"}},
         {"name": "responseStatus", "type": [
-          {"namespace": "org.lilyproject.repository.api", "name": "ResponseStatus", "type": "enum", "symbols": ["CREATED", "UPDATED", "UP_TO_DATE"]},
+          {"name": "AvroResponseStatus", "type": "enum", "symbols": ["CREATED", "UPDATED", "UP_TO_DATE"]},
           "null"
         ]
         }
@@ -148,7 +148,7 @@
         {"name": "id",   "type": ["AvroSchemaId", "null"]},
         {"name": "name", "type": "AvroQName"},
         {"name": "valueType", "type": "AvroValueType"},
-        {"name": "scope", "type": {"namespace": "org.lilyproject.repository.api", "name": "Scope", "type": "enum", "symbols": ["NON_VERSIONED", "VERSIONED", "VERSIONED_MUTABLE"]}}
+        {"name": "scope", "type": {"name": "AvroScope", "type": "enum", "symbols": ["NON_VERSIONED", "VERSIONED", "VERSIONED_MUTABLE"]}}
       ]
     },
 

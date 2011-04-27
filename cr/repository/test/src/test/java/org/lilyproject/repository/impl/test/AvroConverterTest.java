@@ -154,7 +154,7 @@ public class AvroConverterTest {
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
         avroFieldType.name = avroQName ;
-        avroFieldType.scope = Scope.NON_VERSIONED;
+        avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.primitiveValueType = "STRING";
         avroValueType.hierarchical = true;
@@ -184,7 +184,7 @@ public class AvroConverterTest {
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
         avroFieldType.name = avroQName ;
-        avroFieldType.scope = Scope.NON_VERSIONED;
+        avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.primitiveValueType = "STRING";
         avroValueType.hierarchical = true;
