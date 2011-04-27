@@ -23,7 +23,8 @@ import org.lilyproject.util.ObjectUtils;
 public class RecordImpl implements Record {
     private RecordId id;
     private Map<QName, Object> fields = new HashMap<QName, Object>();
-    private List<QName> fieldsToDelete = new ArrayList<QName>();
+    private List<QName> fieldsToDelete = new ArrayList<QName>(0); // default size zero because this is used relatively
+                                                                  // rarely compared to fields added/updated.
     private Map<Scope, RecordTypeRef> recordTypes = new EnumMap<Scope, RecordTypeRef>(Scope.class);
     private Long version;
     private ResponseStatus responseStatus;
@@ -147,7 +148,9 @@ public class RecordImpl implements Record {
         record.version = version;
         record.recordTypes.putAll(recordTypes);
         record.fields.putAll(fields);
-        record.fieldsToDelete.addAll(fieldsToDelete);
+        if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
+            record.fieldsToDelete.addAll(fieldsToDelete);
+        }
         // the ResponseStatus is not cloned, on purpose
         return record;
     }
