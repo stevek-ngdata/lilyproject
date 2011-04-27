@@ -212,4 +212,11 @@ public class DataInputImpl implements DataInput {
     public int getSize() {
         return size;
     }
+
+    public void setSize(int size) {
+        if (size < 0 || size > source.length) {
+            throw new IllegalArgumentException("Invalid size: " + size + " (maximum: " + source.length + ")");
+        }
+        this.size = size;
+    }
 }

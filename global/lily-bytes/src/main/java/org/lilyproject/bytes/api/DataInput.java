@@ -82,4 +82,9 @@ public interface DataInput {
      * Returns the total number of bytes in the <code>DataInput</code>
      */
     int getSize();
+
+    /**
+     * Allows to shrink (not grow) the input to make it appear shorter. Does not actually resize anything.
+     */
+    void setSize(int size);
 }
