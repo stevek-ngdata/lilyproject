@@ -185,11 +185,22 @@ public class RowLogShardImpl implements RowLogShard {
     }
 
     private byte[] createRowKey(RowLogMessage message, String subscription) {
-        byte[] rowKey = new byte[0];
-        rowKey = Bytes.add(rowKey, Bytes.toBytes(subscription));
-        rowKey = Bytes.add(rowKey, Bytes.toBytes(message.getTimestamp()));
-        rowKey = Bytes.add(rowKey, Bytes.toBytes(message.getSeqNr()));
-        rowKey = Bytes.add(rowKey, message.getRowKey());
+        byte[] subscriptionBytes = Bytes.toBytes(subscription);
+        byte[] msgRowkey = message.getRowKey();
+
+        byte[] rowKey = new byte[subscriptionBytes.length +
+                Bytes.SIZEOF_LONG +
+                Bytes.SIZEOF_LONG +
+                msgRowkey.length];
+
+        System.arraycopy(subscriptionBytes, 0, rowKey, 0, subscriptionBytes.length);
+        int offset = subscriptionBytes.length;
+        Bytes.putLong(rowKey, offset, message.getTimestamp());
+        offset += Bytes.SIZEOF_LONG;
+        Bytes.putLong(rowKey, offset, message.getSeqNr());
+        offset += Bytes.SIZEOF_LONG;
+        System.arraycopy(msgRowkey, 0, rowKey, offset, msgRowkey.length);
+
         return rowKey;
     }
 
