@@ -92,15 +92,11 @@ public class HBaseRepository extends BaseRepository {
         return idGenerator;
     }
 
-    public Record createOrUpdate(Record record) throws FieldTypeNotFoundException, RecordException,
-            RecordTypeNotFoundException, InvalidRecordException, TypeException,
-            VersionNotFoundException, RecordLockedException, WalProcessingException, RepositoryException {
+    public Record createOrUpdate(Record record) throws RepositoryException {
         return createOrUpdate(record, true);
     }
 
-    public Record createOrUpdate(Record record, boolean useLatestRecordType) throws FieldTypeNotFoundException,
-            RecordException, RecordTypeNotFoundException, InvalidRecordException, TypeException,
-            VersionNotFoundException, RecordLockedException, WalProcessingException, RepositoryException {
+    public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException {
 
         if (record.getId() == null) {
             // While we could generate an ID ourselves in this case, this would defeat partly the purpose of
@@ -147,9 +143,7 @@ public class HBaseRepository extends BaseRepository {
                 " attempts, toggling between create and update mode.");
     }
 
-    public Record create(Record record) throws RecordExistsException, InvalidRecordException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, TypeException,
-            RecordLockedException, RepositoryException {
+    public Record create(Record record) throws RepositoryException {
 
         long before = System.currentTimeMillis();
         try {
@@ -190,7 +184,7 @@ public class HBaseRepository extends BaseRepository {
                         version = Bytes.toLong(oldVersion) + 1;
                         // Make sure any old data gets cleared and old blobs are deleted
                         // This is to cover the failure scenario where a record was deleted, but a failure
-                        // occured before executing the clearData
+                        // occurred before executing the clearData
                         // If this was already done, this is a no-op
                         clearData(recordId);
                     }
@@ -204,7 +198,8 @@ public class HBaseRepository extends BaseRepository {
                 Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
                 Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
                 
-                calculateRecordChanges(newRecord, dummyOriginalRecord, version, put, recordEvent, referencedBlobs, unReferencedBlobs, false, fieldTypes);
+                calculateRecordChanges(newRecord, dummyOriginalRecord, version, put, recordEvent, referencedBlobs,
+                        unReferencedBlobs, false, fieldTypes);
 
                 // Make sure the record type changed flag stays false for a newly
                 // created record
@@ -222,17 +217,17 @@ public class HBaseRepository extends BaseRepository {
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
                 
             } catch (IOException e) {
-                throw new RecordException("Exception occurred while creating record <" + recordId + "> in HBase table",
+                throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
                         e);
             } catch (RowLogException e) {
-                throw new RecordException("Exception occurred while creating record <" + recordId + "> in HBase table",
+                throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
                         e);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new RecordException("Exception occurred while creating record <" + recordId + "> in HBase table",
+                throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
                         e);
             } catch (BlobException e) {
-                throw new RecordException("Exception occurred while creating record <" + recordId + ">",
+                throw new RecordException("Exception occurred while creating record '" + recordId + "'",
                         e);
             } finally {
                 unlockRow(rowLock);
@@ -256,16 +251,11 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    public Record update(Record record) throws InvalidRecordException, RecordNotFoundException,
-    RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
-    TypeException, RecordLockedException, WalProcessingException, RepositoryException {
+    public Record update(Record record) throws RepositoryException {
         return update(record, false, true);
     }
 
-    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType)
-            throws InvalidRecordException, RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException,
-            RecordLockedException, WalProcessingException, RepositoryException {
+    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException {
 
         long before = System.currentTimeMillis();
         RecordId recordId = record.getId();
@@ -287,14 +277,14 @@ public class HBaseRepository extends BaseRepository {
                 try {
                     return updateMutableFields(record, useLatestRecordType, rowLock, fieldTypes);
                 } catch (BlobException e) {
-                    throw new RecordException("Exception occurred while updating record <" + record.getId() + ">",
+                    throw new RecordException("Exception occurred while updating record '" + record.getId() + "'",
                             e);
                 }
             } else {
                 return updateRecord(record, useLatestRecordType, rowLock, fieldTypes);
             }
         } catch (IOException e) {
-            throw new RecordException("Exception occurred while updating record <" + recordId + "> on HBase table",
+            throw new RecordException("Exception occurred while updating record '" + recordId + ">' on HBase table",
                     e); 
         } finally {
             unlockRow(rowLock);
@@ -303,9 +293,9 @@ public class HBaseRepository extends BaseRepository {
     }
     
     
-    private Record updateRecord(Record record, boolean useLatestRecordType, RowLock rowLock, FieldTypes fieldTypes) throws RecordNotFoundException,
-            InvalidRecordException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-            VersionNotFoundException, TypeException, RecordLockedException, RepositoryException {
+    private Record updateRecord(Record record, boolean useLatestRecordType, RowLock rowLock, FieldTypes fieldTypes)
+            throws RepositoryException {
+
         Record newRecord = record.clone();
 
         RecordId recordId = record.getId();
@@ -319,30 +309,31 @@ public class HBaseRepository extends BaseRepository {
             recordEvent.setType(Type.UPDATE);
             long newVersion = originalRecord.getVersion() == null ? 1 : originalRecord.getVersion() + 1;
                 
-                if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs, unReferencedBlobs, useLatestRecordType, fieldTypes)) {
-                    // Reserve blobs so no other records can use them
-                    reserveBlobs(record.getId(), referencedBlobs);
-                    putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
-                    // Remove the used blobs from the blobIncubator and delete unreferenced blobs from the blobstore
-                    blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
-                    newRecord.setResponseStatus(ResponseStatus.UPDATED);
-                } else {
-                    newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
-                }
+            if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
+                    unReferencedBlobs, useLatestRecordType, fieldTypes)) {
+                // Reserve blobs so no other records can use them
+                reserveBlobs(record.getId(), referencedBlobs);
+                putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
+                // Remove the used blobs from the blobIncubator and delete unreferenced blobs from the blobstore
+                blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
+                newRecord.setResponseStatus(ResponseStatus.UPDATED);
+            } else {
+                newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
+            }
         } catch (RowLogException e) {
-            throw new RecordException("Exception occurred while putting updated record <" + recordId
-                    + "> on HBase table", e);
+            throw new RecordException("Exception occurred while putting updated record '" + recordId
+                    + "' on HBase table", e);
 
         } catch (IOException e) {
-            throw new RecordException("Exception occurred while updating record <" + recordId + "> on HBase table",
+            throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
                     e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RecordException("Exception occurred while updating record <" + recordId + "> on HBase table",
+            throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
                     e);
         } catch (BlobException e) {
-            throw new RecordException("Exception occurred while putting updated record <" + recordId
-                    + "> on HBase table", e);
+            throw new RecordException("Exception occurred while putting updated record '" + recordId
+                    + "' on HBase table", e);
         }
 
         newRecord.getFieldsToDelete().clear();
@@ -353,12 +344,12 @@ public class HBaseRepository extends BaseRepository {
     // A wal message is added to this put object
     // The rowLocker is asked to put the data and message on the record table using the given rowlock
     // Finally the wal is asked to process the message
-    private void putRowWithWalProcessing(RecordId recordId, RowLock rowLock,
-            Put put, RecordEvent recordEvent) throws InterruptedException, RowLogException, IOException, RecordException {
+    private void putRowWithWalProcessing(RecordId recordId, RowLock rowLock, Put put, RecordEvent recordEvent)
+            throws InterruptedException, RowLogException, IOException, RecordException {
         RowLogMessage walMessage;
         walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
         if (!rowLocker.put(put, rowLock)) {
-            throw new RecordException("Invalid or expired lock trying to put record <" + recordId + "> on HBase table");
+            throw new RecordException("Invalid or expired lock trying to put record '" + recordId + "' on HBase table");
         }
 
         if (walMessage != null) {
@@ -376,7 +367,8 @@ public class HBaseRepository extends BaseRepository {
     // Calculates the changes that are to be made on the record-row and puts
     // this information on the Put object and the RecordEvent
     private boolean calculateRecordChanges(Record record, Record originalRecord, Long version, Put put,
-            RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean useLatestRecordType, FieldTypes fieldTypes) throws InterruptedException, RecordTypeNotFoundException, TypeException, FieldTypeNotFoundException, BlobException, RecordException, InvalidRecordException, RepositoryException {
+            RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs,
+            boolean useLatestRecordType, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
         QName recordTypeName = record.getRecordTypeName();
         Long recordTypeVersion = null;
         if (recordTypeName == null) {
@@ -388,7 +380,8 @@ public class HBaseRepository extends BaseRepository {
         RecordType recordType = typeManager.getRecordTypeByName(recordTypeName, recordTypeVersion);
         
         // Check which fields have changed
-        Set<Scope> changedScopes = calculateChangedFields(record, originalRecord, recordType, version, put, recordEvent, referencedBlobs, unReferencedBlobs, fieldTypes);
+        Set<Scope> changedScopes = calculateChangedFields(record, originalRecord, recordType, version, put, recordEvent,
+                referencedBlobs, unReferencedBlobs, fieldTypes);
 
         // If no versioned fields have changed, keep the original version
         boolean versionedFieldsHaveChanged = changedScopes.contains(Scope.VERSIONED)
@@ -399,7 +392,8 @@ public class HBaseRepository extends BaseRepository {
 
         boolean fieldsHaveChanged = !changedScopes.isEmpty();
         if (fieldsHaveChanged) {
-         // The provided recordTypeVersion could have been null, so the latest version of the recordType was taken and we need to know which version that is
+            // The provided recordTypeVersion could have been null, so the latest version of the recordType was taken
+            // and we need to know which version that is
             recordTypeVersion = recordType.getVersion(); 
             if (!recordTypeName.equals(originalRecord.getRecordTypeName())
                     || !recordTypeVersion.equals(originalRecord.getRecordTypeVersion())) {
@@ -432,8 +426,8 @@ public class HBaseRepository extends BaseRepository {
         return fieldsHaveChanged;
     }
     
-    private void validateRecord(Record record, Record originalRecord, RecordType recordType, FieldTypes fieldTypes) throws
-            FieldTypeNotFoundException, TypeException, InvalidRecordException, InterruptedException {
+    private void validateRecord(Record record, Record originalRecord, RecordType recordType, FieldTypes fieldTypes)
+            throws TypeException, InvalidRecordException, InterruptedException {
         // Check mandatory fields
         Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
         List<QName> fieldsToDelete = record.getFieldsToDelete();
@@ -442,10 +436,10 @@ public class HBaseRepository extends BaseRepository {
                 FieldType fieldType = fieldTypes.getFieldTypeById(fieldTypeEntry.getFieldTypeId());
                 QName fieldName = fieldType.getName();
                 if (fieldsToDelete.contains(fieldName)) {
-                    throw new InvalidRecordException("Field: <"+fieldName+"> is mandatory.", record.getId());
+                    throw new InvalidRecordException("Field: '" + fieldName + "' is mandatory.", record.getId());
                 }
                 if (!record.hasField(fieldName) && !originalRecord.hasField(fieldName)) {
-                    throw new InvalidRecordException("Field: <"+fieldName+"> is mandatory.", record.getId());
+                    throw new InvalidRecordException("Field: '" + fieldName + "' is mandatory.", record.getId());
                 }
             }
         }
@@ -453,13 +447,17 @@ public class HBaseRepository extends BaseRepository {
 
     // Calculates which fields have changed and updates the record types of the scopes that have changed fields
     private Set<Scope> calculateChangedFields(Record record, Record originalRecord, RecordType recordType,
-            Long version, Put put, RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, FieldTypes fieldTypes) throws InterruptedException, FieldTypeNotFoundException, TypeException, BlobException, RecordTypeNotFoundException, RecordException, RepositoryException {
+            Long version, Put put, RecordEvent recordEvent, Set<BlobReference> referencedBlobs,
+            Set<BlobReference> unReferencedBlobs, FieldTypes fieldTypes)
+            throws InterruptedException, RepositoryException {
+
         Map<QName, Object> originalFields = originalRecord.getFields();
         Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
         
         Map<QName, Object> fields = getFieldsToUpdate(record);
         
-        changedScopes.addAll(calculateUpdateFields(fields, originalFields, null, version, put, recordEvent, referencedBlobs, unReferencedBlobs, false, fieldTypes));
+        changedScopes.addAll(calculateUpdateFields(fields, originalFields, null, version, put, recordEvent,
+                referencedBlobs, unReferencedBlobs, false, fieldTypes));
         for (BlobReference referencedBlob : referencedBlobs) {
             referencedBlob.setRecordId(record.getId());
         }
@@ -475,15 +473,20 @@ public class HBaseRepository extends BaseRepository {
             // Only update the recordTypeNames and versions if they have indeed changed
             QName originalScopeRecordTypeName = originalRecord.getRecordTypeName(scope);
             if (originalScopeRecordTypeName == null) {
-                put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField, recordType.getId().getBytes());
-                put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField, Bytes.toBytes(recordType.getVersion()));
+                put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField,
+                        recordType.getId().getBytes());
+                put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField,
+                        Bytes.toBytes(recordType.getVersion()));
             } else {
-                RecordType originalScopeRecordType = typeManager.getRecordTypeByName(originalScopeRecordTypeName, originalRecord.getRecordTypeVersion(scope));
+                RecordType originalScopeRecordType = typeManager.getRecordTypeByName(originalScopeRecordTypeName,
+                        originalRecord.getRecordTypeVersion(scope));
                 if (!recordType.getId().equals(originalScopeRecordType.getId())) {
-                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField, recordType.getId().getBytes());
+                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField,
+                            recordType.getId().getBytes());
                 }
                 if (!recordType.getVersion().equals(originalScopeRecordType.getVersion())) {
-                    put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField, Bytes.toBytes(recordType.getVersion()));
+                    put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField,
+                            Bytes.toBytes(recordType.getVersion()));
                 }
             }
             record.setRecordType(scope, recordType.getName(), recordType.getVersion());
@@ -504,8 +507,10 @@ public class HBaseRepository extends BaseRepository {
     }
 
     // Checks for each field if it is different from its previous value and indeed needs to be updated.
-    private Set<Scope> calculateUpdateFields(Map<QName, Object> fields, Map<QName, Object> originalFields, Map<QName, Object> originalNextFields,
-            Long version, Put put, RecordEvent recordEvent, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean mutableUpdate, FieldTypes fieldTypes) throws InterruptedException, FieldTypeNotFoundException, TypeException, BlobException, RecordTypeNotFoundException, RecordException {
+    private Set<Scope> calculateUpdateFields(Map<QName, Object> fields, Map<QName, Object> originalFields,
+            Map<QName, Object> originalNextFields, Long version, Put put, RecordEvent recordEvent,
+            Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean mutableUpdate,
+            FieldTypes fieldTypes) throws InterruptedException, TypeException, BlobException, RecordException {
         Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
@@ -570,9 +575,8 @@ public class HBaseRepository extends BaseRepository {
         return (fieldValue instanceof byte[]) && Arrays.equals(DELETE_MARKER, (byte[])fieldValue);
     }
 
-    private Record updateMutableFields(Record record, boolean latestRecordType, RowLock rowLock, FieldTypes fieldTypes) throws InvalidRecordException,
-            RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
-            VersionNotFoundException, TypeException, RecordLockedException, BlobException, RepositoryException {
+    private Record updateMutableFields(Record record, boolean latestRecordType, RowLock rowLock, FieldTypes fieldTypes)
+            throws RepositoryException {
 
         Record newRecord = record.clone();
 
@@ -609,7 +613,8 @@ public class HBaseRepository extends BaseRepository {
             recordEvent.setVersionUpdated(version);
 
             
-            Set<Scope> changedScopes = calculateUpdateFields(fields, originalFields, originalNextFields, version, put, recordEvent, referencedBlobs, unReferencedBlobs, true, fieldTypes);
+            Set<Scope> changedScopes = calculateUpdateFields(fields, originalFields, originalNextFields, version, put,
+                    recordEvent, referencedBlobs, unReferencedBlobs, true, fieldTypes);
             for (BlobReference referencedBlob : referencedBlobs) {
                 referencedBlob.setRecordId(recordId);
             }
@@ -681,13 +686,13 @@ public class HBaseRepository extends BaseRepository {
                 newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
             }
         } catch (RowLogException e) {
-            throw new RecordException("Exception occurred while updating record <" + recordId+ "> on HBase table", e);
+            throw new RecordException("Exception occurred while updating record '" + recordId+ "' on HBase table", e);
         } catch (IOException e) {
-            throw new RecordException("Exception occurred while updating record <" + recordId + "> on HBase table",
+            throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
                     e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RecordException("Exception occurred while updating record <" + recordId + "> on HBase table",
+            throw new RecordException("Exception occurred while updating record '" + recordId + "' on HBase table",
                     e);
         } finally {
             unlockRow(rowLock);
@@ -697,8 +702,8 @@ public class HBaseRepository extends BaseRepository {
         return newRecord;
     }
 
-    private Map<QName, Object> filterMutableFields(Map<QName, Object> fields, FieldTypes fieldTypes) throws FieldTypeNotFoundException,
-            RecordTypeNotFoundException, RecordException, TypeException, InterruptedException {
+    private Map<QName, Object> filterMutableFields(Map<QName, Object> fields, FieldTypes fieldTypes)
+            throws RecordException, TypeException, InterruptedException {
         Map<QName, Object> mutableFields = new HashMap<QName, Object>();
         for (Entry<QName, Object> field : fields.entrySet()) {
             FieldType fieldType = fieldTypes.getFieldTypeByName(field.getKey());
@@ -717,8 +722,7 @@ public class HBaseRepository extends BaseRepository {
      */
     private void copyValueToNextVersionIfNeeded(Long version, Put put, Map<QName, Object> originalNextFields,
             QName fieldName, Object originalValue, FieldTypes fieldTypes)
-            throws FieldTypeNotFoundException, RecordTypeNotFoundException, RecordException, TypeException,
-            InterruptedException {
+            throws RecordException, TypeException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
             FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldName);
@@ -727,50 +731,41 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    public Record read(RecordId recordId) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, RepositoryException,
+    public Record read(RecordId recordId) throws RepositoryException,
             InterruptedException {
         return read(recordId, null, null);
     }
 
-    public Record read(RecordId recordId, List<QName> fieldNames) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
-            TypeException, RepositoryException, InterruptedException {
+    public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
     
-    public List<Record> read(List<RecordId> recordIds) throws RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, RepositoryException,
-            InterruptedException {
+    public List<Record> read(List<RecordId> recordIds) throws RepositoryException, InterruptedException {
         return read(recordIds, null);
     }
 
-    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, RepositoryException,
-            InterruptedException {
+    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames)
+            throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
         List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
 
         return read(recordIds, fields, fieldTypes);
     }
 
-    public Record read(RecordId recordId, Long version) throws RecordNotFoundException, RecordTypeNotFoundException,
-            FieldTypeNotFoundException, RecordException, VersionNotFoundException, TypeException, RepositoryException,
-            InterruptedException {
+    public Record read(RecordId recordId, Long version) throws RepositoryException, InterruptedException {
         return read(recordId, version, null);
     }
 
-    public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
-            TypeException, RepositoryException, InterruptedException {
+    public Record read(RecordId recordId, Long version, List<QName> fieldNames)
+            throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
         List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
 
         return read(recordId, version, fields, null, fieldTypes);
     }
 
-    private List<FieldType> getFieldTypesFromNames(List<QName> fieldNames, FieldTypes fieldTypes) throws FieldTypeNotFoundException,
-            TypeException, InterruptedException {
+    private List<FieldType> getFieldTypesFromNames(List<QName> fieldNames, FieldTypes fieldTypes)
+            throws TypeException, InterruptedException {
         List<FieldType> fields = null;
         if (fieldNames != null) {
             fields = new ArrayList<FieldType>();
@@ -781,8 +776,8 @@ public class HBaseRepository extends BaseRepository {
         return fields;
     }
     
-    private List<FieldType> getFieldTypesFromIds(List<SchemaId> fieldIds, FieldTypes fieldTypes) throws FieldTypeNotFoundException,
-            TypeException, InterruptedException {
+    private List<FieldType> getFieldTypesFromIds(List<SchemaId> fieldIds, FieldTypes fieldTypes)
+            throws TypeException, InterruptedException {
         List<FieldType> fields = null;
         if (fieldIds != null) {
             fields = new ArrayList<FieldType>(fieldIds.size());
@@ -794,13 +789,13 @@ public class HBaseRepository extends BaseRepository {
     }
     
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
-            throws FieldTypeNotFoundException, TypeException, RecordNotFoundException, RecordException,
-            VersionNotFoundException, RecordTypeNotFoundException, RepositoryException, InterruptedException {
+            throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(fromVersion, "fromVersion");
         ArgumentValidator.notNull(toVersion, "toVersion");
         if (fromVersion > toVersion) {
-            throw new IllegalArgumentException("fromVersion <" + fromVersion + "> must be smaller or equal to toVersion <" + toVersion + ">");
+            throw new IllegalArgumentException("fromVersion '" + fromVersion +
+                    "' must be smaller or equal to toVersion '" + toVersion + "'");
         }
 
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
@@ -820,8 +815,8 @@ public class HBaseRepository extends BaseRepository {
         return getRecordsFromRowResult(recordId, versionsToRead, result, fieldTypes);
     }
     
-    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames) throws FieldTypeNotFoundException, TypeException, RecordNotFoundException, RecordException,
-    VersionNotFoundException, RecordTypeNotFoundException, RepositoryException, InterruptedException {
+    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
+            throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(versions, "versions");
         
@@ -841,17 +836,16 @@ public class HBaseRepository extends BaseRepository {
         
         // Drop the versions that are higher than the latestVersion
         List<Long> validVersions = new ArrayList<Long>();
-        for (int i = 0; i < versions.size(); i++) {
-            if (versions.get(i) > latestVersion)
+        for (Long version : versions) {
+            if (version > latestVersion)
                 break;
-            validVersions.add(versions.get(i));
+            validVersions.add(version);
         }
         return getRecordsFromRowResult(recordId, validVersions, result, fieldTypes);
     }
     
-    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RecordNotFoundException,
-            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
-            TypeException, RepositoryException, InterruptedException {
+    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
+            throws RepositoryException, InterruptedException {
         ReadContext readContext = new ReadContext();
 
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
@@ -872,9 +866,8 @@ public class HBaseRepository extends BaseRepository {
         return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
     }
     
-    private Record read(RecordId recordId, Long requestedVersion, List<FieldType> fields, ReadContext readContext, FieldTypes fieldTypes)
-            throws RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RecordException, VersionNotFoundException, TypeException, RepositoryException, InterruptedException {
+    private Record read(RecordId recordId, Long requestedVersion, List<FieldType> fields, ReadContext readContext,
+            FieldTypes fieldTypes) throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             ArgumentValidator.notNull(recordId, "recordId");
@@ -898,8 +891,7 @@ public class HBaseRepository extends BaseRepository {
     }
     
     private List<Record> read(List<RecordId> recordIds, List<FieldType> fields, FieldTypes fieldTypes) 
-            throws RecordTypeNotFoundException, FieldTypeNotFoundException,
-            RecordException, VersionNotFoundException, TypeException, RepositoryException, InterruptedException {
+            throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();
         try {
             ArgumentValidator.notNull(recordIds, "recordIds");
@@ -927,7 +919,7 @@ public class HBaseRepository extends BaseRepository {
 
     // Retrieves the row from the table and check if it exists and has not been flagged as deleted
     private Result getRow(RecordId recordId, Long version, int numberOfVersions, List<FieldType> fields)
-            throws RecordNotFoundException, RecordException {
+            throws RecordException {
         Result result;
         Get get = new Get(recordId.toBytes());
 
@@ -951,8 +943,8 @@ public class HBaseRepository extends BaseRepository {
                 throw new RecordNotFoundException(recordId);
             }
         } catch (IOException e) {
-            throw new RecordException("Exception occurred while retrieving record <" + recordId
-                    + "> from HBase table", e);
+            throw new RecordException("Exception occurred while retrieving record '" + recordId
+                    + "' from HBase table", e);
         }
         return result;
     }
@@ -988,8 +980,8 @@ public class HBaseRepository extends BaseRepository {
                 results.put(recordIds.get(i++), result);
             } 
         } catch (IOException e) {
-            throw new RecordException("Exception occurred while retrieving records <" + recordIds
-                    + "> from HBase table", e);
+            throw new RecordException("Exception occurred while retrieving records '" + recordIds
+                    + "' from HBase table", e);
         }
         return results;
     }
@@ -1003,11 +995,7 @@ public class HBaseRepository extends BaseRepository {
             return false;
         } else {
             byte[] deleted = result.getValue(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-            if ((deleted == null) || (Bytes.toBoolean(deleted))) {
-                return false;
-            } else {
-                return true;
-            }
+            return !((deleted == null) || (Bytes.toBoolean(deleted)));
         }
     }
 
@@ -1038,13 +1026,13 @@ public class HBaseRepository extends BaseRepository {
         if (recordTypeIdMap != null) {
             idCeilingEntry = recordTypeIdMap.ceilingEntry(version);
         }
-        SchemaId recordTypeId = null;
+        SchemaId recordTypeId;
         if (idCeilingEntry == null)
             return null; // No record type was found
         recordTypeId = new SchemaIdImpl(idCeilingEntry.getValue());
         
         // Get recordTypeVersion
-        Long recordTypeVersion = null;
+        Long recordTypeVersion;
         Entry<Long, byte[]> versionCeilingEntry = null;
         NavigableMap<Long, byte[]> recordTypeVersionMap = allColumnsAllVersionsMap.get(recordTypeVersionColumnName);
         if (recordTypeVersionMap != null) {
@@ -1060,8 +1048,8 @@ public class HBaseRepository extends BaseRepository {
     /**
      *  Gets the requested version of the record (fields and recordTypes) from the Result object. 
      */
-    private Record getRecordFromRowResult(RecordId recordId, Long requestedVersion, ReadContext readContext, Result result, FieldTypes fieldTypes)
-            throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException, RecordTypeNotFoundException, RepositoryException {
+    private Record getRecordFromRowResult(RecordId recordId, Long requestedVersion, ReadContext readContext,
+            Result result, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
         Record record = newRecord(recordId);
         record.setVersion(requestedVersion);
         Set<Scope> scopes = EnumSet.noneOf(Scope.class); // Set of scopes for which a field has been read
@@ -1127,8 +1115,8 @@ public class HBaseRepository extends BaseRepository {
      *  Gets the requested version of the record (fields and recordTypes) from the Result object.
      *  This method is optimized for reading multiple versions.
      */
-    private List<Record> getRecordsFromRowResult(RecordId recordId, List<Long> requestedVersions, Result result, FieldTypes fieldTypes)
-            throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException, RecordTypeNotFoundException, RepositoryException{
+    private List<Record> getRecordsFromRowResult(RecordId recordId, List<Long> requestedVersions, Result result,
+            FieldTypes fieldTypes) throws InterruptedException, RepositoryException{
         Map<Long, Record> records = new HashMap<Long, Record>(requestedVersions.size());
         Map<Long, Set<Scope>> scopes = new HashMap<Long, Set<Scope>>(requestedVersions.size());
         for (Long requestedVersion : requestedVersions) {
@@ -1201,8 +1189,8 @@ public class HBaseRepository extends BaseRepository {
         return new ArrayList<Record>(records.values());
     }
     
-    private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context, FieldTypes fieldTypes)
-            throws FieldTypeNotFoundException, RecordException, TypeException, InterruptedException {
+    private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
+            FieldTypes fieldTypes) throws RecordException, TypeException, InterruptedException {
         if (EncodingUtil.isDeletedField(prefixedValue)) {
             return null;
         }
@@ -1237,7 +1225,7 @@ public class HBaseRepository extends BaseRepository {
         get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
     }
 
-    public void delete(RecordId recordId) throws RecordException, RecordNotFoundException, RecordLockedException, RepositoryException {
+    public void delete(RecordId recordId) throws RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
         RowLock rowLock = null;
@@ -1254,7 +1242,7 @@ public class HBaseRepository extends BaseRepository {
                 recordEvent.setType(Type.DELETE);
                 RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
                 if (!rowLocker.put(put, rowLock)) {
-                    throw new RecordException("Exception occurred while deleting record <" + recordId + "> on HBase table");
+                    throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");
                 }
                 
                 // Clear the old data and delete any referenced blobs
@@ -1271,15 +1259,15 @@ public class HBaseRepository extends BaseRepository {
                 throw new RecordNotFoundException(recordId);
             }
         } catch (RowLogException e) {
-            throw new RecordException("Exception occurred while deleting record <" + recordId
-                    + "> on HBase table", e);
+            throw new RecordException("Exception occurred while deleting record '" + recordId
+                    + "' on HBase table", e);
 
         } catch (IOException e) {
-            throw new RecordException("Exception occurred while deleting record <" + recordId + "> on HBase table",
+            throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table",
                     e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RecordException("Exception occurred while deleting record <" + recordId + "> on HBase table",
+            throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table",
                     e);
         } finally {
             unlockRow(rowLock);
@@ -1310,7 +1298,8 @@ public class HBaseRepository extends BaseRepository {
                     for (Entry<byte[], NavigableMap<Long, byte[]>> column : columnsSet.entrySet()) {
                         try {
                             byte[] columnQualifier = column.getKey();
-                            FieldType fieldType = typeManager.getFieldTypeById(new SchemaIdImpl(Bytes.tail(columnQualifier, columnQualifier.length-1)));
+                            SchemaId schemaId = new SchemaIdImpl(Bytes.tail(columnQualifier, columnQualifier.length - 1));
+                            FieldType fieldType = typeManager.getFieldTypeById(schemaId);
                             ValueType valueType = fieldType.getValueType();
                             NavigableMap<Long,byte[]> cells = column.getValue();
                             Set<Entry<Long, byte[]>> cellsSet = cells.entrySet();
@@ -1319,9 +1308,11 @@ public class HBaseRepository extends BaseRepository {
                                 if (valueType.getPrimitive() instanceof BlobValueType) {
                                     byte[] value = cell.getValue();
                                     if (!isDeleteMarker(value)) {
-                                        Object valueObject = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
+                                        Object valueObject =
+                                                valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
                                         try {
-                                            Set<BlobReference> referencedBlobs = getReferencedBlobs((FieldTypeImpl)fieldType, valueObject);
+                                            Set<BlobReference> referencedBlobs =
+                                                    getReferencedBlobs((FieldTypeImpl)fieldType, valueObject);
                                             blobsToDelete.addAll(referencedBlobs);
                                         } catch (BlobException e) {
                                             log.warn("Failure occured while clearing blob data", e);
@@ -1366,7 +1357,7 @@ public class HBaseRepository extends BaseRepository {
             try {
                 rowLocker.unlockRow(rowLock);
             } catch (IOException e) {
-                log.warn("Exception while unlocking row <" + rowLock.getRowKey()+ ">", e);
+                log.warn("Exception while unlocking row '" + Bytes.toStringBinary(rowLock.getRowKey()) + "'", e);
             }
         }
     }
@@ -1407,7 +1398,8 @@ public class HBaseRepository extends BaseRepository {
     }
     
     // Checks the set of blobs and returns a subset of those blobs which are not referenced anymore
-    private Set<BlobReference> filterReferencedBlobs(RecordId recordId, Set<BlobReference> blobs, Long ignoreVersion) throws IOException {
+    private Set<BlobReference> filterReferencedBlobs(RecordId recordId, Set<BlobReference> blobs, Long ignoreVersion)
+            throws IOException {
         if (recordId == null)
             return blobs;
         Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
@@ -1429,7 +1421,8 @@ public class HBaseRepository extends BaseRepository {
             // Note, if a encoding of the BlobValueType is added, this might have to change.
             valueToCompare = Bytes.add(valueToCompare, blobReference.getBlob().getValue());
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
-            Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);
+            Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL,
+                    valueComparator);
             get.setFilter(filter);
             Result result = recordTable.get(get);
             
