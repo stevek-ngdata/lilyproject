@@ -1,0 +1,57 @@
+diff --git a/pom.xml b/pom.xml
+index ddd8628..d619085 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -28,7 +28,7 @@
+   <groupId>org.apache.hbase</groupId>
+   <artifactId>hbase</artifactId>
+   <packaging>jar</packaging>
+-  <version>0.90.1-cdh3u0</version>
++  <version>0.90.1-cdh3u0-lily</version>
+   <name>HBase</name>
+   <description>
+     HBase is the &amp;lt;a href="http://hadoop.apache.org"&amp;rt;Hadoop&lt;/a&amp;rt; database. Use it when you need
+diff --git a/src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java b/src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+index 7aab4d6..26f66ca 100644
+--- a/src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
++++ b/src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+@@ -1236,6 +1236,8 @@ public class HConnectionManager {
+       try {
+         processBatch((List) list, tableName, pool, results);
+       } catch (InterruptedException e) {
++        // Lily change
++        Thread.currentThread().interrupt();
+         throw new IOException(e);
+       } finally {
+ 
+diff --git a/src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java b/src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+index 4cc7b9c..a168084 100644
+--- a/src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
++++ b/src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+@@ -758,6 +758,12 @@ public class HBaseClient {
+         } catch (InterruptedException ignored) {
+           // save the fact that we were interrupted
+           interrupted = true;
++
++          // Lily change: noticed that often HBase kept hanging on the above call.wait when the
++          // thread was interrupted, even if there was no reason for the call to take a long
++          // time (= hbase & zookeeper running)
++          Thread.currentThread().interrupt();
++          throw new RuntimeException("HBaseClient: interrupted while waiting for call to be done.");
+         }
+       }
+ 
+diff --git a/src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java b/src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+index 4f4828b..4cfdd88 100644
+--- a/src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
++++ b/src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+@@ -370,6 +370,9 @@ public class HBaseRPC {
+         Thread.sleep(1000);
+       } catch (InterruptedException ie) {
+         // IGNORE
++        // Lily change
++        Thread.currentThread().interrupt();
++        throw new RuntimeException("Thread interrupted.");
+       }
+     }
+   }
