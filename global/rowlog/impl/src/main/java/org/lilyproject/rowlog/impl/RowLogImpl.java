@@ -313,7 +313,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     
     public RowLogSubscription[] getSubscriptionsAsArray() {
         synchronized (subscriptions) {
-            return (RowLogSubscription[])subscriptions.values().toArray();
+            return subscriptions.values().toArray(new RowLogSubscription[subscriptions.size()]);
         }
     }
 
