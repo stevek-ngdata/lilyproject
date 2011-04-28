@@ -499,22 +499,29 @@ public abstract class AbstractRepositoryTest {
         Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
-        updateRecord.setField(fieldType3.getName(), false);
+        // Don't update this field, as a test that the internal version inheritance code works correctly
+        // updateRecord.setField(fieldType3.getName(), false);
 
+        repository.update(updateRecord);
+
+        // Now update this field again
+        updateRecord.setField(fieldType3.getName(), false);
         repository.update(updateRecord);
 
         Record record1 = repository.read(record.getId(), 1L);
         Record record2 = repository.read(record.getId(), 2L);
-        
-        List<Record> records = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 2L}), null);
-        assertEquals(2, records.size());
+        Record record3 = repository.read(record.getId(), 3L);
+
+        List<Record> records = repository.readVersions(record.getId(), Arrays.asList(1L, 2L, 3L), null);
+        assertEquals(3, records.size());
         assertTrue(records.contains(record1));
         assertTrue(records.contains(record2));
+        assertTrue(records.contains(record3));
 
         records = repository.readVersions(record.getId(), new ArrayList<Long>(), null);
         assertEquals(0, records.size());
 
-        records = repository.readVersions(record.getId(), Arrays.asList(new Long[]{1L, 5L}), null);
+        records = repository.readVersions(record.getId(), Arrays.asList(1L, 5L), null);
         assertEquals(1, records.size());
         assertTrue(records.contains(record1));
     }

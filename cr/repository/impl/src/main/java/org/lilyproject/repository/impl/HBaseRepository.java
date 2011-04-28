@@ -1138,27 +1138,26 @@ public class HBaseRepository extends BaseRepository {
                 if (key[0] == RecordColumn.DATA_PREFIX) {
                     NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
                 
-                    // Keep a map with decoded fields to avoid decoding them twice.
-                    // The key of the map is the cell-version, not the (lily-)version of the field we want to read
-                    Map<Long, Pair<FieldType, Object>> decodedFields = new HashMap<Long, Pair<FieldType,Object>>();
+                    // Keep the last decoded field value, to avoid decoding the same value again and again if unchanged
+                    // between versions (sparse storage). Note that lastDecodedField can be null, in case of a field
+                    // deletion marker
+                    Long lastDecodedFieldVersion = null;
+                    Pair<FieldType, Object> lastDecodedField = null;
                     for (Long versionToRead : requestedVersions) {
                         Record record = records.get(versionToRead);
-                        // Get the entry for the version (can be a cell with a lower version number if the field was not changed)
+                        // Get the entry for the version (can be a cell with a lower version number if the field was
+                        // not changed)
                         Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(versionToRead);
                         if (ceilingEntry != null) {
-                            Pair<FieldType, Object> alreadyDecodedField = decodedFields.get(ceilingEntry.getKey());
-                            if (alreadyDecodedField != null) {
-                                // Don't extract it again
-                                record.setField(alreadyDecodedField.getV1().getName(), alreadyDecodedField.getV2());
-                                scopes.get(versionToRead).add(alreadyDecodedField.getV1().getScope());
-                                
-                            } else {
-                                // Extract and decode the value of the field
-                                Pair<FieldType, Object> field = extractField(key, ceilingEntry.getValue(), null, fieldTypes);
-                                if (field != null) {
-                                    record.setField(field.getV1().getName(), field.getV2());
-                                    scopes.get(versionToRead).add(field.getV1().getScope());
-                                }
+                            if (lastDecodedFieldVersion == null ||
+                                    !lastDecodedFieldVersion.equals(ceilingEntry.getKey())) {
+                                // Not yet decoded, do it now
+                                lastDecodedFieldVersion = ceilingEntry.getKey();
+                                lastDecodedField = extractField(key, ceilingEntry.getValue(), null, fieldTypes);
+                            }
+                            if (lastDecodedField != null) {
+                                record.setField(lastDecodedField.getV1().getName(), lastDecodedField.getV2());
+                                scopes.get(versionToRead).add(lastDecodedField.getV1().getScope());
                             }
                         }
                     }
