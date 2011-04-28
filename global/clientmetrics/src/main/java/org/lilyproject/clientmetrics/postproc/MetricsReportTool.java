@@ -56,7 +56,7 @@ public class MetricsReportTool extends BaseCliTool {
 
     private NumberFormat doubleFormat = new DecimalFormat("0.00");
 
-    private DateTimeFormatter timeFormat = DateTimeFormat.forPattern("yyyyMMDDHHmmss");
+    private DateTimeFormatter timeFormat = DateTimeFormat.forPattern("yyyyMMddHHmmss");
 
     @Override
     protected String getCmdName() {
