@@ -148,14 +148,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while creating recordType <" + recordType.getName()
-                    + "> on HBase", e);
+            throw new TypeException("Exception occurred while creating recordType '" + recordType.getName()
+                    + "' on HBase", e);
         } catch (KeeperException e) {
-            throw new TypeException("Exception occurred while creating recordType <" + recordType.getName()
-                    + "> on HBase", e);
+            throw new TypeException("Exception occurred while creating recordType '" + recordType.getName()
+                    + "' on HBase", e);
         } catch (InterruptedException e) {
-            throw new TypeException("Exception occurred while creating recordType <" + recordType.getName()
-                    + "> on HBase", e);
+            throw new TypeException("Exception occurred while creating recordType '" + recordType.getName()
+                    + "' on HBase", e);
         }
         return newRecordType;
     }
@@ -218,14 +218,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while updating recordType <" + newRecordType.getId()
-                    + "> on HBase", e);
+            throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
+                    + "' on HBase", e);
         } catch (KeeperException e) {
-            throw new TypeException("Exception occurred while updating recordType <" + newRecordType.getId()
-                    + "> on HBase", e);
+            throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
+                    + "' on HBase", e);
         } catch (InterruptedException e) {
-            throw new TypeException("Exception occurred while updating recordType <" + newRecordType.getId()
-                    + "> on HBase", e);
+            throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
+                    + "' on HBase", e);
         }
         return newRecordType;
     }
@@ -234,9 +234,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         if (!recordType.getName().equals(latestRecordType.getName())) {
             try {
                 getRecordTypeByName(recordType.getName(), null);
-                throw new TypeException("Changing the name <" + recordType.getName() + "> of a recordType <"
-                        + recordType.getId() + "> to a name that already exists is not allowed; old<"
-                        + latestRecordType.getName() + "> new<" + recordType.getName() + ">");
+                throw new TypeException("Changing the name '" + recordType.getName() + "' of a recordType '"
+                        + recordType.getId() + "' to a name that already exists is not allowed; old '"
+                        + latestRecordType.getName() + "' new '" + recordType.getName() + "'");
             } catch (RecordTypeNotFoundException allowed) {
             }
             put.add(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes, encodeName(recordType.getName()));
@@ -261,7 +261,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 throw new RecordTypeNotFoundException(id, null);
             }
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while retrieving recordType <" + id + "> from HBase table", e);
+            throw new TypeException("Exception occurred while retrieving recordType '" + id + "' from HBase table", e);
         }
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(TypeCf.DATA.bytes);
         QName name;
@@ -312,8 +312,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 throw new FieldTypeNotFoundException(fieldTypeEntry.getFieldTypeId());
             }
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while checking existance of FieldTypeEntry <"
-                    + fieldTypeEntry.getFieldTypeId() + "> on HBase", e);
+            throw new TypeException("Exception occurred while checking existance of FieldTypeEntry '"
+                    + fieldTypeEntry.getFieldTypeId() + "' on HBase", e);
         }
         put.add(TypeCf.FIELDTYPE_ENTRY.bytes, idBytes, version, encodeFieldTypeEntry(fieldTypeEntry));
     }
@@ -463,14 +463,14 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while creating fieldType <" + fieldType.getName()
-                    + "> version: <" + version + "> on HBase", e);
+            throw new TypeException("Exception occurred while creating fieldType '" + fieldType.getName()
+                    + "' version: '" + version + "' on HBase", e);
         } catch (KeeperException e) {
-            throw new TypeException("Exception occurred while creating fieldType <" + fieldType.getName()
-                    + "> version: <" + version + "> on HBase", e);
+            throw new TypeException("Exception occurred while creating fieldType '" + fieldType.getName()
+                    + "' version: '" + version + "' on HBase", e);
         } catch (InterruptedException e) {
-            throw new TypeException("Exception occurred while creating fieldType <" + fieldType.getName()
-                    + "> version: <" + version + "> on HBase", e);
+            throw new TypeException("Exception occurred while creating fieldType '" + fieldType.getName()
+                    + "' version: '" + version + "' on HBase", e);
         }
         return newFieldType;
     }
@@ -494,21 +494,21 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // Prepare the update
             FieldType latestFieldType = getFieldTypeByIdWithoutCache(fieldType.getId());
             if (!fieldType.getValueType().equals(latestFieldType.getValueType())) {
-                throw new FieldTypeUpdateException("Changing the valueType of a fieldType <" + fieldType.getId()
-                        + "> is not allowed; old<" + latestFieldType.getValueType() + "> new<"
-                        + fieldType.getValueType() + ">");
+                throw new FieldTypeUpdateException("Changing the valueType of a fieldType '" + fieldType.getId()
+                        + "' is not allowed; old '" + latestFieldType.getValueType() + "' new '"
+                        + fieldType.getValueType() + "'");
             }
             if (!fieldType.getScope().equals(latestFieldType.getScope())) {
-                throw new FieldTypeUpdateException("Changing the scope of a fieldType <" + fieldType.getId()
-                        + "> is not allowed; old<" + latestFieldType.getScope() + "> new<" + fieldType.getScope() + ">");
+                throw new FieldTypeUpdateException("Changing the scope of a fieldType '" + fieldType.getId()
+                        + "' is not allowed; old '" + latestFieldType.getScope() + "' new '" + fieldType.getScope() + "'");
             }
             if (!fieldType.getName().equals(latestFieldType.getName())) {
                 try {
                     getFieldTypeByName(fieldType.getName());
-                    throw new FieldTypeUpdateException("Changing the name <" + fieldType.getName()
-                            + "> of a fieldType <" + fieldType.getId()
-                            + "> to a name that already exists is not allowed; old<" + latestFieldType.getName()
-                            + "> new<" + fieldType.getName() + ">");
+                    throw new FieldTypeUpdateException("Changing the name '" + fieldType.getName()
+                            + "' of a fieldType '" + fieldType.getId()
+                            + "' to a name that already exists is not allowed; old '" + latestFieldType.getName()
+                            + "' new '" + fieldType.getName() + "'");
                 } catch (FieldTypeNotFoundException allowed) {
                 }
                 // Update the field type on the table
@@ -525,13 +525,13 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while updating fieldType <" + fieldType.getId() + "> on HBase",
+            throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
                     e);
         } catch (KeeperException e) {
-            throw new TypeException("Exception occurred while updating fieldType <" + fieldType.getId() + "> on HBase",
+            throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
                     e);
         } catch (InterruptedException e) {
-            throw new TypeException("Exception occurred while updating fieldType <" + fieldType.getId() + "> on HBase",
+            throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
                     e);
         }
         return fieldType.clone();
@@ -606,7 +606,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 throw new FieldTypeNotFoundException(id);
             }
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while retrieving fieldType <" + id + "> from HBase", e);
+            throw new TypeException("Exception occurred while retrieving fieldType '" + id + "' from HBase", e);
         }
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(TypeCf.DATA.bytes);
         QName name;

@@ -57,6 +57,6 @@ public class BlobNotFoundException extends BlobException {
     
     @Override
     public String getMessage() {
-        return "Blob <" + blob + "> could not be found: " + info;
+        return "Blob '" + blob + "' could not be found: " + info;
     }
 }

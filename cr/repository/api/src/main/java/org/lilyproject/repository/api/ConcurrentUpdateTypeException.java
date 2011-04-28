@@ -43,7 +43,7 @@ public class ConcurrentUpdateTypeException extends TypeException {
     @Override
     public String getMessage() {
         StringBuilder message = new StringBuilder();
-        message.append("Concurrent create or update occurred for field or record type <").append(type).append(">");
+        message.append("Concurrent create or update occurred for field or record type '").append(type).append("'");
         return message.toString();
     }
 }

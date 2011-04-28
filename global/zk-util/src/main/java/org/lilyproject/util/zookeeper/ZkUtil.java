@@ -34,7 +34,7 @@ public class ZkUtil {
         try {
             zooKeeper = new ZooKeeperImpl(connectString, sessionTimeout);
         } catch (IOException e) {
-            throw new ZkConnectException("Failed to connect with Zookeeper @ <" + connectString + ">", e);
+            throw new ZkConnectException("Failed to connect with Zookeeper @ '" + connectString + "'", e);
         }
         long waitUntil = System.currentTimeMillis() + sessionTimeout;
         boolean connected = (States.CONNECTED).equals(zooKeeper.getState());
@@ -51,8 +51,8 @@ public class ZkUtil {
             System.out.println("Failed to connect to Zookeeper within timeout: Dumping stack: ");
             Thread.dumpStack();
             zooKeeper.close();
-            throw new ZkConnectException("Failed to connect with Zookeeper @ <" + connectString +
-                    "> within timeout <" + sessionTimeout + ">");
+            throw new ZkConnectException("Failed to connect with Zookeeper @ '" + connectString +
+                    "' within timeout " + sessionTimeout);
         }
         return zooKeeper;
     }

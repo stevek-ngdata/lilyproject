@@ -31,6 +31,6 @@ public class FieldNotFoundException extends RepositoryRuntimeException {
     @Override
     public String getMessage() {
         String id = fieldName != null ? fieldName.toString() : fieldId.toString();
-        return "Field <" + id + "> could not be found.";
+        return "Field '" + id + "' could not be found.";
     }
 }

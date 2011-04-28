@@ -55,13 +55,13 @@ public class RecordTypeNotFoundException extends TypeException {
     @Override
     public String getMessage() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("RecordType <");
+        stringBuilder.append("RecordType '");
         stringBuilder.append(id != null ? id : name);
-        stringBuilder.append("> ");
+        stringBuilder.append("' ");
         if (version != null) {
-            stringBuilder.append("version: <");
+            stringBuilder.append("version: '");
             stringBuilder.append(version);
-            stringBuilder.append("> ");
+            stringBuilder.append("' ");
         }
         stringBuilder.append("could not be found.");
         return stringBuilder.toString();

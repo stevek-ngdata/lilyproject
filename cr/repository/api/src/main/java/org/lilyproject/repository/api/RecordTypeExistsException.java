@@ -40,7 +40,7 @@ public class RecordTypeExistsException extends TypeException {
     @Override
     public String getMessage() {
         StringBuilder message = new StringBuilder();
-        message.append("RecordType <").append(recordType).append("> ").append("already exists");
+        message.append("RecordType '").append(recordType).append("' ").append("already exists");
         return message.toString();
     }
 }

@@ -65,7 +65,7 @@ public class BlobStoreAccessRegistry {
         try {
             decodedKey = decode(blob.getValue());
         } catch (Exception e) {
-            throw new BlobException("Failed to decode the blobkey of the blob <" + blob + ">", e);
+            throw new BlobException("Failed to decode the blobkey of the blob '" + blob + "'", e);
         }
         return decodedKey;
     }

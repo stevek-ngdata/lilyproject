@@ -57,7 +57,7 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         try {
             fsDataOutputStream = fileSystem.create(createPath(uuid));
         } catch (IOException e) {
-            throw new BlobException("Failed to open an outputstream for blob <" +blob+ "> on the DFS blobstore", e);
+            throw new BlobException("Failed to open an outputstream for blob '" + blob + "' on the DFS blobstore", e);
         }
         return new DFSBlobOutputStream(fsDataOutputStream, blobKey, blob);
     }
@@ -68,7 +68,7 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         try {
             return fileSystem.open(createPath(uuid));
         } catch (IOException e) {
-            throw new BlobException("Failed to open an inputstream for blobkey <"+ blobKey+"> on the DFS blobstore", e);
+            throw new BlobException("Failed to open an inputstream for blobkey '" + blobKey + "' on the DFS blobstore", e);
         }
     }
 
@@ -87,7 +87,7 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         try {
             fileSystem.delete(createPath(uuid), false);
         } catch (IOException e) {
-            throw new BlobException("Failed to delete blob with key <" +blobKey+ "> from the DFS blobstore", e);
+            throw new BlobException("Failed to delete blob with key '" + blobKey + "' from the DFS blobstore", e);
         }
     }
 

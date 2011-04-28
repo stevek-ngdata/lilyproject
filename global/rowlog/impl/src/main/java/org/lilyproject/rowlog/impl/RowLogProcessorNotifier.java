@@ -55,7 +55,7 @@ public class RowLogProcessorNotifier {
 		try {
 			rowLogConfigurationManager.notifyProcessor(rowLogId, shardId);
 		} catch (KeeperException e) {
-			log.debug("Exception while notifying processor of rowLog <"+ rowLogId+"> and shard <"+shardId+">", e);
+			log.debug("Exception while notifying processor of rowLog '" + rowLogId + "' and shard '" + shardId + "'", e);
 		}
 	}
     

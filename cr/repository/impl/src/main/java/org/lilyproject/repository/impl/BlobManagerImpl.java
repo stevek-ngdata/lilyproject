@@ -96,7 +96,7 @@ public class BlobManagerImpl implements BlobManager {
             } catch (IOException e) {
                 // We do a best effort to remove the blobs from the blobIncubator
                 // If it fails a background cleanup process will notice this later and clean it up
-                log.info("Failed to remove blobs from the blobIncubator for record <"+ recordId +">", e);
+                log.info("Failed to remove blobs from the blobIncubator for record '" + recordId + "'", e);
             }
         }
         
@@ -112,7 +112,7 @@ public class BlobManagerImpl implements BlobManager {
                 try {
                     registry.delete(blobToDelete);
                 } catch (BlobException e) {
-                    log.warn("Failed to remove blobs from the blobstore for record <"+ recordId +">", e);
+                    log.warn("Failed to remove blobs from the blobstore for record '" + recordId + "'", e);
                 }
             }
         }

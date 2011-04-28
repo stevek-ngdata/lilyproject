@@ -81,11 +81,11 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         try {
             result = table.get(get);
         } catch (IOException e) {
-            throw new BlobException("Failed to open an inputstream for blobkey <" + blobKey + "> on the HBASE blobstore", e);
+            throw new BlobException("Failed to open an inputstream for blobkey '" + blobKey + "' on the HBASE blobstore", e);
         }
         byte[] value = result.getValue(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
         if (value == null) {
-            throw new BlobException("Failed to open an inputstream for blobkey <" + blobKey + "> since no blob was found on the HBASE blobstore");
+            throw new BlobException("Failed to open an inputstream for blobkey '" + blobKey + "' since no blob was found on the HBASE blobstore");
         }
         return new ByteArrayInputStream(value);
     }
@@ -95,7 +95,7 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         try {
             table.delete(delete);
         } catch (IOException e) {
-            throw new BlobException("Failed to delete blob with key <" + blobKey + "> from the DFS blobstore", e);
+            throw new BlobException("Failed to delete blob with key '" + blobKey + "' from the DFS blobstore", e);
         }
     }
     

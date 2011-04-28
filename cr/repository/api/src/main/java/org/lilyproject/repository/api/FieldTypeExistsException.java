@@ -43,7 +43,7 @@ public class FieldTypeExistsException extends TypeException {
     @Override
     public String getMessage() {
         StringBuilder message = new StringBuilder();
-        message.append("FieldType <").append(fieldType).append("> ").append("already exists");
+        message.append("FieldType '").append(fieldType).append("' ").append("already exists");
         return message.toString();
     }
 }

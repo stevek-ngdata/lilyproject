@@ -47,9 +47,9 @@ public class FieldTypeNotFoundException extends TypeException {
     @Override
     public String getMessage() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("FieldType <");
+        stringBuilder.append("FieldType '");
         stringBuilder.append(id != null ? id : name);
-        stringBuilder.append("> ");
+        stringBuilder.append("' ");
         stringBuilder.append("could not be found.");
         return stringBuilder.toString();
     }
