@@ -76,6 +76,6 @@ public class QName {
 
     @Override
     public String toString() {
-        return "QName [namespace=" + namespace + ", name=" + name + "]";
+        return "{" + namespace + "}" + name;
     }
 }
