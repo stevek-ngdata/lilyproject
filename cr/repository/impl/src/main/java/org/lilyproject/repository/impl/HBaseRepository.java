@@ -412,7 +412,9 @@ public class HBaseRepository extends BaseRepository {
             validateRecord(record, originalRecord, recordType, fieldTypes);
 
         }
-        
+
+        setRecordTypesAfterUpdate(record, originalRecord, changedScopes);
+
         // Always set the version on the record. If no fields were changed this
         // will give the latest version in the repository
         record.setVersion(version);
@@ -424,6 +426,26 @@ public class HBaseRepository extends BaseRepository {
         // Clear the list of deleted fields, as this is typically what the user will expect when using the
         // record object for future updates. 
         return fieldsHaveChanged;
+    }
+
+    private void setRecordTypesAfterUpdate(Record record, Record originalRecord, Set<Scope> changedScopes) {
+        // The returned record object after an update should always contain complete record type information for
+        // all the scopes
+        for (Scope scope : Scope.values()) {
+            // For any unchanged or non-existing scope, we reset the record type information to the one of the
+            // original record, so that the returned record object corresponds to the repository state (= same
+            // as when one would do a fresh read)
+            //
+            // Copy over the original record type of a scope if:
+            //   - the scope was unchanged. If it was changed, the record type will already have been filled in
+            //     by calculateRecordChanges.
+            //   - for the non-versioned scope, only copy it over if none of the scopes changed, because the
+            //     record type of the non-versioned scope is always brought up to date in case any scope is changed
+            if (!changedScopes.contains(scope) && (scope != Scope.NON_VERSIONED || changedScopes.isEmpty())) {
+                record.setRecordType(scope, originalRecord.getRecordTypeName(scope),
+                        originalRecord.getRecordTypeVersion(scope));
+            }
+        }
     }
     
     private void validateRecord(Record record, Record originalRecord, RecordType recordType, FieldTypes fieldTypes)
@@ -685,6 +707,8 @@ public class HBaseRepository extends BaseRepository {
             } else {
                 newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
             }
+
+            setRecordTypesAfterUpdate(record, originalRecord, changedScopes);
         } catch (RowLogException e) {
             throw new RecordException("Exception occurred while updating record '" + recordId+ "' on HBase table", e);
         } catch (IOException e) {

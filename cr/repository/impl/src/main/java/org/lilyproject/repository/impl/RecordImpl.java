@@ -78,7 +78,11 @@ public class RecordImpl implements Record {
     }
     
     public void setRecordType(Scope scope, QName name, Long version) {
-        recordTypes.put(scope, new RecordTypeRef(name, version));
+        if (name == null && version == null) {
+            recordTypes.remove(scope);
+        } else {
+            recordTypes.put(scope, new RecordTypeRef(name, version));
+        }
     }
     
     public QName getRecordTypeName(Scope scope) {
