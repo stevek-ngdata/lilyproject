@@ -31,7 +31,7 @@ public class Words {
                 while ((word = reader.readLine()) != null) {
                     if (word.length() > 0) {
                         // The lowerCase is a simple trick to avoid that words like OR, AND, NOT cause
-                        // the SOLR query parser to fail.
+                        // the Solr query parser to fail.
                         result.add(word.toLowerCase());
                     }
                 }

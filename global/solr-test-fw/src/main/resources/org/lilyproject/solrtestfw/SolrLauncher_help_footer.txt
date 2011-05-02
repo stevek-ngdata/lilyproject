@@ -5,5 +5,5 @@
 
 launch-solr is intended for running small-scale tests or doing small demos.
 
-For any other purpose, please set up SOLR yourself, this is not much work
+For any other purpose, please set up Solr yourself, this is not much work
 either.

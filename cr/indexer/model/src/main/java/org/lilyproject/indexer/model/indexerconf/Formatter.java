@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Formats field values to string for transfer to SOLR.
+ * Formats field values to string for transfer to Solr.
  *
  * <p>Concerning the supports* methods: you should have at least one of singleValue
  * or multiValue return true, and at least one of nonHierarchical or hierarchical return

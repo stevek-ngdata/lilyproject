@@ -58,7 +58,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
             System.out.println("  + Update state: " + index.getUpdateState());
             System.out.println("  + Batch build state: " + index.getBatchBuildState());
             System.out.println("  + Queue subscription ID: " + index.getQueueSubscriptionId());
-            System.out.println("  + SOLR shards: ");
+            System.out.println("  + Solr shards: ");
             for (Map.Entry<String, String> shard : index.getSolrShards().entrySet()) {
                 System.out.println("    + " + shard.getKey() + ": " + shard.getValue());
             }

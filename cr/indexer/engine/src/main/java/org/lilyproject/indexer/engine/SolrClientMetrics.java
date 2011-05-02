@@ -19,7 +19,7 @@ public class SolrClientMetrics implements Updater {
     private final SolrClientMetricsMBean mbean;
     private final MetricsContext context;
 
-    /** Counts number of times a SOLR operation has been retried because of connection-related problems. */
+    /** Counts number of times a Solr operation has been retried because of connection-related problems. */
     public MetricsTimeVaryingLong retries = new MetricsTimeVaryingLong("retries", registry);
 
     public SolrClientMetrics(String indexName, String shardName) {
@@ -48,7 +48,7 @@ public class SolrClientMetrics implements Updater {
         private final ObjectName mbeanName;
 
         public SolrClientMetricsMBean(MetricsRegistry registry) {
-            super(registry, "SOLR client");
+            super(registry, "Solr client");
 
             mbeanName = MBeanUtil.registerMBean("SolrClient", recordName, this);
         }

@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-solr-test-fw</artifactId>
-  <name>Lily: SOLR test framework and test launcher</name>
+  <name>Lily: Solr test framework and test launcher</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>

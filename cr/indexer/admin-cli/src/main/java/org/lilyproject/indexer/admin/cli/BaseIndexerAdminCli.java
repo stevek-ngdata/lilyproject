@@ -75,7 +75,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         solrShardsOption = OptionBuilder
                 .withArgName("solr-shards")
                 .hasArg()
-                .withDescription("Comma separated list of 'shardname:URL' pairs pointing to SOLR instances.")
+                .withDescription("Comma separated list of 'shardname:URL' pairs pointing to Solr instances.")
                 .withLongOpt("solr-shards")
                 .create("s");
 
@@ -178,7 +178,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
             for (String shardEntry : solrShardEntries) {
                 int sep = shardEntry.indexOf(':');
                 if (sep == -1) {
-                    System.out.println("SOLR shards should be specified as 'name:URL' pairs, which the following is not:");
+                    System.out.println("Solr shards should be specified as 'name:URL' pairs, which the following is not:");
                     System.out.println(shardEntry);
                     return 1;
                 }
@@ -191,7 +191,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 }
 
                 if (shardName.equals("http")) {
-                    System.out.println("You forgot to specify a shard name for the SOLR shard " + shardEntry);
+                    System.out.println("You forgot to specify a shard name for the Solr shard " + shardEntry);
                     return 1;
                 }
 
@@ -203,7 +203,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                         return 1;
                     }
                 } catch (URISyntaxException e) {
-                    System.out.println("Invalid SOLR shard URI: " + shardAddress);
+                    System.out.println("Invalid Solr shard URI: " + shardAddress);
                     System.out.println(e.getMessage());
                     return 1;
                 }
@@ -231,7 +231,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
             if (solrShards.isEmpty()) {
                 // Probably cannot occur
-                System.out.println("No SOLR shards specified though option is used.");
+                System.out.println("No Solr shards specified though option is used.");
                 return 1;
             }
         }
@@ -364,7 +364,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         model = new IndexerModelImpl(zk);
 
         // Perform some extra validation which we can only do now that we have access
-        // to the indexer model: check that any specified SOLR shard URIs are not the
+        // to the indexer model: check that any specified Solr shard URIs are not the
         // same as those of other indexes.
         if (solrShards != null) {
             Collection<IndexDefinition> indexes = model.getIndexes();
@@ -375,7 +375,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
                     for (String uri2 : index.getSolrShards().values()) {
                         if (uri.equals(uri2)) {
-                            System.out.println("The following SOLR shard URI:");
+                            System.out.println("The following Solr shard URI:");
                             System.out.println(uri);
                             System.out.println("is already in use by the index " + index.getName());
                             if (!cmd.hasOption(forceOption.getOpt())) {

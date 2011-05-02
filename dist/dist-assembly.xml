@@ -241,7 +241,7 @@
       <fileMode>0755</fileMode>
     </file-->
 
-    <!-- Launch SOLR -->
+    <!-- Launch Solr -->
     <file>
       <source>${basedir}/../global/solr-test-fw/target/dist-scripts/launch-solr</source>
       <outputDirectory>/bin/</outputDirectory>

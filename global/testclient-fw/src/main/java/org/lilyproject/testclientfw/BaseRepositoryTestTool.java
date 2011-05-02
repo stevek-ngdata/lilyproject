@@ -45,7 +45,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
         solrOption = OptionBuilder
                 .withArgName("URL")
                 .hasArg()
-                .withDescription("URL of SOLR")
+                .withDescription("URL of Solr")
                 .withLongOpt("solr")
                 .create("s");
 
@@ -77,7 +77,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     }
 
     public void setupSolr() throws MalformedURLException {
-        System.out.println("Using SOLR instance at " + solrUrl);
+        System.out.println("Using Solr instance at " + solrUrl);
 
         MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
         connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);

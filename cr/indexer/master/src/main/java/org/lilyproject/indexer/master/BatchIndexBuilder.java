@@ -109,7 +109,7 @@ public class BatchIndexBuilder {
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", String.valueOf(zkSessionTimeout));
 
         //
-        // SOLR options
+        // Solr options
         //
         if (solrConfig.getRequestWriter() != null) {
             job.getConfiguration().set("org.lilyproject.indexer.batchbuild.requestwriter", solrConfig.getRequestWriter());

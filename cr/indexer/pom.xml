@@ -26,7 +26,7 @@
   <artifactId>lily-indexer</artifactId>
   <packaging>pom</packaging>
 
-  <name>Lily: Indexer (Lucene/SOLR index management)</name>
+  <name>Lily: Indexer (Lucene/Solr index management)</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>

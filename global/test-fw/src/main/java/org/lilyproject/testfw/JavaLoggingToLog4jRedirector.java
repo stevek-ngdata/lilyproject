@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  * <p>This code comes from http://wiki.apache.org/myfaces/Trinidad_and_Common_Logging
  * but slightly adapted to log4j instead of commons-logging.
  *
- * <p>It would actually be better to redirect to commons-logging, but the SOLR war
+ * <p>It would actually be better to redirect to commons-logging, but the Solr war
  * which is launched as part of certain test cases contains the jcl-slf4j bridge and
  * uses jdk14-slf4j, which would cause endless loops between logging systems.
  */

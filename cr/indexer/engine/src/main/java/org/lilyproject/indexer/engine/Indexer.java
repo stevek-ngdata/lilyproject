@@ -136,7 +136,7 @@ public class Indexer {
     }
 
     /**
-     * The actual indexing: maps record fields to index fields, and send to SOLR.
+     * The actual indexing: maps record fields to index fields, and send to Solr.
      *
      * @param record the correct version of the record, which has the versionTag applied to it
      * @param version version of the record, for the nonversioned case this is 0 so is not necessarily the same as
@@ -206,7 +206,7 @@ public class Indexer {
             }
 
             if (!valueAdded) {
-                // No single field was added to the SOLR document.
+                // No single field was added to the Solr document.
                 // In this case we do not add it to the index.
                 // Besides being somewhat logical, it should also be noted that if a record would not contain
                 // any (modified) fields that serve as input to indexFields, we would never have arrived here
@@ -234,7 +234,7 @@ public class Indexer {
 
             // Can be useful during development
             // if (log.isDebugEnabled()) {
-            //    log.debug("Constructed SOLR doc: " + solrDoc);
+            //    log.debug("Constructed Solr doc: " + solrDoc);
             //}
 
             solrShardMgr.getSolrClient(record.getId()).add(solrDoc);

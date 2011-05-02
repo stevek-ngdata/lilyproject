@@ -5,7 +5,7 @@
 
 
 Lily is the first cloud-scalable NoSQL-based content store and search repository,
-built on top of Apache HBase and SOLR.
+built on top of Apache HBase and Solr.
 
 
 Getting started with Lily

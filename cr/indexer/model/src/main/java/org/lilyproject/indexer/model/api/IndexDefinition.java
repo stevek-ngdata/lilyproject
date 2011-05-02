@@ -56,7 +56,7 @@ public interface IndexDefinition {
     void setShardingConfiguration(byte[] configuration);
 
     /**
-     * Map containing the SOLR shards: the key is a logical name for the shard, the value is the
+     * Map containing the Solr shards: the key is a logical name for the shard, the value is the
      * address (URL) of the shard.
      */
     Map<String, String> getSolrShards();

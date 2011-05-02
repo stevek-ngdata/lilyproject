@@ -49,7 +49,7 @@ import java.util.*;
 //       the normal flow and don't need to be logged. This does require putting catch blocks where needed.
 //
 //  * block:
-//       this is what we do in case SOLR is not reachable. It doesn't make sense to skip such error, since we'll
+//       this is what we do in case Solr is not reachable. It doesn't make sense to skip such error, since we'll
 //       run into the same problem with the next message. Therefore, we wait and retry (indefinitely) until it
 //       succeeds. A metric should be augmented so that the admin can be aware this is happening.
 //

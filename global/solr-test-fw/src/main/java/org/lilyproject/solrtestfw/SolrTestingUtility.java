@@ -37,17 +37,17 @@ public class SolrTestingUtility {
         solrHome.setSystemProperties();
 
 
-        // Launch SOLR
+        // Launch Solr
         String solrWar = System.getProperty("solr.war");
         if (solrWar == null || !new File(solrWar).exists()) {
             System.out.println();
             System.out.println("------------------------------------------------------------------------");
-            System.out.println("SOLR not found at");
+            System.out.println("Solr not found at");
             System.out.println(solrWar);
             System.out.println("Verify setting of solr.war system property");
             System.out.println("------------------------------------------------------------------------");
             System.out.println();
-            throw new Exception("SOLR war not found at " + solrWar);
+            throw new Exception("Solr war not found at " + solrWar);
         }
 
         server = new Server(solrPort);

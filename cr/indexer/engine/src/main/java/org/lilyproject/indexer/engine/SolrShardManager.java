@@ -37,7 +37,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 public class SolrShardManager {
-    /** Key = shard name, Value = SOLR URL */
+    /** Key = shard name, Value = Solr URL */
     private Map<String, String> shards;
     private Map<String, SolrClientHandle> shardConnections;
     private ShardSelector selector;
@@ -60,7 +60,7 @@ public class SolrShardManager {
             try {
                 this.requestWriter = (RequestWriter)Class.forName(solrClientConfig.getRequestWriter()).newInstance();
             } catch (Exception e) {
-                throw new RuntimeException("Problem instantiating SOLR request writer", e);
+                throw new RuntimeException("Problem instantiating Solr request writer", e);
             }
         } else {
             this.requestWriter = new BinaryRequestWriter();
@@ -70,7 +70,7 @@ public class SolrShardManager {
             try {
                 this.responseParser = (ResponseParser)Class.forName(solrClientConfig.getResponseParser()).newInstance();
             } catch (Exception e) {
-                throw new RuntimeException("Problem instantiating SOLR response parser", e);
+                throw new RuntimeException("Problem instantiating Solr response parser", e);
             }
         } else {
             this.responseParser = new BinaryResponseParser();

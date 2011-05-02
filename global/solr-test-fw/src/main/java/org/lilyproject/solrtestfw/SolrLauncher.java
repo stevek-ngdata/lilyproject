@@ -58,7 +58,7 @@ public class SolrLauncher extends BaseCliTool {
         schemaOption = OptionBuilder
                 .withArgName("schema.xml")
                 .hasArg()
-                .withDescription("SOLR schema file name")
+                .withDescription("Solr schema file name")
                 .withLongOpt("schema")
                 .create("s");
         options.add(schemaOption);
@@ -90,13 +90,13 @@ public class SolrLauncher extends BaseCliTool {
 
         String solrWar = System.getProperty(SOLR_WAR_PROP);
         if (solrWar == null) {
-            System.err.println("System property that points to SOLR war is not set: " + SOLR_WAR_PROP);
+            System.err.println("System property that points to Solr war is not set: " + SOLR_WAR_PROP);
             return 1;
         }
 
         File solrWarFile = new File(solrWar);
         if (!solrWarFile.exists()) {
-            System.err.println("SOLR war refered to by system property " + SOLR_WAR_PROP + " does not exist:");
+            System.err.println("Solr war referred to by system property " + SOLR_WAR_PROP + " does not exist:");
             System.err.println(solrWarFile.getAbsolutePath());
             return 1;
         }
@@ -154,7 +154,7 @@ public class SolrLauncher extends BaseCliTool {
                     System.out.println("Removing temporary directory " + solrHome.getSolrHomeDir());
                     solrHome.cleanup();
                 } catch (IOException e) {
-                    log.info("Error cleaning temporary SOLR directory", e);
+                    log.info("Error cleaning temporary Solr directory", e);
                 }
             }
         });
@@ -165,9 +165,9 @@ public class SolrLauncher extends BaseCliTool {
         server.start();
 
         System.out.println("-----------------------------------------------");
-        System.out.println("SOLR started.");
+        System.out.println("Solr started.");
         System.out.println();
-        System.out.println("Use this as SOLR URL when creating an index:");
+        System.out.println("Use this as Solr URL when creating an index:");
         System.out.println("http://localhost:" + port + "/solr");
         System.out.println();
         System.out.println("Web GUI available at:");
@@ -187,7 +187,7 @@ public class SolrLauncher extends BaseCliTool {
     private int checkSolrSchema(String schema) {
         File schemaFile = new File(schema);
         if (!schemaFile.exists()) {
-            System.err.println("Specified SOLR schema file does not exist:");
+            System.err.println("Specified Solr schema file does not exist:");
             System.err.println(schemaFile.getAbsolutePath());
             return 1;
         }
@@ -196,14 +196,14 @@ public class SolrLauncher extends BaseCliTool {
         try {
             document = DocumentHelper.parse(schemaFile);
         } catch (Exception e) {
-            System.err.println("Error reading or parsing SOLR schema file.");
+            System.err.println("Error reading or parsing Solr schema file.");
             System.err.println();
             e.printStackTrace();
             return 1;
         }
 
         if (!document.getDocumentElement().getLocalName().equals("schema")) {
-            System.err.println("A SOLR schema file should have a <schema> root element, which the following file");
+            System.err.println("A Solr schema file should have a <schema> root element, which the following file");
             System.err.println("has not:");
             System.err.println(schemaFile.getAbsolutePath());
             return 1;

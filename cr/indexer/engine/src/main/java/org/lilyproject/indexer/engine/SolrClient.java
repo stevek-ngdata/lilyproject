@@ -13,13 +13,13 @@ import java.util.List;
  */
 public interface SolrClient {
     /**
-     * Description of this SOLR server, usually its URL.
+     * Description of this Solr server, usually its URL.
      */
     String getDescription();
 
     //
     //
-    // The following method declarations are copied from SOLR's SolrServer class, but with
+    // The following method declarations are copied from Solr's SolrServer class, but with
     // InterruptedException added to their throws clause. This is necessary for the RetryingSolrClient.
     //
     //

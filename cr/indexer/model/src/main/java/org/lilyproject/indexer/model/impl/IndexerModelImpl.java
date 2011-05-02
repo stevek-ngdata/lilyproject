@@ -166,16 +166,16 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         }
 
         if (index.getSolrShards() == null || index.getSolrShards().isEmpty())
-            throw new IndexValidityException("SOLR shards should not be null or empty.");
+            throw new IndexValidityException("Solr shards should not be null or empty.");
 
         for (String shard : index.getSolrShards().values()) {
             try {
                 URI uri = new URI(shard);
                 if (!uri.isAbsolute()) {
-                    throw new IndexValidityException("SOLR shard URI is not absolute: " + shard);
+                    throw new IndexValidityException("Solr shard URI is not absolute: " + shard);
                 }
             } catch (URISyntaxException e) {
-                throw new IndexValidityException("Invalid SOLR shard URI: " + shard);
+                throw new IndexValidityException("Invalid Solr shard URI: " + shard);
             }
         }
 

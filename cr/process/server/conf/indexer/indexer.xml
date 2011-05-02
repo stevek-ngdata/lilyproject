@@ -45,7 +45,7 @@
     <property>
       <!--
          | Number of concurrent indexing threads within one indexing map task.
-         | Since some time is spent in IO (retrieving data from HBase, sending data to SOLR)
+         | Since some time is spent in IO (retrieving data from HBase, sending data to Solr)
          | the indexing can be sped up by running multiple threads.
          -->
       <name>org.lilyproject.indexer.batchbuild.threads</name>

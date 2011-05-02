@@ -202,7 +202,7 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
 
                 // Avoid printing a complete stack trace for common errors.
                 if (t instanceof SolrServerException && t.getMessage().equals("java.net.ConnectException: Connection refused")) {
-                    log.error("Failure indexing record " + recordId + ": SOLR connection refused.");
+                    log.error("Failure indexing record " + recordId + ": Solr connection refused.");
                 } else {
                     log.error("Failure indexing record " + recordId, t);
                 }
