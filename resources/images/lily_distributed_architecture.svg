@@ -13,7 +13,7 @@
    height="744.09448"
    id="svg9638"
    version="1.1"
-   inkscape:version="0.47 r22583"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="lily_distributed_architecture.svg"
    inkscape:export-filename="/home/bruno/tmp/lily distributed architecture.png"
    inkscape:export-xdpi="81.489998"
@@ -70,7 +70,7 @@
      showguides="true"
      inkscape:guide-bbox="true"
      inkscape:window-width="1680"
-     inkscape:window-height="998"
+     inkscape:window-height="996"
      inkscape:window-x="0"
      inkscape:window-y="1"
      inkscape:window-maximized="1" />
@@ -624,11 +624,6 @@
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
        d="m 209.28571,580.93361 74.46526,0"
        id="path9979" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
-       d="m 357.14286,247.66591 0,-152.142857 229.28571,0"
-       id="path11049"
-       transform="translate(0,308.2677)" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
        d="m 381.42857,272.66591 57.85714,0 0,-42.85714 305.71429,0 0,-29.28572"
