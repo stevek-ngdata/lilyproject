@@ -236,7 +236,7 @@ public class HadoopLauncher extends BaseCliTool {
         // These are needed for the new and improved Map/Reduce framework
         System.setProperty("hadoop.log.dir", new File(baseTempDir, "hadooplogs").getAbsolutePath());
         conf.set("mapred.output.dir", new File(baseTempDir, "mapred").getAbsolutePath());
-        mrCluster = new MiniMRCluster(9001, 0, 1,
+        mrCluster = new MiniMRCluster(8021, 0, 1,
                 FileSystem.get(conf).getUri().toString(), 1, null, new String[] {"localhost"});
         System.out.println("Mini mapreduce cluster started");
         conf.set("mapred.job.tracker",
