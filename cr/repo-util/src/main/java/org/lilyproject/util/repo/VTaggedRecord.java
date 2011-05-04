@@ -230,7 +230,7 @@ public class VTaggedRecord {
         // at the time of this writing)
         if (version == 0L) {
             return getNonVersionedRecord();
-        } else if (version == record.getVersion()) {
+        } else if (record.getVersion() != null && version == record.getVersion()) {
             return record;
         } else {
             return repository.readWithIds(record.getId(), version, fields);
