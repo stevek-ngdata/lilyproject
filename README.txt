@@ -20,14 +20,6 @@ From http://maven.apache.org
 
 Maven 3 is not yet supported!
 
-Windows users (does not work currently)
--------------
-
-Install cygwin, and add its bin directory to the PATH.
-
-You do not need to run any commands via the cygwin shell (use the provided
-bat files instead), it is Hadoop which executes some unix commands like ls.
-
 Building Lily
 =============
 
