@@ -8,7 +8,7 @@ Getting started
 
 For a first introduction to using Lily, please see:
 
-http://docs.outerthought.org/lily-docs-trunk/414-lily.html
+http://docs.outerthought.org/lily-docs-1_0/414-lily.html
 
 Prerequisites
 =============
@@ -18,7 +18,9 @@ Install Maven 2.2.x
 
 From http://maven.apache.org
 
-Windows users
+Maven 3 is not yet supported!
+
+Windows users (does not work currently)
 -------------
 
 Install cygwin, and add its bin directory to the PATH.
