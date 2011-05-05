@@ -61,9 +61,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:svn:http://dev.outerthought.org/svn/outerthought_lilyproject/trunk</connection>
-    <developerConnection>scm:svn:http://dev.outerthought.org/svn/outerthought_lilyproject/trunk</developerConnection>
-    <url>http://dev.outerthought.org/svn/outerthought_lilyproject</url>
+    <connection>scm:svn:https://dev.outerthought.org/svn/outerthought_lilyproject/trunk</connection>
+    <developerConnection>scm:svn:https://dev.outerthought.org/svn/outerthought_lilyproject/trunk</developerConnection>
+    <url>https://dev.outerthought.org/svn/outerthought_lilyproject</url>
   </scm>
 
   <modules>
