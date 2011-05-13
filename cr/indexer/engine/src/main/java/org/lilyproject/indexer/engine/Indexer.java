@@ -249,7 +249,7 @@ public class Indexer {
     private String evalName(DynamicIndexField dynField, DynamicIndexFieldMatch match, FieldType fieldType) {
         // Calculate the name, then add the value
         Map<String, Object> nameContext = new HashMap<String, Object>();
-        nameContext.put("namespace", fieldType.getName().getName());
+        nameContext.put("namespace", fieldType.getName().getNamespace());
         nameContext.put("name", fieldType.getName().getName());
         ValueType valueType = fieldType.getValueType();
         nameContext.put("primitiveType", valueType.getPrimitive().getName());
