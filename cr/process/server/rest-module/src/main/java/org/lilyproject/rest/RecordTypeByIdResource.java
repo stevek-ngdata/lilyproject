@@ -43,11 +43,13 @@ public class RecordTypeByIdResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, RecordType recordType) {
-        if (recordType.getId() != null && !recordType.getId().equals(id)) {
-            throw new ResourceException("Record type id in submitted field type does not match the id in URI.",
+        SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
+
+        if (recordType.getId() != null && !recordType.getId().equals(schemaId)) {
+            throw new ResourceException("ID in submitted record type does not match the id in URI.",
                     BAD_REQUEST.getStatusCode());
         }
-        recordType.setId(repository.getIdGenerator().getSchemaId(id));
+        recordType.setId(schemaId);
 
         ImportResult<RecordType> result;
         try {

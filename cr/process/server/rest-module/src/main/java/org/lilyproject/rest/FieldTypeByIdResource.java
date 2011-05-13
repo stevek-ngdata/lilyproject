@@ -43,13 +43,12 @@ public class FieldTypeByIdResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response put(@PathParam("id") String id, FieldType fieldType) {
-        if (fieldType.getId() != null && !fieldType.getId().toString().equals(id)) {
-            throw new ResourceException("Field type id in submitted field type does not match the id in URI.",
+        SchemaId schemaId = repository.getIdGenerator().getSchemaId(id);
+
+        if (fieldType.getId() != null && !fieldType.getId().equals(schemaId)) {
+            throw new ResourceException("ID in submitted field type does not match the id in URI.",
                     BAD_REQUEST.getStatusCode());
         }
-        SchemaId schemaId = null;
-        if (id != null)
-            schemaId = repository.getIdGenerator().getSchemaId(id);
         fieldType.setId(schemaId);
 
         ImportResult<FieldType> result;
