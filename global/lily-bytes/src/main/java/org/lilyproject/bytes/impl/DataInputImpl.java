@@ -17,7 +17,8 @@ import org.lilyproject.bytes.api.DataInput;
  *    <code>org.elasticsearch.common.io.stream.BytesStreamOutput.java</code>,
  *    <code>org.elasticsearch.common.io.stream.StreamInput.java</code>,
  *    <code>org.elasticsearch.common.io.stream.StreamOutput.java</code>.
- *    
+ * 
+ * <p>See also <a href=http://en.wikipedia.org/wiki/UTF-16/UCS-2>http://en.wikipedia.org/wiki/UTF-16/UCS-2</a>
  */
 public class DataInputImpl implements DataInput {
     public static final int UNI_SUR_LOW_START = 0xDC00;
@@ -103,8 +104,9 @@ public class DataInputImpl implements DataInput {
         // Start with a loop expecting each character to be encoded by one byte
         // This will be most likely the case for most strings.
         while (count < endPos) {
-            b = source[count++]&0xff;
+            b = source[count]&0xff;
             if (!(b < 0xc0)) break; // Once a character is encountered which is encoded with multiple bytes, jump to the next loop
+            count++;
             assert b < 0x80;
             ch = b;
             chararr_count = putChar(chararr_count, ch);

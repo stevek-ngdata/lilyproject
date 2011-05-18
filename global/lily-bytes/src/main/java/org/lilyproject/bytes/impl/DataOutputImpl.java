@@ -103,8 +103,9 @@ public class DataOutputImpl implements DataOutput {
         int utflen = 0;
         
         // First calculate the utflen
-        for (int i = 0; i < strlen; i++) {
-            final int code = string.charAt(i);
+        int i = 0;
+        while(i < strlen) {
+            final int code = string.charAt(i++);
             if (code < 0x80)
                 utflen++;
             else if (code < 0x800) {
@@ -119,6 +120,7 @@ public class DataOutputImpl implements DataOutput {
                     // confirm valid low surrogate and write pair
                     if (utf32 >= 0xDC00 && utf32 <= 0xDFFF) {
                         utflen += 4;
+                        i++;
                         continue;
                     }
                 }
@@ -132,7 +134,6 @@ public class DataOutputImpl implements DataOutput {
         writeIntUnsafe(utflen); // Write the length in the buffer
         
 
-        int i = 0; // Index in the string
         int ch = 0; // Character from the string
         
         // Optimized for loop as long as the characters can be encoded as one byte
