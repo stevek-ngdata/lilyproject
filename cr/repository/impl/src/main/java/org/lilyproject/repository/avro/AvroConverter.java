@@ -22,13 +22,16 @@ import java.util.Map.Entry;
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.util.Utf8;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public class AvroConverter {
-
+    private Log log = LogFactory.getLog(getClass());
+    
     private TypeManager typeManager;
     private Repository repository;
 
@@ -389,13 +392,12 @@ public class AvroConverter {
     public RepositoryException convert(AvroRepositoryException avroException) {
         try {
             Class exceptionClass = Class.forName(convert(avroException.exceptionClass));
-            Map<String, String> params = new HashMap<String, String>();
             Constructor constructor = exceptionClass.getConstructor(String.class, Map.class);
-            RepositoryException repositoryException = (RepositoryException)constructor.newInstance(convert(avroException.message), params);
+            RepositoryException repositoryException = (RepositoryException)constructor.newInstance(convert(avroException.message), avroException.params);
             restoreCauses(avroException.remoteCauses, repositoryException);
             return repositoryException;
         } catch (Exception e) {
-            // TODO log a warning
+            log.debug("Failure while converting remote exception", e);
         }
         RepositoryException repositoryException = new RepositoryException(convert(avroException.message));
         restoreCauses(avroException.remoteCauses, repositoryException);
