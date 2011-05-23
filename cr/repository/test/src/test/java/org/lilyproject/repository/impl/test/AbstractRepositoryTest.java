@@ -115,7 +115,7 @@ public abstract class AbstractRepositoryTest {
         recordType3 = typeManager.updateRecordType(recordType3);
     }
 
-
+    
     @Test
     public void testRecordCreateWithoutRecordType() throws Exception {
         IMocksControl control = createControl();
@@ -195,6 +195,28 @@ public abstract class AbstractRepositoryTest {
         
         record = repository.create(record);
         assertEquals(null, record.getVersion());
+    }
+    
+    @Test 
+    public void testCreateOnlyVersionAndCheckRecordType() throws Exception {
+        Record record = repository.newRecord();
+        record.setRecordType(recordType1.getName(), recordType1.getVersion());
+        record.setField(fieldType2.getName(), 123);
+        
+        record = repository.create(record);
+        
+        Record readRecord = repository.read(record.getId());
+        // Check that the 'global' record type of the read record is also filled in
+        assertEquals(recordType1.getName(), readRecord.getRecordTypeName());
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion());
+
+        // The record type for the versioned scope (only field present) should be returned
+        assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.VERSIONED));
+        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion(Scope.VERSIONED));
+
+        // The record type for the version-mutable scope should not be returned since no such field is present
+        assertEquals(null, readRecord.getRecordTypeName(Scope.VERSIONED_MUTABLE));
+        assertEquals(null, readRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
     }
 
     protected Record createDefaultRecord() throws Exception {
