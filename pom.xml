@@ -476,18 +476,28 @@
 
   <repositories>
     <repository>
+      <id>lilyproject</id>
+      <name>Lily Maven repository</name>
+      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+    </repository>
+
+    <repository>
+      <id>default</id>
+      <name>Maven Repository Switchboard</name>
+      <layout>default</layout>
+      <url>http://repo1.maven.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
       <id>repository.apache.org</id>
       <name>Apache snapshot repository</name>
       <url>https://repository.apache.org/content/groups/snapshots-group/</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
-    </repository>
-
-    <repository>
-      <id>lilyproject</id>
-      <name>Lily Maven repository</name>
-      <url>http://lilyproject.org/maven/maven2/deploy/</url>
     </repository>
 
     <!-- At the time of this writing, the JBoss repository served for junit -->
@@ -503,13 +513,13 @@
 
     <!-- The JBoss Nexus repository serves Netty -->
     <repository>
-       <id>nexus-repository.jboss.org</id>
-       <name>JBoss Nexus Repository</name> 
-       <url>http://repository.jboss.org/nexus/content/groups/public/</url>
-       <snapshots>
-         <enabled>false</enabled>
-       </snapshots>
-     </repository>
+      <id>nexus-repository.jboss.org</id>
+      <name>JBoss Nexus Repository</name>
+      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
 
     <repository>
       <id>cdh.repo</id>
