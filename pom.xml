@@ -99,6 +99,7 @@
     <module>tools/licensecheck</module>
     <module>tools/record-row-visualizer</module>
     <module>tools/print-host</module>
+    <module>tools/archetype/archetype-basic</module>
 
     <module>apps/import</module>
     <module>apps/tester</module>

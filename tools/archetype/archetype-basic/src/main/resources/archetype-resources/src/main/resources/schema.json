@@ -1,0 +1,23 @@
+{
+  namespaces: {
+    /* Declaration of namespace prefixes. */
+    "${package}": "p"
+  },
+  fieldTypes: [
+    {
+      /* The 'p' refers to the namespace declared above, the dollar sign
+         separates the namespace prefix from the name. */
+      name: "p$field1",
+      valueType: { primitive: "STRING" },
+      scope: "non_versioned"
+    }
+  ],
+  recordTypes: [
+    {
+      name: "p$Type1",
+      fields: [
+        {name: "p$field1", mandatory: true }
+      ]
+    }
+  ]
+}
