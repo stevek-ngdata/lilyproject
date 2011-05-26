@@ -9,4 +9,16 @@
   <!-- Port on which to bind the avro server, 0 will bind to an ephemeral port. -->
   <port>12020</port>
 
+  <!--
+    The names of the decorators that should be active. The decorators will be connected
+    in the specified order. The name should be the name with which the RepositoryDecorator
+    is registered in the PluginRegistry. If one of the named decorators would not have
+    been registered (= is not available), Lily will refuse to startup.
+  -->
+  <decorators>
+    <!--
+    <decorator>name</decorator>
+    -->
+  </decorators>
+
 </repository>

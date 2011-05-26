@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /*
- * Copyright 2010 Outerthought bvba
+ * Copyright 2011 Outerthought bvba
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,30 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-repository</artifactId>
-  <packaging>pom</packaging>
-  <name>Lily: Repository</name>
+  <artifactId>lily-repository-spi</artifactId>
+  <name>Lily: Repository SPI</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily</artifactId>
+    <artifactId>lily-repository</artifactId>
     <version>1.1-SNAPSHOT</version>
-    <relativePath>../..</relativePath>
+    <relativePath>../</relativePath>
   </parent>
 
-  <modules>
-    <module>api</module>
-    <module>impl</module>
-    <module>spi</module>
-    <module>test</module>
-  </modules>
+  <build>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-api</artifactId>
+    </dependency>
+  </dependencies>
 
 </project>

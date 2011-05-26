@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<beans              xmlns = "http://www.springframework.org/schema/beans"
+                xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
+            xmlns:context = "http://www.springframework.org/schema/context"
+       xsi:schemaLocation = "http://www.springframework.org/schema/beans
+                             http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+                             http://www.springframework.org/schema/context
+                             http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                             http://kauriproject.org/runtime/1.0#springext
+                             http://www.kauriproject.org/schemas/runtime/springext.xsd">
+
+  <context:annotation-config/>
+
+  <kauri:export-service
+      ref="pluginRegistry"
+      service="org.lilyproject.plugin.PluginRegistry"/>
+
+  <bean id="pluginRegistry" class="org.lilyproject.plugin.impl.PluginRegistryImpl">
+    <constructor-arg>
+      <bean class="java.lang.management.ManagementFactory" factory-method="getPlatformMBeanServer"/>
+    </constructor-arg>
+  </bean>
+
+</beans>

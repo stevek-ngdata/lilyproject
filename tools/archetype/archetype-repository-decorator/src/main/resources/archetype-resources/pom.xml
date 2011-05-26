@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <properties>
+    <version.lily>@lilyversion@</version.lily>
+    <version.kauri>@kauriversion@</version.kauri>
+  </properties>
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>${groupId}</groupId>
+  <artifactId>${artifactId}</artifactId>
+  <version>${version}</version>
+  <name>Sample Lily Repository Decorator</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-spi</artifactId>
+      <version>${version.lily}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-pluginregistry-api</artifactId>
+      <version>${version.lily}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/kauri</directory>
+        <targetPath>KAURI-INF</targetPath>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+          <groupId>org.kauriproject</groupId>
+          <artifactId>kauri-genclassloader-plugin</artifactId>
+          <version>${version.kauri}</version>
+          <executions>
+            <execution>
+              <phase>compile</phase>
+              <goals>
+                <goal>generate</goal>
+              </goals>
+            </execution>
+          </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>default</id>
+      <name>Maven Repository Switchboard</name>
+      <layout>default</layout>
+      <url>http://repo1.maven.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>lilyproject</id>
+      <name>Lily Maven repository</name>
+      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+    </repository>
+  </repositories>
+</project>
+

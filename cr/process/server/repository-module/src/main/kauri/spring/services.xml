@@ -63,6 +63,10 @@
       id="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
+  <kauri:import-service
+      id="pluginRegistry"
+      service="org.lilyproject.plugin.PluginRegistry"/>
+
   <kauri:export-service
       ref="repository"
       service="org.lilyproject.repository.api.Repository"/>
@@ -103,7 +107,7 @@
     <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
   </bean>
 
-  <bean id="repository" class="org.lilyproject.repository.impl.HBaseRepository">
+  <bean id="undecoratedRepository" class="org.lilyproject.repository.impl.HBaseRepository">
     <constructor-arg ref="typeManager"/>
     <constructor-arg ref="idGenerator"/>
     <constructor-arg ref="writeAheadLog"/>
@@ -111,6 +115,14 @@
     <constructor-arg ref="blobManager"/>
     <constructor-arg ref="rowLocker"/>
   </bean>
+
+  <bean id="repositoryDecoratorActivator" class="org.lilyproject.server.modules.repository.RepositoryDecoratorActivator">
+    <constructor-arg ref="pluginRegistry"/>
+    <constructor-arg ref="undecoratedRepository"/>
+    <constructor-arg><kauri:conf path="repository"/></constructor-arg>
+  </bean>
+
+  <bean id="repository" factory-bean="repositoryDecoratorActivator" factory-method="getDecoratedRepository"/>
 
   <bean class="org.lilyproject.server.modules.repository.LinkIndexUpdaterSetup">
     <constructor-arg ref="repository"/>

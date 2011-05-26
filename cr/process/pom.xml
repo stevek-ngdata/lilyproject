@@ -112,23 +112,6 @@
   </dependencyManagement>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.kauriproject</groupId>
-          <artifactId>kauri-genclassloader-plugin</artifactId>
-          <version>${version.kauri}</version>
-          <executions>
-            <execution>
-              <phase>compile</phase>
-              <goals>
-                <goal>generate</goal>
-              </goals>
-            </execution>
-          </executions>
-          </plugin>
-      </plugins>
-    </pluginManagement>
   </build>
 
 </project>
