@@ -18,6 +18,6 @@
 -->
 <classloader share-self="required">
   <classpath>
-    
+    <artifact groupId="org.lilyproject" artifactId="lily-indexer-model" share="required"/>
   </classpath>
 </classloader>

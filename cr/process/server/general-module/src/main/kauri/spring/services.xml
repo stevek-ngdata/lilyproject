@@ -59,6 +59,10 @@
       ref="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
+  <kauri:export-service
+      ref="indexerModel"
+      service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
+
   <bean id="hbaseConfiguration"
       class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl">
     <constructor-arg><kauri:conf path="hbase"/></constructor-arg>
@@ -139,6 +143,10 @@
     <constructor-arg value="lock"/>
     <constructor-arg value="10000"/>
     <constructor-arg ref="rowLockerMetrics"/>
+  </bean>
+
+  <bean id="indexerModel" class="org.lilyproject.indexer.model.impl.IndexerModelImpl">
+    <constructor-arg ref="zooKeeper"/>
   </bean>
 
 </beans>
