@@ -10,6 +10,7 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.spi.RepositoryDecorator;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,11 @@ public class RepositoryDecoratorActivator implements PluginUser<RepositoryDecora
     @PostConstruct
     public void init() {
         pluginRegistry.setPluginUser(RepositoryDecorator.class, this);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        pluginRegistry.unsetPluginUser(RepositoryDecorator.class, this);
     }
 
     @Override
