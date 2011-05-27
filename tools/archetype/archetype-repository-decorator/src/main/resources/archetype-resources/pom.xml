@@ -86,5 +86,13 @@
       <url>http://lilyproject.org/maven/maven2/deploy/</url>
     </repository>
   </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>lilyproject-plugins</id>
+      <name>Lily snapshot plugin repository</name>
+      <url>http://lilyproject.org/maven/maven2/deploy/</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
 
