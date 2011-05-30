@@ -952,6 +952,32 @@ public abstract class AbstractRepositoryTest {
 
         assertEquals(3L, record.getVersion().longValue());
     }
+    
+    @Test
+    public void testRecordReincarnationOnlyVersionedFields() throws Exception {
+        QName versionedOnlyQN = new QName("test", "VersionedOnly");
+        RecordType versionedOnlyRT = typeManager.newRecordType(versionedOnlyQN);
+        versionedOnlyRT.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        versionedOnlyRT = typeManager.createRecordType(versionedOnlyRT);
+        
+        Record record = repository.newRecord();
+        record.setRecordType(versionedOnlyQN);
+        record.setField(fieldType2.getName(), 111);
+        record = repository.create(record);
+        RecordId id = record.getId();
+        repository.delete(id);
+        
+        record = repository.newRecord(id);
+        record.setRecordType(versionedOnlyQN);
+        record.setField(fieldType2.getName(), 222);
+        record = repository.create(record);
+        
+        assertEquals(versionedOnlyQN, record.getRecordTypeName());
+        
+        record = repository.read(id);
+        assertEquals(versionedOnlyQN, record.getRecordTypeName());
+        assertEquals(versionedOnlyQN, record.getRecordTypeName(Scope.VERSIONED));
+    }
 
     @Test
     public void testUpdateMutableField() throws Exception {

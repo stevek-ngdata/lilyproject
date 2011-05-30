@@ -1364,8 +1364,12 @@ public class HBaseRepository extends BaseRepository {
             
             // Delete data
             if (dataToDelete) { // Avoid a delete action when no data was found to delete
-                delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes);
-                delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_VERSION.bytes);
+                // Do not delete the NON-VERSIONED record type column.
+                // If the thombstone was not processed yet (major compaction)
+                // a re-creation of the record would then loose its record type since the NON-VERSIONED 
+                // field is always stored at timestamp 1L
+                // Re-creating the record will always overwrite the (NON-VERSIONED) record type.
+                // So, there is no risk of old data ending up in the new record.
                 delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_ID.bytes);
                 delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_VERSION.bytes);
                 delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
