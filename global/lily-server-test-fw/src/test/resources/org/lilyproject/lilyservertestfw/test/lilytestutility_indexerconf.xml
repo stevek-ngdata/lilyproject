@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<indexer xmlns:l="org.lilyproject.lilytestutility">
+  <records>
+    <record matchNamespace="l" matchName="TestRecordType" matchVariant="*" vtags="last"/>
+  </records>
+
+  <fields>
+    <field name="name" value="l:name"/>
+  </fields>
+
+</indexer>

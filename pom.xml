@@ -92,6 +92,8 @@
     <module>global/clientmetrics</module>
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
+    <module>global/lily-server-test-fw</module>
+
 
     <module>tools/lily-kauri-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
@@ -185,6 +187,12 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-testfw</artifactId>
+        <version>1.1-SNAPSHOT</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-server-testfw</artifactId>
         <version>1.1-SNAPSHOT</version>
         <scope>test</scope>
       </dependency>
