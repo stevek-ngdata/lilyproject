@@ -99,7 +99,6 @@ public class LilyTestUtility {
     }
 
     public void addIndexFromResource(String indexerConf) throws IOException, IndexerConfException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
-        System.out.println("Adding index from resource : " + indexerConf);
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();

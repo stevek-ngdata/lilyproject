@@ -46,7 +46,6 @@ public class LilyTestUtilityTest {
     
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        // TODO use anothe kauriHome path here
         lilyTestUtilily = new LilyTestUtility("../../cr/process/server/", "org/lilyproject/lilyservertestfw/test/lilytestutility_solr_schema.xml");
         lilyTestUtilily.start();
         LilyClient lilyClient = lilyTestUtilily.getClient();
