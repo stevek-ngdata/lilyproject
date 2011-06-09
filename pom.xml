@@ -40,6 +40,9 @@
     <!-- Align jetty versions -->
     <version.jetty>6.1.24</version.jetty>
     <version.jetty.jspapi>6.1.14</version.jetty.jspapi>
+
+    <!-- Tells maven plugins what file encoding to use -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>
