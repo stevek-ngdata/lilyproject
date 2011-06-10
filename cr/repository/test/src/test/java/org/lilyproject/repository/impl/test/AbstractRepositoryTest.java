@@ -22,12 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.easymock.IMocksControl;
 import org.junit.After;
@@ -1486,5 +1481,16 @@ public abstract class AbstractRepositoryTest {
         
         readRecords = repository.read(Arrays.asList(new RecordId[]{}));
         assertTrue(readRecords.isEmpty());
+    }
+
+    @Test
+    public void testConditionalUpdate() throws Exception {
+        Record record = createDefaultRecord();
+
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
+
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+        assertEquals("value1", record.getField(fieldType1.getName()));
     }
 }

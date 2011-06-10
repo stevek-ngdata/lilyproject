@@ -37,13 +37,21 @@
         {"name": "fields", "type": {"type": "array", "items": "AvroField"}},
         {"name": "fieldsToDelete", "type": {"type": "array", "items": "string"}},
         {"name": "responseStatus", "type": [
-          {"name": "AvroResponseStatus", "type": "enum", "symbols": ["CREATED", "UPDATED", "UP_TO_DATE"]},
+          {"name": "AvroResponseStatus", "type": "enum", "symbols": ["CREATED", "UPDATED", "UP_TO_DATE", "CONFLICT"]},
           "null"
         ]
         }
       ]
     },
     
+    {
+      "name": "AvroMutationCondition",
+      "type": "record",
+      "fields": [
+        {"name": "field", "type": "AvroField"}
+      ]
+    },
+
     {
       "name": "AvroSchemaId",
       "type": "record",
@@ -185,7 +193,8 @@
       "request": [
         {"name": "record", "type": "AvroRecord"},
         {"name": "updateVersion", "type": "boolean"},
-        {"name": "useLatestRecordType", "type": "boolean"}],
+        {"name": "useLatestRecordType", "type": "boolean"},
+        {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]}],
       "response": "AvroRecord",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },

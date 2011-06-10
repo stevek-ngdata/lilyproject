@@ -41,8 +41,19 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
+    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
+            List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
+        return delegate.update(record, updateVersion, useLatestRecordType, conditions);
+    }
+
+    @Override
     public Record update(Record record) throws RepositoryException, InterruptedException {
         return delegate.update(record);
+    }
+
+    @Override
+    public Record update(Record record, List<MutationCondition> conditions) throws RepositoryException {
+        return delegate.update(record, conditions);
     }
 
     @Override

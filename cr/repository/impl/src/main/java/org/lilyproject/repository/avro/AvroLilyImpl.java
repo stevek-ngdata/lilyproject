@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.avro.AvroRemoteException;
 import org.lilyproject.repository.api.*;
 
 public class AvroLilyImpl implements AvroLily {
@@ -150,10 +151,12 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
-    public AvroRecord update(AvroRecord record, boolean updateVersion, boolean useLatestRecordType) throws
-            AvroRepositoryException, AvroInterruptedException {
+    @Override
+    public AvroRecord update(AvroRecord record, boolean updateVersion, boolean useLatestRecordType,
+            List<AvroMutationCondition> conditions) throws AvroRemoteException {
         try {
-            return converter.convert(repository.update(converter.convert(record), updateVersion, useLatestRecordType));
+            return converter.convert(repository.update(converter.convert(record), updateVersion, useLatestRecordType,
+                    converter.convertFromAvro(conditions)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {

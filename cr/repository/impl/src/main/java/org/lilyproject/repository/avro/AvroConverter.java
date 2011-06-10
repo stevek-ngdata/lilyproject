@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
+import org.lilyproject.repository.impl.MutationConditionVerifier;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public class AvroConverter {
@@ -123,6 +124,27 @@ public class AvroConverter {
         return new IdRecordImpl(convert(avroIdRecord.record), idToQNameMapping, recordTypeIds);
     }
     
+    public List<MutationCondition> convertFromAvro(List<AvroMutationCondition> avroConditions)
+            throws RepositoryException, InterruptedException {
+
+        if (avroConditions == null) {
+            return null;
+        }
+
+        List<MutationCondition> conditions = new ArrayList<MutationCondition>(avroConditions.size());
+
+        for (AvroMutationCondition avroCond : avroConditions) {
+            AvroField field = avroCond.field;
+            QName name = decodeQName(convert(field.name));
+            ValueType valueType = typeManager.getValueType(convert(field.primitiveType), field.multiValue, field.hierarchical);
+            Object value = valueType.read(new DataInputImpl(field.value.array()));
+
+            conditions.add(new MutationCondition(name, value));
+        }
+
+        return conditions;
+    }
+
     public AvroRecord convert(Record record) throws AvroRepositoryException, AvroInterruptedException {
         AvroRecord avroRecord = new AvroRecord();
         // Id
@@ -218,6 +240,43 @@ public class AvroConverter {
             }
         }
         return avroIdRecord;
+    }
+
+    public List<AvroMutationCondition> convert(List<MutationCondition> conditions)
+            throws AvroRepositoryException, AvroInterruptedException {
+
+        if (conditions == null) {
+            return null;
+        }
+
+        List<AvroMutationCondition> avroConditions = new ArrayList<AvroMutationCondition>(conditions.size());
+
+        for (MutationCondition condition : conditions) {
+            FieldType fieldType;
+            try {
+                fieldType = typeManager.getFieldTypeByName(condition.getField());
+            } catch (RepositoryException e) {
+                throw convert(e);
+            } catch (InterruptedException e) {
+                throw convert(e);
+            }
+
+            AvroField field = new AvroField();
+            field.name = encodeQName(condition.getField());
+            field.primitiveType = convert(fieldType.getValueType().getPrimitive().getName());
+            field.multiValue = fieldType.getValueType().isMultiValue();
+            field.hierarchical = fieldType.getValueType().isHierarchical();
+
+            byte[] value = fieldType.getValueType().toBytes(condition.getValue());
+            field.value = ByteBuffer.wrap(value);
+
+            AvroMutationCondition avroCond = new AvroMutationCondition();
+            avroCond.field = field;
+
+            avroConditions.add(avroCond);
+        }
+
+        return avroConditions;
     }
 
     // The key of a map can only be a string in avro

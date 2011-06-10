@@ -141,12 +141,17 @@ public interface Repository extends Closeable {
      * @throws WalProcessingException 
      */
     Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException, InterruptedException;
-    
+
     /**
      * Shortcut for update(record, false, true)
      * @throws WalProcessingException 
      */
     Record update(Record record) throws RepositoryException, InterruptedException;
+
+    Record update(Record record, List<MutationCondition> conditions) throws RepositoryException, InterruptedException;
+
+    Record update(Record record, boolean updateVersion, boolean useLatestRecordType, List<MutationCondition> conditions)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Creates or updates a record, depending on whether the record already exists.

@@ -203,9 +203,22 @@ public class RemoteRepository extends BaseRepository {
         return update(record, false, true);
     }
 
-    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException, InterruptedException {
+    @Override
+    public Record update(Record record, List<MutationCondition> conditions)
+            throws RepositoryException, InterruptedException {
+        return update(record, false, true, conditions);
+    }
+
+    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType)
+            throws RepositoryException, InterruptedException {
+        return update(record, updateVersion, useLatestRecordType, null);
+    }
+
+    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
+            List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
         try {
-            return converter.convert(lilyProxy.update(converter.convert(record), updateVersion, useLatestRecordType));
+            return converter.convert(lilyProxy.update(converter.convert(record), updateVersion, useLatestRecordType,
+                    converter.convert(conditions)));
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

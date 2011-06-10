@@ -255,7 +255,16 @@ public class HBaseRepository extends BaseRepository {
         return update(record, false, true);
     }
 
+    public Record update(Record record, List<MutationCondition> conditions) throws RepositoryException {
+        return update(record, false, true, conditions);
+    }
+
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException {
+        return update(record, updateVersion, useLatestRecordType, null);
+    }
+
+    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
+            List<MutationCondition> conditions) throws RepositoryException {
 
         long before = System.currentTimeMillis();
         RecordId recordId = record.getId();
@@ -281,7 +290,7 @@ public class HBaseRepository extends BaseRepository {
                             e);
                 }
             } else {
-                return updateRecord(record, useLatestRecordType, rowLock, fieldTypes);
+                return updateRecord(record, useLatestRecordType, rowLock, fieldTypes, conditions);
             }
         } catch (IOException e) {
             throw new RecordException("Exception occurred while updating record '" + recordId + ">' on HBase table",
@@ -293,14 +302,18 @@ public class HBaseRepository extends BaseRepository {
     }
     
     
-    private Record updateRecord(Record record, boolean useLatestRecordType, RowLock rowLock, FieldTypes fieldTypes)
-            throws RepositoryException {
+    private Record updateRecord(Record record, boolean useLatestRecordType, RowLock rowLock, FieldTypes fieldTypes,
+            List<MutationCondition> conditions) throws RepositoryException {
 
         Record newRecord = record.clone();
 
         RecordId recordId = record.getId();
         try {
             Record originalRecord = read(newRecord.getId(), null, null, null, fieldTypes);
+
+            if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, record)) {
+                return originalRecord;
+            }
 
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
