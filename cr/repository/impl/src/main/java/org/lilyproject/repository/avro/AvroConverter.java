@@ -607,27 +607,7 @@ public class AvroConverter {
         }
         return avroRecordIds;
     }
-    
-    public Blob convert(AvroBlob avroBlob) {
-        byte[] value = null;
-        if (avroBlob.value != null)
-            value = avroBlob.value.array();
-        String mediaType = convert(avroBlob.mediaType);
-        Long size = avroBlob.size;
-        String name = convert(avroBlob.name);
-        return new Blob(value, mediaType, size, name);
-    }
 
-    public AvroBlob convert(Blob blob) {
-        AvroBlob avroBlob = new AvroBlob();
-        if (blob.getValue() != null) 
-            avroBlob.value = ByteBuffer.wrap(blob.getValue());
-        avroBlob.mediaType = convert(blob.getMediaType());
-        avroBlob.size = blob.getSize();
-        avroBlob.name = convert(blob.getName());
-        return avroBlob;
-    }
-    
     public SchemaId convert(AvroSchemaId avroSchemaId) {
         if (avroSchemaId == null)
             return null;

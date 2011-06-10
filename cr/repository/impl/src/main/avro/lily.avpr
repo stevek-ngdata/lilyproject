@@ -70,17 +70,6 @@
         {"name": "scopeRecordTypeIds", "type": {"type": "map", "values": ["AvroSchemaId", "null"]}}
       ]
     },
-    
-    {
-      "name": "AvroBlob",
-      "type": "record",
-      "fields": [
-        {"name": "mediaType", "type": ["string", "null"]},
-        {"name": "size", "type": "long"},
-        {"name": "name", "type": ["string", "null"]},
-        {"name": "value", "type": ["bytes", "null"]}
-      ]
-    },
 
     {
       "name": "AvroStackTraceElement",
