@@ -16,7 +16,7 @@
       "name": "AvroField",
       "type": "record",
       "fields": [
-        {"name": "name", "type": "string"},
+        {"name": "name", "type": "AvroQName"},
         {"name": "primitiveType", "type": "string"},
         {"name": "multiValue", "type": "boolean"},
         {"name": "hierarchical", "type": "boolean"},
@@ -35,7 +35,7 @@
         {"name": "scopeRecordTypeNames", "type": {"type": "map", "values": ["AvroQName", "null"]}},
         {"name": "scopeRecordTypeVersions", "type": {"type": "map", "values": "long"}},
         {"name": "fields", "type": {"type": "array", "items": "AvroField"}},
-        {"name": "fieldsToDelete", "type": {"type": "array", "items": "string"}},
+        {"name": "fieldsToDelete", "type": {"type": "array", "items": "AvroQName"}},
         {"name": "responseStatus", "type": [
           {"name": "AvroResponseStatus", "type": "enum", "symbols": ["CREATED", "UPDATED", "UP_TO_DATE", "CONFLICT"]},
           "null"

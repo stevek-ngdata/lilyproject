@@ -27,7 +27,6 @@ import org.apache.commons.logging.LogFactory;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
-import org.lilyproject.repository.impl.MutationConditionVerifier;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public class AvroConverter {
@@ -74,7 +73,7 @@ public class AvroConverter {
         // Fields
         if (avroRecord.fields != null) {
             for (AvroField field : avroRecord.fields) {
-                QName name = decodeQName(convert(field.name));
+                QName name = convert(field.name);
                 ValueType valueType = typeManager.getValueType(convert(field.primitiveType), field.multiValue, field.hierarchical);
                 Object value = valueType.read(new DataInputImpl(field.value.array()));
                 record.setField(name, value);
@@ -82,11 +81,11 @@ public class AvroConverter {
         }
 
         // FieldsToDelete
-        List<CharSequence> avroFieldsToDelete = avroRecord.fieldsToDelete;
+        List<AvroQName> avroFieldsToDelete = avroRecord.fieldsToDelete;
         if (avroFieldsToDelete != null) {
             List<QName> fieldsToDelete = new ArrayList<QName>();
-            for (CharSequence fieldToDelete : avroFieldsToDelete) {
-                fieldsToDelete.add(decodeQName(convert(fieldToDelete)));
+            for (AvroQName fieldToDelete : avroFieldsToDelete) {
+                fieldsToDelete.add(convert(fieldToDelete));
             }
             record.addFieldsToDelete(fieldsToDelete);
         }
@@ -135,7 +134,7 @@ public class AvroConverter {
 
         for (AvroMutationCondition avroCond : avroConditions) {
             AvroField field = avroCond.field;
-            QName name = decodeQName(convert(field.name));
+            QName name = convert(field.name);
             ValueType valueType = typeManager.getValueType(convert(field.primitiveType), field.multiValue, field.hierarchical);
             Object value = valueType.read(new DataInputImpl(field.value.array()));
 
@@ -179,7 +178,7 @@ public class AvroConverter {
         avroRecord.fields = new ArrayList<AvroField>(record.getFields().size());
         for (Entry<QName, Object> field : record.getFields().entrySet()) {
             AvroField avroField = new AvroField();
-            avroField.name = encodeQName(field.getKey());
+            avroField.name = convert(field.getKey());
 
             FieldType fieldType;
             try {
@@ -202,9 +201,9 @@ public class AvroConverter {
 
         // FieldsToDelete
         List<QName> fieldsToDelete = record.getFieldsToDelete();
-        avroRecord.fieldsToDelete = new ArrayList<CharSequence>(fieldsToDelete.size());
+        avroRecord.fieldsToDelete = new ArrayList<AvroQName>(fieldsToDelete.size());
         for (QName fieldToDelete : fieldsToDelete) {
-            avroRecord.fieldsToDelete.add(encodeQName(fieldToDelete));
+            avroRecord.fieldsToDelete.add(convert(fieldToDelete));
         }
 
         // Response status
@@ -262,7 +261,7 @@ public class AvroConverter {
             }
 
             AvroField field = new AvroField();
-            field.name = encodeQName(condition.getField());
+            field.name = convert(condition.getField());
             field.primitiveType = convert(fieldType.getValueType().getPrimitive().getName());
             field.multiValue = fieldType.getValueType().isMultiValue();
             field.hierarchical = fieldType.getValueType().isHierarchical();
@@ -278,30 +277,6 @@ public class AvroConverter {
 
         return avroConditions;
     }
-
-    // The key of a map can only be a string in avro
-    private String encodeQName(QName qname) {
-        StringBuilder stringBuilder = new StringBuilder();
-        String namespace = qname.getNamespace();
-        if (namespace != null) {
-            stringBuilder.append(namespace);
-        }
-        stringBuilder.append(":");
-        stringBuilder.append(qname.getName());
-        return stringBuilder.toString();
-    }
-
-    // The key of a map can only be a string in avro
-    private QName decodeQName(String string) {
-        int separatorIndex = string.indexOf(":");
-        String namespace = null;
-        if (separatorIndex != 0) {
-            namespace = string.substring(0, separatorIndex);
-        }
-        String name = string.substring(separatorIndex+1);
-        return new QName(namespace, name);
-    }
-    
     
     public FieldType convert(AvroFieldType avroFieldType) throws RepositoryException, InterruptedException {
         ValueType valueType = convert(avroFieldType.valueType);
