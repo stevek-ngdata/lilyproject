@@ -26,6 +26,7 @@ import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.net.NetUtils;
+import org.restlet.Client;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -70,14 +71,18 @@ public class KauriTestUtility {
         // We specify the module source locations, because when this test is run, the current module
         // will not yet be installed yet in the Maven repository. While we could get it from the target
         // directory, this approach makes it easier to run the tests from within your IDE.
-        FileInputStream fis = new FileInputStream(new File(getBasedir() + serverProcessSrcDir + "module-source-locations.properties"));
-        SourceLocations sourceLocations = new SourceLocations(fis, getBasedir() + serverProcessSrcDir);
-        fis.close();
-        settings.setSourceLocations(sourceLocations);
+        File sourceLocationsFile = new File(getBasedir() + serverProcessSrcDir + "module-source-locations.properties");
+        if (sourceLocationsFile.exists()) {
+            FileInputStream fis = new FileInputStream(sourceLocationsFile);
+            SourceLocations sourceLocations = new SourceLocations(fis, getBasedir() + serverProcessSrcDir);
+            fis.close();
+            settings.setSourceLocations(sourceLocations);
+        }
 
         runtime = new KauriRuntime(settings);
         runtime.setMode(Mode.getDefault());
         runtime.start();
+        System.out.println("[Evert] KaurRuntime started");
     }
 
     public void stop() {
@@ -97,10 +102,10 @@ public class KauriTestUtility {
     public KauriRuntime getRuntime() {
         return runtime;
     }
-
-//    public Client getClient() {
-//        return runtime.getRestserviceManager().getComponent().getContext().getClientDispatcher();
-//    }
+    
+    public Client getClient() {
+        return runtime.getRestserviceManager().getComponent().getContext().getClientDispatcher();
+    }
 
     public ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
