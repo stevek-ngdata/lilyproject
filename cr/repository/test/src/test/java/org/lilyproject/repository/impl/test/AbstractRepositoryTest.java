@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 
 import java.util.*;
 
+import org.apache.hadoop.hbase.thrift.generated.Mutation;
 import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.Before;
@@ -1487,10 +1488,148 @@ public abstract class AbstractRepositoryTest {
     public void testConditionalUpdate() throws Exception {
         Record record = createDefaultRecord();
 
+        //
+        // Single condition
+        //
         record.setField(fieldType1.getName(), "value2");
         record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
 
         assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
         assertEquals("value1", record.getField(fieldType1.getName()));
+
+        // Check repository state was really not modified
+        record = repository.read(record.getId());
+        assertEquals("value1", record.getField(fieldType1.getName()));
+
+        //
+        // Multiple conditions
+        //
+        List<MutationCondition> conditions = new ArrayList<MutationCondition>();
+        conditions.add(new MutationCondition(fieldType1.getName(), "value1")); // evals to true
+        conditions.add(new MutationCondition(fieldType2.getName(), 123)); // evals to true
+        conditions.add(new MutationCondition(fieldType3.getName(), false)); // evals to false
+
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record, conditions);
+
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+        assertEquals("value1", record.getField(fieldType1.getName()));
+
+        // Check repository state was really not modified
+        record = repository.read(record.getId());
+        assertEquals("value1", record.getField(fieldType1.getName()));
+
+        //
+        // Not-equals condition
+        //
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(fieldType1.getName(), CompareOp.NOT_EQUAL, "value1")));
+
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+        assertEquals("value1", record.getField(fieldType1.getName()));
+
+        //
+        // Other than equals conditions
+        //
+        for (CompareOp op : CompareOp.values()) {
+            List<Integer> testValues = new ArrayList<Integer>();
+            switch (op) {
+                case LESS:
+                    testValues.add(123);
+                    testValues.add(122);
+                    break;
+                case LESS_OR_EQUAL:
+                    testValues.add(122);
+                    break;
+                case EQUAL:
+                    testValues.add(122);
+                    testValues.add(124);
+                    break;
+                case NOT_EQUAL:
+                    testValues.add(123);
+                    break;
+                case GREATER_OR_EQUAL:
+                    testValues.add(124);
+                    break;
+                case GREATER:
+                    testValues.add(123);
+                    testValues.add(124);
+            }
+
+            for (Integer testValue : testValues) {
+                record.setField(fieldType2.getName(), 999);
+                record = repository.update(record,
+                        Collections.singletonList(new MutationCondition(fieldType2.getName(), op, testValue)));
+
+                assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+                assertEquals(123, record.getField(fieldType2.getName()));
+            }
+        }
+
+        //
+        // Allow missing fields
+        //
+
+        record.setField(fieldType1.getName(), "value2");
+        // note that we're testing on field 1B!
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(fieldType1B.getName(), CompareOp.EQUAL, "whatever", true)));
+
+        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
+        assertEquals("value2", record.getField(fieldType1.getName()));
+
+        // reset record state
+        record.setField(fieldType1.getName(), "value1");
+        record = repository.update(record);
+
+        //
+        // Test for missing field
+        //
+
+        // Field MUST be missing
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(fieldType1.getName(), CompareOp.EQUAL, null)));
+
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+        assertEquals("value1", record.getField(fieldType1.getName()));
+
+        // Field MUST NOT be missing (but can have whatever value) -- note that we test on field 1B!
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(fieldType1B.getName(), CompareOp.NOT_EQUAL, null)));
+
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+        assertEquals("value1", record.getField(fieldType1.getName()));
+
+        // Same, successful case
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(fieldType1.getName(), CompareOp.NOT_EQUAL, null)));
+
+        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
+        assertEquals("value2", record.getField(fieldType1.getName()));
+
+        // reset record state
+        record.setField(fieldType1.getName(), "value1");
+        record = repository.update(record);
+
+        //
+        // Test for present field
+        //
+
+        //
+        // Supplied values differ from field type (classcastexception)
+        //
+
+        // TODO
+
+        //
+        // Test on system fields
+        //
+
+        // TODO
+
     }
 }

@@ -48,7 +48,15 @@
       "name": "AvroMutationCondition",
       "type": "record",
       "fields": [
-        {"name": "field", "type": "AvroField"}
+        {"name": "name", "type": "AvroQName"},
+        {"name": "primitiveType", "type": ["null", "string"]},
+        {"name": "multiValue", "type": ["null", "boolean"]},
+        {"name": "hierarchical", "type": ["null", "boolean"]},
+        {"name": "value", "type": ["null", "bytes"]},
+        {"name": "operator", "type":
+          {"name": "AvroCompareOp", "type": "enum",
+           "symbols": ["LESS", "LESS_OR_EQUAL", "EQUAL", "NOT_EQUAL", "GREATER_OR_EQUAL", "GREATER"]}},
+        {"name": "allowMissing", "type": "boolean"}
       ]
     },
 

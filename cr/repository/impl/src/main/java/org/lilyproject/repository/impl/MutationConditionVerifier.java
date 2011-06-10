@@ -1,10 +1,8 @@
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.MutationCondition;
-import org.lilyproject.repository.api.ResponseStatus;
+import org.lilyproject.repository.api.*;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +16,9 @@ public class MutationConditionVerifier {
      * @param record the complete record state as currently stored in the repository
      * @param conditions the conditions that should be satisfied
      */
-    public static boolean checkConditions(Record record, List<MutationCondition> conditions, Record newRecord) {
+    public static boolean checkConditions(Record record, List<MutationCondition> conditions, TypeManager typeManager,
+            Record newRecord) throws RepositoryException, InterruptedException {
+
         if (conditions == null) {
             return true;
         }
@@ -31,12 +31,40 @@ public class MutationConditionVerifier {
         // will likely already have happened as part of serialization/deserialization code.
 
         for (MutationCondition condition : conditions) {
-            if (!record.hasField(condition.getField())) {
+            Object value = record.getFields().get(condition.getField());
+
+            // Compare with null value is special case, handle this first
+            if (condition.getValue() == null) {
+                if (condition.getOp() == CompareOp.EQUAL) {
+                    if (value == null) {
+                        continue;
+                    } else {
+                        allSatisfied = false;
+                        break;
+                    }
+                } else if (condition.getOp() == CompareOp.NOT_EQUAL) {
+                    if (value != null) {
+                        continue;
+                    } else {
+                        allSatisfied = false;
+                        break;
+                    }
+                } else {
+                    throw new RepositoryException("When comparing to null, only (not-)equal operator is allowed. " +
+                            "Operator: " + condition.getOp() + ", field: " + condition.getField());
+                }
+            }
+
+            if (value == null && condition.getAllowMissing()) {
+                continue;
+            }
+
+            if (value == null) {
                 allSatisfied = false;
                 break;
             }
-            Object fieldValue = record.getField(condition.getField());
-            if (!fieldValue.equals(condition.getValue())) {
+
+            if (!checkValue(condition, value, typeManager)) {
                 allSatisfied = false;
                 break;
             }
@@ -50,6 +78,60 @@ public class MutationConditionVerifier {
         }
 
         return true;
+    }
+
+    private static boolean checkValue(MutationCondition cond, Object currentValue, TypeManager typeManager)
+            throws RepositoryException, InterruptedException {
+
+        if (cond.getOp() == CompareOp.EQUAL) {
+            return currentValue.equals(cond.getValue());
+        } else if (cond.getOp() == CompareOp.NOT_EQUAL) {
+            return !currentValue.equals(cond.getValue());
+        }
+
+        ValueType valueType = typeManager.getFieldTypeByName(cond.getField()).getValueType();
+        Comparator comparator = valueType.getPrimitive().getComparator();
+
+        if (!valueType.isPrimitive()) {
+            throw new RepositoryException("Other than (not-)equal operator in mutation condition is only allowed for "
+                    + "single-valued fields. Condition on field: " + cond.getField());
+        }
+
+        if (comparator == null) {
+            throw new RepositoryException("Other than (not-)equals operator in mutation condition used for value type "
+                    + "that does not support comparison: " + valueType.getPrimitive().getName());
+        }
+
+        int result = comparator.compare(currentValue, cond.getValue());
+
+        if (result == 0) {
+            switch (cond.getOp()) {
+                case EQUAL:
+                case GREATER_OR_EQUAL:
+                case LESS_OR_EQUAL:
+                    return true;
+                default:
+                    return false;
+            }
+        } else if (result < 0) {
+            switch (cond.getOp()) {
+                case LESS:
+                case LESS_OR_EQUAL:
+                case NOT_EQUAL:
+                    return true;
+                default:
+                    return false;
+            }
+        } else { // result > 0
+            switch (cond.getOp()) {
+                case GREATER:
+                case GREATER_OR_EQUAL:
+                case NOT_EQUAL:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 
     private static void reduceFields(Record record, Set<QName> fieldsToInclude) {

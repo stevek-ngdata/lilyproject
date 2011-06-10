@@ -311,7 +311,7 @@ public class HBaseRepository extends BaseRepository {
         try {
             Record originalRecord = read(newRecord.getId(), null, null, null, fieldTypes);
 
-            if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, record)) {
+            if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, typeManager, record)) {
                 return originalRecord;
             }
 

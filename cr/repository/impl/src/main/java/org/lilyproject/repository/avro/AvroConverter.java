@@ -133,15 +133,26 @@ public class AvroConverter {
         List<MutationCondition> conditions = new ArrayList<MutationCondition>(avroConditions.size());
 
         for (AvroMutationCondition avroCond : avroConditions) {
-            AvroField field = avroCond.field;
-            QName name = convert(field.name);
-            ValueType valueType = typeManager.getValueType(convert(field.primitiveType), field.multiValue, field.hierarchical);
-            Object value = valueType.read(new DataInputImpl(field.value.array()));
+            QName name = convert(avroCond.name);
 
-            conditions.add(new MutationCondition(name, value));
+            // value is optional
+            Object value = null;
+            if (avroCond.value != null) {
+                ValueType valueType = typeManager.getValueType(convert(avroCond.primitiveType), avroCond.multiValue, avroCond.hierarchical);
+                value = valueType.read(new DataInputImpl(avroCond.value.array()));
+            }
+
+            CompareOp op = convert(avroCond.operator);
+            boolean allowMissing = avroCond.allowMissing;
+
+            conditions.add(new MutationCondition(name, op, value, allowMissing));
         }
 
         return conditions;
+    }
+
+    public CompareOp convert(AvroCompareOp op) {
+        return op == null ? null : CompareOp.values()[op.ordinal()];
     }
 
     public AvroRecord convert(Record record) throws AvroRepositoryException, AvroInterruptedException {
@@ -260,17 +271,22 @@ public class AvroConverter {
                 throw convert(e);
             }
 
-            AvroField field = new AvroField();
-            field.name = convert(condition.getField());
-            field.primitiveType = convert(fieldType.getValueType().getPrimitive().getName());
-            field.multiValue = fieldType.getValueType().isMultiValue();
-            field.hierarchical = fieldType.getValueType().isHierarchical();
-
-            byte[] value = fieldType.getValueType().toBytes(condition.getValue());
-            field.value = ByteBuffer.wrap(value);
 
             AvroMutationCondition avroCond = new AvroMutationCondition();
-            avroCond.field = field;
+
+            avroCond.name = convert(condition.getField());
+
+            if (condition.getValue() != null) {
+                avroCond.primitiveType = convert(fieldType.getValueType().getPrimitive().getName());
+                avroCond.multiValue = fieldType.getValueType().isMultiValue();
+                avroCond.hierarchical = fieldType.getValueType().isHierarchical();
+
+                byte[] value = fieldType.getValueType().toBytes(condition.getValue());
+                avroCond.value = ByteBuffer.wrap(value);
+            }
+
+            avroCond.operator = convert(condition.getOp());
+            avroCond.allowMissing = condition.getAllowMissing();
 
             avroConditions.add(avroCond);
         }
@@ -278,6 +294,10 @@ public class AvroConverter {
         return avroConditions;
     }
     
+    public AvroCompareOp convert(CompareOp op) {
+        return op == null ? null : AvroCompareOp.values()[op.ordinal()];
+    }
+
     public FieldType convert(AvroFieldType avroFieldType) throws RepositoryException, InterruptedException {
         ValueType valueType = convert(avroFieldType.valueType);
         QName name = convert(avroFieldType.name);
