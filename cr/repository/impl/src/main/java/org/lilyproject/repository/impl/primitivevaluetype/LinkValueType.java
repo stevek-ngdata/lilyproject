@@ -22,6 +22,8 @@ import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.PrimitiveValueType;
 import org.lilyproject.repository.api.RecordId;
 
+import java.util.Comparator;
+
 /**
  *
  */
@@ -52,5 +54,10 @@ public class LinkValueType implements PrimitiveValueType {
 
     public Class getType() {
         return RecordId.class;
+    }
+
+    @Override
+    public Comparator getComparator() {
+        return null;
     }
 }

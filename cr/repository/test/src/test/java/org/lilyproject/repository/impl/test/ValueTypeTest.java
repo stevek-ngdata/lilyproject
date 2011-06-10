@@ -16,10 +16,13 @@
 package org.lilyproject.repository.impl.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Random;
 
 import org.apache.hadoop.hbase.util.Bytes;
@@ -135,6 +138,49 @@ public class ValueTypeTest {
         runValueTypeTests("xyRecordTypeId", "XY", new XYCoordinates(-1, 1), new XYCoordinates(Integer.MIN_VALUE, Integer.MAX_VALUE), new XYCoordinates(666, 777));
     }
 
+    @Test
+    public void testComparators() throws Exception {
+        Comparator comparator = typeManager.getValueType("LONG").getPrimitive().getComparator();
+        assertTrue(comparator.compare(new Long(2), new Long(5)) < 0);
+        assertTrue(comparator.compare(new Long(5), new Long(5)) == 0);
+
+        comparator = typeManager.getValueType("DOUBLE").getPrimitive().getComparator();
+        assertTrue(comparator.compare(new Double(2.2d), new Double(5.5d)) < 0);
+
+        comparator = typeManager.getValueType("BLOB").getPrimitive().getComparator();
+        assertNull(comparator);
+
+        comparator = typeManager.getValueType("DATE").getPrimitive().getComparator();
+        assertTrue(comparator.compare(new LocalDate(2012, 5, 5), new LocalDate(2013, 5, 5)) < 0);
+        assertTrue(comparator.compare(new LocalDate(2012, 5, 5), new LocalDate(2012, 5, 5)) == 0);
+
+        comparator = typeManager.getValueType("URI").getPrimitive().getComparator();
+        assertNull(comparator);
+
+        comparator = typeManager.getValueType("DECIMAL").getPrimitive().getComparator();
+        assertTrue(comparator.compare(new BigDecimal("2"), new BigDecimal("5")) < 0);
+        assertTrue(comparator.compare(new BigDecimal("5"), new BigDecimal("5")) == 0);
+
+        comparator = typeManager.getValueType("BOOLEAN").getPrimitive().getComparator();
+        assertTrue(comparator.compare(Boolean.FALSE, Boolean.TRUE) < 0);
+        assertTrue(comparator.compare(Boolean.TRUE, Boolean.TRUE) == 0);
+
+        comparator = typeManager.getValueType("DATETIME").getPrimitive().getComparator();
+        assertTrue(comparator.compare(new DateTime(2012, 5, 5, 6, 7, 8, 9), new DateTime(2012, 5, 5, 6, 7, 8, 10)) < 0);
+        assertTrue(comparator.compare(new DateTime(2012, 5, 5, 6, 7, 8, 9), new DateTime(2012, 5, 5, 6, 7, 8, 9)) == 0);
+
+        comparator = typeManager.getValueType("STRING").getPrimitive().getComparator();
+        assertTrue(comparator.compare("a", "b") < 0);
+        assertTrue(comparator.compare("a", "a") == 0);
+
+        comparator = typeManager.getValueType("LINK").getPrimitive().getComparator();
+        assertNull(comparator);
+
+        comparator = typeManager.getValueType("INTEGER").getPrimitive().getComparator();
+        assertTrue(comparator.compare(new Integer(2), new Integer(5)) < 0);
+        assertTrue(comparator.compare(new Integer(5), new Integer(5)) == 0);
+    }
+
     private void runValueTypeTests(String name, String primitiveValueType, Object value1, Object value2, Object value3) throws Exception {
         testType(name, primitiveValueType, false, false, value1);
         testType(name, primitiveValueType, true, false, Arrays.asList(value1,
@@ -203,6 +249,11 @@ public class ValueTypeTest {
 
         public Class getType() {
             return XYCoordinates.class;
+        }
+
+        @Override
+        public Comparator getComparator() {
+            return null;
         }
     }
 

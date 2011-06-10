@@ -16,6 +16,7 @@
 package org.lilyproject.repository.impl.primitivevaluetype;
 
 import java.net.URI;
+import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
@@ -39,6 +40,11 @@ public class UriValueType implements PrimitiveValueType {
 
     public Class getType() {
         return Long.class;
+    }
+
+    @Override
+    public Comparator getComparator() {
+        return null;
     }
 
     @Override

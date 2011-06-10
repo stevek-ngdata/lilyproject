@@ -21,6 +21,8 @@ import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
+import java.util.Comparator;
+
 public class BlobValueType implements PrimitiveValueType {
     private final String NAME = "BLOB";
 
@@ -81,4 +83,8 @@ public class BlobValueType implements PrimitiveValueType {
         return Blob.class;
     }
 
+    @Override
+    public Comparator getComparator() {
+        return null;
+    }
 }

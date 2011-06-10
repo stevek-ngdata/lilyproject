@@ -22,9 +22,18 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput; 
 import org.lilyproject.repository.api.PrimitiveValueType;
 
+import java.util.Comparator;
+
 public class DateValueType implements PrimitiveValueType {
 
     private final String NAME = "DATE";
+
+    private static final Comparator<LocalDate> COMPARATOR = new Comparator<LocalDate>() {
+        @Override
+        public int compare(LocalDate o1, LocalDate o2) {
+            return o1.compareTo(o2);
+        }
+    };
 
     public String getName() {
         return NAME;
@@ -44,6 +53,11 @@ public class DateValueType implements PrimitiveValueType {
 
     public Class getType() {
         return LocalDate.class;
+    }
+
+    @Override
+    public Comparator getComparator() {
+        return COMPARATOR;
     }
 
     @Override

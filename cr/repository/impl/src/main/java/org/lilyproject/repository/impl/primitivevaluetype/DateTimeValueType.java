@@ -21,9 +21,18 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
+import java.util.Comparator;
+
 public class DateTimeValueType implements PrimitiveValueType {
 
     private final String NAME = "DATETIME";
+
+    private static final Comparator<DateTime> COMPARATOR = new Comparator<DateTime>() {
+        @Override
+        public int compare(DateTime o1, DateTime o2) {
+            return o1.compareTo(o2);
+        }
+    };
 
     public String getName() {
         return NAME;
@@ -43,6 +52,11 @@ public class DateTimeValueType implements PrimitiveValueType {
 
     public Class getType() {
         return DateTime.class;
+    }
+
+    @Override
+    public Comparator getComparator() {
+        return COMPARATOR;
     }
 
     @Override

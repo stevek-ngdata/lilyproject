@@ -19,9 +19,18 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
+import java.util.Comparator;
+
 public class DoubleValueType implements PrimitiveValueType {
 
     private final String NAME = "DOUBLE";
+
+    private static final Comparator<Double> COMPARATOR = new Comparator<Double>() {
+        @Override
+        public int compare(Double o1, Double o2) {
+            return o1.compareTo(o2);
+        }
+    };
 
     public String getName() {
         return NAME;
@@ -37,6 +46,11 @@ public class DoubleValueType implements PrimitiveValueType {
 
     public Class getType() {
         return Long.class;
+    }
+
+    @Override
+    public Comparator getComparator() {
+        return COMPARATOR;
     }
 
     @Override

@@ -18,6 +18,8 @@ package org.lilyproject.repository.api;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 
+import java.util.Comparator;
+
 /**
  * Represents the primitive type that can be used for the value of a field. It should be embedded in a
  * {@link ValueType} before using it in a {@link FieldType}.
@@ -55,6 +57,15 @@ public interface PrimitiveValueType {
      * The Java type of the values of this primitive value type.
      */
     Class getType();
+
+    /**
+     * A comparator that can compare the values corresponding to this value type.
+     *
+     * <p>If comparing values is not supported, null is returned.</p>
+     *
+     * <p>This method should be lightweight to call, so preferably return the same instance on each invocation.</p>
+     */
+    Comparator getComparator();
     
     @Override
     boolean equals(Object obj);

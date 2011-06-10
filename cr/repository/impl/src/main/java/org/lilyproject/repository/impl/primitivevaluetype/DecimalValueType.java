@@ -16,6 +16,7 @@
 package org.lilyproject.repository.impl.primitivevaluetype;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
@@ -24,6 +25,13 @@ import org.lilyproject.repository.api.PrimitiveValueType;
 public class DecimalValueType implements PrimitiveValueType {
 
     private final String NAME = "DECIMAL";
+
+    private static final Comparator<BigDecimal> COMPARATOR = new Comparator<BigDecimal>() {
+        @Override
+        public int compare(BigDecimal o1, BigDecimal o2) {
+            return o1.compareTo(o2);
+        }
+    };
 
     public String getName() {
         return NAME;
@@ -38,7 +46,12 @@ public class DecimalValueType implements PrimitiveValueType {
     }
 
     public Class getType() {
-        return Long.class;
+        return BigDecimal.class;
+    }
+
+    @Override
+    public Comparator getComparator() {
+        return COMPARATOR;
     }
 
     @Override

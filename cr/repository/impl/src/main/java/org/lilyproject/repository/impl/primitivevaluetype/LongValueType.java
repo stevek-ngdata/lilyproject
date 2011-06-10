@@ -19,9 +19,18 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.PrimitiveValueType;
 
+import java.util.Comparator;
+
 public class LongValueType implements PrimitiveValueType {
 
     private final String NAME = "LONG";
+
+    private static final Comparator<Long> COMPARATOR = new Comparator<Long>() {
+        @Override
+        public int compare(Long o1, Long o2) {
+            return o1.compareTo(o2);
+        }
+    };
 
     public String getName() {
         return NAME;
@@ -37,6 +46,11 @@ public class LongValueType implements PrimitiveValueType {
 
     public Class getType() {
         return Long.class;
+    }
+
+    @Override
+    public Comparator getComparator() {
+        return COMPARATOR;
     }
 
     @Override
