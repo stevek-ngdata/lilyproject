@@ -52,7 +52,8 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public Record update(Record record, List<MutationCondition> conditions) throws RepositoryException {
+    public Record update(Record record, List<MutationCondition> conditions)
+            throws RepositoryException, InterruptedException {
         return delegate.update(record, conditions);
     }
 
