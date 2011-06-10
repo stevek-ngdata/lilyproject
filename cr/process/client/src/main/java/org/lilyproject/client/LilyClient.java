@@ -175,7 +175,7 @@ public class LilyClient implements Closeable {
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(fs, blobRootPath);
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(configuration, true);
         BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
-        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess});
+        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess);
         
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, getBlobStoreAccessConfig(zk));
         

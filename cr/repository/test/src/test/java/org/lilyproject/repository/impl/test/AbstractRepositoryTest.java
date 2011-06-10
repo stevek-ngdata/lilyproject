@@ -713,7 +713,7 @@ public abstract class AbstractRepositoryTest {
 
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(recordType1.getName(), recordType1.getVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName() }));
+        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName()));
         repository.update(deleteRecord);
 
         Record readRecord = repository.read(record.getId());
@@ -729,7 +729,7 @@ public abstract class AbstractRepositoryTest {
         assertEquals("value2", readRecord.getField(fieldType6.getName()));
         assertEquals(2222, readRecord.getField(fieldType4.getName()));
 
-        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType2.getName(), fieldType3.getName() }));
+        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType2.getName(), fieldType3.getName()));
         repository.update(deleteRecord);
 
         readRecord = repository.read(record.getId());
@@ -753,7 +753,7 @@ public abstract class AbstractRepositoryTest {
 
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(recordType1.getName(), recordType1.getVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName() }));
+        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName()));
         repository.update(deleteRecord);
         repository.update(deleteRecord);
     }
@@ -763,7 +763,7 @@ public abstract class AbstractRepositoryTest {
         Record record = createDefaultRecord();
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType2.getName() }));
+        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType2.getName()));
         repository.update(deleteRecord);
 
         Record updateRecord = repository.newRecord(record.getId());
@@ -797,7 +797,7 @@ public abstract class AbstractRepositoryTest {
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
         updateRecord.setField(fieldType2.getName(), 999);
-        updateRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName() }));
+        updateRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName()));
         repository.update(updateRecord);
 
         Record readRecord = repository.read(record.getId());
@@ -827,7 +827,7 @@ public abstract class AbstractRepositoryTest {
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
         updateRecord.setField(fieldType2.getName(), 789);
-        updateRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType2.getName() }));
+        updateRecord.addFieldsToDelete(Arrays.asList(fieldType2.getName()));
         repository.update(updateRecord);
 
         try {
@@ -1142,7 +1142,7 @@ public abstract class AbstractRepositoryTest {
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setVersion(Long.valueOf(1));
         deleteRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName(), fieldType2.getName(), fieldType3.getName() }));
+        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName(), fieldType2.getName(), fieldType3.getName()));
 
         repository.update(deleteRecord, true, false);
 
@@ -1181,7 +1181,7 @@ public abstract class AbstractRepositoryTest {
         Record deleteMutableFieldRecord = repository.newRecord(record.getId());
         deleteMutableFieldRecord.setVersion(Long.valueOf(1));
         deleteMutableFieldRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
-        deleteMutableFieldRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType3.getName() }));
+        deleteMutableFieldRecord.addFieldsToDelete(Arrays.asList(fieldType3.getName()));
 
         repository.update(deleteMutableFieldRecord, true, false);
 
@@ -1468,18 +1468,18 @@ public abstract class AbstractRepositoryTest {
         Record record2 = createDefaultRecord();
         Record record3 = createDefaultRecord();
         
-        List<Record> readRecords = repository.read(Arrays.asList(new RecordId[]{record3.getId(), record1.getId()}));
+        List<Record> readRecords = repository.read(Arrays.asList(record3.getId(), record1.getId()));
         
         assertEquals(2, readRecords.size());
         assertTrue(readRecords.contains(record1));
         assertTrue(readRecords.contains(record3));
         
         repository.delete(record2.getId());
-        readRecords = repository.read(Arrays.asList(new RecordId[]{record2.getId(), record1.getId()}));
+        readRecords = repository.read(Arrays.asList(record2.getId(), record1.getId()));
         assertEquals(1, readRecords.size());
         assertTrue(readRecords.contains(record1));
         
-        readRecords = repository.read(Arrays.asList(new RecordId[]{}));
+        readRecords = repository.read(Collections.<RecordId>emptyList());
         assertTrue(readRecords.isEmpty());
     }
 

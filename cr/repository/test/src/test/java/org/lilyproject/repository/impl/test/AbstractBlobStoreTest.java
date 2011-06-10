@@ -250,7 +250,7 @@ public abstract class AbstractBlobStoreTest {
 
         Record record2 = repository.newRecord(record.getId());
         record2.setRecordType(recordType.getName(), null);
-        record2.addFieldsToDelete(Arrays.asList(new QName[]{fieldName}));
+        record2.addFieldsToDelete(Arrays.asList(fieldName));
         
         record = repository.update(record2);
 
@@ -361,7 +361,7 @@ public abstract class AbstractBlobStoreTest {
         
         Record record3 = repository.newRecord(record.getId());
         record3.setRecordType(recordType.getName(), null);
-        record3.addFieldsToDelete(Arrays.asList(new QName[]{fieldName}));
+        record3.addFieldsToDelete(Arrays.asList(fieldName));
         record3.setVersion(record.getVersion());
         repository.update(record3, true, false);
         
@@ -415,19 +415,19 @@ public abstract class AbstractBlobStoreTest {
         
         Record record = repository.newRecord();
         record.setRecordType(recordType.getName(), null);
-        record.setField(fieldName, Arrays.asList(new Blob[]{blob, blob2}));
+        record.setField(fieldName, Arrays.asList(blob, blob2));
         record = repository.create(record);
 
         Record record2 = repository.newRecord(record.getId());
         record2.setRecordType(recordType.getName(), null);
-        record2.setField(fieldName, Arrays.asList(new Blob[]{blob2, blob3}));
+        record2.setField(fieldName, Arrays.asList(blob2, blob3));
         record2 = repository.update(record2, false, false);
 
         // Mutable update of first version
         Record record3 = repository.newRecord(record.getId());
         record3.setVersion(record.getVersion());
         record3.setRecordType(recordType.getName(), null);
-        record3.setField(fieldName, Arrays.asList(new Blob[]{blob4}));
+        record3.setField(fieldName, Arrays.asList(blob4));
         record3 = repository.update(record3, true, false);
         
         //Blob2
@@ -590,19 +590,19 @@ public abstract class AbstractBlobStoreTest {
         
         Record record = repository.newRecord();
         record.setRecordType(recordType.getName(), null);
-        record.setField(fieldName, Arrays.asList(new HierarchyPath[]{new HierarchyPath(blob, blob2), new HierarchyPath(blob3)}));
+        record.setField(fieldName, Arrays.asList(new HierarchyPath(blob, blob2), new HierarchyPath(blob3)));
         record = repository.create(record);
 
         Record record2 = repository.newRecord(record.getId());
         record2.setRecordType(recordType.getName(), null);
-        record2.setField(fieldName, Arrays.asList(new HierarchyPath[]{new HierarchyPath(blob2), new HierarchyPath(blob3, blob4)}));
+        record2.setField(fieldName, Arrays.asList(new HierarchyPath(blob2), new HierarchyPath(blob3, blob4)));
         record2 = repository.update(record2, false, false);
 
         // Mutable update of first version
         Record record3 = repository.newRecord(record.getId());
         record3.setVersion(record.getVersion());
         record3.setRecordType(recordType.getName(), null);
-        record3.setField(fieldName, Arrays.asList(new HierarchyPath[]{new HierarchyPath(blob3, blob4), new HierarchyPath(blob4)}));
+        record3.setField(fieldName, Arrays.asList(new HierarchyPath(blob3, blob4), new HierarchyPath(blob4)));
         record3 = repository.update(record3, true, false);
         
         // Blob2
@@ -715,12 +715,12 @@ public abstract class AbstractBlobStoreTest {
         
         Record record = repository.newRecord();
         record.setRecordType(recordType.getName(), null);
-        record.setField(fieldName, Arrays.asList(new HierarchyPath[]{new HierarchyPath(blob, blob2), new HierarchyPath(blob3)}));
+        record.setField(fieldName, Arrays.asList(new HierarchyPath(blob, blob2), new HierarchyPath(blob3)));
         record = repository.create(record);
 
         Record record2 = repository.newRecord(record.getId());
         record2.setRecordType(recordType.getName(), null);
-        record2.setField(fieldName, Arrays.asList(new HierarchyPath[]{new HierarchyPath(blob2), new HierarchyPath(blob3, blob4)}));
+        record2.setField(fieldName, Arrays.asList(new HierarchyPath(blob2), new HierarchyPath(blob3, blob4)));
         record2 = repository.update(record2, false, false);
 
         repository.delete(record.getId());

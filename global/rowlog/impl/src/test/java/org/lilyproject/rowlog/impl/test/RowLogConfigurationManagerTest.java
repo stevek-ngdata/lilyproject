@@ -229,24 +229,24 @@ public class RowLogConfigurationManagerTest {
 
         // Add subscription
         rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
-        callBack.expect(Collections.EMPTY_LIST);
+        callBack.expect(Collections.<String>emptyList());
         callBack.validate();
 
         // Add listener
-        callBack.expect(Arrays.asList(new String[]{"Listener1"}));
+        callBack.expect(Arrays.asList("Listener1"));
         rowLogConfigurationManager.addListener(rowLogId, subscriptionId1, "Listener1");
         callBack.validate();
 
-        callBack.expect(Arrays.asList(new String[]{"Listener1", "Listener2"}));
+        callBack.expect(Arrays.asList("Listener1", "Listener2"));
         rowLogConfigurationManager.addListener(rowLogId, subscriptionId1, "Listener2");
         callBack.validate();
 
         // Remove subscription
-        callBack.expect(Arrays.asList(new String[]{"Listener2"}));
+        callBack.expect(Arrays.asList("Listener2"));
         rowLogConfigurationManager.removeListener(rowLogId, subscriptionId1, "Listener1");
         callBack.validate();
         
-        callBack.expect(Collections.EMPTY_LIST);
+        callBack.expect(Collections.<String>emptyList());
         rowLogConfigurationManager.removeListener(rowLogId, subscriptionId1, "Listener2");
         callBack.validate();
 

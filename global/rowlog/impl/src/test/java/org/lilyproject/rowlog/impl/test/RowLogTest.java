@@ -62,7 +62,7 @@ public class RowLogTest {
         configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         configurationManager.addRowLog(rowLogId, new RowLogConfig(true, true, 100L, 500L, 5000L));
         configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
-        subscriptionIds = Arrays.asList(new String[]{subscriptionId1});
+        subscriptionIds = Arrays.asList(subscriptionId1);
         control = createControl();
         rowTable = RowLogTableUtil.getRowTable(HBASE_PROXY.getConf());
     }

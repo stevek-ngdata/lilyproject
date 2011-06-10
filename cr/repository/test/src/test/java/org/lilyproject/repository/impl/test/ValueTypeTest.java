@@ -137,13 +137,12 @@ public class ValueTypeTest {
 
     private void runValueTypeTests(String name, String primitiveValueType, Object value1, Object value2, Object value3) throws Exception {
         testType(name, primitiveValueType, false, false, value1);
-        testType(name, primitiveValueType, true, false, Arrays.asList(new Object[] { value1,
-                        value2 }));
-        testType(name, primitiveValueType, false, true, new HierarchyPath(new Object[] { value1,
-                        value2 }));
-        testType(name, primitiveValueType, true, true, Arrays.asList(new HierarchyPath[] {
-                new HierarchyPath(new Object[] { value1, value2 }),
-                new HierarchyPath(new Object[] { value1, value3 }) }));
+        testType(name, primitiveValueType, true, false, Arrays.asList(value1,
+                value2));
+        testType(name, primitiveValueType, false, true, new HierarchyPath(value1,
+                value2));
+        testType(name, primitiveValueType, true, true, Arrays.asList(new HierarchyPath(value1, value2),
+                new HierarchyPath(value1, value3)));
     }
     
     private void testType(String name, String valueTypeString, boolean multivalue, boolean hierarchical,

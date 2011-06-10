@@ -38,7 +38,7 @@ public class WalRowLog extends RowLogImpl {
     @Override
     protected void putMessageOnShard(RowLogMessage message, List<RowLogSubscription> subscriptions) throws RowLogException {
         // Ignore subscriptions and put a message for the 'meta' wal subscription
-        getShard().putMessage(message, Arrays.asList(new String[]{WAL_SUBSCRIPTIONID}));
+        getShard().putMessage(message, Arrays.asList(WAL_SUBSCRIPTIONID));
     }
     
     /**

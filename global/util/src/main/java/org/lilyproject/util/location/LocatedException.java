@@ -78,7 +78,7 @@ public class LocatedException extends Exception
             Throwable parent = thr.getCause();
             if (parent != null) {
                 try {
-                    INIT_CAUSE_METHOD.invoke(thr, new Object[]{ parent });
+                    INIT_CAUSE_METHOD.invoke(thr, parent);
                 } catch (Exception e) {
                     // can happen if parent already set on exception
                 }

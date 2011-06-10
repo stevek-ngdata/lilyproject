@@ -47,7 +47,7 @@ public abstract class BaseRepository implements Repository {
             Integer hierarchyIndex) throws BlobNotFoundException, BlobException, RecordNotFoundException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
             TypeException, RepositoryException, InterruptedException {
-        Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
+        Record record = read(recordId, version, Arrays.asList(fieldName));
         return getInputStream(record, fieldName, multivalueIndex, hierarchyIndex);
     }
     
@@ -65,7 +65,7 @@ public abstract class BaseRepository implements Repository {
             RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
             VersionNotFoundException, TypeException, RepositoryException {
 
-        Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
+        Record record = read(recordId, version, Arrays.asList(fieldName));
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
         return blobManager.getBlobAccess(record, fieldName, multiValueIndex, hierarchyIndex, fieldType);
 

@@ -416,7 +416,7 @@ public class AvroConverterTest {
         record.setField(fieldName, "aValue");
         QName fieldName2 = new QName(null, "aName2");
         record.setField(fieldName2, "aValue2");
-        record.addFieldsToDelete(Arrays.asList(new QName[]{new QName("devnull", "fieldToDelete")}));
+        record.addFieldsToDelete(Arrays.asList(new QName("devnull", "fieldToDelete")));
         
         assertEquals(record, converter.convert(converter.convert(record)));
         control.verify();
