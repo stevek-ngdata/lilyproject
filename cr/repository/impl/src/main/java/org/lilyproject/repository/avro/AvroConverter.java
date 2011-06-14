@@ -28,6 +28,7 @@ import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.util.repo.SystemFields;
 
 public class AvroConverter {
     private Log log = LogFactory.getLog(getClass());
@@ -261,10 +262,16 @@ public class AvroConverter {
 
         List<AvroMutationCondition> avroConditions = new ArrayList<AvroMutationCondition>(conditions.size());
 
+        SystemFields systemFields = SystemFields.getInstance(typeManager, repository.getIdGenerator());
+
         for (MutationCondition condition : conditions) {
             FieldType fieldType;
             try {
-                fieldType = typeManager.getFieldTypeByName(condition.getField());
+                if (systemFields.isSystemField(condition.getField())) {
+                    fieldType = systemFields.get(condition.getField());
+                } else {
+                    fieldType = typeManager.getFieldTypeByName(condition.getField());
+                }
             } catch (RepositoryException e) {
                 throw convert(e);
             } catch (InterruptedException e) {
