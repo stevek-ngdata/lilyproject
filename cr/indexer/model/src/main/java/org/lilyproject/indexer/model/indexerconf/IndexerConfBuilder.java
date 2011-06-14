@@ -29,6 +29,7 @@ import javax.xml.validation.Validator;
 
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.location.LocationAttributes;
+import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.lilyproject.util.xml.LocalXPathExpression;

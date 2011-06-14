@@ -18,6 +18,7 @@ package org.lilyproject.indexer.model.indexerconf;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.util.repo.SystemFields;
 
 import java.util.*;
 

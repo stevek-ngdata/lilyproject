@@ -1629,7 +1629,37 @@ public abstract class AbstractRepositoryTest {
         // Test on system fields
         //
 
-        // TODO
+        final QName versionField = new QName("org.lilyproject.system", "version");
 
+        // Create new record to be sure numbering starts from 1
+        record = createDefaultRecord();
+
+        record.setField(fieldType2.getName(), new Integer(55));
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, new Long(2))));
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+
+        record.setField(fieldType2.getName(), new Integer(55));
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, new Long(1))));
+        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
+        assertEquals(new Long(2), record.getVersion());
+        assertEquals(new Integer(55), record.getField(fieldType2.getName()));
+
+        // Test behavior in case of null version
+        record = repository.newRecord();
+        record.setRecordType(recordType1.getName(), recordType1.getVersion());
+        record.setField(fieldType1.getName(), "value1");
+        record = repository.create(record);
+
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, new Long(1))));
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record,
+                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, null)));
+        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
     }
 }

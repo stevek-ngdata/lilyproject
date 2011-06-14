@@ -1,6 +1,7 @@
 package org.lilyproject.repository.impl;
 
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.repo.SystemFields;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -16,7 +17,7 @@ public class MutationConditionVerifier {
      * @param record the complete record state as currently stored in the repository
      * @param conditions the conditions that should be satisfied
      */
-    public static boolean checkConditions(Record record, List<MutationCondition> conditions, TypeManager typeManager,
+    public static boolean checkConditions(Record record, List<MutationCondition> conditions, Repository repository,
             Record newRecord) throws RepositoryException, InterruptedException {
 
         if (conditions == null) {
@@ -30,8 +31,10 @@ public class MutationConditionVerifier {
         // user. OTOH, since users most of the time will go through a remote itf, such checks
         // will likely already have happened as part of serialization/deserialization code.
 
+        SystemFields systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
+
         for (MutationCondition condition : conditions) {
-            Object value = record.getFields().get(condition.getField());
+            Object value = systemFields.softEval(record, condition.getField(), repository.getTypeManager());
 
             // Compare with null value is special case, handle this first
             if (condition.getValue() == null) {
@@ -64,7 +67,7 @@ public class MutationConditionVerifier {
                 break;
             }
 
-            if (!checkValue(condition, value, typeManager)) {
+            if (!checkValue(condition, value, repository.getTypeManager())) {
                 allSatisfied = false;
                 break;
             }

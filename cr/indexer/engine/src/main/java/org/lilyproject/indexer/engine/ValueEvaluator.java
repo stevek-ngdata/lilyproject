@@ -31,6 +31,7 @@ import org.lilyproject.indexer.model.indexerconf.DerefValue.MasterFollow;
 import org.lilyproject.indexer.model.indexerconf.Formatter;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
 
 import java.io.InputStream;
