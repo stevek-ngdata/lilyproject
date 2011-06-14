@@ -246,8 +246,11 @@
      },
 
     "delete": {
-      "request": [{"name": "recordId", "type": "bytes"}],
-      "response": "null",
+      "request": [
+        {"name": "recordId", "type": "bytes"},
+        {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]}
+      ],
+      "response": ["null", "AvroRecord"],
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
     

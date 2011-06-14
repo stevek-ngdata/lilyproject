@@ -16,11 +16,7 @@
 package org.lilyproject.repository.impl.test;
 
 import static org.easymock.EasyMock.createControl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -1681,5 +1677,27 @@ public abstract class AbstractRepositoryTest {
         record.setField(fieldType3.getName(), true);
         record = repository.update(record, true, true, conditions);
         assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+    }
+
+    @Test
+    public void testConditionalDelete() throws Exception {
+        Record record = createDefaultRecord();
+
+        // perform delete with not-satisfied conditions
+        record = repository.delete(record.getId(),
+                Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
+
+        assertNotNull(record);
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+        assertEquals("value1", record.getField(fieldType1.getName()));
+        assertEquals(1, record.getFields().size());
+
+        // check record was surely not deleted
+        record = repository.read(record.getId());
+
+        // perform delete with satisfied conditions
+        record = repository.delete(record.getId(),
+                Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
+        assertNull(record);
     }
 }

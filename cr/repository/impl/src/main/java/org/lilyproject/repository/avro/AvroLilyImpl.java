@@ -44,7 +44,8 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
-    public AvroRecord createOrUpdate(AvroRecord record, boolean useLatestRecordType) throws AvroRepositoryException, AvroInterruptedException {
+    public AvroRecord createOrUpdate(AvroRecord record, boolean useLatestRecordType)
+            throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(repository.createOrUpdate(converter.convert(record), useLatestRecordType));
         } catch (RepositoryException e) {
@@ -54,16 +55,17 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
-    public Void delete(ByteBuffer recordId) throws AvroRepositoryException,
-            AvroInterruptedException {
+    @Override
+    public AvroRecord delete(ByteBuffer recordId, List<AvroMutationCondition> conditions)
+            throws AvroRemoteException, AvroRepositoryException, AvroGenericException, AvroInterruptedException {
         try {
-            repository.delete(converter.convertAvroRecordId(recordId));
+            Record record = repository.delete(converter.convertAvroRecordId(recordId), converter.convertFromAvro(conditions));
+            return record == null ? null : converter.convert(record);
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
             throw converter.convert(e);
         }
-        return null;
     }
 
     public AvroRecord read(ByteBuffer recordId, long avroVersion, List<AvroQName> avroFieldNames)

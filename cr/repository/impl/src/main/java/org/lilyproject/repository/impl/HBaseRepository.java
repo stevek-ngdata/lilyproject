@@ -1267,6 +1267,12 @@ public class HBaseRepository extends BaseRepository {
     }
 
     public void delete(RecordId recordId) throws RepositoryException {
+        delete(recordId, null);
+    }
+
+    @Override
+    public Record delete(RecordId recordId, List<MutationCondition> conditions)
+            throws RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
         RowLock rowLock = null;
@@ -1275,7 +1281,19 @@ public class HBaseRepository extends BaseRepository {
             // Take Custom Lock
             rowLock = lockRow(recordId);
 
-            if (recordExists(rowId)) { // Check if the record exists in the first place
+            if (conditions != null) {
+                // Only in case there are conditions, we need to read the record.
+                FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
+                Record originalRecord = read(recordId, null, null, null, fieldTypes);
+
+                if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, this, null)) {
+                    return originalRecord;
+                }
+            }
+
+            // Check if the record exists in the first place, this will already be handled before in case there
+            // are conditions
+            if (conditions != null || recordExists(rowId)) {
                 Put put = new Put(rowId);
                 // Mark the record as deleted
                 put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
@@ -1285,10 +1303,10 @@ public class HBaseRepository extends BaseRepository {
                 if (!rowLocker.put(put, rowLock)) {
                     throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");
                 }
-                
+
                 // Clear the old data and delete any referenced blobs
                 clearData(recordId);
-    
+
                 if (walMessage != null) {
                     try {
                         wal.processMessage(walMessage, rowLock);
@@ -1315,8 +1333,10 @@ public class HBaseRepository extends BaseRepository {
             long after = System.currentTimeMillis();
             metrics.report(Action.DELETE, (after-before));
         }
+
+        return null;
     }
-    
+
     // Clear all data of the recordId until the latest record version (included)
     // And delete any referred blobs
     private void clearData(RecordId recordId) throws IOException, RepositoryException, InterruptedException {

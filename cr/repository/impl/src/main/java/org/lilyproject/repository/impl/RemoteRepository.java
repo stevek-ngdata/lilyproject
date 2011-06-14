@@ -77,9 +77,26 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
+    public Record delete(RecordId recordId, List<MutationCondition> conditions)
+            throws RepositoryException, InterruptedException {
+        try {
+            AvroRecord record = lilyProxy.delete(converter.convert(recordId), converter.convert(conditions));
+            return record == null ? null : converter.convert(record);
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredRecordThrowable(e);
+        }
+    }
+
     public void delete(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
-            lilyProxy.delete(converter.convert(recordId));
+            lilyProxy.delete(converter.convert(recordId), null);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

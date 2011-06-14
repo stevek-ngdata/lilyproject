@@ -69,6 +69,22 @@ public interface Repository extends Closeable {
     Record create(Record record) throws RepositoryException, InterruptedException;
 
     /**
+     * Shortcut for {@link #update(Record, boolean, boolean, java.util.List)
+     * update(record, updateVersion, useLatestRecordType, null)}.
+     */
+    Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException, InterruptedException;
+
+    /**
+     * Shortcut for {@link #update(Record, boolean, boolean, java.util.List) update(record, false, true, null)}.
+     */
+    Record update(Record record) throws RepositoryException, InterruptedException;
+
+    /**
+     * Shortcut for {@link #update(Record, boolean, boolean, java.util.List) update(record, false, true, conditions)}.
+     */
+    Record update(Record record, List<MutationCondition> conditions) throws RepositoryException, InterruptedException;
+
+    /**
      * Updates an existing record in the repository.
      *
      * <p>An update can either update the versioned and/or non-versioned fields (in this last case a new version
@@ -89,7 +105,7 @@ public interface Repository extends Closeable {
      *
      * <p>If the record contains any changed versioned fields, a new version will be created. The number of the created
      * version will be available on the returned Record object.
-     * 
+     *
      * <p>If no record type is specified in the record object, the record type that is currently stored (in the
      * non-versioned scope) will be used. Newly created versions always get the same record type as the current
      * record type of the non-versioned scope (= either the one specified in the Record, or if absent, from
@@ -109,7 +125,7 @@ public interface Repository extends Closeable {
      * of the version that is being modified will be set to the current one (= the stored one) of the non-versioned
      * scope, and possibly to its latest version depending on the argument useLatestRecordType.
      *
-     * <li>If you do specify a record type in the Record object (using {@link Record#setRecordType(QName)), the record
+     * <li>If you do specify a record type in the Record object (using {@link Record#setRecordType(QName)}), the record
      * type of the versioned-mutable scope of the version that is being modified will be changed to it, but the record
      * type of the non-versioned scope will be left unmodified. This is in contrast to the record type of the versioned
      * scope, which is always brought to the record type of the non-versioned scope when a new version is created.
@@ -126,10 +142,33 @@ public interface Repository extends Closeable {
      * to see the full record situation (other fields might have been added by concurrent updates). This will be
      * addressed by issue <a href="http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/93">93<a>.<p>
      *
+     * <p><b>Conditionally updating a record: the conditions argument</b></p>
+     *
+     * <p>A conditional update allows to update a record only in case it satisfies certain conditions. This is
+     * also known as "check and update (CAS - check and set)" or "optimistic concurrency control (OCC)".</p>
+     *
+     * <p>The condition can check on any of the record fields (of any scope), thus is not limited to the fields
+     * provided in the record object. For versioned(-mutable) fields, the check is usually performed on the data
+     * from the latest version, except in case updateVersion is true, then the data from version being updated
+     * will be checked (both for the versioned and versioned-mutable fields).</p>
+     *
+     * <p>For more details on specifying the conditions, see {@link MutationCondition}. All the conditions should
+     * be satisfied for the update to proceed, thus the conditions are AND-ed.</p>
+     *
+     * <p>In case one ore more conditions are not satisfied, NO exception is thrown, rather the responseStatus
+     * field of the returned Record object is set to {@link ResponseStatus#CONFLICT}. So the caller who is interested
+     * in knowing whether the update succeeded should check on this field. The returned record object will contain
+     * the currently stored repository state, not the submitted record values.</p>
+     *
+     * <p>The conditions are checked before checking if the record actually needs updating, so you might get
+     * a conflict response even if the stored record state corresponds to the supplied record state.</p>
+     *
      * @param updateVersion if true, the version indicated in the record will be updated (i.e. only the mutable fields will be updated)
      *          otherwise, a new version of the record will be created (if it contains versioned fields)
-     * @param useLatestRecordType if true, the RecordType version given in the Record will be ignored and the latest available RecordType will 
-     *        be used while updating the Record          
+     * @param useLatestRecordType if true, the RecordType version given in the Record will be ignored and the latest available RecordType will
+     *        be used while updating the Record
+     * @param conditions optional (can be null), set of conditions that should be satisfied for the update to proceed
+     *
      * @throws RecordNotFoundException
      *             if the record does not exist
      * @throws InvalidRecordException
@@ -138,18 +177,8 @@ public interface Repository extends Closeable {
      *             TBD
      * @throws FieldTypeNotFoundException
      * @throws RecordTypeNotFoundException
-     * @throws WalProcessingException 
+     * @throws WalProcessingException
      */
-    Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException, InterruptedException;
-
-    /**
-     * Shortcut for update(record, false, true)
-     * @throws WalProcessingException 
-     */
-    Record update(Record record) throws RepositoryException, InterruptedException;
-
-    Record update(Record record, List<MutationCondition> conditions) throws RepositoryException, InterruptedException;
-
     Record update(Record record, boolean updateVersion, boolean useLatestRecordType, List<MutationCondition> conditions)
             throws RepositoryException, InterruptedException;
 
@@ -276,6 +305,20 @@ public interface Repository extends Closeable {
      *            id of the record to delete
      */
     void delete(RecordId recordId) throws RepositoryException, InterruptedException;
+
+    /**
+     * Conditionally delete a record from the repository.
+     *
+     * <p>The delete will only succeed if all the supplied conditions are satisfied. The conditions can check
+     * on fields from all scopes, it are the values from the latest version which are used.</p>
+     *
+     * <p>In case the conditions are satisfied, this method returns null.</p>
+     *
+     * <p>In case the conditions are not satisfied, this method returns a Record object with its responseStatus
+     * field set to {@link ResponseStatus#CONFLICT}. The fields contained in the record object will be those
+     * referred to in the conditions, as far as they exist.</p>
+     */
+    Record delete(RecordId recordId, List<MutationCondition> conditions) throws RepositoryException, InterruptedException;
 
     /**
      * Returns the IdGenerator service.

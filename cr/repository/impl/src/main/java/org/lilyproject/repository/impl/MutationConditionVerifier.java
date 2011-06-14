@@ -3,10 +3,7 @@ package org.lilyproject.repository.impl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.SystemFields;
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MutationConditionVerifier {
     /**
@@ -74,13 +71,26 @@ public class MutationConditionVerifier {
         }
 
         if (!allSatisfied) {
-            // reduce the fields to return to those that were submitted
-            reduceFields(record, newRecord.getFields().keySet());
+            if (newRecord != null) {
+                // reduce the fields to return to those that were submitted
+                reduceFields(record, newRecord.getFields().keySet());
+            } else {
+                // reduce the fields to those on which conditions were put
+                reduceFields(record, extractFields(conditions));
+            }
             record.setResponseStatus(ResponseStatus.CONFLICT);
             return false;
         }
 
         return true;
+    }
+
+    private static Set<QName> extractFields(List<MutationCondition> conditions) {
+        Set<QName> fields = new HashSet<QName>();
+        for (MutationCondition condition : conditions) {
+            fields.add(condition.getField());
+        }
+        return fields;
     }
 
     private static boolean checkValue(MutationCondition cond, Object currentValue, TypeManager typeManager)
