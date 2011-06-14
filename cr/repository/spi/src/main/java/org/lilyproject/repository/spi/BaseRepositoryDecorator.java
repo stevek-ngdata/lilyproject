@@ -126,7 +126,7 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     @Override
     public Record delete(RecordId recordId, List<MutationCondition> conditions)
             throws RepositoryException, InterruptedException {
-        return delete(recordId, conditions);
+        return delegate.delete(recordId, conditions);
     }
 
     @Override

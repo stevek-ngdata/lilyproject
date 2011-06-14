@@ -68,8 +68,10 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
-    public AvroRecord read(ByteBuffer recordId, long avroVersion, List<AvroQName> avroFieldNames)
+    public AvroRecord read(ByteBuffer avroRecordId, long avroVersion, List<AvroQName> avroFieldNames)
             throws AvroRepositoryException, AvroInterruptedException {
+        Long version = converter.convertAvroVersion(avroVersion);
+        RecordId recordId = converter.convertAvroRecordId(avroRecordId);
         List<QName> fieldNames = null;
         if (avroFieldNames != null) {
             fieldNames = new ArrayList<QName>();
@@ -78,8 +80,19 @@ public class AvroLilyImpl implements AvroLily {
             }
         }
         try {
-            return converter.convert(repository.read(converter.convertAvroRecordId(recordId),
-                    converter.convertAvroVersion(avroVersion), fieldNames));
+            if (version == null) {
+                if (fieldNames == null) {
+                    return converter.convert(repository.read(recordId));
+                } else {
+                    return converter.convert(repository.read(recordId, fieldNames));
+                }
+            } else {
+                if (fieldNames == null) {
+                    return converter.convert(repository.read(recordId, version));
+                } else {
+                    return converter.convert(repository.read(recordId, version, fieldNames));
+                }
+            }
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {

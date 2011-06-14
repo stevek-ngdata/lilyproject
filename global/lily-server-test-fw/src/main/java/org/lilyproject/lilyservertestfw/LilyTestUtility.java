@@ -67,23 +67,25 @@ public class LilyTestUtility {
         connectionManager.getParams().setMaxTotalConnections(50);
         HttpClient httpClient = new HttpClient(connectionManager);
         solrServer = new CommonsHttpSolrServer(solrTestUtility.getUri(), httpClient);
-        
     }
 
     public void stop() throws Exception {
         try {
-            solrTestUtility.stop();
+            if (solrTestUtility != null)
+                solrTestUtility.stop();
         } catch (Throwable t) {
             t.printStackTrace();
         }
         try {
+            if (kauriTestUtility != null)
             kauriTestUtility.stop();
         } catch (Throwable t) {
             t.printStackTrace();
         }
 
         try {
-            HBASE_PROXY.stop();
+            if (HBASE_PROXY != null)
+                HBASE_PROXY.stop();
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -98,23 +100,23 @@ public class LilyTestUtility {
         return solrServer;
     }
 
-    public void addIndexFromResource(String indexerConf) throws IOException, IndexerConfException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
+    public void addIndexFromResource(String indexName, String indexerConf) throws IOException, IndexerConfException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        addIndex(indexerConfiguration);
+        addIndex(indexName, indexerConfiguration);
     }
     
-    public void addIndexFromFile(String indexerConf) throws IOException, IndexerConfException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
+    public void addIndexFromFile(String indexName, String indexerConf) throws IOException, IndexerConfException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
         byte[] indexerConfiguration = FileUtils.readFileToByteArray(new File(indexerConf));
-        addIndex(indexerConfiguration);
+        addIndex(indexName, indexerConfiguration);
     }
     
-    public void addIndex(byte[] indexerConfiguration) throws IndexerConfException, IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
+    public void addIndex(String indexName, byte[] indexerConfiguration) throws IndexerConfException, IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
         IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getClient().getRepository());
 
         IndexerModelImpl model = new IndexerModelImpl(zooKeeper);
-        IndexDefinition index = model.newIndex("testindex");
+        IndexDefinition index = model.newIndex(indexName);
         Map<String, String> solrShards = new HashMap<String, String>();
         solrShards.put("testshard", solrTestUtility.getUri());
         index.setSolrShards(solrShards);

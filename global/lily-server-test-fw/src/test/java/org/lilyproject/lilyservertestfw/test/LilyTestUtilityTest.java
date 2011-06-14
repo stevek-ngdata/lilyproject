@@ -67,7 +67,7 @@ public class LilyTestUtilityTest {
         typeManager.createRecordType(recordType1);
         
         // Add index
-        lilyTestUtilily.addIndexFromResource("org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml");
+        lilyTestUtilily.addIndexFromResource("testIndex", "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml");
        
         // Create record
         Record record = repository.newRecord();

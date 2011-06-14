@@ -82,7 +82,6 @@ public class KauriTestUtility {
         runtime = new KauriRuntime(settings);
         runtime.setMode(Mode.getDefault());
         runtime.start();
-        System.out.println("[Evert] KaurRuntime started");
     }
 
     public void stop() {
