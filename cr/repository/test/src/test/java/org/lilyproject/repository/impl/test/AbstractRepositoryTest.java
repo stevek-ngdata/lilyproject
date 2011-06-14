@@ -1584,7 +1584,7 @@ public abstract class AbstractRepositoryTest {
         record = repository.update(record);
 
         //
-        // Test for missing field
+        // Test for missing/present field
         //
 
         // Field MUST be missing
@@ -1614,10 +1614,6 @@ public abstract class AbstractRepositoryTest {
         // reset record state
         record.setField(fieldType1.getName(), "value1");
         record = repository.update(record);
-
-        //
-        // Test for present field
-        //
 
         //
         // Supplied values differ from field type (classcastexception)
@@ -1661,5 +1657,29 @@ public abstract class AbstractRepositoryTest {
         record = repository.update(record,
                 Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, null)));
         assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
+
+        //
+        // Test conditional update on update of version-mutable fields
+        //
+        record = createDefaultRecord();
+
+        record.setField(fieldType3.getName(), false);
+        record = repository.update(record, true, true,
+                Collections.singletonList(new MutationCondition(fieldType3.getName(), CompareOp.EQUAL, Boolean.FALSE)));
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
+
+        record.setField(fieldType3.getName(), false);
+        record = repository.update(record, true, true,
+                Collections.singletonList(new MutationCondition(fieldType3.getName(), CompareOp.EQUAL, Boolean.TRUE)));
+        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
+
+        // In case of versioned-mutable update, we can also add conditions on versioned and non-versioned fields
+        conditions = new ArrayList<MutationCondition>();
+        conditions.add(new MutationCondition(fieldType1.getName(), "value1")); // evals to true
+        conditions.add(new MutationCondition(fieldType2.getName(), 124)); // evals to true
+
+        record.setField(fieldType3.getName(), true);
+        record = repository.update(record, true, true, conditions);
+        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
     }
 }

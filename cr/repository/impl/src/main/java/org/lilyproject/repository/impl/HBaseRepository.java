@@ -284,13 +284,13 @@ public class HBaseRepository extends BaseRepository {
             // Check if the update is an update of mutable fields
             if (updateVersion) {
                 try {
-                    return updateMutableFields(record, useLatestRecordType, rowLock, fieldTypes);
+                    return updateMutableFields(record, useLatestRecordType, conditions, rowLock, fieldTypes);
                 } catch (BlobException e) {
                     throw new RecordException("Exception occurred while updating record '" + record.getId() + "'",
                             e);
                 }
             } else {
-                return updateRecord(record, useLatestRecordType, rowLock, fieldTypes, conditions);
+                return updateRecord(record, useLatestRecordType, conditions, rowLock, fieldTypes);
             }
         } catch (IOException e) {
             throw new RecordException("Exception occurred while updating record '" + recordId + ">' on HBase table",
@@ -302,8 +302,8 @@ public class HBaseRepository extends BaseRepository {
     }
     
     
-    private Record updateRecord(Record record, boolean useLatestRecordType, RowLock rowLock, FieldTypes fieldTypes,
-            List<MutationCondition> conditions) throws RepositoryException {
+    private Record updateRecord(Record record, boolean useLatestRecordType, List<MutationCondition> conditions,
+            RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
 
         Record newRecord = record.clone();
 
@@ -610,8 +610,8 @@ public class HBaseRepository extends BaseRepository {
         return (fieldValue instanceof byte[]) && Arrays.equals(DELETE_MARKER, (byte[])fieldValue);
     }
 
-    private Record updateMutableFields(Record record, boolean latestRecordType, RowLock rowLock, FieldTypes fieldTypes)
-            throws RepositoryException {
+    private Record updateMutableFields(Record record, boolean latestRecordType, List<MutationCondition> conditions,
+            RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
 
         Record newRecord = record.clone();
 
@@ -628,6 +628,11 @@ public class HBaseRepository extends BaseRepository {
             fields = filterMutableFields(fields, fieldTypes);
 
             Record originalRecord = read(recordId, version, null, null, fieldTypes);
+
+            if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, this, record)) {
+                return originalRecord;
+            }
+
             Map<QName, Object> originalFields = filterMutableFields(originalRecord.getFields(), fieldTypes);
 
             Record originalNextRecord = null;
