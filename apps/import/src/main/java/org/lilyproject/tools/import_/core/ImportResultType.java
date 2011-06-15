@@ -21,7 +21,8 @@ public enum ImportResultType {
     CONFLICT(false),
     UP_TO_DATE(true),
     CANNOT_CREATE_EXISTS(false),
-    CANNOT_UPDATE_DOES_NOT_EXIST(false);
+    CANNOT_UPDATE_DOES_NOT_EXIST(false),
+    CONDITION_CONFLICT(false);
 
     private boolean isSuccess;
 

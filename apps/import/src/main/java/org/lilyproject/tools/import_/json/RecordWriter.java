@@ -30,7 +30,7 @@ public class RecordWriter implements EntityWriter<Record> {
 
     public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,
             InterruptedException {
-        Namespaces namespaces = new Namespaces();
+        Namespaces namespaces = new NamespacesImpl();
 
         ObjectNode recordNode = toJson(record, options, namespaces, repository);
 

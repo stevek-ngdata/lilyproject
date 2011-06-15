@@ -95,44 +95,61 @@ public class RecordResource extends RepositoryEnabled {
     @Produces("application/json")
     @Consumes("application/json")
     public Response post(@PathParam("id") String id, PostAction<Record> postAction, @Context UriInfo uriInfo) {
-        if (!postAction.getAction().equals("update")) {
+        if (postAction.getAction().equals("update")) {
+            RecordId recordId = repository.getIdGenerator().fromString(id);
+            Record record = postAction.getEntity();
+
+            if (record.getId() != null && !record.getId().equals(recordId)) {
+                throw new ResourceException("Record id in submitted record does not match record id in URI.",
+                        BAD_REQUEST.getStatusCode());
+            }
+
+            record.setId(recordId);
+
+            ImportResult<Record> result;
+            try {
+                result = RecordImport.importRecord(record, ImportMode.UPDATE, postAction.getConditions(), repository);
+            } catch (Exception e) {
+                throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
+            }
+
+            // TODO record we respond with should be full record or be limited to user-specified field list
+            record = result.getEntity();
+            Response response;
+
+            ImportResultType resultType = result.getResultType();
+            switch (resultType) {
+                case CANNOT_UPDATE_DOES_NOT_EXIST:
+                    throw new ResourceException("Record not found: " + recordId, NOT_FOUND.getStatusCode());
+                case UPDATED:
+                case UP_TO_DATE:
+                    response = Response.ok(Entity.create(record, uriInfo)).build();
+                    break;
+                case CONDITION_CONFLICT:
+                    response = Response.status(CONFLICT.getStatusCode()).entity(Entity.create(record, uriInfo)).build();
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected import result type: " + resultType);
+            }
+
+            return response;
+
+        } else if (postAction.getAction().equals("delete")) {
+            RecordId recordId = repository.getIdGenerator().fromString(id);
+            try {
+                Record record = repository.delete(recordId, postAction.getConditions());
+                if (record != null && record.getResponseStatus() == ResponseStatus.CONFLICT) {
+                    return Response.status(CONFLICT.getStatusCode()).entity(Entity.create(record, uriInfo)).build();
+                }
+            } catch (RecordNotFoundException e) {
+                throw new ResourceException(e, NOT_FOUND.getStatusCode());
+            } catch (Exception e) {
+                throw new ResourceException("Error loading record.", e, INTERNAL_SERVER_ERROR.getStatusCode());
+            }
+            return Response.status(OK.getStatusCode()).build();
+        } else {
             throw new ResourceException("Unsupported POST action: " + postAction.getAction(), BAD_REQUEST.getStatusCode());
         }
-
-        RecordId recordId = repository.getIdGenerator().fromString(id);
-        Record record = postAction.getEntity();
-
-        if (record.getId() != null && !record.getId().equals(recordId)) {
-            throw new ResourceException("Record id in submitted record does not match record id in URI.",
-                    BAD_REQUEST.getStatusCode());
-        }
-
-        record.setId(recordId);
-
-        ImportResult<Record> result;
-        try {
-            result = RecordImport.importRecord(record, ImportMode.UPDATE, repository);
-        } catch (Exception e) {
-            throw new ResourceException(e, INTERNAL_SERVER_ERROR.getStatusCode());
-        }
-
-        // TODO record we respond with should be full record or be limited to user-specified field list
-        record = result.getEntity();
-        Response response;
-
-        ImportResultType resultType = result.getResultType();
-        switch (resultType) {
-            case CANNOT_UPDATE_DOES_NOT_EXIST:
-                throw new ResourceException("Record not found: " + recordId, NOT_FOUND.getStatusCode());
-            case UPDATED:
-            case UP_TO_DATE:
-                response = Response.ok(Entity.create(record, uriInfo)).build();
-                break;
-            default:
-                throw new RuntimeException("Unexpected import result type: " + resultType);
-        }
-
-        return response;
     }
 
     @DELETE

@@ -25,7 +25,7 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
     public static EntityWriter<FieldType> INSTANCE = new FieldTypeWriter();
 
     public ObjectNode toJson(FieldType fieldType, WriteOptions options, Repository repository) {
-        Namespaces namespaces = new Namespaces();
+        Namespaces namespaces = new NamespacesImpl();
 
         ObjectNode fieldNode = toJson(fieldType, options, namespaces, repository);
 

@@ -27,12 +27,13 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     public static EntityReader<FieldType> INSTANCE = new FieldTypeReader();
 
     public FieldType fromJson(ObjectNode node, Repository repository) throws JsonFormatException, RepositoryException, InterruptedException {
-        Namespaces namespaces = NamespacesConverter.fromContextJson(node);
-        return fromJson(node, namespaces, repository);
+        return fromJson(node, null, repository);
     }
 
     public FieldType fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
+
+        namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
         QName name = QNameConverter.fromJson(getString(node, "name"), namespaces);
 

@@ -33,16 +33,17 @@ import java.util.Map;
 import static org.lilyproject.util.json.JsonUtil.*;
 
 public class RecordReader implements EntityReader<Record> {
-    public static EntityReader<Record> INSTANCE = new RecordReader();
+    public static RecordReader INSTANCE = new RecordReader();
 
     public Record fromJson(ObjectNode node, Repository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
-        Namespaces namespaces = NamespacesConverter.fromContextJson(node);
-        return fromJson(node, namespaces, repository);
+        return fromJson(node, null, repository);
     }
 
     public Record fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
+
+        namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
         Record record = repository.newRecord();
 
@@ -89,6 +90,11 @@ public class RecordReader implements EntityReader<Record> {
         }
 
         return record;
+    }
+
+    public Object readValue(FieldType fieldType, JsonNode valueNode, String valueKey, Repository repository)
+            throws JsonFormatException, RepositoryException, InterruptedException {
+        return readMultiValue(valueNode, fieldType, valueKey, repository);
     }
 
     private Object readMultiValue(JsonNode node, FieldType fieldType, String prop, Repository repository)

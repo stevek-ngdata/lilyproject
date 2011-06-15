@@ -30,7 +30,6 @@ import static org.junit.Assert.*;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
-import org.lilyproject.util.json.JsonUtil;
 import org.restlet.Client;
 import org.restlet.Request;
 import org.restlet.Response;
@@ -308,23 +307,33 @@ public class RestTest {
         assertEquals(1, json.get("mixins").size());
     }
 
-    @Test
-    public void testRecordBasics() throws Exception {
+    private void makeBookSchema() throws IOException {
         // Create field type
-        String body = json("{action: 'create', fieldType: {name: 'b$title', valueType: { primitive: 'STRING' }, " +
-                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } } }");
-        Response response = post(BASE_URI + "/schema/fieldTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        String body = json("{name: 'b$title', valueType: { primitive: 'STRING' }, " +
+                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } }");
+        Response response = put(BASE_URI + "/schema/fieldType/b$title?ns.b=org.lilyproject.resttest", body);
+        assertTrue(response.getStatus().isSuccess());
+
+        // Create field type
+        body = json("{name: 'b$summary', valueType: { primitive: 'STRING' }, " +
+                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'b' } }");
+        response = put(BASE_URI + "/schema/fieldType/b$summary?ns.b=org.lilyproject.resttest", body);
+        assertTrue(response.getStatus().isSuccess());
 
         // Create a record type
-        body = json("{action: 'create', recordType: {name: 'b$book', fields: [ {name: 'b$title'} ]," +
-                "namespaces: { 'org.lilyproject.resttest': 'b' } } }");
-        response = post(BASE_URI + "/schema/recordTypeById", body);
-        assertStatus(Status.SUCCESS_CREATED, response);
+        body = json("{name: 'b$book', fields: [ {name: 'b$title'}, {name: 'b$summary'} ]," +
+                "namespaces: { 'org.lilyproject.resttest': 'b' } }");
+        response = put(BASE_URI + "/schema/recordType/b$book?ns.b=org.lilyproject.resttest", body);
+        assertTrue(response.getStatus().isSuccess());
+    }
+
+    @Test
+    public void testRecordBasics() throws Exception {
+        makeBookSchema();
 
         // Create a record using PUT and a user ID
-        body = json("{ type: 'b$book', fields: { 'b$title' : 'Faster Fishing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        response = put(BASE_URI + "/record/USER.faster_fishing", body);
+        String body = json("{ type: 'b$book', fields: { 'b$title' : 'Faster Fishing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        Response response = put(BASE_URI + "/record/USER.faster_fishing", body);
         assertStatus(Status.SUCCESS_CREATED, response);
 
         // Read the record
@@ -878,6 +887,8 @@ public class RestTest {
 
     @Test
     public void testVariantCollection() throws Exception {
+        makeBookSchema();
+
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'Hunting' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         Response response = put(BASE_URI + "/record/USER.hunting.lang=en", body);
         assertStatus(Status.SUCCESS_CREATED, response);
@@ -906,6 +917,8 @@ public class RestTest {
 
     @Test
     public void testRecordByVTag() throws Exception {
+        makeBookSchema();
+
         // Create 'active' vtag field
         String body = json("{action: 'create', fieldType: {name: 'v$active', valueType: { primitive: 'LONG' }, " +
                 "scope: 'non_versioned', namespaces: { 'org.lilyproject.vtag': 'v' } } }");
@@ -1001,6 +1014,150 @@ public class RestTest {
         assertEquals("Peace", fieldsNode.get(prefix + "$subject").getValueAsText());
     }
 
+    @Test
+    public void testConditionUpdate() throws Exception {
+        makeBookSchema();
+
+        String body = json("{ type: 'b$book', fields: { 'b$title' : 'ABC1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        Response response = put(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Test update with failing condition
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC2' } }, " +
+                "conditions: [{field: 'b$title', value: 'ABC5'}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } }");
+
+        response = post(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+
+        // Verify update did not go through
+        response = get(BASE_URI + "/record/USER.ABC");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        JsonNode json = readJson(response.getEntity());
+        assertEquals("ABC1", getFieldValue(json, "title").getTextValue());
+
+        // Test update with succeeding condition
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC2' } }, " +
+                "conditions: [{field: 'b$title', value: 'ABC1'}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } }");
+
+        response = post(BASE_URI + "/record/USER.ABC", body);
+
+        assertStatus(Status.SUCCESS_OK, response);
+
+        // Verify update did not through
+        response = get(BASE_URI + "/record/USER.ABC");
+        assertStatus(Status.SUCCESS_OK, response);
+
+        json = readJson(response.getEntity());
+        assertEquals("ABC2", getFieldValue(json, "title").getTextValue());
+
+        //
+        // Test with custom compare operator
+        //
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC3' } }, " +
+                "conditions: [{field: 'b$title', value: 'ABC2', operator: 'not_equal'}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } }");
+
+        response = post(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+
+        //
+        // Test allowMissing flag
+        //
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC3' } }, " +
+                "conditions: [{field: 'b$summary', value: 'some summary', allowMissing: false}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } }");
+
+        response = post(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC3' } }, " +
+                "conditions: [{field: 'b$summary', value: 'some summary', allowMissing: true}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } }");
+
+        response = post(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.SUCCESS_OK, response);
+
+        //
+        // Test null value
+        //
+        // First remove summary field again
+        body = json("{ action: 'update', record: { " +
+                "fieldsToDelete: ['b$summary'], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+        response = post(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.SUCCESS_OK, response);
+
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC4' } }, " +
+                "conditions: [{field: 'b$summary', value: null, operator: 'not_equal'}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+
+        response = post(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC4' } }, " +
+                "conditions: [{field: 'b$summary', value: null, operator: 'equal'}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+
+        response = post(BASE_URI + "/record/USER.ABC", body);
+        assertStatus(Status.SUCCESS_OK, response);
+
+        //
+        // Test system field check
+        //
+        // Create a new record
+        body = json("{ type: 'b$book', fields: { 'b$title' : 'ABC1' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        response = put(BASE_URI + "/record/USER.sysfieldcheck", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        // Test update with failing condition
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC2' } }, " +
+                "conditions: [{field: 's$version', value: 2}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b', 'org.lilyproject.system': 's' } }");
+
+        response = post(BASE_URI + "/record/USER.sysfieldcheck", body);
+        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+
+        // Test update with succeeding condition
+        body = json("{ action: 'update', record: { fields: { 'b$title' : 'ABC2' } }, " +
+                "conditions: [{field: 's$version', value: 1}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b', 'org.lilyproject.system': 's' } }");
+
+        response = post(BASE_URI + "/record/USER.sysfieldcheck", body);
+        assertStatus(Status.SUCCESS_OK, response);
+    }
+
+    @Test
+    public void testConditionDelete() throws Exception {
+        makeBookSchema();
+
+        String body = json("{ type: 'b$book', fields: { 'b$title' : 'CondDel' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
+        Response response = put(BASE_URI + "/record/USER.ConDel", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+
+        body = json("{ action: 'delete'," +
+                "conditions: [{field: 'b$title', value: 'foo'}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+
+        response = post(BASE_URI + "/record/USER.ConDel", body);
+        assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
+
+        body = json("{ action: 'delete'," +
+                "conditions: [{field: 'b$title', value: 'CondDel'}], " +
+                "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
+
+        response = post(BASE_URI + "/record/USER.ConDel", body);
+        assertStatus(Status.SUCCESS_OK, response);
+    }
+
+    private JsonNode getFieldValue(JsonNode recordJson, String fieldName) {
+        String prefix = recordJson.get("namespaces").get("org.lilyproject.resttest").getTextValue();
+        JsonNode fieldsNode = recordJson.get("fields");
+        return fieldsNode.get(prefix + "$" + fieldName);
+    }
+
     private void assertStatus(Status expectedStatus, Response response) throws IOException {
         if (!expectedStatus.equals(response.getStatus())) {
             System.err.println("Detected unexpected response status, body of the response is:");
@@ -1016,36 +1173,9 @@ public class RestTest {
             System.err.println("  Description: " +
                     (json.get("description") != null ? json.get("description").getTextValue() : null));
             System.err.println("  Status: " + (json.get("status") != null ? json.get("status").getIntValue() : null));
-            if (json.get("causes") != null) {
-                System.err.println("  Causes:");
-                ArrayNode causes = (ArrayNode)json.get("causes");
-                for (int i = 0; i < causes.size(); i++) {
-                    ObjectNode causeNode = (ObjectNode)causes.get(i);
-                    System.err.println("    Cause message: " + causeNode.get("message").getTextValue());
-                    System.err.println("    Cause type: " + causeNode.get("type").getTextValue());
-                    System.err.println("    StackTrace:");
-                    ArrayNode stNode = (ArrayNode)causeNode.get("stackTrace");
-                    for (int j = 0; j < stNode.size(); j++) {
-                        ObjectNode steNode = (ObjectNode)stNode.get(j);
-                        String className = steNode.get("class").getTextValue();
-                        String method = steNode.get("method").getTextValue();
-                        String file = steNode.get("file") != null ? steNode.get("file").getTextValue() : null;
-                        int line = steNode.get("line").getIntValue();
-                        boolean nativeMethod = steNode.get("native") != null && steNode.get("native").getBooleanValue();
-
-                        System.err.println("      " + className + "." + method +
-                                (nativeMethod ? "(Native Method)" :
-                                        (file != null && line >= 0 ?
-                                                "(" + file + ":" + line + ")" :
-                                                (file != null ? "(" + file + ")" : "(Unknown Source)"))));
-                    }
-
-                    int common = JsonUtil.getInt(causeNode, "stackTraceCommon", -1);
-                    if (common != -1) {
-                        System.err.println("      " + common + " more");
-                    }
-                }
-            }
+            System.err.println("  StackTrace:");
+            JsonNode stackTrace = json.get("stackTrace");
+            System.out.println(stackTrace != null ? stackTrace.getValueAsText() : null);
         } else {
             System.err.println(response.getEntityAsText());
         }

@@ -27,7 +27,7 @@ import org.lilyproject.util.json.JsonFormat;
 import java.io.InputStream;
 
 public class JsonImport {
-    private Namespaces namespaces = new Namespaces();
+    private Namespaces namespaces = new NamespacesImpl();
     private Repository repository;
     private TypeManager typeManager;
     private ImportListener importListener;
@@ -53,7 +53,7 @@ public class JsonImport {
         // This way things should still work fast and within little memory if anyone would use this to
         // load large amounts of records.
 
-        namespaces.clear();
+        namespaces = new NamespacesImpl();
 
         JsonParser jp = JsonFormat.JSON_FACTORY_NON_STD.createJsonParser(is);
 
@@ -111,7 +111,9 @@ public class JsonImport {
     }
 
     public void readNamespaces(ObjectNode node) throws JsonFormatException {
-        this.namespaces = NamespacesConverter.fromJson(node);
+        // We don't expect the namespaces to be modified since we're reading rather than writing, still wrap it
+        // to make sure they are really not modified.
+        this.namespaces = new UnmodifiableNamespaces(NamespacesConverter.fromJson(node));
     }
 
     public Namespaces getNamespaces() {

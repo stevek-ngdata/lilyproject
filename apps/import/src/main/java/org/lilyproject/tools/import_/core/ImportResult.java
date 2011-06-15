@@ -31,6 +31,13 @@ public class ImportResult<T> {
         return result;
     }
 
+    public static <T> ImportResult<T> conditionConflict(T entity) {
+        ImportResult<T> result = new ImportResult<T>();
+        result.resultType = ImportResultType.CONDITION_CONFLICT;
+        result.entity = entity;
+        return result;
+    }
+
     public static <T> ImportResult<T> created(T entity) {
         ImportResult<T> result = new ImportResult<T>();
         result.resultType = ImportResultType.CREATED;

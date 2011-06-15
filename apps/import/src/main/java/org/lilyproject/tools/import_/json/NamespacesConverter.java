@@ -23,22 +23,50 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class NamespacesConverter {
-    public static Namespaces fromContextJson(ObjectNode contextNode) throws JsonFormatException {
+    /**
+     * Reads namespaces, returns null if none are defined.
+     */
+    public static Namespaces fromContextJsonIfAvailable(ObjectNode contextNode) throws JsonFormatException {
+        JsonNode nsNode = contextNode.get("namespaces");
+        if (nsNode == null) {
+            return null;
+        } else if (!nsNode.isObject()) {
+            throw new JsonFormatException("The value of the namespaces property should be an object.");
+        } else {
+            return NamespacesConverter.fromJson((ObjectNode)nsNode);
+        }
+    }
+
+    /**
+     * Reads namespaces, falling back to supplied contextNs if none are defined locally, or inheriting
+     * from contextNs. This method never returns null.
+     */
+    public static Namespaces fromContextJson(ObjectNode contextNode, Namespaces contextNs) throws JsonFormatException {
         Namespaces namespaces;
         JsonNode nsNode = contextNode.get("namespaces");
         if (nsNode == null) {
-            namespaces = new Namespaces();
+            if (contextNs != null) {
+                return contextNs;
+            } else {
+                return new NamespacesImpl();
+            }
         } else if (!nsNode.isObject()) {
             throw new JsonFormatException("The value of the namespaces property should be an object.");
         } else {
             namespaces = NamespacesConverter.fromJson((ObjectNode)nsNode);
+            if (contextNs != null) {
+                return new InheritingNamespaces(contextNs, namespaces);
+            }
+            return namespaces;
         }
+    }
 
-        return namespaces;
+    public static Namespaces fromContextJson(ObjectNode contextNode) throws JsonFormatException {
+        return fromContextJson(contextNode, null);
     }
 
     public static Namespaces fromJson(ObjectNode nsNode) throws JsonFormatException {
-        Namespaces namespaces = new Namespaces();
+        Namespaces namespaces = new NamespacesImpl();
 
         Iterator<Map.Entry<String, JsonNode>> fieldsIt = nsNode.getFields();
         while (fieldsIt.hasNext()) {

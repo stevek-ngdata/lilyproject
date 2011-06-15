@@ -26,7 +26,7 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
     public static EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();
 
     public ObjectNode toJson(RecordType recordType, WriteOptions options, Repository repository) {
-        Namespaces namespaces = new Namespaces();
+        Namespaces namespaces = new NamespacesImpl();
 
         ObjectNode rtNode = toJson(recordType, options, namespaces, repository);
 
