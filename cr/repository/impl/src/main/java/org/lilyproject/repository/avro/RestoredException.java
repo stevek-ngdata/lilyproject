@@ -42,4 +42,20 @@ public class RestoredException extends Exception implements RemoteThrowableInfo 
     public String getOriginalMessage() {
         return originalMessage;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append((originalMessage != null) ? (originalClass + ": " + originalMessage) : originalClass);
+
+        if (stackTrace != null) {
+            builder.append("\n\tREMOTE EXCEPTION STACKTRACE:");
+            for (StackTraceElement aTrace : stackTrace)
+                builder.append("\n\tat ").append(aTrace);
+            builder.append("\n");
+        }
+
+        return builder.toString();
+    }
 }
