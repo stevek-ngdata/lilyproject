@@ -401,15 +401,15 @@ public class RestTest {
 
         // Delete the record
         response = delete(BASE_URI + "/record/USER.faster_fishing");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(Status.SUCCESS_NO_CONTENT, response);
 
         // Verify deleted record is gone
         response = get(BASE_URI + "/record/USER.faster_fishing");
         assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
 
-        // Verify delete is idempotent
+        // Test delete of non-existing record
         response = delete(BASE_URI + "/record/USER.faster_fishing");
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
 
         // Create a record using PUT and a client-specified UUID
         UUID uuid = UUID.randomUUID();
@@ -1149,7 +1149,7 @@ public class RestTest {
                 "namespaces : { 'org.lilyproject.resttest': 'b' } } }");
 
         response = post(BASE_URI + "/record/USER.ConDel", body);
-        assertStatus(Status.SUCCESS_OK, response);
+        assertStatus(Status.SUCCESS_NO_CONTENT, response);
     }
 
     private JsonNode getFieldValue(JsonNode recordJson, String fieldName) {

@@ -146,7 +146,7 @@ public class RecordResource extends RepositoryEnabled {
             } catch (Exception e) {
                 throw new ResourceException("Error loading record.", e, INTERNAL_SERVER_ERROR.getStatusCode());
             }
-            return Response.status(OK.getStatusCode()).build();
+            return Response.status(NO_CONTENT.getStatusCode()).build();
         } else {
             throw new ResourceException("Unsupported POST action: " + postAction.getAction(), BAD_REQUEST.getStatusCode());
         }
@@ -158,10 +158,10 @@ public class RecordResource extends RepositoryEnabled {
         try {
             repository.delete(recordId);
         } catch (RecordNotFoundException e) {
-            // ignore: delete is idempotent!
+            throw new ResourceException(e, NOT_FOUND.getStatusCode());
         } catch (Exception e) {
             throw new ResourceException("Error loading record.", e, INTERNAL_SERVER_ERROR.getStatusCode());
         }
-        return Response.status(OK.getStatusCode()).build();
+        return Response.status(NO_CONTENT.getStatusCode()).build();
     }
 }
