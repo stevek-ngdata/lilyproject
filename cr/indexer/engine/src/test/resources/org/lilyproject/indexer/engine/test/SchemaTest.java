@@ -32,11 +32,11 @@ public class SchemaTest {
     @Test
     public void test() throws Exception {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        URL url = getClass().getClassLoader().getResource("org/lilyproject/indexer/conf/indexerconf.xsd");
+        URL url = getClass().getClassLoader().getResource("org/lilyproject/indexer/model/indexerconf/indexerconf.xsd");
         Schema schema = factory.newSchema(url);
         Validator validator = schema.newValidator();
 
-        InputStream is = getClass().getClassLoader().getResourceAsStream("org/lilyproject/indexer/test/indexerconf1.xml");
+        InputStream is = getClass().getClassLoader().getResourceAsStream("org/lilyproject/indexer/engine/test/indexerconf1.xml");
         validator.validate(new StreamSource(is));
     }
 }
