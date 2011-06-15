@@ -454,15 +454,28 @@ public class AvroConverter {
         try {
             Class exceptionClass = Class.forName(convert(avroException.exceptionClass));
             Constructor constructor = exceptionClass.getConstructor(String.class, Map.class);
-            RepositoryException repositoryException = (RepositoryException)constructor.newInstance(convert(avroException.message), avroException.params);
+            RepositoryException repositoryException = (RepositoryException)constructor.newInstance(
+                    convert(avroException.message), avroMapToStringMap(avroException.params));
             restoreCauses(avroException.remoteCauses, repositoryException);
             return repositoryException;
         } catch (Exception e) {
-            log.debug("Failure while converting remote exception", e);
+            log.error("Failure while converting remote exception", e);
         }
         RepositoryException repositoryException = new RepositoryException(convert(avroException.message));
         restoreCauses(avroException.remoteCauses, repositoryException);
         return repositoryException;
+    }
+
+    private Map<String, String> avroMapToStringMap(Map<CharSequence, CharSequence> map) {
+        if (map == null) {
+            return null;
+        }
+
+        Map<String, String> result = new HashMap<String, String>();
+        for (Map.Entry<CharSequence, CharSequence> entry : map.entrySet()) {
+            result.put(convert(entry.getKey()), convert(entry.getValue()));
+        }
+        return result;
     }
 
     public AvroInterruptedException convert(InterruptedException exception) {
