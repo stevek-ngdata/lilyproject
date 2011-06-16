@@ -237,6 +237,19 @@ public class TutorialTest {
     }
 
     @Test
+    public void updateRecordConditionally() throws Exception {
+        List<MutationCondition> conditions = new ArrayList<MutationCondition>();
+        conditions.add(new MutationCondition(new QName(NS, "manager"), "Manager Z"));
+
+        RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
+        Record record = repository.read(id);
+        record.setField(new QName(NS, "manager"), "Manager P");
+        record = repository.update(record, conditions);
+
+        System.out.println(record.getResponseStatus());
+    }
+
+    @Test
     public void readRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
 
