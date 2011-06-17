@@ -462,8 +462,9 @@ public class Link {
             return false;
 
         Link other = (Link)obj;
-        ObjectUtils.safeEquals(masterRecordId, other.masterRecordId);
-
+        if (!ObjectUtils.safeEquals(masterRecordId, other.masterRecordId))
+            return false;
+        
         if (copyAll != other.copyAll)
             return false;
 
