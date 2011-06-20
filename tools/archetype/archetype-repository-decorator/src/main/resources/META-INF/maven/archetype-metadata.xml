@@ -21,6 +21,8 @@ http://maven.apache.org/plugins/maven-archetype-plugin/specification/archetype-m
       <directory/>
       <includes>
         <include>README.txt</include>
+        <include>dist-assembly.xml</include>
+        <include>wiring.xml</include>
       </includes>
     </fileSet>
     <fileSet filtered="true" packaged="true">

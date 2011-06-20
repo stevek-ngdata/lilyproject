@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!-- This file should be deployed in the plugins/load-before-repository directory -->
+<wiring>
+  <modules>
+    <artifact id="${artifactId}" groupId="${groupId}" artifactId="${artifactId}" version="${version}">
+    </artifact>
+  </modules>
+</wiring>
