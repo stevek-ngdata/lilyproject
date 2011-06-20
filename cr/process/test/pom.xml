@@ -91,6 +91,16 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <project.version>${project.version}</project.version>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
         <version>1.1-SNAPSHOT</version>

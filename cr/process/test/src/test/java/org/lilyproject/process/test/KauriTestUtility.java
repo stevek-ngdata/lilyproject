@@ -50,15 +50,21 @@ public class KauriTestUtility {
     private KauriRuntime runtime;
     private File tmpDir;
     private File confDir;
+    private File userConfDir;
     private int port;
     private String serverProcessSrcDir;
+
+    public KauriTestUtility(String serverProcessSrcDir) {
+        this(serverProcessSrcDir, null);
+    }
 
     /**
      *
      * @param serverProcessSrcDir relative to project base dir, should end on slash
      */
-    public KauriTestUtility(String serverProcessSrcDir) {
+    public KauriTestUtility(String serverProcessSrcDir, File userConfDir) {
         this.serverProcessSrcDir = "/" + serverProcessSrcDir;
+        this.userConfDir = userConfDir;
         tmpDir = createTempDir();
         port = NetUtils.getFreePort();
     }
@@ -105,6 +111,8 @@ public class KauriTestUtility {
 
     public ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
+        if (userConfDir != null)
+            confDirs.add(userConfDir);
         confDirs.add(confDir);
         confDirs.add(new File(getBasedir() + serverProcessSrcDir + "conf"));
         return new ConfManagerImpl(confDirs);
@@ -168,7 +176,7 @@ public class KauriTestUtility {
             String dirName = System.getProperty("java.io.tmpdir") + File.separator + ("kauritest_") + suffix;
             dir = new File(dirName);
             if (dir.exists()) {
-                System.out.println("Temporary test directory already exists, trying another location. Currenty tried: " + dirName);
+                System.out.println("Temporary test directory already exists, trying another location. Currently tried: " + dirName);
                 continue;
             }
 
