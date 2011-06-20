@@ -301,6 +301,13 @@
       </excludes>
     </fileSet>
 
+    <!-- Plugins directory -->
+    <fileSet>
+      <directory>${basedir}/src/main/resources/plugins</directory>
+      <outputDirectory>/plugins</outputDirectory>
+      <useDefaultExcludes>true</useDefaultExcludes>
+    </fileSet>
+
     <!-- Java service wrapper -->
     <fileSet>
       <directory>${basedir}/src/main/resources/service/wrapper-3.5.4</directory>
