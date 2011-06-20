@@ -17,8 +17,8 @@ CLASSPATH="$$$CLASSPATH_PREFIX$$$$$$CLASSPATH$$$"
 
 # Only add LILY_CLI_CLASSPATH when it is not empty, to avoid adding the working dir to
 # the classpath by accident.
-if [ ! -z "LILY_CLI_CLASSPATH" ] ; then
-  CLASSPATH=$CLASSPATH:LILY_CLI_CLASSPATH
+if [ ! -z "$LILY_CLI_CLASSPATH" ] ; then
+  CLASSPATH=$CLASSPATH:$LILY_CLI_CLASSPATH
 fi
 
 export CLASSPATH

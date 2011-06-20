@@ -237,22 +237,27 @@ public class GenScriptMojo extends AbstractMojo {
     }
 
     private String generateClassPath(boolean isDevelopment, Platform platform) throws MojoExecutionException {
+        // The classpath is generated such that there is no trailing path separator: otherwise this can cause
+        // the current working directory to be added to the classpath unintentionally
         StringBuilder result = new StringBuilder();
         ArtifactRepositoryLayout layout = m2layout;
         String basePath = isDevelopment ? settings.getLocalRepository() : platform.envPrefix.concat("LILY_HOME").concat(platform.envSuffix).concat(platform.fileSeparator).concat("lib");
 
         for (Artifact artifact: getClassPath()) {
+            if (result.length() > 0)
+                result.append(platform.pathSeparator);
             result.append(basePath).append(platform.fileSeparator).append(artifactPath(artifact, platform));
-            result.append(platform.pathSeparator);
         }
 
         if (includeProjectInClasspath) {
+            if (result.length() > 0)
+                result.append(platform.pathSeparator);
+
             if (isDevelopment) {
                 result.append(project.getBuild().getOutputDirectory());
             } else {
                 result.append(basePath).append(platform.fileSeparator).append(artifactPath(project.getArtifact(), platform));
             }
-            result.append(platform.pathSeparator);
         }
 
         return result.toString();

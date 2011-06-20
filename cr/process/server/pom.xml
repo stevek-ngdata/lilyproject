@@ -98,12 +98,12 @@
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository=$M2_REPO -Dlily.logdir=$LILY_HOME/logs -Dlily.plugin.dir=$LILY_HOME/plugins</value>
+              <value>-Dkauri.launcher.repository=$LAUNCHER_M2_REPO -Dlily.logdir=$LILY_HOME/logs -Dlily.plugin.dir=$LILY_HOME/plugins</value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository="%M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs" -Dlily.plugin.dir="%LILY_HOME%\plugins"</value>
+              <value>-Dkauri.launcher.repository="%LAUNCHER_M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs" -Dlily.plugin.dir="%LILY_HOME%\plugins"</value>
             </parameter>
             <parameter>
               <platform>unix</platform>
