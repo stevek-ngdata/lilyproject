@@ -309,11 +309,7 @@ public class HBaseRepository extends BaseRepository {
 
         RecordId recordId = record.getId();
         try {
-            Record originalRecord = read(newRecord.getId(), null, null, null, fieldTypes);
-
-            if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, this, record)) {
-                return originalRecord;
-            }
+            Record originalRecord = new UnmodifiableRecord(read(newRecord.getId(), null, null, null, fieldTypes));
 
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
@@ -324,6 +320,15 @@ public class HBaseRepository extends BaseRepository {
                 
             if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
                     unReferencedBlobs, useLatestRecordType, fieldTypes)) {
+
+                // Check the conditions after establishing that the record really needs updating, this makes the
+                // conditional update operation idempotent.
+                Record conditionsResponse = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
+                        record);
+                if (conditionsResponse != null) {
+                    return conditionsResponse;
+                }
+
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
                 putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
@@ -627,11 +632,7 @@ public class HBaseRepository extends BaseRepository {
             Map<QName, Object> fields = getFieldsToUpdate(record);
             fields = filterMutableFields(fields, fieldTypes);
 
-            Record originalRecord = read(recordId, version, null, null, fieldTypes);
-
-            if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, this, record)) {
-                return originalRecord;
-            }
+            Record originalRecord = new UnmodifiableRecord(read(recordId, version, null, null, fieldTypes));
 
             Map<QName, Object> originalFields = filterMutableFields(originalRecord.getFields(), fieldTypes);
 
@@ -663,6 +664,14 @@ public class HBaseRepository extends BaseRepository {
             }
             
             if (!changedScopes.isEmpty()) {
+                // Check the conditions after establishing that the record really needs updating, this makes the
+                // conditional update operation idempotent.
+                Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
+                        record);
+                if (conditionsRecord != null) {
+                    return conditionsRecord;
+                }
+
                 // Update the record types
                 
                 // If no record type is specified explicitly, use the current one of the non-versioned scope
@@ -1286,8 +1295,10 @@ public class HBaseRepository extends BaseRepository {
                 FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
                 Record originalRecord = read(recordId, null, null, null, fieldTypes);
 
-                if (!MutationConditionVerifier.checkConditions(originalRecord, conditions, this, null)) {
-                    return originalRecord;
+                Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
+                        null);
+                if (conditionsRecord != null) {
+                    return conditionsRecord;
                 }
             }
 

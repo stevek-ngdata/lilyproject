@@ -13,12 +13,14 @@ public class MutationConditionVerifier {
      *
      * @param record the complete record state as currently stored in the repository
      * @param conditions the conditions that should be satisfied
+     *
+     * @return null if conditions are satisfied, a Record object if not.
      */
-    public static boolean checkConditions(Record record, List<MutationCondition> conditions, Repository repository,
+    public static Record checkConditions(Record record, List<MutationCondition> conditions, Repository repository,
             Record newRecord) throws RepositoryException, InterruptedException {
 
         if (conditions == null) {
-            return true;
+            return null;
         }
 
         boolean allSatisfied = true;
@@ -71,18 +73,19 @@ public class MutationConditionVerifier {
         }
 
         if (!allSatisfied) {
+            Record responseRecord = record.clone();
             if (newRecord != null) {
                 // reduce the fields to return to those that were submitted
-                reduceFields(record, newRecord.getFields().keySet());
+                reduceFields(responseRecord, newRecord.getFields().keySet());
             } else {
                 // reduce the fields to those on which conditions were put
-                reduceFields(record, extractFields(conditions));
+                reduceFields(responseRecord, extractFields(conditions));
             }
-            record.setResponseStatus(ResponseStatus.CONFLICT);
-            return false;
+            responseRecord.setResponseStatus(ResponseStatus.CONFLICT);
+            return responseRecord;
         }
 
-        return true;
+        return null;
     }
 
     private static Set<QName> extractFields(List<MutationCondition> conditions) {

@@ -1519,6 +1519,26 @@ public abstract class AbstractRepositoryTest {
         assertEquals("value1", record.getField(fieldType1.getName()));
 
         //
+        // Record state already matches supplied state, conditions should not be checked, so we expect response
+        // UP_TO_DATE rather than CONFLICT.
+        //
+        record.setField(fieldType1.getName(), "value1");
+        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
+
+        assertEquals(ResponseStatus.UP_TO_DATE, record.getResponseStatus());
+
+        // Do the same update twice (as can happen when auto-retrying in case of IO exceptions)
+        record.setField(fieldType1.getName(), "value2");
+        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
+        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
+
+        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
+        assertEquals(ResponseStatus.UP_TO_DATE, record.getResponseStatus());
+
+        // reset record state
+        record = createDefaultRecord();
+
+        //
         // Not-equals condition
         //
         record.setField(fieldType1.getName(), "value2");
@@ -1619,6 +1639,13 @@ public abstract class AbstractRepositoryTest {
         //
 
         // TODO
+//        record.setField(fieldType1.getName(), "value2");
+//        try {
+//            repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), new Long(55))));
+//            fail("Expected an exception");
+//        } catch (ClassCastException e) {
+//            // expected
+//        }
 
         //
         // Test on system fields
