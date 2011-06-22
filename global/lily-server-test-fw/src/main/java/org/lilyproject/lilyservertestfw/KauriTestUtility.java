@@ -52,32 +52,29 @@ public class KauriTestUtility {
     private File confDir;
     private int port;
     private String serverProcessSrcDir;
+    private File userConfDir;
+
+    
+    public KauriTestUtility(String serverProcessSrcDir) {
+        this(serverProcessSrcDir, null);
+    }
 
     /**
      *
      * @param serverProcessSrcDir relative to project base dir, should end on slash
      */
-    public KauriTestUtility(String serverProcessSrcDir) {
-        this.serverProcessSrcDir = "/" + serverProcessSrcDir;
+    public KauriTestUtility(String serverProcessSrcDir, File userConfDir) {
+        if (serverProcessSrcDir != null)
+            this.serverProcessSrcDir = "/" + serverProcessSrcDir;
+        this.userConfDir = userConfDir;
         tmpDir = createTempDir();
         port = NetUtils.getFreePort();
     }
-
+    
     public void start() throws Exception {
         KauriRuntimeSettings settings = new KauriRuntimeSettings();
         settings.setRepository(getRepository());
         settings.setConfManager(getConfManager());
-
-        // We specify the module source locations, because when this test is run, the current module
-        // will not yet be installed yet in the Maven repository. While we could get it from the target
-        // directory, this approach makes it easier to run the tests from within your IDE.
-        File sourceLocationsFile = new File(getBasedir() + serverProcessSrcDir + "module-source-locations.properties");
-        if (sourceLocationsFile.exists()) {
-            FileInputStream fis = new FileInputStream(sourceLocationsFile);
-            SourceLocations sourceLocations = new SourceLocations(fis, getBasedir() + serverProcessSrcDir);
-            fis.close();
-            settings.setSourceLocations(sourceLocations);
-        }
 
         runtime = new KauriRuntime(settings);
         runtime.setMode(Mode.getDefault());
@@ -108,8 +105,11 @@ public class KauriTestUtility {
 
     public ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
+        if (userConfDir != null)
+            confDirs.add(userConfDir);
         confDirs.add(confDir);
-        confDirs.add(new File(getBasedir() + serverProcessSrcDir + "conf"));
+        if (serverProcessSrcDir != null)
+            confDirs.add(new File(getBasedir() + serverProcessSrcDir + "conf"));
         return new ConfManagerImpl(confDirs);
     }
 

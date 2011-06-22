@@ -5,6 +5,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.lilyservertestfw.KauriTestUtility;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.testfw.HBaseProxy;
 

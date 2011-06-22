@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+import org.lilyproject.lilyservertestfw.KauriTestUtility;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
