@@ -95,6 +95,12 @@
       <artifactId>jsp-api-2.1</artifactId>
       <version>${version.jetty.jspapi}</version>
     </dependency>
+    
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-solrj</artifactId>
+      <version>${version.solr}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.solr</groupId>

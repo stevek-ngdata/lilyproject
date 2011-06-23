@@ -34,6 +34,7 @@ import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
+import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.zookeeper.ZkConnectException;
@@ -43,41 +44,27 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class LilyProxy {
     private HBaseProxy hbaseProxy;
     private LilyServerProxy lilyServerProxy;
-    private SolrTestingUtility solrTestUtility;
-    private CommonsHttpSolrServer solrServer;
+    private SolrProxy solrProxy;
 
-    public LilyProxy(String solrSchema) {
-        // TODO Auto-generated constructor stub
+    public LilyProxy() {
         hbaseProxy = new HBaseProxy();
-
-        // TODO : move to solr proxy
-        solrTestUtility = new SolrTestingUtility(solrSchema);
+        solrProxy = new SolrProxy();
         lilyServerProxy = new LilyServerProxy();
     }
 
-    public void start() throws Exception {
+    public void start(String solrSchema, String solrUri) throws Exception {
         hbaseProxy.start();
-        startSolr();
+        solrProxy.start(solrSchema, solrUri);
         lilyServerProxy.start(hbaseProxy.getZkConnectString());
     }
     
     public void stop() throws Exception {
         if (lilyServerProxy != null)
             lilyServerProxy.stop();
-        solrServer = null;
-        if (solrTestUtility != null)
-            solrTestUtility.stop();
+        if (solrProxy != null)
+            solrProxy.stop();
         if (hbaseProxy != null)
             hbaseProxy.stop();
-    }
-    
-    private void startSolr() throws Exception {
-        solrTestUtility.start();
-        MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
-        connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);
-        connectionManager.getParams().setMaxTotalConnections(50);
-        HttpClient httpClient = new HttpClient(connectionManager);
-        solrServer = new CommonsHttpSolrServer(solrTestUtility.getUri(), httpClient);
     }
     
     public LilyClient getLilyClient() throws IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException {
@@ -85,7 +72,7 @@ public class LilyProxy {
     }
     
     public SolrServer getSolrServer() {
-        return solrServer;
+        return solrProxy.getSolrServer();
     }
 
     //
@@ -109,7 +96,7 @@ public class LilyProxy {
         IndexerModelImpl model = new IndexerModelImpl(zk);
         IndexDefinition index = model.newIndex(indexName);
         Map<String, String> solrShards = new HashMap<String, String>();
-        solrShards.put("testshard", solrTestUtility.getUri());
+        solrShards.put("testshard", solrProxy.getUri());
         index.setSolrShards(solrShards);
         index.setConfiguration(indexerConfiguration);
         model.addIndex(index);
