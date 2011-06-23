@@ -101,4 +101,8 @@ public class HadoopLauncherService implements LauncherService {
             }
         }
     }
+
+    public Configuration getConf() {
+        return conf;
+    }
 }
