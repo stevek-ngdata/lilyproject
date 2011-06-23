@@ -33,6 +33,29 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes/org/lilyproject/lilyservertestfw/conf</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../../cr/process/server/conf</directory>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+    
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
@@ -188,12 +211,78 @@ chdir /d %CWD%
     <dependency><groupId>org.apache.solr</groupId><artifactId>solr-solrj</artifactId><version>${version.solr}</version></dependency>
     <dependency><groupId>org.apache.solr</groupId><artifactId>solr-webapp</artifactId><version>${version.solr}</version><type>war</type></dependency>
     <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-client</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-rest-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-general-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-rowlog-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-webui-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-model</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-testfw</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-solr-test-fw</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-solrj</artifactId>
+      <version>${version.solr}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-webapp</artifactId>
+      <version>${version.solr}</version>
+      <type>war</type>
+    </dependency>
+    
+    <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-core</artifactId>
       <version>${version.solr}</version>
       <exclusions>
         <!-- Woodstox is also a dependency of solr-solrj, but there it has the correct groupId
-             org.codehaus.woodstox (this version is not available in the repo). -->
+             org.codehaus.woodstox (this version is not available in the repo).
+-->
         <exclusion>
           <groupId>woodstox</groupId>
           <artifactId>wstx-asl</artifactId>
@@ -218,18 +307,39 @@ chdir /d %CWD%
       </exclusions>
     </dependency>
     
-    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-log4j12</artifactId><version>1.6.1</version></dependency>
-    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>1.6.1</version></dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.6.1</version>
+    </dependency>
     
-    <dependency><groupId>commons-logging</groupId><artifactId>commons-logging</artifactId><version>1.1.1</version></dependency>
-    <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><version>2.0</version></dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.0</version>
+    </dependency>
     
     <!--
       The following dependencies are here because otherwise Spring/Kauri does not find their classes.
       This is because of the excludes that were added to the lily-client pom to make it lighter, combined
       with the fact the classes can't see classes in class loaders lower in the CL hierarchy.
     -->
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-repository-impl</artifactId></dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-impl</artifactId>
+    </dependency>
     
     
   </dependencies>
