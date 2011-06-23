@@ -18,13 +18,14 @@ package org.lilyproject.testfw;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.zookeeper.*;
+import org.lilyproject.testfw.fork.HBaseTestingUtility;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
@@ -45,6 +46,7 @@ public class HBaseProxy {
     private static Mode MODE;
     private static Configuration CONF;
     private static HBaseTestingUtility TEST_UTIL;
+    private static File TEST_HOME;
 
     private enum Mode { EMBED, CONNECT }
     private static String HBASE_MODE_PROP_NAME = "lily.test.hbase";
@@ -87,8 +89,13 @@ public class HBaseProxy {
             case EMBED:
                 addHBaseTestProps(CONF);
                 addUserProps(CONF);
-                System.clearProperty(HBaseTestingUtility.TEST_DIRECTORY_KEY);
-                TEST_UTIL = new HBaseTestingUtility(CONF);
+
+                if (TEST_HOME != null) {
+                    TestHomeUtil.cleanupTestHome(TEST_HOME);
+                }
+                TEST_HOME = TestHomeUtil.createTestHome();
+
+                TEST_UTIL = HBaseTestingUtilityFactory.create(CONF, TEST_HOME);
                 TEST_UTIL.startMiniCluster(1);
 
                 // In the past, it happened that HMaster would not become initialized, blocking later on
@@ -188,6 +195,10 @@ public class HBaseProxy {
             }
         }
         CONF = null;
+
+        if (TEST_HOME != null) {
+            TestHomeUtil.cleanupTestHome(TEST_HOME);
+        }
     }
 
     public Configuration getConf() {
