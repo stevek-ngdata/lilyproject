@@ -179,6 +179,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     public void resetLilyState() {
         // TODO should make this synchronized or maybe better check against concurrent calling
         try {
+            long before = System.currentTimeMillis();
             if (!enableLily || !enableHadoop || !enableSolr) {
                 throw new Exception("resetLilyState is only supported when all services are running");
             }
@@ -204,6 +205,8 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             // Start Lily
             System.out.println("Starting Lily");
             lilyService.start(new ArrayList<String>());
+
+            System.out.println("Reset Lily state took " + (System.currentTimeMillis() - before) + " ms");
         } catch (Exception e) {
             System.out.println("Error while resetting Lily state: " + e.getMessage());
             e.printStackTrace();
