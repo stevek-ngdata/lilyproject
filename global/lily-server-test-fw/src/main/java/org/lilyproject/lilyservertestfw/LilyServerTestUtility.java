@@ -15,12 +15,12 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.zookeeper.KeeperException;
 import org.kauriproject.runtime.KauriRuntime;
 import org.kauriproject.runtime.KauriRuntimeSettings;
 import org.kauriproject.runtime.configuration.ConfManager;
@@ -28,22 +28,14 @@ import org.kauriproject.runtime.configuration.ConfManagerImpl;
 import org.kauriproject.runtime.rapi.Mode;
 import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
-import org.lilyproject.client.NoServersException;
-import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.indexer.model.impl.IndexerModelImpl;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
-import org.lilyproject.util.zookeeper.ZkConnectException;
 
 public class LilyServerTestUtility {
 
     private final String confDir;
     private KauriRuntime runtime;
-    private File tmpDir;
 
     public LilyServerTestUtility(String confDir) {
         this.confDir = confDir;
-        tmpDir = createTempDir();
     }
     
     public void start() throws Exception {
@@ -59,14 +51,6 @@ public class LilyServerTestUtility {
     public void stop() {
         if (runtime != null) {
             runtime.stop();
-        }
-
-        if (tmpDir != null) {
-            try {
-                FileUtils.deleteDirectory(tmpDir);
-            } catch (IOException e) {
-                // ignore
-            }
         }
     }
     
@@ -84,30 +68,5 @@ public class LilyServerTestUtility {
             localRepositoryPath = System.getProperty("user.home") + "/.m2/repository";
 
         return new Maven2StyleArtifactRepository(new File(localRepositoryPath));
-    }
-    
-    private File createTempDir() {
-        String suffix = (System.currentTimeMillis() % 100000) + "" + (int)(Math.random() * 100000);
-        File dir;
-        while (true) {
-            String dirName = System.getProperty("java.io.tmpdir") + File.separator + ("lilytest_") + suffix;
-            dir = new File(dirName);
-            if (dir.exists()) {
-                System.out.println("Temporary test directory already exists, trying another location. Currenty tried: " + dirName);
-                continue;
-            }
-
-            boolean dirCreated = dir.mkdirs();
-            if (!dirCreated) {
-                throw new RuntimeException("Failed to created temporary test directory at " + dirName);
-            }
-
-            break;
-        }
-
-        dir.mkdirs();
-        dir.deleteOnExit();
-
-        return dir;
     }
 }
