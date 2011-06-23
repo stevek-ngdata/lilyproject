@@ -52,7 +52,8 @@ public class SolrProxy {
         
         switch (MODE) {
         case EMBED:
-            solrTestingUtility = new SolrTestingUtility(schemaLocation);
+            solrTestingUtility = new SolrTestingUtility();
+            solrTestingUtility.setSchemaLocation("classpath:" + schemaLocation);
             solrTestingUtility.start();
             this.uri = solrTestingUtility.getUri();
             solrServer = new CommonsHttpSolrServer(uri, httpClient);

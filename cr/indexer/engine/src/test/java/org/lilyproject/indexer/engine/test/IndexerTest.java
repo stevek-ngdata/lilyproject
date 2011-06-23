@@ -110,7 +110,8 @@ public class IndexerTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        SOLR_TEST_UTIL = new SolrTestingUtility("org/lilyproject/indexer/engine/test/schema1.xml");
+        SOLR_TEST_UTIL = new SolrTestingUtility();
+        SOLR_TEST_UTIL.setSchemaLocation("classpath:org/lilyproject/indexer/engine/test/schema1.xml");
 
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
                 "org.lilyproject.rowlog.impl.RowLogImpl");

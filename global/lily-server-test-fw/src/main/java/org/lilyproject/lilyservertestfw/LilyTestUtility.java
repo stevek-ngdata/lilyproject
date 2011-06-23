@@ -60,7 +60,8 @@ public class LilyTestUtility {
         kauriTestUtility.createDefaultConf(HBASE_PROXY);
         kauriTestUtility.start();
 
-        solrTestUtility = new SolrTestingUtility(solrSchema);
+        solrTestUtility = new SolrTestingUtility();
+        solrTestUtility.setSchemaLocation("classpath:" + solrSchema);
         solrTestUtility.start();
         MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
         connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);

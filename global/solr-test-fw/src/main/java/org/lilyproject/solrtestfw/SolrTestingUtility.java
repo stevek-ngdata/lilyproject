@@ -21,43 +21,86 @@ import org.mortbay.jetty.webapp.WebAppContext;
 import java.io.*;
 
 public class SolrTestingUtility {
-    private int solrPort = 6712;
+    private int solrPort = 8983;
     private Server server;
     private String schemaLocation;
+    private String autoCommitSetting;
+    private String solrWarPath;
     private TempSolrHome solrHome;
 
-    public SolrTestingUtility(String schemaLocation) {
+    public SolrTestingUtility() {
+    }
+
+    public String getSchemaLocation() {
+        return schemaLocation;
+    }
+
+    public void setSchemaLocation(String schemaLocation) {
         this.schemaLocation = schemaLocation;
+    }
+
+    public String getAutoCommitSetting() {
+        return autoCommitSetting;
+    }
+
+    public void setAutoCommitSetting(String autoCommitSetting) {
+        this.autoCommitSetting = autoCommitSetting;
+    }
+
+    public String getSolrWarPath() {
+        return solrWarPath;
+    }
+
+    public void setSolrWarPath(String solrWarPath) {
+        this.solrWarPath = solrWarPath;
     }
 
     public void start() throws Exception {
         solrHome = new TempSolrHome();
-        solrHome.copyDefaultConfigToSolrHome("");
-        solrHome.copySchemaFromResource(schemaLocation);
+
+        solrHome.copyDefaultConfigToSolrHome(autoCommitSetting == null ? "" : autoCommitSetting);
+
+        if (schemaLocation != null) {
+            if (schemaLocation.startsWith("classpath:")) {
+                solrHome.copySchemaFromResource(schemaLocation.substring("classpath:".length()));
+            } else {
+                solrHome.copySchemaFromFile(new File(schemaLocation));
+            }
+        } else {
+            solrHome.copySchemaFromResource("org/lilyproject/solrtestfw/conftemplate/schema.xml");
+        }
+
         solrHome.setSystemProperties();
 
 
         // Launch Solr
-        String solrWar = System.getProperty("solr.war");
-        if (solrWar == null || !new File(solrWar).exists()) {
+        if (solrWarPath == null) {
+            solrWarPath = System.getProperty("solr.war");
+        }
+
+        if (solrWarPath == null || !new File(solrWarPath).exists()) {
             System.out.println();
             System.out.println("------------------------------------------------------------------------");
             System.out.println("Solr not found at");
-            System.out.println(solrWar);
+            System.out.println(solrWarPath);
             System.out.println("Verify setting of solr.war system property");
             System.out.println("------------------------------------------------------------------------");
             System.out.println();
-            throw new Exception("Solr war not found at " + solrWar);
+            throw new Exception("Solr war not found at " + solrWarPath);
         }
 
         server = new Server(solrPort);
-        server.addHandler(new WebAppContext(solrWar, "/"));
+        server.addHandler(new WebAppContext(solrWarPath, "/solr"));
 
         server.start();
     }
 
     public String getUri() {
-        return "http://localhost:" + solrPort;
+        return "http://localhost:" + solrPort + "/solr";
+    }
+
+    public Server getServer() {
+        return server;
     }
 
     public void stop() throws Exception {

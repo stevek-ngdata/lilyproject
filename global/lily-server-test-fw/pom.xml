@@ -72,7 +72,7 @@
           <scripts>
             <script>
               <basename>launch-test-lily</basename>
-              <mainClass>org.lilyproject.lilyservertestfw.LilyLauncher</mainClass>
+              <mainClass>org.lilyproject.lilyservertestfw.launcher.LilyLauncher</mainClass>
             </script>
           </scripts>
           <beforeJavaHook>
@@ -156,6 +156,28 @@ chdir /d %CWD%
               <value>%LILY_HOME%/tmp/hadoopwebapps;$LILY_HOME\lib\org\lilyproject\lily-hbase-ext\${project.version}\lily-hbase-ext-${project.version}.jar;</value>
             </parameter>
           </classPathPrefix>
+          <defaultJvmArgs>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dist</mode>
+              <value>-Dlily.solrlauncher.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
+            </parameter>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dev</mode>
+              <value>-Dlily.solrlauncher.war=${settings.localRepository}/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
+            </parameter>
+            <parameter>
+              <platform>windows</platform>
+              <mode>dist</mode>
+              <value>-Dlily.solrlauncher.war=%M2_REPO%\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war</value>
+            </parameter>
+            <parameter>
+              <platform>windows</platform>
+              <mode>dev</mode>
+              <value>-Dlily.solrlauncher.war=${settings.localRepository}\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war</value>
+            </parameter>
+          </defaultJvmArgs>
         </configuration>
         <executions>
           <execution>

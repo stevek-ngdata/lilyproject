@@ -30,53 +30,6 @@
     <relativePath>../..</relativePath>
   </parent>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-genscript-plugin</artifactId>
-        <configuration>
-          <scripts>
-            <script>
-              <basename>launch-solr</basename>
-              <mainClass>org.lilyproject.solrtestfw.SolrLauncher</mainClass>
-            </script>
-          </scripts>
-          <defaultJvmArgs>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dist</mode>
-              <value>-Dlily.solrlauncher.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
-            </parameter>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dev</mode>
-              <value>-Dlily.solrlauncher.war=${settings.localRepository}/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dist</mode>
-              <value>-Dlily.solrlauncher.war=%M2_REPO%\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war</value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dev</mode>
-              <value>-Dlily.solrlauncher.war=${settings.localRepository}\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war</value>
-            </parameter>
-          </defaultJvmArgs>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>genscript</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
   <dependencies>
     <dependency>
       <groupId>org.mortbay.jetty</groupId>
