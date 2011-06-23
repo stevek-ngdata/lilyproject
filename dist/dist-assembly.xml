@@ -229,14 +229,14 @@
       <fileMode>0755</fileMode>
     </file-->
 
-    <!-- Launch hadoop -->
+    <!-- Launch lily -->
     <file>
-      <source>${basedir}/../global/test-fw/target/dist-scripts/launch-hadoop</source>
+      <source>${basedir}/../global/lily-server-test-fw/target/dist-scripts/launch-test-lily</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <!--file>
-      <source>${basedir}/../global/test-fw/target/dist-scripts/launch-hadoop.bat</source>
+      <source>${basedir}/../global/lily-server-test-fw/target/dist-scripts/launch-test-lily.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file-->

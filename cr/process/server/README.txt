@@ -10,7 +10,7 @@ You can either:
 
  * launch a dummy Hadoop/HBase/ZooKeeper via:
       cd global/testfw
-      ./target/launch-hadoop
+      ./target/launch-test-lily --hadoop
 
  * or use a HBase installation you set up yourself.
    See Lily's root pom.xml for the version we build against, properties:

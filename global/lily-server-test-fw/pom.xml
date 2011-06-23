@@ -41,10 +41,139 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-genscript-plugin</artifactId>
+        <configuration>
+          <scripts>
+            <script>
+              <basename>launch-test-lily</basename>
+              <mainClass>org.lilyproject.lilyservertestfw.LilyLauncher</mainClass>
+            </script>
+          </scripts>
+          <beforeJavaHook>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dev</mode>
+              <value>
+WEBAPPSDIR=${basedir}/target/hadoopwebapps
+mkdir -p $WEBAPPSDIR
+CWD=`pwd`
+cd $WEBAPPSDIR
+$JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar webapps
+$JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
+cd $CWD
+
+# Enable JMX access on the same port as used by HBase's region server
+# This is handy because some of our test tools can read out HBase metrics this way
+LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
+LILY_JAVA_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+              </value>
+            </parameter>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dist</mode>
+              <value>
+WEBAPPSDIR=$LILY_HOME/tmp/hadoopwebapps
+mkdir -p $WEBAPPSDIR
+CWD=`pwd`
+cd $WEBAPPSDIR
+$JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar webapps
+$JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
+cd $CWD
+              </value>
+            </parameter>
+            <parameter>
+              <platform>windows</platform>
+              <mode>dev</mode>
+              <value>
+set WEBAPPSDIR=${basedir}\target\hadoopwebapps
+mkdir %WEBAPPSDIR%
+set CWD=%CD%
+cd %WEBAPPSDIR%
+"%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar webapps
+"%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
+chdir /d %CWD%
+              </value>
+            </parameter>
+            <parameter>
+              <platform>windows</platform>
+              <mode>dist</mode>
+              <value>
+set WEBAPPSDIR=%LILY_HOME%\tmp\hadoopwebapps
+mkdir %WEBAPPSDIR%
+set CWD=%CD%
+cd %WEBAPPSDIR%
+"%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar webapps
+"%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
+chdir /d %CWD%
+              </value>
+            </parameter>
+          </beforeJavaHook>
+          <classPathPrefix>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dev</mode>
+              <value>${basedir}/target/hadoopwebapps:${basedir}/../../cr/hbase-ext/target/lily-hbase-ext-${project.version}.jar:</value>
+            </parameter>
+            <parameter>
+              <platform>unix</platform>
+              <mode>dist</mode>
+              <value>$LILY_HOME/tmp/hadoopwebapps:$LILY_HOME/lib/org/lilyproject/lily-hbase-ext/${project.version}/lily-hbase-ext-${project.version}.jar:</value>
+            </parameter>
+            <parameter>
+              <platform>windows</platform>
+              <mode>dev</mode>
+              <value>${basedir}/target/hadoopwebapps;${basedir}\..\..\cr\hbase-ext\target\lily-hbase-ext-${project.version}.jar;</value>
+            </parameter>
+            <parameter>
+              <platform>windows</platform>
+              <mode>dist</mode>
+              <value>%LILY_HOME%/tmp/hadoopwebapps;$LILY_HOME\lib\org\lilyproject\lily-hbase-ext\${project.version}\lily-hbase-ext-${project.version}.jar;</value>
+            </parameter>
+          </classPathPrefix>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>genscript</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   
   <dependencies>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-cli-fw</artifactId>
+      <!-- cli-fw is only needed when running standalone, not when this project is reused
+           as library. -->
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-testfw</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+      <classifier>tests</classifier>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-solr-test-fw</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
     <dependency><groupId>org.kauriproject</groupId><artifactId>kauri-runtime</artifactId><version>${version.kauri}</version></dependency>
     
     <dependency><groupId>org.lilyproject</groupId><artifactId>lily-client</artifactId></dependency>
@@ -55,9 +184,7 @@
     <dependency><groupId>org.lilyproject</groupId><artifactId>lily-rowlog-module</artifactId></dependency>
     <dependency><groupId>org.lilyproject</groupId><artifactId>lily-webui-module</artifactId></dependency>
     <dependency><groupId>org.lilyproject</groupId><artifactId>lily-indexer-model</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-testfw</artifactId><scope>compile</scope></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-solr-test-fw</artifactId><scope>compile</scope></dependency>
-        
+
     <dependency><groupId>org.apache.solr</groupId><artifactId>solr-solrj</artifactId><version>${version.solr}</version></dependency>
     <dependency><groupId>org.apache.solr</groupId><artifactId>solr-webapp</artifactId><version>${version.solr}</version><type>war</type></dependency>
     <dependency>

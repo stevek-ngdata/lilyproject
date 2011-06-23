@@ -63,10 +63,9 @@ this is also easier for debugging.
 To easily launch a mini HBase without having to install it, execute:
 
 cd testfw
-./target/launch-hadoop
+./target/launch-test-lily --hadoop
 
-This prints a line "Minicluster is up" when it is started, though it is
-quickly followed by more logging.
+This will print some non-log informational messages once everything is up.
 
 And then run the tests with
 

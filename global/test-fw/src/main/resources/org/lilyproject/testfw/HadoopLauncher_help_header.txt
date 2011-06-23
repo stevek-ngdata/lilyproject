@@ -1,2 +1,0 @@
-Launch a complete Hadoop & HBase stack within one VM, without requiring
-to configure anything.
