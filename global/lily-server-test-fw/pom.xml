@@ -219,19 +219,65 @@ chdir /d %CWD%
       <scope>compile</scope>
     </dependency>
 
-    <dependency><groupId>org.kauriproject</groupId><artifactId>kauri-runtime</artifactId><version>${version.kauri}</version></dependency>
+    <dependency>
+      <groupId>org.kauriproject</groupId>
+      <artifactId>kauri-runtime</artifactId>
+      <version>${version.kauri}</version>
+    </dependency>
     
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-client</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-rest-module</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-indexer-module</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-general-module</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-repository-module</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-rowlog-module</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-webui-module</artifactId></dependency>
-    <dependency><groupId>org.lilyproject</groupId><artifactId>lily-indexer-model</artifactId></dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-client</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-rest-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-general-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-rowlog-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-webui-module</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-model</artifactId>
+    </dependency>
 
-    <dependency><groupId>org.apache.solr</groupId><artifactId>solr-solrj</artifactId><version>${version.solr}</version></dependency>
-    <dependency><groupId>org.apache.solr</groupId><artifactId>solr-webapp</artifactId><version>${version.solr}</version><type>war</type></dependency>
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-solrj</artifactId>
+      <version>${version.solr}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-webapp</artifactId>
+      <version>${version.solr}</version>
+      <type>war</type>
+    </dependency>
+    
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-client</artifactId>
