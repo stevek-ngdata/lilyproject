@@ -25,6 +25,7 @@ import org.kauriproject.runtime.rapi.Mode;
 import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
 import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.net.NetUtils;
 import org.restlet.Client;
 
@@ -197,12 +198,8 @@ public class KauriTestUtility {
         return basedir;
     }
 
-    private ArtifactRepository getRepository() {
-        String localRepositoryPath = System.getProperty("localRepository");
-        if (localRepositoryPath == null)
-            localRepositoryPath = System.getProperty("user.home") + "/.m2/repository";
-
-        return new Maven2StyleArtifactRepository(new File(localRepositoryPath));
+    private ArtifactRepository getRepository() throws IOException {
+        return new Maven2StyleArtifactRepository(MavenUtil.findLocalMavenRepository());
     }
 
 }

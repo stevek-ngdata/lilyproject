@@ -17,11 +17,13 @@ package org.lilyproject.solrtestfw;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.NullInputStream;
+import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 import java.io.*;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,9 +91,23 @@ public class SolrTestingUtility {
         setSystemProperties();
 
 
-        // Launch Solr
+        // Determine location of Solr war file:
+        //  - either provided by setSolrWarPath()
+        //  - or provided via system property solr.war
+        //  - finally use default, assuming availability in local repository
         if (solrWarPath == null) {
             solrWarPath = System.getProperty("solr.war");
+        }
+        if (solrWarPath == null) {
+            Properties properties = new Properties();
+            InputStream is = getClass().getResourceAsStream("solr.properties");
+            if (is != null) {
+                properties.load(is);
+                is.close();
+                String solrVersion = properties.getProperty("solr.version");
+                solrWarPath = MavenUtil.findLocalMavenRepository().getAbsolutePath() +
+                        "/org/apache/solr/solr-webapp/" + solrVersion + "/solr-webapp-" + solrVersion + ".war";
+            }
         }
 
         if (solrWarPath == null || !new File(solrWarPath).exists()) {
@@ -99,7 +115,6 @@ public class SolrTestingUtility {
             System.out.println("------------------------------------------------------------------------");
             System.out.println("Solr not found at");
             System.out.println(solrWarPath);
-            System.out.println("Verify setting of solr.war system property");
             System.out.println("------------------------------------------------------------------------");
             System.out.println();
             throw new Exception("Solr war not found at " + solrWarPath);

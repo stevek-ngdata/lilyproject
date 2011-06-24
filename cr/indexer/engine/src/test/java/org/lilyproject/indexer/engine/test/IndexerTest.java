@@ -62,8 +62,6 @@ import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
-// To run this test from an IDE, set a property solr.war pointing to the Solr war
-
 public class IndexerTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
     private static IndexerConf INDEXER_CONF;

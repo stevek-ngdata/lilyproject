@@ -30,20 +30,6 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <systemPropertyVariables>
-            <solr.war>${settings.localRepository}/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</solr.war>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>

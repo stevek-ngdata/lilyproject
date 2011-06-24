@@ -16,6 +16,7 @@
 package org.lilyproject.lilyservertestfw;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import org.kauriproject.runtime.configuration.ConfManagerImpl;
 import org.kauriproject.runtime.rapi.Mode;
 import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
+import org.lilyproject.util.MavenUtil;
 
 public class LilyServerTestUtility {
 
@@ -63,11 +65,7 @@ public class LilyServerTestUtility {
     }
 
     
-    private ArtifactRepository getRepository() {
-        String localRepositoryPath = System.getProperty("localRepository");
-        if (localRepositoryPath == null)
-            localRepositoryPath = System.getProperty("user.home") + "/.m2/repository";
-
-        return new Maven2StyleArtifactRepository(new File(localRepositoryPath));
+    private ArtifactRepository getRepository() throws IOException {
+        return new Maven2StyleArtifactRepository(MavenUtil.findLocalMavenRepository());
     }
 }
