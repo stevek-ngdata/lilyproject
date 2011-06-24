@@ -46,6 +46,9 @@ public class LilyLauncherService implements LauncherService {
 
     @Override
     public void stop() {
-        lilyServerTestUtility.stop();
+        if (lilyServerTestUtility != null) {
+            lilyServerTestUtility.stop();
+            lilyServerTestUtility = null;
+        }
     }
 }

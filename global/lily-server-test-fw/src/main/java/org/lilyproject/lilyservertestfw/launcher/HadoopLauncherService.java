@@ -99,6 +99,8 @@ public class HadoopLauncherService implements LauncherService {
             } catch (Throwable t) {
                 log.error("Error shutting down MiniZKCluster", t);
             }
+
+            hbaseTestUtility = null;
         }
     }
 

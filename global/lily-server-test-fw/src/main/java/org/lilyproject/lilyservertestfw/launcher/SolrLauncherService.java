@@ -142,12 +142,15 @@ public class SolrLauncherService implements LauncherService {
 
     @Override
     public void stop() {
-        if (solrTestingUtility.getServer() != null) {
-            try {
-                solrTestingUtility.getServer().stop();
-            } catch (Throwable t) {
-                log.error("Error shutting down Solr/Jetty", t);
+        if (solrTestingUtility != null) {
+            if (solrTestingUtility.getServer() != null) {
+                try {
+                    solrTestingUtility.getServer().stop();
+                } catch (Throwable t) {
+                    log.error("Error shutting down Solr/Jetty", t);
+                }
             }
+            solrTestingUtility = null;
         }
     }
 }
