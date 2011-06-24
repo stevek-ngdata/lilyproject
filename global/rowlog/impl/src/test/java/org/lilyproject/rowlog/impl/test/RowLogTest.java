@@ -42,7 +42,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 
 public class RowLogTest {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private static RowLogConfigurationManager configurationManager;
     private static IMocksControl control;
     private static RowLog rowLog;
@@ -57,6 +57,7 @@ public class RowLogTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);

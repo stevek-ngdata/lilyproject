@@ -33,7 +33,7 @@ import java.util.List;
  * Helper class to instantiate and wire all the repository related services.
  */
 public class RepositorySetup {
-    private HBaseProxy hbaseProxy = new HBaseProxy();
+    private HBaseProxy hbaseProxy;
     private Configuration hadoopConf;
     private ZooKeeperItf zk;
 
@@ -71,6 +71,7 @@ public class RepositorySetup {
     public void setupCore() throws Exception {
         if (coreSetup)
             return;
+        hbaseProxy = new HBaseProxy();
         hbaseProxy.start();
         hadoopConf = hbaseProxy.getConf();
         zk = ZkUtil.connect(hbaseProxy.getZkConnectString(), 10000);

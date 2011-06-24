@@ -41,12 +41,13 @@ import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class RowLogConfigurationManagerTest {
-    protected final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    protected static HBaseProxy HBASE_PROXY;
     private static ZooKeeperItf zooKeeper;
     
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
     }

@@ -15,10 +15,15 @@
  */
 package org.lilyproject.solrtestfw;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.input.NullInputStream;
+import org.lilyproject.util.test.TestHomeUtil;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SolrTestingUtility {
     private int solrPort = 8983;
@@ -26,9 +31,19 @@ public class SolrTestingUtility {
     private String schemaLocation;
     private String autoCommitSetting;
     private String solrWarPath;
-    private TempSolrHome solrHome;
+    private File solrHomeDir;
+    private File solrConfDir;
 
-    public SolrTestingUtility() {
+    public SolrTestingUtility() throws IOException {
+        this(null);
+    }
+
+    public SolrTestingUtility(File solrHomeDir) throws IOException {
+        if (solrHomeDir == null) {
+            this.solrHomeDir = TestHomeUtil.createTestHome("lily-solrtesthome-");
+        } else {
+            this.solrHomeDir = solrHomeDir;
+        }
     }
 
     public String getSchemaLocation() {
@@ -56,21 +71,22 @@ public class SolrTestingUtility {
     }
 
     public void start() throws Exception {
-        solrHome = new TempSolrHome();
+        solrConfDir = new File(solrHomeDir, "conf");
+        FileUtils.forceMkdir(solrConfDir);
 
-        solrHome.copyDefaultConfigToSolrHome(autoCommitSetting == null ? "" : autoCommitSetting);
+        copyDefaultConfigToSolrHome(autoCommitSetting == null ? "" : autoCommitSetting);
 
         if (schemaLocation != null) {
             if (schemaLocation.startsWith("classpath:")) {
-                solrHome.copySchemaFromResource(schemaLocation.substring("classpath:".length()));
+                copySchemaFromResource(schemaLocation.substring("classpath:".length()));
             } else {
-                solrHome.copySchemaFromFile(new File(schemaLocation));
+                copySchemaFromFile(new File(schemaLocation));
             }
         } else {
-            solrHome.copySchemaFromResource("org/lilyproject/solrtestfw/conftemplate/schema.xml");
+            copySchemaFromResource("org/lilyproject/solrtestfw/conftemplate/schema.xml");
         }
 
-        solrHome.setSystemProperties();
+        setSystemProperties();
 
 
         // Launch Solr
@@ -107,8 +123,60 @@ public class SolrTestingUtility {
         if (server != null)
             server.stop();
 
-        if (solrHome != null)
-            solrHome.cleanup();
+        if (solrHomeDir != null) {
+            FileUtils.deleteDirectory(solrHomeDir);
+        }
     }
 
+    public void setSystemProperties() {
+        System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
+        System.setProperty("solr.data.dir", new File(solrHomeDir, "data").getAbsolutePath());
+    }
+
+    public void copyDefaultConfigToSolrHome(String autoCommitSetting) throws IOException {
+        copyResourceFiltered("org/lilyproject/solrtestfw/conftemplate/solrconfig.xml",
+                new File(solrConfDir, "solrconfig.xml"), autoCommitSetting);
+        createEmptyFile(new File(solrConfDir, "synonyms.txt"));
+        createEmptyFile(new File(solrConfDir, "stopwords.txt"));
+        createEmptyFile(new File(solrConfDir, "protwords.txt"));
+    }
+
+    public void copySchemaFromFile(File schemaFile) throws IOException {
+        FileUtils.copyFile(schemaFile, new File(solrConfDir, "schema.xml"));
+    }
+
+    public void copySchemaFromResource(String path) throws IOException {
+        copyResource(path, new File(solrConfDir, "schema.xml"));
+    }
+
+    private void copyResource(String path, File destination) throws IOException {
+        InputStream is = getClass().getClassLoader().getResourceAsStream(path);
+        FileUtils.copyInputStreamToFile(is, destination);
+        is.close();
+    }
+
+    private void copyResourceFiltered(String path, File destination, String autoCommitSetting) throws IOException {
+
+        InputStream is = getClass().getClassLoader().getResourceAsStream(path);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+
+        FileWriter writer = new FileWriter(destination);
+
+        String placeholder = Pattern.quote("<!--AUTOCOMMIT_PLACEHOLDER-->");
+        String replacement = Matcher.quoteReplacement(autoCommitSetting);
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            line = line.replaceAll(placeholder, replacement);
+            writer.write(line);
+            writer.write('\n');
+        }
+
+        reader.close();
+        writer.close();
+    }
+
+    private void createEmptyFile(File destination) throws IOException {
+        FileUtils.copyInputStreamToFile(new NullInputStream(0), destination);
+    }
 }

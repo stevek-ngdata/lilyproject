@@ -44,7 +44,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class TypeManagerReliableCreateTest {
 
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("data");
     private static final byte[] CONCURRENT_COUNTER_COLUMN_NAME = Bytes.toBytes("cc");
     private static ValueType valueType;
@@ -57,6 +57,7 @@ public class TypeManagerReliableCreateTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());

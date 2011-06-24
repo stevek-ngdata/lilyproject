@@ -31,7 +31,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class
         AbstractRowLogEndToEndTest {
-    protected final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    protected static HBaseProxy HBASE_PROXY;
     protected static RowLog rowLog;
     protected static RowLogShard shard;
     protected static RowLogProcessor processor;
@@ -47,6 +47,7 @@ public abstract class
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         configuration = HBASE_PROXY.getConf();
         rowTable = RowLogTableUtil.getRowTable(configuration);

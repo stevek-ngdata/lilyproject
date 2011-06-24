@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class RestTest {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private final static KauriTestUtility KAURI_TEST_UTIL = new KauriTestUtility("../server/");
     private static String BASE_URI;
 
@@ -57,6 +57,7 @@ public class RestTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
 
         KAURI_TEST_UTIL.createDefaultConf(HBASE_PROXY);

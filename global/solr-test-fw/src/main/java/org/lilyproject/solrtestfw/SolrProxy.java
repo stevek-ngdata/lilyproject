@@ -17,8 +17,13 @@ package org.lilyproject.solrtestfw;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.io.FileUtils;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.lilyproject.util.test.TestHomeUtil;
+
+import java.io.File;
+import java.io.IOException;
 
 public class SolrProxy {
     private Mode mode;
@@ -33,11 +38,17 @@ public class SolrProxy {
 
     private String uri;
 
-    public SolrProxy() {
-        this(null);
+    private File solrHomeDir;
+
+    public SolrProxy() throws IOException {
+        this(null, null);
     }
 
-    public SolrProxy(Mode mode) {
+    /**
+     *
+     * @param testDir storage dir to use in case of embedded mode (a subdir will be made)
+     */
+    public SolrProxy(Mode mode, File testDir) throws IOException {
         if (mode == null) {
             String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
             if (solrModeProp == null || solrModeProp.equals("") || solrModeProp.equals("embed")) {
@@ -55,6 +66,15 @@ public class SolrProxy {
         connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);
         connectionManager.getParams().setMaxTotalConnections(50);
         httpClient = new HttpClient(connectionManager);
+
+        if (this.mode == Mode.EMBED) {
+            if (testDir == null) {
+                solrHomeDir = TestHomeUtil.createTestHome("lily-solrproxy-");
+            } else {
+                solrHomeDir = new File(testDir, "solrproxy");
+                FileUtils.forceMkdir(solrHomeDir);
+            }
+        }
     }
 
     public void start(String schemaLocation) throws Exception {
@@ -62,7 +82,10 @@ public class SolrProxy {
 
         switch (mode) {
             case EMBED:
-                solrTestingUtility = new SolrTestingUtility();
+                FileUtils.forceMkdir(solrHomeDir);
+                FileUtils.cleanDirectory(solrHomeDir);
+                System.out.println("SolrProxy embedded mode temp dir: " + solrHomeDir.getAbsolutePath());
+                solrTestingUtility = new SolrTestingUtility(solrHomeDir);
                 solrTestingUtility.setSchemaLocation("classpath:" + schemaLocation);
                 solrTestingUtility.start();
                 this.uri = solrTestingUtility.getUri();

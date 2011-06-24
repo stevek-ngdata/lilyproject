@@ -15,12 +15,14 @@
  */
 package org.lilyproject.testfw;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.testfw.fork.HBaseTestingUtility;
+import org.lilyproject.util.test.TestHomeUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,11 +50,15 @@ public class HBaseProxy {
     public enum Mode { EMBED, CONNECT }
     private static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
 
-    public HBaseProxy() {
-        this(null);
+    public HBaseProxy() throws IOException {
+        this(null, null);
     }
 
-    public HBaseProxy(Mode mode) {
+    /**
+     *
+     * @param testDir storage dir to use in case of embedded mode (a subdir will be made)
+     */
+    public HBaseProxy(Mode mode, File testDir) throws IOException {
         if (mode == null) {
             String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
             if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
@@ -64,6 +70,15 @@ public class HBaseProxy {
             }
         } else {
             this.mode = mode;
+        }
+
+        if (this.mode == Mode.EMBED) {
+            if (testDir == null) {
+                testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
+            } else {
+                testHome = new File(testDir, "hbaseproxy");
+                FileUtils.forceMkdir(testHome);
+            }
         }
     }
 
@@ -95,10 +110,9 @@ public class HBaseProxy {
                 addHBaseTestProps(conf);
                 addUserProps(conf);
 
-                if (testHome != null) {
-                    TestHomeUtil.cleanupTestHome(testHome);
-                }
-                testHome = TestHomeUtil.createTestHome();
+                TestHomeUtil.cleanupTestHome(testHome);
+
+                System.out.println("HBaseProxy embedded mode temp dir: " + testHome.getAbsolutePath());
 
                 testUtil = HBaseTestingUtilityFactory.create(conf, testHome);
                 testUtil.startMiniCluster(1);

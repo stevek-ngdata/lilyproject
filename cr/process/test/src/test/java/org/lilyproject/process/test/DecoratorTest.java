@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class DecoratorTest {
 
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private static KauriTestUtility KAURI_TEST_UTIL;
 
     @BeforeClass
@@ -37,6 +37,7 @@ public class DecoratorTest {
         String pluginDir = setupPluginsDirectory(tmpDir);
         File confDir = setupConfDirectory(tmpDir);
 
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
 
         KAURI_TEST_UTIL = new KauriTestUtility("../server/", confDir);

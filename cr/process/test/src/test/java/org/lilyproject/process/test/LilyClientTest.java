@@ -29,11 +29,12 @@ import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
 
 public class LilyClientTest {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private final static KauriTestUtility KAURI_TEST_UTIL = new KauriTestUtility("../server/");
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
 
         KAURI_TEST_UTIL.createDefaultConf(HBASE_PROXY);

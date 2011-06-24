@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
+import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 
 public class LilyServerProxy {
@@ -40,11 +41,17 @@ public class LilyServerProxy {
 
     private String zkConnectString;
 
-    public LilyServerProxy() {
-        this(null);
+    private File testHome;
+
+    public LilyServerProxy() throws IOException {
+        this(null, null);
     }
 
-    public LilyServerProxy(Mode mode) {
+    /**
+     *
+     * @param testDir storage dir to use in case of embedded mode (a subdir will be made)
+     */
+    public LilyServerProxy(Mode mode, File testDir) throws IOException {
         if (mode == null) {
             String lilyModeProp = System.getProperty(LILY_MODE_PROP_NAME);
             if (lilyModeProp == null || lilyModeProp.equals("") || lilyModeProp.equals("embed")) {
@@ -57,6 +64,15 @@ public class LilyServerProxy {
         } else {
             this.mode = mode;
         }
+
+        if (this.mode == Mode.EMBED) {
+            if (testDir == null) {
+                testHome = TestHomeUtil.createTestHome("lilyserverproxy-");
+            } else {
+                testHome = new File(testDir, "lilyserverproxy");
+                FileUtils.forceMkdir(testHome);
+            }
+        }
     }
 
     public void start(String zkConnectString) throws Exception {
@@ -66,8 +82,13 @@ public class LilyServerProxy {
 
         switch (mode) {
             case EMBED:
-                File dir = createTmpConfDir();
-                lilyServerTestUtility = new LilyServerTestUtility(dir.getAbsolutePath());
+                FileUtils.forceMkdir(testHome);
+                FileUtils.cleanDirectory(testHome);
+                System.out.println("LilySeverProxy embedded mode temp dir: " + testHome.getAbsolutePath());
+                File confDir = new File(testHome, "conf");
+                FileUtils.forceMkdir(confDir);
+                extractTemplateConf(confDir);
+                lilyServerTestUtility = new LilyServerTestUtility(confDir.getAbsolutePath());
                 lilyServerTestUtility.start();
                 break;
             case CONNECT:
@@ -89,32 +110,10 @@ public class LilyServerProxy {
             return new LilyClient("localhost:2181", 10000);
     }
     
-    private File createTmpConfDir() throws URISyntaxException, IOException {
-        String suffix = (System.currentTimeMillis() % 100000) + "" + (int)(Math.random() * 100000);
-        File dir;
-        while (true) {
-            String dirName = System.getProperty("java.io.tmpdir") + File.separator + ("lilytest_conf_") + suffix;
-            dir = new File(dirName);
-            if (dir.exists()) {
-                System.out.println("Temporary test directory already exists, trying another location. Currenty tried: " + dirName);
-                continue;
-            }
-
-            boolean dirCreated = dir.mkdirs();
-            if (!dirCreated) {
-                throw new RuntimeException("Failed to created temporary test directory at " + dirName);
-            }
-
-            break;
-        }
-
-        dir.mkdirs();
-        dir.deleteOnExit();
-
+    private void extractTemplateConf(File confDir) throws URISyntaxException, IOException {
         URL confUrl = getClass().getClassLoader().getResource("org/lilyproject/lilyservertestfw/conf/");
-        FileUtils.copyDirectory(new File(confUrl.toURI()), dir);
+        FileUtils.copyDirectory(new File(confUrl.toURI()), confDir);
         if (log.isDebugEnabled())
-            log.debug("Copied conf resources to tmp dir: " + dir.getAbsolutePath());
-        return dir;
+            log.debug("Copied conf resources to tmp dir: " + confDir.getAbsolutePath());
     }
 }

@@ -33,6 +33,11 @@
   <dependencies>
 
     <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-util</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
       <scope>compile</scope>

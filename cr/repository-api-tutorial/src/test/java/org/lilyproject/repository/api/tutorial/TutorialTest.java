@@ -56,7 +56,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  * to be updated too.
  */
 public class TutorialTest {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
 
     private static final String NS = "org.lilyproject.tutorial";
 
@@ -73,6 +73,7 @@ public class TutorialTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
 
         IdGenerator idGenerator = new IdGeneratorImpl();

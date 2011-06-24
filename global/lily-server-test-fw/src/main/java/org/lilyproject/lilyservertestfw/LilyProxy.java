@@ -31,6 +31,7 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -45,15 +46,16 @@ public class LilyProxy {
     private LilyServerProxy lilyServerProxy;
     private SolrProxy solrProxy;
     private Mode mode;
+    private File testHome;
 
     public enum Mode { EMBED, CONNECT }
     private static String MODE_PROP_NAME = "lily.lilyproxy.mode";
 
-    public LilyProxy() {
+    public LilyProxy() throws IOException {
         this(null);
     }
 
-    public LilyProxy(Mode mode) {
+    public LilyProxy(Mode mode) throws IOException {
         if (mode == null) {
             String modeProp = System.getProperty(MODE_PROP_NAME);
             if (modeProp == null || modeProp.equals("") || modeProp.equals("embed")) {
@@ -67,12 +69,17 @@ public class LilyProxy {
             this.mode = mode;
         }
 
+        if (this.mode == Mode.EMBED) {
+            testHome = TestHomeUtil.createTestHome("lily-proxy-");
+        }
+
         // We imply our mode on all of the specific Proxy's. This is because certain behavior (the state reset)
         // requires that they all be in the same mode.
-        hbaseProxy = new HBaseProxy(mode == Mode.EMBED ? HBaseProxy.Mode.EMBED : HBaseProxy.Mode.CONNECT);
+        hbaseProxy = new HBaseProxy(this.mode == Mode.EMBED ? HBaseProxy.Mode.EMBED : HBaseProxy.Mode.CONNECT, testHome);
         hbaseProxy.setCleanStateOnConnect(false);
-        solrProxy = new SolrProxy(mode == Mode.EMBED ? SolrProxy.Mode.EMBED : SolrProxy.Mode.CONNECT);
-        lilyServerProxy = new LilyServerProxy(mode == Mode.EMBED ? LilyServerProxy.Mode.EMBED : LilyServerProxy.Mode.CONNECT);
+        solrProxy = new SolrProxy(this.mode == Mode.EMBED ? SolrProxy.Mode.EMBED : SolrProxy.Mode.CONNECT, testHome);
+        lilyServerProxy = new LilyServerProxy(this.mode == Mode.EMBED ?
+                LilyServerProxy.Mode.EMBED : LilyServerProxy.Mode.CONNECT, testHome);
     }
 
     public void start(String solrSchema) throws Exception {
@@ -94,6 +101,11 @@ public class LilyProxy {
             System.out.println("State reset done.");
         }
 
+        if (mode == Mode.EMBED) {
+            FileUtils.forceMkdir(testHome);
+            FileUtils.cleanDirectory(testHome);
+        }
+
         hbaseProxy.start();
         solrProxy.start(solrSchema);
         lilyServerProxy.start(hbaseProxy.getZkConnectString());
@@ -106,6 +118,10 @@ public class LilyProxy {
             solrProxy.stop();
         if (hbaseProxy != null)
             hbaseProxy.stop();
+
+        if (testHome != null) {
+            FileUtils.deleteDirectory(testHome);
+        }
     }
     
     public LilyClient getLilyClient() throws IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException {

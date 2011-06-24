@@ -42,7 +42,7 @@ import org.lilyproject.testfw.TestHelper;
 
 public class RowLogShardTest {
 
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private static RowLogShardImpl shard;
     private static IMocksControl control;
     private static RowLog rowLog;
@@ -51,6 +51,7 @@ public class RowLogShardTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         control = createControl();
     }

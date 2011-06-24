@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.testfw.CleanupUtil;
 import org.lilyproject.testfw.TestHelper;
-import org.lilyproject.testfw.TestHomeUtil;
+import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;
 import java.io.File;
@@ -112,7 +112,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         //
         //
         //
-        testHome = TestHomeUtil.createTestHome();
+        testHome = TestHomeUtil.createTestHome("lily-launcher-");
 
         TestHelper.setupConsoleLogging("WARN");
         TestHelper.setupOtherDefaults();

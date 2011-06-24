@@ -39,7 +39,7 @@ import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class LilyTestUtility {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private KauriTestUtility kauriTestUtility;
     private SolrTestingUtility solrTestUtility;
     private ZooKeeperItf zooKeeper;
@@ -54,13 +54,14 @@ public class LilyTestUtility {
 
     public void start() throws Exception {
         kauriTestUtility = new KauriTestUtility(kauriHome);
+        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         zooKeeper = new StateWatchingZooKeeper(HBASE_PROXY.getZkConnectString(), 10000);
 
         kauriTestUtility.createDefaultConf(HBASE_PROXY);
         kauriTestUtility.start();
 
-        solrTestUtility = new SolrTestingUtility();
+        solrTestUtility = new SolrTestingUtility(null);
         solrTestUtility.setSchemaLocation("classpath:" + solrSchema);
         solrTestUtility.start();
         MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();

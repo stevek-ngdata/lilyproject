@@ -39,7 +39,7 @@ import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.testfw.TestHelper;
 
 public class RowLockerTest {
-    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private static HBaseProxy HBASE_PROXY;
     private final static byte[] family = Bytes.toBytes("RowLockerCF");
     private final static byte[] qualifier = Bytes.toBytes("RowLockerQ");
     private final static String tableName = "RowLockerTable";
@@ -48,6 +48,8 @@ public class RowLockerTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
+
+        HBASE_PROXY = new HBaseProxy();
 
         Map<String, byte[]> timestampReusingTables = new HashMap<String, byte[]>();
         timestampReusingTables.put("RowLockerTable", Bytes.toBytes("RowLockerCF"));
