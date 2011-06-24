@@ -21,8 +21,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
@@ -30,8 +28,6 @@ import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 
 public class LilyServerProxy {
-    private Log log = LogFactory.getLog(getClass());
-
     private Mode mode;
 
     public enum Mode { EMBED, CONNECT }
@@ -111,9 +107,7 @@ public class LilyServerProxy {
     }
     
     private void extractTemplateConf(File confDir) throws URISyntaxException, IOException {
-        URL confUrl = getClass().getClassLoader().getResource("org/lilyproject/lilyservertestfw/conf/");
-        FileUtils.copyDirectory(new File(confUrl.toURI()), confDir);
-        if (log.isDebugEnabled())
-            log.debug("Copied conf resources to tmp dir: " + confDir.getAbsolutePath());
+        URL confUrl = getClass().getClassLoader().getResource(ConfUtil.CONF_RESOURCE_PATH);
+        ConfUtil.copyConfResources(confUrl, ConfUtil.CONF_RESOURCE_PATH, confDir);
     }
 }

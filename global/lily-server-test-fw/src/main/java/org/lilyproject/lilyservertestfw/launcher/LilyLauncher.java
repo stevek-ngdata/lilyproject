@@ -69,10 +69,11 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 .create("lily");
         options.add(enableLilyOption);
 
+        
         for (LauncherService service : allServices) {
             service.addOptions(options);
         }
-
+        
         return options;
     }
 

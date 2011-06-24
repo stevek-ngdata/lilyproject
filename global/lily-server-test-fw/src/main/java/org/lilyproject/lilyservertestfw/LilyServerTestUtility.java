@@ -16,11 +16,9 @@
 package org.lilyproject.lilyservertestfw;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.kauriproject.runtime.KauriRuntime;
 import org.kauriproject.runtime.KauriRuntimeSettings;
 import org.kauriproject.runtime.configuration.ConfManager;
