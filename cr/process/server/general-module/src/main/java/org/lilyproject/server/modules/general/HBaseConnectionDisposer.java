@@ -23,10 +23,13 @@ import javax.annotation.PreDestroy;
 public class HBaseConnectionDisposer {
     @PreDestroy
     public void stop() {
-        try {
-            HConnectionManager.deleteAllConnections(true);
-        } catch (Throwable t) {
-            LogFactory.getLog(getClass()).error("Problem cleaning up HBase connections", t);
+        String opt = System.getProperty("lily.hbase.deleteConnections");
+        if (opt == null || opt.equals("true")) {
+            try {
+                HConnectionManager.deleteAllConnections(true);
+            } catch (Throwable t) {
+                LogFactory.getLog(getClass()).error("Problem cleaning up HBase connections", t);
+            }
         }
     }
 }

@@ -39,6 +39,9 @@ public class LilyServerTestUtility {
     }
     
     public void start() throws Exception {
+        // This disable the HBaseConnectionDisposer in Lily which deletes HBase connections on shutdown
+        System.setProperty("lily.hbase.deleteConnections", "false");
+
         KauriRuntimeSettings settings = new KauriRuntimeSettings();
         settings.setRepository(getRepository());
         settings.setConfManager(getConfManager());

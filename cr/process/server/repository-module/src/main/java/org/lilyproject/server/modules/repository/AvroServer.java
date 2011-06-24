@@ -53,16 +53,16 @@ public class AvroServer {
     
     @PreDestroy
     public void stop() {
-        // It would be nice to wait for client threads to end, but since these client threads pass into
-        // HBase client code which is notoriously difficult to interrupt, we skip this step
-        /*
+        // Previously the server.close call was disable for the following reason, just leaving this comment here for
+        // historical reasons:
+        //    It would be nice to wait for client threads to end, but since these client threads pass into
+        //    HBase client code which is notoriously difficult to interrupt, we skip this step
         server.close();
         try {
             server.join();
         } catch (InterruptedException e) {
             Thread.interrupted();
         }
-        */
     }
 
     public int getPort() {
