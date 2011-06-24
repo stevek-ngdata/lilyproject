@@ -86,7 +86,9 @@ public class SolrProxy {
                 FileUtils.cleanDirectory(solrHomeDir);
                 System.out.println("SolrProxy embedded mode temp dir: " + solrHomeDir.getAbsolutePath());
                 solrTestingUtility = new SolrTestingUtility(solrHomeDir);
-                solrTestingUtility.setSchemaLocation("classpath:" + schemaLocation);
+                if (schemaLocation != null) {
+                    solrTestingUtility.setSchemaLocation("classpath:" + schemaLocation);
+                }
                 solrTestingUtility.start();
                 this.uri = solrTestingUtility.getUri();
                 solrServer = new CommonsHttpSolrServer(uri, httpClient);
