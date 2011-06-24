@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="lilytestproxy.svg"
+   inkscape:export-filename="/home/bruno/tmp/lilytestproxy.png"
+   inkscape:export-xdpi="81.489998"
+   inkscape:export-ydpi="81.489998">
+  <defs
+     id="defs4">
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;">
+      <path
+         id="path3891"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="147.97472"
+     inkscape:cy="668.44036"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1149"
+     inkscape:window-x="1680"
+     inkscape:window-y="1"
+     inkscape:window-maximized="1"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       orientation="1,0"
+       position="422.24376,510.12704"
+       id="guide5118" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="-147.48227,1008.1322"
+       id="guide5120" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect2985"
+       width="401.53564"
+       height="284.35797"
+       x="21.213203"
+       y="33.623344" />
+    <rect
+       y="405.13608"
+       x="20.304611"
+       height="197.48483"
+       width="186.8782"
+       id="rect2987"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="25.355331"
+       y="425.33917"
+       id="text2989"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2991"
+         x="25.355331"
+         y="425.33917"
+         style="font-size:16px">lily-test-launcher</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="453.5585"
+       y="141.20459"
+       id="text2993"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2995"
+         x="453.5585"
+         y="141.20459" /></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot2997"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       transform="translate(-429.21331,282.11428)"><flowRegion
+         id="flowRegion2999"><rect
+           id="rect3001"
+           width="168.69548"
+           height="177.78685"
+           x="459.61942"
+           y="159.38733" /></flowRegion><flowPara
+         id="flowPara4897">lily-test-launcher script provides setupless quickstart of all services in one JVM:</flowPara><flowPara
+         id="flowPara3005">- HDFS</flowPara><flowPara
+         id="flowPara3007">- MapReduce</flowPara><flowPara
+         id="flowPara3009">- ZooKeeper</flowPara><flowPara
+         id="flowPara3015">- HBase</flowPara><flowPara
+         id="flowPara3011">- Solr</flowPara><flowPara
+         id="flowPara3013">- Lily Server</flowPara></flowRoot>    <text
+       sodipodi:linespacing="125%"
+       id="text3017"
+       y="55.341614"
+       x="170.62691"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-size:16px"
+         y="55.341614"
+         x="170.62691"
+         id="tspan3019"
+         sodipodi:role="line">YourTestCase</tspan></text>
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect3041"
+       width="165.91757"
+       height="69.700523"
+       x="146.91118"
+       y="143.72997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="194.83249"
+       y="164.4381"
+       id="text3021"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3023"
+         x="194.83249"
+         y="164.4381"
+         style="font-size:16px">LilyProxy</tspan></text>
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect3043"
+       width="74.498749"
+       height="37.375645"
+       x="148.4061"
+       y="174.03455" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text3025"
+       y="187.6716"
+       x="153.98224"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-size:13px"
+         y="187.6716"
+         x="153.98224"
+         sodipodi:role="line"
+         id="tspan3029">if mode =</tspan><tspan
+         style="font-size:16px"
+         y="206.91185"
+         x="153.98224"
+         sodipodi:role="line"
+         id="tspan3033">EMBED</tspan></text>
+    <rect
+       y="173.78201"
+       x="225.1777"
+       height="37.375645"
+       width="85.862968"
+       id="rect3045"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="230.22845"
+       y="186.64114"
+       id="text3035"
+       sodipodi:linespacing="125%"><tspan
+         id="tspan3037"
+         sodipodi:role="line"
+         x="230.22845"
+         y="186.64114"
+         style="font-size:13px">if mode =</tspan><tspan
+         id="tspan3039"
+         sodipodi:role="line"
+         x="230.22845"
+         y="205.88139"
+         style="font-size:16px">CONNECT</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="59.538086"
+       y="81.605591"
+       id="text3051"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="59.538086"
+         y="81.605591"
+         id="tspan3085">start(): either launches</tspan><tspan
+         sodipodi:role="line"
+         x="59.538086"
+         y="96.605591"
+         id="tspan3091">embedded Lily stack or</tspan><tspan
+         sodipodi:role="line"
+         x="59.538086"
+         y="111.60559"
+         id="tspan3095">connects to externally</tspan><tspan
+         sodipodi:role="line"
+         x="59.538086"
+         y="126.60559"
+         id="tspan3097">running Lily stack</tspan></text>
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect3055"
+       width="160.10918"
+       height="60.104076"
+       x="31.31473"
+       y="251.81628" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="21.213203"
+       y="263.43304"
+       id="text3057"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3059"
+         x="21.213203"
+         y="263.43304" /></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3061"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       transform="translate(19.697975,4.5456865)"><flowRegion
+         id="flowRegion3063"><rect
+           id="rect3065"
+           width="149.50258"
+           height="77.276672"
+           x="16.667517"
+           y="253.33151" /></flowRegion><flowPara
+         id="flowPara3067">Embedded Lily stack:</flowPara><flowPara
+         id="flowPara3069">HDFS, ZooKeeper, HBase, Solr, Lily Server</flowPara></flowRoot>    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="M 212.05081,59.887307 195.88837,143.2249"
+       id="path3071"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path3073"
+       d="m 230.73609,60.412688 11.61675,82.327442"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-mid:none;marker-end:url(#Arrow2Lend)"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="241.34525"
+       y="79.585289"
+       id="text3075"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="241.34525"
+         y="79.585289"
+         id="tspan3081">TestCase accesses services</tspan><tspan
+         sodipodi:role="line"
+         x="241.34525"
+         y="94.585289"
+         id="tspan4675">agnostic of how they were</tspan><tspan
+         sodipodi:role="line"
+         x="241.34525"
+         y="109.58529"
+         id="tspan3079">launched: getLilyClient(),</tspan><tspan
+         sodipodi:role="line"
+         x="241.34525"
+         y="124.58529"
+         id="tspan4681">getSolrServer(), ...</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="m 179.80715,210.40004 -75.25636,40.91117"
+       id="path4683"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="M 260.61936,210.90511 170.71578,404.8544"
+       id="path4685"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:2.99999999, 1;stroke-dashoffset:0"
+       id="rect4869"
+       width="186.8782"
+       height="89.903603"
+       x="234.35542"
+       y="405.35947" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text4871"
+       y="425.56253"
+       x="239.40614"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-size:16px"
+         y="425.56253"
+         x="239.40614"
+         id="tspan4873"
+         sodipodi:role="line">custom cluster</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path4903"
+       d="M 292.61936,210.90511 333.02545,404.8544"
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:2, 1;stroke-dashoffset:0;marker-end:url(#Arrow2Lend)"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="253.0432"
+       y="459.90771"
+       id="text4905"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4907"
+         x="253.0432"
+         y="459.90771">(not yet supported)</tspan></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot4909"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       transform="translate(-40.401644,2.0203059)"><flowRegion
+         id="flowRegion4911"><rect
+           id="rect4913"
+           width="170.71579"
+           height="44.446709"
+           x="62.629459"
+           y="334.14374" /></flowRegion><flowPara
+         id="flowPara4915">on start(), all state is reset so that testcase starts from blank slate on each run</flowPara></flowRoot>  </g>
+</svg>
