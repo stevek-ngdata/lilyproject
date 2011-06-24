@@ -114,7 +114,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         //
         testHome = TestHomeUtil.createTestHome();
 
-        TestHelper.setupConsoleLogging("INFO");
+        TestHelper.setupConsoleLogging("WARN");
         TestHelper.setupOtherDefaults();
 
         //
