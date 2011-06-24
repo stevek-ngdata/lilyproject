@@ -31,6 +31,8 @@ import org.lilyproject.util.Logs;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import javax.annotation.PreDestroy;
+
 public abstract class AbstractTypeManager implements TypeManager {
     protected Log log;
 
@@ -56,6 +58,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         cacheRefresher.start();
     }
     
+    @PreDestroy
     public void close() throws IOException {
         try {
             cacheRefresher.stop();
