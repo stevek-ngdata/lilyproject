@@ -44,7 +44,7 @@ public class LilyProxyTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
-        lilyProxy.start("org/lilyproject/lilyservertestfw/test/lilytestutility_solr_schema.xml", null);
+        lilyProxy.start("org/lilyproject/lilyservertestfw/test/lilytestutility_solr_schema.xml");
         LilyClient lilyClient = lilyProxy.getLilyClient();
         repository = lilyClient.getRepository();
     }

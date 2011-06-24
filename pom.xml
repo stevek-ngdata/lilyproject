@@ -643,7 +643,10 @@
             <forkMode>always</forkMode>
             <argLine>-Xmx256m ${argLine}</argLine>
             <systemPropertyVariables>
-              <lily.test.hbase>${lily.test.hbase}</lily.test.hbase>
+              <lily.hbaseproxy.mode>${lily.hbaseproxy.mode}</lily.hbaseproxy.mode>
+              <!--<lily.solrproxy.mode>${lily.solrproxy.mode}</lily.solrproxy.mode>-->
+              <!--<lily.lilyserverproxy.mode>${lily.lilyserverproxy.mode}</lily.lilyserverproxy.mode>-->
+              <!--<lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>-->
               <lily.test.log>${lily.test.log}</lily.test.log>
             </systemPropertyVariables>
           </configuration>
@@ -692,7 +695,10 @@
     <profile>
       <id>connect</id>
       <properties>
-        <lily.test.hbase>connect</lily.test.hbase>
+        <lily.hbaseproxy.mode>connect</lily.hbaseproxy.mode>
+        <lily.solrproxy.mode>connect</lily.solrproxy.mode>
+        <lily.lilyserverproxy.mode>connect</lily.lilyserverproxy.mode>
+        <lily.lilyproxy.mode>connect</lily.lilyproxy.mode>
         <argLine />
       </properties>
     </profile>

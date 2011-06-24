@@ -18,11 +18,8 @@ package org.lilyproject.testfw;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.zookeeper.*;
 import org.lilyproject.testfw.fork.HBaseTestingUtility;
 
 import java.io.File;
@@ -31,8 +28,6 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-
-import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 /**
  * Provides access to HBase, either by starting an embedded HBase or by connecting to a running HBase.
@@ -43,14 +38,42 @@ import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
  * FROM ALL TABLES!
  */
 public class HBaseProxy {
-    private static Mode MODE;
-    private static Configuration CONF;
-    private static HBaseTestingUtility TEST_UTIL;
-    private static File TEST_HOME;
+    private Mode mode;
+    private Configuration conf;
+    private HBaseTestingUtility testUtil;
+    private File testHome;
     private CleanupUtil cleanupUtil;
+    private boolean cleanStateOnConnect = true;
 
-    private enum Mode { EMBED, CONNECT }
-    private static String HBASE_MODE_PROP_NAME = "lily.test.hbase";
+    public enum Mode { EMBED, CONNECT }
+    private static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
+
+    public HBaseProxy() {
+        this(null);
+    }
+
+    public HBaseProxy(Mode mode) {
+        if (mode == null) {
+            String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
+            if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
+                this.mode = Mode.EMBED;
+            } else if (hbaseModeProp.equals("connect")) {
+                this.mode = Mode.CONNECT;
+            } else {
+                throw new RuntimeException("Unexpected value for " + HBASE_MODE_PROP_NAME + ": " + hbaseModeProp);
+            }
+        } else {
+            this.mode = mode;
+        }
+    }
+
+    public boolean getCleanStateOnConnect() {
+        return cleanStateOnConnect;
+    }
+
+    public void setCleanStateOnConnect(boolean cleanStateOnConnect) {
+        this.cleanStateOnConnect = cleanStateOnConnect;
+    }
 
     public void start() throws Exception {
         start(Collections.<String, byte[]>emptyMap());
@@ -63,36 +86,27 @@ public class HBaseProxy {
      *                               will be compacted and waited for until inserting data works again.
      */
     public void start(Map<String, byte[]> timestampReusingTables) throws Exception {
-        String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
-        if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
-            MODE = Mode.EMBED;
-        } else if (hbaseModeProp.equals("connect")) {
-            MODE = Mode.CONNECT;
-        } else {
-            throw new RuntimeException("Unexpected value for " + HBASE_MODE_PROP_NAME + ": " + hbaseModeProp);
-        }
+        System.out.println("HBaseProxy mode: " + mode);
 
-        System.out.println("HBase usage mode: " + MODE);
+        conf = HBaseConfiguration.create();
 
-        CONF = HBaseConfiguration.create();
-
-        switch (MODE) {
+        switch (mode) {
             case EMBED:
-                addHBaseTestProps(CONF);
-                addUserProps(CONF);
+                addHBaseTestProps(conf);
+                addUserProps(conf);
 
-                if (TEST_HOME != null) {
-                    TestHomeUtil.cleanupTestHome(TEST_HOME);
+                if (testHome != null) {
+                    TestHomeUtil.cleanupTestHome(testHome);
                 }
-                TEST_HOME = TestHomeUtil.createTestHome();
+                testHome = TestHomeUtil.createTestHome();
 
-                TEST_UTIL = HBaseTestingUtilityFactory.create(CONF, TEST_HOME);
-                TEST_UTIL.startMiniCluster(1);
+                testUtil = HBaseTestingUtilityFactory.create(conf, testHome);
+                testUtil.startMiniCluster(1);
 
                 // In the past, it happened that HMaster would not become initialized, blocking later on
                 // the proper shutdown of the mini cluster. Now added this as an early warning mechanism.
                 long before = System.currentTimeMillis();
-                while (!TEST_UTIL.getMiniHBaseCluster().getMaster().isInitialized()) {
+                while (!testUtil.getMiniHBaseCluster().getMaster().isInitialized()) {
                     if (System.currentTimeMillis() - before > 60000) {
                         throw new RuntimeException("HMaster.isInitialized() does not become true.");
                     }
@@ -100,29 +114,32 @@ public class HBaseProxy {
                     Thread.sleep(500);
                 }
 
-                CONF = TEST_UTIL.getConfiguration();
-                cleanupUtil = new CleanupUtil(CONF, getZkConnectString());
+                conf = testUtil.getConfiguration();
+                cleanupUtil = new CleanupUtil(conf, getZkConnectString());
                 break;
             case CONNECT:
-                CONF.set("hbase.zookeeper.quorum", "localhost");
-                CONF.set("hbase.zookeeper.property.clientPort", "2181"); // matches HBaseRunner
-                addUserProps(CONF);
+                conf.set("hbase.zookeeper.quorum", "localhost");
+                conf.set("hbase.zookeeper.property.clientPort", "2181");
+                addUserProps(conf);
 
-                cleanupUtil = new CleanupUtil(CONF, getZkConnectString());
-                cleanupUtil.cleanZooKeeper();
+                cleanupUtil = new CleanupUtil(conf, getZkConnectString());
+                if (cleanStateOnConnect) {
+                    cleanupUtil.cleanZooKeeper();
 
-                Map<String, byte[]> allTimestampReusingTables = new HashMap<String, byte[]>();
-                allTimestampReusingTables.putAll(cleanupUtil.getDefaultTimestampReusingTables());
-                allTimestampReusingTables.putAll(timestampReusingTables);
-                cleanupUtil.cleanTables(allTimestampReusingTables);
+                    Map<String, byte[]> allTimestampReusingTables = new HashMap<String, byte[]>();
+                    allTimestampReusingTables.putAll(cleanupUtil.getDefaultTimestampReusingTables());
+                    allTimestampReusingTables.putAll(timestampReusingTables);
+                    cleanupUtil.cleanTables(allTimestampReusingTables);
+                }
+
                 break;
             default:
-                throw new RuntimeException("Unexpected mode: " + MODE);
+                throw new RuntimeException("Unexpected mode: " + mode);
         }
     }
 
     public String getZkConnectString() {
-        return CONF.get("hbase.zookeeper.quorum") + ":" + CONF.get("hbase.zookeeper.property.clientPort");
+        return conf.get("hbase.zookeeper.quorum") + ":" + conf.get("hbase.zookeeper.property.clientPort");
     }
     
     /**
@@ -160,7 +177,7 @@ public class HBaseProxy {
         //HConnectionManager.deleteConnectionInfo(CONF, true);
         HConnectionManager.deleteAllConnections(true);
 
-        if (MODE == Mode.EMBED) {
+        if (mode == Mode.EMBED) {
             // Since HBase mini cluster shutdown has a tendency of sometimes failing (hanging waiting on master
             // to end), add a protection for this so that we do not run indefinitely. Especially important not to
             // annoy the other projects on our Hudson server.
@@ -168,8 +185,8 @@ public class HBaseProxy {
                 @Override
                 public void run() {
                     try {
-                        TEST_UTIL.shutdownMiniCluster();
-                        TEST_UTIL = null;
+                        testUtil.shutdownMiniCluster();
+                        testUtil = null;
                     } catch (IOException e) {
                         System.out.println("Error shutting down mini cluster.");
                         e.printStackTrace();
@@ -188,20 +205,20 @@ public class HBaseProxy {
                 throw new Exception("Failed to stop the mini cluster within the predetermined timeout.");
             }
         }
-        CONF = null;
+        conf = null;
 
-        if (TEST_HOME != null) {
-            TestHomeUtil.cleanupTestHome(TEST_HOME);
+        if (testHome != null) {
+            TestHomeUtil.cleanupTestHome(testHome);
         }
     }
 
     public Configuration getConf() {
-        return CONF;
+        return conf;
     }
 
     public FileSystem getBlobFS() throws IOException, URISyntaxException {
-        if (MODE == Mode.EMBED) {
-            return TEST_UTIL.getDFSCluster().getFileSystem();
+        if (mode == Mode.EMBED) {
+            return testUtil.getDFSCluster().getFileSystem();
         } else {
             String dfsUri = System.getProperty("lily.test.dfs");
 

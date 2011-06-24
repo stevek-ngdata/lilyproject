@@ -31,39 +31,49 @@ import org.lilyproject.util.zookeeper.ZkConnectException;
 public class LilyServerProxy {
     private Log log = LogFactory.getLog(getClass());
 
-    private static Mode MODE;
+    private Mode mode;
 
-    private enum Mode { EMBED, CONNECT };
-    private static String LILY_MODE_PROP_NAME = "lily.test.mode";
+    public enum Mode { EMBED, CONNECT }
+    private static String LILY_MODE_PROP_NAME = "lily.lilyserverproxy.mode";
 
     private LilyServerTestUtility lilyServerTestUtility;
 
     private String zkConnectString;
 
     public LilyServerProxy() {
+        this(null);
+    }
+
+    public LilyServerProxy(Mode mode) {
+        if (mode == null) {
+            String lilyModeProp = System.getProperty(LILY_MODE_PROP_NAME);
+            if (lilyModeProp == null || lilyModeProp.equals("") || lilyModeProp.equals("embed")) {
+                this.mode = Mode.EMBED;
+            } else if (lilyModeProp.equals("connect")) {
+                this.mode = Mode.CONNECT;
+            } else {
+                throw new RuntimeException("Unexpected value for " + LILY_MODE_PROP_NAME + ": " + lilyModeProp);
+            }
+        } else {
+            this.mode = mode;
+        }
     }
 
     public void start(String zkConnectString) throws Exception {
+        System.out.println("LilyServerProxy mode: " + mode);
+
         this.zkConnectString = zkConnectString;
-        String lilyModeProp = System.getProperty(LILY_MODE_PROP_NAME);
-        if (lilyModeProp == null || lilyModeProp.equals("") || lilyModeProp.equals("embed")) {
-            MODE = Mode.EMBED;
-        } else if (lilyModeProp.equals("connect")) {
-            MODE = Mode.CONNECT;
-        } else {
-            throw new RuntimeException("Unexpected value for " + LILY_MODE_PROP_NAME + ": " + lilyModeProp);
-        }
-        
-        switch (MODE) {
-        case EMBED:
-            File dir = createTmpConfDir();
-            lilyServerTestUtility = new LilyServerTestUtility(dir.getAbsolutePath());
-            lilyServerTestUtility.start();
-            break;
-        case CONNECT:
-            break;
-        default:
-            throw new RuntimeException("Unexpected mode: " + MODE);
+
+        switch (mode) {
+            case EMBED:
+                File dir = createTmpConfDir();
+                lilyServerTestUtility = new LilyServerTestUtility(dir.getAbsolutePath());
+                lilyServerTestUtility.start();
+                break;
+            case CONNECT:
+                break;
+            default:
+                throw new RuntimeException("Unexpected mode: " + mode);
         }
     }
     

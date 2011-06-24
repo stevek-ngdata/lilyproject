@@ -35,20 +35,67 @@ import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+
 public class LilyProxy {
     private HBaseProxy hbaseProxy;
     private LilyServerProxy lilyServerProxy;
     private SolrProxy solrProxy;
+    private Mode mode;
+
+    public enum Mode { EMBED, CONNECT }
+    private static String MODE_PROP_NAME = "lily.lilyproxy.mode";
 
     public LilyProxy() {
-        hbaseProxy = new HBaseProxy();
-        solrProxy = new SolrProxy();
-        lilyServerProxy = new LilyServerProxy();
+        this(null);
     }
 
-    public void start(String solrSchema, String solrUri) throws Exception {
+    public LilyProxy(Mode mode) {
+        if (mode == null) {
+            String modeProp = System.getProperty(MODE_PROP_NAME);
+            if (modeProp == null || modeProp.equals("") || modeProp.equals("embed")) {
+                this.mode = Mode.EMBED;
+            } else if (modeProp.equals("connect")) {
+                this.mode = Mode.CONNECT;
+            } else {
+                throw new RuntimeException("Unexpected value for " + MODE_PROP_NAME + ": " + modeProp);
+            }
+        } else {
+            this.mode = mode;
+        }
+
+        // We imply our mode on all of the specific Proxy's. This is because certain behavior (the state reset)
+        // requires that they all be in the same mode.
+        hbaseProxy = new HBaseProxy(mode == Mode.EMBED ? HBaseProxy.Mode.EMBED : HBaseProxy.Mode.CONNECT);
+        hbaseProxy.setCleanStateOnConnect(false);
+        solrProxy = new SolrProxy(mode == Mode.EMBED ? SolrProxy.Mode.EMBED : SolrProxy.Mode.CONNECT);
+        lilyServerProxy = new LilyServerProxy(mode == Mode.EMBED ? LilyServerProxy.Mode.EMBED : LilyServerProxy.Mode.CONNECT);
+    }
+
+    public void start(String solrSchema) throws Exception {
+        System.out.println("LilyProxy mode: " + mode);
+
+        if (mode == Mode.CONNECT) {
+            // First reset the state
+            System.out.println("Calling reset state flag on externally launched Lily...");
+            try {
+                String hostport = "localhost:10102";
+                JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
+                JMXConnector connector = JMXConnectorFactory.connect(url);
+                connector.connect();
+                ObjectName lilyLauncher = new ObjectName("LilyLauncher:name=Launcher");
+                connector.getMBeanServerConnection().invoke(lilyLauncher, "resetLilyState", new Object[0], new String[0]);
+            } catch (Exception e) {
+                throw new Exception("Resetting Lily state failed.", e);
+            }
+            System.out.println("State reset done.");
+        }
+
         hbaseProxy.start();
-        solrProxy.start(solrSchema, solrUri);
+        solrProxy.start(solrSchema);
         lilyServerProxy.start(hbaseProxy.getZkConnectString());
     }
     

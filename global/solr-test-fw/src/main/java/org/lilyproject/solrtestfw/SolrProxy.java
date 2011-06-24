@@ -21,10 +21,10 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 
 public class SolrProxy {
-    private static Mode MODE;
+    private Mode mode;
 
-    private enum Mode { EMBED, CONNECT };
-    private static String SOLR_MODE_PROP_NAME = "solr.test.mode";
+    public enum Mode { EMBED, CONNECT }
+    private static String SOLR_MODE_PROP_NAME = "lily.solrproxy.mode";
 
     private SolrTestingUtility solrTestingUtility;
     private SolrServer solrServer;
@@ -34,36 +34,46 @@ public class SolrProxy {
     private String uri;
 
     public SolrProxy() {
+        this(null);
+    }
+
+    public SolrProxy(Mode mode) {
+        if (mode == null) {
+            String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
+            if (solrModeProp == null || solrModeProp.equals("") || solrModeProp.equals("embed")) {
+                this.mode = Mode.EMBED;
+            } else if (solrModeProp.equals("connect")) {
+                this.mode = Mode.CONNECT;
+            } else {
+                throw new RuntimeException("Unexpected value for " + SOLR_MODE_PROP_NAME + ": " + solrModeProp);
+            }
+        } else {
+            this.mode = mode;
+        }
+
         MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
         connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);
         connectionManager.getParams().setMaxTotalConnections(50);
         httpClient = new HttpClient(connectionManager);
     }
 
-    public void start(String schemaLocation, String solrUri) throws Exception {
-        String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
-        if (solrModeProp == null || solrModeProp.equals("") || solrModeProp.equals("embed")) {
-            MODE = Mode.EMBED;
-        } else if (solrModeProp.equals("connect")) {
-            MODE = Mode.CONNECT;
-        } else {
-            throw new RuntimeException("Unexpected value for " + SOLR_MODE_PROP_NAME + ": " + solrModeProp);
-        }
-        
-        switch (MODE) {
-        case EMBED:
-            solrTestingUtility = new SolrTestingUtility();
-            solrTestingUtility.setSchemaLocation("classpath:" + schemaLocation);
-            solrTestingUtility.start();
-            this.uri = solrTestingUtility.getUri();
-            solrServer = new CommonsHttpSolrServer(uri, httpClient);
-            break;
-        case CONNECT:
-            this.uri = solrUri;
-            solrServer = new CommonsHttpSolrServer(uri, httpClient);
-            break;
-        default:
-            throw new RuntimeException("Unexpected mode: " + MODE);
+    public void start(String schemaLocation) throws Exception {
+        System.out.println("SolrProxy mode: " + mode);
+
+        switch (mode) {
+            case EMBED:
+                solrTestingUtility = new SolrTestingUtility();
+                solrTestingUtility.setSchemaLocation("classpath:" + schemaLocation);
+                solrTestingUtility.start();
+                this.uri = solrTestingUtility.getUri();
+                solrServer = new CommonsHttpSolrServer(uri, httpClient);
+                break;
+            case CONNECT:
+                this.uri = "http://localhost:8983/solr";
+                solrServer = new CommonsHttpSolrServer(uri, httpClient);
+                break;
+            default:
+                throw new RuntimeException("Unexpected mode: " + mode);
         }
     }
     
