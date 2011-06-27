@@ -3,6 +3,7 @@ package org.lilyproject.lilyservertestfw.launcher;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
@@ -18,6 +19,7 @@ public class SolrLauncherService implements LauncherService {
 
     private String autoCommitSetting;
     private String schema;
+    private File testHome;
 
     private SolrTestingUtility solrTestingUtility;
     private int autoCommitTime = -1;
@@ -45,6 +47,9 @@ public class SolrLauncherService implements LauncherService {
 
     @Override
     public int setup(CommandLine cmd, File testHome) throws Exception {
+        this.testHome = new File(testHome, "solr");
+        FileUtils.forceMkdir(testHome);
+
         schema = cmd.getOptionValue(schemaOption.getOpt());
         if (schema != null) {
             int result = checkSolrSchema(schema);
@@ -96,7 +101,7 @@ public class SolrLauncherService implements LauncherService {
 
     @Override
     public int start(List<String> postStartupInfo) throws Exception {
-        solrTestingUtility = new SolrTestingUtility();
+        solrTestingUtility = new SolrTestingUtility(testHome);
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
         solrTestingUtility.setSchemaLocation(schema);
 
