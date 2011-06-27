@@ -34,6 +34,7 @@ public class SolrTestingUtility {
     private String autoCommitSetting;
     private String solrWarPath;
     private File solrHomeDir;
+    private File solrCoreDir;
     private File solrConfDir;
 
     public SolrTestingUtility() throws IOException {
@@ -77,9 +78,11 @@ public class SolrTestingUtility {
     }
 
     public void start() throws Exception {
-        solrConfDir = new File(solrHomeDir, "conf");
+        solrCoreDir = new File(solrHomeDir, "core0");
+        solrConfDir = new File(solrCoreDir, "conf");
         FileUtils.forceMkdir(solrConfDir);
 
+        writeCoresConf();
         copyDefaultConfigToSolrHome(autoCommitSetting == null ? "" : autoCommitSetting);
 
         if (schemaLocation != null) {
@@ -163,12 +166,24 @@ public class SolrTestingUtility {
         server.start();
     }
 
-    public void setSystemProperties() {
+    private void setSystemProperties() {
         System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
-        System.setProperty("solr.data.dir", new File(solrHomeDir, "data").getAbsolutePath());
     }
 
-    public void copyDefaultConfigToSolrHome(String autoCommitSetting) throws IOException {
+    private void writeCoresConf() throws FileNotFoundException {
+        File coresFile = new File(solrHomeDir, "solr.xml");
+        PrintWriter writer = new PrintWriter(coresFile);
+        writer.println("<solr persistent='false'>");
+        writer.println(" <cores adminPath='/admin/cores' defaultCoreName='core0'>");
+        writer.println("  <core name='core0' instanceDir='core0'>");
+        writer.println("    <property name='solr.data.dir' value='${solr.solr.home}/core0/data'/>");
+        writer.println("  </core>");
+        writer.println(" </cores>");
+        writer.println("</solr>");
+        writer.close();
+    }
+
+    private void copyDefaultConfigToSolrHome(String autoCommitSetting) throws IOException {
         copyResourceFiltered("org/lilyproject/solrtestfw/conftemplate/solrconfig.xml",
                 new File(solrConfDir, "solrconfig.xml"), autoCommitSetting);
         createEmptyFile(new File(solrConfDir, "synonyms.txt"));
