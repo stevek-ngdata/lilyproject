@@ -13,10 +13,11 @@ import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;
-import java.io.File;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -215,7 +216,11 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println("Clearing HDFS Blob Store on " + dfsUri);
             cleanupUtil.cleanBlobStore(new URI(dfsUri));
 
-            // TODO: clear Solr state
+            // Clear Solr state
+            int response = sendSolrUpdateRequest("<update><delete><query>*:*</query></delete><commit/></update>");
+            if (response != 200) {
+                throw new RuntimeException("Solr delete all docs: expected 200 status but it is " + response);
+            }
 
             // The following is useful to observer what threads were not stopped properly after stopping Lily
             if (System.getProperty("lily.launcher.threaddump-after-lily-stop") != null) {
@@ -230,10 +235,23 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         } catch (Exception e) {
             System.out.println("Error while resetting Lily state: " + e.getMessage());
             e.printStackTrace();
-            throw new RuntimeException("Error while resetting Lily state: " + e.getMessage());
+            throw new RuntimeException("Error while resetting Lily state: " + e.getMessage(), e);
         } finally {
             resetRunning.set(false);
         }
+    }
+
+    private int sendSolrUpdateRequest(String request) throws IOException {
+        URL url = new URL("http://localhost:8983/solr/update");
+        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+        conn.setDoOutput(true);
+        conn.setRequestProperty("Content-Type", "text/xml");
+        OutputStream os = conn.getOutputStream();
+        os.write(request.getBytes("UTF-8"));
+        os.close();
+        int response = conn.getResponseCode();
+        conn.disconnect();
+        return response;
     }
 }
 
