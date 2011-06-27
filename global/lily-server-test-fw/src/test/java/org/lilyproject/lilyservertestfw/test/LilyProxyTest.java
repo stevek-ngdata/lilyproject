@@ -45,7 +45,7 @@ public class LilyProxyTest {
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
         lilyProxy.start("org/lilyproject/lilyservertestfw/test/lilytestutility_solr_schema.xml");
-        LilyClient lilyClient = lilyProxy.getLilyClient();
+        LilyClient lilyClient = lilyProxy.getLilyServerProxy().getClient();
         repository = lilyClient.getRepository();
     }
     
@@ -58,13 +58,15 @@ public class LilyProxyTest {
     public void testCreateRecord() throws Exception {
         // Create schema
         TypeManager typeManager = repository.getTypeManager();
-        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), FIELD1, Scope.NON_VERSIONED));
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
+                FIELD1, Scope.NON_VERSIONED));
         RecordType recordType1 = typeManager.newRecordType(RECORDTYPE1);
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         typeManager.createRecordType(recordType1);
         
         // Add index
-        lilyProxy.addIndexFromResource("testIndex", "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml");
+        lilyProxy.getLilyServerProxy().addIndexFromResource("testIndex",
+                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml");
        
         // Create record
         Record record = repository.newRecord();
@@ -75,7 +77,7 @@ public class LilyProxyTest {
         Assert.assertEquals("aName", (String)record.getField(FIELD1));
         
         // Query Solr
-        SolrServer solrServer = lilyProxy.getSolrServer();
+        SolrServer solrServer = lilyProxy.getSolrProxy().getSolrServer();
         List<RecordId> recordIds = new ArrayList<RecordId>();
         long waitUntil = System.currentTimeMillis() + 60000L;
         while (System.currentTimeMillis() < waitUntil) {
@@ -91,7 +93,7 @@ public class LilyProxyTest {
     }
     
     private List<RecordId> querySolr(String name) throws SolrServerException {
-        SolrServer solr = lilyProxy.getSolrServer();
+        SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");

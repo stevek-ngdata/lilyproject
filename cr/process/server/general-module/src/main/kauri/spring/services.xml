@@ -108,6 +108,7 @@
 
   <bean id="connectionDisposer"
         class="org.lilyproject.server.modules.general.HBaseConnectionDisposer">
+    <constructor-arg ref="hbaseConf"/>
   </bean>
 
   <bean id="zooKeeperMXBean" class="org.lilyproject.util.zookeeper.ZooKeeperMXBean">

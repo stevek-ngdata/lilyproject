@@ -16,14 +16,11 @@ public class SolrLauncherService implements LauncherService {
     private Option schemaOption;
     private Option commitOption;
 
-    private String solrWarPath;
     private String autoCommitSetting;
     private String schema;
 
     private SolrTestingUtility solrTestingUtility;
     private int autoCommitTime = -1;
-
-    private static final String SOLR_WAR_PROP = "lily.solrlauncher.war";
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -48,20 +45,6 @@ public class SolrLauncherService implements LauncherService {
 
     @Override
     public int setup(CommandLine cmd, File testHome) throws Exception {
-        solrWarPath = System.getProperty(SOLR_WAR_PROP);
-        if (solrWarPath == null) {
-            System.err.println("System property that points to Solr war is not set: " + SOLR_WAR_PROP);
-            return 1;
-        }
-
-        File solrWarFile = new File(solrWarPath);
-        if (!solrWarFile.exists()) {
-            System.err.println("Solr war referred to by system property " + SOLR_WAR_PROP + " does not exist:");
-            System.err.println(solrWarFile.getAbsolutePath());
-            return 1;
-        }
-        solrWarPath = solrWarFile.getAbsolutePath();
-
         schema = cmd.getOptionValue(schemaOption.getOpt());
         if (schema != null) {
             int result = checkSolrSchema(schema);
@@ -115,7 +98,6 @@ public class SolrLauncherService implements LauncherService {
     public int start(List<String> postStartupInfo) throws Exception {
         solrTestingUtility = new SolrTestingUtility();
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
-        solrTestingUtility.setSolrWarPath(solrWarPath);
         solrTestingUtility.setSchemaLocation(schema);
 
         solrTestingUtility.start();
@@ -152,5 +134,9 @@ public class SolrLauncherService implements LauncherService {
             }
             solrTestingUtility = null;
         }
+    }
+
+    public SolrTestingUtility getSolrTestingUtility() {
+        return solrTestingUtility;
     }
 }

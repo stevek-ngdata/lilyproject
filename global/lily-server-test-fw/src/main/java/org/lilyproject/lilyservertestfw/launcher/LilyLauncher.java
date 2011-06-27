@@ -5,6 +5,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.testfw.CleanupUtil;
 import org.lilyproject.testfw.TestHelper;
@@ -12,9 +14,11 @@ import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;
 import java.io.File;
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableHadoopOption;
@@ -177,7 +181,13 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         }
     }
 
+    private AtomicBoolean resetRunning = new AtomicBoolean();
+
     public void resetLilyState() {
+        if (!resetRunning.compareAndSet(false, true)) {
+            throw new RuntimeException("There is already a Lily state reset running.");
+        }
+
         // TODO should make this synchronized or maybe better check against concurrent calling
         try {
             long before = System.currentTimeMillis();
@@ -194,14 +204,21 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println("Clearing HBase tables");
             CleanupUtil cleanupUtil = new CleanupUtil(hadoopService.getConf(), "localhost:2181");
             cleanupUtil.cleanTables();
+            HConnectionManager.deleteConnection(hadoopService.getConf(), true);
 
             // Clear Lily ZooKeeper state
             System.out.println("Clearing Lily's ZooKeeper state");
             cleanupUtil.cleanZooKeeper();
 
+
             // TODO: clean blob store directory, what else?
 
             // TODO: clear Solr state
+
+            // The following is useful to observer what threads were not stopped properly after stopping Lily
+            if (System.getProperty("lily.launcher.threaddump-after-lily-stop") != null) {
+                ReflectionUtils.printThreadInfo(new PrintWriter("launcher-threadump-after-lily-stop"), "Thread dump");
+            }
 
             // Start Lily
             System.out.println("Starting Lily");
@@ -212,6 +229,26 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println("Error while resetting Lily state: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Error while resetting Lily state: " + e.getMessage());
+        } finally {
+            resetRunning.set(false);
+        }
+    }
+
+    @Override
+    public String getSolrHome() {
+        if (enableSolr) {
+            return solrService.getSolrTestingUtility().getSolrHomeDir().getAbsolutePath();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void restartSolr() throws Exception {
+        if (enableSolr) {
+            solrService.getSolrTestingUtility().restartServletContainer();
+        } else {
+            throw new RuntimeException("Solr is not enabled, hence can not restart it.");
         }
     }
 }

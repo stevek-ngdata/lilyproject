@@ -1,9 +1,16 @@
 package org.lilyproject.testfw;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HServerAddress;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.catalog.CatalogTracker;
+import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.ipc.HRegionInterface;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -140,7 +147,7 @@ public class CleanupUtil {
             htable.close();
 
             if (timestampReusingTables.containsKey(table.getNameAsString())) {
-                admin.flush(table.getName());
+                flush(admin, table.getNameAsString());
                 admin.majorCompact(table.getName());
             }
         }
@@ -227,7 +234,7 @@ public class CleanupUtil {
         }
 
         // Perform major compaction
-        admin.flush(tableName);
+        flush(admin, tableName);
         admin.majorCompact(tableName);
 
         // Wait for compact to finish
@@ -235,5 +242,57 @@ public class CleanupUtil {
             byte[] CF = Bytes.toBytes(columnFamily);
             waitForCompact(tableName, CF);
         }
+    }
+
+    /**
+     * This method was copied from HBase's HBaseAdmin source file in order to fix a connection leak:
+     * the CatalogTracker was not closed, this would among other things leak a ZooKeeper client connection
+     * on each flush (especially important when this is used in the LilyLauncher).
+     *
+     * <p></p>This bug was present in chd3u, but already fixed in HBase trunk, so this method can be
+     * removed after upgrade.
+     */
+    private void flush(HBaseAdmin hbaseAdmin, String tableName) throws IOException, InterruptedException {
+        CatalogTracker ct = getCatalogTracker();
+        try {
+            List<Pair<HRegionInfo, HServerAddress>> pairs =
+                    MetaReader.getTableRegionsAndLocations(ct, tableName);
+            for (Pair<HRegionInfo, HServerAddress> pair: pairs) {
+                if (pair.getSecond() == null) continue;
+                flush(hbaseAdmin, pair.getSecond(), pair.getFirst());
+            }
+        } finally {
+            cleanupCatalogTracker(ct);
+        }
+    }
+
+    /** Copied from HBase source to support flush fix. */
+    private void flush(HBaseAdmin hbaseAdmin, final HServerAddress hsa, final HRegionInfo hri)
+            throws IOException {
+        HRegionInterface rs = hbaseAdmin.getConnection().getHRegionConnection(hsa);
+        rs.flushRegion(hri);
+    }
+
+    /** Copied from HBase source to support flush fix. */
+    private synchronized CatalogTracker getCatalogTracker()
+            throws ZooKeeperConnectionException, IOException {
+        CatalogTracker ct = null;
+        try {
+            HConnection connection =
+                    HConnectionManager.getConnection(new Configuration(this.conf));
+            ct = new CatalogTracker(connection);
+            ct.start();
+        } catch (InterruptedException e) {
+            // Let it out as an IOE for now until we redo all so tolerate IEs
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted", e);
+        }
+        return ct;
+    }
+
+    /** Copied from HBase source to support flush fix. */
+    private void cleanupCatalogTracker(final CatalogTracker ct) {
+        ct.stop();
+        HConnectionManager.deleteConnection(ct.getConnection().getConfiguration(), true);
     }
 }

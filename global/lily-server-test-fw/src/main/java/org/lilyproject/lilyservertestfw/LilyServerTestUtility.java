@@ -28,6 +28,7 @@ import org.kauriproject.runtime.rapi.Mode;
 import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
 import org.lilyproject.util.MavenUtil;
+import org.lilyproject.util.io.Closer;
 
 public class LilyServerTestUtility {
 
@@ -52,9 +53,7 @@ public class LilyServerTestUtility {
     }
     
     public void stop() {
-        if (runtime != null) {
-            runtime.stop();
-        }
+        Closer.close(runtime);
     }
     
     private ConfManager getConfManager() {
@@ -64,8 +63,11 @@ public class LilyServerTestUtility {
         return new ConfManagerImpl(confDirs);
     }
 
-    
     private ArtifactRepository getRepository() throws IOException {
         return new Maven2StyleArtifactRepository(MavenUtil.findLocalMavenRepository());
+    }
+
+    public KauriRuntime getRuntime() {
+        return runtime;
     }
 }

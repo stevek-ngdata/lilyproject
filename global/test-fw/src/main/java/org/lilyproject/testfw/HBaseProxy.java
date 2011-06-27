@@ -51,14 +51,10 @@ public class HBaseProxy {
     private static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
 
     public HBaseProxy() throws IOException {
-        this(null, null);
+        this(null);
     }
 
-    /**
-     *
-     * @param testDir storage dir to use in case of embedded mode (a subdir will be made)
-     */
-    public HBaseProxy(Mode mode, File testDir) throws IOException {
+    public HBaseProxy(Mode mode) throws IOException {
         if (mode == null) {
             String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
             if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
@@ -71,15 +67,22 @@ public class HBaseProxy {
         } else {
             this.mode = mode;
         }
+    }
 
-        if (this.mode == Mode.EMBED) {
-            if (testDir == null) {
-                testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
-            } else {
-                testHome = new File(testDir, "hbaseproxy");
-                FileUtils.forceMkdir(testHome);
-            }
+    public void setTestHome(File testHome) throws IOException {
+        if (mode != Mode.EMBED) {
+            throw new RuntimeException("testHome should only be set when mode is EMBED");
         }
+        this.testHome = testHome;
+    }
+
+    private void initTestHome() throws IOException {
+        if (testHome == null) {
+            testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
+        }
+
+        FileUtils.forceMkdir(testHome);
+        FileUtils.cleanDirectory(testHome);
     }
 
     public boolean getCleanStateOnConnect() {
@@ -110,7 +113,7 @@ public class HBaseProxy {
                 addHBaseTestProps(conf);
                 addUserProps(conf);
 
-                TestHomeUtil.cleanupTestHome(testHome);
+                initTestHome();
 
                 System.out.println("HBaseProxy embedded mode temp dir: " + testHome.getAbsolutePath());
 
@@ -187,10 +190,6 @@ public class HBaseProxy {
     }
 
     public void stop() throws Exception {
-        // Close connections with HBase and HBase's ZooKeeper handles
-        //HConnectionManager.deleteConnectionInfo(CONF, true);
-        HConnectionManager.deleteAllConnections(true);
-
         if (mode == Mode.EMBED) {
             // Since HBase mini cluster shutdown has a tendency of sometimes failing (hanging waiting on master
             // to end), add a protection for this so that we do not run indefinitely. Especially important not to
@@ -219,6 +218,14 @@ public class HBaseProxy {
                 throw new Exception("Failed to stop the mini cluster within the predetermined timeout.");
             }
         }
+
+        // Close connections with HBase and HBase's ZooKeeper handles
+        //HConnectionManager.deleteConnectionInfo(CONF, true);
+        HConnectionManager.deleteAllConnections(true);
+
+        // Close all HDFS connections
+        FileSystem.closeAll();
+
         conf = null;
 
         if (testHome != null) {

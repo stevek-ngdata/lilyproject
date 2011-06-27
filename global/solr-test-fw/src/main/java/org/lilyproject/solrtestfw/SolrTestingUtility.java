@@ -72,6 +72,10 @@ public class SolrTestingUtility {
         this.solrWarPath = solrWarPath;
     }
 
+    public File getSolrHomeDir() {
+        return solrHomeDir;
+    }
+
     public void start() throws Exception {
         solrConfDir = new File(solrHomeDir, "conf");
         FileUtils.forceMkdir(solrConfDir);
@@ -120,10 +124,14 @@ public class SolrTestingUtility {
             throw new Exception("Solr war not found at " + solrWarPath);
         }
 
-        server = new Server(solrPort);
-        server.addHandler(new WebAppContext(solrWarPath, "/solr"));
-
+        server = createServer();
         server.start();
+    }
+
+    private Server createServer() {
+        Server server = new Server(solrPort);
+        server.addHandler(new WebAppContext(solrWarPath, "/solr"));
+        return server;
     }
 
     public String getUri() {
@@ -143,6 +151,18 @@ public class SolrTestingUtility {
         }
     }
 
+    /**
+     * Restarts the servlet container without throwing away the data.
+     */
+    public void restartServletContainer() throws Exception {
+        server.stop();
+        server.join();
+
+        // Somehow restarting the same server object does not work, so create a new one
+        server = createServer();
+        server.start();
+    }
+
     public void setSystemProperties() {
         System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
         System.setProperty("solr.data.dir", new File(solrHomeDir, "data").getAbsolutePath());
@@ -156,11 +176,11 @@ public class SolrTestingUtility {
         createEmptyFile(new File(solrConfDir, "protwords.txt"));
     }
 
-    public void copySchemaFromFile(File schemaFile) throws IOException {
+    private void copySchemaFromFile(File schemaFile) throws IOException {
         FileUtils.copyFile(schemaFile, new File(solrConfDir, "schema.xml"));
     }
 
-    public void copySchemaFromResource(String path) throws IOException {
+    private void copySchemaFromResource(String path) throws IOException {
         copyResource(path, new File(solrConfDir, "schema.xml"));
     }
 

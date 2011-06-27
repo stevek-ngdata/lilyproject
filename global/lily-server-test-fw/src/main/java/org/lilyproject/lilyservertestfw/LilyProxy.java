@@ -16,25 +16,11 @@
 package org.lilyproject.lilyservertestfw;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.zookeeper.KeeperException;
-import org.lilyproject.client.LilyClient;
-import org.lilyproject.client.NoServersException;
-import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.indexer.model.impl.IndexerModelImpl;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.test.TestHomeUtil;
-import org.lilyproject.util.zookeeper.ZkConnectException;
-import org.lilyproject.util.zookeeper.ZkUtil;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -69,17 +55,17 @@ public class LilyProxy {
             this.mode = mode;
         }
 
-        if (this.mode == Mode.EMBED) {
-            testHome = TestHomeUtil.createTestHome("lily-proxy-");
-        }
-
         // We imply our mode on all of the specific Proxy's. This is because certain behavior (the state reset)
         // requires that they all be in the same mode.
-        hbaseProxy = new HBaseProxy(this.mode == Mode.EMBED ? HBaseProxy.Mode.EMBED : HBaseProxy.Mode.CONNECT, testHome);
+        hbaseProxy = new HBaseProxy(this.mode == Mode.EMBED ? HBaseProxy.Mode.EMBED : HBaseProxy.Mode.CONNECT);
         hbaseProxy.setCleanStateOnConnect(false);
-        solrProxy = new SolrProxy(this.mode == Mode.EMBED ? SolrProxy.Mode.EMBED : SolrProxy.Mode.CONNECT, testHome);
+        solrProxy = new SolrProxy(this.mode == Mode.EMBED ? SolrProxy.Mode.EMBED : SolrProxy.Mode.CONNECT);
         lilyServerProxy = new LilyServerProxy(this.mode == Mode.EMBED ?
-                LilyServerProxy.Mode.EMBED : LilyServerProxy.Mode.CONNECT, testHome);
+                LilyServerProxy.Mode.EMBED : LilyServerProxy.Mode.CONNECT);
+    }
+
+    public void start() throws Exception {
+        start(null);
     }
 
     public void start(String solrSchema) throws Exception {
@@ -95,6 +81,7 @@ public class LilyProxy {
                 connector.connect();
                 ObjectName lilyLauncher = new ObjectName("LilyLauncher:name=Launcher");
                 connector.getMBeanServerConnection().invoke(lilyLauncher, "resetLilyState", new Object[0], new String[0]);
+                connector.close();
             } catch (Exception e) {
                 throw new Exception("Resetting Lily state failed.", e);
             }
@@ -102,13 +89,15 @@ public class LilyProxy {
         }
 
         if (mode == Mode.EMBED) {
-            FileUtils.forceMkdir(testHome);
-            FileUtils.cleanDirectory(testHome);
+            testHome = TestHomeUtil.createTestHome("lily-proxy-");
+            hbaseProxy.setTestHome(new File(testHome, "hbaseproxy"));
+            solrProxy.setTestHome(new File(testHome, "solrproxy"));
+            lilyServerProxy.setTestHome(new File(testHome, "serverproxy"));
         }
 
         hbaseProxy.start();
         solrProxy.start(solrSchema);
-        lilyServerProxy.start(hbaseProxy.getZkConnectString());
+        lilyServerProxy.start();
     }
     
     public void stop() throws Exception {
@@ -123,39 +112,16 @@ public class LilyProxy {
             FileUtils.deleteDirectory(testHome);
         }
     }
-    
-    public LilyClient getLilyClient() throws IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException {
-        return lilyServerProxy.getClient();
-    }
-    
-    public SolrServer getSolrServer() {
-        return solrProxy.getSolrServer();
+
+    public HBaseProxy getHbaseProxy() {
+        return hbaseProxy;
     }
 
-    //
-    // Add Index
-    //
-    public void addIndexFromResource(String indexName, String indexerConf) throws IOException, IndexerConfException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
-        InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
-        byte[] indexerConfiguration = IOUtils.toByteArray(is);
-        is.close();
-        addIndex(indexName, indexerConfiguration);
+    public LilyServerProxy getLilyServerProxy() {
+        return lilyServerProxy;
     }
-    
-    public void addIndexFromFile(String indexName, String indexerConf) throws IOException, IndexerConfException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
-        byte[] indexerConfiguration = FileUtils.readFileToByteArray(new File(indexerConf));
-        addIndex(indexName, indexerConfiguration);
-    }
-    
-    private void addIndex(String indexName, byte[] indexerConfiguration) throws IndexerConfException, IOException, InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException, IndexModelException, IndexValidityException {
-        IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getLilyClient().getRepository());
-        ZooKeeperItf zk = ZkUtil.connect(hbaseProxy.getZkConnectString(), 10000);
-        IndexerModelImpl model = new IndexerModelImpl(zk);
-        IndexDefinition index = model.newIndex(indexName);
-        Map<String, String> solrShards = new HashMap<String, String>();
-        solrShards.put("testshard", solrProxy.getUri());
-        index.setSolrShards(solrShards);
-        index.setConfiguration(indexerConfiguration);
-        model.addIndex(index);
+
+    public SolrProxy getSolrProxy() {
+        return solrProxy;
     }
 }
