@@ -103,7 +103,8 @@ public class SolrLauncherService implements LauncherService {
     public int start(List<String> postStartupInfo) throws Exception {
         solrTestingUtility = new SolrTestingUtility(testHome);
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
-        solrTestingUtility.setSchemaLocation(schema);
+        byte[] schemaData = schema == null ? null : FileUtils.readFileToByteArray(new File(schema));
+        solrTestingUtility.setSchemaData(schemaData);
 
         solrTestingUtility.start();
 

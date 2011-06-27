@@ -22,15 +22,18 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
+import org.lilyproject.util.xml.DocumentHelper;
+import org.lilyproject.util.xml.XPathUtils;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Arrays;
 
 public class SolrProxy {
     private Mode mode;
@@ -87,7 +90,7 @@ public class SolrProxy {
         start(null);
     }
 
-    public void start(String schemaLocation) throws Exception {
+    public void start(byte[] solrSchemaData) throws Exception {
         System.out.println("SolrProxy mode: " + mode);
 
         switch (mode) {
@@ -95,14 +98,17 @@ public class SolrProxy {
                 initTestHome();
                 System.out.println("SolrProxy embedded mode temp dir: " + testHome.getAbsolutePath());
                 solrTestingUtility = new SolrTestingUtility(testHome);
-                if (schemaLocation != null) {
-                    solrTestingUtility.setSchemaLocation("classpath:" + schemaLocation);
+                if (solrSchemaData != null) {
+                    solrTestingUtility.setSchemaData(solrSchemaData);
                 }
                 solrTestingUtility.start();
                 this.uri = solrTestingUtility.getUri();
                 solrServer = new CommonsHttpSolrServer(uri, httpClient);
                 break;
             case CONNECT:
+                if (solrSchemaData != null) {
+                    changeSolrSchema(solrSchemaData);
+                }
                 this.uri = "http://localhost:8983/solr";
                 solrServer = new CommonsHttpSolrServer(uri, httpClient);
                 break;
@@ -134,79 +140,59 @@ public class SolrProxy {
         return uri;
     }
 
-    public void changeSolrSchema(File file) throws Exception {
-        FileInputStream fis = new FileInputStream(file);
-        try {
-            changeSolrSchema(fis);
-        } finally {
-            Closer.close(fis);
+    public void changeSolrSchema(byte[] newSchemaData) throws Exception {
+        //
+        // Find out location of Solr home dir
+        //
+        Document doc = readCoreStatus();
+        File solrHomeDir = new File(XPathUtils.evalString("/response/lst[@name='status']/lst[@name='core0']/str[@name='instanceDir']", doc));
+
+        //
+        // Write the schema file
+        //
+        File solrConfDir = new File(solrHomeDir, "conf");
+        File schemaFile = new File(solrConfDir, "schema.xml");
+
+        byte[] existingSchemaData = FileUtils.readFileToByteArray(schemaFile);
+
+        if (Arrays.equals(newSchemaData, existingSchemaData)) {
+            // Schema is unchanged, do nothing
+            System.out.println("Solr schema was unchanged, not overwriting it and not reloading the Solr core.");
+            return;
         }
+
+        FileUtils.writeByteArrayToFile(schemaFile, newSchemaData);
+        System.out.println("Wrote new Solr schema to " + schemaFile.getAbsolutePath());
+
+        //
+        // Restart Solr
+        //
+        reloadCore();
     }
 
-    /**
-     *
-     * @param is InputStream to read the schema from, stream will not be closed.
-     */
-    public void changeSolrSchema(InputStream is) throws Exception {
-        //
-        // In case of CONNECT mode, set up JMX connection
-        //
-        ObjectName lilyLauncher = new ObjectName("LilyLauncher:name=Launcher");
-        JMXConnector jmxConnector = null;
-        if (mode == Mode.CONNECT) {
-            String hostport = "localhost:10102";
-            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
-            jmxConnector = JMXConnectorFactory.connect(url);
-            jmxConnector.connect();
+    private Document readCoreStatus() throws IOException, SAXException, ParserConfigurationException {
+        URL coreStatusURL = new URL("http://localhost:8983/solr/admin/cores?action=STATUS&core=core0");
+        HttpURLConnection coreStatusConn = (HttpURLConnection)coreStatusURL.openConnection();
+        coreStatusConn.connect();
+        if (coreStatusConn.getResponseCode() != 200) {
+            throw new RuntimeException("Fetch Solr core status: expected status 200 but got: " +
+                    coreStatusConn.getResponseCode());
         }
+        InputStream is = coreStatusConn.getInputStream();
+        Document doc = DocumentHelper.parse(is);
+        is.close();
+        coreStatusConn.disconnect();
+        return doc;
+    }
 
-
-        try {
-            //
-            // Find out location of Solr home dir
-            //
-            File solrHomeDir;
-            switch (mode) {
-                case EMBED:
-                    solrHomeDir = solrTestingUtility.getSolrHomeDir();
-                    break;
-                case CONNECT:
-                    String solrHome;
-                    solrHome = (String)jmxConnector.getMBeanServerConnection().getAttribute(lilyLauncher, "SolrHome");
-                    if (solrHome != null) {
-                        solrHomeDir = new File(solrHome);
-                    } else {
-                        throw new Exception("Solr is not enabled in the Lily launcher.");
-                    }
-                    break;
-                default:
-                    throw new RuntimeException("Unexpected mode: " + mode);
-            }
-
-            //
-            // Write the schema file
-            //
-            File solrConfDir = new File(solrHomeDir, "conf");
-            FileUtils.forceMkdir(solrConfDir);
-            File schemaFile = new File(solrConfDir, "schema.xml");
-            FileUtils.copyInputStreamToFile(is, schemaFile);
-            System.out.println("Wrote new Solr schema to " + schemaFile.getAbsolutePath());
-
-            //
-            // Restart Solr
-            //
-            switch (mode) {
-                case EMBED:
-                    solrTestingUtility.restartServletContainer();
-                    break;
-                case CONNECT:
-                    jmxConnector.getMBeanServerConnection().invoke(lilyLauncher, "restartSolr", new Object[0], new String[0]);
-                    break;
-                default:
-                    throw new RuntimeException("Unexpected mode: " + mode);
-            }
-        } finally {
-            Closer.close(jmxConnector);
+    private void reloadCore() throws IOException {
+        URL coreReloadURL = new URL("http://localhost:8983/solr/admin/cores?action=RELOAD&core=core0");
+        HttpURLConnection coreReloadConn = (HttpURLConnection)coreReloadURL.openConnection();
+        coreReloadConn.connect();
+        int response = coreReloadConn.getResponseCode();
+        coreReloadConn.disconnect();
+        if (response != 200) {
+            throw new RuntimeException("Core reload: expected status 200 but got: " + response);
         }
     }
 }

@@ -189,7 +189,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             throw new RuntimeException("There is already a Lily state reset running.");
         }
 
-        // TODO should make this synchronized or maybe better check against concurrent calling
         try {
             long before = System.currentTimeMillis();
             if (!enableLily || !enableHadoop || !enableSolr) {
@@ -234,24 +233,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             throw new RuntimeException("Error while resetting Lily state: " + e.getMessage());
         } finally {
             resetRunning.set(false);
-        }
-    }
-
-    @Override
-    public String getSolrHome() {
-        if (enableSolr) {
-            return solrService.getSolrTestingUtility().getSolrHomeDir().getAbsolutePath();
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public void restartSolr() throws Exception {
-        if (enableSolr) {
-            solrService.getSolrTestingUtility().restartServletContainer();
-        } else {
-            throw new RuntimeException("Solr is not enabled, hence can not restart it.");
         }
     }
 }

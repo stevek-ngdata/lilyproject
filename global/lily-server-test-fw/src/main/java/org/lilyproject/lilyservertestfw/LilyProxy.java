@@ -68,7 +68,7 @@ public class LilyProxy {
         start(null);
     }
 
-    public void start(String solrSchema) throws Exception {
+    public void start(byte[] solrSchemaData) throws Exception {
         System.out.println("LilyProxy mode: " + mode);
 
         if (mode == Mode.CONNECT) {
@@ -96,7 +96,7 @@ public class LilyProxy {
         }
 
         hbaseProxy.start();
-        solrProxy.start(solrSchema);
+        solrProxy.start(solrSchemaData);
         lilyServerProxy.start();
     }
     

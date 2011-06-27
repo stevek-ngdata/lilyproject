@@ -16,6 +16,7 @@
 package org.lilyproject.solrtestfw;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
 import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -30,7 +31,7 @@ import java.util.regex.Pattern;
 public class SolrTestingUtility {
     private int solrPort = 8983;
     private Server server;
-    private String schemaLocation;
+    private byte[] schemaData;
     private String autoCommitSetting;
     private String solrWarPath;
     private File solrHomeDir;
@@ -49,12 +50,8 @@ public class SolrTestingUtility {
         }
     }
 
-    public String getSchemaLocation() {
-        return schemaLocation;
-    }
-
-    public void setSchemaLocation(String schemaLocation) {
-        this.schemaLocation = schemaLocation;
+    public void setSchemaData(byte[] schemaData) {
+        this.schemaData = schemaData;
     }
 
     public String getAutoCommitSetting() {
@@ -85,15 +82,10 @@ public class SolrTestingUtility {
         writeCoresConf();
         copyDefaultConfigToSolrHome(autoCommitSetting == null ? "" : autoCommitSetting);
 
-        if (schemaLocation != null) {
-            if (schemaLocation.startsWith("classpath:")) {
-                copySchemaFromResource(schemaLocation.substring("classpath:".length()));
-            } else {
-                copySchemaFromFile(new File(schemaLocation));
-            }
-        } else {
-            copySchemaFromResource("org/lilyproject/solrtestfw/conftemplate/schema.xml");
+        if (schemaData == null) {
+            schemaData = IOUtils.toByteArray(getClass().getResourceAsStream("conftemplate/schema.xml"));
         }
+        writeSchema();
 
         setSystemProperties();
 
@@ -191,12 +183,8 @@ public class SolrTestingUtility {
         createEmptyFile(new File(solrConfDir, "protwords.txt"));
     }
 
-    private void copySchemaFromFile(File schemaFile) throws IOException {
-        FileUtils.copyFile(schemaFile, new File(solrConfDir, "schema.xml"));
-    }
-
-    private void copySchemaFromResource(String path) throws IOException {
-        copyResource(path, new File(solrConfDir, "schema.xml"));
+    private void writeSchema() throws IOException {
+        FileUtils.writeByteArrayToFile(new File(solrConfDir, "schema.xml"), schemaData);
     }
 
     private void copyResource(String path, File destination) throws IOException {

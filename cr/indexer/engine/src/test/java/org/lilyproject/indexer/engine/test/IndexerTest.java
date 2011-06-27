@@ -30,10 +30,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
@@ -109,7 +109,7 @@ public class IndexerTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         SOLR_TEST_UTIL = new SolrTestingUtility();
-        SOLR_TEST_UTIL.setSchemaLocation("classpath:org/lilyproject/indexer/engine/test/schema1.xml");
+        SOLR_TEST_UTIL.setSchemaData(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml")));
 
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
                 "org.lilyproject.rowlog.impl.RowLogImpl");
