@@ -210,6 +210,9 @@ public class IndexerWorker {
                 try {
                     handle.stop();
                 } catch (Throwable t2) {
+                    if (t instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
                     log.error("Problem stopping listeners for failed-to-start index updater for index '" +
                             index.getName() + "'", t2);
                 }
@@ -317,6 +320,10 @@ public class IndexerWorker {
     private class EventWorker implements Runnable {
         public void run() {
             while (true) {
+                if (Thread.interrupted()) {
+                    return;
+                }
+
                 try {
                     int queueSize = eventQueue.size();
                     if (queueSize >= 10) {
