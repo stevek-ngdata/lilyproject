@@ -16,6 +16,7 @@ import javax.management.ObjectName;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -210,8 +211,10 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println("Clearing Lily's ZooKeeper state");
             cleanupUtil.cleanZooKeeper();
 
-
-            // TODO: clean blob store directory, what else?
+            // Clear Blobs on hdfs blobstore
+            String dfsUri = "hdfs://localhost:8020/lily/blobs";
+            System.out.println("Clearing HDFS Blob Store on " + dfsUri);
+            cleanupUtil.cleanBlobStore(new URI(dfsUri));
 
             // TODO: clear Solr state
 

@@ -1,6 +1,8 @@
 package org.lilyproject.testfw;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HServerAddress;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -17,6 +19,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.*;
 
 import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
@@ -242,6 +245,12 @@ public class CleanupUtil {
             byte[] CF = Bytes.toBytes(columnFamily);
             waitForCompact(tableName, CF);
         }
+    }
+    
+    public void cleanBlobStore(URI dfsUri) throws Exception {
+        FileSystem fs = FileSystem.get(new URI(dfsUri.getScheme() + "://" + dfsUri.getAuthority()), conf);
+        Path blobRootPath = new Path(dfsUri.getPath());
+        fs.delete(blobRootPath, true);
     }
 
     /**
