@@ -90,9 +90,9 @@ public class LilyProxy {
 
         if (mode == Mode.EMBED) {
             testHome = TestHomeUtil.createTestHome("lily-proxy-");
-            hbaseProxy.setTestHome(new File(testHome, "hbaseproxy"));
-            solrProxy.setTestHome(new File(testHome, "solrproxy"));
-            lilyServerProxy.setTestHome(new File(testHome, "serverproxy"));
+            hbaseProxy.setTestHome(new File(testHome, "hadoop"));
+            solrProxy.setTestHome(new File(testHome, "solr"));
+            lilyServerProxy.setTestHome(new File(testHome, "lilyserver"));
         }
 
         hbaseProxy.start();
