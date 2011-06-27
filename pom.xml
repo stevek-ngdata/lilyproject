@@ -43,6 +43,11 @@
 
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Set the argLine property to empty value by default. This is to make sure the ${argLine} in
+         the configuration of the surefire plugin will get substituted.
+         Otherwise the tests fail with a "java.lang.NoClassDefFoundError: null".-->
+    <argLine/>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>
@@ -644,9 +649,6 @@
             <argLine>-Xmx256m ${argLine}</argLine>
             <systemPropertyVariables>
               <lily.hbaseproxy.mode>${lily.hbaseproxy.mode}</lily.hbaseproxy.mode>
-              <!--<lily.solrproxy.mode>${lily.solrproxy.mode}</lily.solrproxy.mode>-->
-              <!--<lily.lilyserverproxy.mode>${lily.lilyserverproxy.mode}</lily.lilyserverproxy.mode>-->
-              <!--<lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>-->
               <lily.test.log>${lily.test.log}</lily.test.log>
             </systemPropertyVariables>
           </configuration>
@@ -679,34 +681,23 @@
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
-      <properties>
-        <!-- This is to make sure the ${argLine} in the configuration of the surefire plugin will get substituted.
-             Otherwise the tests fail with a "java.lang.NoClassDefFoundError: null". -->
-        <argLine />
-      </properties>
     </profile>
     <profile>
       <id>fast</id>
       <properties>
         <skipTests>true</skipTests>
-        <argLine />
       </properties>
     </profile>
     <profile>
       <id>connect</id>
       <properties>
         <lily.hbaseproxy.mode>connect</lily.hbaseproxy.mode>
-        <lily.solrproxy.mode>connect</lily.solrproxy.mode>
-        <lily.lilyserverproxy.mode>connect</lily.lilyserverproxy.mode>
-        <lily.lilyproxy.mode>connect</lily.lilyproxy.mode>
-        <argLine />
       </properties>
     </profile>
     <profile>
       <id>log</id>
       <properties>
         <lily.test.log>true</lily.test.log>
-        <argLine />
       </properties>
     </profile>
   </profiles>
