@@ -100,7 +100,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
 
     private void registerMBean() {
         try {
-            mbeanName = new ObjectName("Lily:service=RowLog,name=" + this.id);
+            mbeanName = new ObjectName("RowLog:name=" + this.id);
             ManagementFactory.getPlatformMBeanServer().registerMBean(this, mbeanName);
         } catch (InstanceAlreadyExistsException e) {
             log.info("MBean '"+ mbeanName +"' for rowlog '" + this.id + "' already registered", e);

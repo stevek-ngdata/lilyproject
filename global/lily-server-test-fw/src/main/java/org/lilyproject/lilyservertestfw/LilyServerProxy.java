@@ -255,17 +255,43 @@ public class LilyServerProxy {
         }
         
         // Wait for RowLog to know the mq subscriptionId
-        MBeanServer platformMBeanServer = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-        ObjectName objectName = ObjectNameManager.getInstance("Lily:service=RowLog,name=mq");
-
-        List<String> subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
-        while (!subscriptionIds.contains(subscriptionId)) {
-            Thread.sleep(50);
+        ObjectName objectName = new ObjectName("RowLog:name=mq");
+        List<String> subscriptionIds = null;
+        switch (mode) {
+        case EMBED:
+            MBeanServer platformMBeanServer = java.lang.management.ManagementFactory.getPlatformMBeanServer();
+            
             subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
-        }
-        if (!subscriptionId.contains(subscriptionId)) {
-            log.info("SubscriptionId for index '" + indexName + "' not known to mq rowlog within " + timeout + "ms");
-            return false;
+            while (!subscriptionIds.contains(subscriptionId)) {
+                Thread.sleep(50);
+                subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
+            }
+            if (!subscriptionId.contains(subscriptionId)) {
+                log.info("SubscriptionId for index '" + indexName + "' not known to mq rowlog within " + timeout + "ms");
+                return false;
+            }
+            break;
+        case CONNECT:
+            JMXConnector connector = null;
+            try {
+                String hostport = "localhost:10102";
+                JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
+                connector = JMXConnectorFactory.connect(url);
+                connector.connect();
+                subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
+                while (!subscriptionIds.contains(subscriptionId)) {
+                    Thread.sleep(50);
+                    subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
+                }
+            } finally {
+                if (connector != null)
+                    connector.close();
+            }
+
+            break;
+
+        default:
+            throw new RuntimeException("Unexpected mode: " + mode);
         }
         return true;
 
