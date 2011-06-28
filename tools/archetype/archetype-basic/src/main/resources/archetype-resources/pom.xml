@@ -30,6 +30,20 @@
       <artifactId>lily-import</artifactId>
       <version>${version.lily}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-server-testfw</artifactId>
+      <version>${version.lily}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -46,6 +60,18 @@
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <forkMode>always</forkMode>
+          <argLine>-Xmx256m</argLine>
+          <systemPropertyVariables>
+            <lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
     </plugins>
@@ -68,5 +94,14 @@
       <url>http://lilyproject.org/maven/maven2/deploy/</url>
     </repository>
   </repositories>
+
+  <profiles>
+    <profile>
+      <id>connect</id>
+      <properties>
+        <lily.lilyproxy.mode>connect</lily.lilyproxy.mode>
+      </properties>
+    </profile>
+  </profiles>
 
 </project>
