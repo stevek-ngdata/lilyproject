@@ -21,11 +21,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.kauriproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.client.LilyClient;
@@ -34,13 +41,17 @@ import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
+import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+import org.springframework.jmx.support.ObjectNameManager;
 
 public class LilyServerProxy {
+    private Log log = LogFactory.getLog(getClass());
+
     private Mode mode;
 
     public enum Mode { EMBED, CONNECT }
@@ -174,25 +185,44 @@ public class LilyServerProxy {
         ConfUtil.copyConfResources(confUrl, ConfUtil.CONF_RESOURCE_PATH, confDir);
     }
 
-    public void addIndexFromResource(String indexName, String indexerConf) throws IOException, IndexerConfException,
-            InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException,
-            IndexModelException, IndexValidityException {
+    /**
+     * Adds an index from in index configuration contained in a resource.
+     * 
+     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout has passed).
+     * Only when this is the case record creates or updates will result in messages to be created on the MQ rowlog.
+     * <p>Not that when the messages from the MQ rowlog are processed, the data has been put in solr but this data might not
+     * be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
+     * 
+     * @param indexName name of the index
+     * @param indexerConf path to the resource containing the index configuration
+     * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
+     * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
+     */
+    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        addIndex(indexName, indexerConfiguration);
+        return addIndex(indexName, indexerConfiguration, timeout);
     }
 
-    public void addIndexFromFile(String indexName, String indexerConf) throws IOException, IndexerConfException,
-            InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException,
-            IndexModelException, IndexValidityException {
+    /**
+     * Adds an index from in index configuration contained in a file.
+     * 
+     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout has passed).
+     * Only when this is the case record creates or updates will result in messages to be created on the MQ rowlog.
+     * 
+     * @param indexName name of the index
+     * @param indexerConf path to the file containing the index configuration
+     * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
+     * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
+     */
+    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout) throws Exception {
         byte[] indexerConfiguration = FileUtils.readFileToByteArray(new File(indexerConf));
-        addIndex(indexName, indexerConfiguration);
+        return addIndex(indexName, indexerConfiguration, timeout);
     }
 
-    private void addIndex(String indexName, byte[] indexerConfiguration) throws IndexerConfException, IOException,
-            InterruptedException, KeeperException, ZkConnectException, NoServersException, IndexExistsException,
-            IndexModelException, IndexValidityException {
+    private boolean addIndex(String indexName, byte[] indexerConfiguration, long timeout) throws Exception {
+        long tryUntil = System.currentTimeMillis() + timeout; 
         IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getClient().getRepository());
         WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
@@ -201,5 +231,43 @@ public class LilyServerProxy {
         index.setSolrShards(solrShards);
         index.setConfiguration(indexerConfiguration);
         indexerModel.addIndex(index);
+        
+        // Wait for index to be known by indexerModel 
+        while (!indexerModel.hasIndex(indexName) || System.currentTimeMillis() > tryUntil) {
+            Thread.sleep(50);
+        }
+        if (!indexerModel.hasIndex(indexName)) {
+            log.info("Index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
+            return false;
+        }
+     
+        // Wait for subscriptionId to be known by indexerModel
+        String subscriptionId = null;
+        IndexDefinition indexDefinition = indexerModel.getIndex(indexName);
+        subscriptionId = indexDefinition.getQueueSubscriptionId();
+        while (subscriptionId == null || System.currentTimeMillis() > tryUntil) {
+            Thread.sleep(50);
+            subscriptionId = indexerModel.getIndex(indexName).getQueueSubscriptionId();
+        }
+        if (subscriptionId == null) {
+            log.info("SubscriptionId for index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
+            return false;
+        }
+        
+        // Wait for RowLog to know the mq subscriptionId
+        MBeanServer platformMBeanServer = java.lang.management.ManagementFactory.getPlatformMBeanServer();
+        ObjectName objectName = ObjectNameManager.getInstance("Lily:service=RowLog,name=mq");
+
+        List<String> subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
+        while (!subscriptionIds.contains(subscriptionId)) {
+            Thread.sleep(50);
+            subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
+        }
+        if (!subscriptionId.contains(subscriptionId)) {
+            log.info("SubscriptionId for index '" + indexName + "' not known to mq rowlog within " + timeout + "ms");
+            return false;
+        }
+        return true;
+
     }
 }

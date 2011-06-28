@@ -67,8 +67,8 @@ public class LilyProxyTest {
         typeManager.createRecordType(recordType1);
         
         // Add index
-        lilyProxy.getLilyServerProxy().addIndexFromResource("testIndex",
-                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml");
+        Assert.assertTrue("Adding index took too long", lilyProxy.getLilyServerProxy().addIndexFromResource("testIndex",
+                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L));
        
         // Create record
         Record record = repository.newRecord();
@@ -78,18 +78,17 @@ public class LilyProxyTest {
         record = repository.read(record.getId());
         Assert.assertEquals("aName", (String)record.getField(FIELD1));
         
+        // Wait for messages to be processed
+        Assert.assertTrue("Processing messages took too long", lilyProxy.getHbaseProxy().waitWalAndMQMessagesProcessed(60000L));
+        
+        // Make sure the data is visible in solr
+        lilyProxy.getSolrProxy().commit();
+
         // Query Solr
-        SolrServer solrServer = lilyProxy.getSolrProxy().getSolrServer();
-        List<RecordId> recordIds = new ArrayList<RecordId>();
-        long waitUntil = System.currentTimeMillis() + 60000L;
-        while (System.currentTimeMillis() < waitUntil) {
-            recordIds = querySolr("aName");
-            if (recordIds.size()>0)
-                break;
-            solrServer.commit();
-        }
+        List<RecordId> recordIds = querySolr("aName");
         
         Assert.assertTrue(recordIds.contains(record.getId()));
+
         System.out.println("Original record:" +record.getId().toString());
         System.out.println("Queried record:" +recordIds.get(0).toString());
     }

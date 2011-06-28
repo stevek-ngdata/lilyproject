@@ -16,10 +16,13 @@
 package org.lilyproject.rowlog.impl;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.management.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,7 +37,7 @@ import org.lilyproject.util.io.Closer;
 /**
  * See {@link RowLog}
  */
-public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver {
+public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserver, RowLogObserver {
 
     private static final byte PL_BYTE = (byte)1;
     private static final byte ES_BYTE = (byte)2;
@@ -56,6 +59,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     private byte[] payloadPrefix;
     private byte[] executionStatePrefix;
     private byte[] seqNrQualifier;
+    private ObjectName mbeanName;
 
     /**
      * The RowLog should be instantiated with information about the table that contains the rows the messages are 
@@ -90,9 +94,39 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 initialSubscriptionsLoaded.wait();
             }
         }
+        
+        registerMBean();
     }
 
+    private void registerMBean() {
+        try {
+            mbeanName = new ObjectName("Lily:service=RowLog,name=" + this.id);
+            ManagementFactory.getPlatformMBeanServer().registerMBean(this, mbeanName);
+        } catch (InstanceAlreadyExistsException e) {
+            log.info("MBean '"+ mbeanName +"' for rowlog '" + this.id + "' already registered", e);
+        } catch (MBeanRegistrationException e) {
+            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
+        } catch (NotCompliantMBeanException e) {
+            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
+        } catch (MalformedObjectNameException e) {
+            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
+        } catch (NullPointerException e) {
+            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
+        }
+    }
+    
+    private void unregisterMBean() {
+        try {
+            ManagementFactory.getPlatformMBeanServer().unregisterMBean(mbeanName);
+        } catch (MBeanRegistrationException e) {
+            log.warn("Failed unRegistering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
+        } catch (InstanceNotFoundException e) {
+            log.info("MBean '"+ mbeanName +"' for rowlog '" + this.id + "' was not registered", e);
+        }
+    }
+    
     public void stop() {
+        unregisterMBean();
         rowLogConfigurationManager.removeRowLogObserver(id, this);
         synchronized (initialRowLogConfigLoaded) {
             initialRowLogConfigLoaded.set(false);
@@ -308,6 +342,12 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     public List<RowLogSubscription> getSubscriptions() {
         synchronized (subscriptions) {
             return new ArrayList<RowLogSubscription>(subscriptions.values());
+        }
+    }
+    
+    public List<String> getSubscriptionIds() {
+        synchronized(subscriptions) {
+            return new ArrayList<String>(subscriptions.keySet());
         }
     }
     
@@ -589,4 +629,6 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         buffer.putLong(timestamp);
         return buffer.array();
     }
+    
+    
  }

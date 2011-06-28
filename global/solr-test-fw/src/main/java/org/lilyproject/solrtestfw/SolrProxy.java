@@ -136,6 +136,13 @@ public class SolrProxy {
         return solrServer;
     }
     
+    /**
+     * Commits the solr index. 
+     */
+    public void commit() throws Exception {
+        solrServer.commit();
+    }
+    
     public String getUri() {
         return uri;
     }

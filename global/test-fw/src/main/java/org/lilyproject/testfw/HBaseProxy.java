@@ -16,10 +16,12 @@
 package org.lilyproject.testfw;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.ftpserver.command.impl.SYST;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.testfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -250,8 +252,84 @@ public class HBaseProxy {
             return FileSystem.get(new URI(dfsUri), getConf());
         }
     }
-
+    
+    /**
+     * Cleans all data from the hbase tables.
+     * 
+     * <p>Should only be called when lily-server is not running.
+     */
     public void cleanTables() throws Exception {
         cleanupUtil.cleanTables();
+    }
+
+    /**
+     * Cleans all blobs from the hdfs blobstore
+     * 
+     * <p>Should only be called when lily-server is not running.
+     */
+    public void cleanBlobStore() throws Exception {
+        cleanupUtil.cleanBlobStore(getBlobFS().getUri());
+    }
+
+    /**
+     * Waits for all messages from the WAL and MQ to be processed.
+     * 
+     * @param timeout the maximum time to wait
+     * @return false if the timeout was reached before all messages were processed
+     */
+    public boolean waitWalAndMQMessagesProcessed(long timeout) throws Exception {
+        long before = System.currentTimeMillis();
+        if (!waitWalMessagesProcessed(timeout))
+            return false;
+        long duration = System.currentTimeMillis() - before;
+        return waitMQMessagesProcessed(timeout - duration);
+    }
+    
+    /**
+     * Waits for all messages from the WAL to be processed.
+     * 
+     * @param timeout the maximum time to wait
+     * @return false if the timeout was reached before all messages were processed
+     */
+    public boolean waitWalMessagesProcessed(long timeout) throws Exception {
+        String tableName = "wal" + "-" + "shard1";
+        HTable hTable = new HTable(conf, Bytes.toBytes(tableName));
+        try {
+            return waitRowLogMessagesProcessed(timeout, hTable);
+        } finally {
+            hTable.close();
+        }
+        
+    }
+
+    /**
+     * Waits for all messages from the MQ to be processed.
+     * 
+     * @param timeout the maximum time to wait
+     * @return false if the timeout was reached before all messages were processed
+     */
+    public boolean waitMQMessagesProcessed(long timeout) throws Exception {
+        String tableName = "mq" + "-" + "shard1";
+        HTable hTable = new HTable(conf, Bytes.toBytes(tableName));
+        try {
+            return waitRowLogMessagesProcessed(timeout, hTable);
+        } finally {
+            hTable.close();
+        }
+    }
+    
+    private boolean waitRowLogMessagesProcessed(long timeout, HTable hTable) throws Exception {
+        long tryUntil = System.currentTimeMillis() + timeout;
+        while (System.currentTimeMillis() < tryUntil) {
+            hTable.flushCommits();
+            ResultScanner scanner = hTable.getScanner(Bytes.toBytes("messages"));
+            Result result = scanner.next();
+            scanner.close();
+            if (result == null || result.size() <= 0) {
+                return true;
+            }
+            Thread.sleep(50);
+        }
+        return false;
     }
 }
