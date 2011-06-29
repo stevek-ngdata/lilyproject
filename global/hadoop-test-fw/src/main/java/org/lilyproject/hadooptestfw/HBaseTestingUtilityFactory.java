@@ -1,8 +1,8 @@
-package org.lilyproject.testfw;
+package org.lilyproject.hadooptestfw;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.lilyproject.testfw.fork.HBaseTestingUtility;
+import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 
 import java.io.File;
 import java.io.IOException;

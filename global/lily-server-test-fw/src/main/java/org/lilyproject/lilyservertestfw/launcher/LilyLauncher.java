@@ -8,8 +8,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.cli.BaseCliTool;
-import org.lilyproject.testfw.CleanupUtil;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.CleanupUtil;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;

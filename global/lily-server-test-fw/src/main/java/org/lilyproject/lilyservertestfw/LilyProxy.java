@@ -19,7 +19,7 @@ import java.io.*;
 
 import org.apache.commons.io.FileUtils;
 import org.lilyproject.solrtestfw.SolrProxy;
-import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;
@@ -35,7 +35,7 @@ public class LilyProxy {
     private File testHome;
 
     public enum Mode { EMBED, CONNECT }
-    private static String MODE_PROP_NAME = "lily.lilyproxy.mode";
+    public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
 
     public LilyProxy() throws IOException {
         this(null);

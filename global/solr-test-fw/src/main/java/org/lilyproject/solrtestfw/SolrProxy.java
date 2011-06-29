@@ -39,7 +39,7 @@ public class SolrProxy {
     private Mode mode;
 
     public enum Mode { EMBED, CONNECT }
-    private static String SOLR_MODE_PROP_NAME = "lily.solrproxy.mode";
+    public static String SOLR_MODE_PROP_NAME = "lily.solrproxy.mode";
 
     private SolrTestingUtility solrTestingUtility;
     private SolrServer solrServer;

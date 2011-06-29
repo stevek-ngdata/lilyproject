@@ -21,8 +21,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.lilyproject.hbaseindex.*;
-import org.lilyproject.testfw.HBaseProxy;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.TestHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;

@@ -15,7 +15,7 @@ import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
-import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;

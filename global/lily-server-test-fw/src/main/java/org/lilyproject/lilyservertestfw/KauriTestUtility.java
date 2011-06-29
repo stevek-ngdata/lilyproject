@@ -24,7 +24,7 @@ import org.kauriproject.runtime.model.SourceLocations;
 import org.kauriproject.runtime.rapi.Mode;
 import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.Maven2StyleArtifactRepository;
-import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.net.NetUtils;
 import org.restlet.Client;

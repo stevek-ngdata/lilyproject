@@ -25,7 +25,7 @@ import org.lilyproject.indexer.engine.IndexLockTimeoutException;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkUtil;

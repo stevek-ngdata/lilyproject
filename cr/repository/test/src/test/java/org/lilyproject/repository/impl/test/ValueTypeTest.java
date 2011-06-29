@@ -37,7 +37,7 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.TestHelper;
 
 public class ValueTypeTest {
 

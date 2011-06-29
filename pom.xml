@@ -89,7 +89,7 @@
     <module>global/rowlog</module>
     <module>global/rowlock</module>
     <module>global/util</module>
-    <module>global/test-fw</module>
+    <module>global/hadoop-test-fw</module>
     <module>global/hbase-util</module>
     <module>global/zk-util</module>
     <module>global/json-util</module>
@@ -194,7 +194,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-testfw</artifactId>
+        <artifactId>lily-hadoop-testfw</artifactId>
         <version>1.1-SNAPSHOT</version>
         <scope>test</scope>
       </dependency>

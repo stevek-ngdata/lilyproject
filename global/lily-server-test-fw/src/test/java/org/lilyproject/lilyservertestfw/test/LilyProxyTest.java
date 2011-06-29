@@ -31,6 +31,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.*;
 
@@ -41,9 +42,19 @@ public class LilyProxyTest {
     private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
     private static Repository repository;
     private static LilyProxy lilyProxy;
+    private static boolean skip;
     
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        String hbaseMode = System.getProperty(HBaseProxy.HBASE_MODE_PROP_NAME);
+        String lilyMode = System.getProperty(LilyProxy.MODE_PROP_NAME);
+        if ("connect".equals(hbaseMode) && !"connect".equals(lilyMode)) {
+            skip = true;
+            System.out.println("This test expects the whole Lily stack to be started, either embeded or standalone.");
+            System.out.println("It does not work with the -Pconnect profile.");
+            System.out.println("Skipping test...");
+            return;
+        }
         lilyProxy = new LilyProxy();
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
         lilyProxy.start(schemaData);
@@ -53,11 +64,15 @@ public class LilyProxyTest {
     
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        if (skip)
+            return;
         lilyProxy.stop();
     }
     
     @Test
     public void testCreateRecord() throws Exception {
+        if (skip)
+            return;
         // Create schema
         TypeManager typeManager = repository.getTypeManager();
         FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),

@@ -35,8 +35,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLock;
-import org.lilyproject.testfw.HBaseProxy;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.TestHelper;
 
 public class RowLockerTest {
     private static HBaseProxy HBASE_PROXY;

@@ -32,7 +32,7 @@ import org.lilyproject.repository.impl.*;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
 

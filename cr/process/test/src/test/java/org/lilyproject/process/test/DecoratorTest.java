@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.KauriTestUtility;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 
 import java.io.File;
 

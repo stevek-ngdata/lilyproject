@@ -58,7 +58,7 @@
     
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-testfw</artifactId>
+      <artifactId>lily-hadoop-testfw</artifactId>
     </dependency>
     
     <dependency>

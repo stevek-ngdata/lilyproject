@@ -30,7 +30,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.testfw.fork;
+package org.lilyproject.hadooptestfw.fork;
 
 import static org.junit.Assert.assertTrue;
 
@@ -82,7 +82,7 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.mapred.JobConf;
-import org.lilyproject.testfw.fork.MiniMRCluster;
+import org.lilyproject.hadooptestfw.fork.MiniMRCluster;
 import org.apache.zookeeper.ZooKeeper;
 
 /**

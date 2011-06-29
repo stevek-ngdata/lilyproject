@@ -69,7 +69,7 @@
     <dependency>
       <!-- Currently only here to get the logging deps in -->
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-testfw</artifactId>
+      <artifactId>lily-hadoop-testfw</artifactId>
     </dependency>
 
     <dependency>

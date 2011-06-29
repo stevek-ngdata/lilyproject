@@ -9,7 +9,7 @@ You should have HBase running in order to run the Lily repository server.
 You can either:
 
  * launch a dummy Hadoop/HBase/ZooKeeper via:
-      cd global/testfw
+      cd global/lily-server-testfw
       ./target/launch-test-lily --hadoop
 
  * or use a HBase installation you set up yourself.

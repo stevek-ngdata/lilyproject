@@ -26,7 +26,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.testfw.fork;
+package org.lilyproject.hadooptestfw.fork;
 
 import java.io.File;
 import java.io.IOException;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.testfw;
+package org.lilyproject.hadooptestfw;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.ftpserver.command.impl.SYST;
@@ -23,7 +23,7 @@ import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.lilyproject.testfw.fork.HBaseTestingUtility;
+import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import java.io.File;
@@ -50,7 +50,7 @@ public class HBaseProxy {
     private boolean cleanStateOnConnect = true;
 
     public enum Mode { EMBED, CONNECT }
-    private static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
+    public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
 
     public HBaseProxy() throws IOException {
         this(null);

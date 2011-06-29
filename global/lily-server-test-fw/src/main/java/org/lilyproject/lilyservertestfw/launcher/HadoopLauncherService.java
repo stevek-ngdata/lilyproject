@@ -7,13 +7,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.lilyproject.testfw.HBaseTestingUtilityFactory;
+import org.lilyproject.hadooptestfw.HBaseTestingUtilityFactory;
 
 import java.io.File;
 import java.util.List;
 
 public class HadoopLauncherService implements LauncherService {
-    private org.lilyproject.testfw.fork.HBaseTestingUtility hbaseTestUtility;
+    private org.lilyproject.hadooptestfw.fork.HBaseTestingUtility hbaseTestUtility;
     private Configuration conf;
     private File testHome;
 

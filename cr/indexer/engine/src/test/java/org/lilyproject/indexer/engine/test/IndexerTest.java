@@ -58,7 +58,7 @@ import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 

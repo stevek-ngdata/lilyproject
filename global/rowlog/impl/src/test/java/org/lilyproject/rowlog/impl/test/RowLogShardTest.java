@@ -37,8 +37,8 @@ import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.rowlog.impl.RowLogMessageImpl;
 import org.lilyproject.rowlog.impl.RowLogShardImpl;
-import org.lilyproject.testfw.HBaseProxy;
-import org.lilyproject.testfw.TestHelper;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.hadooptestfw.TestHelper;
 
 public class RowLogShardTest {
 
