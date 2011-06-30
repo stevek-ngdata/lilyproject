@@ -334,7 +334,7 @@ public class LilyServerProxy {
                 Thread.sleep(50);
                 subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
             }
-            if (!subscriptionId.contains(subscriptionId)) {
+            if (!subscriptionIds.contains(subscriptionId)) {
                 log.info("SubscriptionId '" + subscriptionId + "' not known to mq rowlog within " + timeout + "ms");
                 return false;
             }
@@ -354,16 +354,19 @@ public class LilyServerProxy {
                 while (!subscriptionIds.contains(subscriptionId) && System.currentTimeMillis() < tryUntil) {
                     Thread.sleep(50);
                     try {
-                    subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
+                        subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
                     } catch (InstanceNotFoundException e) {
                         // Ignore, we keep trying
                     } 
+                }
+                if (!subscriptionIds.contains(subscriptionId)) {
+                    log.info("SubscriptionId '" + subscriptionId + "' not known to mq rowlog within " + timeout + "ms");
+                    return false;
                 }
             } finally {
                 if (connector != null)
                     connector.close();
             }
-
             break;
 
         default:
