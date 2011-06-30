@@ -214,13 +214,23 @@ public class LilyServerProxy {
      * @param indexName name of the index
      * @param indexerConf path to the resource containing the index configuration
      * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
+     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the subscriptionId of the new index
+     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId of the new index. 
+     *        This can only be true if the waitForIndexerModel is true as well. 
      * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
      */
-    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
+    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        return addIndex(indexName, indexerConfiguration, timeout);
+        return addIndex(indexName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+    }
+    
+    /**
+     * Shortcut method with waitForIndexerModel and waitForMQRowlog put to true
+     */
+    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
+        return addIndexFromResource(indexName, indexerConf, timeout, true, true);
     }
 
     /**
@@ -232,14 +242,24 @@ public class LilyServerProxy {
      * @param indexName name of the index
      * @param indexerConf path to the file containing the index configuration
      * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
+     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the subscriptionId of the new index
+     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId of the new index. 
+     *        This can only be true if the waitForIndexerModel is true as well. 
      * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
      */
-    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout) throws Exception {
+    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
         byte[] indexerConfiguration = FileUtils.readFileToByteArray(new File(indexerConf));
-        return addIndex(indexName, indexerConfiguration, timeout);
+        return addIndex(indexName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+    }
+    
+    /**
+     * Shortcut method with waitForIndexerModel and waitForMQRowlog put to true
+     */
+    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout) throws Exception {
+        return addIndexFromFile(indexName, indexerConf, timeout, true, true);
     }
 
-    private boolean addIndex(String indexName, byte[] indexerConfiguration, long timeout) throws Exception {
+    private boolean addIndex(String indexName, byte[] indexerConfiguration, long timeout, boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout; 
         IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getClient().getRepository());
         WriteableIndexerModel indexerModel = getIndexerModel();
@@ -250,29 +270,58 @@ public class LilyServerProxy {
         index.setConfiguration(indexerConfiguration);
         indexerModel.addIndex(index);
         
+        String subscriptionId = null;
+        if (waitForIndexerModel) {
+            // Wait for subscriptionId to be known by indexerModel
+            subscriptionId = waitIndexerModelKnowsSubscriptionId(indexName, tryUntil, timeout, indexerModel);
+            if (subscriptionId == null)
+                return false;
+        } else {
+            return true;
+        }
+        
+        if (waitForMQRowlog) {
+            // Wait for RowLog to know the mq subscriptionId
+            return waitMQRowlogKnowsSubscriptionId(subscriptionId, tryUntil, timeout);
+        } else {
+            return true;
+        }
+    }
+
+    
+    public String waitIndexerModelKnowsSubscriptionId(String indexName, long timeout, WriteableIndexerModel indexerModel) throws Exception {
+        return waitIndexerModelKnowsSubscriptionId(indexName, System.currentTimeMillis()+timeout, timeout, indexerModel);
+    }
+    
+    private String waitIndexerModelKnowsSubscriptionId(String indexName, long tryUntil, long timeout, WriteableIndexerModel indexerModel) throws Exception {
+        String subscriptionId = null;
+
         // Wait for index to be known by indexerModel 
-        while (!indexerModel.hasIndex(indexName) || System.currentTimeMillis() > tryUntil) {
+        while (!indexerModel.hasIndex(indexName) && System.currentTimeMillis() < tryUntil) {
             Thread.sleep(50);
         }
         if (!indexerModel.hasIndex(indexName)) {
             log.info("Index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
-            return false;
+            return subscriptionId;
         }
-     
-        // Wait for subscriptionId to be known by indexerModel
-        String subscriptionId = null;
+        
         IndexDefinition indexDefinition = indexerModel.getIndex(indexName);
         subscriptionId = indexDefinition.getQueueSubscriptionId();
-        while (subscriptionId == null || System.currentTimeMillis() > tryUntil) {
+        while (subscriptionId == null && System.currentTimeMillis() < tryUntil) {
             Thread.sleep(50);
             subscriptionId = indexerModel.getIndex(indexName).getQueueSubscriptionId();
         }
         if (subscriptionId == null) {
             log.info("SubscriptionId for index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
-            return false;
         }
-        
-        // Wait for RowLog to know the mq subscriptionId
+        return subscriptionId;
+    }
+
+    public boolean waitMQRowlogKnowsSubscriptionId(String subscriptionId, String indexName, long timeout) throws Exception {
+        return waitMQRowlogKnowsSubscriptionId(subscriptionId, System.currentTimeMillis()+timeout, timeout);
+    }
+    
+    private boolean waitMQRowlogKnowsSubscriptionId(String subscriptionId, long tryUntil, long timeout) throws Exception {
         ObjectName objectName = new ObjectName("RowLog:name=mq");
         List<String> subscriptionIds = null;
         switch (mode) {
@@ -280,12 +329,12 @@ public class LilyServerProxy {
             MBeanServer platformMBeanServer = java.lang.management.ManagementFactory.getPlatformMBeanServer();
             
             subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
-            while (!subscriptionIds.contains(subscriptionId)) {
+            while (!subscriptionIds.contains(subscriptionId) && System.currentTimeMillis() < tryUntil) {
                 Thread.sleep(50);
                 subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
             }
             if (!subscriptionId.contains(subscriptionId)) {
-                log.info("SubscriptionId for index '" + indexName + "' not known to mq rowlog within " + timeout + "ms");
+                log.info("SubscriptionId '" + subscriptionId + "' not known to mq rowlog within " + timeout + "ms");
                 return false;
             }
             break;
@@ -297,7 +346,7 @@ public class LilyServerProxy {
                 connector = JMXConnectorFactory.connect(url);
                 connector.connect();
                 subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
-                while (!subscriptionIds.contains(subscriptionId)) {
+                while (!subscriptionIds.contains(subscriptionId) && System.currentTimeMillis() < tryUntil) {
                     Thread.sleep(50);
                     subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
                 }
@@ -312,6 +361,5 @@ public class LilyServerProxy {
             throw new RuntimeException("Unexpected mode: " + mode);
         }
         return true;
-
     }
 }
