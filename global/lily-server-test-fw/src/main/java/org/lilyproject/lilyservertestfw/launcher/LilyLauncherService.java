@@ -13,44 +13,36 @@ import org.lilyproject.lilyservertestfw.LilyServerTestUtility;
 
 public class LilyLauncherService implements LauncherService {
     private LilyServerTestUtility lilyServerTestUtility;
-    private Option confDirOption;
-    private File confDir;
+    File defaultConfDir = null;
 
     @Override
     public void addOptions(List<Option> options) {
-        confDirOption = OptionBuilder
-            .withDescription("Lily configuration directory")
-            .withLongOpt("confDir")
-            .hasArg()
-            .create("confDir");
-        options.add(confDirOption);
     }
 
     @Override
     public int setup(CommandLine cmd, File testHome) throws Exception {
-        String confDirName = cmd.getOptionValue(confDirOption.getOpt());
-        // TODO need to make up mind about what conf dirs to use, for now just using the built-in default conf
-        confDir = null;
-        if (confDirName != null)
-            confDir = new File(confDirName);
+        String defaultConfDirPath = System.getProperty("lily.conf.dir");
+        if (defaultConfDirPath != null)
+            defaultConfDir = new File(defaultConfDirPath);
         else {
-            confDir = new File(testHome, "lilyconf");
-            FileUtils.forceMkdir(confDir);
+            // This is just to be sure. The LilyLauncher script should actually always set the system property
+            defaultConfDir = new File(testHome, "lilyconf");
+            FileUtils.forceMkdir(defaultConfDir);
             URL confUrl = getClass().getClassLoader().getResource(ConfUtil.CONF_RESOURCE_PATH);
-            ConfUtil.copyConfResources(confUrl, ConfUtil.CONF_RESOURCE_PATH, confDir);
+            ConfUtil.copyConfResources(confUrl, ConfUtil.CONF_RESOURCE_PATH, defaultConfDir);
         }
         return 0;
     }
 
     @Override
     public int start(List<String> postStartupInfo) throws Exception {
-        lilyServerTestUtility = new LilyServerTestUtility(confDir.getAbsolutePath());
+        lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), null);
         lilyServerTestUtility.start();
 
         postStartupInfo.add("-----------------------------------------------");
         postStartupInfo.add("Lily is running");
         postStartupInfo.add("");
-        postStartupInfo.add("Using configuration from: " + confDir.getAbsolutePath());
+        postStartupInfo.add("Using configuration from: " + defaultConfDir.getAbsolutePath());
         postStartupInfo.add("");
 
         return 0;

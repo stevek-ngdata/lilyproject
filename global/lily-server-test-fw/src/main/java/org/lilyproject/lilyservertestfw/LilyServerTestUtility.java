@@ -32,11 +32,13 @@ import org.lilyproject.util.io.Closer;
 
 public class LilyServerTestUtility {
 
-    private final String confDir;
     private KauriRuntime runtime;
+    private final String defaultConfDir;
+    private final String customConfDir;
 
-    public LilyServerTestUtility(String confDir) {
-        this.confDir = confDir;
+    public LilyServerTestUtility(String defaultConfDir, String customConfDir) {
+        this.defaultConfDir = defaultConfDir;
+        this.customConfDir = customConfDir;
     }
     
     public void start() throws Exception {
@@ -58,8 +60,10 @@ public class LilyServerTestUtility {
     
     private ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
-        if (confDir != null) 
-            confDirs.add(new File(confDir));
+        if (defaultConfDir != null) 
+            confDirs.add(new File(defaultConfDir));
+        if (customConfDir != null)
+            confDirs.add(new File(customConfDir));
         return new ConfManagerImpl(confDirs);
     }
 

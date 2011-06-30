@@ -35,6 +35,8 @@ public class DecoratorTest {
         File tmpDir = new File(basedir + "/target/lily-test");
 
         String pluginDir = setupPluginsDirectory(tmpDir);
+        System.setProperty("lily.plugin.dir", pluginDir);
+
         File confDir = setupConfDirectory(tmpDir);
 
         HBASE_PROXY = new HBaseProxy();
@@ -44,7 +46,6 @@ public class DecoratorTest {
 
         KAURI_TEST_UTIL.createDefaultConf(HBASE_PROXY);
 
-        System.setProperty("lily.plugin.dir", pluginDir);
         try {
             KAURI_TEST_UTIL.start();
         } finally {

@@ -107,10 +107,14 @@ public class LilyServerProxy {
             case EMBED:
                 initTestHome();
                 System.out.println("LilySeverProxy embedded mode temp dir: " + testHome.getAbsolutePath());
-                File confDir = new File(testHome, "conf");
-                FileUtils.forceMkdir(confDir);
-                extractTemplateConf(confDir);
-                lilyServerTestUtility = new LilyServerTestUtility(confDir.getAbsolutePath());
+                // Setup default conf dir : extract conf from resources into testHome
+                File defaultConfDir = new File(testHome, "conf");
+                FileUtils.forceMkdir(defaultConfDir);
+                extractTemplateConf(defaultConfDir);
+                // Get custom conf dir 
+                String customConfDir = System.getProperty("lily.conf.customdir");
+                
+                lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), customConfDir);
                 lilyServerTestUtility.start();
                 break;
             case CONNECT:
