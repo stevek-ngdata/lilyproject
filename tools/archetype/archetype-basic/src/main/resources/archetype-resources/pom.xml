@@ -71,6 +71,8 @@
           <argLine>-Xmx256m</argLine>
           <systemPropertyVariables>
             <lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>
+            <lily.conf.customdir>${lily.conf.customdir}</lily.conf.customdir>
+            <lily.plugin.dir>${lily.plugin.dir}</lily.plugin.dir>
           </systemPropertyVariables>
         </configuration>
       </plugin>
