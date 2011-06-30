@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -323,7 +324,7 @@ public class LilyServerProxy {
     
     private boolean waitMQRowlogKnowsSubscriptionId(String subscriptionId, long tryUntil, long timeout) throws Exception {
         ObjectName objectName = new ObjectName("RowLog:name=mq");
-        List<String> subscriptionIds = null;
+        List<String> subscriptionIds = new ArrayList<String>();
         switch (mode) {
         case EMBED:
             MBeanServer platformMBeanServer = java.lang.management.ManagementFactory.getPlatformMBeanServer();
@@ -345,10 +346,18 @@ public class LilyServerProxy {
                 JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
                 connector = JMXConnectorFactory.connect(url);
                 connector.connect();
-                subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
+                try {
+                    subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
+                } catch (InstanceNotFoundException e) {
+                    // Ignore, we keep trying
+                }
                 while (!subscriptionIds.contains(subscriptionId) && System.currentTimeMillis() < tryUntil) {
                     Thread.sleep(50);
+                    try {
                     subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
+                    } catch (InstanceNotFoundException e) {
+                        // Ignore, we keep trying
+                    } 
                 }
             } finally {
                 if (connector != null)
