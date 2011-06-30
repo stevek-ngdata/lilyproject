@@ -124,4 +124,29 @@ public class LilyProxy {
     public SolrProxy getSolrProxy() {
         return solrProxy;
     }
+    
+    /**
+     * Waits for all messages from the WAL and MQ to be processed and optionally commits the solr index.
+     * 
+     * @param timeout the maximum time to wait
+     * @param
+     * @return false if the timeout was reached before all messages were processed
+     */
+    public boolean waitWalAndMQMessagesProcessed(long timeout, boolean commitSolr) throws Exception {
+        boolean result = hbaseProxy.waitWalAndMQMessagesProcessed(timeout);
+        if (commitSolr)
+            solrProxy.commit();
+        return result;
+    }
+    
+    /**
+     * Waits for all messages from the WAL and MQ to be processed and commits the solr index by default.
+     * 
+     * @param timeout the maximum time to wait
+     * @param
+     * @return false if the timeout was reached before all messages were processed
+     */
+    public boolean waitWalAndMQMessagesProcessed(long timeout) throws Exception {
+        return waitWalAndMQMessagesProcessed(timeout, true);
+    }
 }

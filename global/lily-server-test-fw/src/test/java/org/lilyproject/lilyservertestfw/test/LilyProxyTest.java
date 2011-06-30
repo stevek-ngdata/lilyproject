@@ -94,11 +94,8 @@ public class LilyProxyTest {
         Assert.assertEquals("aName", (String)record.getField(FIELD1));
         
         // Wait for messages to be processed
-        Assert.assertTrue("Processing messages took too long", lilyProxy.getHbaseProxy().waitWalAndMQMessagesProcessed(60000L));
+        Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
         
-        // Make sure the data is visible in solr
-        lilyProxy.getSolrProxy().commit();
-
         // Query Solr
         List<RecordId> recordIds = querySolr("aName");
         
