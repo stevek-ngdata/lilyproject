@@ -36,6 +36,12 @@ public class LilyServerTestUtility {
     private final String defaultConfDir;
     private final String customConfDir;
 
+    /**
+     * LilyServerTestUtility is used to start Lily using the KauriRuntime.
+     * 
+     * @param defaultConfDir path to the directory containing the default configuration files to startup lily 
+     * @param customConfDir path to a directory containing custom configuration files which should be used on top of the default configuration files
+     */
     public LilyServerTestUtility(String defaultConfDir, String customConfDir) {
         this.defaultConfDir = defaultConfDir;
         this.customConfDir = customConfDir;

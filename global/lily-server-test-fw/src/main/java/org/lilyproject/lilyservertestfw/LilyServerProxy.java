@@ -40,16 +40,17 @@ import org.lilyproject.client.NoServersException;
 import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-import org.springframework.jmx.support.ObjectNameManager;
 
 public class LilyServerProxy {
+    public static final String LILY_CONF_DIR = "lily.conf.dir";
+    public static final String LILY_CONF_CUSTOMDIR = "lily.conf.customdir";
+
     private Log log = LogFactory.getLog(getClass());
 
     private Mode mode;
@@ -69,6 +70,19 @@ public class LilyServerProxy {
         this(null);
     }
 
+    /**
+     * LilyServerProxy starts a proxy for lily which either :
+     *   - connects to an already running lily (using launch-test-lily) (CONNECT mode)
+     *   - starts a new LilyServerTestUtility (EMBED mode)
+     *   
+     * <p>In the EMBED mode the default configuration files used are the files present 
+     *    in the resource "org/lilyproject/lilyservertestfw/conf/".
+     *    These files are copied into the resource at build-time from "cr/process/server/conf".  
+     * <br>On top of these default configuration files, custom configuration files can be used. 
+     *     The path to these custom configuration files should be put in the system property 
+     *     "lily.conf.customdir". 
+     * @param mode the mode (CONNECT or EMBED) in which to start the proxy.
+     */
     public LilyServerProxy(Mode mode) throws IOException {
         if (mode == null) {
             String lilyModeProp = System.getProperty(LILY_MODE_PROP_NAME);
@@ -112,7 +126,7 @@ public class LilyServerProxy {
                 FileUtils.forceMkdir(defaultConfDir);
                 extractTemplateConf(defaultConfDir);
                 // Get custom conf dir 
-                String customConfDir = System.getProperty("lily.conf.customdir");
+                String customConfDir = System.getProperty(LILY_CONF_CUSTOMDIR);
                 
                 lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), customConfDir);
                 lilyServerTestUtility.start();

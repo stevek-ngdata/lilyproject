@@ -27,16 +27,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-import org.lilyproject.lilyservertestfw.KauriTestUtility;
-import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
-import org.restlet.Client;
-import org.restlet.Request;
-import org.restlet.Response;
-import org.restlet.data.MediaType;
-import org.restlet.data.Method;
-import org.restlet.data.Status;
+import org.restlet.*;
+import org.restlet.data.*;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 
@@ -49,35 +44,27 @@ import java.util.List;
 import java.util.UUID;
 
 public class RestTest {
-    private static HBaseProxy HBASE_PROXY;
-    private final static KauriTestUtility KAURI_TEST_UTIL = new KauriTestUtility("../server/");
     private static String BASE_URI;
 
     private static Client CLIENT;
+    private static LilyProxy lilyProxy;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        HBASE_PROXY = new HBaseProxy();
-        HBASE_PROXY.start();
+        lilyProxy = new LilyProxy();
+        lilyProxy.start();
 
-        KAURI_TEST_UTIL.createDefaultConf(HBASE_PROXY);
-        KAURI_TEST_UTIL.start();
+        CLIENT = new Client(new Context(), Protocol.HTTP);
 
-        CLIENT = KAURI_TEST_UTIL.getClient();
-
-        BASE_URI = "http://localhost:" + KAURI_TEST_UTIL.getPort() + "/repository";
+        BASE_URI = "http://localhost:12060/repository";
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         try {
-            KAURI_TEST_UTIL.stop();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-
-        try {
-            HBASE_PROXY.stop();
+            if (lilyProxy != null) {
+                lilyProxy.stop();
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }

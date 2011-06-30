@@ -5,9 +5,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.lilyservertestfw.KauriTestUtility;
+import org.lilyproject.lilyservertestfw.LilyProxy;
+import org.lilyproject.lilyservertestfw.LilyProxy.Mode;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.hadooptestfw.HBaseProxy;
 
 import java.io.File;
 
@@ -21,8 +21,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class DecoratorTest {
 
-    private static HBaseProxy HBASE_PROXY;
-    private static KauriTestUtility KAURI_TEST_UTIL;
+    private static LilyProxy lilyProxy;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -37,33 +36,27 @@ public class DecoratorTest {
         String pluginDir = setupPluginsDirectory(tmpDir);
         System.setProperty("lily.plugin.dir", pluginDir);
 
-        File confDir = setupConfDirectory(tmpDir);
 
-        HBASE_PROXY = new HBaseProxy();
-        HBASE_PROXY.start();
-
-        KAURI_TEST_UTIL = new KauriTestUtility("../server/", confDir);
-
-        KAURI_TEST_UTIL.createDefaultConf(HBASE_PROXY);
+        File customConfDir = setupConfDirectory(tmpDir);
+        System.setProperty("lily.conf.dir", basedir+"/../server/conf");
+        System.setProperty("lily.conf.customdir", customConfDir.getAbsolutePath());
 
         try {
-            KAURI_TEST_UTIL.start();
+            lilyProxy = new LilyProxy(Mode.EMBED);
+            lilyProxy.start();
         } finally {
-            // Make sure it's won't be used by later-running tests
+            // Make sure it's properties won't be used by later-running tests
             System.getProperties().remove("lily.plugin.dir");
+            System.getProperties().remove("lily.conf.dir");
+            System.getProperties().remove("lily.conf.customdir");
         }
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         try {
-            KAURI_TEST_UTIL.stop();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-
-        try {
-            HBASE_PROXY.stop();
+           if (lilyProxy != null)
+               lilyProxy.stop();
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -117,7 +110,7 @@ public class DecoratorTest {
 
     @Test
     public void test() throws Exception {
-        LilyClient client = new LilyClient(HBASE_PROXY.getZkConnectString(), 10000);
+        LilyClient client = lilyProxy.getLilyServerProxy().getClient();
 
         // Obtain a repository
         Repository repository = client.getRepository();
