@@ -47,6 +47,34 @@
       <artifactId>maven-artifact</artifactId>
       <version>${version.maven}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-project</artifactId>
+      <version>${version.maven}</version>
+    </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <tasks>
+                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/"/>
+                <echo file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/kauri.properties"
+                      encoding="utf8">kauri.version=${version.kauri}</echo>
+              </tasks>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -23,6 +23,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 
@@ -41,14 +42,6 @@ public class KauriProjectRepository extends AbstractMojo {
      * @required
      */
     protected String confDirectory;
-
-    /**
-     * Kauri version.
-     *
-     * @parameter
-     * @required
-     */
-    protected String kauriVersion;
 
     /**
      * Location of the conf directory.
@@ -91,10 +84,11 @@ public class KauriProjectRepository extends AbstractMojo {
     protected ArtifactResolver resolver;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        KauriProjectClasspath cp = new KauriProjectClasspath(confDirectory, kauriVersion, getLog(), null,
-                artifactFactory, resolver, remoteRepositories, localRepository);
+        KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
+                artifactFactory, resolver, localRepository);
 
-        Set<Artifact> artifacts = cp.getAllArtifacts();
+        ModuleArtifacts moduleArtifacts = cp.getModuleArtifactsFromKauriConfig(new File(confDirectory), remoteRepositories);
+        Set<Artifact> artifacts = cp.getAllArtifacts(moduleArtifacts.artifacts, remoteRepositories);
         RepositoryWriter.write(artifacts, targetDirectory);
     }
 

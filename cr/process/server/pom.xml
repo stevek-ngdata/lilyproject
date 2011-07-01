@@ -143,9 +143,6 @@ LILY_JAVA_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
         <artifactId>lily-kauri-plugin</artifactId>
         <version>1.1-SNAPSHOT</version>
         <inherited>false</inherited>
-        <configuration>
-          <kauriVersion>${version.kauri}</kauriVersion>
-        </configuration>
         <executions>
           <execution>
             <phase>compile</phase>

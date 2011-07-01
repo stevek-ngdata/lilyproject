@@ -34,14 +34,6 @@ import java.util.Set;
  */
 public class KauriRuntimeRepository extends AbstractMojo {
     /**
-     * Kauri version.
-     *
-     * @parameter
-     * @required
-     */
-    protected String kauriVersion;
-
-    /**
      * Location of the conf directory.
      *
      * @parameter expression="${basedir}/target/kauri-repository"
@@ -82,10 +74,13 @@ public class KauriRuntimeRepository extends AbstractMojo {
     protected ArtifactResolver resolver;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        KauriProjectClasspath cp = new KauriProjectClasspath(null, kauriVersion, getLog(), null,
-                artifactFactory, resolver, remoteRepositories, localRepository);
+        KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
+                artifactFactory, resolver, localRepository);
 
-        Artifact runtimeLauncherArtifact = artifactFactory.createArtifact("org.kauriproject", "kauri-runtime-launcher", kauriVersion, "runtime", "jar");
+        String kauriVersion = KauriMavenUtil.getKauriVersion();
+
+        Artifact runtimeLauncherArtifact = artifactFactory.createArtifact("org.kauriproject", "kauri-runtime-launcher",
+                kauriVersion, "runtime", "jar");
 
         try {
             resolver.resolve(runtimeLauncherArtifact, remoteRepositories, localRepository);
@@ -93,7 +88,8 @@ public class KauriRuntimeRepository extends AbstractMojo {
             throw new MojoExecutionException("Error resolving artifact: " + runtimeLauncherArtifact, e);
         }
 
-        Set<Artifact> artifacts = cp.getClassPathArtifacts(runtimeLauncherArtifact, "org/kauriproject/launcher/classloader.xml");
+        Set<Artifact> artifacts = cp.getClassPathArtifacts(runtimeLauncherArtifact,
+                "org/kauriproject/launcher/classloader.xml", remoteRepositories);
         artifacts.add(runtimeLauncherArtifact);
 
         RepositoryWriter.write(artifacts, targetDirectory);

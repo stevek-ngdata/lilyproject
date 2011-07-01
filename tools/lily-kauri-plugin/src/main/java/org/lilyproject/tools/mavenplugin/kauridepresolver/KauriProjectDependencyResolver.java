@@ -22,11 +22,15 @@ import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProjectBuilder;
+import org.apache.maven.settings.Repository;
 import org.kauriproject.runtime.model.SourceLocations;
 
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -38,18 +42,16 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
     /**
      * Location of the conf directory.
      *
-     * @parameter expression="${basedir}/conf"
-     * @required
+     * @parameter
      */
     protected String confDirectory;
 
     /**
-     * Kauri version.
+     * Location of a wiring.xml file on the classpath.
      *
      * @parameter
-     * @required
      */
-    protected String kauriVersion;
+    protected String wiringXmlResource;
 
     /**
      * Location of the module-source-locations.properties file.
@@ -78,6 +80,13 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
      * @readonly
      */
     private String projectVersion;
+
+    /**
+     * @parameter expression="${project.dependencyArtifacts}"
+     * @required
+     * @readonly
+     */
+    private Set<Artifact> dependencyArtifacts;
 
     /**
      * Maven Artifact Factory component.
@@ -111,10 +120,23 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
      */
     protected ArtifactResolver resolver;
 
+    /**
+     * @component role="org.apache.maven.project.MavenProjectBuilder"
+     * @required
+     * @readonly
+     */
+    protected MavenProjectBuilder mavenProjectBuilder;
+
+
     protected XPathFactory xpathFactory = XPathFactory.newInstance();
     protected SourceLocations sourceLocations = new SourceLocations();
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if ((confDirectory == null && wiringXmlResource == null)
+                || (confDirectory != null && wiringXmlResource != null)) {
+            throw new MojoExecutionException("Either confDirectory or wiringXmlResource should be specified.");
+        }
+
         if (moduleSourceLocations != null) {
             File sourceLocationsFile = new File(moduleSourceLocations);
             FileInputStream sourceLocationsStream = null;
@@ -131,10 +153,30 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
             }
         }
 
-        KauriProjectClasspath cp = new KauriProjectClasspath(confDirectory, kauriVersion, getLog(), new MyArtifactFilter(),
-                artifactFactory, resolver, remoteRepositories, localRepository);
+        KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), new MyArtifactFilter(),
+                artifactFactory, resolver, localRepository);
 
-        cp.getAllArtifacts();
+        ModuleArtifacts moduleArts;
+        if (confDirectory != null) {
+            moduleArts = cp.getModuleArtifactsFromKauriConfig(new File(confDirectory), remoteRepositories);
+        } else {
+            moduleArts = cp.getModuleArtifactsFromKauriConfig(dependencyArtifacts, wiringXmlResource,
+                    mavenProjectBuilder, remoteRepositories);
+        }
+
+        List allRemoteRepos = new ArrayList();
+        allRemoteRepos.addAll(remoteRepositories);
+
+        // In case the wiring.xml was read from an artifact, use that artifacts remote repositories to resolve
+        // the modules listed in the wiring. TODO: This should in fact be applied further: the artifacts listed in the
+        // modules classloader's should be retrieved from that module's artifact remoterepositories.
+
+        // TODO we should filter out repos pointing to the same URI
+        if (moduleArts.remoteRepositories != null) {
+            allRemoteRepos.addAll(moduleArts.remoteRepositories);
+        }
+
+        cp.getAllArtifacts(moduleArts.artifacts, allRemoteRepos);
     }
 
     public class MyArtifactFilter implements KauriProjectClasspath.ArtifactFilter {
