@@ -62,7 +62,7 @@ this is also easier for debugging.
 
 To easily launch a mini HBase without having to install it, execute:
 
-cd testfw
+cd global/lily-server-test-fw
 ./target/launch-test-lily --hadoop
 
 This will print some non-log informational messages once everything is up.
