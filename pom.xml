@@ -649,6 +649,7 @@
             <argLine>-Xmx256m ${argLine}</argLine>
             <systemPropertyVariables>
               <lily.hbaseproxy.mode>${lily.hbaseproxy.mode}</lily.hbaseproxy.mode>
+              <lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>
               <lily.test.log>${lily.test.log}</lily.test.log>
             </systemPropertyVariables>
           </configuration>
@@ -692,6 +693,7 @@
       <id>connect</id>
       <properties>
         <lily.hbaseproxy.mode>connect</lily.hbaseproxy.mode>
+        <lily.lilyproxy.mode>hadoop-connect</lily.lilyproxy.mode>
       </properties>
     </profile>
     <profile>

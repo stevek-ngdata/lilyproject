@@ -6,7 +6,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.lilyservertestfw.LilyProxy.Mode;
 import org.lilyproject.repository.api.*;
 
 import java.io.File;
@@ -38,11 +37,11 @@ public class DecoratorTest {
 
 
         File customConfDir = setupConfDirectory(tmpDir);
-        System.setProperty("lily.conf.dir", basedir+"/../server/conf");
+        System.setProperty("lily.conf.dir", basedir + "/../server/conf");
         System.setProperty("lily.conf.customdir", customConfDir.getAbsolutePath());
 
         try {
-            lilyProxy = new LilyProxy(Mode.EMBED);
+            lilyProxy = new LilyProxy();
             lilyProxy.start();
         } finally {
             // Make sure it's properties won't be used by later-running tests

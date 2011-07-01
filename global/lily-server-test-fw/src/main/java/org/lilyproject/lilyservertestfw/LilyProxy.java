@@ -34,7 +34,7 @@ public class LilyProxy {
     private Mode mode;
     private File testHome;
 
-    public enum Mode { EMBED, CONNECT }
+    public enum Mode { EMBED, CONNECT, HADOOP_CONNECT }
     public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
 
     public LilyProxy() throws IOException {
@@ -48,6 +48,8 @@ public class LilyProxy {
                 this.mode = Mode.EMBED;
             } else if (modeProp.equals("connect")) {
                 this.mode = Mode.CONNECT;
+            } else if (modeProp.equals("hadoop-connect")) {
+                this.mode = Mode.HADOOP_CONNECT;
             } else {
                 throw new RuntimeException("Unexpected value for " + MODE_PROP_NAME + ": " + modeProp);
             }
@@ -55,14 +57,43 @@ public class LilyProxy {
             this.mode = mode;
         }
 
-        // We imply our mode on all of the specific Proxy's. This is because certain behavior (the state reset)
-        // requires that they all be in the same mode.
-        hbaseProxy = new HBaseProxy(this.mode == Mode.EMBED ? HBaseProxy.Mode.EMBED : HBaseProxy.Mode.CONNECT);
-        hbaseProxy.setCleanStateOnConnect(false);
+        HBaseProxy.Mode hbaseMode;
+        SolrProxy.Mode solrMode;
+        LilyServerProxy.Mode lilyServerMode;
+
+        // LilyProxy imposes its mode on all of the specific Proxy's. This is because the special resetLilyState
+        // operation in case of connect requires they are all in the same mode.
+        // The special HADOOP_CONNECT mode is mainly intended for Lily's own tests: many tests suppose only
+        // hadoop is running externally because they launch specific parts of the Lily implementation themselves,
+        // combined with the fact that the mode should be the same for all tests.
+        switch (this.mode) {
+            case EMBED:
+                hbaseMode = HBaseProxy.Mode.EMBED;
+                solrMode = SolrProxy.Mode.EMBED;
+                lilyServerMode = LilyServerProxy.Mode.EMBED;
+                break;
+            case CONNECT:
+                hbaseMode = HBaseProxy.Mode.CONNECT;
+                solrMode = SolrProxy.Mode.CONNECT;
+                lilyServerMode = LilyServerProxy.Mode.CONNECT;
+                break;
+            case HADOOP_CONNECT:
+                hbaseMode = HBaseProxy.Mode.CONNECT;
+                solrMode = SolrProxy.Mode.EMBED;
+                lilyServerMode = LilyServerProxy.Mode.EMBED;
+                break;
+            default:
+                throw new RuntimeException("Unexpected mode: " + this.mode);
+        }
+
+        hbaseProxy = new HBaseProxy(hbaseMode);
+        if (this.mode == Mode.CONNECT) {
+            // we'll do the reset through the special JMX call
+            hbaseProxy.setCleanStateOnConnect(false);
+        }
         hbaseProxy.setEnableMapReduce(true);
-        solrProxy = new SolrProxy(this.mode == Mode.EMBED ? SolrProxy.Mode.EMBED : SolrProxy.Mode.CONNECT);
-        lilyServerProxy = new LilyServerProxy(this.mode == Mode.EMBED ?
-                LilyServerProxy.Mode.EMBED : LilyServerProxy.Mode.CONNECT);
+        solrProxy = new SolrProxy(solrMode);
+        lilyServerProxy = new LilyServerProxy(lilyServerMode);
     }
 
     public void start() throws Exception {
@@ -89,9 +120,10 @@ public class LilyProxy {
             System.out.println("State reset done.");
         }
 
-        if (mode == Mode.EMBED) {
+        if (mode == Mode.EMBED || mode == Mode.HADOOP_CONNECT) {
             testHome = TestHomeUtil.createTestHome("lily-proxy-");
-            hbaseProxy.setTestHome(new File(testHome, "hadoop"));
+            if (mode == Mode.EMBED)
+                hbaseProxy.setTestHome(new File(testHome, "hadoop"));
             solrProxy.setTestHome(new File(testHome, "solr"));
             lilyServerProxy.setTestHome(new File(testHome, "lilyserver"));
         }
