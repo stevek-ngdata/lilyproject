@@ -59,6 +59,7 @@ public class LilyProxy {
         // requires that they all be in the same mode.
         hbaseProxy = new HBaseProxy(this.mode == Mode.EMBED ? HBaseProxy.Mode.EMBED : HBaseProxy.Mode.CONNECT);
         hbaseProxy.setCleanStateOnConnect(false);
+        hbaseProxy.setEnableMapReduce(true);
         solrProxy = new SolrProxy(this.mode == Mode.EMBED ? SolrProxy.Mode.EMBED : SolrProxy.Mode.CONNECT);
         lilyServerProxy = new LilyServerProxy(this.mode == Mode.EMBED ?
                 LilyServerProxy.Mode.EMBED : LilyServerProxy.Mode.CONNECT);

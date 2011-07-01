@@ -23,8 +23,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -51,6 +50,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class LilyServerProxy {
     public static final String LILY_CONF_DIR = "lily.conf.dir";
     public static final String LILY_CONF_CUSTOMDIR = "lily.conf.customdir";
+    private static final String COUNTER_NUM_FAILED_RECORDS = "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -271,10 +271,10 @@ public class LilyServerProxy {
         index.setConfiguration(indexerConfiguration);
         indexerModel.addIndex(index);
         
-        String subscriptionId = null;
+        String subscriptionId;
         if (waitForIndexerModel) {
             // Wait for subscriptionId to be known by indexerModel
-            subscriptionId = waitIndexerModelKnowsSubscriptionId(indexName, tryUntil, timeout, indexerModel);
+            subscriptionId = waitOnIndexSubscriptionId(indexName, tryUntil, timeout);
             if (subscriptionId == null)
                 return false;
         } else {
@@ -283,18 +283,19 @@ public class LilyServerProxy {
         
         if (waitForMQRowlog) {
             // Wait for RowLog to know the mq subscriptionId
-            return waitMQRowlogKnowsSubscriptionId(subscriptionId, tryUntil, timeout);
+            return waitOnMQSubscription(subscriptionId, true, timeout);
         } else {
             return true;
         }
     }
 
-    
-    public String waitIndexerModelKnowsSubscriptionId(String indexName, long timeout, WriteableIndexerModel indexerModel) throws Exception {
-        return waitIndexerModelKnowsSubscriptionId(indexName, System.currentTimeMillis()+timeout, timeout, indexerModel);
+
+    public String waitOnIndexSubscriptionId(String indexName, long timeout) throws Exception {
+        return waitOnIndexSubscriptionId(indexName, System.currentTimeMillis() + timeout, timeout);
     }
-    
-    private String waitIndexerModelKnowsSubscriptionId(String indexName, long tryUntil, long timeout, WriteableIndexerModel indexerModel) throws Exception {
+
+    private String waitOnIndexSubscriptionId(String indexName, long tryUntil, long timeout) throws Exception {
+        WriteableIndexerModel indexerModel = getIndexerModel();
         String subscriptionId = null;
 
         // Wait for index to be known by indexerModel 
@@ -318,60 +319,96 @@ public class LilyServerProxy {
         return subscriptionId;
     }
 
-    public boolean waitMQRowlogKnowsSubscriptionId(String subscriptionId, String indexName, long timeout) throws Exception {
-        return waitMQRowlogKnowsSubscriptionId(subscriptionId, System.currentTimeMillis()+timeout, timeout);
+    /**
+     * Waits for a MQ subscription to be actually picked up by the row log. After waiting for this, one can be
+     * sure that for newly added records the subscription will receive events.
+     *
+     * @param subscriptionId id of the subscription
+     * @param waitUntilAvailable if true, waits until the subscription exists, if false, wait until the subscription
+     *                           does not exist.
+     * @param timeOut maximim time to wait
+     * @return false if the intended situation was not reached within the timeout.
+     */
+    public boolean waitOnMQSubscription(String subscriptionId, boolean waitUntilAvailable, long timeOut) throws Exception {
+        return waitOnMQSubscriptionInt(subscriptionId, waitUntilAvailable, System.currentTimeMillis() + timeOut);
     }
-    
-    private boolean waitMQRowlogKnowsSubscriptionId(String subscriptionId, long tryUntil, long timeout) throws Exception {
-        ObjectName objectName = new ObjectName("RowLog:name=mq");
-        List<String> subscriptionIds = new ArrayList<String>();
-        switch (mode) {
-        case EMBED:
-            MBeanServer platformMBeanServer = java.lang.management.ManagementFactory.getPlatformMBeanServer();
-            
-            subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
-            while (!subscriptionIds.contains(subscriptionId) && System.currentTimeMillis() < tryUntil) {
-                Thread.sleep(50);
-                subscriptionIds = (List<String>)platformMBeanServer.getAttribute(objectName, "SubscriptionIds");
-            }
-            if (!subscriptionIds.contains(subscriptionId)) {
-                log.info("SubscriptionId '" + subscriptionId + "' not known to mq rowlog within " + timeout + "ms");
-                return false;
-            }
-            break;
-        case CONNECT:
-            JMXConnector connector = null;
-            try {
-                String hostport = "localhost:10102";
-                JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
-                connector = JMXConnectorFactory.connect(url);
-                connector.connect();
-                try {
-                    subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
-                } catch (InstanceNotFoundException e) {
-                    // Ignore, we keep trying
-                }
-                while (!subscriptionIds.contains(subscriptionId) && System.currentTimeMillis() < tryUntil) {
-                    Thread.sleep(50);
-                    try {
-                        subscriptionIds = (List<String>)connector.getMBeanServerConnection().getAttribute(objectName, "SubscriptionIds");
-                    } catch (InstanceNotFoundException e) {
-                        // Ignore, we keep trying
-                    } 
-                }
-                if (!subscriptionIds.contains(subscriptionId)) {
-                    log.info("SubscriptionId '" + subscriptionId + "' not known to mq rowlog within " + timeout + "ms");
-                    return false;
-                }
-            } finally {
-                if (connector != null)
-                    connector.close();
-            }
-            break;
 
-        default:
-            throw new RuntimeException("Unexpected mode: " + mode);
+    private boolean waitOnMQSubscriptionInt(String subscriptionId, boolean waitUntilAvailable, long tryUntil) throws Exception {
+        ObjectName objectName = new ObjectName("Lily:name=RowLog,id=mq");
+        MBeanServerConnection connection = null;
+        JMXConnector connector = null;
+
+        try {
+            switch (mode) {
+                case EMBED:
+                    connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
+                    break;
+                case CONNECT:
+                    String hostport = "localhost:10102";
+                    JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
+                    connector = JMXConnectorFactory.connect(url);
+                    connector.connect();
+                    connection = connector.getMBeanServerConnection();
+                    break;
+            }
+
+            while (System.currentTimeMillis() < tryUntil) {
+                List<String> subscriptionIds = (List<String>)connection.getAttribute(objectName, "SubscriptionIds");
+                if (waitUntilAvailable) {
+                    if (subscriptionIds.contains(subscriptionId)) {
+                        return true;
+                    }
+                } else {
+                    if (!subscriptionIds.contains(subscriptionId)) {
+                        return true;
+                    }
+                }
+                Thread.sleep(50);
+            }
+            return false;
+
+        } finally {
+            if (connector != null)
+                connector.close();
         }
-        return true;
+    }
+
+    /**
+     * Performs a batch index build of an index, waits for it to finish. If it does not finish within the
+     * specified timeout, an exception is thrown. If the index build was not successful, false is returned.
+     */
+    public boolean batchBuildIndex(String indexName, long timeOut) throws Exception {
+        WriteableIndexerModel model = getIndexerModel();
+
+        try {
+            String lock = model.lockIndex(indexName);
+            try {
+                IndexDefinition index = model.getMutableIndex(indexName);
+                index.setBatchBuildState(IndexBatchBuildState.BUILD_REQUESTED);
+                model.updateIndex(index, lock);
+            } finally {
+                model.unlockIndex(lock);
+            }
+        } catch (Exception e) {
+            throw new Exception("Error launching batch index build.", e);
+        }
+
+        try {
+            // Now wait until its finished
+            long tryUntil = System.currentTimeMillis() + timeOut;
+            while (System.currentTimeMillis() < tryUntil) {
+                Thread.sleep(100);
+                IndexDefinition definition = model.getIndex(indexName);
+                if (definition.getBatchBuildState() == IndexBatchBuildState.INACTIVE) {
+                    Long amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
+                    return (definition.getLastBatchBuildInfo().getSuccess()
+                        && (amountFailed == null || amountFailed == 0L));
+                }
+            }
+        } catch (Exception e) {
+            throw new Exception("Error checking if batch index job ended.", e);
+        }
+
+        throw new RuntimeException("Batch index build did not finish within time out of " + timeOut);
     }
 }

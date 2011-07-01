@@ -32,6 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.*;
 
@@ -82,27 +83,66 @@ public class LilyProxyTest {
         typeManager.createRecordType(recordType1);
         
         // Add index
-        Assert.assertTrue("Adding index took too long", lilyProxy.getLilyServerProxy().addIndexFromResource("testIndex",
+        String indexName = "testIndex";
+        Assert.assertTrue("Adding index took too long", lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
                 "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L));
        
         // Create record
         Record record = repository.newRecord();
         record.setRecordType(RECORDTYPE1);
-        record.setField(FIELD1, "aName");
+        record.setField(FIELD1, "name1");
         record = repository.create(record);
         record = repository.read(record.getId());
-        Assert.assertEquals("aName", (String)record.getField(FIELD1));
+        Assert.assertEquals("name1", (String)record.getField(FIELD1));
         
         // Wait for messages to be processed
         Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
         
         // Query Solr
-        List<RecordId> recordIds = querySolr("aName");
+        List<RecordId> recordIds = querySolr("name1");
         
         Assert.assertTrue(recordIds.contains(record.getId()));
 
         System.out.println("Original record:" +record.getId().toString());
         System.out.println("Queried record:" +recordIds.get(0).toString());
+
+        //
+        // Batch index build scenario
+        //
+
+        // Disable incremental index updating
+        WriteableIndexerModel indexerModel = lilyProxy.getLilyServerProxy().getIndexerModel();
+        String lock = indexerModel.lockIndex(indexName);
+        String subscriptionId;
+        try {
+            IndexDefinition index = indexerModel.getMutableIndex(indexName);
+            subscriptionId = index.getQueueSubscriptionId();
+            index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
+            indexerModel.updateIndex(index, lock);
+        } finally {
+            indexerModel.unlockIndex(lock);
+        }
+        lilyProxy.getLilyServerProxy().waitOnMQSubscription(subscriptionId, false, 60000L);
+
+        // Create record
+        record = repository.newRecord();
+        record.setRecordType(RECORDTYPE1);
+        record.setField(FIELD1, "name2");
+        record = repository.create(record);
+        
+        // Wait for messages to be processed -- there shouldn't be any
+        Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
+
+        // Record shouldn't be in index yet 
+        recordIds = querySolr("name2");        
+        Assert.assertFalse(recordIds.contains(record.getId()));
+        
+        // Trigger batch build
+        lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4);
+
+        // Now record should be in index 
+        recordIds = querySolr("name2");        
+        Assert.assertFalse(recordIds.contains(record.getId()));
     }
     
     private List<RecordId> querySolr(String name) throws SolrServerException {
@@ -111,7 +151,7 @@ public class LilyProxyTest {
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");
         QueryResponse response = solr.query(solrQuery);
-        // Convert query result into a list of links
+        // Convert query result into a list of record IDs
         SolrDocumentList solrDocumentList = response.getResults();
         List<RecordId> recordIds = new ArrayList<RecordId>();
         for (SolrDocument solrDocument : solrDocumentList) {

@@ -48,6 +48,7 @@ public class HBaseProxy {
     private File testHome;
     private CleanupUtil cleanupUtil;
     private boolean cleanStateOnConnect = true;
+    private boolean enableMapReduce = false;
 
     public enum Mode { EMBED, CONNECT }
     public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
@@ -95,6 +96,14 @@ public class HBaseProxy {
         this.cleanStateOnConnect = cleanStateOnConnect;
     }
 
+    public boolean getEnableMapReduce() {
+        return enableMapReduce;
+    }
+
+    public void setEnableMapReduce(boolean enableMapReduce) {
+        this.enableMapReduce = enableMapReduce;
+    }
+
     public void start() throws Exception {
         start(Collections.<String, byte[]>emptyMap());
     }
@@ -121,6 +130,9 @@ public class HBaseProxy {
 
                 testUtil = HBaseTestingUtilityFactory.create(conf, testHome);
                 testUtil.startMiniCluster(1);
+                if (enableMapReduce) {
+                    testUtil.startMiniMapReduceCluster(1);
+                }
 
                 // In the past, it happened that HMaster would not become initialized, blocking later on
                 // the proper shutdown of the mini cluster. Now added this as an early warning mechanism.
