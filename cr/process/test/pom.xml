@@ -39,31 +39,6 @@
       <artifactId>lily-server-testfw</artifactId>
     </dependency>
 
-    <!-- The following dependencies are to force the server modules to be built, which is
-         a prerequisite for launching the server process. -->
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rest-module</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-module</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-general-module</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-module</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
