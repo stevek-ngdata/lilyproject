@@ -114,7 +114,7 @@ public class LilyProxy {
         }
     }
 
-    public HBaseProxy getHbaseProxy() {
+    public HBaseProxy getHBaseProxy() {
         return hbaseProxy;
     }
 
