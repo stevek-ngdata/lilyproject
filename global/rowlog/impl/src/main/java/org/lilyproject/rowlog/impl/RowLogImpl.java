@@ -103,7 +103,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             mbeanName = new ObjectName("RowLog:name=" + this.id);
             ManagementFactory.getPlatformMBeanServer().registerMBean(this, mbeanName);
         } catch (InstanceAlreadyExistsException e) {
-            log.info("MBean '"+ mbeanName +"' for rowlog '" + this.id + "' already registered", e);
+            log.warn("MBean '"+ mbeanName +"' for rowlog '" + this.id + "' already registered", e);
         } catch (MBeanRegistrationException e) {
             log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
         } catch (NotCompliantMBeanException e) {
@@ -136,12 +136,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             initialSubscriptionsLoaded.set(false);
         }
         Closer.close(processorNotifier);
-    }
-    
-    @Override
-    protected void finalize() throws Throwable {
-        stop();
-        super.finalize();
     }
     
     public String getId() {
