@@ -148,6 +148,10 @@ public class LilyServerProxy {
         }
 
         Closer.close(lilyClient);
+
+        this.zooKeeper = null;
+        this.indexerModel = null;
+        this.lilyClient = null;
     }
     
     public synchronized LilyClient getClient() throws IOException, InterruptedException, KeeperException,
