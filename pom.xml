@@ -83,6 +83,7 @@
     <module>cr/hbase-ext</module>
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
+    <module>cr/lily-server-test-fw</module>
 
     <module>global/hbaseindex</module>
     <module>global/hbaseindex-perftest</module>
@@ -100,8 +101,6 @@
     <module>global/clientmetrics</module>
     <module>global/lily-bytes</module>
     <module>global/pluginregistry</module>
-    <module>global/lily-server-test-fw</module>
-
 
     <module>tools/lily-kauri-plugin</module>
     <module>tools/hbase-exclusions-plugin</module>
