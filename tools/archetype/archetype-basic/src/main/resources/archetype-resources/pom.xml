@@ -33,7 +33,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-server-testfw</artifactId>
+      <artifactId>lily-server-test-fw</artifactId>
       <version>${version.lily}</version>
       <scope>test</scope>
     </dependency>

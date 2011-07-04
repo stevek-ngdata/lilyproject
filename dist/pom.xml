@@ -64,7 +64,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-server-testfw</artifactId>
+      <artifactId>lily-server-test-fw</artifactId>
     </dependency>
 
     <dependency>

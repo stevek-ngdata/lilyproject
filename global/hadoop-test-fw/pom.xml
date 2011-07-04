@@ -22,7 +22,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-hadoop-testfw</artifactId>
+  <artifactId>lily-hadoop-test-fw</artifactId>
   <name>Lily: test framework</name>
 
   <parent>

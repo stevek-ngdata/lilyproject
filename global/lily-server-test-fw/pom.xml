@@ -20,7 +20,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-server-testfw</artifactId>
+  <artifactId>lily-server-test-fw</artifactId>
   <name>Lily-server: test framework</name>
 
   <parent>
@@ -213,7 +213,7 @@ chdir /d %CWD%
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hadoop-testfw</artifactId>
+      <artifactId>lily-hadoop-test-fw</artifactId>
       <scope>compile</scope>
     </dependency>
 
