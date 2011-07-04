@@ -9,6 +9,11 @@
 
     <!-- Tells maven plugins what file encoding to use -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Set the argLine property to empty value by default. This is to make sure the ${argLine} in
+         the configuration of the surefire plugin will get substituted.
+         Otherwise the tests fail with a "java.lang.NoClassDefFoundError: null".-->
+    <argLine/>
   </properties>
 
   <modelVersion>4.0.0</modelVersion>
@@ -70,7 +75,7 @@
         <version>2.5</version>
         <configuration>
           <forkMode>always</forkMode>
-          <argLine>-Xmx256m</argLine>
+          <argLine>-Xmx256m ${argLine}</argLine>
           <systemPropertyVariables>
             <lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>
             <lily.conf.customdir>${lily.conf.customdir}</lily.conf.customdir>
