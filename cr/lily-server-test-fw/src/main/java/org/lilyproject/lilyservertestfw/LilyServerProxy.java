@@ -379,7 +379,7 @@ public class LilyServerProxy {
 
     /**
      * Performs a batch index build of an index, waits for it to finish. If it does not finish within the
-     * specified timeout, an exception is thrown. If the index build was not successful, false is returned.
+     * specified timeout, false is returned. If the index build was not successful, an exception is thrown.
      */
     public boolean batchBuildIndex(String indexName, long timeOut) throws Exception {
         WriteableIndexerModel model = getIndexerModel();
@@ -405,14 +405,20 @@ public class LilyServerProxy {
                 IndexDefinition definition = model.getIndex(indexName);
                 if (definition.getBatchBuildState() == IndexBatchBuildState.INACTIVE) {
                     Long amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
-                    return (definition.getLastBatchBuildInfo().getSuccess()
-                        && (amountFailed == null || amountFailed == 0L));
+                    boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
+                    if (successFlag && (amountFailed == null || amountFailed == 0L)) {
+                        return true;
+                    } else {
+                        throw new Exception("Batch index build did not finish successfully: success flag = " +
+                            successFlag + ", amount failed records = " + amountFailed + ", job state = " +
+                            definition.getLastBatchBuildInfo().getJobState());
+                    }
                 }
             }
         } catch (Exception e) {
             throw new Exception("Error checking if batch index job ended.", e);
         }
 
-        throw new RuntimeException("Batch index build did not finish within time out of " + timeOut);
+        return false;
     }
 }

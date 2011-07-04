@@ -123,7 +123,8 @@ public class LilyProxyTest {
         Assert.assertFalse(recordIds.contains(record.getId()));
         
         // Trigger batch build
-        lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4);
+        Assert.assertTrue("Batch index build took too long",
+                lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4));
 
         // Now record should be in index 
         recordIds = querySolr("name2");        
