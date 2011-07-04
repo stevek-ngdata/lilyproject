@@ -20,6 +20,7 @@ import java.io.*;
 import org.apache.commons.io.FileUtils;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;
@@ -33,6 +34,8 @@ public class LilyProxy {
     private SolrProxy solrProxy;
     private Mode mode;
     private File testHome;
+    private boolean started = false;
+    private boolean hasBeenStarted = false;
 
     public enum Mode { EMBED, CONNECT, HADOOP_CONNECT }
     public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
@@ -101,6 +104,20 @@ public class LilyProxy {
     }
 
     public void start(byte[] solrSchemaData) throws Exception {
+        if (started) {
+            throw new IllegalStateException("LilyProxy is already started.");
+        } else {
+            started = true;
+        }
+
+        if (hasBeenStarted && this.mode == Mode.EMBED) {
+            // In embed mode, we can't support multiple start-stop sequences since
+            // HBase/Hadoop does not shut down all processes synchronously.
+            throw new IllegalStateException("LilyProxy can only be started once in a JVM when using embed mode.");
+        } else {
+            hasBeenStarted = true;
+        }
+
         System.out.println("LilyProxy mode: " + mode);
 
         if (mode == Mode.CONNECT) {
@@ -134,16 +151,15 @@ public class LilyProxy {
     }
     
     public void stop() throws Exception {
-        if (lilyServerProxy != null)
-            lilyServerProxy.stop();
-        if (solrProxy != null)
-            solrProxy.stop();
-        if (hbaseProxy != null)
-            hbaseProxy.stop();
+        Closer.close(lilyServerProxy);
+        Closer.close(solrProxy);
+        Closer.close(hbaseProxy);
 
         if (testHome != null) {
             FileUtils.deleteDirectory(testHome);
         }
+
+        started = false;
     }
 
     public HBaseProxy getHBaseProxy() {
