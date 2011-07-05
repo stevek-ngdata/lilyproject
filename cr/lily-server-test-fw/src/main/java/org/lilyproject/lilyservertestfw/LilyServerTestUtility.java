@@ -35,6 +35,7 @@ public class LilyServerTestUtility {
     private KauriRuntime runtime;
     private final String defaultConfDir;
     private final String customConfDir;
+    private ArtifactRepository artifactRepository;
 
     /**
      * LilyServerTestUtility is used to start Lily using the KauriRuntime.
@@ -52,7 +53,7 @@ public class LilyServerTestUtility {
         System.setProperty("lily.hbase.deleteConnections", "false");
 
         KauriRuntimeSettings settings = new KauriRuntimeSettings();
-        settings.setRepository(getRepository());
+        settings.setRepository(resolveRepository());
         settings.setConfManager(getConfManager());
 
         runtime = new KauriRuntime(settings);
@@ -73,8 +74,20 @@ public class LilyServerTestUtility {
         return new ConfManagerImpl(confDirs);
     }
 
-    private ArtifactRepository getRepository() throws IOException {
-        return new Maven2StyleArtifactRepository(MavenUtil.findLocalMavenRepository());
+    private ArtifactRepository resolveRepository() throws IOException {
+        if (this.artifactRepository != null) {
+            return artifactRepository;
+        } else {
+            return new Maven2StyleArtifactRepository(MavenUtil.findLocalMavenRepository());
+        }
+    }
+
+    public ArtifactRepository getArtifactRepository() {
+        return artifactRepository;
+    }
+
+    public void setArtifactRepository(ArtifactRepository artifactRepository) {
+        this.artifactRepository = artifactRepository;
     }
 
     public KauriRuntime getRuntime() {
