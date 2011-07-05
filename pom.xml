@@ -341,6 +341,21 @@
         <version>1.1-SNAPSHOT</version>
       </dependency>
       <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-archetype-basic</artifactId>
+        <version>1.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-archetype-repository-decorator</artifactId>
+        <version>1.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-kauri-plugin</artifactId>
+        <version>1.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${version.zookeeper}</version>

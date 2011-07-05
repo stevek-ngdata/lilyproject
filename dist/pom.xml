@@ -71,6 +71,27 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-print-host</artifactId>
     </dependency>
+
+    <!--
+       The following dependencies are not strictly required to launch Lily, but they are useful
+       in case you don't have access to an external Lily repository (or if the particular
+       version is not deployed in the repository). One can then change the definition of the
+       Lily repository to point to file:///$LILY_HOME/lib.
+    -->
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-archetype-basic</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-archetype-repository-decorator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-kauri-plugin</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
