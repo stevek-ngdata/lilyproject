@@ -107,13 +107,24 @@
     <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
   </bean>
 
-  <bean id="undecoratedRepository" class="org.lilyproject.repository.impl.HBaseRepository">
-    <constructor-arg ref="typeManager"/>
-    <constructor-arg ref="idGenerator"/>
-    <constructor-arg ref="writeAheadLog"/>
-    <constructor-arg ref="hbaseTableFactory"/>
-    <constructor-arg ref="blobManager"/>
-    <constructor-arg ref="rowLocker"/>
+  <bean id="recordUpdateHookActivator" class="org.lilyproject.server.modules.repository.RecordUpdateHookActivator">
+    <constructor-arg ref="pluginRegistry"/>
+    <constructor-arg><kauri:conf path="repository"/></constructor-arg>
+  </bean>
+
+  <bean id="undecoratedRepository"
+        factory-bean="recordUpdateHookActivator"
+        factory-method="activeUpdateHooks">
+    <constructor-arg>
+      <bean class="org.lilyproject.repository.impl.HBaseRepository">
+        <constructor-arg ref="typeManager"/>
+        <constructor-arg ref="idGenerator"/>
+        <constructor-arg ref="writeAheadLog"/>
+        <constructor-arg ref="hbaseTableFactory"/>
+        <constructor-arg ref="blobManager"/>
+        <constructor-arg ref="rowLocker"/>
+      </bean>
+    </constructor-arg>
   </bean>
 
   <bean id="repositoryDecoratorActivator" class="org.lilyproject.server.modules.repository.RepositoryDecoratorActivator">

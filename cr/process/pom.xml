@@ -41,6 +41,7 @@
     <module>test</module>
     <module>rest-perftest</module>
     <module>test-decorator</module>
+    <module>test-updatehook</module>
   </modules>
 
   <repositories>

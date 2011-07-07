@@ -34,6 +34,7 @@ import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
 import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
+import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
@@ -61,6 +62,7 @@ public class HBaseRepository extends BaseRepository {
     private Map<Scope, byte[]> recordTypeVersionColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
     private RowLog wal;
     private RowLocker rowLocker;
+    private List<RecordUpdateHook> updateHooks = Collections.emptyList();
     
     private Log log = LogFactory.getLog(getClass());
     private RepositoryMetrics metrics;
@@ -86,6 +88,14 @@ public class HBaseRepository extends BaseRepository {
     }
 
     public void close() throws IOException {
+    }
+
+    /**
+     * Sets the record update hooks.
+     */
+    public void setRecordUpdateHooks(List<RecordUpdateHook> recordUpdateHooks) {
+        this.updateHooks = recordUpdateHooks == null ?
+                Collections.<RecordUpdateHook>emptyList() : recordUpdateHooks;
     }
 
     public IdGenerator getIdGenerator() {
@@ -305,11 +315,16 @@ public class HBaseRepository extends BaseRepository {
     private Record updateRecord(Record record, boolean useLatestRecordType, List<MutationCondition> conditions,
             RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
 
-        Record newRecord = record.clone();
-
         RecordId recordId = record.getId();
+
         try {
-            Record originalRecord = new UnmodifiableRecord(read(newRecord.getId(), null, null, null, fieldTypes));
+            Record originalRecord = new UnmodifiableRecord(read(record.getId(), null, null, null, fieldTypes));
+
+            for (RecordUpdateHook hook : updateHooks) {
+                hook.beforeUpdate(record, originalRecord, this, fieldTypes);
+            }
+
+            Record newRecord = record.clone();
 
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
@@ -338,6 +353,10 @@ public class HBaseRepository extends BaseRepository {
             } else {
                 newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
             }
+
+            newRecord.getFieldsToDelete().clear();
+            return newRecord;
+
         } catch (RowLogException e) {
             throw new RecordException("Exception occurred while putting updated record '" + recordId
                     + "' on HBase table", e);
@@ -353,9 +372,6 @@ public class HBaseRepository extends BaseRepository {
             throw new RecordException("Exception occurred while putting updated record '" + recordId
                     + "' on HBase table", e);
         }
-
-        newRecord.getFieldsToDelete().clear();
-        return newRecord;
     }
 
     // This method takes a put object containing the row's data to be updated

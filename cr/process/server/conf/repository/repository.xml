@@ -21,4 +21,13 @@
     -->
   </decorators>
 
+  <!-- The names of the update hooks that should be active, listed in the order in
+       which they are called. For the name, same remarks as for decorators.
+  -->
+  <updateHooks>
+    <!--
+    <updateHook>name</updateHook>
+    -->
+  </updateHooks>
+
 </repository>
