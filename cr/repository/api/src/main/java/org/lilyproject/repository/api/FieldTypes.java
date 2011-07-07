@@ -3,7 +3,7 @@ package org.lilyproject.repository.api;
 /**
  * The FieldTypes contains a snapshot of the field types in the Lily Schema. 
  * 
- * <p> To be used when a consistent shapshot is needed while performing CRUD operations.
+ * <p> To be used when a consistent snapshot is needed while performing CRUD operations.
  */
 public interface FieldTypes {
     /**
@@ -12,7 +12,7 @@ public interface FieldTypes {
      * @throws FieldTypeNotFoundException when no fieldType with the given ID exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException, TypeException, InterruptedException;
+    FieldType getFieldTypeById(SchemaId id) throws TypeException, InterruptedException;
     
     /**
      * Gets a FieldType from the FieldTypes.
@@ -20,6 +20,6 @@ public interface FieldTypes {
      * @throws FieldTypeNotFoundException when no fieldType with the given name exists
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
-    FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException, TypeException, InterruptedException;
+    FieldType getFieldTypeByName(QName name) throws TypeException, InterruptedException;
 
 }
