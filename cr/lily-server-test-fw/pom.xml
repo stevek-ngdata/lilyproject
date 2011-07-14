@@ -71,143 +71,20 @@
         </executions>
       </plugin>
 
+      <!--
+          Generate a classloader XML configuration for use by the
+          lily-launcher project.
+        -->
       <plugin>
-        <groupId>org.lilyproject</groupId>
-        <artifactId>lily-genscript-plugin</artifactId>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-genclassloader-plugin</artifactId>
         <configuration>
-          <scripts>
-            <script>
-              <basename>launch-test-lily</basename>
-              <mainClass>org.lilyproject.lilyservertestfw.launcher.LilyLauncher</mainClass>
-            </script>
-          </scripts>
-          <beforeJavaHook>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dev</mode>
-              <value>
-WEBAPPSDIR=${basedir}/target/hadoopwebapps
-mkdir -p $WEBAPPSDIR
-CWD=`pwd`
-cd $WEBAPPSDIR
-$JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar webapps
-$JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
-cd $CWD
-
-# Enable JMX access on the same port as used by HBase's region server
-# This is handy because some of our test tools can read out HBase metrics this way
-LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-LILY_JAVA_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
-              </value>
-            </parameter>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dist</mode>
-              <value>
-WEBAPPSDIR=$LILY_HOME/tmp/hadoopwebapps
-mkdir -p $WEBAPPSDIR
-CWD=`pwd`
-cd $WEBAPPSDIR
-$JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar webapps
-$JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
-cd $CWD
-
-# Enable JMX access on the same port as used by HBase's region server
-# This is handy because some of our test tools can read out HBase metrics this way
-LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-LILY_JAVA_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
-              </value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dev</mode>
-              <value>
-set WEBAPPSDIR=${basedir}\target\hadoopwebapps
-mkdir %WEBAPPSDIR%
-set CWD=%CD%
-cd %WEBAPPSDIR%
-"%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar webapps
-"%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
-chdir /d %CWD%
-
-rem Enable JMX access on the same port as used by HBase's region server
-rem This is handy because some of our test tools can read out HBase metrics this way
-set LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-set LILY_JAVA_OPTIONS="%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS%"
-              </value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dist</mode>
-              <value>
-set WEBAPPSDIR=%LILY_HOME%\tmp\hadoopwebapps
-mkdir %WEBAPPSDIR%
-set CWD=%CD%
-cd %WEBAPPSDIR%
-"%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar webapps
-"%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
-chdir /d %CWD%
-
-rem Enable JMX access on the same port as used by HBase's region server
-rem This is handy because some of our test tools can read out HBase metrics this way
-set LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-set LILY_JAVA_OPTIONS="%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS%"
-              </value>
-            </parameter>
-          </beforeJavaHook>
-          <classPathPrefix>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dev</mode>
-              <value>${basedir}/target/hadoopwebapps:${basedir}/../../cr/hbase-ext/target/lily-hbase-ext-${project.version}.jar:</value>
-            </parameter>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dist</mode>
-              <value>$LILY_HOME/tmp/hadoopwebapps:$LILY_HOME/lib/org/lilyproject/lily-hbase-ext/${project.version}/lily-hbase-ext-${project.version}.jar:</value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dev</mode>
-              <value>${basedir}/target/hadoopwebapps;${basedir}\..\..\cr\hbase-ext\target\lily-hbase-ext-${project.version}.jar;</value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dist</mode>
-              <value>%LILY_HOME%/tmp/hadoopwebapps;%LILY_HOME%\lib\org\lilyproject\lily-hbase-ext\${project.version}\lily-hbase-ext-${project.version}.jar;</value>
-            </parameter>
-          </classPathPrefix>
-          <defaultJvmArgs>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dist</mode>
-              <value>-Dlily.conf.dir=$LILY_HOME/conf -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
-            </parameter>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dev</mode>
-              <value>-Dlily.conf.dir=${basedir}/../../cr/process/server/conf -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dist</mode>
-              <value>-Dlily.conf.dir=%LILY_HOME%\conf -Dlily.plugin.dir=%LILY_HOME%\plugins -Dlily.testlauncher.repository=%M2_REPO% -Dsolr.war=%M2_REPO%/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dev</mode>
-              <value>-Dlily.plugin.dir=${basedir}\..\..\cr\process\server\conf -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
-            </parameter>
-          </defaultJvmArgs>
+          <templateFileName>there is none</templateFileName>
+          <targetDirectory>${basedir}/target/</targetDirectory>
+          <targetFileName>classloader-for-use-by-launcher.xml</targetFileName>
+          <includeSelf>true</includeSelf>
+          <includeTypes>jar</includeTypes>
         </configuration>
-        <executions>
-          <execution>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>genscript</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

@@ -156,6 +156,15 @@ public class LilyProxy {
         Closer.close(hbaseProxy);
 
         if (testHome != null) {
+            try {
+                FileUtils.deleteDirectory(testHome);
+            } catch (IOException e) {
+                // We're logging this instead of throwing the exception
+                // since deleting the folder often fails in Windows.
+                // Throwing the exception would also fail the testcase although
+                // it is only the cleanup of the temporary folder that failed.
+                System.out.println("Warning! LilyProxy.stop() failed to delete folder: " + testHome.getAbsolutePath() + ", " + e.getMessage());
+            }
             FileUtils.deleteDirectory(testHome);
         }
 

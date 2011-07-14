@@ -66,6 +66,11 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-server-test-fw</artifactId>
     </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-server-test-fw-loader</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.lilyproject</groupId>

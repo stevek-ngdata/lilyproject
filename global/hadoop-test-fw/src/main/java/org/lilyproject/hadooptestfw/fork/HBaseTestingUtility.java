@@ -928,7 +928,7 @@ public class HBaseTestingUtility {
    * @throws IOException When starting the cluster fails.
    */
   public void startMiniMapReduceCluster() throws IOException {
-    startMiniMapReduceCluster(2);
+//    startMiniMapReduceCluster(2);
   }
 
   /**

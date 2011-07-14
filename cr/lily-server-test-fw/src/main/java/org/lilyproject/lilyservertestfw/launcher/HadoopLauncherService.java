@@ -18,6 +18,7 @@ public class HadoopLauncherService implements LauncherService {
     private File testHome;
 
     private Log log = LogFactory.getLog(getClass());
+    private boolean windows;
 
     @Override
     public void addOptions(List<Option> options) {
@@ -61,17 +62,16 @@ public class HadoopLauncherService implements LauncherService {
         postStartupInfo.add("");
 
         postStartupInfo.add("-------------------------");
-        postStartupInfo.add("MapReduce is running");
-        postStartupInfo.add("");
-        postStartupInfo.add("JobTracker web ui: http://localhost:" +
-                hbaseTestUtility.getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
-        postStartupInfo.add("");
-        postStartupInfo.add("Configuration conf = new Configuration();");
-        postStartupInfo.add("conf.set(\"mapred.job.tracker\", \"localhost:" +
-                hbaseTestUtility.getMRCluster().getJobTrackerPort() + "\");");
-        postStartupInfo.add("Job job = new Job(conf);");
-        postStartupInfo.add("");
-
+            postStartupInfo.add("MapReduce is running");
+            postStartupInfo.add("");
+            postStartupInfo.add("JobTracker web ui: http://localhost:" +
+                    hbaseTestUtility.getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
+            postStartupInfo.add("");
+            postStartupInfo.add("Configuration conf = new Configuration();");
+            postStartupInfo.add("conf.set(\"mapred.job.tracker\", \"localhost:" +
+                    hbaseTestUtility.getMRCluster().getJobTrackerPort() + "\");");
+            postStartupInfo.add("Job job = new Job(conf);");
+            postStartupInfo.add("");
         return 0;
     }
 

@@ -87,7 +87,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         new LilyLauncher().start(args);
     }
 
-
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
@@ -186,6 +185,8 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private AtomicBoolean resetRunning = new AtomicBoolean();
 
     public void resetLilyState() {
+        Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+        
         if (!resetRunning.compareAndSet(false, true)) {
             throw new RuntimeException("There is already a Lily state reset running.");
         }

@@ -24,12 +24,16 @@ public class HBaseTestingUtilityFactory {
         // This property is picked up by our fork of MiniMRCluster (the default implementation was hardcoded
         // to use build/test/mapred/local)
         System.setProperty("mapred.local.dir", createSubDir(tmpDir, "mapred-local"));
+        
         conf.set("mapred.local.dir", createSubDir(tmpDir, "mapred-local"));
 
         // Properties used for MiniMRCluster
         conf.set("hadoop.log.dir", createSubDir(tmpDir, "hadoop-logs"));
         conf.set("hadoop.tmp.dir", createSubDir(tmpDir, "mapred-output"));
-
+        
+        conf.set("mapred.system.dir", "/tmp/hadoop/mapred/system");
+        conf.set("mapreduce.jobtracker.staging.root.dir", "/tmp/hadoop/mapred/staging");
+        
         // Force default port numbers
         conf.set("hbase.master.info.port", "60010");
         conf.set("hbase.regionserver.info.port", "60030");
