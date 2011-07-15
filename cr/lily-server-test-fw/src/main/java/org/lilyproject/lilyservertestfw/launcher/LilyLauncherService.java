@@ -56,6 +56,8 @@ public class LilyLauncherService implements LauncherService {
         postStartupInfo.add("Lily is running");
         postStartupInfo.add("");
         postStartupInfo.add("Using configuration from: " + defaultConfDir.getAbsolutePath());
+        postStartupInfo.add("You can connect a LilyClient to it using zookeeper connect string \"localhost:2181\"");
+        postStartupInfo.add("(Example: new LilyClient(\"localhost:2181\", 20000); )");
         postStartupInfo.add("");
 
         return 0;
