@@ -110,7 +110,7 @@ cd $CWD
 # Enable JMX access on the same port as used by HBase's region server
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-LILY_JAVA_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
               </value>
             </parameter>
             <parameter>

@@ -46,9 +46,10 @@ if "%LILY_CLI_CLASSPATH%"=="" goto noExtraClassPath
 set CLASSPATH=%CLASSPATH%;%LILY_CLI_CLASSPATH%
 :noExtraClassPath
 
+set LILY_OPTIONS=%LILY_JAVA_OPTIONS%
 $$$BEFORE_JAVA_HOOK$$$
 
-"%JAVA_HOME%/bin/java" -classpath "%CLASSPATH%" %LILY_JAVA_OPTIONS% $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ %*
+"%JAVA_HOME%/bin/java" -classpath "%CLASSPATH%" %LILY_OPTIONS% $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ %*
 goto end
 
 :end
