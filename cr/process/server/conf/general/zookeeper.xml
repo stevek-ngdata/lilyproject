@@ -16,4 +16,9 @@
   <!-- The ZooKeeper session timeout -->
   <sessionTimeout>20000</sessionTimeout>
 
+  <!-- How long to wait at startup for ZooKeeper. This is relevant when you
+       start services in a random order, and hence ZooKeeper may be started
+       later than Lily (possibly on another node whose initialization is slower).-->
+  <startupTimeout>600000</startupTimeout>
+
 </zooKeeper>

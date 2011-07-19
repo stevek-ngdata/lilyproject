@@ -63,8 +63,11 @@
       ref="indexerModel"
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
+  <!-- The depends-on zooKeeper is so that Lily's ZooKeeper connection establishment code
+       is the reference with regards to waiting until ZooKeeper is available. -->
   <bean id="hbaseConfiguration"
-      class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl">
+      class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl"
+      depends-on="zooKeeper">
     <constructor-arg><kauri:conf path="hbase"/></constructor-arg>
     <constructor-arg><kauri:conf path="mapreduce"/></constructor-arg>
     <constructor-arg value="${zookeeper:connectString}"/>
@@ -85,6 +88,7 @@
         class="org.lilyproject.util.zookeeper.StateWatchingZooKeeper">
     <constructor-arg value="${zookeeper:connectString}"/>
     <constructor-arg value="${zookeeper:sessionTimeout}"/>
+    <constructor-arg value="${zookeeper:startupTimeout}"/>
   </bean>
 
   <bean id="hbaseConf"

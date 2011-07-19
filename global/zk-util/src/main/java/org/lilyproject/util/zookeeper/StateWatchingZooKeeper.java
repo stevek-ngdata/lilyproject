@@ -67,6 +67,10 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
     private Runnable endProcessHook;
 
     public StateWatchingZooKeeper(String connectString, int sessionTimeout) throws IOException {
+        this(connectString, sessionTimeout, sessionTimeout);
+    }
+
+    public StateWatchingZooKeeper(String connectString, int sessionTimeout, int startupTimeOut) throws IOException {
         this.requestedSessionTimeout = sessionTimeout;
         this.sessionTimeout = sessionTimeout;
 
@@ -76,12 +80,19 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
 
         // Wait for connection to come up: if we fail to connect to ZK now, we do not want to continue
         // starting up the Lily node.
-        long waitUntil = System.currentTimeMillis() + sessionTimeout;
+        long waitUntil = System.currentTimeMillis() + startupTimeOut;
+        int count = 0;
         while (zk.getState() != CONNECTED && waitUntil > System.currentTimeMillis()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 break;
+            }
+            count++;
+            if (count == 30) {
+                // Output a message every 3s
+                log.info("Waiting for ZooKeeper connection to be established");
+                count = 0;
             }
         }
 
@@ -92,7 +103,7 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
             } catch (Throwable t) {
                 // ignore
             }
-            throw new IOException("Failed to connect with Zookeeper within timeout " + sessionTimeout +
+            throw new IOException("Failed to connect with Zookeeper within timeout " + startupTimeOut +
                     ", connection string: " + connectString);
         }
 
