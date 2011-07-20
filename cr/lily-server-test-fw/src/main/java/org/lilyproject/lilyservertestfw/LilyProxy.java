@@ -16,8 +16,11 @@
 package org.lilyproject.lilyservertestfw;
 
 import java.io.*;
+import java.util.Collection;
+import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.*;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.util.io.Closer;
@@ -29,6 +32,10 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 public class LilyProxy {
+    /**
+     * 
+     */
+    private static final String TEMP_DIR_PREFIX = "lily-proxy-";
     private HBaseProxy hbaseProxy;
     private LilyServerProxy lilyServerProxy;
     private SolrProxy solrProxy;
@@ -104,6 +111,7 @@ public class LilyProxy {
     }
 
     public void start(byte[] solrSchemaData) throws Exception {
+        cleanOldTmpDirs();
         if (started) {
             throw new IllegalStateException("LilyProxy is already started.");
         } else {
@@ -138,7 +146,7 @@ public class LilyProxy {
         }
 
         if (mode == Mode.EMBED || mode == Mode.HADOOP_CONNECT) {
-            testHome = TestHomeUtil.createTestHome("lily-proxy-");
+            testHome = TestHomeUtil.createTestHome(TEMP_DIR_PREFIX);
             if (mode == Mode.EMBED)
                 hbaseProxy.setTestHome(new File(testHome, "hadoop"));
             solrProxy.setTestHome(new File(testHome, "solr"));
@@ -165,10 +173,17 @@ public class LilyProxy {
                 // it is only the cleanup of the temporary folder that failed.
                 System.out.println("Warning! LilyProxy.stop() failed to delete folder: " + testHome.getAbsolutePath() + ", " + e.getMessage());
             }
-            FileUtils.deleteDirectory(testHome);
         }
 
         started = false;
+    }
+    
+    public void cleanOldTmpDirs() {
+        File tempDirectory = FileUtils.getTempDirectory();
+        File[] files = tempDirectory.listFiles((FilenameFilter)new PrefixFileFilter(TEMP_DIR_PREFIX));
+        for (File file : files) {
+            FileUtils.deleteQuietly(file);
+        }
     }
 
     public HBaseProxy getHBaseProxy() {
