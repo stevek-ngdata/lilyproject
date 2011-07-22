@@ -38,11 +38,24 @@ public class LauncherClasspathHelper {
 
     public static ClassLoader getClassLoader(String configResource, File repositoryLocation) {
         URL[] classPath = getClassPath(configResource, repositoryLocation);
+        
+        // Set the classpath also in the system property java.class.path
+        // When the MapReduce taskjvm.sh scripts are generated,
+        // this property is used to set the classpath in the script.
+        StringBuilder builder = new StringBuilder();
+        String pathSeparator = System.getProperty("path.separator");
+        builder.append(System.getProperty("java.class.path"));
+        builder.append(pathSeparator);
+        for (URL url : classPath) {
+            builder.append(url.getFile());
+            builder.append(pathSeparator);
+        }
+        System.setProperty("java.class.path", builder.toString());
+        
         return new URLClassLoader(classPath, LauncherClasspathHelper.class.getClassLoader());
     }
 
     public static URL[] getClassPath(String configResource, File repositoryLocation) {
-
         Document document;
         InputStream is = LauncherClasspathHelper.class.getClassLoader().getResourceAsStream(configResource);
         if (is == null) {
