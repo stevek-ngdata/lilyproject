@@ -196,7 +196,7 @@ public class HBaseRepository extends BaseRepository {
                         // This is to cover the failure scenario where a record was deleted, but a failure
                         // occurred before executing the clearData
                         // If this was already done, this is a no-op
-                        clearData(recordId);
+                        clearData(recordId, null);
                     }
                 }
                 
@@ -1306,11 +1306,11 @@ public class HBaseRepository extends BaseRepository {
             // Take Custom Lock
             rowLock = lockRow(recordId);
 
-            if (conditions != null) {
-                // Only in case there are conditions, we need to read the record.
-                FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-                Record originalRecord = read(recordId, null, null, null, fieldTypes);
+            // We need to read the original record in order to put the delete marker in the non-versioned fields.
+            FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
+            Record originalRecord = read(recordId, null, null, null, fieldTypes);
 
+            if (conditions != null) {
                 Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
                         null);
                 if (conditionsRecord != null) {
@@ -1324,6 +1324,19 @@ public class HBaseRepository extends BaseRepository {
                 Put put = new Put(rowId);
                 // Mark the record as deleted
                 put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
+                
+                // Put the delete marker in the non-versioned fields instead of deleting their columns in the clearData call
+                // This is needed to avoid non-versioned fields to be lost due to the hbase delete thombstone
+                // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
+                Map<QName, Object> fields = originalRecord.getFields();
+                for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
+                    FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldEntry.getKey());
+                    if (Scope.NON_VERSIONED == fieldType.getScope()) {
+                        put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, DELETE_MARKER);
+                    }
+                    
+                }
+                
                 RecordEvent recordEvent = new RecordEvent();
                 recordEvent.setType(Type.DELETE);
                 RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
@@ -1332,7 +1345,7 @@ public class HBaseRepository extends BaseRepository {
                 }
 
                 // Clear the old data and delete any referenced blobs
-                clearData(recordId);
+                clearData(recordId, originalRecord);
 
                 if (walMessage != null) {
                     try {
@@ -1366,7 +1379,7 @@ public class HBaseRepository extends BaseRepository {
 
     // Clear all data of the recordId until the latest record version (included)
     // And delete any referred blobs
-    private void clearData(RecordId recordId) throws IOException, RepositoryException, InterruptedException {
+    private void clearData(RecordId recordId, Record originalRecord) throws IOException, RepositoryException, InterruptedException {
         Get get = new Get(recordId.toBytes());
         get.addFamily(RecordCf.DATA.bytes);
         get.setFilter(new ColumnPrefixFilter(new byte[]{RecordColumn.DATA_PREFIX}));
@@ -1394,22 +1407,34 @@ public class HBaseRepository extends BaseRepository {
                             for (Entry<Long, byte[]> cell : cellsSet) {
                                 // Get blobs to delete
                                 if (valueType.getPrimitive() instanceof BlobValueType) {
-                                    byte[] value = cell.getValue();
-                                    if (!isDeleteMarker(value)) {
-                                        Object valueObject =
-                                                valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
-                                        try {
-                                            Set<BlobReference> referencedBlobs =
-                                                    getReferencedBlobs((FieldTypeImpl)fieldType, valueObject);
-                                            blobsToDelete.addAll(referencedBlobs);
-                                        } catch (BlobException e) {
-                                            log.warn("Failure occured while clearing blob data", e);
-                                            // We do a best effort here
+                                    Object blobValue = null;
+                                    if (fieldType.getScope() == Scope.NON_VERSIONED) {
+                                        // Read the blob value from the original record, 
+                                        // since the delete marker has already been put in the field by the delete call
+                                        if (originalRecord != null)
+                                            blobValue = originalRecord.getField(fieldType.getName());
+                                    } else {
+                                        byte[] value = cell.getValue();
+                                        if (!isDeleteMarker(value)) {
+                                            blobValue = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
                                         }
+                                    }
+                                    try {
+                                        if (blobValue != null)
+                                            blobsToDelete.addAll(getReferencedBlobs((FieldTypeImpl)fieldType, blobValue));
+                                    } catch (BlobException e) {
+                                        log.warn("Failure occured while clearing blob data", e);
+                                        // We do a best effort here
                                     }
                                 }
                                 // Get cells to delete
-                                delete.deleteColumn(RecordCf.DATA.bytes, columnQualifier, cell.getKey());
+                                // Only delete if in NON_VERSIONED scope
+                                // The NON_VERSIONED fields will get filled in with a delete marker
+                                // This is needed to avoid non-versioned fields to be lost due to the hbase delete thombstone
+                                // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
+                                if (fieldType.getScope() != Scope.NON_VERSIONED) { 
+                                    delete.deleteColumn(RecordCf.DATA.bytes, columnQualifier, cell.getKey());
+                                }
                                 dataToDelete = true;
                             }
                         } catch (FieldTypeNotFoundException e) {
@@ -1434,7 +1459,7 @@ public class HBaseRepository extends BaseRepository {
                 // a re-creation of the record would then loose its record type since the NON-VERSIONED 
                 // field is always stored at timestamp 1L
                 // Re-creating the record will always overwrite the (NON-VERSIONED) record type.
-                // So, there is no risk of old data ending up in the new record.
+                // So, there is no risk of old record type information ending up in the new record.
                 delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_ID.bytes);
                 delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_VERSION.bytes);
                 delete.deleteColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
