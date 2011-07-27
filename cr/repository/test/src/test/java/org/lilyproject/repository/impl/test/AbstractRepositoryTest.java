@@ -885,9 +885,9 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
-    public void testRecordReincarnationFromVersionedToNonVersioned() throws Exception {
-        QName vfield = new QName("reinc", "vfield");
-        QName nvfield = new QName("reinc", "nvfield");
+    public void testRecordRecreateFromVersionedToNonVersioned() throws Exception {
+        QName vfield = new QName("recreate", "vfield");
+        QName nvfield = new QName("recreate", "nvfield");
 
         FieldType vfieldtype = typeManager.newFieldType(typeManager.getValueType("STRING"), vfield, Scope.VERSIONED);
         vfieldtype = typeManager.createFieldType(vfieldtype);
@@ -897,7 +897,7 @@ public abstract class AbstractRepositoryTest {
 
         RecordType rt = typeManager.newRecordType(new QName("reinc", "rt"));
         rt.addFieldTypeEntry(vfieldtype.getId(), false);
-        rt.addFieldTypeEntry(vfieldtype.getId(), false);
+        rt.addFieldTypeEntry(nvfieldtype.getId(), false);
         rt = typeManager.createRecordType(rt);
 
         // Create a record with versions
@@ -923,6 +923,8 @@ public abstract class AbstractRepositoryTest {
         record = repository.createOrUpdate(record);
 
         assertEquals(null, record.getVersion());
+        
+        assertEquals(rt.getName(), record.getRecordTypeName());
 
         // Now add a version again, reusing last value from previously deleted record
         record.setField(vfield, "value 2");
@@ -930,6 +932,77 @@ public abstract class AbstractRepositoryTest {
 
         assertEquals(3L, record.getVersion().longValue());
     }
+    
+    @Test
+    public void testRecordRecreateOnlyVersionedFields() throws Exception {
+        QName versionedOnlyQN = new QName("test", "VersionedOnly");
+        RecordType versionedOnlyRT = typeManager.newRecordType(versionedOnlyQN);
+        versionedOnlyRT.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
+        versionedOnlyRT = typeManager.createRecordType(versionedOnlyRT);
+        
+        Record record = repository.newRecord();
+        record.setRecordType(versionedOnlyQN);
+        record.setField(fieldType2.getName(), 111);
+        record = repository.create(record);
+        RecordId id = record.getId();
+        repository.delete(id);
+        
+        record = repository.newRecord(id);
+        record.setRecordType(versionedOnlyQN);
+        record.setField(fieldType2.getName(), 222);
+        record = repository.create(record);
+        
+        assertEquals(versionedOnlyQN, record.getRecordTypeName());
+        
+        record = repository.read(id);
+        assertEquals(versionedOnlyQN, record.getRecordTypeName());
+        assertEquals(versionedOnlyQN, record.getRecordTypeName(Scope.VERSIONED));
+    }
+
+    
+    @Test
+    public void testRecordRecreateNonVersionedOnly() throws Exception {
+        QName nvfield = new QName("recreate", "OnlyNonVersioned");
+ 
+        FieldType nvfieldtype = typeManager.newFieldType(typeManager.getValueType("STRING"), nvfield, Scope.NON_VERSIONED);
+        nvfieldtype = typeManager.createFieldType(nvfieldtype);
+
+        QName rtName = new QName("recreate", "rtOnlyNonVersioned");
+        RecordType rt = typeManager.newRecordType(rtName);
+        rt.addFieldTypeEntry(nvfieldtype.getId(), false);
+        rt = typeManager.createRecordType(rt);
+
+        // Create a record with versions
+        RecordId recordId = repository.getIdGenerator().newRecordId();
+        Record record = repository.newRecord(recordId);
+        record.setRecordType(rt.getName());
+
+        record.setField(nvfield, "nv value 1");
+        record = repository.createOrUpdate(record);
+        record = repository.read(record.getId());
+
+        assertEquals("nv value 1", record.getField(nvfield));
+        assertEquals(rtName, record.getRecordTypeName());
+        
+        assertEquals(null, record.getVersion());
+        
+        // Delete the record
+        repository.delete(recordId);
+
+        // Re-create the record,
+        record = repository.newRecord(recordId);
+        record.setRecordType(rt.getName());
+        record.setField(nvfield, "nv value 2");
+        record = repository.createOrUpdate(record);
+
+        assertEquals(rtName, record.getRecordTypeName());
+        assertEquals(null, record.getVersion());
+        
+        record = repository.read(record.getId());
+        assertEquals("nv value 2", record.getField(nvfield));
+        assertEquals(rtName, record.getRecordTypeName());
+    }
+
 
     @Test
     public void testUpdateMutableField() throws Exception {
