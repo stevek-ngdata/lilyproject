@@ -1307,8 +1307,9 @@ public class HBaseRepository extends BaseRepository {
             rowLock = lockRow(recordId);
 
             // We need to read the original record in order to put the delete marker in the non-versioned fields.
-            FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-            Record originalRecord = read(recordId, null, null, null, fieldTypes);
+            // Throw RecordNotFoundException if there is no record to be deleted
+            FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();            
+            Record originalRecord = read(recordId, null, null, null, fieldTypes); 
 
             if (conditions != null) {
                 Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
@@ -1318,44 +1319,38 @@ public class HBaseRepository extends BaseRepository {
                 }
             }
 
-            // Check if the record exists in the first place, this will already be handled before in case there
-            // are conditions
-            if (conditions != null || recordExists(rowId)) {
-                Put put = new Put(rowId);
-                // Mark the record as deleted
-                put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
-                
-                // Put the delete marker in the non-versioned fields instead of deleting their columns in the clearData call
-                // This is needed to avoid non-versioned fields to be lost due to the hbase delete thombstone
-                // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
-                Map<QName, Object> fields = originalRecord.getFields();
-                for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
-                    FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldEntry.getKey());
-                    if (Scope.NON_VERSIONED == fieldType.getScope()) {
-                        put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, DELETE_MARKER);
-                    }
-                    
+            Put put = new Put(rowId);
+            // Mark the record as deleted
+            put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
+            
+            // Put the delete marker in the non-versioned fields instead of deleting their columns in the clearData call
+            // This is needed to avoid non-versioned fields to be lost due to the hbase delete thombstone
+            // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
+            Map<QName, Object> fields = originalRecord.getFields();
+            for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
+                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldEntry.getKey());
+                if (Scope.NON_VERSIONED == fieldType.getScope()) {
+                    put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, DELETE_MARKER);
                 }
                 
-                RecordEvent recordEvent = new RecordEvent();
-                recordEvent.setType(Type.DELETE);
-                RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
-                if (!rowLocker.put(put, rowLock)) {
-                    throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");
-                }
+            }
+            
+            RecordEvent recordEvent = new RecordEvent();
+            recordEvent.setType(Type.DELETE);
+            RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
+            if (!rowLocker.put(put, rowLock)) {
+                throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");
+            }
 
-                // Clear the old data and delete any referenced blobs
-                clearData(recordId, originalRecord);
+            // Clear the old data and delete any referenced blobs
+            clearData(recordId, originalRecord);
 
-                if (walMessage != null) {
-                    try {
-                        wal.processMessage(walMessage, rowLock);
-                    } catch (RowLogException e) {
-                        // Processing the message failed, it will be retried later.
-                    }
+            if (walMessage != null) {
+                try {
+                    wal.processMessage(walMessage, rowLock);
+                } catch (RowLogException e) {
+                    // Processing the message failed, it will be retried later.
                 }
-            } else {
-                throw new RecordNotFoundException(recordId);
             }
         } catch (RowLogException e) {
             throw new RecordException("Exception occurred while deleting record '" + recordId

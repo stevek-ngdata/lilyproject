@@ -901,7 +901,6 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
-    //TODO
     public void testRecordRecreateFromVersionedToNonVersioned() throws Exception {
         QName vfield = new QName("recreate", "vfield");
         QName nvfield = new QName("recreate", "nvfield");
