@@ -180,8 +180,7 @@ public class MiniMRCluster {
       conf.set("mapred.task.tracker.http.address", "0.0.0.0:0");
       conf.set("mapred.task.tracker.report.address", 
                 "127.0.0.1:" + taskTrackerPort);
-
-      File localDirBase =
+      File localDirBase = 
         new File(conf.get("mapred.local.dir")).getAbsoluteFile();
       localDirBase.mkdirs();
       StringBuffer localPath = new StringBuffer();
@@ -356,7 +355,7 @@ public class MiniMRCluster {
         } else {
           // Lily change: removed inaccessible call to tt.getName()
           LOG.info("Waiting for task tracker " + runner.tt +
-                   " to be idle.");
+                     " to be idle.");
         }
         try {
           Thread.sleep(1000);
@@ -603,7 +602,7 @@ public class MiniMRCluster {
       new TaskAttemptID(jtId, jobId.getId(), false, 0, 0);
     return taskTrackerList.get(index).getTaskTracker()
                                      .getMapCompletionEvents(jobId, 0, max, 
-                                                             dummy);
+                                                             dummy, null);
   }
   
   /**

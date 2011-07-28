@@ -104,6 +104,7 @@ public class HBaseTestingUtility {
    */
   private boolean passedZkCluster = false;
   private MiniDFSCluster dfsCluster = null;
+
   private MiniHBaseCluster hbaseCluster = null;
   private MiniMRCluster mrCluster = null;
   // If non-null, then already a cluster running.
@@ -126,6 +127,10 @@ public class HBaseTestingUtility {
 
   public HBaseTestingUtility(Configuration conf) {
     this.conf = conf;
+  }
+
+  public MiniHBaseCluster getHbaseCluster() {
+    return hbaseCluster;
   }
 
   /**
@@ -271,7 +276,7 @@ public class HBaseTestingUtility {
     if (this.zkCluster != null) {
       throw new IOException("Cluster already running at " + dir);
     }
-    this.zkCluster = new MiniZooKeeperCluster();
+    this.zkCluster = new MiniZooKeeperCluster(this.getConfiguration());
     // Lily change: set client port
     this.zkCluster.setClientPort(2181);
     int clientPort = this.zkCluster.startup(dir);
@@ -928,7 +933,7 @@ public class HBaseTestingUtility {
    * @throws IOException When starting the cluster fails.
    */
   public void startMiniMapReduceCluster() throws IOException {
-//    startMiniMapReduceCluster(2);
+    startMiniMapReduceCluster(2);
   }
 
   /**
@@ -944,7 +949,7 @@ public class HBaseTestingUtility {
     System.setProperty("hadoop.log.dir", c.get("hadoop.log.dir"));
     c.set("mapred.output.dir", c.get("hadoop.tmp.dir"));
     // Lily change: fix port number + set host name (+ fix # of servers to 1) + use custom jobconf so that
-      // hadoop dir properties get passed on.
+    // hadoop dir properties get passed on.
     JobConf jobConf = new JobConf(conf);
     mrCluster = new MiniMRCluster(9001, 0, 1,
       FileSystem.get(conf).getUri().toString(), 1, null, new String[] {"localhost"}, null, jobConf);
@@ -1314,9 +1319,9 @@ public class HBaseTestingUtility {
 
     return getFromStoreFile(store,get);
   }
-
-    // Lily change: add getter for MRCluster
-    public MiniMRCluster getMRCluster() {
-        return mrCluster;
-    }
+  
+  // Lily change: add getter for MRCluster
+  public MiniMRCluster getMRCluster() {
+      return mrCluster;
+  }
 }
