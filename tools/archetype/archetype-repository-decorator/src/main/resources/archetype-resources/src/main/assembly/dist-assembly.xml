@@ -8,8 +8,8 @@
 
   <files>
     <file>
-      <source>${basedir}/wiring.xml</source>
-      <outputDirectory>/</outputDirectory>
+      <source>${basedir}/src/main/decorator/plugins/load-before-repository/wiring.xml</source>
+      <outputDirectory>/plugins/load-before-repository</outputDirectory>
     </file>
   </files>
 

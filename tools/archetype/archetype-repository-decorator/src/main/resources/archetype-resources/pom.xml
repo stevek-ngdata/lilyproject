@@ -77,7 +77,7 @@
           <appendAssemblyId>false</appendAssemblyId>
           <tarLongFileMode>gnu</tarLongFileMode>
           <descriptors>
-            <descriptor>dist-assembly.xml</descriptor>
+            <descriptor>src/main/assembly/dist-assembly.xml</descriptor>
           </descriptors>
         </configuration>
       </plugin>
