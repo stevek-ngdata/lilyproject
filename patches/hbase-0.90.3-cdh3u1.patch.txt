@@ -1,0 +1,22 @@
+diff -r hbase-0.90.3-cdh3u1/pom.xml hbase-0.90.3-cdh3u1-lily/pom.xml
+31c31
+<   <version>0.90.3-cdh3u1</version>
+---
+>   <version>0.90.3-cdh3u1-lily</version>
+diff -r hbase-0.90.3-cdh3u1/src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java hbase-0.90.3-cdh3u1-lily/src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+1242a1243,1244
+>         // Lily change
+>         Thread.currentThread().interrupt();
+diff -r hbase-0.90.3-cdh3u1/src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java hbase-0.90.3-cdh3u1-lily/src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+760a761,766
+> 
+>           // Lily change: noticed that often HBase kept hanging on the above call.wait when the
+>           // thread was interrupted, even if there was no reason for the call to take a long
+>           // time (= hbase & zookeeper running)
+>           Thread.currentThread().interrupt();
+>           throw new RuntimeException("HBaseClient: interrupted while waiting for call to be done.");
+diff -r hbase-0.90.3-cdh3u1/src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java hbase-0.90.3-cdh3u1-lily/src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+372a373,375
+>         // Lily change
+>         Thread.currentThread().interrupt();
+>         throw new RuntimeException("Thread interrupted.");
