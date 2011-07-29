@@ -1512,4 +1512,48 @@ public abstract class AbstractRepositoryTest {
         readRecords = repository.read(Arrays.asList(new RecordId[]{}));
         assertTrue(readRecords.isEmpty());
     }
+    
+    @Test
+    public void testRecordWithLinkFields() throws Exception {
+        FieldType linkFieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LINK", false, false), new QName("testRecordWithLinkFields", "linkFieldType"), Scope.NON_VERSIONED));
+
+        RecordType recordTypeWithLink = typeManager.newRecordType(new QName("test", "recordTypeWithLink"));
+        recordTypeWithLink.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
+        recordTypeWithLink = typeManager.createRecordType(recordTypeWithLink);
+        
+        // Create records to link to
+        Record record = createDefaultRecord();
+        Record record2 = createDefaultRecord();
+        
+        // Create record with link to record
+        Record recordWithLinks = repository.newRecord();
+        recordWithLinks.setRecordType(recordTypeWithLink.getName());
+        Link link = Link.newBuilder().recordId(record.getId()).copyAll(false).create();
+        recordWithLinks.setField(linkFieldType.getName(), link);
+        recordWithLinks = repository.create(recordWithLinks);
+        
+        // Validate link is created
+        link = (Link)recordWithLinks.getField(linkFieldType.getName());
+        assertEquals(record.getId(), link.getMasterRecordId());
+        
+        // Read record again and validate link is there
+        recordWithLinks = repository.read(recordWithLinks.getId());
+        link = (Link)recordWithLinks.getField(linkFieldType.getName());
+        assertEquals(record.getId(), link.getMasterRecordId());
+        
+        // Update record with link to record2
+        recordWithLinks = repository.newRecord(recordWithLinks.getId());
+        link = Link.newBuilder().recordId(record2.getId()).copyAll(false).create();
+        recordWithLinks.setField(linkFieldType.getName(), link);
+        recordWithLinks = repository.update(recordWithLinks);
+
+        // Validate link is updated
+        link = (Link)recordWithLinks.getField(linkFieldType.getName());
+        assertEquals(record2.getId(), link.getMasterRecordId());
+
+        // Read record and validate link is still updated
+        recordWithLinks = repository.read(recordWithLinks.getId());
+        link = (Link)recordWithLinks.getField(linkFieldType.getName());
+        assertEquals(record2.getId(), link.getMasterRecordId());
+    }
 }
