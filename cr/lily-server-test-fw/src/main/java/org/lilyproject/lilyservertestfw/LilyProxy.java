@@ -15,21 +15,21 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.*;
-import java.util.Collection;
-import java.util.Iterator;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.*;
-import org.lilyproject.solrtestfw.SolrProxy;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.test.TestHomeUtil;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.PrefixFileFilter;
+import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.solrtestfw.SolrProxy;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.test.TestHomeUtil;
 
 public class LilyProxy {
     /**
@@ -43,15 +43,30 @@ public class LilyProxy {
     private File testHome;
     private boolean started = false;
     private boolean hasBeenStarted = false;
+    private boolean clearData = true;
 
     public enum Mode { EMBED, CONNECT, HADOOP_CONNECT }
     public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
+    public static String TESTHOME_PROP_NAME = "lily.lilyproxy.dir";
+    public static String CLEARDATA_PROP_NAME = "lily.lilyproxy.clear";
 
     public LilyProxy() throws IOException {
         this(null);
     }
 
     public LilyProxy(Mode mode) throws IOException {
+        this(mode, null, null);
+    }
+
+    /**
+     * Creates a new LilyProxu
+     * @param mode either EMBED, CONNECT or HADOOP_CONNECT
+     * @param testHome the directory in which to store data and logfiles. Can only be used in EMBED mode.
+     * @param clearData if true, clear the data when stopping the LilyProxy. 
+     *        Should be used together with the testHome parameter and can only be used in EMBED mode.
+     * @throws IOException
+     */
+    public LilyProxy(Mode mode, File testHome, Boolean clearData) throws IOException {
         if (mode == null) {
             String modeProp = System.getProperty(MODE_PROP_NAME);
             if (modeProp == null || modeProp.equals("") || modeProp.equals("embed")) {
@@ -65,6 +80,20 @@ public class LilyProxy {
             }
         } else {
             this.mode = mode;
+        }
+
+        if (testHome != null)
+            setTestHome(testHome);
+        else {
+            String testHomeProp = System.getProperty(TESTHOME_PROP_NAME);
+            if (testHomeProp != null)
+                setTestHome(new File(testHomeProp));
+        }
+        
+        if (clearData != null) {
+            this.clearData = clearData;
+        } else {
+            this.clearData = Boolean.parseBoolean(System.getProperty(CLEARDATA_PROP_NAME, "true"));
         }
 
         HBaseProxy.Mode hbaseMode;
@@ -96,14 +125,14 @@ public class LilyProxy {
                 throw new RuntimeException("Unexpected mode: " + this.mode);
         }
 
-        hbaseProxy = new HBaseProxy(hbaseMode);
+        hbaseProxy = new HBaseProxy(hbaseMode, this.clearData);
         if (this.mode == Mode.CONNECT) {
             // we'll do the reset through the special JMX call
             hbaseProxy.setCleanStateOnConnect(false);
         }
         hbaseProxy.setEnableMapReduce(true);
-        solrProxy = new SolrProxy(solrMode);
-        lilyServerProxy = new LilyServerProxy(lilyServerMode);
+        solrProxy = new SolrProxy(solrMode, this.clearData);
+        lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData);
     }
 
     public void start() throws Exception {
@@ -146,7 +175,9 @@ public class LilyProxy {
         }
 
         if (mode == Mode.EMBED || mode == Mode.HADOOP_CONNECT) {
-            testHome = TestHomeUtil.createTestHome(TEMP_DIR_PREFIX);
+            if (testHome == null)
+                testHome = TestHomeUtil.createTestHome(TEMP_DIR_PREFIX);
+            
             if (mode == Mode.EMBED)
                 hbaseProxy.setTestHome(new File(testHome, "hadoop"));
             solrProxy.setTestHome(new File(testHome, "solr"));
@@ -163,7 +194,7 @@ public class LilyProxy {
         Closer.close(solrProxy);
         Closer.close(hbaseProxy);
 
-        if (testHome != null) {
+        if (clearData && testHome != null) {
             try {
                 FileUtils.deleteDirectory(testHome);
             } catch (IOException e) {
@@ -178,11 +209,21 @@ public class LilyProxy {
         started = false;
     }
     
+    public void setTestHome(File testHome) throws IOException {
+        if (mode != Mode.EMBED) {
+            throw new RuntimeException("testHome should only be set when mode is EMBED");
+        }
+        this.testHome = testHome;
+        System.setProperty("test.build.data", testHome.getAbsolutePath());
+    }
+    
     public void cleanOldTmpDirs() {
-        File tempDirectory = FileUtils.getTempDirectory();
-        File[] files = tempDirectory.listFiles((FilenameFilter)new PrefixFileFilter(TEMP_DIR_PREFIX));
-        for (File file : files) {
-            FileUtils.deleteQuietly(file);
+        if (clearData) {
+            File tempDirectory = FileUtils.getTempDirectory();
+            File[] files = tempDirectory.listFiles((FilenameFilter)new PrefixFileFilter(TEMP_DIR_PREFIX));
+            for (File file : files) {
+                FileUtils.deleteQuietly(file);
+            }
         }
     }
 

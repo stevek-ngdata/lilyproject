@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.FileUtils;
 import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.ChainedMaven2StyleArtifactRepository;

@@ -16,7 +16,6 @@
 package org.lilyproject.hadooptestfw;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.ftpserver.command.impl.SYST;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.*;
@@ -44,11 +43,13 @@ import java.util.*;
 public class HBaseProxy {
     private Mode mode;
     private Configuration conf;
-    private HBaseTestingUtility testUtil;
+    private HBaseTestingUtility hbaseTestUtil;
     private File testHome;
     private CleanupUtil cleanupUtil;
     private boolean cleanStateOnConnect = true;
     private boolean enableMapReduce = false;
+    private boolean clearData = true;
+    private boolean format;
 
     public enum Mode { EMBED, CONNECT }
     public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
@@ -58,6 +59,18 @@ public class HBaseProxy {
     }
 
     public HBaseProxy(Mode mode) throws IOException {
+        this(mode, true);
+    }
+    
+    /**
+     * Creates new HBaseProxy
+     * @param mode either EMBED or CONNECT
+     * @param clearData if true, clears the data directories upon shutdown
+     * @throws IOException
+     */
+    public HBaseProxy(Mode mode, boolean clearData) throws IOException {
+        this.clearData = clearData;
+        
         if (mode == null) {
             String hbaseModeProp = System.getProperty(HBASE_MODE_PROP_NAME);
             if (hbaseModeProp == null || hbaseModeProp.equals("") || hbaseModeProp.equals("embed")) {
@@ -84,8 +97,13 @@ public class HBaseProxy {
             testHome = TestHomeUtil.createTestHome("lily-hbaseproxy-");
         }
 
+        if (!testHome.exists()) 
+            format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
         FileUtils.forceMkdir(testHome);
-        FileUtils.cleanDirectory(testHome);
+        if (clearData) {
+            FileUtils.cleanDirectory(testHome);
+            format = true; // After cleaning the directory the NameNode and DataNodes will have to be formatted
+        }
     }
 
     public boolean getCleanStateOnConnect() {
@@ -128,16 +146,16 @@ public class HBaseProxy {
 
                 System.out.println("HBaseProxy embedded mode temp dir: " + testHome.getAbsolutePath());
 
-                testUtil = HBaseTestingUtilityFactory.create(conf, testHome);
-                testUtil.startMiniCluster(1);
+                hbaseTestUtil = HBaseTestingUtilityFactory.create(conf, testHome);
+                hbaseTestUtil.startMiniCluster(1, format);
                 if (enableMapReduce) {
-                    testUtil.startMiniMapReduceCluster(1);
+                    hbaseTestUtil.startMiniMapReduceCluster(1);
                 }
 
                 // In the past, it happened that HMaster would not become initialized, blocking later on
                 // the proper shutdown of the mini cluster. Now added this as an early warning mechanism.
                 long before = System.currentTimeMillis();
-                while (!testUtil.getMiniHBaseCluster().getMaster().isInitialized()) {
+                while (!hbaseTestUtil.getMiniHBaseCluster().getMaster().isInitialized()) {
                     if (System.currentTimeMillis() - before > 60000) {
                         throw new RuntimeException("HMaster.isInitialized() does not become true.");
                     }
@@ -145,7 +163,7 @@ public class HBaseProxy {
                     Thread.sleep(500);
                 }
 
-                conf = testUtil.getConfiguration();
+                conf = hbaseTestUtil.getConfiguration();
                 cleanupUtil = new CleanupUtil(conf, getZkConnectString());
                 break;
             case CONNECT:
@@ -212,8 +230,8 @@ public class HBaseProxy {
                 @Override
                 public void run() {
                     try {
-                        testUtil.shutdownMiniCluster();
-                        testUtil = null;
+                        hbaseTestUtil.shutdownMiniCluster(clearData);
+                        hbaseTestUtil = null;
                     } catch (IOException e) {
                         System.out.println("Error shutting down mini cluster.");
                         e.printStackTrace();
@@ -242,7 +260,7 @@ public class HBaseProxy {
 
         conf = null;
 
-        if (testHome != null) {
+        if (clearData && testHome != null) {
             TestHomeUtil.cleanupTestHome(testHome);
         }
     }
@@ -253,7 +271,7 @@ public class HBaseProxy {
 
     public FileSystem getBlobFS() throws IOException, URISyntaxException {
         if (mode == Mode.EMBED) {
-            return testUtil.getDFSCluster().getFileSystem();
+            return hbaseTestUtil.getDFSCluster().getFileSystem();
         } else {
             String dfsUri = System.getProperty("lily.test.dfs");
 

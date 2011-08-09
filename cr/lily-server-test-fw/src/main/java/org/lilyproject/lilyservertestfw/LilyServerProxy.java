@@ -66,11 +66,16 @@ public class LilyServerProxy {
     private LilyClient lilyClient;
     private WriteableIndexerModel indexerModel;
     private ZooKeeperItf zooKeeper;
+    private boolean clearData;
 
     public LilyServerProxy() throws IOException {
         this(null);
     }
 
+    public LilyServerProxy(Mode mode) throws IOException {
+        this(mode, true);
+    }
+    
     /**
      * LilyServerProxy starts a proxy for lily which either :
      *   - connects to an already running lily (using launch-test-lily) (CONNECT mode)
@@ -84,7 +89,9 @@ public class LilyServerProxy {
      *     "lily.conf.customdir". 
      * @param mode the mode (CONNECT or EMBED) in which to start the proxy.
      */
-    public LilyServerProxy(Mode mode) throws IOException {
+    public LilyServerProxy(Mode mode, boolean clearData) throws IOException {
+        this.clearData = clearData;
+        
         if (mode == null) {
             String lilyModeProp = System.getProperty(LILY_MODE_PROP_NAME);
             if (lilyModeProp == null || lilyModeProp.equals("") || lilyModeProp.equals("embed")) {
@@ -112,7 +119,8 @@ public class LilyServerProxy {
         }
 
         FileUtils.forceMkdir(testHome);
-        FileUtils.cleanDirectory(testHome);
+        if (clearData)
+            FileUtils.cleanDirectory(testHome);
     }
 
     public void start() throws Exception {
@@ -213,7 +221,7 @@ public class LilyServerProxy {
      * 
      * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout has passed).
      * Only when this is the case record creates or updates will result in messages to be created on the MQ rowlog.
-     * <p>Not that when the messages from the MQ rowlog are processed, the data has been put in solr but this data might not
+     * <p>Note that when the messages from the MQ rowlog are processed, the data has been put in solr but this data might not
      * be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
      * 
      * @param indexName name of the index

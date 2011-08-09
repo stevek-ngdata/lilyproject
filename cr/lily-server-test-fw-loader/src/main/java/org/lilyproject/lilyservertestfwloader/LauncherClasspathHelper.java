@@ -128,7 +128,6 @@ public class LauncherClasspathHelper {
         if (!artifactFile.exists()) {
             throw new RuntimeException("Classpath entry not found at " + artifactFile.getAbsolutePath());
         } else {
-            System.out.println("Loading classpath entry at "+ artifactFile.getAbsolutePath());
             try {
                 return artifactFile.toURL();
             } catch (MalformedURLException e) {

@@ -37,12 +37,19 @@ public class SolrTestingUtility {
     private File solrHomeDir;
     private File solrCoreDir;
     private File solrConfDir;
+    private boolean clearData;
 
     public SolrTestingUtility() throws IOException {
         this(null);
     }
 
     public SolrTestingUtility(File solrHomeDir) throws IOException {
+        this(solrHomeDir, true);
+    }
+    
+    public SolrTestingUtility(File solrHomeDir, boolean clearData) throws IOException {
+        this.clearData = clearData;
+        
         if (solrHomeDir == null) {
             this.solrHomeDir = TestHomeUtil.createTestHome("lily-solrtesthome-");
         } else {
@@ -141,7 +148,7 @@ public class SolrTestingUtility {
         if (server != null)
             server.stop();
 
-        if (solrHomeDir != null) {
+        if (clearData && solrHomeDir != null) {
             FileUtils.deleteDirectory(solrHomeDir);
         }
     }

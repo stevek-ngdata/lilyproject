@@ -51,11 +51,25 @@ public class SolrProxy {
 
     private File testHome;
 
+    private boolean clearData;
+
     public SolrProxy() throws IOException {
         this(null);
     }
 
     public SolrProxy(Mode mode) throws IOException {
+        this(mode, true);
+    }
+    
+    /**
+     * Creates a new SolrProxy
+     * @param mode either EMBEd or CONNECT
+     * @param clearData it true, clears the data directories upon shutdown
+     * @throws IOException
+     */
+    public SolrProxy(Mode mode, boolean clearData) throws IOException {
+        this.clearData = clearData;
+        
         if (mode == null) {
             String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
             if (solrModeProp == null || solrModeProp.equals("") || solrModeProp.equals("embed")) {
@@ -83,7 +97,8 @@ public class SolrProxy {
         }
 
         FileUtils.forceMkdir(testHome);
-        FileUtils.cleanDirectory(testHome);
+        if (clearData)
+            FileUtils.cleanDirectory(testHome);
     }
 
     public void start() throws Exception {
@@ -97,7 +112,7 @@ public class SolrProxy {
             case EMBED:
                 initTestHome();
                 System.out.println("SolrProxy embedded mode temp dir: " + testHome.getAbsolutePath());
-                solrTestingUtility = new SolrTestingUtility(testHome);
+                solrTestingUtility = new SolrTestingUtility(testHome, clearData);
                 if (solrSchemaData != null) {
                     solrTestingUtility.setSchemaData(solrSchemaData);
                 }

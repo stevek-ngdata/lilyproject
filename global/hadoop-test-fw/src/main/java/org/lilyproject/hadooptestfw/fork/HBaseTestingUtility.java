@@ -212,17 +212,24 @@ public class HBaseTestingUtility {
   public MiniDFSCluster startMiniDFSCluster(int servers) throws Exception {
     return startMiniDFSCluster(servers, null);
   }
-
+  
+  // Lily Change: added similar method with an extra format parameter
+  public MiniDFSCluster startMiniDFSCluster(int servers, final File dir) throws Exception {
+      return startMiniDFSCluster(servers, null, true);
+  }
+  
   /**
    * Start a minidfscluster.
    * Can only create one.
    * @param dir Where to home your dfs cluster.
    * @param servers How many DNs to start.
+   * // Lily change: added parameter
+   * @param format if true, format the dfs NameNode and DataNodes before starting up 
    * @throws Exception
    * @see {@link #shutdownMiniDFSCluster()}
    * @return The mini dfs cluster created.
    */
-  public MiniDFSCluster startMiniDFSCluster(int servers, final File dir)
+  public MiniDFSCluster startMiniDFSCluster(int servers, final File dir, boolean format)
   throws Exception {
     // This does the following to home the minidfscluster
     //     base_dir = new File(System.getProperty("test.build.data", "build/test/data"), "dfs/");
@@ -236,7 +243,8 @@ public class HBaseTestingUtility {
     System.setProperty(TEST_DIRECTORY_KEY, this.clusterTestBuildDir.toString());
     System.setProperty("test.cache.data", this.clusterTestBuildDir.toString());
     // Lily change: first argument changed from 0 to 8020
-    this.dfsCluster = new MiniDFSCluster(8020, this.conf, servers, true, true,
+    // Lily change: let the formating of NameNode and DataNodes depend on the format parameter
+    this.dfsCluster = new MiniDFSCluster(8020, this.conf, servers, format, true,
       true, null, null, null, null);
     // Set this just-started cluser as our filesystem.
     FileSystem fs = this.dfsCluster.getFileSystem();
@@ -323,7 +331,25 @@ public class HBaseTestingUtility {
    */
   public MiniHBaseCluster startMiniCluster(final int numSlaves)
   throws Exception {
-    return startMiniCluster(1, numSlaves);
+    // Lily Change: set format parameter by default on true
+    return startMiniCluster(1, numSlaves, true);
+  }
+  
+  // Lily Change: added extra method with format parameter
+  /**
+   * @param format, if true format dfs NameNode and DataNodes before starting up
+   * @see {@link #startMiniCluster(int)}
+   */
+  public MiniHBaseCluster startMiniCluster(final int numSlaves, final boolean format)
+  throws Exception {
+    return startMiniCluster(1, numSlaves, format);
+  }
+  
+  // Lily Change: added similar method with extra format parameter
+  public MiniHBaseCluster startMiniCluster(final int numMasters,
+          final int numSlaves)
+      throws Exception {
+      return startMiniCluster(numMasters, numSlaves, true);
   }
 
   /**
@@ -338,12 +364,14 @@ public class HBaseTestingUtility {
    * datanodes and regionservers.  If numSlaves is > 1, then make sure
    * hbase.regionserver.info.port is -1 (i.e. no ui per regionserver) otherwise
    * bind errors.
+   * // Lily change: added parameter
+   * @param format, if true format dfs NameNode and DataNodes before starting up 
    * @throws Exception
    * @see {@link #shutdownMiniCluster()}
    * @return Mini hbase cluster instance created.
    */
   public MiniHBaseCluster startMiniCluster(final int numMasters,
-      final int numSlaves)
+      final int numSlaves, boolean format)
   throws Exception {
     LOG.info("Starting up minicluster with " + numMasters + " master(s) and " +
         numSlaves + " regionserver(s) and datanode(s)");
@@ -360,7 +388,8 @@ public class HBaseTestingUtility {
     System.setProperty(TEST_DIRECTORY_KEY, this.clusterTestBuildDir.getPath());
     // Bring up mini dfs cluster. This spews a bunch of warnings about missing
     // scheme. Complaints are 'Scheme is undefined for build/test/data/dfs/name1'.
-    startMiniDFSCluster(numSlaves, this.clusterTestBuildDir);
+    // Lily Change: pass on format parameter
+    startMiniDFSCluster(numSlaves, this.clusterTestBuildDir, format);
     this.dfsCluster.waitClusterUp();
 
     // Start up a zk cluster.
@@ -425,13 +454,21 @@ public class HBaseTestingUtility {
   public MiniHBaseCluster getMiniHBaseCluster() {
     return this.hbaseCluster;
   }
+  
+  // Lily Change: Added similar method with clearData parameter
+  public void shutdownMiniCluster() throws IOException {
+      // Lily Change: put clearData parameter by default on true
+      shutdownMiniCluster(true);
+  }
 
   /**
    * Stops mini hbase, zk, and hdfs clusters.
+   * // Lily change: added clearData parameter
+   * @param clearData if true, delete the clusterTestBuildDir
    * @throws IOException
    * @see {@link #startMiniCluster(int)}
    */
-  public void shutdownMiniCluster() throws IOException {
+  public void shutdownMiniCluster(boolean clearData) throws IOException {
     LOG.info("Shutting down minicluster");
     shutdownMiniHBaseCluster();
     if (!this.passedZkCluster) shutdownMiniZKCluster();
@@ -440,13 +477,16 @@ public class HBaseTestingUtility {
       this.dfsCluster.shutdown();
     }
     // Clean up our directory.
-    if (this.clusterTestBuildDir != null && this.clusterTestBuildDir.exists()) {
-      // Need to use deleteDirectory because File.delete required dir is empty.
-      if (!FSUtils.deleteDirectory(FileSystem.getLocal(this.conf),
-          new Path(this.clusterTestBuildDir.toString()))) {
-        LOG.warn("Failed delete of " + this.clusterTestBuildDir.toString());
-      }
-      this.clusterTestBuildDir = null;
+    // Lily Change: if clearData is true, delete the clusterTestBuildDir
+    if (clearData) {
+        if (this.clusterTestBuildDir != null && this.clusterTestBuildDir.exists()) {
+          // Need to use deleteDirectory because File.delete required dir is empty.
+          if (!FSUtils.deleteDirectory(FileSystem.getLocal(this.conf),
+              new Path(this.clusterTestBuildDir.toString()))) {
+            LOG.warn("Failed delete of " + this.clusterTestBuildDir.toString());
+          }
+          this.clusterTestBuildDir = null;
+        }
     }
     LOG.info("Minicluster is down");
   }
