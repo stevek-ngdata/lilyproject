@@ -387,6 +387,8 @@ public class AvroConverter {
     }
 
     public QName convert(AvroQName name) {
+        if (name == null)
+            return null;
         return new QName(convert(name.namespace), convert(name.name));
     }
 
@@ -664,5 +666,17 @@ public class AvroConverter {
         if (schemaId.getBytes() != null) 
             avroSchemaId.idBytes = ByteBuffer.wrap(schemaId.getBytes());
         return avroSchemaId;
+    }
+    
+    public QName[] convert(List<AvroQName> avroNames) {
+        QName[] names = null;
+        if (avroNames != null) {
+            names = new QName[avroNames.size()];
+            int i = 0;
+            for (AvroQName avroQName : avroNames) {
+                names[i++] = convert(avroQName);
+            }
+        }
+        return names;
     }
 }

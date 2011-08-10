@@ -47,6 +47,7 @@ public abstract class AbstractRepositoryTest {
     private static RecordType recordType1B;
     private static RecordType recordType2;
     private static RecordType recordType3;
+    private static String namespace = "/test/repository";
 
     @Before
     public void setUp() throws Exception {
@@ -62,7 +63,6 @@ public abstract class AbstractRepositoryTest {
     }
 
     private static void setupFieldTypes() throws Exception {
-        String namespace = "/test/repository";
         fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field1"), Scope.NON_VERSIONED));
         fieldType1B = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field1B"), Scope.NON_VERSIONED));
         fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(namespace, "field2"), Scope.VERSIONED));
@@ -77,7 +77,7 @@ public abstract class AbstractRepositoryTest {
     }
     
     private static void setupRecordTypes() throws Exception {
-        recordType1 = typeManager.newRecordType(new QName("test", "RT1"));
+        recordType1 = typeManager.newRecordType(new QName(namespace, "RT1"));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
@@ -87,14 +87,14 @@ public abstract class AbstractRepositoryTest {
         recordType1B.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1B.getId(), false));
         recordType1B = typeManager.updateRecordType(recordType1B);
 
-        recordType2 = typeManager.newRecordType(new QName("test", "RT2"));
+        recordType2 = typeManager.newRecordType(new QName(namespace, "RT2"));
 
         recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType4.getId(), false));
         recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType5.getId(), false));
         recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
         recordType2 = typeManager.createRecordType(recordType2);
         
-        recordType3 = typeManager.newRecordType(new QName("test", "RT3"));
+        recordType3 = typeManager.newRecordType(new QName(namespace, "RT3"));
         recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
@@ -463,7 +463,7 @@ public abstract class AbstractRepositoryTest {
 
         repository.update(updateRecord);
         
-        List<Record> list = repository.readVersions(record.getId(), 1L, 2L, null);
+        List<Record> list = repository.readVersions(record.getId(), 1L, 2L, (QName[])null);
         assertEquals(2, list.size());
         assertTrue(list.contains(repository.read(record.getId(), 1L)));
         assertTrue(list.contains(repository.read(record.getId(), 2L)));
@@ -479,7 +479,7 @@ public abstract class AbstractRepositoryTest {
 
         repository.update(updateRecord);
         
-        List<Record> list = repository.readVersions(record.getId(), 0L, 5L, null);
+        List<Record> list = repository.readVersions(record.getId(), 0L, 5L, (QName[])null);
         assertEquals(2, list.size());
         assertTrue(list.contains(repository.read(record.getId(), 1L)));
         assertTrue(list.contains(repository.read(record.getId(), 2L)));
@@ -503,7 +503,7 @@ public abstract class AbstractRepositoryTest {
         updateRecord.setField(fieldType2.getName(), 791);
         repository.update(updateRecord);
 
-        List<Record> list = repository.readVersions(record.getId(), 2L, 3L, null);
+        List<Record> list = repository.readVersions(record.getId(), 2L, 3L);
         assertEquals(2, list.size());
         assertTrue(list.contains(repository.read(record.getId(), 2L)));
         assertTrue(list.contains(repository.read(record.getId(), 3L)));
@@ -528,16 +528,16 @@ public abstract class AbstractRepositoryTest {
         Record record2 = repository.read(record.getId(), 2L);
         Record record3 = repository.read(record.getId(), 3L);
 
-        List<Record> records = repository.readVersions(record.getId(), Arrays.asList(1L, 2L, 3L), null);
+        List<Record> records = repository.readVersions(record.getId(), Arrays.asList(1L, 2L, 3L), (QName[])null);
         assertEquals(3, records.size());
         assertTrue(records.contains(record1));
         assertTrue(records.contains(record2));
         assertTrue(records.contains(record3));
 
-        records = repository.readVersions(record.getId(), new ArrayList<Long>(), null);
+        records = repository.readVersions(record.getId(), new ArrayList<Long>(), (QName[])null);
         assertEquals(0, records.size());
 
-        records = repository.readVersions(record.getId(), Arrays.asList(1L, 5L), null);
+        records = repository.readVersions(record.getId(), Arrays.asList(1L, 5L), (QName[])null);
         assertEquals(1, records.size());
         assertTrue(records.contains(record1));
     }
@@ -951,7 +951,7 @@ public abstract class AbstractRepositoryTest {
     
     @Test
     public void testRecordRecreateOnlyVersionedFields() throws Exception {
-        QName versionedOnlyQN = new QName("test", "VersionedOnly");
+        QName versionedOnlyQN = new QName(namespace, "VersionedOnly");
         RecordType versionedOnlyRT = typeManager.newRecordType(versionedOnlyQN);
         versionedOnlyRT.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         versionedOnlyRT = typeManager.createRecordType(versionedOnlyRT);
@@ -1247,7 +1247,7 @@ public abstract class AbstractRepositoryTest {
 
     @Test
     public void testMixinLatestVersion() throws Exception {
-        RecordType recordType4 = typeManager.newRecordType(new QName("test", "RT4"));
+        RecordType recordType4 = typeManager.newRecordType(new QName(namespace, "RT4"));
         recordType4.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
         recordType4.addMixin(recordType1.getId()); // In fact recordType1B should be taken as Mixin
         recordType4 = typeManager.createRecordType(recordType4);
@@ -1779,7 +1779,7 @@ public abstract class AbstractRepositoryTest {
     public void testRecordWithLinkFields() throws Exception {
         FieldType linkFieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LINK", false, false), new QName("testRecordWithLinkFields", "linkFieldType"), Scope.NON_VERSIONED));
 
-        RecordType recordTypeWithLink = typeManager.newRecordType(new QName("test", "recordTypeWithLink"));
+        RecordType recordTypeWithLink = typeManager.newRecordType(new QName(namespace, "recordTypeWithLink"));
         recordTypeWithLink.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
         recordTypeWithLink = typeManager.createRecordType(recordTypeWithLink);
         
@@ -1817,5 +1817,51 @@ public abstract class AbstractRepositoryTest {
         recordWithLinks = repository.read(recordWithLinks.getId());
         link = (Link)recordWithLinks.getField(linkFieldType.getName());
         assertEquals(record2.getId(), link.getMasterRecordId());
+    }
+    
+    @Test
+    public void testRecordBuilder() throws Exception {
+        RecordBuilder builder = repository.recordBuilder();
+        Record record = builder.recordType(recordType1.getName())
+            .field(fieldType1.getName(), "abc")
+            .field(fieldType2.getName(), 123)
+            .field(fieldType3.getName(), true)
+            .create();
+        assertEquals(record, repository.read(record.getId()));
+        
+        builder.reset();
+        Record record2 = builder.recordType(recordType2.getName())
+            .field(fieldType4.getName(), 999)
+            .field(fieldType5.getName(), true)
+            .field(fieldType6.getName(), "xyz")
+            .create();
+        
+        Record readRecord = repository.read(record2.getId());
+        assertEquals(999, readRecord.getField(fieldType4.getName()));
+        try {
+            readRecord.getField(fieldType1.getName());
+            fail("FieldType1 not expected. Builder should have been reset");
+        } catch (FieldNotFoundException expected) {
+        }
+    }
+    
+    @Test
+    public void testDefaultNamespace() throws Exception {
+        RecordBuilder builder = repository.recordBuilder();
+        Record record = builder.defaultNameSpace(namespace)
+            .recordType("RT1")
+            .field("field1", "abc")
+            .field("field2", 123)
+            .field("field3", true)
+            .create();
+        Record readRecord = repository.read(record.getId());
+        assertEquals(record, readRecord);
+        
+        assertEquals("abc", readRecord.getField("field1"));
+        readRecord.setDefaultNamespace("anotherNamespace");
+        try {
+            readRecord.getField("field1");
+        } catch (FieldNotFoundException expected) {
+        }
     }
 }

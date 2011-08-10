@@ -282,7 +282,6 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
     
     public RecordType newRecordType(SchemaId recordTypeId, QName name) {
-        ArgumentValidator.notNull(name, "name");
         return new RecordTypeImpl(recordTypeId, name);
     }
 

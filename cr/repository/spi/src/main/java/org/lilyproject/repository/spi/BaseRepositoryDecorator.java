@@ -69,18 +69,13 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public Record read(RecordId recordId) throws RepositoryException, InterruptedException {
-        return delegate.read(recordId);
-    }
-
-    @Override
     public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return delegate.read(recordId, fieldNames);
     }
 
     @Override
-    public List<Record> read(List<RecordId> recordIds) throws RepositoryException, InterruptedException {
-        return delegate.read(recordIds);
+    public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
+        return delegate.read(recordId, fieldNames);
     }
 
     @Override
@@ -90,12 +85,19 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public Record read(RecordId recordId, Long version) throws RepositoryException, InterruptedException {
-        return delegate.read(recordId, version);
+    public List<Record> read(List<RecordId> recordIds, QName... fieldNames)
+            throws RepositoryException, InterruptedException {
+        return delegate.read(recordIds, fieldNames);
     }
 
     @Override
     public Record read(RecordId recordId, Long version, List<QName> fieldNames)
+            throws RepositoryException, InterruptedException {
+        return delegate.read(recordId, version, fieldNames);
+    }
+
+    @Override
+    public Record read(RecordId recordId, Long version, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         return delegate.read(recordId, version, fieldNames);
     }
@@ -107,7 +109,19 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
+    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames)
+            throws RepositoryException, InterruptedException {
+        return delegate.readVersions(recordId, fromVersion, toVersion, fieldNames);
+    }
+
+    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
+            throws RepositoryException, InterruptedException {
+        return delegate.readVersions(recordId, versions, fieldNames);
+    }
+
+    @Override
+    public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         return delegate.readVersions(recordId, versions, fieldNames);
     }
@@ -191,5 +205,10 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     @Override
     public void close() throws IOException {
         delegate.close();
+    }
+    
+    @Override
+    public RecordBuilder recordBuilder() throws RecordException, InterruptedException {
+        return delegate.recordBuilder();
     }
 }

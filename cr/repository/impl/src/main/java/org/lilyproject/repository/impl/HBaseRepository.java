@@ -798,41 +798,41 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    public Record read(RecordId recordId) throws RepositoryException,
-            InterruptedException {
-        return read(recordId, null, null);
-    }
-
     public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
+        return read(recordId, null, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
     
-    public List<Record> read(List<RecordId> recordIds) throws RepositoryException, InterruptedException {
-        return read(recordIds, null);
-    }
-
     public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
-        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
-
-        return read(recordIds, fields, fieldTypes);
+        return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
-
-    public Record read(RecordId recordId, Long version) throws RepositoryException, InterruptedException {
-        return read(recordId, version, null);
+    
+    public List<Record> read(List<RecordId> recordIds, QName...fieldNames)
+            throws RepositoryException, InterruptedException {
+        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
+        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
+        
+        return read(recordIds, fields, fieldTypes);
     }
 
     public Record read(RecordId recordId, Long version, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
+        return read(recordId, version , fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
-
+        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
+        
         return read(recordId, version, fields, null, fieldTypes);
     }
 
-    private List<FieldType> getFieldTypesFromNames(List<QName> fieldNames, FieldTypes fieldTypes)
-            throws TypeException, InterruptedException {
+    private List<FieldType> getFieldTypesFromNames(FieldTypes fieldTypes, QName... fieldNames)
+        throws TypeException, InterruptedException {
         List<FieldType> fields = null;
         if (fieldNames != null) {
             fields = new ArrayList<FieldType>();
@@ -856,6 +856,11 @@ public class HBaseRepository extends BaseRepository {
     }
     
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
+        throws RepositoryException, InterruptedException {
+        return readVersions(recordId, fromVersion, toVersion, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(fromVersion, "fromVersion");
@@ -866,7 +871,7 @@ public class HBaseRepository extends BaseRepository {
         }
 
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
+        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
 
         int numberOfVersionsToRetrieve = (int)(toVersion - fromVersion + 1);
         Result result = getRow(recordId, toVersion, numberOfVersionsToRetrieve, fields);
@@ -883,6 +888,11 @@ public class HBaseRepository extends BaseRepository {
     }
     
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
+    throws RepositoryException, InterruptedException {
+        return readVersions(recordId, versions, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(versions, "versions");
@@ -893,7 +903,7 @@ public class HBaseRepository extends BaseRepository {
         Collections.sort(versions);
         
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
+        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
         
         Long lowestRequestedVersion = versions.get(0);
         Long highestRequestedVersion = versions.get(versions.size()-1);
@@ -1633,5 +1643,9 @@ public class HBaseRepository extends BaseRepository {
         public Set<Scope> getScopes() {
             return scopes;
         }
+    }
+    
+    public RecordBuilder recordBuilder() throws RecordException {
+        return new RecordBuilderImpl(this);
     }
 }

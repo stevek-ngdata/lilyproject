@@ -108,18 +108,19 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
-    public Record read(RecordId recordId) throws RepositoryException, InterruptedException {
-        return read(recordId, null, null);
-    }
-
     public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
+        return read(recordId, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
     
-    public List<Record> read(List<RecordId> recordIds) throws RepositoryException, InterruptedException {
-        return read(recordIds, null);
-    }
     public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RepositoryException, InterruptedException {
+        return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public List<Record> read(List<RecordId> recordIds, QName... fieldNames) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordIds, "recordIds");
         if (recordIds == null)
             return new ArrayList<Record>();
@@ -130,7 +131,7 @@ public class RemoteRepository extends BaseRepository {
             }
             List<AvroQName> avroFieldNames = null;
             if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.size());
+                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
                 for (QName fieldName : fieldNames) {
                     avroFieldNames.add(converter.convert(fieldName));
                 }
@@ -147,15 +148,15 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
-    public Record read(RecordId recordId, Long version) throws RepositoryException, InterruptedException {
-        return read(recordId, version, null);
-    }
-
     public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RepositoryException, InterruptedException {
+        return read(recordId, version, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
             if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.size());
+                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
                 for (QName fieldName : fieldNames) {
                     avroFieldNames.add(converter.convert(fieldName));
                 }
@@ -171,12 +172,16 @@ public class RemoteRepository extends BaseRepository {
             throw handleUndeclaredRecordThrowable(e);
         }
     }
-    
+
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames) throws RepositoryException, InterruptedException {
+        return readVersions(recordId, fromVersion, toVersion, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+    
+    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames) throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
             if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.size());
+                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
                 for (QName fieldName : fieldNames) {
                     avroFieldNames.add(converter.convert(fieldName));
                 }
@@ -195,10 +200,15 @@ public class RemoteRepository extends BaseRepository {
 
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
     throws RepositoryException, InterruptedException {
+        return readVersions(recordId, versions, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    }
+        
+    public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
+    throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
             if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.size());
+                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
                 for (QName fieldName : fieldNames) {
                     avroFieldNames.add(converter.convert(fieldName));
                 }
@@ -214,7 +224,6 @@ public class RemoteRepository extends BaseRepository {
             throw handleUndeclaredRecordThrowable(e);
         }
     }
-
     
     public Record update(Record record) throws RepositoryException, InterruptedException {
         return update(record, false, true);
@@ -306,6 +315,10 @@ public class RemoteRepository extends BaseRepository {
         } else {
             throw e;
         }
+    }
+    
+    public RecordBuilder recordBuilder() throws RecordException {
+        return new RecordBuilderImpl(this);
     }
 }
 

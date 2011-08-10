@@ -15,6 +15,7 @@
  */
 package org.lilyproject.repository.api;
 
+import java.io.ObjectInputStream.GetField;
 import java.util.List;
 import java.util.Map;
 
@@ -135,7 +136,7 @@ public interface Record {
      * @throws FieldNotFoundException if the field is not present in this Record object. To avoid the exception,
      *         use {@link #hasField}.
      */
-    Object getField(QName fieldName) throws FieldNotFoundException;
+    <T> T getField(QName fieldName) throws FieldNotFoundException;
 
     /**
      * Checks if the field with the given name is present in this Record object.
@@ -196,4 +197,98 @@ public interface Record {
      * </ul>
      */
     boolean softEquals(Object obj);
+    
+    /**
+     * Sets a default namespace on a record object.
+     * <p> 
+     * The default namespace is used to resovle a QName when only the name part is given, 
+     * like for instance in {@link #getField(String)}. </br> 
+     * When resolving a name into a QName, it is first checked if the default namespace is set.
+     * If not, the namespace of the recordType is used. If that is not set either, 
+     * a RecordException is thrown. </br>
+     * The resolving happens at the moment a related method is called. 
+     * This means that if the default namespace or record type is changed afterwards, this has
+     * no influence on the already resolved QNames.</br>
+     * <p>
+     * The default namespace is only used for resolving names into QNames. It is not sent to
+     * the server, nor stored on the repository.
+     * 
+     * @param namespace the default namespace to use
+     */
+    void setDefaultNamespace(String namespace);
+    
+    /**
+     * Resolves the QName of the record type and sets it on the record.
+     * <p>
+     * @see {@link #setDefaultNamespace(String)} 
+     * @see {@link #setRecordType(QName)}
+     * @param recordTypeName the name part of the record type to set
+     * @throws RecordException when the QName cannot be resolved
+     */
+    void setRecordType(String recordTypeName) throws RecordException;
+    
+    /**
+     * Resolves the QName of the record type and sets it on the record.
+     * <p>
+     * @see {@link #setDefaultNamespace(String)} 
+     * @see {@link #setRecordType(QName, Long)}
+     * @param recordTypeName the name part of the record type to set
+     * @throws RecordException when the QName cannot be resolved
+     */
+    void setRecordType(String recordTypeName, Long version) throws RecordException;
+    
+    /**
+     * Resolves the QName of the record type and sets it on the record.
+     * <p>
+     * @see {@link #setDefaultNamespace(String)} 
+     * @see {@link #setRecordType(Scope, QName, Long)}
+     * @param recordTypeName the name part of the record type to set
+     * @throws RecordException when the QName cannot be resolved
+     */
+    void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException;
+    
+    /**
+     * Resolves the QName of the field and sets it on the record.
+     * <p>
+     * @see {@link #setDefaultNamespace(String)} 
+     * @see {@link #setField(QName)}
+     * @param fieldName the name part of the field to set
+     * @param value the value to set on the field
+     * @throws RecordException when the QName cannot be resolved
+     */
+    void setField(String fieldName, Object value) throws RecordException;
+
+    /**
+     * Resolves the QName of the field and gets it from the record.
+     * <p>
+     * @see {@link #setDefaultNamespace(String)} 
+     * @see {@link #getField(QName)}
+     * @param fieldName the name part of the field to get
+     * @return the value of the field
+     * @throws FieldNotFoundException if the field does not exist on the record
+     * @throws RecordException when the QName cannot be resolved
+     */
+    <T> T getField(String fieldName) throws FieldNotFoundException, RecordException;
+    
+    /**
+     * Resolves the QName of the field and deletes it from the record.
+     * <p>
+     * @see {@link #setDefaultNamespace(String)} 
+     * @see {@link #delete(QName, boolean)}
+     * @param fieldName the name part of the field to delete
+     * @param addToFieldsToDelete true if the field needs to be deleted from the record in the repository as well
+     * @throws RecordException when the QName cannot be resolved
+     */
+    void delete(String fieldName, boolean addToFieldsToDelete) throws RecordException;
+    
+    /**
+     * Resolves the QName of the field and checks if it exists.
+     * <p>
+     * @see {@link #setDefaultNamespace(String)} 
+     * @see {@link #hasField(QName)}
+     * @param fieldName the name part of the field to check 
+     * @return true if the field exists on the record
+     * @throws RecordException when the QName cannot be resolved
+     */
+    boolean hasField(String fieldName) throws RecordException;
 }

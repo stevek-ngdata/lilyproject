@@ -171,7 +171,7 @@
       "type": "record",
       "fields": [
         {"name": "id", "type": ["AvroSchemaId", "null"]},
-        {"name": "name", "type": "AvroQName"},
+        {"name": "name", "type": ["AvroQName", "null"]},
         {"name": "version", "type": ["long", "null"]},
         {"name": "fieldTypeEntries", "type": {"type": "array", "items": "AvroFieldTypeEntry"}},
         {"name": "mixins", "type": {"type": "array", "items": "AvroMixin"}}

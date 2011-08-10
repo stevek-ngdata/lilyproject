@@ -137,4 +137,44 @@ public class UnmodifiableRecord implements Record {
     public boolean softEquals(Object obj) {
         return delegate.softEquals(obj);
     }
+    
+    @Override
+    public void setDefaultNamespace(String namespace) {
+        throw new RuntimeException(MSG);
+    }
+    
+    @Override
+    public void setRecordType(String recordTypeName) {
+        throw new RuntimeException(MSG);
+    }
+
+    @Override
+    public void setRecordType(String recordTypeName, Long version) {
+        throw new RuntimeException(MSG);
+    }
+
+    @Override
+    public void setRecordType(Scope scope, String recordTypeName, Long version) {
+        throw new RuntimeException(MSG);
+    }
+    
+    @Override
+    public void setField(String fieldName, Object value) {
+        throw new RuntimeException(MSG);
+    }
+
+    @Override
+    public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
+        return delegate.getField(fieldName);
+    }
+    
+    @Override
+    public void delete(String fieldName, boolean addToFieldsToDelete) {
+        throw new RuntimeException(MSG);
+    }
+    
+    @Override
+    public boolean hasField(String fieldName) throws RecordException {
+        return delegate.hasField(fieldName);
+    }
 }

@@ -29,7 +29,8 @@ public class RecordImpl implements Record {
     private Long version;
     private ResponseStatus responseStatus;
     
-
+    private String defaultNamespace = null;
+    
     /**
      * This constructor should not be called directly.
      * @use {@link Repository#newRecord} instead
@@ -100,12 +101,12 @@ public class RecordImpl implements Record {
         fieldsToDelete.remove(name);
     }
     
-    public Object getField(QName name) throws FieldNotFoundException {
+    public <T> T getField(QName name) throws FieldNotFoundException {
         Object field = fields.get(name);
         if (field == null) {
             throw new FieldNotFoundException(name);
         }
-        return field;
+        return (T)field;
     }
 
     public boolean hasField(QName fieldName) {
@@ -277,5 +278,46 @@ public class RecordImpl implements Record {
             RecordTypeRef other = (RecordTypeRef) obj;
             return ObjectUtils.safeEquals(name, other.name) && ObjectUtils.safeEquals(version, other.version);
         }
+    }
+    
+    public void setDefaultNamespace(String namespace) {
+        this.defaultNamespace = namespace;
+    }
+
+    private QName resolveNamespace(String name) throws RecordException {
+        if (defaultNamespace != null)
+            return new QName(defaultNamespace, name);
+        QName recordTypeName = getRecordTypeName();
+        if (recordTypeName != null)
+            return new QName(recordTypeName.getNamespace(), name);
+        else throw new RecordException("Namespace could not be resolved for name '" + name + "'since no default namespace was given and no record type is set");
+    }
+    
+    public void setRecordType(String recordTypeName) throws RecordException {
+        setRecordType(resolveNamespace(recordTypeName));
+    }
+    
+    public void setRecordType(String recordTypeName, Long version) throws RecordException {
+        setRecordType(resolveNamespace(recordTypeName), version);
+    }
+    
+    public void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException {
+        setRecordType(scope, resolveNamespace(recordTypeName), version);
+    }
+    
+    public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
+        return getField(resolveNamespace(fieldName));
+    }
+    
+    public void setField(String fieldName, Object value) throws RecordException {
+        setField(resolveNamespace(fieldName), value);
+    }
+    
+    public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
+        delete(resolveNamespace(fieldName), addFieldsToDelete);
+    }
+    
+    public boolean hasField(String fieldName) throws RecordException {
+        return hasField(resolveNamespace(fieldName));
     }
 }

@@ -72,26 +72,12 @@ public class AvroLilyImpl implements AvroLily {
             throws AvroRepositoryException, AvroInterruptedException {
         Long version = converter.convertAvroVersion(avroVersion);
         RecordId recordId = converter.convertAvroRecordId(avroRecordId);
-        List<QName> fieldNames = null;
-        if (avroFieldNames != null) {
-            fieldNames = new ArrayList<QName>();
-            for (AvroQName avroQName : avroFieldNames) {
-                fieldNames.add(converter.convert(avroQName));
-            }
-        }
+        QName[] fieldNames = converter.convert(avroFieldNames);
         try {
             if (version == null) {
-                if (fieldNames == null) {
-                    return converter.convert(repository.read(recordId));
-                } else {
-                    return converter.convert(repository.read(recordId, fieldNames));
-                }
+                return converter.convert(repository.read(recordId, fieldNames));
             } else {
-                if (fieldNames == null) {
-                    return converter.convert(repository.read(recordId, version));
-                } else {
-                    return converter.convert(repository.read(recordId, version, fieldNames));
-                }
+                return converter.convert(repository.read(recordId, version, fieldNames));
             }
         } catch (RepositoryException e) {
             throw converter.convert(e);
@@ -109,15 +95,8 @@ public class AvroLilyImpl implements AvroLily {
                 recordIds.add(converter.convertAvroRecordId(avroRecordId));
             }
         }
-        List<QName> fieldNames = null;
-        if (avroFieldNames != null) {
-            fieldNames = new ArrayList<QName>();
-            for (AvroQName avroQName : avroFieldNames) {
-                fieldNames.add(converter.convert(avroQName));
-            }
-        }
         try {
-            return converter.convertRecords(repository.read(recordIds, fieldNames));
+            return converter.convertRecords(repository.read(recordIds, converter.convert(avroFieldNames)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
@@ -127,16 +106,9 @@ public class AvroLilyImpl implements AvroLily {
 
     public List<AvroRecord> readVersions(ByteBuffer recordId, long avroFromVersion, long avroToVersion,
             List<AvroQName> avroFieldNames) throws AvroRepositoryException, AvroInterruptedException {
-        List<QName> fieldNames = null;
-        if (avroFieldNames != null) {
-            fieldNames = new ArrayList<QName>();
-            for (AvroQName avroQName : avroFieldNames) {
-                fieldNames.add(converter.convert(avroQName));
-            }
-        }
         try {
             return converter.convertRecords(repository.readVersions(converter.convertAvroRecordId(
-                    recordId), converter.convertAvroVersion(avroFromVersion), converter.convertAvroVersion(avroToVersion), fieldNames));
+                    recordId), converter.convertAvroVersion(avroFromVersion), converter.convertAvroVersion(avroToVersion), converter.convert(avroFieldNames)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
@@ -146,19 +118,12 @@ public class AvroLilyImpl implements AvroLily {
     
     public List<AvroRecord> readSpecificVersions(ByteBuffer recordId, List<Long> avroVersions,
             List<AvroQName> avroFieldNames) throws AvroRepositoryException, AvroInterruptedException {
-        List<QName> fieldNames = null;
-        if (avroFieldNames != null) {
-            fieldNames = new ArrayList<QName>();
-            for (AvroQName avroQName : avroFieldNames) {
-                fieldNames.add(converter.convert(avroQName));
-            }
-        }
         // The avroVersions are a GenericData$Array which for instance cannot be sorted, so we convert it to an ArrayList
         List<Long> versions = new ArrayList<Long>(avroVersions.size());
         versions.addAll(avroVersions);
         try {
             return converter.convertRecords(repository.readVersions(converter.convertAvroRecordId(
-                    recordId), versions, fieldNames));
+                    recordId), versions, converter.convert(avroFieldNames)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {

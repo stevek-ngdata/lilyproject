@@ -49,6 +49,7 @@ public interface TypeManager extends Closeable {
      *
      * @throws RecordTypeExistsException when a recordType with the same id already exists on the repository 
      * @throws RecordTypeNotFoundException when a mixin of the recordType refers to a non-existing {@link RecordType} 
+     * @throws TypeException when the given recordType has no name specified
      * @throws FieldTypeNotFoundException 
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
@@ -232,4 +233,9 @@ public interface TypeManager extends Closeable {
     List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
 
     List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
+    
+    /**
+     * Returns a record type builder object which can be used to compose a record type object and create or update it on the repository.
+     */
+    RecordTypeBuilder rtBuilder() throws TypeException;
 }

@@ -103,6 +103,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     public RecordType createRecordType(RecordType recordType) throws RecordTypeExistsException,
             RecordTypeNotFoundException, FieldTypeNotFoundException, TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
+        if (recordType.getName() == null) {
+            throw new TypeException("Name of recordType to create is mandatory");
+        }
+        ArgumentValidator.notNull(recordType.getName(), "recordType.name");
         RecordType newRecordType = recordType.clone();
         Long recordTypeVersion = Long.valueOf(1);
         try {
@@ -183,14 +187,23 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 throw new RecordTypeNotFoundException(recordType.getId(), null);
             }
             
-            byte[] nameBytes = encodeName(recordType.getName());
+            // Only do the concurrency check when a name was given
+            QName name = recordType.getName();
+            byte[] nameBytes = null;
+            Long now = null;
+            if (name != null) {
+                nameBytes = encodeName(name);
 
-            // Check for concurrency
-            long now = System.currentTimeMillis();
-            checkConcurrency(recordType.getName(), nameBytes, now);
+                // Check for concurrency
+                now = System.currentTimeMillis();
+                checkConcurrency(recordType.getName(), nameBytes, now);
+            }
             
             // Prepare the update
             RecordType latestRecordType = getRecordTypeByIdWithoutCache(id, null);
+            // If no name was given, continue to use the name that was already on the record type
+            if (name == null)
+                newRecordType.setName(latestRecordType.getName());
             Long latestRecordTypeVersion = latestRecordType.getVersion();
             Long newRecordTypeVersion = latestRecordTypeVersion + 1;
 
@@ -200,7 +213,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             boolean mixinsChanged = updateMixins(put, newRecordTypeVersion, newRecordType, latestRecordType);
 
-            boolean nameChanged = updateName(put, recordType, latestRecordType);
+            boolean nameChanged = updateName(put, newRecordType, latestRecordType);
 
             // Update the record type on the table
             if (fieldTypeEntriesChanged || mixinsChanged || nameChanged) {
@@ -216,7 +229,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             notifyCacheInvalidate();
             
             // Clear the concurrency timestamp
-            clearConcurrency(nameBytes, now);
+            if (name != null)
+                clearConcurrency(nameBytes, now);
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
                     + "' on HBase", e);
@@ -718,5 +732,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         public boolean isCacheInvalidationTriggerEnabled() {
             return cacheInvalidationEnabled;
         }
+    }
+    
+    public RecordTypeBuilder rtBuilder() throws TypeException {
+        return new RecordTypeBuilderImpl(this);
     }
 }

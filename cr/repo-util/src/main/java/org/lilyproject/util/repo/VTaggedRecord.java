@@ -263,8 +263,8 @@ public class VTaggedRecord {
         }
 
         // Remove versioned record type info
-        record.setRecordType(Scope.VERSIONED, null, null);
-        record.setRecordType(Scope.VERSIONED_MUTABLE, null, null);
+        record.setRecordType(Scope.VERSIONED, (QName)null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName)null, null);
     }
 
     private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds)

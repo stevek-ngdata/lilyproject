@@ -18,6 +18,7 @@ package org.lilyproject.repository.impl.test;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.Collection;
 import java.util.Map;
@@ -357,5 +358,33 @@ public abstract class AbstractTypeManagerRecordTypeTest {
             fail();
         } catch (TypeException expected){
         }
+    }
+    
+    @Test
+    public void testRecordTypeBuilder() throws Exception {
+        RecordTypeBuilder builder = typeManager.rtBuilder();
+        try {
+            builder.create();
+            fail("TypeException expected since name of recordType is not specified");
+        } catch (TypeException expected) {
+        }
+        QName rtName = new QName("builderNS", "builderName");
+        builder.name(rtName);
+        builder.field(fieldType1.getId(), false);
+        builder.field(fieldType2.getId(), true);
+        RecordType recordType = builder.create();
+        
+        RecordType readRecordType = typeManager.getRecordTypeByName(rtName, null);
+        assertEquals(recordType, readRecordType);
+        assertFalse(readRecordType.getFieldTypeEntry(fieldType1.getId()).isMandatory());
+        assertTrue(readRecordType.getFieldTypeEntry(fieldType2.getId()).isMandatory());
+        
+        builder.reset();
+        builder.id(recordType.getId());
+        recordType = builder.update();
+        readRecordType = typeManager.getRecordTypeByName(rtName, null);
+        assertEquals(recordType, readRecordType);
+        assertEquals(Long.valueOf(2), readRecordType.getVersion());
+        assertNull(readRecordType.getFieldTypeEntry(fieldType1.getId()));
     }
 }

@@ -130,8 +130,8 @@ public class VersionTag {
         }
 
         // Remove versioned record type info
-        record.setRecordType(Scope.VERSIONED, null, null);
-        record.setRecordType(Scope.VERSIONED_MUTABLE, null, null);
+        record.setRecordType(Scope.VERSIONED, (QName)null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName)null, null);
     }
 
     private static void filterFields(Record record, Set<QName> fields) {

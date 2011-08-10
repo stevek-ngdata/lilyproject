@@ -129,8 +129,8 @@ public class IdRecordImpl implements IdRecord {
         record.setField(fieldName, value);
     }
 
-    public Object getField(QName fieldName) throws FieldNotFoundException {
-        return record.getField(fieldName);
+    public <T> T getField(QName fieldName) throws FieldNotFoundException {
+        return (T)record.getField(fieldName);
     }
 
     public boolean hasField(QName fieldName) {
@@ -181,5 +181,43 @@ public class IdRecordImpl implements IdRecord {
         throw new UnsupportedOperationException("IdRecordImpl does not support softEquals.");
     }
 
+    @Override
+    public void setDefaultNamespace(String namespace) {
+        record.setDefaultNamespace(namespace);
+    }
     
+    @Override
+    public void setRecordType(String recordTypeName) throws RecordException {
+        record.setRecordType(recordTypeName);
+    }
+
+    @Override
+    public void setRecordType(String recordTypeName, Long version) throws RecordException {
+        record.setRecordType(recordTypeName, version);
+    }
+
+    @Override
+    public void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException {
+        record.setRecordType(scope, recordTypeName, version);
+    }
+
+    @Override
+    public void setField(String fieldName, Object value) throws RecordException {
+        record.setField(fieldName, value);
+    }
+
+    @Override
+    public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
+        return record.getField(fieldName);
+    }
+    
+    @Override
+    public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
+        record.delete(fieldName, addFieldsToDelete);
+    }
+    
+    @Override
+    public boolean hasField(String fieldName) throws RecordException {
+        return record.hasField(fieldName);
+    }
 }
