@@ -15,7 +15,7 @@ public class LilySample {
         //
         // Instantiate Lily client
         //
-        LilyClient lilyClient = new LilyClient("localhost:2181", 20000);
+        LilyClient lilyClient = new LilyClient(System.getProperty("zkConn", "localhost:2181"), 20000);
         Repository repository = lilyClient.getRepository();
 
         //
