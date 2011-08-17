@@ -276,7 +276,7 @@
 
     <!-- Lily server configuration -->
     <fileSet>
-      <directory>${basedir}/target/lily-conf</directory>
+      <directory>${basedir}/../cr/process/server/conf</directory>
       <outputDirectory>/conf</outputDirectory>
       <useDefaultExcludes>true</useDefaultExcludes>
     </fileSet>
