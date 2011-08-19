@@ -164,9 +164,8 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException {
-        return delegate.getBlob(recordId, version, fieldName, multiValueIndex, hierarchyIndex);
+    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+        return delegate.getBlob(recordId, version, fieldName, indexes);
     }
 
     @Override
@@ -175,9 +174,8 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException {
-        return delegate.getInputStream(recordId, version, fieldName, multivalueIndex, hierarchyIndex);
+    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+        return delegate.getInputStream(recordId, version, fieldName, indexes);
     }
 
     @Override
@@ -187,14 +185,9 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex)
+    public InputStream getInputStream(Record record, QName fieldName, Integer...indexes)
             throws RepositoryException, InterruptedException {
-        return delegate.getInputStream(record, fieldName, multivalueIndex, hierarchyIndex);
-    }
-
-    @Override
-    public InputStream getInputStream(Record record, QName fieldName) throws RepositoryException, InterruptedException {
-        return delegate.getInputStream(record, fieldName);
+        return delegate.getInputStream(record, fieldName, indexes);
     }
 
     @Override

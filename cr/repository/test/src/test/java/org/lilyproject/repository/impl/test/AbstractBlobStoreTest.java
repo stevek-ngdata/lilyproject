@@ -47,7 +47,7 @@ public abstract class AbstractBlobStoreTest {
     @Test
     public void testCreate() throws Exception {
         QName fieldName = new QName("test", "testCreate");
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testCreateRT"));
@@ -78,13 +78,13 @@ public abstract class AbstractBlobStoreTest {
         QName fieldName1 = new QName("test", "testThreeSizes1");
         QName fieldName2 = new QName("test", "testThreeSizes2");
         QName fieldName3 = new QName("test", "testThreeSizes3");
-        FieldType fieldType1 = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName1,
+        FieldType fieldType1 = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName1,
                 Scope.NON_VERSIONED);
         fieldType1 = typeManager.createFieldType(fieldType1);
-        FieldType fieldType2 = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName2,
+        FieldType fieldType2 = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName2,
                 Scope.NON_VERSIONED);
         fieldType2 = typeManager.createFieldType(fieldType2);
-        FieldType fieldType3 = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName3,
+        FieldType fieldType3 = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName3,
                 Scope.NON_VERSIONED);
         fieldType3 = typeManager.createFieldType(fieldType3);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testThreeSizes"));
@@ -122,7 +122,7 @@ public abstract class AbstractBlobStoreTest {
     @Test
     public void testCreateTwoRecordsWithSameBlob() throws Exception {
         QName fieldName = new QName("test", "ablob2");
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testCreateTwoRecordsWithSameBlobRT"));
@@ -180,7 +180,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testUpdateNonVersionedBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateNonVersionedBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateNonVersionedBlobRT"+size));
@@ -208,7 +208,7 @@ public abstract class AbstractBlobStoreTest {
         record = repository.update(record2);
         
         // Reading should return blob2
-        byte[] readBytes = readBlob(record.getId(), record.getVersion(), fieldName, null, null, size);
+        byte[] readBytes = readBlob(record.getId(), record.getVersion(), fieldName, size);
         assertTrue(Arrays.equals(bytes2, readBytes));
         
         assertBlobDelete(expectDelete, blob);
@@ -231,7 +231,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testDeleteNonVersionedBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testDeleteNonVersionedBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testDeleteNonVersionedBlobRT"+size));
@@ -274,7 +274,7 @@ public abstract class AbstractBlobStoreTest {
 
     private void testUpdateMutableBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateMutableBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateMutableBlobRT"+size));
@@ -303,7 +303,7 @@ public abstract class AbstractBlobStoreTest {
         record = repository.update(record2, true, false);
         
         // Blob2 should still exist
-        byte[] readBytes = readBlob(record.getId(), record.getVersion(), fieldName, null, null, size);
+        byte[] readBytes = readBlob(record.getId(), record.getVersion(), fieldName, size);
         assertTrue(Arrays.equals(bytes2, readBytes));
         
         assertBlobDelete(expectDelete, blob);
@@ -326,7 +326,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testDeleteMutableBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testDeleteMutableBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testDeleteMutableBlobRT"+size));
@@ -353,10 +353,10 @@ public abstract class AbstractBlobStoreTest {
         repository.update(record2, false, false);
         
         // Blob1 should still exist
-        byte[] readBytes = readBlob(record.getId(), record.getVersion(), fieldName, null, null, size);
+        byte[] readBytes = readBlob(record.getId(), record.getVersion(), fieldName, size);
         assertTrue(Arrays.equals(bytes, readBytes));
         // Blob2 should still exist
-        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, null, null, size);
+        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size);
         assertTrue(Arrays.equals(bytes2, readBytes));
         
         Record record3 = repository.newRecord(record.getId());
@@ -366,7 +366,7 @@ public abstract class AbstractBlobStoreTest {
         repository.update(record3, true, false);
         
         // Blob2 should still exist
-        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, null, null, size);
+        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size);
         assertTrue(Arrays.equals(bytes2, readBytes));
         
         assertBlobDelete(expectDelete, blob);
@@ -389,8 +389,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testUpdateMutableMultivalueBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateMutableMultivalueBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", true, false), fieldName,
-                Scope.VERSIONED_MUTABLE);
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST", "BLOB"), fieldName, Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateMutableMultivalueBlobRT"+size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
@@ -431,28 +430,28 @@ public abstract class AbstractBlobStoreTest {
         record3 = repository.update(record3, true, false);
         
         //Blob2
-        byte[] readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, 0, null, size);
+        byte[] readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size, 0);
         assertTrue(Arrays.equals(bytes2, readBytes));
 
         //Blob3
-        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, 1, null, size);
+        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size, 1);
         assertTrue(Arrays.equals(bytes3, readBytes));
         
         //Blob4 in version 1
-        readBytes = readBlob(record.getId(), record.getVersion(), fieldName, 0, null, size);
+        readBytes = readBlob(record.getId(), record.getVersion(), fieldName, size, 0);
         assertTrue(Arrays.equals(bytes4, readBytes));
         
         assertBlobDelete(expectDelete, blob);
         
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, null, null, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size);
             fail("BlobNotFoundException expected since index should not be null");
         } catch (BlobNotFoundException expected) {
             
         }
 
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, 1, null, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size, 1);
             fail("BlobNotFoundException expected since index is out of bounds");
         } catch (BlobNotFoundException expected) {
             
@@ -477,7 +476,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testUpdateMutableHierarchyBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateMutableHierarchyBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, true), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("PATH", "BLOB"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateMutableHierarchyBlobRT"+size));
@@ -519,28 +518,28 @@ public abstract class AbstractBlobStoreTest {
         record3 = repository.update(record3, true, false);
         
         // Blob2
-        byte[] readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, null, 0, size);
+        byte[] readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size, 0);
         assertTrue(Arrays.equals(bytes2, readBytes));
         
         // Blob3
-        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, null, 1, size);
+        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size, 1);
         assertTrue(Arrays.equals(bytes3, readBytes));
         
         // Blob4 in version1
-        readBytes = readBlob(record.getId(), record.getVersion(), fieldName, null, 1, size);
+        readBytes = readBlob(record.getId(), record.getVersion(), fieldName, size, 1);
         assertTrue(Arrays.equals(bytes4, readBytes));
         
         assertBlobDelete(expectDelete, blob);
 
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, null, null, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size);
             fail("BlobNotFoundException expected since index should not be null");
         } catch (BlobNotFoundException expected) {
             
         }
 
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, null, 2, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size, 2);
             fail("BlobNotFoundException expected since index is out of bounds");
         } catch (BlobNotFoundException expected) {
             
@@ -564,7 +563,7 @@ public abstract class AbstractBlobStoreTest {
 
     private void testUpdateMutableMultivalueHierarchyBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateMutableMultivalueHierarchyBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", true, true), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST", "PATH<BLOB>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateMutableMultivalueHierarchyBlobRT"+size));
@@ -606,42 +605,42 @@ public abstract class AbstractBlobStoreTest {
         record3 = repository.update(record3, true, false);
         
         // Blob2
-        byte[] readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, 0, 0, size);
+        byte[] readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size, 0, 0);
         assertTrue(Arrays.equals(bytes2, readBytes));
         
         // Blob3
-        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, 1, 0, size);
+        readBytes = readBlob(record2.getId(), record2.getVersion(), fieldName, size, 1, 0);
         assertTrue(Arrays.equals(bytes3, readBytes));
         
         // Blob4 in version1
-        readBytes = readBlob(record.getId(), record.getVersion(), fieldName, 0, 1, size);
+        readBytes = readBlob(record.getId(), record.getVersion(), fieldName, size, 0, 1);
         assertTrue(Arrays.equals(bytes4, readBytes));
         
         assertBlobDelete(expectDelete, blob);
         
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, null, null, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size);
             fail("BlobNotFoundException expected since index should not be null");
         } catch (BlobNotFoundException expected) {
             
         }
         
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, 0, null, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size, 0);
             fail("BlobNotFoundException expected since index should not be null");
         } catch (BlobNotFoundException expected) {
             
         }
 
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, 2, 0, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size, 2, 0);
             fail("BlobNotFoundException expected since index is out of bounds");
         } catch (BlobNotFoundException expected) {
             
         }
         
         try {
-            readBlob(record.getId(), record.getVersion(), fieldName, 1, 1, size);
+            readBlob(record.getId(), record.getVersion(), fieldName, size, 1, 1);
             fail("BlobNotFoundException expected since index is out of bounds");
         } catch (BlobNotFoundException expected) {
             
@@ -651,7 +650,7 @@ public abstract class AbstractBlobStoreTest {
     @Test
     public void testDelete() throws Exception {
         QName fieldName = new QName("test", "testDelete");
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testDeleteRT"));
@@ -689,7 +688,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testDeleteMultivalueHierarchyBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testDeleteMultivalueHierarchyBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", true, true), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST", "PATH<BLOB>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testDeleteMultivalueHierarchyBlobRT"+size));
@@ -734,7 +733,7 @@ public abstract class AbstractBlobStoreTest {
     @Test
     public void testBlobIncubatorMonitorUnusedBlob() throws Exception {
         QName fieldName = new QName("test", "testBlobIncubatorMonitorUnusedBlob");
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testBlobIncubatorMonitorUnusedBlobRT"));
@@ -760,7 +759,7 @@ public abstract class AbstractBlobStoreTest {
     @Test
     public void testBlobIncubatorMonitorFailureAfterReservation() throws Exception {
         QName fieldName = new QName("test", "testBlobIncubatorMonitorFailureAfterReservation");
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testBlobIncubatorMonitorFailureAfterReservationRT"));
@@ -792,7 +791,7 @@ public abstract class AbstractBlobStoreTest {
     @Test
     public void testBlobIncubatorMonitorFailureBeforeRemovingReservation() throws Exception {
         QName fieldName = new QName("test", "testBlobIncubatorMonitorFailureBeforeRemovingReservation");
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB", false, false), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), fieldName,
                 Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testBlobIncubatorMonitorFailureBeforeRemovingReservation"));
@@ -860,8 +859,8 @@ public abstract class AbstractBlobStoreTest {
 
     @Test
     public void testInvalidReadRequests() throws Exception {
-        ValueType stringType = typeManager.getValueType("STRING", false, false);
-        ValueType blobType = typeManager.getValueType("BLOB", false, false);
+        ValueType stringType = typeManager.getValueType("STRING");
+        ValueType blobType = typeManager.getValueType("BLOB");
 
         FieldType nonBlobField = typeManager.newFieldType(stringType, new QName("test", "NonBlobField"), Scope.VERSIONED);
         nonBlobField = typeManager.createFieldType(nonBlobField);
@@ -927,12 +926,11 @@ public abstract class AbstractBlobStoreTest {
     
     private byte[] readBlob(RecordId recordId, QName fieldName, long size) throws RepositoryException,
             InterruptedException, IOException {
-        return readBlob(recordId, null, fieldName, null, null, size);
+        return readBlob(recordId, null, fieldName, size);
     }
     
-    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
-            Integer hierarchyIndex, long size) throws RepositoryException, InterruptedException, IOException {
-        InputStream inputStream = repository.getInputStream(recordId, version, fieldName, multivalueIndex, hierarchyIndex);
+    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, long size, Integer...indexes) throws RepositoryException, InterruptedException, IOException {
+        InputStream inputStream = repository.getInputStream(recordId, version, fieldName, indexes);
         byte[] readBytes = new byte[(int)size];
         inputStream.read(readBytes);
         inputStream.close();

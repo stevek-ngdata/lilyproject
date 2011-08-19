@@ -122,15 +122,15 @@ public class LinkIndexTest {
 
     @Test
     public void testLinkIndexUpdater() throws Exception {
-        FieldType nonVersionedFt = typeManager.newFieldType(typeManager.getValueType("LINK", false, false),
+        FieldType nonVersionedFt = typeManager.newFieldType(typeManager.getValueType("LINK"),
                 new QName("ns", "link1"), Scope.NON_VERSIONED);
         nonVersionedFt = typeManager.createFieldType(nonVersionedFt);
 
-        FieldType versionedFt = typeManager.newFieldType(typeManager.getValueType("LINK", true, false),
+        FieldType versionedFt = typeManager.newFieldType(typeManager.getValueType("LIST", "LINK"),
                 new QName("ns", "link2"), Scope.VERSIONED);
         versionedFt = typeManager.createFieldType(versionedFt);
 
-        FieldType versionedMutableFt = typeManager.newFieldType(typeManager.getValueType("LINK", true, false),
+        FieldType versionedMutableFt = typeManager.newFieldType(typeManager.getValueType("LIST", "LINK"),
                 new QName("ns", "link3"), Scope.VERSIONED_MUTABLE);
         versionedMutableFt = typeManager.createFieldType(versionedMutableFt);
 

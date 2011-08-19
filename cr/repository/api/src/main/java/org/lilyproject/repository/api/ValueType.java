@@ -15,9 +15,12 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 
 /**
  * A value type represents the type of the value of a {@link FieldType}.
@@ -51,39 +54,19 @@ import org.lilyproject.bytes.api.DataInput;
 public interface ValueType {
 
     /**
-     * Is this a multi-value value type.
-     */
-    boolean isMultiValue();
-    
-    /**
-     * Is this a hierarchical value type. See also {@link HierarchyPath}.
-     */
-    boolean isHierarchical();
-
-    /**
-     * Is this a primitive value type. A value type is primitive if it is not hierarchical and not multi-value, thus
-     * if its values directly correspond to the {@link #getPrimitive PrimitiveValueType}. This is a shortcut method
-     * to avoid checking the other flags individually.
-     */
-    boolean isPrimitive();
-
-    /**
      * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
      * @throws UnknownValueTypeEncodingException 
      */
-    public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException;
+    Object read(DataInput dataInput) throws UnknownValueTypeEncodingException;
     
 
+    void write(Object value, DataOutput dataOutput);
+    
     /**
      * Encodes an object of the type represented by this {@link ValueType} to a byte[].
      */
     byte[] toBytes(Object value);
 
-    /**
-     * Gets the primitive value type.
-     */
-    PrimitiveValueType getPrimitive();
-    
     /**
      * Returns the Java {@link Class} object for the values of this value type.
      *
@@ -93,10 +76,7 @@ public interface ValueType {
      */
     Class getType();
 
-    /**
-     * Returns an encoded byte[] representing this value type.
-     */
-    byte[] toBytes();
+    String getTypeParams();
     
     /**
      * Returns a set of all values contained in this value.
@@ -105,4 +85,27 @@ public interface ValueType {
     Set<Object> getValues(Object value);
     
     boolean equals(Object obj);
+    
+    /**
+     * A comparator that can compare the values corresponding to this value type.
+     *
+     * <p>If comparing values is not supported, null is returned.</p>
+     *
+     * <p>This method should be lightweight to call, so preferably return the same instance on each invocation.</p>
+     */
+    Comparator getComparator();
+    
+    String getName();
+    
+    String getFullName();
+    
+    ValueType getBaseValueType();
+    
+    ValueType getNestedValueType();
+    
+    int getNestingLevel();
+    
+    boolean isMultiValue();
+    
+    boolean isHierarchical();
 }

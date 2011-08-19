@@ -18,6 +18,7 @@ package org.lilyproject.repository.api;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 // IMPORTANT:
 //   See the note on the requirement TypeException described in the Repository.java file.
@@ -184,7 +185,7 @@ public interface TypeManager extends Closeable {
     /**
      * Provides {@link ValueType} instances. These are used to set to value type of {@link FieldType}s.
      *
-     * <p>The built-in available primitive value types are listed in the following table.
+     * <p>The built-in available value types are listed in the following table.
      *
      * <table>
      * <tbody>
@@ -200,29 +201,28 @@ public interface TypeManager extends Closeable {
      * <tr><td>BLOB</td>     <td>org.lilyproject.repository.api.Blob</td></tr>
      * <tr><td>LINK</td>     <td>org.lilyproject.repository.api.Link</td></tr>
      * <tr><td>URI</td>      <td>java.net.URI</td></tr>
+     * <tr><td>LIST</td>      <td>java.util.List</td></tr>
      * </tbody>
      * </table>
      *
-     * @param primitiveValueTypeName the name of the {@link PrimitiveValueType} to be encapsulated by this
-     *                               {@link ValueType}. See table above.
-     * @param multiValue if this {@link ValueType} should represent a multi value field or not
-     * @param hierarchical if this{@link ValueType} should represent a {@link HierarchyPath} field or not
+     * @param valueTypeName the name of the {@link ValueType}. See table above.
+     * @param typeParams String of parameters specific to the value type
      */
-    ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical) throws RepositoryException, InterruptedException;
+    ValueType getValueType(String valueTypeName, String typeParams) throws RepositoryException, InterruptedException;
+    
+    /**
+     * Shortcut for {@link #getValueType(String, String) getValueType(name, null)}.
+     */
+    ValueType getValueType(String valueTypeName) throws RepositoryException, InterruptedException;
 
     /**
-     * Shortcut for {@link #getValueType(String, boolean, boolean) getValueType(name, false, false)}.
-     */
-    ValueType getValueType(String primitiveValueTypeName) throws RepositoryException, InterruptedException;
-
-    /**
-     * Registers custom {@link PrimitiveValueType}s.
+     * Registers custom {@link ValueType}s.
      *
      * <p><b>TODO:</b> Maybe this should rather move to an SPI interface? Can this replace a built-in primitive
      * value type if the name corresponds? Does it make sense to allow registering at any time? Probably implies
      * registering on all Lily nodes? This needs more thought.
      */
-    void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) throws RepositoryException, InterruptedException;
+    void registerValueType(String name, ValueTypeFactory valueTypeFactory) throws RepositoryException, InterruptedException;
 
     /**
      * Returns a snapshot of the FieldTypes. To be used when a consistent snapshot is needed while performing a CRUD operation.

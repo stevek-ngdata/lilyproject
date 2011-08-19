@@ -67,6 +67,8 @@ public interface BlobManager {
      */
     BlobAccess getBlobAccess(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
             FieldType fieldType) throws BlobNotFoundException, BlobException;
+    
+    BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, Integer...indexes) throws BlobNotFoundException, BlobException;
 
     /**
      * The BlobManager manages the BlobStoreAccess functionality for the Repository. 

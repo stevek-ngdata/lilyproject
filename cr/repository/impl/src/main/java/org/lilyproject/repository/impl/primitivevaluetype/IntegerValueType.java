@@ -15,15 +15,16 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
-
 import java.util.Comparator;
 
-public class IntegerValueType implements PrimitiveValueType {
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-    private final String NAME = "INTEGER";
+public class IntegerValueType extends AbstractValueType implements ValueType {
+
+    public static final String NAME = "INTEGER";
 
     private static final Comparator<Integer> COMPARATOR = new Comparator<Integer>() {
         @Override
@@ -34,6 +35,10 @@ public class IntegerValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public Integer read(DataInput dataInput) {
@@ -76,5 +81,22 @@ public class IntegerValueType implements PrimitiveValueType {
         } else if (!NAME.equals(other.NAME))
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new IntegerValueTypeFactory();
+    }
+    
+    public static class IntegerValueTypeFactory implements ValueTypeFactory {
+        private static IntegerValueType instance = new IntegerValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

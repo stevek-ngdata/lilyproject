@@ -27,7 +27,7 @@ public class Formatters {
     
     public Formatter getFormatter(ValueType valueType) {
         for (FormatterEntry entry : formatters) {
-            if (!entry.useForTypes.contains(valueType.getPrimitive().getName())
+            if (!entry.useForTypes.contains(valueType.getBaseValueType().getName())
                     && !entry.useForTypes.isEmpty())
                 continue;
 

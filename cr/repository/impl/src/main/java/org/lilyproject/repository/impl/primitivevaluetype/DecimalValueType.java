@@ -20,11 +20,12 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-public class DecimalValueType implements PrimitiveValueType {
+public class DecimalValueType extends AbstractValueType implements ValueType {
 
-    private final String NAME = "DECIMAL";
+    public final static String NAME = "DECIMAL";
 
     private static final Comparator<BigDecimal> COMPARATOR = new Comparator<BigDecimal>() {
         @Override
@@ -35,6 +36,10 @@ public class DecimalValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public BigDecimal read(DataInput dataInput) {
@@ -77,5 +82,22 @@ public class DecimalValueType implements PrimitiveValueType {
         } else if (!NAME.equals(other.NAME))
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new DecimalValueTypeFactory();
+    }
+    
+    public static class DecimalValueTypeFactory implements ValueTypeFactory {
+        private static DecimalValueType instance = new DecimalValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

@@ -15,30 +15,31 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
+import java.util.Comparator;
+
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.Link;
-import org.lilyproject.repository.api.PrimitiveValueType;
-import org.lilyproject.repository.api.RecordId;
-
-import java.util.Comparator;
+import org.lilyproject.repository.api.*;
 
 /**
  *
  */
-public class LinkValueType implements PrimitiveValueType {
+public class LinkValueType extends AbstractValueType implements ValueType {
     
-    private final String NAME = "LINK";
+    public final static String NAME = "LINK";
     private final IdGenerator idGenerator;
+    private static TypeManager typeManager;
 
     public LinkValueType(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
-        
     }
     
     public String getName() {
         return NAME;
+    }
+    
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public Link read(DataInput dataInput) {
@@ -59,5 +60,26 @@ public class LinkValueType implements PrimitiveValueType {
     @Override
     public Comparator getComparator() {
         return null;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory(IdGenerator idGenerator) {
+        return new LinkValueTypeFactory(idGenerator);
+    }
+    
+    public static class LinkValueTypeFactory implements ValueTypeFactory {
+        private static LinkValueType instance;
+
+        LinkValueTypeFactory(IdGenerator idGenerator){
+            instance = new LinkValueType(idGenerator);
+        }
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

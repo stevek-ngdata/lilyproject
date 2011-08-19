@@ -45,8 +45,7 @@ public class VersionTag {
         String namespace = fieldType.getName().getNamespace();
         return (namespace != null && namespace.equals(NAMESPACE)
                 && fieldType.getScope() == Scope.NON_VERSIONED
-                && fieldType.getValueType().isPrimitive()
-                && fieldType.getValueType().getPrimitive().getName().equals("LONG")
+                && fieldType.getValueType().getName().equals("LONG")
                 && !fieldType.getName().getName().equals("last")); /* filter out 'last' vtag, it should not be
                                                                       custom assigned */
     }

@@ -15,15 +15,18 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
+import java.util.Comparator;
+import java.util.Map;
+
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class StringValueType extends AbstractValueType implements ValueType {
 
-public class StringValueType implements PrimitiveValueType {
-
-    private final String NAME = "STRING";
+    public static final String NAME = "STRING";
+    private static StringValueType instance = new StringValueType();
 
     private static final Comparator<String> COMPARATOR = new Comparator<String>() {
         @Override
@@ -34,6 +37,14 @@ public class StringValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+    
+    public ValueType getBaseValueType() {
+        return this;
+    }
+    
+    public static StringValueType instance(Map<String, String> typeParams) {
+        return instance;
     }
 
     public String read(DataInput dataInput) {
@@ -81,4 +92,20 @@ public class StringValueType implements PrimitiveValueType {
         return true;
     }
 
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new StringValueTypeFactory();
+    }
+    
+    public static class StringValueTypeFactory implements ValueTypeFactory {
+        private static StringValueType instance = new StringValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
+    }
 }

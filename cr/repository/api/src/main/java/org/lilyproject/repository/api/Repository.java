@@ -427,9 +427,8 @@ public interface Repository extends Closeable {
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
      * @throws BlobException thrown when opening an InputStream on the blob fails
      */
-    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException;
-
+    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
+    
     /**
      * Shortcut getBlob method where version, multiValueIndex and hierarchyIndex are set to null.
      */
@@ -441,8 +440,7 @@ public interface Repository extends Closeable {
      * <p>This is a shortcut for {@link #getBlob}.getInputStream().
      *
      */
-    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException;
+    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
 
     /**
      * Shortcut getInputStream method where version, multiValueIndex and hierarchyIndex are set to null.
@@ -454,13 +452,8 @@ public interface Repository extends Closeable {
      * This avoids an extra call on the repository to read the record.
      * This is especially usefull for inline blobs. 
      */
-    InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws RepositoryException, InterruptedException;
-
-    /**
-     * Shortcut getInputStream method where the record is given and multivalueIndex and hierarchyIndex are set to null. 
-     */
-    InputStream getInputStream(Record record, QName fieldName) throws RepositoryException, InterruptedException;
-
+    InputStream getInputStream(Record record, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
+    
     /**
      * Get all the variants that exist for the given recordId.
      *

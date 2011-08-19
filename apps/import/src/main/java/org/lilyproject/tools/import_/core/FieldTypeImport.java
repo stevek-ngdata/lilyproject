@@ -55,8 +55,8 @@ public class FieldTypeImport {
                     boolean updated = false;
 
                     // Check non-mutable fields are equal
-                    String oldPrimitive = oldFieldType.getValueType().getPrimitive().getName();
-                    String newPrimitive = newFieldType.getValueType().getPrimitive().getName();
+                    String oldPrimitive = oldFieldType.getValueType().getBaseValueType().getName();
+                    String newPrimitive = newFieldType.getValueType().getBaseValueType().getName();
                     if (!oldPrimitive.equals(newPrimitive)) {
                         return ImportResult.conflict("primitive type", oldPrimitive, newPrimitive);
                     }

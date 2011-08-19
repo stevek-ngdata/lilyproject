@@ -252,8 +252,8 @@ public class Indexer {
         nameContext.put("namespace", fieldType.getName().getNamespace());
         nameContext.put("name", fieldType.getName().getName());
         ValueType valueType = fieldType.getValueType();
-        nameContext.put("primitiveType", valueType.getPrimitive().getName());
-        nameContext.put("primitiveTypeLC", valueType.getPrimitive().getName().toLowerCase());
+        nameContext.put("primitiveType", valueType.getBaseValueType().getName());
+        nameContext.put("primitiveTypeLC", valueType.getBaseValueType().getName().toLowerCase());
         nameContext.put("multiValue", valueType.isMultiValue());
         nameContext.put("hierarchical", valueType.isHierarchical());
         if (match.nameMatch != null) {

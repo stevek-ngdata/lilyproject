@@ -46,7 +46,18 @@ public class FieldTypeReader implements EntityReader<FieldType> {
         Scope scope = parseScope(scopeName);
 
         TypeManager typeManager = repository.getTypeManager();
-        ValueType valueType = typeManager.getValueType(primitive, multiValue, hierarchical);
+        ValueType valueType;
+        if (multiValue) {
+            if (hierarchical) {
+                valueType = typeManager.getValueType("LIST", "PATH<"+primitive+">");
+            } else {
+                valueType = typeManager.getValueType("LIST", primitive);
+            }
+        } else if (hierarchical) {
+            valueType = typeManager.getValueType("PATH", primitive);
+        } else {
+            valueType = typeManager.getValueType(primitive);
+        }
         FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
 
         String idString = getString(node, "id", null);
@@ -60,7 +71,7 @@ public class FieldTypeReader implements EntityReader<FieldType> {
             if (fieldType.getScope() != Scope.NON_VERSIONED)
                 throw new JsonFormatException("vtag fields should be in the non-versioned scope");
 
-            if (!fieldType.getValueType().getPrimitive().getName().equals("LONG"))
+            if (!fieldType.getValueType().getBaseValueType().getName().equals("LONG"))
                 throw new JsonFormatException("vtag fields should be of type LONG");
 
             if (fieldType.getValueType().isMultiValue())

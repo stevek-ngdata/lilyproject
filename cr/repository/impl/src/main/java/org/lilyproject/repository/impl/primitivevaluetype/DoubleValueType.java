@@ -15,15 +15,16 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
-
 import java.util.Comparator;
 
-public class DoubleValueType implements PrimitiveValueType {
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-    private final String NAME = "DOUBLE";
+public class DoubleValueType extends AbstractValueType implements ValueType {
+
+    public final static String NAME = "DOUBLE";
 
     private static final Comparator<Double> COMPARATOR = new Comparator<Double>() {
         @Override
@@ -34,6 +35,10 @@ public class DoubleValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+    
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public Double read(DataInput dataInput) {
@@ -76,5 +81,22 @@ public class DoubleValueType implements PrimitiveValueType {
         } else if (!NAME.equals(other.NAME))
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new DoubleValueTypeFactory();
+    }
+    
+    public static class DoubleValueTypeFactory implements ValueTypeFactory {
+        private static DoubleValueType instance = new DoubleValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

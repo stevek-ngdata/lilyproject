@@ -36,9 +36,9 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     private static FieldType fieldType3;
 
     protected static void setupFieldTypes() throws Exception {
-        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName("ns1", "field1"), Scope.NON_VERSIONED));
-        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(null, "field2"), Scope.VERSIONED));
-        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName("ns1", "field3"), Scope.VERSIONED_MUTABLE));
+        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("ns1", "field1"), Scope.NON_VERSIONED));
+        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName(null, "field2"), Scope.VERSIONED));
+        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"), new QName("ns1", "field3"), Scope.VERSIONED_MUTABLE));
     }
 
     @Test
@@ -320,7 +320,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     
     @Test
     public void testGetFieldTypes() throws Exception {
-        FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName("NS", "getFieldTypes"), Scope.NON_VERSIONED));
+        FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("NS", "getFieldTypes"), Scope.NON_VERSIONED));
         Collection<FieldType> fieldTypes = typeManager.getFieldTypes();
         assertTrue(fieldTypes.contains(fieldType));
     }

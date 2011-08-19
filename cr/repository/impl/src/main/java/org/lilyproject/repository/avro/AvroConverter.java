@@ -75,7 +75,7 @@ public class AvroConverter {
         if (avroRecord.fields != null) {
             for (AvroField field : avroRecord.fields) {
                 QName name = convert(field.name);
-                ValueType valueType = typeManager.getValueType(convert(field.primitiveType), field.multiValue, field.hierarchical);
+                ValueType valueType = typeManager.getValueType(convert(field.valueType), convert(field.typeParams));
                 Object value = valueType.read(new DataInputImpl(field.value.array()));
                 record.setField(name, value);
             }
@@ -139,7 +139,7 @@ public class AvroConverter {
             // value is optional
             Object value = null;
             if (avroCond.value != null) {
-                ValueType valueType = typeManager.getValueType(convert(avroCond.primitiveType), avroCond.multiValue, avroCond.hierarchical);
+                ValueType valueType = typeManager.getValueType(convert(avroCond.valueType), convert(avroCond.typeParams));
                 value = valueType.read(new DataInputImpl(avroCond.value.array()));
             }
 
@@ -201,9 +201,8 @@ public class AvroConverter {
                 throw convert(e);
             }
 
-            avroField.primitiveType = fieldType.getValueType().getPrimitive().getName();
-            avroField.multiValue = fieldType.getValueType().isMultiValue();
-            avroField.hierarchical = fieldType.getValueType().isHierarchical();
+            avroField.valueType = fieldType.getValueType().getName();
+            avroField.typeParams = fieldType.getValueType().getTypeParams();
 
             byte[] value = fieldType.getValueType().toBytes(field.getValue());
             avroField.value = ByteBuffer.wrap(value);
@@ -284,9 +283,8 @@ public class AvroConverter {
             avroCond.name = convert(condition.getField());
 
             if (condition.getValue() != null) {
-                avroCond.primitiveType = convert(fieldType.getValueType().getPrimitive().getName());
-                avroCond.multiValue = fieldType.getValueType().isMultiValue();
-                avroCond.hierarchical = fieldType.getValueType().isHierarchical();
+                avroCond.valueType = convert(fieldType.getValueType().getName());
+                avroCond.typeParams = fieldType.getValueType().getTypeParams();
 
                 byte[] value = fieldType.getValueType().toBytes(condition.getValue());
                 avroCond.value = ByteBuffer.wrap(value);
@@ -375,14 +373,13 @@ public class AvroConverter {
     }
 
     public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {
-        return typeManager.getValueType(convert(valueType.primitiveValueType), valueType.multivalue, valueType.hierarchical);
+        return typeManager.getValueType(convert(valueType.valueType), convert(valueType.typeParams));
     }
 
     public AvroValueType convert(ValueType valueType) {
         AvroValueType avroValueType = new AvroValueType();
-        avroValueType.primitiveValueType = valueType.getPrimitive().getName();
-        avroValueType.multivalue = valueType.isMultiValue();
-        avroValueType.hierarchical = valueType.isHierarchical();
+        avroValueType.valueType = valueType.getName();
+        avroValueType.typeParams = valueType.getTypeParams();
         return avroValueType;
     }
 

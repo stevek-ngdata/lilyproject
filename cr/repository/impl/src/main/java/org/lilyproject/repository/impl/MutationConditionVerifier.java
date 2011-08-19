@@ -106,16 +106,11 @@ public class MutationConditionVerifier {
         }
 
         ValueType valueType = typeManager.getFieldTypeByName(cond.getField()).getValueType();
-        Comparator comparator = valueType.getPrimitive().getComparator();
-
-        if (!valueType.isPrimitive()) {
-            throw new RepositoryException("Other than (not-)equal operator in mutation condition is only allowed for "
-                    + "single-valued fields. Condition on field: " + cond.getField());
-        }
+        Comparator comparator = valueType.getComparator();
 
         if (comparator == null) {
             throw new RepositoryException("Other than (not-)equals operator in mutation condition used for value type "
-                    + "that does not support comparison: " + valueType.getPrimitive().getName());
+                    + "that does not support comparison: " + valueType.getFullName());
         }
 
         int result = comparator.compare(currentValue, cond.getValue());

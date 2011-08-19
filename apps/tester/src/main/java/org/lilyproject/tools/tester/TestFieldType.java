@@ -86,7 +86,7 @@ public class TestFieldType {
     }
     
     private ActionResult generatePrimitiveValue(TestAction testAction) {
-        String primitive = fieldType.getValueType().getPrimitive().getName();
+        String primitive = fieldType.getValueType().getBaseValueType().getName();
 
         if (primitive.equals("STRING")) {
             return new ActionResult(true, generateString(), 0);

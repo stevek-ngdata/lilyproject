@@ -63,16 +63,16 @@ public abstract class AbstractRepositoryTest {
     }
 
     private static void setupFieldTypes() throws Exception {
-        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field1"), Scope.NON_VERSIONED));
-        fieldType1B = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field1B"), Scope.NON_VERSIONED));
-        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(namespace, "field2"), Scope.VERSIONED));
-        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName(namespace, "field3"),
+        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(namespace, "field1"), Scope.NON_VERSIONED));
+        fieldType1B = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(namespace, "field1B"), Scope.NON_VERSIONED));
+        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName(namespace, "field2"), Scope.VERSIONED));
+        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"), new QName(namespace, "field3"),
                 Scope.VERSIONED_MUTABLE));
 
-        fieldType4 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(namespace, "field4"), Scope.NON_VERSIONED));
-        fieldType5 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName(namespace, "field5"), Scope.VERSIONED));
+        fieldType4 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName(namespace, "field4"), Scope.NON_VERSIONED));
+        fieldType5 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"), new QName(namespace, "field5"), Scope.VERSIONED));
         fieldType6 = typeManager.createFieldType(typeManager
-                .newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field6"), Scope.VERSIONED_MUTABLE));
+                .newFieldType(typeManager.getValueType("STRING"), new QName(namespace, "field6"), Scope.VERSIONED_MUTABLE));
         
     }
     
@@ -568,8 +568,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadSpecificFields() throws Exception {
         Record record = createDefaultRecord();
-        Record readRecord = repository.read(record.getId(), Arrays.asList(fieldType1.getName(), fieldType2.getName(),
-                fieldType3.getName()));
+        Record readRecord = repository.read(record.getId(), fieldType1.getName(), fieldType2.getName(), fieldType3.getName());
         assertEquals(repository.read(record.getId()), readRecord);
     }
 
@@ -1777,7 +1776,7 @@ public abstract class AbstractRepositoryTest {
     
     @Test
     public void testRecordWithLinkFields() throws Exception {
-        FieldType linkFieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LINK", false, false), new QName("testRecordWithLinkFields", "linkFieldType"), Scope.NON_VERSIONED));
+        FieldType linkFieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LINK"), new QName("testRecordWithLinkFields", "linkFieldType"), Scope.NON_VERSIONED));
 
         RecordType recordTypeWithLink = typeManager.newRecordType(new QName(namespace, "recordTypeWithLink"));
         recordTypeWithLink.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));

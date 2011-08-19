@@ -97,7 +97,7 @@ public class ValueEvaluator {
             indexValues = Collections.singletonList(new IndexValue(record, fieldType, value));
         }
 
-        if (fieldType.getValueType().getPrimitive().getName().equals("BLOB") && extractContent) {
+        if (fieldType.getValueType().getBaseValueType().getName().equals("BLOB") && extractContent) {
             return extractContent(indexValues, repository);
         }
 

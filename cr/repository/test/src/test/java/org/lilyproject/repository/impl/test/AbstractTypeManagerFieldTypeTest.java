@@ -33,7 +33,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     @Test
     public void testCreate() throws Exception {
         QName name = new QName(null, "testCreate");
-        ValueType valueType = typeManager.getValueType("STRING", false, false);
+        ValueType valueType = typeManager.getValueType("STRING");
         FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         assertEquals(fieldType, typeManager.getFieldTypeById(fieldType.getId()));
@@ -44,7 +44,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     @Test
     public void testCreateIgnoresGivenId() throws Exception {
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
-        ValueType valueType = typeManager.getValueType("STRING", false, false);
+        ValueType valueType = typeManager.getValueType("STRING");
         FieldType fieldType = typeManager.newFieldType(id, valueType , new QName(null, "aName"), Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         assertFalse(fieldType.getId().equals(id));
@@ -53,11 +53,11 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     @Test
     public void testCreateSameNameFails() throws Exception {
         QName name = new QName(null, "testCreateSameNameFails");
-        ValueType valueType = typeManager.getValueType("STRING", false, false);
+        ValueType valueType = typeManager.getValueType("STRING");
         FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.NON_VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         
-        ValueType valueType2 = typeManager.getValueType("INTEGER", false, false);
+        ValueType valueType2 = typeManager.getValueType("INTEGER");
         FieldType fieldType2 = typeManager.newFieldType(valueType2, name, Scope.NON_VERSIONED);
         try {
             if (avro)
@@ -71,7 +71,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     @Test
     public void testUpdate() throws Exception {
         QName name = new QName(null, "testUpdate");
-        ValueType valueType = typeManager.getValueType("STRING", false, false);
+        ValueType valueType = typeManager.getValueType("STRING");
         FieldType fieldTypeCreate = typeManager.newFieldType(valueType , name, Scope.VERSIONED);
         fieldTypeCreate = typeManager.createFieldType(fieldTypeCreate);
         
@@ -83,7 +83,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         assertEquals(typeManager.getFieldTypeById(fieldTypeCreate.getId()), typeManager.getFieldTypeByName(new QName(null, "newName")));
         
         // Create new fieldType with first name
-        ValueType valueType2 = typeManager.getValueType("INTEGER", false, false);
+        ValueType valueType2 = typeManager.getValueType("INTEGER");
         FieldType fieldType2 = typeManager.newFieldType(valueType2 , name, Scope.NON_VERSIONED);
         fieldType2 = typeManager.createFieldType(fieldTypeCreate);
         assertEquals(fieldType2, typeManager.getFieldTypeByName(name));
@@ -92,11 +92,11 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     @Test
     public void testUpdateValueTypeFails() throws Exception {
         QName name = new QName(null, "testUpdateValueTypeFails");
-        ValueType valueType = typeManager.getValueType("STRING", false, false);
+        ValueType valueType = typeManager.getValueType("STRING");
         FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         
-        fieldType.setValueType(typeManager.getValueType("INTEGER", false, false));
+        fieldType.setValueType(typeManager.getValueType("INTEGER"));
         try {
             if (avro)
                 System.out.println("Expecting FieldTypeUpdateException");
@@ -109,7 +109,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     @Test
     public void testUpdateScopeFails() throws Exception {
         QName name = new QName(null, "testUpdateScopeFails");
-        ValueType valueType = typeManager.getValueType("STRING", false, false);
+        ValueType valueType = typeManager.getValueType("STRING");
         FieldType fieldType = typeManager.newFieldType(valueType , name, Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         
@@ -126,12 +126,12 @@ public abstract class AbstractTypeManagerFieldTypeTest {
     @Test
     public void testUpdateToAnExistingNameFails() throws Exception {
         QName name1 = new QName(null, "testUpdateToAnExistingNameFails1");
-        ValueType valueType = typeManager.getValueType("STRING", false, false);
+        ValueType valueType = typeManager.getValueType("STRING");
         FieldType fieldType = typeManager.newFieldType(valueType , name1, Scope.VERSIONED);
         fieldType = typeManager.createFieldType(fieldType);
         
         QName name2 = new QName(null, "testUpdateToAnExistingNameFails2");
-        ValueType valueType2 = typeManager.getValueType("STRING", false, false);
+        ValueType valueType2 = typeManager.getValueType("STRING");
         FieldType fieldType2 = typeManager.newFieldType(valueType2 , name2, Scope.VERSIONED);
         fieldType2 = typeManager.createFieldType(fieldType2);
         

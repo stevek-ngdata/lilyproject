@@ -16,6 +16,8 @@
 package org.lilyproject.repository.impl;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import org.apache.commons.logging.Log;
@@ -38,7 +40,7 @@ public abstract class AbstractTypeManager implements TypeManager {
 
     protected CacheRefresher cacheRefresher = new CacheRefresher();
     
-    protected Map<String, PrimitiveValueType> primitiveValueTypes = new HashMap<String, PrimitiveValueType>();
+    protected Map<String, ValueTypeFactory> valueTypeFactories = new HashMap<String, ValueTypeFactory>();
     protected IdGenerator idGenerator;
     
     //
@@ -305,23 +307,18 @@ public abstract class AbstractTypeManager implements TypeManager {
             }
 
     //
-    // Primitive value types
+    // Value types
     //
-    public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {
-        primitiveValueTypes.put(primitiveValueType.getName(), primitiveValueType);
+    public void registerValueType(String valueTypeName, ValueTypeFactory valueTypeFactory) {
+        valueTypeFactories.put(valueTypeName, valueTypeFactory);
     }
 
-    public ValueType getValueType(String primitiveValueTypeName, boolean multivalue, boolean hierarchy) {
-        PrimitiveValueType type = primitiveValueTypes.get(primitiveValueTypeName);
-        if (type == null) {
-            throw new IllegalArgumentException("Primitive value type does not exist: " + primitiveValueTypeName);
-        }
-        return new ValueTypeImpl(type, multivalue, hierarchy);
+    public ValueType getValueType(String valueTypeName, String valueTypeParams) throws RepositoryException, InterruptedException {
+        return valueTypeFactories.get(valueTypeName).getValueType(valueTypeParams);
     }
 
-    @Override
-    public ValueType getValueType(String primitiveValueTypeName) throws RepositoryException, InterruptedException {
-        return getValueType(primitiveValueTypeName, false, false);
+    public ValueType getValueType(String valueTypeName) throws RepositoryException, InterruptedException {
+        return getValueType(valueTypeName, null);
     }
 
     // TODO get this from some configuration file
@@ -333,16 +330,19 @@ public abstract class AbstractTypeManager implements TypeManager {
         // types in the javadoc of the method TypeManager.getValueType.
         //
 
-        registerPrimitiveValueType(new StringValueType());
-        registerPrimitiveValueType(new IntegerValueType());
-        registerPrimitiveValueType(new LongValueType());
-        registerPrimitiveValueType(new DoubleValueType());
-        registerPrimitiveValueType(new DecimalValueType());
-        registerPrimitiveValueType(new BooleanValueType());
-        registerPrimitiveValueType(new DateValueType());
-        registerPrimitiveValueType(new DateTimeValueType());
-        registerPrimitiveValueType(new LinkValueType(idGenerator));
-        registerPrimitiveValueType(new BlobValueType());
-        registerPrimitiveValueType(new UriValueType());
+        // TODO or rather use factories?
+        registerValueType(StringValueType.NAME, StringValueType.factory());
+        registerValueType(IntegerValueType.NAME, IntegerValueType.factory());
+        registerValueType(LongValueType.NAME, LongValueType.factory());
+        registerValueType(DoubleValueType.NAME, DoubleValueType.factory());
+        registerValueType(DecimalValueType.NAME, DecimalValueType.factory());
+        registerValueType(BooleanValueType.NAME, BooleanValueType.factory());
+        registerValueType(DateValueType.NAME, DateValueType.factory());
+        registerValueType(DateTimeValueType.NAME, DateTimeValueType.factory());
+        registerValueType(LinkValueType.NAME, LinkValueType.factory(idGenerator));
+        registerValueType(BlobValueType.NAME, BlobValueType.factory());
+        registerValueType(UriValueType.NAME, UriValueType.factory());
+        registerValueType(ListValueType.NAME, ListValueType.factory(this));
+        registerValueType(PathValueType.NAME, PathValueType.factory(this));
     }
 }

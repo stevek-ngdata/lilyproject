@@ -15,18 +15,18 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
+import java.util.Comparator;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput; 
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class DateValueType extends AbstractValueType implements ValueType {
 
-public class DateValueType implements PrimitiveValueType {
-
-    private final String NAME = "DATE";
+    public final static String NAME = "DATE";
 
     private static final Comparator<LocalDate> COMPARATOR = new Comparator<LocalDate>() {
         @Override
@@ -37,6 +37,10 @@ public class DateValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public LocalDate read(DataInput dataInput) {
@@ -77,5 +81,22 @@ public class DateValueType implements PrimitiveValueType {
         if (getClass() != obj.getClass())
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new DateValueTypeFactory();
+    }
+    
+    public static class DateValueTypeFactory implements ValueTypeFactory {
+        private static DateValueType instance = new DateValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

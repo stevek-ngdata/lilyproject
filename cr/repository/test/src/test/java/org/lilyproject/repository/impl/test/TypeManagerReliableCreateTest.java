@@ -63,7 +63,7 @@ public class TypeManagerReliableCreateTest {
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
-        valueType = typeManager.getValueType("LONG", false, false);
+        valueType = typeManager.getValueType("LONG");
     }
     
     @AfterClass

@@ -17,9 +17,8 @@
       "type": "record",
       "fields": [
         {"name": "name", "type": "AvroQName"},
-        {"name": "primitiveType", "type": "string"},
-        {"name": "multiValue", "type": "boolean"},
-        {"name": "hierarchical", "type": "boolean"},
+        {"name": "valueType", "type": "string"},
+        {"name": "typeParams", "type": ["string", "null"]},
         {"name": "value", "type": "bytes"}
       ]
     },
@@ -49,9 +48,8 @@
       "type": "record",
       "fields": [
         {"name": "name", "type": "AvroQName"},
-        {"name": "primitiveType", "type": ["null", "string"]},
-        {"name": "multiValue", "type": ["null", "boolean"]},
-        {"name": "hierarchical", "type": ["null", "boolean"]},
+        {"name": "valueType", "type": ["null", "string"]},
+        {"name": "typeParams", "type": ["null", "string"]},
         {"name": "value", "type": ["null", "bytes"]},
         {"name": "operator", "type":
           {"name": "AvroCompareOp", "type": "enum",
@@ -131,9 +129,8 @@
       "name": "AvroValueType",
       "type": "record",
       "fields": [
-        {"name": "primitiveValueType", "type": "string"},
-        {"name": "multivalue", "type": "boolean"},
-        {"name": "hierarchical", "type": "boolean"}
+        {"name": "valueType", "type": "string"},
+        {"name": "typeParams", "type": ["string", "null"]}
       ]
     },
 

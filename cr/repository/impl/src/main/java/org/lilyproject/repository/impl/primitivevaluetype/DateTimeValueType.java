@@ -16,16 +16,17 @@
 package org.lilyproject.repository.impl.primitivevaluetype;
 
 
+import java.util.Comparator;
+
 import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class DateTimeValueType extends AbstractValueType implements ValueType {
 
-public class DateTimeValueType implements PrimitiveValueType {
-
-    private final String NAME = "DATETIME";
+    public final static String NAME = "DATETIME";
 
     private static final Comparator<DateTime> COMPARATOR = new Comparator<DateTime>() {
         @Override
@@ -36,6 +37,10 @@ public class DateTimeValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public DateTime read(DataInput dataInput) {
@@ -76,5 +81,22 @@ public class DateTimeValueType implements PrimitiveValueType {
         if (getClass() != obj.getClass())
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new DateTimeValueTypeFactory();
+    }
+    
+    public static class DateTimeValueTypeFactory implements ValueTypeFactory {
+        private static DateTimeValueType instance = new DateTimeValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

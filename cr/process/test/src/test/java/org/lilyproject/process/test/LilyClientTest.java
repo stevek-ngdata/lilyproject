@@ -63,7 +63,7 @@ public class LilyClientTest {
 
         // Create a blob field type and record type
         TypeManager typeManager = repository.getTypeManager();
-        ValueType blobType = typeManager.getValueType("BLOB", false, false);
+        ValueType blobType = typeManager.getValueType("BLOB");
         FieldType blobFieldType = typeManager.newFieldType(blobType, new QName(NS, "data"), Scope.VERSIONED);
         blobFieldType = typeManager.createFieldType(blobFieldType);
 

@@ -37,40 +37,28 @@ public abstract class BaseRepository implements Repository {
         return blobManager.getOutputStream(blob);
     }
 
+    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+        Record record = read(recordId, version, fieldName);
+        return getInputStream(record, fieldName, indexes);
+    }
+    
     public InputStream getInputStream(RecordId recordId, QName fieldName)
             throws RepositoryException, InterruptedException {
-        return getInputStream(recordId, null, fieldName, null, null);
-    }
-
-    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException {
-        Record record = read(recordId, version, Arrays.asList(fieldName));
-        return getInputStream(record, fieldName, multivalueIndex, hierarchyIndex);
+        return getInputStream(recordId, null, fieldName);
     }
     
-    public InputStream getInputStream(Record record, QName fieldName) throws RepositoryException, InterruptedException {
-        return getInputStream(record, fieldName, null, null);
+    public InputStream getInputStream(Record record, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+        FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
+        return blobManager.getBlobAccess(record, fieldName, fieldType, indexes).getInputStream();
+    }
+
+    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+        Record record = read(recordId, version, fieldName);
+        FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
+        return blobManager.getBlobAccess(record, fieldName, fieldType, indexes);
     }
     
-    public InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex)
-            throws RepositoryException, InterruptedException {
-        FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
-        return blobManager.getBlobAccess(record, fieldName, multivalueIndex, hierarchyIndex, fieldType).getInputStream();
-    }
-
-    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException {
-
-        Record record = read(recordId, version, Arrays.asList(fieldName));
-        FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
-        return blobManager.getBlobAccess(record, fieldName, multiValueIndex, hierarchyIndex, fieldType);
-
-    }
-
-
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException {
-
-        return getBlob(recordId, null, fieldName, null, null);
-
+        return getBlob(recordId, null, fieldName);
     }
 }

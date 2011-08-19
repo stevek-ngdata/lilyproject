@@ -57,7 +57,7 @@ public class DynamicIndexField {
         }
 
         if (primitiveTypes != null) {
-            if (!primitiveTypes.contains(fieldType.getValueType().getPrimitive().getName())) {
+            if (!primitiveTypes.contains(fieldType.getValueType().getBaseValueType().getName())) {
                 match.match = false;
                 return match;
             }

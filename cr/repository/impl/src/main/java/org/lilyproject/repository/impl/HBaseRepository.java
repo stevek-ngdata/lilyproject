@@ -29,7 +29,10 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
@@ -622,9 +625,10 @@ public class HBaseRepository extends BaseRepository {
             return DELETE_MARKER;
         ValueType valueType = fieldType.getValueType();
 
-        byte[] encodedFieldValue = valueType.toBytes(fieldValue);
-        encodedFieldValue = EncodingUtil.prefixValue(encodedFieldValue, EXISTS_FLAG);
-        return encodedFieldValue;
+        DataOutput dataOutput = new DataOutputImpl();
+        dataOutput.writeByte(EXISTS_FLAG);
+        valueType.write(fieldValue, dataOutput);
+        return dataOutput.toByteArray();
     }
 
     private boolean isDeleteMarker(Object fieldValue) {
@@ -1267,14 +1271,16 @@ public class HBaseRepository extends BaseRepository {
     
     private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
             FieldTypes fieldTypes) throws RecordException, TypeException, InterruptedException {
-        if (EncodingUtil.isDeletedField(prefixedValue)) {
+        DataInput dataInput = new DataInputImpl(prefixedValue);
+        byte prefix = dataInput.readByte();
+        if (LilyHBaseSchema.DELETE_FLAG == prefix) {
             return null;
         }
         FieldType fieldType = fieldTypes.getFieldTypeById(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
         if (context != null) 
             context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
-        Object value = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(prefixedValue)));
+        Object value = valueType.read(dataInput);
         return new Pair<FieldType, Object>(fieldType, value);
     }
 
@@ -1411,7 +1417,7 @@ public class HBaseRepository extends BaseRepository {
                             Set<Entry<Long, byte[]>> cellsSet = cells.entrySet();
                             for (Entry<Long, byte[]> cell : cellsSet) {
                                 // Get blobs to delete
-                                if (valueType.getPrimitive() instanceof BlobValueType) {
+                                if (valueType.getBaseValueType() instanceof BlobValueType) {
                                     Object blobValue = null;
                                     if (fieldType.getScope() == Scope.NON_VERSIONED) {
                                         // Read the blob value from the original record, 
@@ -1495,8 +1501,7 @@ public class HBaseRepository extends BaseRepository {
     private Set<BlobReference> getReferencedBlobs(FieldTypeImpl fieldType, Object value) throws BlobException {
         HashSet<BlobReference> referencedBlobs = new HashSet<BlobReference>();
         ValueType valueType = fieldType.getValueType();
-        PrimitiveValueType primitiveValueType = valueType.getPrimitive();
-        if ((primitiveValueType instanceof BlobValueType) && ! isDeleteMarker(value)) {
+        if ((valueType.getBaseValueType() instanceof BlobValueType) && ! isDeleteMarker(value)) {
             Set<Object> values = valueType.getValues(value);
             for (Object object : values) {
                 referencedBlobs.add(new BlobReference((Blob)object, null, fieldType));
@@ -1532,14 +1537,8 @@ public class HBaseRepository extends BaseRepository {
 
             Get get = new Get(recordIdBytes);
             get.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
-            byte[] valueToCompare;
-            if (valueType.isMultiValue() && valueType.isHierarchical()) {
-                valueToCompare = Bytes.toBytes(2);
-            } else if (valueType.isMultiValue() || valueType.isHierarchical()) {
-                valueToCompare = Bytes.toBytes(1);
-            } else {
-                valueToCompare = Bytes.toBytes(0);
-            }
+            byte[] valueToCompare = Bytes.toBytes(valueType.getNestingLevel());
+            
             // Note, if a encoding of the BlobValueType is added, this might have to change.
             valueToCompare = Bytes.add(valueToCompare, blobReference.getBlob().getValue());
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);

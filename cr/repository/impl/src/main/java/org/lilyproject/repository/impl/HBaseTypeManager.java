@@ -447,7 +447,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Prepare the put
             Put put = new Put(rowId);
-            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes, fieldType.getValueType().toBytes());
+            put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes, encodeValueType(fieldType.getValueType()));
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes, Bytes
                     .toBytes(fieldType.getScope().name()));
             put.add(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes, nameBytes);
@@ -490,7 +490,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     public FieldType updateFieldType(FieldType fieldType) throws FieldTypeNotFoundException, FieldTypeUpdateException,
-            TypeException {
+            TypeException, RepositoryException, InterruptedException {
         byte[] rowId = fieldType.getId().getBytes();
         try {
             // Do an exists check first 
@@ -608,7 +608,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     
-    private FieldType getFieldTypeByIdWithoutCache(SchemaId id) throws FieldTypeNotFoundException, TypeException {
+    private FieldType getFieldTypeByIdWithoutCache(SchemaId id) throws FieldTypeNotFoundException, TypeException, RepositoryException, InterruptedException  {
         ArgumentValidator.notNull(id, "id");
         Result result;
         Get get = new Get(id.getBytes());
@@ -625,14 +625,13 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(TypeCf.DATA.bytes);
         QName name;
         name = decodeName(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_NAME.bytes));
-        ValueType valueType = ValueTypeImpl.fromBytes(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_VALUETYPE.bytes),
-                this);
+        ValueType valueType = decodeValueType(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_VALUETYPE.bytes));
         Scope scope = Scope.valueOf(Bytes.toString(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_SCOPE.bytes)));
         return new FieldTypeImpl(id, valueType, name, scope);
     }
 
     public List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException,
-            TypeException {
+            TypeException, RepositoryException, InterruptedException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
         ResultScanner scanner;
         try {
@@ -737,4 +736,24 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     public RecordTypeBuilder rtBuilder() throws TypeException {
         return new RecordTypeBuilderImpl(this);
     }
+    
+    // ValueType encoding
+    private byte valueTypeEncodingVersion = (byte)1;
+    
+    private byte[] encodeValueType(ValueType valueType) {
+        DataOutput dataOutput = new DataOutputImpl();
+        dataOutput.writeByte(valueTypeEncodingVersion);
+        dataOutput.writeUTF(valueType.getName());
+        dataOutput.writeUTF(valueType.getTypeParams());
+        return dataOutput.toByteArray();
+    }
+    
+    private ValueType decodeValueType(byte[] bytes) throws RepositoryException, InterruptedException {
+        DataInput dataInput = new DataInputImpl(bytes);
+        dataInput.readByte(); // Ignore since there is only have one encoding version
+        String valueTypeName = dataInput.readUTF();
+        String typeParams = dataInput.readUTF();
+        return getValueType(valueTypeName, typeParams);
+    }
+   
 }

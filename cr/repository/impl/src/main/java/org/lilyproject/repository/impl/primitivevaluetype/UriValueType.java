@@ -20,14 +20,19 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-public class UriValueType implements PrimitiveValueType {
+public class UriValueType extends AbstractValueType implements ValueType {
 
-    private final String NAME = "URI";
+    public final static String NAME = "URI";
 
     public String getName() {
         return NAME;
+    }
+
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public URI read(DataInput dataInput) {
@@ -70,5 +75,22 @@ public class UriValueType implements PrimitiveValueType {
         } else if (!NAME.equals(other.NAME))
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new UriValueTypeFactory();
+    }
+    
+    public static class UriValueTypeFactory implements ValueTypeFactory {
+        private static UriValueType instance = new UriValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

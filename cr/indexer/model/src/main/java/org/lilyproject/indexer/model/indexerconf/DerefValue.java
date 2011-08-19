@@ -51,9 +51,13 @@ public class DerefValue extends BaseValue {
             }
         }
 
+        // TODO make this more generic for multiple levels of LIST and PATH nesting
         if (multiValue) {
-            this.valueType = typeManager.getValueType(fieldType.getValueType().getPrimitive().getName(), true,
-                    fieldType.getValueType().isHierarchical());
+            if (fieldType.getValueType().isHierarchical()) {
+                this.valueType = typeManager.getValueType("LIST", "PATH<"+fieldType.getValueType().getBaseValueType().getName()+">");
+            } else {
+                this.valueType = typeManager.getValueType("LIST", fieldType.getValueType().getBaseValueType().getName());
+            }
         } else {
             this.valueType = fieldType.getValueType();
         }

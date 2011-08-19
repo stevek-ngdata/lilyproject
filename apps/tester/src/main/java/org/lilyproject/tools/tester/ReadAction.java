@@ -65,8 +65,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             QName fieldName = entry.getKey();
             FieldType fieldType = fieldTypes.get(fieldName);
             ValueType valueType = fieldType.getValueType();
-            PrimitiveValueType primitiveValueType = valueType.getPrimitive();
-            if (primitiveValueType instanceof BlobValueType) {
+            if (valueType.getBaseValueType() instanceof BlobValueType) {
                 if (valueType.isMultiValue()) {
                     List<Object> multivalues = (List<Object>)(entry.getValue());
                     int multivalueIndex = randomIndex(multivalues.size());

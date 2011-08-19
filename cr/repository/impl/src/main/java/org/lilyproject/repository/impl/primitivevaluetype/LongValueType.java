@@ -15,15 +15,16 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
-
 import java.util.Comparator;
 
-public class LongValueType implements PrimitiveValueType {
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-    private final String NAME = "LONG";
+public class LongValueType extends AbstractValueType  implements ValueType {
+
+    public final static String NAME = "LONG";
 
     private static final Comparator<Long> COMPARATOR = new Comparator<Long>() {
         @Override
@@ -34,6 +35,10 @@ public class LongValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+    
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public Long read(DataInput dataInput) {
@@ -76,5 +81,22 @@ public class LongValueType implements PrimitiveValueType {
         } else if (!NAME.equals(other.NAME))
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new LongValueTypeFactory();
+    }
+    
+    public static class LongValueTypeFactory implements ValueTypeFactory {
+        private static LongValueType instance = new LongValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

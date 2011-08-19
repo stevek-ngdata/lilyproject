@@ -15,19 +15,24 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
+import java.util.Comparator;
+
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
-
-public class BlobValueType implements PrimitiveValueType {
-    private final String NAME = "BLOB";
+public class BlobValueType extends AbstractValueType implements ValueType {
+    public final static String NAME = "BLOB";
 
     public String getName() {
         return NAME;
+    }
+    
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     /**
@@ -86,5 +91,22 @@ public class BlobValueType implements PrimitiveValueType {
     @Override
     public Comparator getComparator() {
         return null;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new BlobValueTypeFactory();
+    }
+    
+    public static class BlobValueTypeFactory implements ValueTypeFactory {
+        private static BlobValueType instance = new BlobValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }

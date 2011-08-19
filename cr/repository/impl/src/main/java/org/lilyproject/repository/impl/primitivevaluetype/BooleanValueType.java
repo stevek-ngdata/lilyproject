@@ -15,15 +15,16 @@
  */
 package org.lilyproject.repository.impl.primitivevaluetype;
 
-import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
-
 import java.util.Comparator;
 
-public class BooleanValueType implements PrimitiveValueType {
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-    private final String NAME = "BOOLEAN";
+public class BooleanValueType extends AbstractValueType implements ValueType {
+
+    public final static String NAME = "BOOLEAN";
 
     private static final Comparator<Boolean> COMPARATOR = new Comparator<Boolean>() {
         @Override
@@ -34,6 +35,10 @@ public class BooleanValueType implements PrimitiveValueType {
 
     public String getName() {
         return NAME;
+    }
+    
+    public ValueType getBaseValueType() {
+        return this;
     }
 
     public Boolean read(DataInput dataInput) {
@@ -76,5 +81,22 @@ public class BooleanValueType implements PrimitiveValueType {
         } else if (!NAME.equals(other.NAME))
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new BooleanValueTypeFactory();
+    }
+    
+    public static class BooleanValueTypeFactory implements ValueTypeFactory {
+        private static BooleanValueType instance = new BooleanValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+        
     }
 }
