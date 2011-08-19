@@ -20,7 +20,7 @@ import java.util.Arrays;
 import org.lilyproject.util.ArgumentValidator;
 
 /**
- * A Blob is a {@link PrimitiveValueType primitive type} that can be used to store arbitrarily large binary data.
+ * A Blob is a {@link ValueType value type} that can be used to store arbitrarily large binary data.
  * Besides the binary data itself, a blob holds some metadata such as the media-type and size.
  *
  * <p>Storing and retrieving data to and from the blob happens through {@link java.io.OutputStream} and

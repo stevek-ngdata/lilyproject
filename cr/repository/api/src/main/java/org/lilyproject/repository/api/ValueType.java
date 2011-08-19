@@ -16,7 +16,6 @@
 package org.lilyproject.repository.api;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
@@ -27,16 +26,9 @@ import org.lilyproject.bytes.api.DataOutput;
  *
  * <p>It consists of:
  * <ul>
- *  <li>A {@link PrimitiveValueType}: this is a particular kind of value like a string, long, ... It could
+ *  <li>A {@link ValueType}: this is a particular kind of value like a string, long, ... It could
  *      also be a composite value, e.g. a coordinate with x and y values.
- *  <li>a multi-value flag: to indicate if the value should be multi-value, in which case the value is a
- *      java.util.List.
- *  <li>a hierarchical flag: to indicate if the value should be a hierarchical path, in which case the value is
- *      a {@link HierarchyPath}.
  * </ul>
- *
- * <p>The reason for having the separate concept of a {@link PrimitiveValueType} is so that we could have a multi-value
- * and/or hierarchical variant of any kind of value.
  *
  * <p>A field can be either multi-value or hierarchical, or both at the same time. In the last case, the value
  * is a java.util.List of {@link HierarchyPath} objects, not the other way round.
@@ -69,10 +61,6 @@ public interface ValueType {
 
     /**
      * Returns the Java {@link Class} object for the values of this value type.
-     *
-     * <p>For multi-value fields (including those which are hierarchical), this will be java.util.List.
-     * For single-valued hierarchical fields this is {@link HierarchyPath}. In all other cases, this is the same
-     * as {@link PrimitiveValueType#getType}.
      */
     Class getType();
 
