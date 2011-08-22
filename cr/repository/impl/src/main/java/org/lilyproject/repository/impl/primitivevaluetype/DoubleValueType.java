@@ -19,6 +19,7 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -41,7 +42,8 @@ public class DoubleValueType extends AbstractValueType implements ValueType {
         return this;
     }
 
-    public Double read(DataInput dataInput) {
+    @SuppressWarnings("unchecked")
+    public Double read(DataInput dataInput, Repository repository) {
         return dataInput.readDouble();
     }
 
@@ -97,6 +99,5 @@ public class DoubleValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String typeParams) {
             return instance;
         }
-        
     }
 }

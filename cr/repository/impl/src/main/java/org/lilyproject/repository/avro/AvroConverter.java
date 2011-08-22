@@ -76,7 +76,7 @@ public class AvroConverter {
             for (AvroField field : avroRecord.fields) {
                 QName name = convert(field.name);
                 ValueType valueType = typeManager.getValueType(convert(field.valueType), convert(field.typeParams));
-                Object value = valueType.read(new DataInputImpl(field.value.array()));
+                Object value = valueType.read(new DataInputImpl(field.value.array()), repository);
                 record.setField(name, value);
             }
         }
@@ -140,7 +140,7 @@ public class AvroConverter {
             Object value = null;
             if (avroCond.value != null) {
                 ValueType valueType = typeManager.getValueType(convert(avroCond.valueType), convert(avroCond.typeParams));
-                value = valueType.read(new DataInputImpl(avroCond.value.array()));
+                value = valueType.read(new DataInputImpl(avroCond.value.array()), repository);
             }
 
             CompareOp op = convert(avroCond.operator);
@@ -195,17 +195,17 @@ public class AvroConverter {
             FieldType fieldType;
             try {
                 fieldType = typeManager.getFieldTypeByName(field.getKey());
+
+                avroField.valueType = fieldType.getValueType().getName();
+                avroField.typeParams = fieldType.getValueType().getTypeParams();
+    
+                byte[] value = fieldType.getValueType().toBytes(field.getValue());
+                avroField.value = ByteBuffer.wrap(value);
             } catch (RepositoryException e) {
                 throw convert(e);
             } catch (InterruptedException e) {
                 throw convert(e);
             }
-
-            avroField.valueType = fieldType.getValueType().getName();
-            avroField.typeParams = fieldType.getValueType().getTypeParams();
-
-            byte[] value = fieldType.getValueType().toBytes(field.getValue());
-            avroField.value = ByteBuffer.wrap(value);
 
             avroRecord.fields.add(avroField);
         }
@@ -271,29 +271,29 @@ public class AvroConverter {
                 } else {
                     fieldType = typeManager.getFieldTypeByName(condition.getField());
                 }
+
+
+                AvroMutationCondition avroCond = new AvroMutationCondition();
+    
+                avroCond.name = convert(condition.getField());
+    
+                if (condition.getValue() != null) {
+                    avroCond.valueType = convert(fieldType.getValueType().getName());
+                    avroCond.typeParams = fieldType.getValueType().getTypeParams();
+    
+                    byte[] value = fieldType.getValueType().toBytes(condition.getValue());
+                    avroCond.value = ByteBuffer.wrap(value);
+                }
+                avroCond.operator = convert(condition.getOp());
+                avroCond.allowMissing = condition.getAllowMissing();
+                
+                avroConditions.add(avroCond);
             } catch (RepositoryException e) {
                 throw convert(e);
             } catch (InterruptedException e) {
                 throw convert(e);
             }
 
-
-            AvroMutationCondition avroCond = new AvroMutationCondition();
-
-            avroCond.name = convert(condition.getField());
-
-            if (condition.getValue() != null) {
-                avroCond.valueType = convert(fieldType.getValueType().getName());
-                avroCond.typeParams = fieldType.getValueType().getTypeParams();
-
-                byte[] value = fieldType.getValueType().toBytes(condition.getValue());
-                avroCond.value = ByteBuffer.wrap(value);
-            }
-
-            avroCond.operator = convert(condition.getOp());
-            avroCond.allowMissing = condition.getAllowMissing();
-
-            avroConditions.add(avroCond);
         }
 
         return avroConditions;

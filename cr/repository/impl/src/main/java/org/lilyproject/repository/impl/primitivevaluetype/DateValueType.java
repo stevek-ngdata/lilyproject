@@ -21,6 +21,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -43,7 +44,8 @@ public class DateValueType extends AbstractValueType implements ValueType {
         return this;
     }
 
-    public LocalDate read(DataInput dataInput) {
+    @SuppressWarnings("unchecked")
+    public LocalDate read(DataInput dataInput, Repository repository) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return new LocalDate(dataInput.readLong(), DateTimeZone.UTC);
@@ -97,6 +99,5 @@ public class DateValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String typeParams) {
             return instance;
         }
-        
     }
 }

@@ -48,16 +48,20 @@ public interface ValueType {
     /**
      * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
      * @throws UnknownValueTypeEncodingException 
+     * @throws InterruptedException 
+     * @throws RepositoryException 
      */
-    Object read(DataInput dataInput) throws UnknownValueTypeEncodingException;
+    <T> T read(DataInput dataInput, Repository repository) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
     
 
-    void write(Object value, DataOutput dataOutput);
+    void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
     
     /**
      * Encodes an object of the type represented by this {@link ValueType} to a byte[].
+     * @throws InterruptedException 
+     * @throws RepositoryException 
      */
-    byte[] toBytes(Object value);
+    byte[] toBytes(Object value) throws RepositoryException, InterruptedException;
 
     /**
      * Returns the Java {@link Class} object for the values of this value type.

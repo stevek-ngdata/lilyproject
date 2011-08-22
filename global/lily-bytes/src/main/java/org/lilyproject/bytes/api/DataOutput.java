@@ -33,10 +33,12 @@ public interface DataOutput {
     void writeBytes(byte[] value);
 
     /**
-     * Writes a string to the <code>DataOutput</code>
-     * The string is encoded in unmodified UTF-8.
+     * Writes a string to the <code>DataOutput</code>. </p>
+     * The string is encoded in unmodified UTF-8. </br>
      * Its encoding includes the size of the string so that it can be read from a {@link DataInput} 
      * without the need to specify its size.
+     * 
+     * @param value the string to write. Empty string and null are also allowed.
      */
     void writeUTF(String value);
 

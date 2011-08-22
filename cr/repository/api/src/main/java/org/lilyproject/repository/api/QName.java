@@ -78,4 +78,18 @@ public class QName {
     public String toString() {
         return "{" + namespace + "}" + name;
     }
+    
+    /**
+     * Creates a qname based on a string.
+     * <p>
+     * The format of the string needs to be the same as the string returned by {@link #toString()}. </br>
+     * i.e.: {namespace}name
+     * @param qname
+     */
+    public static QName fromString(String qname) throws IllegalArgumentException {
+        int indexBracket = qname.indexOf('}');
+        if (indexBracket < 1) 
+            throw new IllegalArgumentException("QName string should be of the format {namespace}name");
+        return new QName(qname.substring(1,indexBracket), qname.substring(indexBracket + 1));
+    }
 }

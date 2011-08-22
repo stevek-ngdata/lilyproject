@@ -60,7 +60,6 @@ import org.lilyproject.util.repo.RecordEvent.Type;
 public class HBaseRepository extends BaseRepository {
  
     private HTableInterface recordTable;
-    private final IdGenerator idGenerator;
     private Map<Scope, byte[]> recordTypeIdColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
     private Map<Scope, byte[]> recordTypeVersionColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
     private RowLog wal;
@@ -72,9 +71,8 @@ public class HBaseRepository extends BaseRepository {
 
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, RowLog wal,
             HBaseTableFactory hbaseTableFactory, BlobManager blobManager, RowLocker rowLocker) throws IOException {
-        super(typeManager, blobManager);
+        super(typeManager, blobManager, idGenerator);
 
-        this.idGenerator = idGenerator;
         this.wal = wal;
 
         recordTable = LilyHBaseSchema.getRecordTable(hbaseTableFactory);
@@ -569,7 +567,7 @@ public class HBaseRepository extends BaseRepository {
     private Set<Scope> calculateUpdateFields(Map<QName, Object> fields, Map<QName, Object> originalFields,
             Map<QName, Object> originalNextFields, Long version, Put put, RecordEvent recordEvent,
             Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean mutableUpdate,
-            FieldTypes fieldTypes) throws InterruptedException, TypeException, BlobException, RecordException {
+            FieldTypes fieldTypes) throws InterruptedException, TypeException, BlobException, RecordException, RepositoryException {
         Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
@@ -620,7 +618,7 @@ public class HBaseRepository extends BaseRepository {
     }
     
     private byte[] encodeFieldValue(FieldType fieldType, Object fieldValue) throws FieldTypeNotFoundException,
-            RecordTypeNotFoundException, RecordException {
+            RecordTypeNotFoundException, RecordException, RepositoryException, InterruptedException {
         if (isDeleteMarker(fieldValue))
             return DELETE_MARKER;
         ValueType valueType = fieldType.getValueType();
@@ -793,7 +791,7 @@ public class HBaseRepository extends BaseRepository {
      */
     private void copyValueToNextVersionIfNeeded(Long version, Put put, Map<QName, Object> originalNextFields,
             QName fieldName, Object originalValue, FieldTypes fieldTypes)
-            throws RecordException, TypeException, InterruptedException {
+            throws RecordException, TypeException, RepositoryException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
             FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldName);
@@ -1270,7 +1268,7 @@ public class HBaseRepository extends BaseRepository {
     }
     
     private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
-            FieldTypes fieldTypes) throws RecordException, TypeException, InterruptedException {
+            FieldTypes fieldTypes) throws RecordException, TypeException, RepositoryException, InterruptedException {
         DataInput dataInput = new DataInputImpl(prefixedValue);
         byte prefix = dataInput.readByte();
         if (LilyHBaseSchema.DELETE_FLAG == prefix) {
@@ -1280,7 +1278,7 @@ public class HBaseRepository extends BaseRepository {
         if (context != null) 
             context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
-        Object value = valueType.read(dataInput);
+        Object value = valueType.read(dataInput, this);
         return new Pair<FieldType, Object>(fieldType, value);
     }
 
@@ -1427,7 +1425,7 @@ public class HBaseRepository extends BaseRepository {
                                     } else {
                                         byte[] value = cell.getValue();
                                         if (!isDeleteMarker(value)) {
-                                            blobValue = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
+                                            blobValue = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)), this);
                                         }
                                     }
                                     try {

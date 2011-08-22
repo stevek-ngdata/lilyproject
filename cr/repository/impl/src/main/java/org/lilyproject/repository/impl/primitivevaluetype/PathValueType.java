@@ -45,6 +45,10 @@ public class PathValueType extends AbstractValueType implements ValueType {
         }
     }
     
+    public PathValueType(TypeManager typeManager, DataInput typeParamsDataInput) throws RepositoryException, InterruptedException {
+        this(typeManager, typeParamsDataInput.readUTF());
+    }
+    
     public String getName() {
         return NAME;
     }
@@ -65,16 +69,17 @@ public class PathValueType extends AbstractValueType implements ValueType {
         return 1 + valueType.getNestingLevel();
     }
 
-    public HierarchyPath read(DataInput dataInput) throws UnknownValueTypeEncodingException {
+    @SuppressWarnings("unchecked")
+    public HierarchyPath read(DataInput dataInput, Repository repository) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
         List<Object> result = new ArrayList<Object>(nrOfValues);
         for (int i = 0 ; i < nrOfValues; i++) {
-            result.add(valueType.read(dataInput));
+            result.add(valueType.read(dataInput, repository));
         }
         return new HierarchyPath(result.toArray(new Object[result.size()]));
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
         Object[] elements = ((HierarchyPath) value).getElements();
         dataOutput.writeInt(elements.length);
         for (Object element : elements) {
@@ -129,6 +134,5 @@ public class PathValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException {
             return new PathValueType(typeManager, typeParams);
         }
-        
     }
 }

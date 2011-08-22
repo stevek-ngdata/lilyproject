@@ -34,6 +34,7 @@ import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.primitivevaluetype.AbstractValueType;
+import org.lilyproject.repository.impl.primitivevaluetype.StringValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
 
 public class ValueTypeTest {
@@ -128,7 +129,39 @@ public class ValueTypeTest {
         
         runValueTypeTests("blobTypeId", "BLOB", blob1, blob2, blob3);
     }
+    
+    @Test
+    public void testRecordType() throws Exception {
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("valueTypeTest", "field1"), Scope.NON_VERSIONED));
+        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName("valueTypeTest", "field2"), Scope.NON_VERSIONED));
+        RecordTypeBuilder rtBuilder = typeManager.rtBuilder();
+        RecordType valueTypeRT = rtBuilder.name(new QName("valueTypeTest", "recordValueTypeRecordType"))
+            .field(fieldType1.getId(), false)
+            .field(fieldType2.getId(), true)
+            .create();
+        
+        Record recordField1 = repository.recordBuilder()
+            .recordType(valueTypeRT.getName(), 1L)
+            .field(fieldType1.getName(), "abc")
+            .field(fieldType2.getName(), 123)
+            .newRecord();
+        Record recordField2 = repository.recordBuilder()
+            .recordType(valueTypeRT.getName(), 1L)
+            .field(fieldType1.getName(), "def")
+            .field(fieldType2.getName(), 456)
+            .newRecord();
+        Record recordField3 = repository.recordBuilder()
+            .recordType(valueTypeRT.getName(), 1L)
+            .field(fieldType1.getName(), "xyz")
+            .field(fieldType2.getName(), 888)
+            .newRecord();
 
+        testType("recordValueTypeId", "RECORD", "{valueTypeTest}recordValueTypeRecordType", recordField1);
+        testType("recordValueTypeId", "LIST", "RECORD<{valueTypeTest}recordValueTypeRecordType>", Arrays.asList(recordField1, recordField2));
+        testType("recordValueTypeId", "PATH", "RECORD<{valueTypeTest}recordValueTypeRecordType>", new HierarchyPath(recordField1, recordField2));
+        testType("recordValueTypeId", "LIST", "PATH<RECORD<{valueTypeTest}recordValueTypeRecordType>>", Arrays.asList(new HierarchyPath(recordField1, recordField2), new HierarchyPath(recordField1, recordField3)));
+    }
+    
     @Test
     public void testNewValueType() throws Exception {
         typeManager.registerValueType(XYValueType.NAME, factory());
@@ -223,7 +256,7 @@ public class ValueTypeTest {
             return this;
         }
         
-        public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException {
+        public Object read(DataInput dataInput, Repository repository) throws UnknownValueTypeEncodingException {
             byte encodingVersion = dataInput.readByte();
             int x;
             int y;
@@ -330,4 +363,185 @@ public class ValueTypeTest {
             return ValueTypeTest.this;
         }
     }
+    
+    @Test
+    public void testRecordVTTypeInVT() throws Exception {
+        String ns = "testRecordVTTypeInVT";
+        // Create a fieldType to be used as a field in a record type to be used as the type for a RecordValueType
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1"), Scope.NON_VERSIONED));
+        // Create a record type to be used as the type for a RecordValueType
+        RecordType rt1 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt1"))
+            .field(fieldType1.getId(), false)
+            .create();
+        
+        // Make a RecordValueType with the record type specified
+        ValueType recordVT1 = typeManager.getValueType("RECORD", "{"+ns+"}rt1");
+
+        // Create a fieldType with as value type a RecordValueType
+        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(recordVT1, new QName(ns, "field2"), Scope.NON_VERSIONED));
+        // Create a recordType with a field of this field type
+        RecordType rt2 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt2"))
+            .field(fieldType2.getId(), false)
+            .create();
+        
+        // Make a record to be used as field value
+        Record recordField = repository.recordBuilder().field(new QName(ns, "field1"), "abc").newRecord();
+        // Create a record with a record as field
+        Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
+        
+        // Read the record and check the field of the record-field
+        Record readRecord = repository.read(createdRecord.getId());
+        assertEquals("abc", ((Record)readRecord.getField(new QName(ns, "field2"))).getField(new QName(ns, "field1")));
+    }
+    
+    @Test
+    public void testRecordVTTypeInRecord() throws Exception {
+        String ns = "testRecordVTTypeInRecord";
+        // Create a fieldType to be used as a field in a record type to be used as the type for a RecordValueType
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1"), Scope.NON_VERSIONED));
+        // Create a record type to be used as the type for a RecordValueType
+        RecordType rt1 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt1"))
+            .field(fieldType1.getId(), false)
+            .create();
+        
+        // Make a RecordValueType without the record type specified
+        ValueType recordVT1 = typeManager.getValueType("RECORD");
+
+        // Create a fieldType with as value type a RecordValueType
+        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(recordVT1, new QName(ns, "field2"), Scope.NON_VERSIONED));
+        // Create a recordType with a field of this field type
+        RecordType rt2 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt2"))
+            .field(fieldType2.getId(), false)
+            .create();
+        
+        // Make a record to be used as field value, specify the record type here
+        Record recordField = repository.recordBuilder().recordType(new QName(ns, "rt1")).field(new QName(ns, "field1"), "abc").newRecord();
+        
+        // Create a record with a record as field
+        Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
+        
+        // Read the record and check the field of the record-field
+        Record readRecord = repository.read(createdRecord.getId());
+        assertEquals("abc", ((Record)readRecord.getField(new QName(ns, "field2"))).getField(new QName(ns, "field1")));
+        
+    }
+    
+    @Test
+    public void testRecordVTNoTypeDefined() throws Exception {
+        String ns = "testRecordVTNoTypeDefined";
+        // Create a fieldType to be used as a field in a record type to be used as the type for a RecordValueType
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1"), Scope.NON_VERSIONED));
+        // Create a record type to be used as the type for a RecordValueType
+        RecordType rt1 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt1"))
+            .field(fieldType1.getId(), false)
+            .create();
+        
+        // Make a RecordValueType without the record type specified
+        ValueType recordVT1 = typeManager.getValueType("RECORD");
+
+        // Create a fieldType with as value type a RecordValueType
+        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(recordVT1, new QName(ns, "field2"), Scope.NON_VERSIONED));
+        
+        // Create a recordType with a field of this field type
+        RecordType rt2 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt2"))
+            .field(fieldType2.getId(), false)
+            .create();
+        
+        // Make a record to be used as field value, don't specify the record type here either
+        Record recordField = repository.recordBuilder().field(new QName(ns, "field1"), "abc").newRecord();
+        
+        // Create a record with a record as field
+        try {
+            Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
+            Assert.fail();
+        } catch (RecordException expected) {
+        }
+    }
+    
+    @Test
+    public void testRecordVTUndefinedField() throws Exception {
+        String ns = "testRecordVTUndefinedField";
+        // Create a fieldType to be used as a field in a record type to be used as the type for a RecordValueType
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1"), Scope.NON_VERSIONED));
+        FieldType fieldType1b = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1b"), Scope.NON_VERSIONED));
+        // Create a record type to be used as the type for a RecordValueType
+        RecordType rt1 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt1"))
+            .field(fieldType1.getId(), false)
+            .field(fieldType1b.getId(), false)
+            .create();
+        
+        // Make a RecordValueType without the record type specified
+        ValueType recordVT1 = typeManager.getValueType("RECORD");
+
+        // Create a fieldType with as value type a RecordValueType
+        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(recordVT1, new QName(ns, "field2"), Scope.NON_VERSIONED));
+        // Create a recordType with a field of this field type
+        RecordType rt2 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt2"))
+            .field(fieldType2.getId(), false)
+            .create();
+        
+        // Make a record to be used as field value, specify the record type here
+        // Only fill in field1, not field1b
+        Record recordField = repository.recordBuilder().recordType(new QName(ns, "rt1")).field(new QName(ns, "field1"), "abc").newRecord();
+        
+        // Create a record with a record as field
+        Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
+        
+        // Read the record and check the field of the record-field
+        Record readRecord = repository.read(createdRecord.getId());
+        Record readRecordInRecord = (Record)readRecord.getField(new QName(ns, "field2"));
+        assertEquals("abc", readRecordInRecord.getField(new QName(ns, "field1")));
+        Assert.assertFalse(readRecordInRecord.hasField(new QName(ns, "field1b")));
+        
+    }
+    
+    @Test
+    public void testRecordVTUnallowedField() throws Exception {
+        String ns = "testRecordVTUnallowedField";
+        // Create a fieldType to be used as a field in a record type to be used as the type for a RecordValueType
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1"), Scope.NON_VERSIONED));
+        FieldType fieldType1b = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1b"), Scope.NON_VERSIONED));
+        // Create a record type to be used as the type for a RecordValueType
+        // Do not add fieldType1b to the record type
+        RecordType rt1 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt1"))
+            .field(fieldType1.getId(), false)
+            .create();
+        
+        // Make a RecordValueType without the record type specified
+        ValueType recordVT1 = typeManager.getValueType("RECORD");
+
+        // Create a fieldType with as value type a RecordValueType
+        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(recordVT1, new QName(ns, "field2"), Scope.NON_VERSIONED));
+        // Create a recordType with a field of this field type
+        RecordType rt2 = typeManager.rtBuilder()
+            .name(new QName(ns, "rt2"))
+            .field(fieldType2.getId(), false)
+            .create();
+        
+        // Make a record to be used as field value, specify the record type here
+        Record recordField = repository.recordBuilder()
+            .recordType(new QName(ns, "rt1"))
+            .field(new QName(ns, "field1"), "abc")
+            .field(new QName(ns, "field1b"), "def") // Also fill in field1b, although the recordType does not specify it
+            .newRecord();
+        
+        // Create a record with a record as field
+        try {
+            repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
+            Assert.fail();
+        } catch (RecordException expected) {
+            
+        }
+    }
+    
+    
 }

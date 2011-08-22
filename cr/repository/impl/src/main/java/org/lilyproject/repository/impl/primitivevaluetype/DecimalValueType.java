@@ -20,6 +20,7 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -42,7 +43,8 @@ public class DecimalValueType extends AbstractValueType implements ValueType {
         return this;
     }
 
-    public BigDecimal read(DataInput dataInput) {
+    @SuppressWarnings("unchecked")
+    public BigDecimal read(DataInput dataInput, Repository repository) {
         return new BigDecimal(dataInput.readUTF());
     }
 
@@ -98,6 +100,5 @@ public class DecimalValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String typeParams) {
             return instance;
         }
-        
     }
 }

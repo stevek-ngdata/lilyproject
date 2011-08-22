@@ -222,7 +222,7 @@ public interface TypeManager extends Closeable {
      * value type if the name corresponds? Does it make sense to allow registering at any time? Probably implies
      * registering on all Lily nodes? This needs more thought.
      */
-    void registerValueType(String name, ValueTypeFactory valueTypeFactory) throws RepositoryException, InterruptedException;
+    void registerValueType(String name, ValueTypeFactory valueTypeFactory);
 
     /**
      * Returns a snapshot of the FieldTypes. To be used when a consistent snapshot is needed while performing a CRUD operation.

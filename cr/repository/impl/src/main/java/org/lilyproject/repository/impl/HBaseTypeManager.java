@@ -68,7 +68,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         this.typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         registerDefaultValueTypes();
         setupCaches();
-
+        
         // The 'last' vtag should always exist in the system (at least, for everything index-related). Therefore we
         // create it here.
         try {

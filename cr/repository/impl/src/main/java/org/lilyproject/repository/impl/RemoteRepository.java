@@ -38,15 +38,13 @@ import org.lilyproject.util.io.Closer;
 public class RemoteRepository extends BaseRepository {
     private AvroLily lilyProxy;
     private final AvroConverter converter;
-    private IdGenerator idGenerator;
     private Transceiver client;
 
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
             IdGenerator idGenerator, BlobManager blobManager) throws IOException {
-        super(typeManager, blobManager);
+        super(typeManager, blobManager, idGenerator);
 
         this.converter = converter;
-        this.idGenerator = idGenerator;
 
         //client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
         client = NettyTransceiverFactory.create(address);

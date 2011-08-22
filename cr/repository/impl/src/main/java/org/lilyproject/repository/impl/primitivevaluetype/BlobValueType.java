@@ -20,9 +20,7 @@ import java.util.Comparator;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hbaseext.ContainsValueComparator;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.ValueType;
-import org.lilyproject.repository.api.ValueTypeFactory;
+import org.lilyproject.repository.api.*;
 
 public class BlobValueType extends AbstractValueType implements ValueType {
     public final static String NAME = "BLOB";
@@ -38,7 +36,8 @@ public class BlobValueType extends AbstractValueType implements ValueType {
     /**
      * See write for the byte format.
      */
-    public Object read(DataInput dataInput) {
+    @SuppressWarnings("unchecked")
+    public Blob read(DataInput dataInput, Repository repository) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         int keyLength = dataInput.readVInt();
@@ -107,6 +106,5 @@ public class BlobValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String typeParams) {
             return instance;
         }
-        
     }
 }

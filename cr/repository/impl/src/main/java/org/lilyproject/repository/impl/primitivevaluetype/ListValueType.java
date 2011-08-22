@@ -45,6 +45,10 @@ public class ListValueType extends AbstractValueType implements ValueType {
         }
     }
     
+    public ListValueType(TypeManager typeManager, DataInput typeParamsDataInput) throws RepositoryException, InterruptedException {
+        this(typeManager, typeParamsDataInput.readUTF());
+    }
+    
     public String getName() {
         return NAME;
     }
@@ -65,16 +69,17 @@ public class ListValueType extends AbstractValueType implements ValueType {
         return 1 + valueType.getNestingLevel();
     }
 
-    public List<Object> read(DataInput dataInput) throws UnknownValueTypeEncodingException {
+    @SuppressWarnings("unchecked")
+    public List<Object> read(DataInput dataInput, Repository repository) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
         List<Object> result = new ArrayList<Object>(nrOfValues);
         for (int i = 0 ; i < nrOfValues; i++) {
-            result.add(valueType.read(dataInput));
+            result.add(valueType.read(dataInput, repository));
        }
         return result;
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
         List<Object> values = ((List<Object>) value);
         dataOutput.writeInt(values.size());
         for (Object element : values) {

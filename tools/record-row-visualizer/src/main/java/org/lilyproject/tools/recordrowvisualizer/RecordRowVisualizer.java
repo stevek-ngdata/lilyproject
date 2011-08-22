@@ -15,10 +15,7 @@ import org.kauriproject.template.source.ClasspathSourceResolver;
 import org.kauriproject.template.source.Source;
 import org.kauriproject.template.source.SourceResolver;
 import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
@@ -43,6 +40,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     protected Option recordIdOption;
     protected RecordRow recordRow;
     protected TypeManager typeMgr;
+    protected Repository repository = null; // TODO
 
     @Override
     protected String getCmdName() {
@@ -93,6 +91,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         // TODO should be able to avoid ZK for this use-case?
         final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
         typeMgr = new HBaseTypeManager(idGenerator, conf, zk, new HBaseTableFactoryImpl(conf));
+        
 
         Get get = new Get(recordId.toBytes());
         get.setMaxVersions();
@@ -169,8 +168,8 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         if (cf == null)
             return;
 
-        recordRow.nvFields = new Fields(cf, typeMgr, Scope.NON_VERSIONED);
-        recordRow.vFields = new Fields(cf, typeMgr, Scope.VERSIONED);
+        recordRow.nvFields = new Fields(cf, typeMgr, repository, Scope.NON_VERSIONED);
+        recordRow.vFields = new Fields(cf, typeMgr, repository, Scope.VERSIONED);
     }
 
     private void readRowLog(Map<RowLogKey, List<ExecutionData>> walStateByKey, Map<RowLogKey, List<String>> walPayloadByKey, Map<RowLogKey, List<ExecutionData>> mqStateByKey, Map<RowLogKey, List<String>> mqPayloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf) throws IOException {

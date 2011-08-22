@@ -20,13 +20,13 @@ import java.util.Map;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class StringValueType extends AbstractValueType implements ValueType {
 
     public static final String NAME = "STRING";
-    private static StringValueType instance = new StringValueType();
 
     private static final Comparator<String> COMPARATOR = new Comparator<String>() {
         @Override
@@ -43,11 +43,8 @@ public class StringValueType extends AbstractValueType implements ValueType {
         return this;
     }
     
-    public static StringValueType instance(Map<String, String> typeParams) {
-        return instance;
-    }
-
-    public String read(DataInput dataInput) {
+    @SuppressWarnings("unchecked")
+    public String read(DataInput dataInput, Repository repository) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return dataInput.readUTF();
@@ -106,6 +103,5 @@ public class StringValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String typeParams) {
             return instance;
         }
-        
     }
 }

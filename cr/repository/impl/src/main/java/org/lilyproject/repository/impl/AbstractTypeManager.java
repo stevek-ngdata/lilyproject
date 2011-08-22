@@ -16,9 +16,9 @@
 package org.lilyproject.repository.impl;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
+
+import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.zookeeper.KeeperException;
@@ -32,8 +32,6 @@ import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import javax.annotation.PreDestroy;
 
 public abstract class AbstractTypeManager implements TypeManager {
     protected Log log;
@@ -316,11 +314,11 @@ public abstract class AbstractTypeManager implements TypeManager {
     public ValueType getValueType(String valueTypeName, String valueTypeParams) throws RepositoryException, InterruptedException {
         return valueTypeFactories.get(valueTypeName).getValueType(valueTypeParams);
     }
-
+    
     public ValueType getValueType(String valueTypeName) throws RepositoryException, InterruptedException {
         return getValueType(valueTypeName, null);
     }
-
+    
     // TODO get this from some configuration file
     protected void registerDefaultValueTypes() {
         //
@@ -344,5 +342,6 @@ public abstract class AbstractTypeManager implements TypeManager {
         registerValueType(UriValueType.NAME, UriValueType.factory());
         registerValueType(ListValueType.NAME, ListValueType.factory(this));
         registerValueType(PathValueType.NAME, PathValueType.factory(this));
+        registerValueType(RecordValueType.NAME, RecordValueType.factory(this));
     }
 }

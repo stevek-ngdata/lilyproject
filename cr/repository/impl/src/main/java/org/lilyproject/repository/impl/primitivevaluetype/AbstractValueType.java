@@ -20,11 +20,12 @@ import java.util.Set;
 
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.ValueType;
 
-public abstract class AbstractValueType {
+public abstract class AbstractValueType implements ValueType {
 
-    public abstract void write(Object value, DataOutput dataOutput);
+    public abstract void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
     
     public abstract String getName();
     
@@ -34,7 +35,7 @@ public abstract class AbstractValueType {
         return null;
     }
     
-    public byte[] toBytes(Object value) {
+    public byte[] toBytes(Object value) throws RepositoryException, InterruptedException {
         DataOutput dataOutput = new DataOutputImpl();
         write(value, dataOutput);
         return dataOutput.toByteArray();

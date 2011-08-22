@@ -5,17 +5,18 @@ import org.lilyproject.util.ArgumentValidator;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 
 public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
     protected final TypeManager typeManager;
+    protected final IdGenerator idGenerator;
 
-    protected BaseRepository(TypeManager typeManager, BlobManager blobManager) {
+    protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator) {
         this.typeManager = typeManager;
         this.blobManager = blobManager;
+        this.idGenerator = idGenerator;
     }
-
+    
     public TypeManager getTypeManager() {
         return typeManager;
     }
