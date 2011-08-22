@@ -68,7 +68,9 @@ public interface ValueType {
      */
     Class getType();
 
-    String getTypeParams();
+    void encodeTypeParams(DataOutput dataOutput);
+    
+    byte[] getTypeParams();
     
     /**
      * Returns a set of all values contained in this value.
@@ -89,7 +91,7 @@ public interface ValueType {
     
     String getName();
     
-    String getFullName();
+    String getFullName() throws RepositoryException, InterruptedException;
     
     ValueType getBaseValueType();
     

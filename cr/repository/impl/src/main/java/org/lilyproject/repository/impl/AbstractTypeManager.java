@@ -26,6 +26,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.primitivevaluetype.*;
 import org.lilyproject.util.ArgumentValidator;
@@ -315,8 +316,12 @@ public abstract class AbstractTypeManager implements TypeManager {
         return valueTypeFactories.get(valueTypeName).getValueType(valueTypeParams);
     }
     
+    public ValueType getValueType(String valueTypeName, DataInput dataInput) throws RepositoryException, InterruptedException {
+        return valueTypeFactories.get(valueTypeName).getValueType(dataInput);
+    }
+    
     public ValueType getValueType(String valueTypeName) throws RepositoryException, InterruptedException {
-        return getValueType(valueTypeName, null);
+        return getValueType(valueTypeName, (String)null);
     }
     
     // TODO get this from some configuration file

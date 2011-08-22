@@ -41,7 +41,7 @@ public abstract class AbstractValueType implements ValueType {
         return dataOutput.toByteArray();
     }
     
-    public String getFullName() {
+    public String getFullName() throws RepositoryException, InterruptedException {
         return getName();
     }
     
@@ -55,7 +55,11 @@ public abstract class AbstractValueType implements ValueType {
         return result;
     }
     
-    public String getTypeParams() {
+    public void encodeTypeParams(DataOutput dataOutput) {
+        // Do nothing
+    }
+    
+    public byte[] getTypeParams() {
         return null;
     }
     

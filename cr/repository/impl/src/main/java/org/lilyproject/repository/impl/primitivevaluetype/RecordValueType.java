@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 
@@ -32,22 +33,50 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     public static final String NAME = "RECORD";
     private final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
     private final TypeManager typeManager;
-    private String recordTypeName;
-    private QName recordTypeQName;
+    private SchemaId recordTypeId = null;
 
     public RecordValueType(TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.typeManager = typeManager;
-        this.recordTypeName = recordTypeName;
         if (recordTypeName != null)
-            this.recordTypeQName = QName.fromString(recordTypeName);
+            this.recordTypeId = typeManager.getRecordTypeByName(QName.fromString(recordTypeName), null).getId();
+    }
+    
+    public RecordValueType(TypeManager typeManager, DataInput dataInput) {
+        this.typeManager = typeManager;
+        if (dataInput.readByte() == DEFINED) {
+            int length = dataInput.readVInt();
+            recordTypeId = new SchemaIdImpl(dataInput.readBytes(length));
+        }
     }
     
     public String getName() {
         return NAME;
     }
     
-    public String getTypeParams() {
-        return recordTypeName;
+    public String getFullName() throws RepositoryException, InterruptedException {
+        if (recordTypeId == null)
+            return NAME;
+        else {
+            return NAME+"<"+typeManager.getRecordTypeById(recordTypeId, null).getName()+">";
+        }
+    }
+    
+    public void encodeTypeParams(DataOutput dataOutput) {
+        if (recordTypeId == null) {
+            dataOutput.writeByte(UNDEFINED);
+        } else {
+            dataOutput.writeByte(DEFINED);
+            byte[] idBytes = recordTypeId.getBytes();
+            dataOutput.writeVInt(idBytes.length);
+            dataOutput.writeBytes(idBytes);
+        }
+    }
+    
+    @Override
+    public byte[] getTypeParams() {
+        DataOutput dataOutput = new DataOutputImpl();
+        encodeTypeParams(dataOutput);
+        return dataOutput.toByteArray();
     }
     
     public ValueType getBaseValueType() {
@@ -76,14 +105,17 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     public void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
         Record record = (Record)value;
         
-        // Validate the record type
         RecordType recordType = null;
-        if (record.getRecordTypeName() != null && recordTypeName != null && !recordTypeQName.equals(record.getRecordTypeName()))
-            throw new RecordException("The record's Record Type '"+record.getRecordTypeName()+"' does not match the record value type's record type '" + recordTypeName + "'");
-        if (record.getRecordTypeName() != null) {
-            recordType = typeManager.getRecordTypeByName(record.getRecordTypeName(), record.getVersion());
-        } else  if (recordTypeName != null) {
-            recordType = typeManager.getRecordTypeByName(recordTypeQName, null);
+        QName recordTypeName = record.getRecordTypeName();
+        if (recordTypeName != null) {
+            recordType = typeManager.getRecordTypeByName(recordTypeName, record.getRecordTypeVersion());
+            if (recordTypeId != null) {
+                // Validate the same record type is being used
+                if (!recordType.getId().equals(recordTypeId))
+                    throw new RecordException("The record's Record Type '"+recordType.getId()+"' does not match the record value type's record type '" + recordTypeId + "'");
+            }
+        } else if (recordTypeId != null) {
+                recordType = typeManager.getRecordTypeById(recordTypeId, null);
         } else {
             throw new RecordException("The record '" + record + "' should specify a record type");
         }
@@ -180,6 +212,11 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         @Override
         public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException, InterruptedException {
             return new RecordValueType(typeManager, recordName);
+        }
+        
+        @Override
+        public ValueType getValueType(DataInput dataInput) {
+            return new RecordValueType(typeManager, dataInput);
         }
     }
 }

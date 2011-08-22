@@ -19,6 +19,7 @@ import java.util.*;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
@@ -97,10 +98,17 @@ public class PathValueType extends AbstractValueType implements ValueType {
     }
 
     @Override
-    public String getTypeParams() {
-        return typeParams;
+    public void encodeTypeParams(DataOutput dataOutput) {
+        dataOutput.writeUTF(typeParams);
     }
-
+    
+    @Override
+    public byte[] getTypeParams() {
+        DataOutput dataOutput = new DataOutputImpl();
+        encodeTypeParams(dataOutput);
+        return dataOutput.toByteArray();
+    }
+    
     @Override
     public Set<Object> getValues(Object value) {
         Set<Object> result = new HashSet<Object>();
@@ -133,6 +141,11 @@ public class PathValueType extends AbstractValueType implements ValueType {
         @Override
         public ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException {
             return new PathValueType(typeManager, typeParams);
+        }
+        
+        @Override
+        public ValueType getValueType(DataInput dataInput) throws RepositoryException, InterruptedException {
+            return new PathValueType(typeManager, dataInput);
         }
     }
 }

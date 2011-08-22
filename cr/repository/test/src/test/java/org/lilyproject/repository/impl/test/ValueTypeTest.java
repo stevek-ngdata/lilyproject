@@ -307,6 +307,11 @@ public class ValueTypeTest {
         public ValueType getValueType(String typeParams) {
             return new XYValueType();
         }
+
+        @Override
+        public ValueType getValueType(DataInput dataInput) throws RepositoryException, InterruptedException {
+            return new XYValueType();
+        }
     }
 
     private class XYCoordinates {

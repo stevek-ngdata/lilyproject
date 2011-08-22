@@ -15,6 +15,8 @@
  */
 package org.lilyproject.repository.api;
 
+import org.lilyproject.bytes.api.DataInput;
+
 
 /**
  *
@@ -22,4 +24,6 @@ package org.lilyproject.repository.api;
 public interface ValueTypeFactory {
 
     ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException;
+
+    ValueType getValueType(DataInput dataInput) throws RepositoryException, InterruptedException ;
 }

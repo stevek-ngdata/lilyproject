@@ -744,7 +744,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         DataOutput dataOutput = new DataOutputImpl();
         dataOutput.writeByte(valueTypeEncodingVersion);
         dataOutput.writeUTF(valueType.getName());
-        dataOutput.writeUTF(valueType.getTypeParams());
+        valueType.encodeTypeParams(dataOutput);
         return dataOutput.toByteArray();
     }
     
@@ -752,8 +752,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         DataInput dataInput = new DataInputImpl(bytes);
         dataInput.readByte(); // Ignore since there is only have one encoding version
         String valueTypeName = dataInput.readUTF();
-        String typeParams = dataInput.readUTF();
-        return getValueType(valueTypeName, typeParams);
+        return getValueType(valueTypeName, dataInput);
     }
    
 }

@@ -99,5 +99,10 @@ public class DateTimeValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String typeParams) {
             return instance;
         }
+        
+        @Override
+        public ValueType getValueType(DataInput dataInput) {
+            return instance;
+        }
     }
 }

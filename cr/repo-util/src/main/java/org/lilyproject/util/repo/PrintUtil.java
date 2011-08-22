@@ -201,15 +201,11 @@ public class PrintUtil {
         println(out, indent, "ID = " + fieldType.getId());
         println(out, indent, "Name = {" + fieldType.getName().getNamespace() + "}" + fieldType.getName().getName());
         println(out, indent, "Mandatory = " + fieldTypeEntry.isMandatory());
-        StringBuilder builder = new StringBuilder();
-        builder.append(fieldType.getValueType().getName());
-        String typeParams = fieldType.getValueType().getTypeParams();
-        if (typeParams != null) {
-            builder.append("<");
-            builder.append(typeParams);
-            builder.append(">");
+        try {
+            println(out, indent, "ValueType = " + fieldType.getValueType().getFullName());
+        } catch (Throwable t) {
+            // value type failed to load
         }
-        println(out, indent, "ValueType = " + builder.toString());
     }
 
     private static void println(PrintStream out, int indent, String text) {

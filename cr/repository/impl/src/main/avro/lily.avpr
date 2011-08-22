@@ -18,7 +18,7 @@
       "fields": [
         {"name": "name", "type": "AvroQName"},
         {"name": "valueType", "type": "string"},
-        {"name": "typeParams", "type": ["string", "null"]},
+        {"name": "typeParams", "type": ["bytes", "null"]},
         {"name": "value", "type": "bytes"}
       ]
     },
@@ -49,7 +49,7 @@
       "fields": [
         {"name": "name", "type": "AvroQName"},
         {"name": "valueType", "type": ["null", "string"]},
-        {"name": "typeParams", "type": ["null", "string"]},
+        {"name": "typeParams", "type": ["null", "bytes"]},
         {"name": "value", "type": ["null", "bytes"]},
         {"name": "operator", "type":
           {"name": "AvroCompareOp", "type": "enum",
@@ -130,7 +130,7 @@
       "type": "record",
       "fields": [
         {"name": "valueType", "type": "string"},
-        {"name": "typeParams", "type": ["string", "null"]}
+        {"name": "typeParams", "type": ["bytes", "null"]}
       ]
     },
 

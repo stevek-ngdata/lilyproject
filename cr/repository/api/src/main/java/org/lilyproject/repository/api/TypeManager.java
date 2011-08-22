@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.lilyproject.bytes.api.DataInput;
+
 // IMPORTANT:
 //   See the note on the requirement TypeException described in the Repository.java file.
 
@@ -209,6 +211,8 @@ public interface TypeManager extends Closeable {
      * @param typeParams String of parameters specific to the value type
      */
     ValueType getValueType(String valueTypeName, String typeParams) throws RepositoryException, InterruptedException;
+    
+    ValueType getValueType(String valueTypeName, DataInput dataInput) throws RepositoryException, InterruptedException;
     
     /**
      * Shortcut for {@link #getValueType(String, String) getValueType(name, null)}.
