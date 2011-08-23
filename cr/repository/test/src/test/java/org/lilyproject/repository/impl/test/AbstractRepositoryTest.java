@@ -1863,4 +1863,65 @@ public abstract class AbstractRepositoryTest {
         } catch (FieldNotFoundException expected) {
         }
     }
+    
+    @Test
+    public void testRecordValueType() throws Exception {
+        String namespace = "testRecordValueType";
+        QName rvtRTName = new QName(namespace, "rvtRT");
+        QName rtName = new QName(namespace, "rt");
+        QName ft1Name = new QName(namespace, "ft1");
+        QName ft2Name = new QName(namespace, "ft2");
+        QName ft3Name = new QName(namespace, "ft3");
+        RecordType rvtRT = typeManager.rtBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
+        ValueType rvt = typeManager.getValueType("RECORD", rvtRTName.toString());
+        FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
+        FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
+        FieldType ft3 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft3Name, Scope.VERSIONED_MUTABLE));
+        RecordType rt = typeManager.rtBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).field(ft3.getId(), false).create();
+        
+        Record ft1Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft1abc").newRecord();
+        Record ft1Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft1def").newRecord();
+        Record ft2Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft2abc").newRecord();
+        Record ft2Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft2def").newRecord();
+        Record ft3Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft3abc").newRecord();
+        Record ft3Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft3def").newRecord();
+        Record ft3Value3 = repository.recordBuilder().field(fieldType1.getName(), "ft3xyz").newRecord();
+        
+        // Create record
+        Record createdRecord = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).field(ft2Name, ft2Value1).field(ft3Name, ft3Value1).create();
+        Record readRecord = repository.read(createdRecord.getId());
+        assertEquals("ft1abc", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
+        assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
+        assertEquals("ft3abc", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
+        
+        // Update record
+        repository.recordBuilder().recordId(createdRecord.getId()).field(ft1Name, ft1Value2).field(ft2Name, ft2Value2).field(ft3Name, ft3Value2).update();
+        readRecord = repository.read(createdRecord.getId());
+        assertEquals(new Long(2), readRecord.getVersion());
+        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
+        assertEquals("ft2def", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
+        assertEquals("ft3def", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
+
+        readRecord = repository.read(createdRecord.getId(), 1L);
+        assertEquals(new Long(1), readRecord.getVersion());
+        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
+        assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
+        assertEquals("ft3abc", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
+
+        
+        // Update mutable field record
+        Record newRecord = repository.recordBuilder().recordId(createdRecord.getId()).version(1L).field(ft3Name, ft3Value3).updateVersion(true).update();
+        readRecord = repository.read(createdRecord.getId());
+        assertEquals(new Long(2), readRecord.getVersion());
+        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
+        assertEquals("ft2def", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
+        assertEquals("ft3def", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
+
+        readRecord = repository.read(createdRecord.getId(), 1L);
+        assertEquals(new Long(1), readRecord.getVersion());
+        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
+        assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
+        assertEquals("ft3xyz", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
+
+    }
 }
