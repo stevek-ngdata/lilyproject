@@ -15,21 +15,21 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.*;
-import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.primitivevaluetype.AbstractValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
 
 public class RecordTest {

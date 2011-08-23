@@ -9,7 +9,7 @@ import javax.naming.OperationNotSupportedException;
 
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
+import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.util.json.JsonUtil;
 
 public class ReadAction extends AbstractTestAction implements TestAction {

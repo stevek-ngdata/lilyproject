@@ -36,7 +36,7 @@ import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
-import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
+import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;

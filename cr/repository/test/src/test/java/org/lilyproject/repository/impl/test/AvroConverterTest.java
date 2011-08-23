@@ -34,7 +34,7 @@ import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
-import org.lilyproject.repository.impl.primitivevaluetype.StringValueType;
+import org.lilyproject.repository.impl.valuetype.StringValueType;
 
 
 public class AvroConverterTest {

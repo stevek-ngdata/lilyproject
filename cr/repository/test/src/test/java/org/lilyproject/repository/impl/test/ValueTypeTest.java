@@ -29,7 +29,7 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.primitivevaluetype.AbstractValueType;
+import org.lilyproject.repository.impl.valuetype.AbstractValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
 
 public class ValueTypeTest {

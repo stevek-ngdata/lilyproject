@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
 
@@ -23,14 +23,10 @@ import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 
-/**
- *
- */
 public class LinkValueType extends AbstractValueType implements ValueType {
     
     public final static String NAME = "LINK";
 
-    private static final byte ENCODING_VERSION = (byte)1;
     private static final byte UNDEFINED = (byte)0;
     private static final byte DEFINED = (byte)1;
 
