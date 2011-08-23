@@ -180,6 +180,16 @@ public interface Record {
 
     void setResponseStatus(ResponseStatus status);
     
+    /**
+     * Creates a clone of the record object
+     * <p>
+     * A new record object is created with the same id, version, recordTypes, fields and deleteFields. </br>
+     * The response status is not copied into the new Record object.
+     * <p>
+     * Of the fields that are not of an immutable type, a deep copy is performed.
+     * This includes List, HierarchyPath, Blob and Record. </br>
+     * In case a record is included in itself (which should not be done but cannot be avoided API-wise) such a deep-copy is not performed.</br>
+     */
     Record clone();
     
     boolean equals(Object obj);

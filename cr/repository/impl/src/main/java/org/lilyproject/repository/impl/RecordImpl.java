@@ -16,6 +16,7 @@
 package org.lilyproject.repository.impl;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ObjectUtils;
@@ -152,12 +153,43 @@ public class RecordImpl implements Record {
         record.id = id;
         record.version = version;
         record.recordTypes.putAll(recordTypes);
-        record.fields.putAll(fields);
+        for (Entry<QName, Object> entry : fields.entrySet()) {
+            record.fields.put(entry.getKey(), cloneValue(entry.getValue(), record)); // Deep clone of the values
+        }
         if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
             record.fieldsToDelete.addAll(fieldsToDelete);
         }
         // the ResponseStatus is not cloned, on purpose
         return record;
+    }
+    
+    private Object cloneValue(Object value, Record clone) {
+        if (value instanceof List) {
+            List<Object> newList = new ArrayList<Object>();
+            List<Object> values = (List<Object>)value;
+            for (Object object : values) {
+                newList.add(cloneValue(object, clone));
+            }
+            return newList;
+        }
+        if (value instanceof HierarchyPath) {
+            Object[] elements = ((HierarchyPath)value).getElements();
+            Object[] newElements = new Object[elements.length];
+            for (int i = 0; i < newElements.length; i++) {
+                newElements[i] = cloneValue(elements[i], clone);
+            }
+            return new HierarchyPath(newElements);
+        }
+        if (value instanceof Blob) {
+            return ((Blob)value).clone();
+        }
+        if (value instanceof Record) {
+            Record record = (Record)value;
+            if (record == this)
+                return clone; // Avoid recursion
+            return (record).clone();
+        }
+        return value; // All other values are immutable
     }
 
     @Override

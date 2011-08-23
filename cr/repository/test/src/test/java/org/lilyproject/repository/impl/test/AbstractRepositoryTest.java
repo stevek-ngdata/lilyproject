@@ -1908,7 +1908,6 @@ public abstract class AbstractRepositoryTest {
         assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
         assertEquals("ft3abc", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
 
-        
         // Update mutable field record
         Record newRecord = repository.recordBuilder().recordId(createdRecord.getId()).version(1L).field(ft3Name, ft3Value3).updateVersion(true).update();
         readRecord = repository.read(createdRecord.getId());
@@ -1922,6 +1921,32 @@ public abstract class AbstractRepositoryTest {
         assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
         assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
         assertEquals("ft3xyz", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
-
+    }
+    
+    @Test
+    public void testRecordNestedInItself() throws Exception {
+        String namespace = "testRecordNestedInItself";
+        QName rvtRTName = new QName(namespace, "rvtRT");
+        QName rtName = new QName(namespace, "rt");
+        QName ft1Name = new QName(namespace, "ft1");
+        QName ft2Name = new QName(namespace, "ft2");
+        
+        typeManager.rtBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
+        ValueType rvt = typeManager.getValueType("RECORD");
+        FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
+        FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
+        typeManager.rtBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).create();
+        
+        Record ft1Value1 = repository.recordBuilder().recordType(rvtRTName).field(fieldType1.getName(), "ft1abc").newRecord();
+        
+        // Create record
+        Record record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).newRecord();
+        record.setField(ft2Name, record); // Nest record in itself
+        Record createdRecord = repository.create(record);
+        
+        Record readRecord = repository.read(createdRecord.getId());
+        assertEquals("ft1abc", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
+        assertEquals("ft1abc", ((Record)((Record)readRecord.getField(ft2Name)).getField(ft1Name)).getField(fieldType1.getName()));
+        
     }
 }

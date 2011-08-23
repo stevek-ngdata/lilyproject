@@ -32,6 +32,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     private static final byte ENCODING_VERSION = (byte)1;
     private static final byte UNDEFINED = (byte)0;
     private static final byte DEFINED = (byte)1;
+    private static final byte DEFINED_IDENTICAL = (byte)2;
     
     private final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
     private final TypeManager typeManager;
@@ -87,21 +88,24 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     
     @SuppressWarnings("unchecked")
     public Record read(DataInput dataInput, Repository repository) throws RepositoryException, InterruptedException {
-        RecordBuilder recordBuilder = repository.recordBuilder();
+        Record record = repository.recordBuilder().newRecord();
         dataInput.readByte(); // Ignore, there is currently only one encoding : 1
         int length = dataInput.readVInt();
         byte[] recordTypeId = dataInput.readBytes(length);
         Long recordTypeVersion = dataInput.readLong();
         RecordType recordType = typeManager.getRecordTypeById(new SchemaIdImpl(recordTypeId), recordTypeVersion);
-        recordBuilder.recordType(recordType.getName(), recordTypeVersion);
+        record.setRecordType(recordType.getName(), recordTypeVersion);
         List<FieldType> fieldTypes = getSortedFieldTypes(recordType);
         for (FieldType fieldType : fieldTypes) {
-            if (DEFINED == dataInput.readByte()) {
+            byte readByte = dataInput.readByte();
+            if (DEFINED == readByte) {
                 Object value = fieldType.getValueType().read(dataInput, repository);
-                recordBuilder.field(fieldType.getName(), value);
+                record.setField(fieldType.getName(), value);
+            } else if (DEFINED_IDENTICAL == readByte) { // The record is nested in itself
+                record.setField(fieldType.getName(), record);
             }
         }
-        return recordBuilder.newRecord();
+        return record;
     }
     
     public void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
@@ -152,6 +156,10 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             Object fieldValue = recordFields.get(fieldType.getName());
             if (fieldValue == null) 
                 dataOutput.writeByte(UNDEFINED);
+            else if (fieldValue == record) {
+                dataOutput.writeByte(DEFINED_IDENTICAL); // The record is nested in itself, avoid recursion
+                givenFields.remove(fieldType.getName());
+            }
             else {
                 dataOutput.writeByte(DEFINED);
                 fieldType.getValueType().write(fieldValue, dataOutput);

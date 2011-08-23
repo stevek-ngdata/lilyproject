@@ -36,7 +36,7 @@ import org.lilyproject.util.ArgumentValidator;
  * Once that's done, you can store the {@link Record} itself. Thus: first upload all blobs and close their
  * OutputStreams, then save the record. It does not matter when the blob value is set on the record object itself.
  */
-public class Blob {
+public class Blob implements Cloneable {
 
     private String mediaType;
     private Long size;
@@ -69,6 +69,14 @@ public class Blob {
         this.name = name;
     }
     
+    /**
+     * Create a clone of the Blob object.
+     * <p>
+     * Note that this does NOT create a copy of the actual blob-data (e.g. on HDFS). 
+     */
+    public Blob clone() {
+        return new Blob(value, mediaType, size, name);
+    }
     
     public byte[] getValue() {
         return value;

@@ -15,15 +15,11 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Random;
+import java.util.*;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
@@ -618,6 +614,4 @@ public class ValueTypeTest {
             
         }
     }
-    
-    
 }
