@@ -19,7 +19,9 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 
 /**
  *
@@ -27,19 +29,63 @@ import org.lilyproject.repository.api.*;
 public class LinkValueType extends AbstractValueType implements ValueType {
     
     public final static String NAME = "LINK";
-    private final IdGenerator idGenerator;
-    private static TypeManager typeManager;
 
-    public LinkValueType(IdGenerator idGenerator) {
+    private static final byte ENCODING_VERSION = (byte)1;
+    private static final byte UNDEFINED = (byte)0;
+    private static final byte DEFINED = (byte)1;
+
+    private final IdGenerator idGenerator;
+    private final TypeManager typeManager;
+    private SchemaId recordTypeId = null;
+
+    public LinkValueType(IdGenerator idGenerator, TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.idGenerator = idGenerator;
+        this.typeManager = typeManager;
+        if (recordTypeName != null)
+            this.recordTypeId = typeManager.getRecordTypeByName(QName.fromString(recordTypeName), null).getId();
+    }
+    
+    public LinkValueType(IdGenerator idGenerator, TypeManager typeManager, DataInput dataInput) {
+        this.idGenerator = idGenerator;
+        this.typeManager = typeManager;
+        if (dataInput.readByte() == DEFINED) {
+            int length = dataInput.readVInt();
+            recordTypeId = new SchemaIdImpl(dataInput.readBytes(length));
+        }
     }
     
     public String getName() {
         return NAME;
     }
     
+    public String getFullName() throws RepositoryException, InterruptedException {
+        if (recordTypeId == null)
+            return NAME;
+        else {
+            return NAME+"<"+typeManager.getRecordTypeById(recordTypeId, null).getName()+">";
+        }
+    }
+    
     public ValueType getBaseValueType() {
         return this;
+    }
+    
+    public void encodeTypeParams(DataOutput dataOutput) {
+        if (recordTypeId == null) {
+            dataOutput.writeByte(UNDEFINED);
+        } else {
+            dataOutput.writeByte(DEFINED);
+            byte[] idBytes = recordTypeId.getBytes();
+            dataOutput.writeVInt(idBytes.length);
+            dataOutput.writeBytes(idBytes);
+        }
+    }
+    
+    @Override
+    public byte[] getTypeParams() {
+        DataOutput dataOutput = new DataOutputImpl();
+        encodeTypeParams(dataOutput);
+        return dataOutput.toByteArray();
     }
 
     @SuppressWarnings("unchecked")
@@ -50,6 +96,8 @@ public class LinkValueType extends AbstractValueType implements ValueType {
     }
 
     public void write(Object value, DataOutput dataOutput) {
+        // We're not storing any recordType information together with the data
+        // The recordType information is only available in the schema
         dataOutput.writeByte((byte)1); // Encoding version 1
         ((Link)value).write(dataOutput);
     }
@@ -66,25 +114,27 @@ public class LinkValueType extends AbstractValueType implements ValueType {
     //
     // Factory
     //
-    public static ValueTypeFactory factory(IdGenerator idGenerator) {
-        return new LinkValueTypeFactory(idGenerator);
+    public static ValueTypeFactory factory(IdGenerator idGenerator, TypeManager typeManager) {
+        return new LinkValueTypeFactory(idGenerator, typeManager);
     }
     
     public static class LinkValueTypeFactory implements ValueTypeFactory {
-        private static LinkValueType instance;
+        private final TypeManager typeManager;
+        private final IdGenerator idGenerator;
 
-        LinkValueTypeFactory(IdGenerator idGenerator){
-            instance = new LinkValueType(idGenerator);
+        LinkValueTypeFactory(IdGenerator idGenerator, TypeManager typeManager){
+            this.idGenerator = idGenerator;
+            this.typeManager = typeManager;
         }
         
         @Override
-        public ValueType getValueType(String typeParams) {
-            return instance;
+        public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException, InterruptedException {
+            return new LinkValueType(idGenerator, typeManager, recordName);
         }
         
         @Override
         public ValueType getValueType(DataInput dataInput) {
-            return instance;
+            return new LinkValueType(idGenerator, typeManager, dataInput);
         }
     }
 }

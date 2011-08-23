@@ -34,7 +34,6 @@ import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.primitivevaluetype.AbstractValueType;
-import org.lilyproject.repository.impl.primitivevaluetype.StringValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
 
 public class ValueTypeTest {
@@ -112,11 +111,6 @@ public class ValueTypeTest {
     }
 
     @Test
-    public void testLinkType() throws Exception {
-        runValueTypeTests("linkRecordTypeId", "LINK", new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()));
-    }
-
-    @Test
     public void testUriType() throws Exception {
         runValueTypeTests("uriRecordTypeId", "URI", URI.create("http://foo.com/bar"), URI.create("file://foo/com/bar.txt"), URI.create("https://site/index.html"));
     }
@@ -132,10 +126,10 @@ public class ValueTypeTest {
     
     @Test
     public void testRecordType() throws Exception {
-        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("valueTypeTest", "field1"), Scope.NON_VERSIONED));
-        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName("valueTypeTest", "field2"), Scope.NON_VERSIONED));
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("testRecordType", "field1"), Scope.NON_VERSIONED));
+        FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName("testRecordType", "field2"), Scope.NON_VERSIONED));
         RecordTypeBuilder rtBuilder = typeManager.rtBuilder();
-        RecordType valueTypeRT = rtBuilder.name(new QName("valueTypeTest", "recordValueTypeRecordType"))
+        RecordType valueTypeRT = rtBuilder.name(new QName("testRecordType", "recordValueTypeRecordType"))
             .field(fieldType1.getId(), false)
             .field(fieldType2.getId(), true)
             .create();
@@ -156,11 +150,30 @@ public class ValueTypeTest {
             .field(fieldType2.getName(), 888)
             .newRecord();
 
-        testType("recordValueTypeId", "RECORD", "{valueTypeTest}recordValueTypeRecordType", recordField1);
-        testType("recordValueTypeId", "LIST", "RECORD<{valueTypeTest}recordValueTypeRecordType>", Arrays.asList(recordField1, recordField2));
-        testType("recordValueTypeId", "PATH", "RECORD<{valueTypeTest}recordValueTypeRecordType>", new HierarchyPath(recordField1, recordField2));
-        testType("recordValueTypeId", "LIST", "PATH<RECORD<{valueTypeTest}recordValueTypeRecordType>>", Arrays.asList(new HierarchyPath(recordField1, recordField2), new HierarchyPath(recordField1, recordField3)));
+        testType("recordValueTypeId", "RECORD", "{testRecordType}recordValueTypeRecordType", recordField1);
+        testType("recordValueTypeId", "LIST", "RECORD<{testRecordType}recordValueTypeRecordType>", Arrays.asList(recordField1, recordField2));
+        testType("recordValueTypeId", "PATH", "RECORD<{testRecordType}recordValueTypeRecordType>", new HierarchyPath(recordField1, recordField2));
+        testType("recordValueTypeId", "LIST", "PATH<RECORD<{testRecordType}recordValueTypeRecordType>>", Arrays.asList(new HierarchyPath(recordField1, recordField2), new HierarchyPath(recordField1, recordField3)));
     }
+
+    @Test
+    public void testLinkType() throws Exception {
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("testLinkType", "field1"), Scope.NON_VERSIONED));
+        RecordTypeBuilder rtBuilder = typeManager.rtBuilder();
+        RecordType valueTypeRT = rtBuilder.name(new QName("testLinkType", "linkValueTypeRecordType"))
+            .field(fieldType1.getId(), false)
+            .create();
+        
+        testType("recordValueTypeId", "LINK", null, new Link(idGenerator.newRecordId()));
+        testType("recordValueTypeId", "LINK", "{testLinkType}linkValueTypeRecordType", new Link(idGenerator.newRecordId()));
+        testType("recordValueTypeId", "LIST", "LINK<{testLinkType}linkValueTypeRecordType>", Arrays.asList(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "LIST", "LINK", Arrays.asList(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "PATH", "LINK<{testLinkType}linkValueTypeRecordType>", new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "PATH", "LINK", new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "LIST", "PATH<LINK<{testLinkType}linkValueTypeRecordType>>", Arrays.asList(new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())), new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()))));
+        testType("recordValueTypeId", "LIST", "PATH<LINK>", Arrays.asList(new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())), new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()))));
+    }
+    
     
     @Test
     public void testNewValueType() throws Exception {
@@ -214,6 +227,9 @@ public class ValueTypeTest {
         assertNull(comparator);
         
         comparator = typeManager.getValueType("PATH", "STRING").getComparator();
+        assertNull(comparator); 
+        
+        comparator = typeManager.getValueType("RECORD", "{testRecordType}recordValueTypeRecordType").getComparator();
         assertNull(comparator); 
     }
 

@@ -27,10 +27,12 @@ import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public class RecordValueType extends AbstractValueType implements ValueType {
 
+    public static final String NAME = "RECORD";
+    
     private static final byte ENCODING_VERSION = (byte)1;
     private static final byte UNDEFINED = (byte)0;
     private static final byte DEFINED = (byte)1;
-    public static final String NAME = "RECORD";
+    
     private final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
     private final TypeManager typeManager;
     private SchemaId recordTypeId = null;

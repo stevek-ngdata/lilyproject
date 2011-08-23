@@ -342,7 +342,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         registerValueType(BooleanValueType.NAME, BooleanValueType.factory());
         registerValueType(DateValueType.NAME, DateValueType.factory());
         registerValueType(DateTimeValueType.NAME, DateTimeValueType.factory());
-        registerValueType(LinkValueType.NAME, LinkValueType.factory(idGenerator));
+        registerValueType(LinkValueType.NAME, LinkValueType.factory(idGenerator, this));
         registerValueType(BlobValueType.NAME, BlobValueType.factory());
         registerValueType(UriValueType.NAME, UriValueType.factory());
         registerValueType(ListValueType.NAME, ListValueType.factory(this));

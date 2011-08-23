@@ -21,7 +21,6 @@ import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.eq;
 import static org.junit.Assert.assertEquals;
 
-import java.io.DataInput;
 import java.nio.ByteBuffer;
 import java.util.*;
 
