@@ -907,14 +907,49 @@ public abstract class AbstractBlobStoreTest {
         }
 
         try {
-            repository.getInputStream(repoSetup.getIdGenerator().fromString("USER.nonexistingrecord"), null,
-                    absentField.getName(), null, null);
+            repository.getInputStream(repoSetup.getIdGenerator().fromString("USER.nonexistingrecord"), null, absentField.getName(), (Integer[])null);
             fail("Expected exception");
         } catch (RecordNotFoundException e) {
             // ok
         }
     }
 
+    @Test
+    public void testCreateBlobInRecordValue() throws Exception {
+        String ns = "testCreateBlobInRecordValue";
+        QName blobFieldName = new QName(ns, "blobField");
+        FieldType blobFieldType = typeManager.newFieldType(typeManager.getValueType("BLOB"), blobFieldName,
+                Scope.NON_VERSIONED);
+        blobFieldType = typeManager.createFieldType(blobFieldType);
+        
+        RecordType blobContainingRT = typeManager.rtBuilder().name(new QName(ns, "blobContainingRT")).field(blobFieldType.getId(), true).create();
+
+        QName recordFieldName = new QName(ns, "recordField");
+        FieldType recordFieldType = typeManager.newFieldType(typeManager.getValueType("RECORD", blobContainingRT.getName().toString()), recordFieldName, Scope.NON_VERSIONED);
+        recordFieldType = typeManager.createFieldType(recordFieldType);
+        
+        RecordType recordContainingRT = typeManager.rtBuilder().name(new QName(ns, "recordContainingRT")).field(recordFieldType.getId(), true).create();
+        
+        byte[] bytes = Bytes.toBytes("someBytes");
+        Blob blob = writeBlob(bytes, "aMediaType", "testCreate");
+        Record blobContainingRecord = repository.recordBuilder().recordType(blobContainingRT.getName()).field(blobFieldName, blob).newRecord();
+
+        Record recordContainingRecord = repository.recordBuilder().recordType(recordContainingRT.getName()).field(recordFieldName, blobContainingRecord).create();
+        
+        InputStream inputStream = repository.getInputStreamNested(recordContainingRecord.getId(), recordFieldName, blobFieldName);
+        byte[] readBytes = new byte[(int)blob.getSize().longValue()];
+        inputStream.read(readBytes);
+        inputStream.close();
+        assertTrue(Arrays.equals(bytes, readBytes));
+        
+        // Test the getInputStream with giving the record instead of the recordId
+        byte[] readBytes2 = new byte[(int)(blob.getSize().longValue())];
+        inputStream = repository.getInputStreamNested(recordContainingRecord, recordFieldName, blobFieldName);
+        inputStream.read(readBytes2);
+        inputStream.close();
+        assertTrue(Arrays.equals(bytes, readBytes2));
+    }
+    
     private Blob writeBlob(byte[] bytes, String mediaType, String name) throws BlobException, RepositoryException, InterruptedException,
             IOException {
         Blob blob = new Blob(mediaType, (long) bytes.length, name);

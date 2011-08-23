@@ -434,6 +434,8 @@ public interface Repository extends Closeable {
      */
     BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException;
 
+    BlobAccess getBlobNested(RecordId recordId, Long version, QName...fieldNames) throws RepositoryException, InterruptedException;
+    
     /**
      * Returns an {@link InputStream} from which the binary data of a blob can be read.
      *
@@ -446,6 +448,12 @@ public interface Repository extends Closeable {
      * Shortcut getInputStream method where version, multiValueIndex and hierarchyIndex are set to null.
      */
     InputStream getInputStream(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException;
+
+    InputStream getInputStreamNested(RecordId recordId, Long version, QName...fieldNames) throws RepositoryException, InterruptedException;
+    
+    InputStream getInputStreamNested(RecordId recordId, QName...fieldNames) throws RepositoryException, InterruptedException;
+    
+    InputStream getInputStreamNested(Record record, QName...fieldNames) throws RepositoryException, InterruptedException;
     
     /**
      * getInputStream method where the record containing the blob is given instead of its recordId.

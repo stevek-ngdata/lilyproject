@@ -172,6 +172,12 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException {
         return delegate.getBlob(recordId, fieldName);
     }
+    
+    @Override
+    public BlobAccess getBlobNested(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException,
+            InterruptedException {
+        return delegate.getBlobNested(recordId, version, fieldNames);
+    }
 
     @Override
     public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
@@ -189,6 +195,24 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
             throws RepositoryException, InterruptedException {
         return delegate.getInputStream(record, fieldName, indexes);
     }
+    
+    @Override
+    public InputStream getInputStreamNested(RecordId recordId, Long version, QName... fieldNames)
+            throws RepositoryException, InterruptedException {
+        return delegate.getInputStreamNested(recordId, version, fieldNames);
+    }
+    
+    @Override
+    public InputStream getInputStreamNested(RecordId recordId, QName... fieldNames) throws RepositoryException,
+            InterruptedException {
+        return delegate.getInputStreamNested(recordId, fieldNames);
+    }
+
+    @Override
+    public InputStream getInputStreamNested(Record record, QName... fieldNames) throws RepositoryException,
+            InterruptedException {
+        return delegate.getInputStreamNested(record, fieldNames);
+    }
 
     @Override
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException {
@@ -204,4 +228,8 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     public RecordBuilder recordBuilder() throws RecordException, InterruptedException {
         return delegate.recordBuilder();
     }
+
+
+    
+
 }
