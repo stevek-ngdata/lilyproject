@@ -187,31 +187,54 @@ public interface TypeManager extends Closeable {
     /**
      * Provides {@link ValueType} instances. These are used to set to value type of {@link FieldType}s.
      *
-     * <p>The built-in available value types are listed in the following table.
+     * <p>The built-in available value types are listed in the following table. 
      *
      * <table>
      * <tbody>
-     * <tr><th>Name</th>     <th>Class</th></tr>
+     * <tr><th>Name</th>     <th>Class</th></tr> <th>
      * <tr><td>STRING</td>   <td>java.lang.String</td></tr>
      * <tr><td>INTEGER</td>  <td>java.lang.Integer</td></tr>
      * <tr><td>LONG</td>     <td>java.lang.Long</td></tr>
      * <tr><td>DOUBLE</td>   <td>java.lang.Double</td></tr>
-     * <tr><td>DECIMAL</td>   <td>java.math.BigDecimal</td></tr>
+     * <tr><td>DECIMAL</td>  <td>java.math.BigDecimal</td></tr>
      * <tr><td>BOOLEAN</td>  <td>java.lang.Boolean</td></tr>
      * <tr><td>DATE</td>     <td>org.joda.time.LocalDate</td></tr>
      * <tr><td>DATETIME</td> <td>org.joda.time.DateTime</td></tr>
      * <tr><td>BLOB</td>     <td>org.lilyproject.repository.api.Blob</td></tr>
      * <tr><td>LINK</td>     <td>org.lilyproject.repository.api.Link</td></tr>
      * <tr><td>URI</td>      <td>java.net.URI</td></tr>
-     * <tr><td>LIST</td>      <td>java.util.List</td></tr>
+     * <tr><td>LIST</td>     <td>java.util.List</td></tr>
+     * <tr><td>PATH</td>     <td>org.lilyproject.repository.api.HierarchyPath</td></tr>
+     * <tr><td>RECORD</td>   <td>org.lilyproject.repository.api.Record</td></tr>
      * </tbody>
      * </table>
+     * 
+     * <p>Some value types accept extra parameters (typeParams) to define the exact value type.
+     * <p>For List and Path the typeParams define the value type of the included values.
+     * It is mandatory to define this value type. It should be specified by its name and if that
+     * value type in its turn needs some typeParams these should be appended within brackets "&lt;&gt;".
+     * <br>For example: <code>getValueType("LIST", "PATH&lt;STRING&gt;");</code>
+     * 
+     * <p>For Record and Link valuetype it is possible to define the {@link RecordType} in the typeParams.
+     * This is not mandatory. It is done by specifying the name of the RecordType in the format 
+     * <code>{namespace}name</code>. 
+     * <br>For example: <code>getValueType("RECORD", "{myNamespace}recordType1");</code>
      *
+     * @see ValueType
      * @param valueTypeName the name of the {@link ValueType}. See table above.
      * @param typeParams String of parameters specific to the value type
      */
     ValueType getValueType(String valueTypeName, String typeParams) throws RepositoryException, InterruptedException;
     
+    /**
+     * Provides a {@link ValueType} instace, where the typeParams are read and decoded from a {@link DataInput}.
+     * 
+     * <p>The value type itself is responsible for encoding and decoding its typeParams.
+     * 
+     * @param valueTypeName name of the value type, cfr {@link #getValueType(String, DataInput)}
+     * @param dataInput the DataInput from which to read the typeParams.
+     * @return a ValueType
+     */
     ValueType getValueType(String valueTypeName, DataInput dataInput) throws RepositoryException, InterruptedException;
     
     /**

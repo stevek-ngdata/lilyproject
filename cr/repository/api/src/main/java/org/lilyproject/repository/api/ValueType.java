@@ -36,6 +36,7 @@ import org.lilyproject.bytes.api.DataOutput;
  * <li>It has one (non-versioned) record type, and all its fields must be defined in that record type</li>
  * <li>All its fields are non-versioned</li>
  * <li>It is stored in its entirety inside a field of the surrounding record</li>
+ * <li>Blob fields are not allowed</li>
  * 
  * <p>It is the responsibility of a ValueType to convert the values to/from byte representation, as used for
  * storage in the repository. This should delegate to the PrimitiveValueType for the conversion of a single value.
@@ -125,7 +126,7 @@ public interface ValueType {
     
     /**
      * @return the full name of the value type with its type params (cfr {@link TypeManager#getValueType(String, String)}) 
-     * enclosed in "< >" after the name. For example: "LIST< STRING >"   
+     * enclosed in "&lt;&gt;" after the name. For example: "LIST&lt;STRING&gt;"   
      * @throws RepositoryException
      * @throws InterruptedException
      */
@@ -148,6 +149,9 @@ public interface ValueType {
      * ListValueType and PathValueType can again contain other value types. </br>
      * This method returns the number of nesting levels until the base value type is reached.</br>
      * For non List or Path value types the returned value is 1.
+     * 
+     * This method is used by the Repository and BlobIncubator when checking if a blob is already
+     * used by the record. 
      */
     int getNestingLevel();
     

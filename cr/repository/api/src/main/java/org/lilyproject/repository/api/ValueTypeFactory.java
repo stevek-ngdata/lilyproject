@@ -19,11 +19,23 @@ import org.lilyproject.bytes.api.DataInput;
 
 
 /**
- *
+ * A ValueTypeFactory is used to create a new instance of a {@link ValueType}.
+ * 
+ * Each ValueType should have a corresponding ValueTypeFactory and it should be 
+ * registered on the TypeManager through {@link TypeManager#registerValueType(String, ValueTypeFactory)}
+ * 
  */
 public interface ValueTypeFactory {
 
+    /**
+     *  Returns an instance of the ValueType
+     *  @param typeParams the value type specific parameters as String 
+     */
     ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException;
 
+    /**
+     *  Returns an instance of the ValueType
+     *  @param dataInput the DataInput from which to read the value type specific parameters 
+     */
     ValueType getValueType(DataInput dataInput) throws RepositoryException, InterruptedException ;
 }

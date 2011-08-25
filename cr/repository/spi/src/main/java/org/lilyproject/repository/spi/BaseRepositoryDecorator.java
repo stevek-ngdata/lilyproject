@@ -174,12 +174,6 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
     
     @Override
-    public BlobAccess getBlobNested(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException,
-            InterruptedException {
-        return delegate.getBlobNested(recordId, version, fieldNames);
-    }
-
-    @Override
     public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
         return delegate.getInputStream(recordId, version, fieldName, indexes);
     }
@@ -196,24 +190,6 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
         return delegate.getInputStream(record, fieldName, indexes);
     }
     
-    @Override
-    public InputStream getInputStreamNested(RecordId recordId, Long version, QName... fieldNames)
-            throws RepositoryException, InterruptedException {
-        return delegate.getInputStreamNested(recordId, version, fieldNames);
-    }
-    
-    @Override
-    public InputStream getInputStreamNested(RecordId recordId, QName... fieldNames) throws RepositoryException,
-            InterruptedException {
-        return delegate.getInputStreamNested(recordId, fieldNames);
-    }
-
-    @Override
-    public InputStream getInputStreamNested(Record record, QName... fieldNames) throws RepositoryException,
-            InterruptedException {
-        return delegate.getInputStreamNested(record, fieldNames);
-    }
-
     @Override
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException {
         return delegate.getVariants(recordId);

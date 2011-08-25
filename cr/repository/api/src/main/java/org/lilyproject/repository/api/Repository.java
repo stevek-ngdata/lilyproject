@@ -417,12 +417,13 @@ public interface Repository extends Closeable {
      * read the blob's data.
      *
      * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
+     * And in case of ListValueType or PathValueType fields an array of indexes.
      *
      * @param recordId the id of the record containing the blob
-     * @param fieldName the QName of the field containing the blob
      * @param version optionally a version of the record, if null the latest record version is used
-     * @param multiValueIndex optionally, the position of the blob in a multi-value field
-     * @param hierarchyIndex optionally, the position of the blob in a hierarchical field
+     * @param fieldName the QName of the field containing the blob
+     * @param indexes optionally, the position of a blob in a List or Path field,
+     *        where each index gives the position at a deeper level
 
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
      * @throws BlobException thrown when opening an InputStream on the blob fails
@@ -430,31 +431,32 @@ public interface Repository extends Closeable {
     BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
     
     /**
-     * Shortcut getBlob method where version, multiValueIndex and hierarchyIndex are set to null.
+     * Shortcut getBlob method where version and indexes are set to null.
      */
     BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException;
 
-    BlobAccess getBlobNested(RecordId recordId, Long version, QName...fieldNames) throws RepositoryException, InterruptedException;
-    
     /**
      * Returns an {@link InputStream} from which the binary data of a blob can be read.
-     *
-     * <p>This is a shortcut for {@link #getBlob}.getInputStream().
-     *
+     * 
+     * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
+     * And in case of ListValueType or PathValueType fields an array of indexes.
+     * 
+     * @param recordId the id of the record containing the blob
+     * @param version optionally a version of the record, if null the latest record version is used
+     * @param fieldName the QName of the field containing the blob
+     * @param indexes optionally, the position of a blob in a List or Path field,
+     *        where each index gives the position at a deeper level
+
+     * @throws BlobNotFoundException thrown when no blob can be found at the given location
+     * @throws BlobException thrown when opening an InputStream on the blob fails
      */
     InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
 
     /**
-     * Shortcut getInputStream method where version, multiValueIndex and hierarchyIndex are set to null.
+     * Shortcut getInputStream method where version, and indexes are set to null.
      */
     InputStream getInputStream(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException;
 
-    InputStream getInputStreamNested(RecordId recordId, Long version, QName...fieldNames) throws RepositoryException, InterruptedException;
-    
-    InputStream getInputStreamNested(RecordId recordId, QName...fieldNames) throws RepositoryException, InterruptedException;
-    
-    InputStream getInputStreamNested(Record record, QName...fieldNames) throws RepositoryException, InterruptedException;
-    
     /**
      * getInputStream method where the record containing the blob is given instead of its recordId.
      * This avoids an extra call on the repository to read the record.

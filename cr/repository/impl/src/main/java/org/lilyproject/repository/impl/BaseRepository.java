@@ -53,30 +53,6 @@ public abstract class BaseRepository implements Repository {
         return blobManager.getBlobAccess(record, fieldName, fieldType, indexes).getInputStream();
     }
     
-    public InputStream getInputStreamNested(RecordId recordId, QName...fieldNames) throws RepositoryException, InterruptedException {
-        return getInputStreamNested(recordId, null, fieldNames);
-    }
-    
-    public InputStream getInputStreamNested(RecordId recordId, Long version, QName...fieldNames) throws RepositoryException, InterruptedException {
-        ArgumentValidator.notNull(fieldNames, "fieldNames");
-        if (fieldNames.length < 1)
-            throw new IllegalArgumentException("At least one fieldName should be given");
-        Record record = read(recordId, version, fieldNames[0]);
-        return getInputStreamNested(record, fieldNames);
-    }
-    
-    public InputStream getInputStreamNested(Record record, QName...fieldNames) throws RepositoryException, InterruptedException {
-        ArgumentValidator.notNull(fieldNames, "fieldNames");
-        if (fieldNames.length < 1)
-            throw new IllegalArgumentException("At least one fieldName should be given");
-        int i = 0;
-        for (; i < fieldNames.length-1; i++) {
-            record = record.getField(fieldNames[i]);
-        }
-        FieldType fieldType = typeManager.getFieldTypeByName(fieldNames[i]);
-        return blobManager.getBlobAccess(record, fieldNames[i], fieldType).getInputStream();
-    }
-
     public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
         Record record = read(recordId, version, fieldName);
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
@@ -85,18 +61,5 @@ public abstract class BaseRepository implements Repository {
     
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException {
         return getBlob(recordId, null, fieldName);
-    }
-    
-    public BlobAccess getBlobNested(RecordId recordId, Long version, QName...fieldNames) throws RepositoryException, InterruptedException {
-        ArgumentValidator.notNull(fieldNames, "fieldNames");
-        if (fieldNames.length < 1)
-            throw new IllegalArgumentException("At least one fieldName should be given");
-        Record record = read(recordId, version, fieldNames[0]);
-        int i = 0;
-        for (; i < fieldNames.length-1; i++) {
-            record = record.getField(fieldNames[i]);
-        }
-        FieldType fieldType = typeManager.getFieldTypeByName(fieldNames[i]);
-        return blobManager.getBlobAccess(record, fieldNames[i], fieldType);
     }
 }
