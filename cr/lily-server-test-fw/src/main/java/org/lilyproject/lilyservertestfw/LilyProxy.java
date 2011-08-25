@@ -59,7 +59,7 @@ public class LilyProxy {
     }
 
     /**
-     * Creates a new LilyProxu
+     * Creates a new LilyProxy
      * @param mode either EMBED, CONNECT or HADOOP_CONNECT
      * @param testHome the directory in which to store data and logfiles. Can only be used in EMBED mode.
      * @param clearData if true, clear the data when stopping the LilyProxy. 
