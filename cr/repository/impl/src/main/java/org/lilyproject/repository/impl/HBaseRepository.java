@@ -1065,19 +1065,6 @@ public class HBaseRepository extends BaseRepository {
         return results;
     }
     
-    private boolean recordExists(byte[] rowId) throws IOException {
-        Get get = new Get(rowId);
-        
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-        Result result = recordTable.get(get);
-        if (result == null || result.isEmpty()) {
-            return false;
-        } else {
-            byte[] deleted = result.getValue(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-            return !((deleted == null) || (Bytes.toBoolean(deleted)));
-        }
-    }
-
     /**
      * Extracts the latest record type for a specific scope from the Result.
      */
