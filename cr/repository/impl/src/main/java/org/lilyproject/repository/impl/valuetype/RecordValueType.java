@@ -129,6 +129,9 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         // Get and sort the field type entries that should be in the record
         List<FieldType> fieldTypes = getSortedFieldTypes(recordType);
         
+        Map<QName, Object> recordFields = record.getFields();
+        List<QName> expectedFields = new ArrayList<QName>();
+        
         // Write the record type information
         // Encoding:
         // - encoding version : byte (1)
@@ -146,28 +149,25 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         // - if not present in the record : undefined marker : byte (0)
         // - if present in the record : defined marker : byte (1)
         //      - fieldValue : bytes
-        Map<QName, Object> recordFields = record.getFields();
-        // Taking a copy since we don't want to manipulate the fields of the record itself.
-        List<QName> givenFields = new ArrayList<QName>();
-        for (QName qName : recordFields.keySet()) {
-            givenFields.add(qName);
-        }
         for (FieldType fieldType : fieldTypes) {
-            Object fieldValue = recordFields.get(fieldType.getName());
+            QName name = fieldType.getName();
+            expectedFields.add(name);
+            Object fieldValue = recordFields.get(name);
             if (fieldValue == null) 
                 dataOutput.writeByte(UNDEFINED);
             else if (fieldValue == record) {
                 dataOutput.writeByte(DEFINED_IDENTICAL); // The record is nested in itself, avoid recursion
-                givenFields.remove(fieldType.getName());
             }
             else {
                 dataOutput.writeByte(DEFINED);
                 fieldType.getValueType().write(fieldValue, dataOutput);
-                givenFields.remove(fieldType.getName());
             }
         }
-        if (!givenFields.isEmpty())
+
+        // Check if the record does contain fields that are not defined in the record type  
+        if (!expectedFields.containsAll(recordFields.keySet())) {
             throw new InvalidRecordException("Record contains fields not part of the record type '" + recordType + "'", record.getId());
+        }
     }
 
     private List<FieldType> getSortedFieldTypes(RecordType recordType) throws RepositoryException,
@@ -177,12 +177,6 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
             fieldTypes.add(typeManager.getFieldTypeById(fieldTypeEntry.getFieldTypeId()));
         }
-        Collections.sort(fieldTypes, new Comparator<FieldType>() {
-            @Override
-            public int compare(FieldType fieldType1, FieldType fieldType2) {
-                return byteArrayComparator.compare(fieldType1.getId().getBytes(), fieldType2.getId().getBytes());
-            }
-        });
         return fieldTypes;
     }
     

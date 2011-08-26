@@ -18,7 +18,6 @@ package org.lilyproject.repository.api;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.lilyproject.bytes.api.DataInput;
 
