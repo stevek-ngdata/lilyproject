@@ -37,7 +37,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
      * See write for the byte format.
      */
     @SuppressWarnings("unchecked")
-    public Blob read(DataInput dataInput, Repository repository) {
+    public Blob read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         int keyLength = dataInput.readVInt();

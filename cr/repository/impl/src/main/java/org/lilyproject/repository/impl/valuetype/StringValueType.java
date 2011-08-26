@@ -19,7 +19,6 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -43,7 +42,7 @@ public class StringValueType extends AbstractValueType implements ValueType {
     }
     
     @SuppressWarnings("unchecked")
-    public String read(DataInput dataInput, Repository repository) {
+    public String read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return dataInput.readUTF();

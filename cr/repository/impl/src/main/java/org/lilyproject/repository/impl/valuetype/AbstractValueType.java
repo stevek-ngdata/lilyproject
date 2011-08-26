@@ -19,12 +19,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.*;
 
 public abstract class AbstractValueType implements ValueType {
 
+    @Override
+    public <T> T read(byte[] data) throws UnknownValueTypeEncodingException,
+            RepositoryException, InterruptedException {
+        return read(new DataInputImpl(data));
+    }
+    
     public abstract void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
     
     public abstract String getName();

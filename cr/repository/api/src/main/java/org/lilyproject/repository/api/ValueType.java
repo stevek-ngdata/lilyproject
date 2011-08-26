@@ -58,7 +58,9 @@ public interface ValueType {
      * @throws InterruptedException 
      * @throws RepositoryException 
      */
-    <T> T read(DataInput dataInput, Repository repository) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
+    <T> T read(DataInput dataInput) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
+
+    <T> T read(byte[] data) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
     
     /**
      * Encodes an object of the type represented by this value type to a {@link DataOutput}.</br>

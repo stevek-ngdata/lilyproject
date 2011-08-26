@@ -81,7 +81,7 @@ public class AvroConverter {
                     valueType = typeManager.getValueType(convert(field.valueType));
                 else 
                     valueType = typeManager.getValueType(convert(field.valueType), new DataInputImpl(typeParams.array()));
-                Object value = valueType.read(new DataInputImpl(field.value.array()), repository);
+                Object value = valueType.read(field.value.array());
                 record.setField(name, value);
             }
         }
@@ -150,7 +150,7 @@ public class AvroConverter {
                     valueType = typeManager.getValueType(convert(avroCond.valueType));
                 else
                     valueType = typeManager.getValueType(convert(avroCond.valueType), new DataInputImpl(typeParams.array()));
-                value = valueType.read(new DataInputImpl(avroCond.value.array()), repository);
+                value = valueType.read(avroCond.value.array());
             }
 
             CompareOp op = convert(avroCond.operator);

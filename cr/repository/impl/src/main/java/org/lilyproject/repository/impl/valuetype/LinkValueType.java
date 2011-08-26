@@ -85,7 +85,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
     }
 
     @SuppressWarnings("unchecked")
-    public Link read(DataInput dataInput, Repository repository) {
+    public Link read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return Link.read(dataInput, idGenerator);

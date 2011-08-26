@@ -268,7 +268,7 @@ public class ValueTypeTest {
             return this;
         }
         
-        public Object read(DataInput dataInput, Repository repository) throws UnknownValueTypeEncodingException {
+        public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException {
             byte encodingVersion = dataInput.readByte();
             int x;
             int y;

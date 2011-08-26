@@ -71,11 +71,11 @@ public class ListValueType extends AbstractValueType implements ValueType {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Object> read(DataInput dataInput, Repository repository) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException {
+    public List<Object> read(DataInput dataInput) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
         List<Object> result = new ArrayList<Object>(nrOfValues);
         for (int i = 0 ; i < nrOfValues; i++) {
-            result.add(valueType.read(dataInput, repository));
+            result.add(valueType.read(dataInput));
        }
         return result;
     }

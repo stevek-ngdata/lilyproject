@@ -29,9 +29,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
@@ -1256,8 +1254,7 @@ public class HBaseRepository extends BaseRepository {
     
     private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
             FieldTypes fieldTypes) throws RecordException, TypeException, RepositoryException, InterruptedException {
-        DataInput dataInput = new DataInputImpl(prefixedValue);
-        byte prefix = dataInput.readByte();
+        byte prefix = prefixedValue[0];
         if (LilyHBaseSchema.DELETE_FLAG == prefix) {
             return null;
         }
@@ -1265,7 +1262,7 @@ public class HBaseRepository extends BaseRepository {
         if (context != null) 
             context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
-        Object value = valueType.read(dataInput, this);
+        Object value = valueType.read(EncodingUtil.stripPrefix(prefixedValue));
         return new Pair<FieldType, Object>(fieldType, value);
     }
 
@@ -1412,7 +1409,7 @@ public class HBaseRepository extends BaseRepository {
                                     } else {
                                         byte[] value = cell.getValue();
                                         if (!isDeleteMarker(value)) {
-                                            blobValue = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)), this);
+                                            blobValue = valueType.read(EncodingUtil.stripPrefix(value));
                                         }
                                     }
                                     try {

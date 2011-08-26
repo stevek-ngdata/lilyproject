@@ -19,7 +19,6 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -43,7 +42,7 @@ public class IntegerValueType extends AbstractValueType implements ValueType {
     }
 
     @SuppressWarnings("unchecked")
-    public Integer read(DataInput dataInput, Repository repository) {
+    public Integer read(DataInput dataInput) {
         return dataInput.readInt();
     }
 

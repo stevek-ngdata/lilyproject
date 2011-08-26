@@ -41,7 +41,7 @@ public class Fields {
                         if (EncodingUtil.isDeletedField(value)) {
                             decodedValue = DELETED;
                         } else {
-                            decodedValue = fieldType.getValueType().read(new DataInputImpl(EncodingUtil.stripPrefix(value)), repository);
+                            decodedValue = fieldType.getValueType().read(EncodingUtil.stripPrefix(value));
                         }
         
                         columns.put(fieldId, decodedValue);

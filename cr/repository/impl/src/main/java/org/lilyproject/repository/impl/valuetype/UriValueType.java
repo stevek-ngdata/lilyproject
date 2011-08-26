@@ -20,7 +20,6 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -36,7 +35,7 @@ public class UriValueType extends AbstractValueType implements ValueType {
         return this;
     }
 
-    public URI read(DataInput dataInput, Repository repository) {
+    public URI read(DataInput dataInput) {
         return URI.create(dataInput.readUTF());
     }
 

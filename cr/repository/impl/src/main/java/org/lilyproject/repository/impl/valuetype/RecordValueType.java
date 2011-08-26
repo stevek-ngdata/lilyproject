@@ -18,11 +18,12 @@ package org.lilyproject.repository.impl.valuetype;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.RecordImpl;
+import org.lilyproject.repository.impl.RecordRvtImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public class RecordValueType extends AbstractValueType implements ValueType {
@@ -34,7 +35,6 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     private static final byte DEFINED = (byte)1;
     private static final byte DEFINED_IDENTICAL = (byte)2;
     
-    private final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
     private final TypeManager typeManager;
     private SchemaId recordTypeId = null;
 
@@ -87,8 +87,13 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     }
     
     @SuppressWarnings("unchecked")
-    public Record read(DataInput dataInput, Repository repository) throws RepositoryException, InterruptedException {
-        Record record = repository.recordBuilder().newRecord();
+    public Record read(byte[] data) throws RepositoryException, InterruptedException {
+        return new RecordRvtImpl(data, this);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public Record read(DataInput dataInput) throws RepositoryException, InterruptedException {
+        Record record = new RecordImpl();
         dataInput.readByte(); // Ignore, there is currently only one encoding : 1
         int length = dataInput.readVInt();
         byte[] recordTypeId = dataInput.readBytes(length);
@@ -99,7 +104,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         for (FieldType fieldType : fieldTypes) {
             byte readByte = dataInput.readByte();
             if (DEFINED == readByte) {
-                Object value = fieldType.getValueType().read(dataInput, repository);
+                Object value = fieldType.getValueType().read(dataInput);
                 record.setField(fieldType.getName(), value);
             } else if (DEFINED_IDENTICAL == readByte) { // The record is nested in itself
                 record.setField(fieldType.getName(), record);
@@ -108,7 +113,30 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         return record;
     }
     
+    @Override
+    public byte[] toBytes(Object value) throws RepositoryException, InterruptedException {
+        if (value instanceof RecordRvtImpl) {
+            byte[] bytes = ((RecordRvtImpl)value).getBytes();
+            if (bytes != null) 
+                return bytes;
+        }
+        DataOutput dataOutput = new DataOutputImpl();
+        encodeData(value, dataOutput);
+        return dataOutput.toByteArray();
+    }
+
     public void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
+        if (value instanceof RecordRvtImpl) {
+            byte[] bytes = ((RecordRvtImpl)value).getBytes();
+            if (bytes != null) { 
+                dataOutput.writeBytes(bytes);
+                return;
+            }
+        }
+        encodeData(value, dataOutput);
+    }
+    
+    private void encodeData(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
         Record record = (Record)value;
         
         RecordType recordType = null;

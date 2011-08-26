@@ -21,7 +21,6 @@ import java.util.Comparator;
 import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -45,7 +44,7 @@ public class DateTimeValueType extends AbstractValueType implements ValueType {
     }
 
     @SuppressWarnings("unchecked")
-    public DateTime read(DataInput dataInput, Repository repository) {
+    public DateTime read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return new DateTime(dataInput.readLong());
