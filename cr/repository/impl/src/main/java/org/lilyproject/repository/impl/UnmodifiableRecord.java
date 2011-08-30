@@ -84,7 +84,7 @@ public class UnmodifiableRecord implements Record {
     }
 
     @Override
-    public Object getField(QName fieldName) throws FieldNotFoundException {
+    public <T> T getField(QName fieldName) throws FieldNotFoundException {
         return delegate.getField(fieldName);
     }
 

@@ -33,7 +33,7 @@ public class IdRecordImpl implements IdRecord {
         this.recordTypeIds = recordTypeIds;
     }
 
-    public Object getField(SchemaId fieldId) throws FieldNotFoundException {
+    public <T> T getField(SchemaId fieldId) throws FieldNotFoundException {
         QName qname = mapping.get(fieldId);
         if (qname == null) {
             throw new FieldNotFoundException(fieldId);

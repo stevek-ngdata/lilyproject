@@ -34,7 +34,7 @@ public interface IdRecord extends Record {
 
     SchemaId getRecordTypeId(Scope scope);
 
-    Object getField(SchemaId fieldId) throws FieldNotFoundException;
+    <T> T getField(SchemaId fieldId) throws FieldNotFoundException;
 
     boolean hasField(SchemaId fieldId);
 
