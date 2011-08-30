@@ -50,17 +50,20 @@
 
     <plugins>
       <plugin>
-          <groupId>org.kauriproject</groupId>
-          <artifactId>kauri-genclassloader-plugin</artifactId>
-          <version>${version.kauri}</version>
-          <executions>
-            <execution>
-              <phase>compile</phase>
-              <goals>
-                <goal>generate</goal>
-              </goals>
-            </execution>
-          </executions>
+        <groupId>org.kauriproject</groupId>
+        <artifactId>kauri-genclassloader-plugin</artifactId>
+        <version>${version.kauri}</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includeTypes>jar</includeTypes>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

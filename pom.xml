@@ -702,6 +702,9 @@
               </goals>
             </execution>
           </executions>
+          <configuration>
+            <includeTypes>jar</includeTypes>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
