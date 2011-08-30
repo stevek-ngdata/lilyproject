@@ -61,8 +61,11 @@ public class IndexManager {
      * Creates a new index.
      *
      * @throws IndexExistsException if an index with the same name already exists
+     * @throws IndexNotFoundException very unlikely to occur here
      */
-    public synchronized Index getIndex(IndexDefinition indexDef) throws IOException, InterruptedException {
+    public synchronized Index getIndex(IndexDefinition indexDef) throws IOException, InterruptedException,
+            IndexNotFoundException {
+
         if (indexDef.getFields().size() == 0) {
             throw new IllegalArgumentException("An IndexDefinition should contain at least one field.");
         }
@@ -118,8 +121,14 @@ public class IndexManager {
         return instantiateIndex(name, table);
     }
 
-    private Index instantiateIndex(String name, HTableInterface table) throws IOException {
-        byte[] jsonData = table.getTableDescriptor().getValue(INDEX_META_KEY);
+    private Index instantiateIndex(String name, HTableInterface table) throws IOException, IndexNotFoundException {
+        byte[] jsonData;
+        try {
+            jsonData = table.getTableDescriptor().getValue(INDEX_META_KEY);
+        } catch (TableNotFoundException e) {
+            throw new IndexNotFoundException(name);
+        }
+
         if (jsonData == null) {
             throw new IOException("Not a valid index table: " + name);
         }
