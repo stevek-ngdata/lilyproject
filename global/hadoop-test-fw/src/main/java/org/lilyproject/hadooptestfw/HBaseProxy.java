@@ -146,8 +146,8 @@ public class HBaseProxy {
 
                 System.out.println("HBaseProxy embedded mode temp dir: " + testHome.getAbsolutePath());
 
-                hbaseTestUtil = HBaseTestingUtilityFactory.create(conf, testHome);
-                hbaseTestUtil.startMiniCluster(1, format);
+                hbaseTestUtil = HBaseTestingUtilityFactory.create(conf, testHome, clearData);
+                hbaseTestUtil.startMiniCluster(1);
                 if (enableMapReduce) {
                     hbaseTestUtil.startMiniMapReduceCluster(1);
                 }
@@ -230,7 +230,7 @@ public class HBaseProxy {
                 @Override
                 public void run() {
                     try {
-                        hbaseTestUtil.shutdownMiniCluster(clearData);
+                        hbaseTestUtil.shutdownMiniCluster();
                         hbaseTestUtil = null;
                     } catch (IOException e) {
                         System.out.println("Error shutting down mini cluster.");

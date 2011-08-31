@@ -23,7 +23,7 @@ public class LilyLauncherService implements LauncherService {
     }
 
     @Override
-    public int setup(CommandLine cmd, File testHome) throws Exception {
+    public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
         String defaultConfDirPath = System.getProperty("lily.conf.dir");
         if (defaultConfDirPath != null) {
             defaultConfDir = new File(defaultConfDirPath);
@@ -56,7 +56,9 @@ public class LilyLauncherService implements LauncherService {
         postStartupInfo.add("");
         postStartupInfo.add("Using configuration from: " + defaultConfDir.getAbsolutePath());
         postStartupInfo.add("You can connect a LilyClient to it using zookeeper connect string \"localhost:2181\"");
-        postStartupInfo.add("(Example: new LilyClient(\"localhost:2181\", 20000); )");
+        postStartupInfo.add("");
+        postStartupInfo.add("From Java, use:");
+        postStartupInfo.add("LilyClient lilyClient = new LilyClient(\"localhost:2181\", 20000);");
         postStartupInfo.add("");
 
         return 0;

@@ -3,6 +3,7 @@ package org.lilyproject.lilyservertestfw.launcher;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.HConnectionManager;
@@ -26,8 +27,10 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableHadoopOption;
     private Option enableSolrOption;
     private Option enableLilyOption;
+    private Option dataDirOption;
 
     private File testHome;
+    private boolean clearData = true;
 
     private HadoopLauncherService hadoopService = new HadoopLauncherService();
     private SolrLauncherService solrService = new SolrLauncherService();
@@ -75,7 +78,15 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 .create("lily");
         options.add(enableLilyOption);
 
-        
+        dataDirOption = OptionBuilder
+                .withDescription("Directory where data should be stored, instead of a temporary directory. " +
+                        "Can be used to restart from previous state.")
+                .hasArg()
+                .withArgName("path")
+                .withLongOpt("data-dir")
+                .create("d");
+        options.add(dataDirOption);
+
         for (LauncherService service : allServices) {
             service.addOptions(options);
         }
@@ -116,10 +127,29 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enabledServices.add(lilyService);
 
         //
+        // Determine directory below which all services will store their data
         //
-        //
-        testHome = TestHomeUtil.createTestHome("lily-launcher-");
+        if (cmd.hasOption(dataDirOption.getOpt())) {
+            String dataDir = cmd.getOptionValue(dataDirOption.getOpt());
+            testHome = new File(dataDir);
+            if (testHome.exists() && !testHome.isDirectory()) {
+                System.err.println("Specified data directory exists and is not a directory:");
+                System.err.println(testHome.getAbsolutePath());
+                return -1;
+            } else if (testHome.exists() && testHome.isDirectory() && testHome.list().length > 0) {
+                System.out.println("Specified data directory exists: will re-use data from previous run!");
+            } else if (!testHome.exists()) {
+                FileUtils.forceMkdir(testHome);
+            }
+            // If the user specified the storage directory, do not delete it
+            clearData = false;
+        } else {
+            testHome = TestHomeUtil.createTestHome("lily-launcher-");
+        }
 
+        //
+        // Setup logging
+        //
         TestHelper.setupConsoleLogging("WARN");
         TestHelper.setupOtherDefaults();
 
@@ -131,7 +161,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         List<String> postStartupInfo = new ArrayList<String>();
 
         for (LauncherService service : enabledServices) {
-            if ((result = service.setup(cmd, testHome)) != 0)
+            if ((result = service.setup(cmd, testHome, clearData)) != 0)
                 return result;
         }
 
@@ -172,8 +202,10 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 //
                 // Cleanup temp data dir
                 //
-                System.out.println("Deleting " + testHome.getPath());
-                TestHomeUtil.cleanupTestHome(testHome);
+                if (clearData) {
+                    System.out.println("Deleting " + testHome.getPath());
+                    TestHomeUtil.cleanupTestHome(testHome);
+                }
 
                 System.out.println("Bye!");
             } catch (Throwable t) {

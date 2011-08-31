@@ -39,7 +39,7 @@ public class HadoopLauncher extends BaseCliTool {
 
         baseTempDir = TestHomeUtil.createTestHome("launch-hadoop-");
 
-        HBaseTestingUtility testUtil = HBaseTestingUtilityFactory.create(conf, baseTempDir);
+        HBaseTestingUtility testUtil = HBaseTestingUtilityFactory.create(conf, baseTempDir, true);
         testUtil.startMiniCluster(1);
         testUtil.startMiniMapReduceCluster(1);
 

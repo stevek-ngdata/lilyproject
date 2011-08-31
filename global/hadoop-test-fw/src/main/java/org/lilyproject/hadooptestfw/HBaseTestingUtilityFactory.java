@@ -14,8 +14,10 @@ public class HBaseTestingUtilityFactory {
      *
      * @param conf HBase conf to use, as created by HBaseConfiguration.create().
      * @param tmpDir directory under which data of dfs, zookeeper, mr, ... will be stored
+     * @param clearData can data be cleared (at startup or shutdown), use true unless you need the data from a previous
+     *                  run
      */
-    public static HBaseTestingUtility create(Configuration conf, File tmpDir) throws IOException {
+    public static HBaseTestingUtility create(Configuration conf, File tmpDir, boolean clearData) throws IOException {
 
         // This location will be used for dfs, zookeeper, ...
         System.setProperty(HBaseTestingUtility.TEST_DIRECTORY_KEY, createSubDir(tmpDir, "hadoop"));
@@ -38,7 +40,13 @@ public class HBaseTestingUtilityFactory {
         conf.set("hbase.master.info.port", "60010");
         conf.set("hbase.regionserver.info.port", "60030");
 
-        return new HBaseTestingUtility(conf);
+        // Disable the automatic closing of Hadoop FileSystem objects by its shutdown hook.
+        // Otherwise, when stopping 'launch-test-lily' (LilyLauncher), the shutdown hook closes the filesystem
+        // before HBase had the opportunity to flush its data. This then leads to (possibly long) recoveries
+        // on the next startup (and even then, I've seen data loss, maybe sync is not active for the mini cluster?).
+        conf.set("fs.automatic.close", "false");
+
+        return new HBaseTestingUtility(conf, clearData);
     }
 
     private static String createSubDir(File parent, String child) throws IOException {

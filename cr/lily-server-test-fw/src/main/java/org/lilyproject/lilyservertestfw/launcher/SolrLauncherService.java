@@ -20,6 +20,7 @@ public class SolrLauncherService implements LauncherService {
     private String autoCommitSetting;
     private String schema;
     private File testHome;
+    private boolean clearData;
 
     private SolrTestingUtility solrTestingUtility;
     private int autoCommitTime = -1;
@@ -46,9 +47,10 @@ public class SolrLauncherService implements LauncherService {
     }
 
     @Override
-    public int setup(CommandLine cmd, File testHome) throws Exception {
+    public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
         this.testHome = new File(testHome, "solr");
         FileUtils.forceMkdir(testHome);
+        this.clearData = clearData;
 
         schema = cmd.getOptionValue(schemaOption.getOpt());
         if (schema != null) {
@@ -101,7 +103,7 @@ public class SolrLauncherService implements LauncherService {
 
     @Override
     public int start(List<String> postStartupInfo) throws Exception {
-        solrTestingUtility = new SolrTestingUtility(testHome);
+        solrTestingUtility = new SolrTestingUtility(testHome, clearData);
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
         byte[] schemaData = schema == null ? null : FileUtils.readFileToByteArray(new File(schema));
         solrTestingUtility.setSchemaData(schemaData);
