@@ -408,10 +408,10 @@ public class HBaseTestingUtility {
           t = new HTable(c, HConstants.META_TABLE_NAME);
           break;
         } catch (NotServingRegionException e) {
-          if (regionAvailableTries > 10) {
-              throw new RuntimeException("Unable to scan meta table after " + regionAvailableTries + " attempts");
+          if (regionAvailableTries > 50) {
+              throw new RuntimeException("Unable to scan meta table after several retries.", e);
           } else {
-              Thread.sleep(50);
+              Thread.sleep(100);
           }
         }
     }
