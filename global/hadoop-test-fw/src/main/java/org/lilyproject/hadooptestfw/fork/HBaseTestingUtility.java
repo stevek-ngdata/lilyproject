@@ -400,7 +400,21 @@ public class HBaseTestingUtility {
     Configuration c = new Configuration(this.conf);
     this.hbaseCluster = new MiniHBaseCluster(c, numMasters, numSlaves);
     // Don't leave here till we've done a successful scan of the .META.
-    HTable t = new HTable(c, HConstants.META_TABLE_NAME);
+    HTable t;
+    int regionAvailableTries = 0;
+    while (true) {
+        regionAvailableTries++;
+        try {
+          t = new HTable(c, HConstants.META_TABLE_NAME);
+          break;
+        } catch (NotServingRegionException e) {
+          if (regionAvailableTries > 10) {
+              throw new RuntimeException("Unable to scan meta table after " + regionAvailableTries + " attempts");
+          } else {
+              Thread.sleep(50);
+          }
+        }
+    }
     ResultScanner s = t.getScanner(new Scan());
     while (s.next() != null) {
       continue;
