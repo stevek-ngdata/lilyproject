@@ -74,7 +74,8 @@ public class HadoopLauncherService implements LauncherService {
         postStartupInfo.add("conf.set(\"hbase.zookeeper.property.clientPort\", \"2181\");");
         postStartupInfo.add("");
 
-        postStartupInfo.add("-------------------------");
+        if (!disableMapReduce) {
+            postStartupInfo.add("-------------------------");
             postStartupInfo.add("MapReduce is running");
             postStartupInfo.add("");
             postStartupInfo.add("JobTracker web ui: http://localhost:" +
@@ -85,6 +86,8 @@ public class HadoopLauncherService implements LauncherService {
                     hbaseTestUtility.getMRCluster().getJobTrackerPort() + "\");");
             postStartupInfo.add("Job job = new Job(conf);");
             postStartupInfo.add("");
+        }
+
         return 0;
     }
 
