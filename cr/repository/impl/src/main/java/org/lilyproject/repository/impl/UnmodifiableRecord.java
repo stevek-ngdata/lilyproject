@@ -85,7 +85,8 @@ public class UnmodifiableRecord implements Record {
 
     @Override
     public <T> T getField(QName fieldName) throws FieldNotFoundException {
-        return delegate.getField(fieldName);
+        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
+        return (T)delegate.getField(fieldName);
     }
 
     @Override
@@ -165,7 +166,8 @@ public class UnmodifiableRecord implements Record {
 
     @Override
     public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
-        return delegate.getField(fieldName);
+        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
+        return (T)delegate.getField(fieldName);
     }
     
     @Override
