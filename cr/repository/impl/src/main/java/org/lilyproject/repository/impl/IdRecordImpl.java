@@ -33,12 +33,13 @@ public class IdRecordImpl implements IdRecord {
         this.recordTypeIds = recordTypeIds;
     }
 
-    public Object getField(SchemaId fieldId) throws FieldNotFoundException {
+    public <T> T getField(SchemaId fieldId) throws FieldNotFoundException {
         QName qname = mapping.get(fieldId);
         if (qname == null) {
             throw new FieldNotFoundException(fieldId);
         }
-        return record.getField(qname);
+        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
+        return (T)record.getField(qname);
     }
 
     public boolean hasField(SchemaId fieldId) {
@@ -208,7 +209,8 @@ public class IdRecordImpl implements IdRecord {
 
     @Override
     public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
-        return record.getField(fieldName);
+        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
+        return (T)record.getField(fieldName);
     }
     
     @Override

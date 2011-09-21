@@ -345,7 +345,8 @@ public class RecordImpl implements Record {
     }
     
     public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
-        return getField(resolveNamespace(fieldName));
+        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
+        return (T)getField(resolveNamespace(fieldName));
     }
     
     public void setField(String fieldName, Object value) throws RecordException {

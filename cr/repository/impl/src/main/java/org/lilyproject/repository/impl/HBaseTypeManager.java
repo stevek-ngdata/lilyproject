@@ -127,9 +127,12 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             // Check for concurrency
             long now = System.currentTimeMillis();
             checkConcurrency(recordType.getName(), nameBytes, now);
-            
-            if (getRecordTypeFromCache(recordType.getName()) != null)
+
+            // FIXME: is this a reliable check? Cache might be out of date in case changes happen on other nodes?
+            if (getRecordTypeFromCache(recordType.getName()) != null) {
+                clearConcurrency(nameBytes, now);
                 throw new RecordTypeExistsException(recordType);
+            }
 
             Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
             for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
@@ -461,8 +464,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 if (getFieldTypesSnapshot().getFieldTypeByName(fieldType.getName()) != null)
                     throw new FieldTypeExistsException(fieldType);
             } catch (FieldTypeNotFoundException ignore) {
+                // FIXME: should not use exceptions for non-exceptional flow
             }
 
+            // FIXME: the flow here is different than for record types, were first the name reservation is taken
+            // and then the existence is checked.
             // Check for concurrency
             long now = System.currentTimeMillis();
             checkConcurrency(fieldType.getName(), nameBytes, now);
@@ -577,7 +583,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         // The concurrent timeout should be large enough to allow fieldType caches to be refreshed
         if (originalTimestamp != null) {
             if ((originalTimestamp + CONCURRENT_TIMEOUT) >= now) {
-                throw new ConcurrentUpdateTypeException(name.getName());
+                throw new ConcurrentUpdateTypeException(name.toString());
             }
             
         }
@@ -585,7 +591,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         Put put = new Put(nameBytes);
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now));
         if (!getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, originalTimestampBytes, put)) {
-            throw new ConcurrentUpdateTypeException(name.getName());
+            throw new ConcurrentUpdateTypeException(name.toString());
         }
     }
     
