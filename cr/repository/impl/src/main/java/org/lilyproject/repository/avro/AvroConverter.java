@@ -75,12 +75,7 @@ public class AvroConverter {
         if (avroRecord.fields != null) {
             for (AvroField field : avroRecord.fields) {
                 QName name = convert(field.name);
-                ByteBuffer typeParams = field.typeParams;
-                ValueType valueType = null;
-                if (typeParams == null)
-                    valueType = typeManager.getValueType(convert(field.valueType));
-                else 
-                    valueType = typeManager.getValueType(convert(field.valueType), new DataInputImpl(typeParams.array()));
+                ValueType valueType = typeManager.getValueType(convert(field.valueType));
                 Object value = valueType.read(field.value.array());
                 record.setField(name, value);
             }
@@ -144,12 +139,7 @@ public class AvroConverter {
             // value is optional
             Object value = null;
             if (avroCond.value != null) {
-                ValueType valueType = null;
-                ByteBuffer typeParams = avroCond.typeParams;
-                if (typeParams == null)
-                    valueType = typeManager.getValueType(convert(avroCond.valueType));
-                else
-                    valueType = typeManager.getValueType(convert(avroCond.valueType), new DataInputImpl(typeParams.array()));
+                ValueType valueType = typeManager.getValueType(convert(avroCond.valueType));
                 value = valueType.read(avroCond.value.array());
             }
 
@@ -205,13 +195,9 @@ public class AvroConverter {
             FieldType fieldType;
             try {
                 fieldType = typeManager.getFieldTypeByName(field.getKey());
-
-                avroField.valueType = fieldType.getValueType().getSimpleName();
-                byte[] typeParams = fieldType.getValueType().getTypeParams();
-                if (typeParams != null)
-                    avroField.typeParams = ByteBuffer.wrap(typeParams);
-    
-                byte[] value = fieldType.getValueType().toBytes(field.getValue());
+                ValueType valueType = fieldType.getValueType();
+                avroField.valueType = valueType.getName();
+                byte[] value = valueType.toBytes(field.getValue());
                 avroField.value = ByteBuffer.wrap(value);
             } catch (RepositoryException e) {
                 throw convert(e);
@@ -290,12 +276,9 @@ public class AvroConverter {
                 avroCond.name = convert(condition.getField());
     
                 if (condition.getValue() != null) {
-                    avroCond.valueType = convert(fieldType.getValueType().getSimpleName());
-                    byte[] typeParams = fieldType.getValueType().getTypeParams();
-                    if (typeParams != null)
-                        avroCond.typeParams = ByteBuffer.wrap(typeParams);
-    
-                    byte[] value = fieldType.getValueType().toBytes(condition.getValue());
+                    ValueType valueType = fieldType.getValueType();
+                    avroCond.valueType = convert(valueType.getName());
+                    byte[] value = valueType.toBytes(condition.getValue());
                     avroCond.value = ByteBuffer.wrap(value);
                 }
                 avroCond.operator = convert(condition.getOp());
@@ -331,7 +314,7 @@ public class AvroConverter {
         return scope == null ? null : Scope.values()[scope.ordinal()];
     }
 
-    public AvroFieldType convert(FieldType fieldType) {
+    public AvroFieldType convert(FieldType fieldType) throws RepositoryException, InterruptedException {
         AvroFieldType avroFieldType = new AvroFieldType();
         
         avroFieldType.id = convert(fieldType.getId());
@@ -387,18 +370,12 @@ public class AvroConverter {
     }
 
     public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {
-        ByteBuffer typeParams = valueType.typeParams;
-        if (typeParams == null)
-            return typeManager.getValueType(convert(valueType.valueType));
-        return typeManager.getValueType(convert(valueType.valueType), new DataInputImpl(typeParams.array()));
+        return typeManager.getValueType(convert(valueType.valueType));
     }
 
-    public AvroValueType convert(ValueType valueType) {
+    public AvroValueType convert(ValueType valueType) throws RepositoryException, InterruptedException {
         AvroValueType avroValueType = new AvroValueType();
-        avroValueType.valueType = valueType.getSimpleName();
-        byte[] typeParams = valueType.getTypeParams();
-        if (typeParams != null)
-            avroValueType.typeParams = ByteBuffer.wrap(typeParams);
+        avroValueType.valueType = convert(valueType.getName());
         return avroValueType;
     }
 
@@ -617,7 +594,7 @@ public class AvroConverter {
         return recordTypes;
     }
 
-    public List<AvroFieldType> convertFieldTypes(Collection<FieldType> fieldTypes) {
+    public List<AvroFieldType> convertFieldTypes(Collection<FieldType> fieldTypes) throws RepositoryException, InterruptedException {
         List<AvroFieldType> avroFieldTypes = new ArrayList<AvroFieldType>(fieldTypes.size());
         for (FieldType fieldType : fieldTypes) {
             avroFieldTypes.add(convert(fieldType));

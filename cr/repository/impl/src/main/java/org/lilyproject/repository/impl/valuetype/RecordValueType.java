@@ -245,10 +245,5 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException, InterruptedException {
             return new RecordValueType(typeManager, recordName);
         }
-        
-        @Override
-        public ValueType getValueType(DataInput dataInput) {
-            return new RecordValueType(typeManager, dataInput);
-        }
     }
 }

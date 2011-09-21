@@ -312,16 +312,12 @@ public abstract class AbstractTypeManager implements TypeManager {
         valueTypeFactories.put(valueTypeName, valueTypeFactory);
     }
 
-    public ValueType getValueType(String valueTypeName, String valueTypeParams) throws RepositoryException, InterruptedException {
-        return valueTypeFactories.get(valueTypeName).getValueType(valueTypeParams);
-    }
-    
-    public ValueType getValueType(String valueTypeName, DataInput dataInput) throws RepositoryException, InterruptedException {
-        return valueTypeFactories.get(valueTypeName).getValueType(dataInput);
-    }
-    
-    public ValueType getValueType(String valueTypeName) throws RepositoryException, InterruptedException {
-        return getValueType(valueTypeName, (String)null);
+    public ValueType getValueType(String valueType) throws RepositoryException, InterruptedException {
+        int indexOfParams = valueType.indexOf("<");
+        if (indexOfParams == -1)
+            return valueTypeFactories.get(valueType).getValueType((String)null);
+        else 
+            return valueTypeFactories.get(valueType.substring(0, indexOfParams)).getValueType(valueType.substring(indexOfParams + 1, valueType.length()-1));
     }
     
     // TODO get this from some configuration file

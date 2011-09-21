@@ -123,7 +123,7 @@ public class RecordValueTypeBenchmark {
         }
         rtBuilder.create();
         
-        ValueType rvt = typeManager.getValueType("RECORD", rvtRTName.toString());
+        ValueType rvt = typeManager.getValueType("RECORD<"+rvtRTName.toString()+">");
         
         FieldType rvtFT = typeManager.createFieldType(typeManager.newFieldType(rvt, new QName(ns, "rvtField"), Scope.NON_VERSIONED));
         typeManager.rtBuilder().name(new QName(ns, "rvtFieldRT")).field(rvtFT.getId(), false).create();

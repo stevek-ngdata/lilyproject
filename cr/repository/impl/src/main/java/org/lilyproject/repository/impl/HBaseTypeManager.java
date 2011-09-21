@@ -438,7 +438,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return createFieldType(newFieldType(valueType, name, scope));
     }
 
-    public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException {
+    public FieldType createFieldType(FieldType fieldType) throws FieldTypeExistsException, TypeException, RepositoryException {
         ArgumentValidator.notNull(fieldType, "fieldType");
 
         FieldType newFieldType;
@@ -746,19 +746,17 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     // ValueType encoding
     private byte valueTypeEncodingVersion = (byte)1;
     
-    private byte[] encodeValueType(ValueType valueType) {
+    private byte[] encodeValueType(ValueType valueType) throws RepositoryException, InterruptedException {
         DataOutput dataOutput = new DataOutputImpl();
         dataOutput.writeByte(valueTypeEncodingVersion);
-        dataOutput.writeUTF(valueType.getSimpleName());
-        valueType.encodeTypeParams(dataOutput);
+        dataOutput.writeUTF(valueType.getName());
         return dataOutput.toByteArray();
     }
     
     private ValueType decodeValueType(byte[] bytes) throws RepositoryException, InterruptedException {
         DataInput dataInput = new DataInputImpl(bytes);
-        dataInput.readByte(); // Ignore since there is only have one encoding version
-        String valueTypeName = dataInput.readUTF();
-        return getValueType(valueTypeName, dataInput);
+        dataInput.readByte(); // Ignore since there is only one encoding version
+        return getValueType(dataInput.readUTF());
     }
    
 }

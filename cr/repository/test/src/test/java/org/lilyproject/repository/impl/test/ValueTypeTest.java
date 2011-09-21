@@ -146,10 +146,10 @@ public class ValueTypeTest {
             .field(fieldType2.getName(), 888)
             .newRecord();
 
-        testType("recordValueTypeId", "RECORD", "{testRecordType}recordValueTypeRecordType", recordField1);
-        testType("recordValueTypeId", "LIST", "RECORD<{testRecordType}recordValueTypeRecordType>", Arrays.asList(recordField1, recordField2));
-        testType("recordValueTypeId", "PATH", "RECORD<{testRecordType}recordValueTypeRecordType>", new HierarchyPath(recordField1, recordField2));
-        testType("recordValueTypeId", "LIST", "PATH<RECORD<{testRecordType}recordValueTypeRecordType>>", Arrays.asList(new HierarchyPath(recordField1, recordField2), new HierarchyPath(recordField1, recordField3)));
+        testType("recordValueTypeId", "RECORD<{testRecordType}recordValueTypeRecordType>", recordField1);
+        testType("recordValueTypeId", "LIST<RECORD<{testRecordType}recordValueTypeRecordType>>", Arrays.asList(recordField1, recordField2));
+        testType("recordValueTypeId", "PATH<RECORD<{testRecordType}recordValueTypeRecordType>>", new HierarchyPath(recordField1, recordField2));
+        testType("recordValueTypeId", "LIST<PATH<RECORD<{testRecordType}recordValueTypeRecordType>>>", Arrays.asList(new HierarchyPath(recordField1, recordField2), new HierarchyPath(recordField1, recordField3)));
     }
 
     @Test
@@ -160,14 +160,14 @@ public class ValueTypeTest {
             .field(fieldType1.getId(), false)
             .create();
         
-        testType("recordValueTypeId", "LINK", null, new Link(idGenerator.newRecordId()));
-        testType("recordValueTypeId", "LINK", "{testLinkType}linkValueTypeRecordType", new Link(idGenerator.newRecordId()));
-        testType("recordValueTypeId", "LIST", "LINK<{testLinkType}linkValueTypeRecordType>", Arrays.asList(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
-        testType("recordValueTypeId", "LIST", "LINK", Arrays.asList(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
-        testType("recordValueTypeId", "PATH", "LINK<{testLinkType}linkValueTypeRecordType>", new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
-        testType("recordValueTypeId", "PATH", "LINK", new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
-        testType("recordValueTypeId", "LIST", "PATH<LINK<{testLinkType}linkValueTypeRecordType>>", Arrays.asList(new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())), new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()))));
-        testType("recordValueTypeId", "LIST", "PATH<LINK>", Arrays.asList(new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())), new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()))));
+        testType("recordValueTypeId", "LINK", new Link(idGenerator.newRecordId()));
+        testType("recordValueTypeId", "LINK<{testLinkType}linkValueTypeRecordType>", new Link(idGenerator.newRecordId()));
+        testType("recordValueTypeId", "LIST<LINK<{testLinkType}linkValueTypeRecordType>>", Arrays.asList(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "LIST<LINK>", Arrays.asList(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "PATH<LINK<{testLinkType}linkValueTypeRecordType>>", new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "PATH<LINK>", new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())));
+        testType("recordValueTypeId", "LIST<PATH<LINK<{testLinkType}linkValueTypeRecordType>>>", Arrays.asList(new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())), new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()))));
+        testType("recordValueTypeId", "LIST<PATH<LINK>>", Arrays.asList(new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId())), new HierarchyPath(new Link(idGenerator.newRecordId()), new Link(idGenerator.newRecordId()))));
     }
     
     
@@ -219,29 +219,29 @@ public class ValueTypeTest {
         comparator = typeManager.getValueType("LINK").getComparator();
         assertNull(comparator);
 
-        comparator = typeManager.getValueType("LIST", "STRING").getComparator();
+        comparator = typeManager.getValueType("LIST<STRING>").getComparator();
         assertNull(comparator);
         
-        comparator = typeManager.getValueType("PATH", "STRING").getComparator();
+        comparator = typeManager.getValueType("PATH<STRING>").getComparator();
         assertNull(comparator); 
         
-        comparator = typeManager.getValueType("RECORD", "{testRecordType}recordValueTypeRecordType").getComparator();
+        comparator = typeManager.getValueType("RECORD<{testRecordType}recordValueTypeRecordType>").getComparator();
         assertNull(comparator); 
     }
 
     private void runValueTypeTests(String name, String valueType, Object value1, Object value2, Object value3) throws Exception {
-        testType(name, valueType, null, value1);
-        testType(name, "LIST", valueType, Arrays.asList(value1, value2));
-        testType(name, "PATH", valueType, new HierarchyPath(value1, value2));
-        testType(name, "LIST", "PATH<"+valueType+">", Arrays.asList(new HierarchyPath(value1, value2), new HierarchyPath(value1, value3)));
+        testType(name, valueType, value1);
+        testType(name, "LIST<"+valueType+">", Arrays.asList(value1, value2));
+        testType(name, "PATH<"+valueType+">", new HierarchyPath(value1, value2));
+        testType(name, "LIST<PATH<"+valueType+">>", Arrays.asList(new HierarchyPath(value1, value2), new HierarchyPath(value1, value3)));
     }
     
-    private void testType(String name, String valueTypeString, String typeParams,
+    private void testType(String name, String valueType,
                     Object fieldValue) throws Exception {
-        String testName = name+valueTypeString+typeParams;
+        String testName = name+valueType;
         QName fieldTypeName = new QName("valueTypeTest", testName+"FieldId");
         FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType(
-                        valueTypeString, typeParams), fieldTypeName, Scope.VERSIONED));
+                        valueType), fieldTypeName, Scope.VERSIONED));
         RecordType recordType = typeManager.newRecordType(new QName("valueTypeTest", testName+"RecordTypeId"));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType.getId(), true));
         recordType = typeManager.createRecordType(recordType);
@@ -319,11 +319,6 @@ public class ValueTypeTest {
         public ValueType getValueType(String typeParams) {
             return new XYValueType();
         }
-
-        @Override
-        public ValueType getValueType(DataInput dataInput) throws RepositoryException, InterruptedException {
-            return new XYValueType();
-        }
     }
 
     private class XYCoordinates {
@@ -393,7 +388,7 @@ public class ValueTypeTest {
             .create();
         
         // Make a RecordValueType with the record type specified
-        ValueType recordVT1 = typeManager.getValueType("RECORD", "{"+ns+"}rt1");
+        ValueType recordVT1 = typeManager.getValueType("RECORD<{"+ns+"}rt1>");
 
         // Create a fieldType with as value type a RecordValueType
         FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(recordVT1, new QName(ns, "field2"), Scope.NON_VERSIONED));
@@ -429,7 +424,7 @@ public class ValueTypeTest {
             .create();
         
         // Make a RecordValueType with the record type specified
-        ValueType recordVT1 = typeManager.getValueType("RECORD", "{"+ns+"}rt1");
+        ValueType recordVT1 = typeManager.getValueType("RECORD<{"+ns+"}rt1>");
 
         // Create a fieldType with as value type a RecordValueType
         FieldType fieldType2 = typeManager.createFieldType(typeManager.newFieldType(recordVT1, new QName(ns, "field2"), Scope.NON_VERSIONED));
@@ -440,7 +435,7 @@ public class ValueTypeTest {
             .create();
         
         // Create a fieldType with as value type a 'nested' RecordValueType
-        ValueType recordVT2 = typeManager.getValueType("RECORD", "{"+ns+"}rt2");
+        ValueType recordVT2 = typeManager.getValueType("RECORD<{"+ns+"}rt2>");
         FieldType fieldType3 = typeManager.createFieldType(typeManager.newFieldType(recordVT2, new QName(ns, "field3"), Scope.NON_VERSIONED));
         RecordType rt3 = typeManager.rtBuilder()
             .name(new QName(ns, "rt3"))

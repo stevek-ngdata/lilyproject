@@ -15,8 +15,6 @@
  */
 package org.lilyproject.repository.api;
 
-import org.lilyproject.bytes.api.DataInput;
-
 
 /**
  * A ValueTypeFactory is used to create a new instance of a {@link ValueType}.
@@ -32,10 +30,4 @@ public interface ValueTypeFactory {
      *  @param typeParams the value type specific parameters as String 
      */
     ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException;
-
-    /**
-     *  Returns an instance of the ValueType
-     *  @param dataInput the DataInput from which to read the value type specific parameters 
-     */
-    ValueType getValueType(DataInput dataInput) throws RepositoryException, InterruptedException ;
 }

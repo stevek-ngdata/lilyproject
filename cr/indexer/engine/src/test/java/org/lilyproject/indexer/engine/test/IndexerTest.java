@@ -168,19 +168,19 @@ public class IndexerTest {
 
     private static void setupSchema() throws Exception {
         ValueType stringValueType = typeManager.getValueType("STRING");
-        ValueType stringMvValueType = typeManager.getValueType("LIST", "STRING");
+        ValueType stringMvValueType = typeManager.getValueType("LIST<STRING>");
 
         ValueType longValueType = typeManager.getValueType("LONG");
 
         ValueType linkValueType = typeManager.getValueType("LINK");
 
         ValueType blobValueType = typeManager.getValueType("BLOB");
-        ValueType blobMvHierValueType = typeManager.getValueType("LIST", "PATH<BLOB>");
+        ValueType blobMvHierValueType = typeManager.getValueType("LIST<PATH<BLOB>>");
 
         ValueType dateTimeValueType = typeManager.getValueType("DATETIME");
         ValueType dateValueType = typeManager.getValueType("DATE");
 
-        ValueType intHierValueType = typeManager.getValueType("PATH", "INTEGER");
+        ValueType intHierValueType = typeManager.getValueType("PATH<INTEGER>");
 
         //
         // Version tag fields
@@ -1156,8 +1156,8 @@ public class IndexerTest {
         //
         ValueType stringValueType = typeManager.getValueType("STRING");
         ValueType longValueType = typeManager.getValueType("LONG");
-        ValueType mvStringValueType = typeManager.getValueType("LIST", "STRING");
-        ValueType hierStringValueType = typeManager.getValueType("PATH", "STRING");
+        ValueType mvStringValueType = typeManager.getValueType("LIST<STRING>");
+        ValueType hierStringValueType = typeManager.getValueType("PATH<STRING>");
         ValueType dateValueType = typeManager.getValueType("DATE");
         ValueType blobValueType = typeManager.getValueType("BLOB");
 

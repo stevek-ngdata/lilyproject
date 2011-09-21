@@ -36,14 +36,7 @@ public class ListValueType extends AbstractValueType implements ValueType {
         ArgumentValidator.notNull(typeParams, "typeParams");
         this.typeParams = typeParams;
         this.fullName = NAME+"<"+typeParams+">";
-        int indexOpenBracket = typeParams.indexOf('<');
-        if (indexOpenBracket == -1) {
-            this.valueType = typeManager.getValueType(typeParams);
-        } else {
-            String firstType = typeParams.substring(0, indexOpenBracket);
-            String nestedTypeParams = typeParams.substring(indexOpenBracket + 1, typeParams.length()-1);
-            this.valueType = typeManager.getValueType(firstType, nestedTypeParams);
-        }
+        this.valueType = typeManager.getValueType(typeParams);
     }
     
     public ListValueType(TypeManager typeManager, DataInput typeParamsDataInput) throws RepositoryException, InterruptedException {
@@ -146,11 +139,6 @@ public class ListValueType extends AbstractValueType implements ValueType {
         @Override
         public ValueType getValueType(String typeParams) throws RepositoryException, InterruptedException {
             return new ListValueType(typeManager, typeParams);
-        }
-        
-        @Override
-        public ValueType getValueType(DataInput dataInput) throws RepositoryException, InterruptedException {
-            return new ListValueType(typeManager, dataInput);
         }
     }
 }

@@ -140,7 +140,7 @@ public class TutorialTest {
     @Test
     public void updateRecordType() throws Exception {
         ValueType stringValueType = typeManager.getValueType("STRING");
-        ValueType stringMvValueType = typeManager.getValueType("LIST", "STRING");
+        ValueType stringMvValueType = typeManager.getValueType("LIST<STRING>");
         ValueType longValueType = typeManager.getValueType("LONG");
         ValueType dateValueType = typeManager.getValueType("DATE");
         ValueType blobValueType = typeManager.getValueType("BLOB");

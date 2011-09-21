@@ -1875,7 +1875,7 @@ public abstract class AbstractRepositoryTest {
         QName ft2Name = new QName(namespace, "ft2");
         QName ft3Name = new QName(namespace, "ft3");
         typeManager.rtBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
-        ValueType rvt = typeManager.getValueType("RECORD", rvtRTName.toString());
+        ValueType rvt = typeManager.getValueType("RECORD<"+rvtRTName.toString()+">");
         FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
         FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
         FieldType ft3 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft3Name, Scope.VERSIONED_MUTABLE));

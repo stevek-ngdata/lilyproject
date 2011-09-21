@@ -18,7 +18,6 @@ package org.lilyproject.repository.impl.test;
 import static org.easymock.EasyMock.createControl;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.eq;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
@@ -28,9 +27,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.easymock.IMocksControl;
 import org.junit.*;
-import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.bytes.impl.DataInputImpl;
-import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
@@ -99,7 +95,6 @@ public class AvroConverterTest {
         converter.setRepository(repository);
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = "STRING";
-        avroValueType.typeParams = null;
         
         assertEquals(valueType, converter.convert(avroValueType));
         assertEquals(avroValueType, converter.convert(valueType));
@@ -151,7 +146,6 @@ public class AvroConverterTest {
         avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = "STRING";
-        avroValueType.typeParams = null;
         avroFieldType.valueType = avroValueType;
         
         assertEquals(fieldType, converter.convert(avroFieldType));
@@ -162,7 +156,7 @@ public class AvroConverterTest {
     @Test
     public void testFieldTypeWithoutId() throws Exception {
         ValueType valueType = new StringValueType();
-        typeManager.getValueType(eq("LIST"), isA(DataInputImpl.class));
+        typeManager.getValueType("LIST<STRING>");
         expectLastCall().andReturn(valueType);
         QName name = new QName("aNamespace", "aName");
         FieldType fieldType = new FieldTypeImpl(null, valueType , name, Scope.NON_VERSIONED);
@@ -179,10 +173,7 @@ public class AvroConverterTest {
         avroFieldType.name = avroQName ;
         avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
-        avroValueType.valueType = "LIST";
-        DataOutput dataOutput = new DataOutputImpl();
-        dataOutput.writeUTF("STRING");
-        avroValueType.typeParams = ByteBuffer.wrap(dataOutput.toByteArray());
+        avroValueType.valueType = "LIST<STRING>";
         avroFieldType.valueType = avroValueType;
         
         converter.convert(avroFieldType);

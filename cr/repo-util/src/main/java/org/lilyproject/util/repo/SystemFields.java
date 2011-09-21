@@ -214,7 +214,7 @@ public class SystemFields {
 
                 ValueType valueType;
                 try {
-                    valueType = field.multiValue ? typeManager.getValueType("LIST", field.type) : typeManager.getValueType(field.type);
+                    valueType = field.multiValue ? typeManager.getValueType("LIST<"+field.type+">") : typeManager.getValueType(field.type);
                 } catch (RepositoryException e) {
                     throw new RuntimeException(e); // unlikely to occur
                 } catch (InterruptedException e) {

@@ -49,12 +49,12 @@ public class FieldTypeReader implements EntityReader<FieldType> {
         ValueType valueType;
         if (multiValue) {
             if (hierarchical) {
-                valueType = typeManager.getValueType("LIST", "PATH<"+primitive+">");
+                valueType = typeManager.getValueType("LIST<PATH<"+primitive+">>");
             } else {
-                valueType = typeManager.getValueType("LIST", primitive);
+                valueType = typeManager.getValueType("LIST<"+ primitive+">");
             }
         } else if (hierarchical) {
-            valueType = typeManager.getValueType("PATH", primitive);
+            valueType = typeManager.getValueType("PATH<"+ primitive+">");
         } else {
             valueType = typeManager.getValueType(primitive);
         }

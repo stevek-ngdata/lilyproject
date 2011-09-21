@@ -389,7 +389,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testUpdateMutableMultivalueBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateMutableMultivalueBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST", "BLOB"), fieldName, Scope.VERSIONED_MUTABLE);
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST<BLOB>"), fieldName, Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateMutableMultivalueBlobRT"+size));
         FieldTypeEntry fieldTypeEntry = typeManager.newFieldTypeEntry(fieldType.getId(), true);
@@ -476,7 +476,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testUpdateMutableHierarchyBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateMutableHierarchyBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("PATH", "BLOB"), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("PATH<BLOB>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateMutableHierarchyBlobRT"+size));
@@ -563,7 +563,7 @@ public abstract class AbstractBlobStoreTest {
 
     private void testUpdateMutableMultivalueHierarchyBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testUpdateMutableMultivalueHierarchyBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST", "PATH<BLOB>"), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST<PATH<BLOB>>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testUpdateMutableMultivalueHierarchyBlobRT"+size));
@@ -688,7 +688,7 @@ public abstract class AbstractBlobStoreTest {
     
     private void testDeleteMultivalueHierarchyBlob(int size, boolean expectDelete) throws Exception {
         QName fieldName = new QName("test", "testDeleteMultivalueHierarchyBlob"+size);
-        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST", "PATH<BLOB>"), fieldName,
+        FieldType fieldType = typeManager.newFieldType(typeManager.getValueType("LIST<PATH<BLOB>>"), fieldName,
                 Scope.VERSIONED_MUTABLE);
         fieldType = typeManager.createFieldType(fieldType);
         RecordType recordType = typeManager.newRecordType(new QName(null, "testDeleteMultivalueHierarchyBlobRT"+size));

@@ -127,10 +127,5 @@ public class LinkValueType extends AbstractValueType implements ValueType {
         public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException, InterruptedException {
             return new LinkValueType(idGenerator, typeManager, recordName);
         }
-        
-        @Override
-        public ValueType getValueType(DataInput dataInput) {
-            return new LinkValueType(idGenerator, typeManager, dataInput);
-        }
     }
 }

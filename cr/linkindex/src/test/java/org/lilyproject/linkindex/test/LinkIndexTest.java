@@ -126,11 +126,11 @@ public class LinkIndexTest {
                 new QName("ns", "link1"), Scope.NON_VERSIONED);
         nonVersionedFt = typeManager.createFieldType(nonVersionedFt);
 
-        FieldType versionedFt = typeManager.newFieldType(typeManager.getValueType("LIST", "LINK"),
+        FieldType versionedFt = typeManager.newFieldType(typeManager.getValueType("LIST<LINK>"),
                 new QName("ns", "link2"), Scope.VERSIONED);
         versionedFt = typeManager.createFieldType(versionedFt);
 
-        FieldType versionedMutableFt = typeManager.newFieldType(typeManager.getValueType("LIST", "LINK"),
+        FieldType versionedMutableFt = typeManager.newFieldType(typeManager.getValueType("LIST<LINK>"),
                 new QName("ns", "link3"), Scope.VERSIONED_MUTABLE);
         versionedMutableFt = typeManager.createFieldType(versionedMutableFt);
 

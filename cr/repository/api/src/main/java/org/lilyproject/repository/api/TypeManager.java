@@ -208,39 +208,24 @@ public interface TypeManager extends Closeable {
      * </tbody>
      * </table>
      * 
-     * <p>Some value types accept extra parameters (typeParams) to define the exact value type.
-     * <p>For List and Path the typeParams define the value type of the included values.
-     * It is mandatory to define this value type. It should be specified by its name and if that
-     * value type in its turn needs some typeParams these should be appended within brackets "&lt;&gt;".
-     * <br>For example: <code>getValueType("LIST", "PATH&lt;STRING&gt;");</code>
+     * <p>Some value types accept extra parameters to define the exact value type.
+     * <p>For List and Path these parameters define the value type of the included values.
+     * It is mandatory to define this value type. 
+     * It should be specified by putting its name between brackets "&lt;&gt;"  
+     * and if that value type in its turn needs some extra parameters, 
+     * these should be appended again within brackets "&lt;&gt;".
+     * <br>For example: <code>getValueType("LIST&lt;PATH&lt;STRING&gt;&gt;");</code>
      * 
-     * <p>For Record and Link valuetype it is possible to define the {@link RecordType} in the typeParams.
+     * <p>For Record and Link valuetype it is possible to define the {@link RecordType} in the parameters.
      * This is not mandatory. It is done by specifying the name of the RecordType in the format 
-     * <code>{namespace}name</code>. 
-     * <br>For example: <code>getValueType("RECORD", "{myNamespace}recordType1");</code>
+     * <code>{namespace}name</code> between brackets "&lt;&gt;". 
+     * <br>For example: <code>getValueType("RECORD<{myNamespace}recordType1>");</code>
      *
      * @see ValueType
-     * @param valueTypeName the name of the {@link ValueType}. See table above.
-     * @param typeParams String of parameters specific to the value type
+     * @param valueType the value type string representation. See table above.
      */
-    ValueType getValueType(String valueTypeName, String typeParams) throws RepositoryException, InterruptedException;
+     ValueType getValueType(String valueType) throws RepositoryException, InterruptedException;
     
-    /**
-     * Provides a {@link ValueType} instace, where the typeParams are read and decoded from a {@link DataInput}.
-     * 
-     * <p>The value type itself is responsible for encoding and decoding its typeParams.
-     * 
-     * @param valueTypeName name of the value type, cfr {@link #getValueType(String, DataInput)}
-     * @param dataInput the DataInput from which to read the typeParams.
-     * @return a ValueType
-     */
-    ValueType getValueType(String valueTypeName, DataInput dataInput) throws RepositoryException, InterruptedException;
-    
-    /**
-     * Shortcut for {@link #getValueType(String, String) getValueType(name, null)}.
-     */
-    ValueType getValueType(String valueTypeName) throws RepositoryException, InterruptedException;
-
     /**
      * Registers custom {@link ValueType}s.
      *
