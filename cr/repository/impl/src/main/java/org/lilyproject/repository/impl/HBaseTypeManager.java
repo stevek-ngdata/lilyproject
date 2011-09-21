@@ -749,7 +749,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     private byte[] encodeValueType(ValueType valueType) {
         DataOutput dataOutput = new DataOutputImpl();
         dataOutput.writeByte(valueTypeEncodingVersion);
-        dataOutput.writeUTF(valueType.getName());
+        dataOutput.writeUTF(valueType.getSimpleName());
         valueType.encodeTypeParams(dataOutput);
         return dataOutput.toByteArray();
     }

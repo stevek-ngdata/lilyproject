@@ -110,7 +110,7 @@ public class MutationConditionVerifier {
 
         if (comparator == null) {
             throw new RepositoryException("Other than (not-)equals operator in mutation condition used for value type "
-                    + "that does not support comparison: " + valueType.getFullName());
+                    + "that does not support comparison: " + valueType.getName());
         }
 
         int result = comparator.compare(currentValue, cond.getValue());

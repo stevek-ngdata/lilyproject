@@ -138,7 +138,7 @@ public class RecordReader implements EntityReader<Record> {
     private Object readPrimitive(JsonNode node, FieldType fieldType, String prop, Repository repository)
             throws JsonFormatException {
 
-        String primitive = fieldType.getValueType().getBaseValueType().getName();
+        String primitive = fieldType.getValueType().getBaseValueType().getSimpleName();
 
         if (primitive.equals("STRING")) {
             if (!node.isTextual())

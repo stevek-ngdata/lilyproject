@@ -33,7 +33,7 @@ public abstract class AbstractValueType implements ValueType {
     
     public abstract void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
     
-    public abstract String getName();
+    public abstract String getSimpleName();
     
     public abstract ValueType getBaseValueType();
     
@@ -47,8 +47,8 @@ public abstract class AbstractValueType implements ValueType {
         return dataOutput.toByteArray();
     }
     
-    public String getFullName() throws RepositoryException, InterruptedException {
-        return getName();
+    public String getName() throws RepositoryException, InterruptedException {
+        return getSimpleName();
     }
     
     public int getNestingLevel() {

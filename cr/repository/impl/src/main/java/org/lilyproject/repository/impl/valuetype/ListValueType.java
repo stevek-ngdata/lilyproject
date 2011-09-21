@@ -50,11 +50,11 @@ public class ListValueType extends AbstractValueType implements ValueType {
         this(typeManager, typeParamsDataInput.readUTF());
     }
     
-    public String getName() {
+    public String getSimpleName() {
         return NAME;
     }
     
-    public String getFullName() {
+    public String getName() {
         return fullName;
     }
     

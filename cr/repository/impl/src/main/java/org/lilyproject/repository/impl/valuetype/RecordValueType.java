@@ -52,11 +52,11 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         }
     }
     
-    public String getName() {
+    public String getSimpleName() {
         return NAME;
     }
     
-    public String getFullName() throws RepositoryException, InterruptedException {
+    public String getName() throws RepositoryException, InterruptedException {
         if (recordTypeId == null)
             return NAME;
         else {

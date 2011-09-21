@@ -202,7 +202,7 @@ public class PrintUtil {
         println(out, indent, "Name = {" + fieldType.getName().getNamespace() + "}" + fieldType.getName().getName());
         println(out, indent, "Mandatory = " + fieldTypeEntry.isMandatory());
         try {
-            println(out, indent, "ValueType = " + fieldType.getValueType().getFullName());
+            println(out, indent, "ValueType = " + fieldType.getValueType().getName());
         } catch (Throwable t) {
             // value type failed to load
         }

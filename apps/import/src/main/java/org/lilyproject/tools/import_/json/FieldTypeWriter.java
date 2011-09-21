@@ -57,7 +57,7 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
     public static ObjectNode valueTypeToJson(ValueType valueType) {
         ObjectNode vtNode = JsonNodeFactory.instance.objectNode();
 
-        vtNode.put("primitive", valueType.getBaseValueType().getName());
+        vtNode.put("primitive", valueType.getBaseValueType().getSimpleName());
         vtNode.put("multiValue", valueType.isMultiValue());
         vtNode.put("hierarchical", valueType.isHierarchical());
 

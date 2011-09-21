@@ -27,7 +27,7 @@ public class UriValueType extends AbstractValueType implements ValueType {
 
     public final static String NAME = "URI";
 
-    public String getName() {
+    public String getSimpleName() {
         return NAME;
     }
 

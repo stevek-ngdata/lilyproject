@@ -199,7 +199,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
     private static final VTaggedRecord.FieldFilter LINK_FIELD_FILTER = new VTaggedRecord.FieldFilter() {
         @Override
         public boolean accept(FieldType fieldtype) {
-            return fieldtype.getValueType().getBaseValueType().getName().equals("LINK");
+            return fieldtype.getValueType().getBaseValueType().getSimpleName().equals("LINK");
         }
     };
 

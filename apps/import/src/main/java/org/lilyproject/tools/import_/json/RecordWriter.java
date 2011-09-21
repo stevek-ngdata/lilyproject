@@ -119,7 +119,7 @@ public class RecordWriter implements EntityWriter<Record> {
     }
 
     private static JsonNode primitiveValueToJson(Object value, FieldType fieldType) {
-        String type = fieldType.getValueType().getBaseValueType().getName();
+        String type = fieldType.getValueType().getBaseValueType().getSimpleName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;
 

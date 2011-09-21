@@ -33,7 +33,7 @@ public class BooleanValueType extends AbstractValueType implements ValueType {
         }
     };
 
-    public String getName() {
+    public String getSimpleName() {
         return NAME;
     }
     

@@ -25,7 +25,7 @@ import org.lilyproject.repository.api.*;
 public class BlobValueType extends AbstractValueType implements ValueType {
     public final static String NAME = "BLOB";
 
-    public String getName() {
+    public String getSimpleName() {
         return NAME;
     }
     

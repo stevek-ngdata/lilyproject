@@ -38,9 +38,9 @@ public class RecordLinkExtractor {
             ValueType valueType = fieldType.getValueType();
             Object value = field.getValue();
 
-            if (valueType.getBaseValueType().getName().equals("LINK")) {
+            if (valueType.getBaseValueType().getSimpleName().equals("LINK")) {
                 extract(value, collector, fieldType.getId(), record.getId(), repository.getIdGenerator());
-            } else if (valueType.getBaseValueType().getName().equals("BLOB")) {
+            } else if (valueType.getBaseValueType().getSimpleName().equals("BLOB")) {
                 // TODO implement link extraction from blob fields
                 //      However: since blob link extraction is more expensive, we might not want to do
                 //               it as a secondary action. Maybe the link index for blobs should be a

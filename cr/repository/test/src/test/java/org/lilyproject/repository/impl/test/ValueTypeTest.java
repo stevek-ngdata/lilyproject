@@ -260,7 +260,7 @@ public class ValueTypeTest {
 
         public static final String NAME = "XY";
 
-        public String getName() {
+        public String getSimpleName() {
             return NAME;
         }
         

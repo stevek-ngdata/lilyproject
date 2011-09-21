@@ -54,7 +54,7 @@ public class DefaultFormatter implements Formatter {
     }
 
     protected String formatPrimitiveValue(Object value, ValueType valueType) {
-        String type = valueType.getBaseValueType().getName();
+        String type = valueType.getBaseValueType().getSimpleName();
 
         if (type.equals("DATE")) {
             LocalDate date = (LocalDate)value;

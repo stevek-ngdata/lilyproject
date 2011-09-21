@@ -121,18 +121,18 @@ public interface ValueType {
     Comparator getComparator();
     
     /**
-     * @return the name of the value type (e.g. "STRING"). 
-     * See {@link TypeManager#getValueType(String, String)} for a list of all possible value types and their names.
+     * @return the simple name of the value type (e.g. "STRING") without any extra parameters for the type. 
+     * See {@link TypeManager#getValueType(String)} for a list of all possible value types and their names.
      */
-    String getName();
+    String getSimpleName();
     
     /**
-     * @return the full name of the value type with its type params (cfr {@link TypeManager#getValueType(String, String)}) 
-     * enclosed in "&lt;&gt;" after the name. For example: "LIST&lt;STRING&gt;"   
+     * @return the name of the value type where the optional parameters of the type are  
+     * enclosed in "&lt;&gt;" after the simple name. For example: "LIST&lt;STRING&gt;"   
      * @throws RepositoryException
      * @throws InterruptedException
      */
-    String getFullName() throws RepositoryException, InterruptedException;
+    String getName() throws RepositoryException, InterruptedException;
     
     /**
      * ListValueType and PathValueType can again contain other value types. </br>
