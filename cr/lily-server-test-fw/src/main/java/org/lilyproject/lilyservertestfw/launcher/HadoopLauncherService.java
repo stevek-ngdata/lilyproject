@@ -2,6 +2,7 @@ package org.lilyproject.lilyservertestfw.launcher;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,18 +17,28 @@ public class HadoopLauncherService implements LauncherService {
     private org.lilyproject.hadooptestfw.fork.HBaseTestingUtility hbaseTestUtility;
     private Configuration conf;
     private File testHome;
+    private boolean clearData;
+    private Option disableMROption;
+    private boolean disableMapReduce = false;
 
     private Log log = LogFactory.getLog(getClass());
-    private boolean windows;
 
     @Override
     public void addOptions(List<Option> options) {
+        disableMROption = OptionBuilder
+                .withDescription("Disable startup of MapReduce services")
+                .withLongOpt("disable-map-reduce")
+                .create("dmr");
+        options.add(disableMROption);
     }
 
     @Override
-    public int setup(CommandLine cmd, File testHome) throws Exception {
+    public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
         this.testHome = new File(testHome, "hadoop");
         FileUtils.forceMkdir(testHome);
+        this.clearData = clearData;
+        disableMapReduce = cmd.hasOption(disableMROption.getOpt());
+
         return 0;
     }
 
@@ -35,9 +46,11 @@ public class HadoopLauncherService implements LauncherService {
     public int start(List<String> postStartupInfo) throws Exception {
         conf = HBaseConfiguration.create();
 
-        hbaseTestUtility = HBaseTestingUtilityFactory.create(conf, testHome);
+        hbaseTestUtility = HBaseTestingUtilityFactory.create(conf, testHome, clearData);
         hbaseTestUtility.startMiniCluster(1);
-        hbaseTestUtility.startMiniMapReduceCluster(1);
+        if (!disableMapReduce) {
+            hbaseTestUtility.startMiniMapReduceCluster(1);
+        }
 
         postStartupInfo.add("-------------------------");
         postStartupInfo.add("HDFS is running");
@@ -61,7 +74,8 @@ public class HadoopLauncherService implements LauncherService {
         postStartupInfo.add("conf.set(\"hbase.zookeeper.property.clientPort\", \"2181\");");
         postStartupInfo.add("");
 
-        postStartupInfo.add("-------------------------");
+        if (!disableMapReduce) {
+            postStartupInfo.add("-------------------------");
             postStartupInfo.add("MapReduce is running");
             postStartupInfo.add("");
             postStartupInfo.add("JobTracker web ui: http://localhost:" +
@@ -72,6 +86,8 @@ public class HadoopLauncherService implements LauncherService {
                     hbaseTestUtility.getMRCluster().getJobTrackerPort() + "\");");
             postStartupInfo.add("Job job = new Job(conf);");
             postStartupInfo.add("");
+        }
+
         return 0;
     }
 

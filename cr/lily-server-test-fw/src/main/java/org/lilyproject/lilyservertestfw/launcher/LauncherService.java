@@ -17,7 +17,7 @@ public interface LauncherService {
      * @return process exit code, if non-null process will exit. This should be used for expected error conditions,
      *         rather than throwing an exception.
      */
-    int setup(CommandLine cmd, File testHome) throws Exception;
+    int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception;
 
     /**
      *

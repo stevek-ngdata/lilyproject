@@ -132,7 +132,11 @@ public class SolrTestingUtility {
 
     private Server createServer() {
         Server server = new Server(solrPort);
-        server.addHandler(new WebAppContext(solrWarPath, "/solr"));
+        WebAppContext ctx = new WebAppContext(solrWarPath, "/solr");
+        // The reason to change the classloading behavior was primarily so that the logging libraries would
+        // be inherited, and hence that Solr would use the same logging system & conf.
+        ctx.setParentLoaderPriority(true);
+        server.addHandler(ctx);
         return server;
     }
 

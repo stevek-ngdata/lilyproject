@@ -6,6 +6,8 @@
 //   - Fix Hadoop namenode port number to 8020
 //   - Fix jobtracker port number to 9001 + set task tracker hostname to localhost (useful for links in web ui to work)
 //   - Add getMRCluster()
+//   - Allow to keep data from previous runs (optional) (doesn't format hdfs)
+//   - Use custom version of MiniZooKeeperCluster that allows to keep data
 //
 //  All changes are commented with "Lily change"
 //
@@ -74,7 +76,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.util.Writables;
-import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.hadoop.hdfs.DFSClient;
@@ -82,7 +83,6 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.mapred.JobConf;
-import org.lilyproject.hadooptestfw.fork.MiniMRCluster;
 import org.apache.zookeeper.ZooKeeper;
 
 /**
@@ -110,6 +110,9 @@ public class HBaseTestingUtility {
   // If non-null, then already a cluster running.
   private File clusterTestBuildDir = null;
 
+  // Lily change: add the clearData boolean
+  private boolean clearData;
+
   /**
    * System property key to get test directory value.
    * Name is as it is because mini dfs has hard-codings to put test data here.
@@ -126,7 +129,13 @@ public class HBaseTestingUtility {
   }
 
   public HBaseTestingUtility(Configuration conf) {
+    this(conf, true);
+  }
+
+  // Lily change: added this constructor
+  public HBaseTestingUtility(Configuration conf, boolean clearData) {
     this.conf = conf;
+    this.clearData = clearData;
   }
 
   public MiniHBaseCluster getHbaseCluster() {
@@ -212,24 +221,18 @@ public class HBaseTestingUtility {
   public MiniDFSCluster startMiniDFSCluster(int servers) throws Exception {
     return startMiniDFSCluster(servers, null);
   }
-  
-  // Lily Change: added similar method with an extra format parameter
-  public MiniDFSCluster startMiniDFSCluster(int servers, final File dir) throws Exception {
-      return startMiniDFSCluster(servers, null, true);
-  }
-  
+
   /**
    * Start a minidfscluster.
    * Can only create one.
    * @param dir Where to home your dfs cluster.
    * @param servers How many DNs to start.
    * // Lily change: added parameter
-   * @param format if true, format the dfs NameNode and DataNodes before starting up 
    * @throws Exception
    * @see {@link #shutdownMiniDFSCluster()}
    * @return The mini dfs cluster created.
    */
-  public MiniDFSCluster startMiniDFSCluster(int servers, final File dir, boolean format)
+  public MiniDFSCluster startMiniDFSCluster(int servers, final File dir)
   throws Exception {
     // This does the following to home the minidfscluster
     //     base_dir = new File(System.getProperty("test.build.data", "build/test/data"), "dfs/");
@@ -243,7 +246,8 @@ public class HBaseTestingUtility {
     System.setProperty(TEST_DIRECTORY_KEY, this.clusterTestBuildDir.toString());
     System.setProperty("test.cache.data", this.clusterTestBuildDir.toString());
     // Lily change: first argument changed from 0 to 8020
-    // Lily change: let the formating of NameNode and DataNodes depend on the format parameter
+    // Lily change: let the formatting of NameNode and DataNodes depend on whether the dir is empty
+    boolean format = this.clusterTestBuildDir.list().length == 0;
     this.dfsCluster = new MiniDFSCluster(8020, this.conf, servers, format, true,
       true, null, null, null, null);
     // Set this just-started cluser as our filesystem.
@@ -284,7 +288,7 @@ public class HBaseTestingUtility {
     if (this.zkCluster != null) {
       throw new IOException("Cluster already running at " + dir);
     }
-    this.zkCluster = new MiniZooKeeperCluster(this.getConfiguration());
+    this.zkCluster = new MiniZooKeeperCluster(this.getConfiguration(), clearData);
     // Lily change: set client port
     this.zkCluster.setClientPort(2181);
     int clientPort = this.zkCluster.startup(dir);
@@ -331,25 +335,7 @@ public class HBaseTestingUtility {
    */
   public MiniHBaseCluster startMiniCluster(final int numSlaves)
   throws Exception {
-    // Lily Change: set format parameter by default on true
-    return startMiniCluster(1, numSlaves, true);
-  }
-  
-  // Lily Change: added extra method with format parameter
-  /**
-   * @param format, if true format dfs NameNode and DataNodes before starting up
-   * @see {@link #startMiniCluster(int)}
-   */
-  public MiniHBaseCluster startMiniCluster(final int numSlaves, final boolean format)
-  throws Exception {
-    return startMiniCluster(1, numSlaves, format);
-  }
-  
-  // Lily Change: added similar method with extra format parameter
-  public MiniHBaseCluster startMiniCluster(final int numMasters,
-          final int numSlaves)
-      throws Exception {
-      return startMiniCluster(numMasters, numSlaves, true);
+    return startMiniCluster(1, numSlaves);
   }
 
   /**
@@ -364,14 +350,11 @@ public class HBaseTestingUtility {
    * datanodes and regionservers.  If numSlaves is > 1, then make sure
    * hbase.regionserver.info.port is -1 (i.e. no ui per regionserver) otherwise
    * bind errors.
-   * // Lily change: added parameter
-   * @param format, if true format dfs NameNode and DataNodes before starting up 
    * @throws Exception
    * @see {@link #shutdownMiniCluster()}
    * @return Mini hbase cluster instance created.
    */
-  public MiniHBaseCluster startMiniCluster(final int numMasters,
-      final int numSlaves, boolean format)
+  public MiniHBaseCluster startMiniCluster(final int numMasters, final int numSlaves)
   throws Exception {
     LOG.info("Starting up minicluster with " + numMasters + " master(s) and " +
         numSlaves + " regionserver(s) and datanode(s)");
@@ -388,8 +371,7 @@ public class HBaseTestingUtility {
     System.setProperty(TEST_DIRECTORY_KEY, this.clusterTestBuildDir.getPath());
     // Bring up mini dfs cluster. This spews a bunch of warnings about missing
     // scheme. Complaints are 'Scheme is undefined for build/test/data/dfs/name1'.
-    // Lily Change: pass on format parameter
-    startMiniDFSCluster(numSlaves, this.clusterTestBuildDir, format);
+    startMiniDFSCluster(numSlaves, this.clusterTestBuildDir);
     this.dfsCluster.waitClusterUp();
 
     // Start up a zk cluster.
@@ -455,20 +437,12 @@ public class HBaseTestingUtility {
     return this.hbaseCluster;
   }
   
-  // Lily Change: Added similar method with clearData parameter
+    /**
+     * Stops mini hbase, zk, and hdfs clusters.
+     * @throws IOException
+     * @see {@link #startMiniCluster(int)}
+     */
   public void shutdownMiniCluster() throws IOException {
-      // Lily Change: put clearData parameter by default on true
-      shutdownMiniCluster(true);
-  }
-
-  /**
-   * Stops mini hbase, zk, and hdfs clusters.
-   * // Lily change: added clearData parameter
-   * @param clearData if true, delete the clusterTestBuildDir
-   * @throws IOException
-   * @see {@link #startMiniCluster(int)}
-   */
-  public void shutdownMiniCluster(boolean clearData) throws IOException {
     LOG.info("Shutting down minicluster");
     shutdownMiniHBaseCluster();
     if (!this.passedZkCluster) shutdownMiniZKCluster();
