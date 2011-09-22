@@ -49,7 +49,7 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
 
         fieldNode.put("scope", fieldType.getScope().toString().toLowerCase());
 
-        fieldNode.put("valueType", fieldType.getValueType().getName());
+        fieldNode.put("valueType", ValueTypeNSConverter.toJson(fieldType.getValueType().getName(), namespaces));
 
         return fieldNode;
     }

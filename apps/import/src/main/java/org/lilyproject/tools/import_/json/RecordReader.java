@@ -71,7 +71,7 @@ public class RecordReader implements EntityReader<Record> {
 
                 QName qname = QNameConverter.fromJson(entry.getKey(), namespaces);
                 FieldType fieldType = repository.getTypeManager().getFieldTypeByName(qname);
-                Object value = readValue(fields.get(entry.getKey()), fieldType.getValueType(), entry.getKey(), repository);
+                Object value = readValue(fields.get(entry.getKey()), fieldType.getValueType(), entry.getKey(), namespaces, repository);
                 record.setField(qname, value);
             }
         }
@@ -92,22 +92,22 @@ public class RecordReader implements EntityReader<Record> {
         return record;
     }
 
-    private Object readList(JsonNode node, ValueType valueType, String prop, Repository repository)
-            throws JsonFormatException {
+    private Object readList(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, Repository repository)
+            throws JsonFormatException, RepositoryException, InterruptedException {
         if (!node.isArray()) {
             throw new JsonFormatException("List value should be specified as array in " + prop);
         }
         
         List<Object> value = new ArrayList<Object>();
         for (int i = 0; i < node.size(); i++) {
-            value.add(readValue(node.get(i), valueType, prop, repository));
+            value.add(readValue(node.get(i), valueType, prop, namespaces, repository));
         }
         
         return value;
     }
 
-    private Object readPath(JsonNode node, ValueType valueType, String prop, Repository repository)
-            throws JsonFormatException {
+    private Object readPath(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, Repository repository)
+            throws JsonFormatException, RepositoryException, InterruptedException {
 
         if (!node.isArray()) {
             throw new JsonFormatException("Path value should be specified as an array in " + prop);
@@ -115,21 +115,21 @@ public class RecordReader implements EntityReader<Record> {
 
         Object[] elements = new Object[node.size()];
         for (int i = 0; i < node.size(); i++) {
-            elements[i] = readValue(node.get(i), valueType, prop, repository);
+            elements[i] = readValue(node.get(i), valueType, prop, namespaces, repository);
         }
 
         return new HierarchyPath(elements);
     }
 
-    public Object readValue(JsonNode node, ValueType valueType, String prop, Repository repository)
-            throws JsonFormatException {
+    public Object readValue(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, Repository repository)
+            throws JsonFormatException, RepositoryException, InterruptedException {
 
         String name = valueType.getSimpleName();
 
         if (name.equals("LIST")) {
-            return readList(node, valueType.getNestedValueType(), prop, repository);
+            return readList(node, valueType.getNestedValueType(), prop, namespaces, repository);
         } else if (name.equals("PATH")) {
-            return readPath(node, valueType.getNestedValueType(), prop, repository);
+            return readPath(node, valueType.getNestedValueType(), prop, namespaces, repository);
         } else if (name.equals("STRING")) {
             if (!node.isTextual())
                 throw new JsonFormatException("Expected text value for " + prop);
@@ -190,6 +190,8 @@ public class RecordReader implements EntityReader<Record> {
 
             ObjectNode blobNode = (ObjectNode)node;
             return BlobConverter.fromJson(blobNode);
+        } else if (name.equals("RECORD")) {
+            return fromJson((ObjectNode)node, namespaces, repository);
         } else {
             throw new JsonFormatException("Value type not supported: " + name);
         }

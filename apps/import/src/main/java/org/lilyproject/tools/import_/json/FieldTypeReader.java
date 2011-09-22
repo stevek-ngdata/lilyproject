@@ -36,13 +36,13 @@ public class FieldTypeReader implements EntityReader<FieldType> {
 
         QName name = QNameConverter.fromJson(getString(node, "name"), namespaces);
 
-        String valueTypeString = getString(node, "valueType");
 
         String scopeName = getString(node, "scope", "non_versioned");
         Scope scope = parseScope(scopeName);
 
         TypeManager typeManager = repository.getTypeManager();
-        ValueType valueType = typeManager.getValueType(valueTypeString);
+        String valueTypeString = getString(node, "valueType");
+        ValueType valueType = typeManager.getValueType(ValueTypeNSConverter.fromJson(valueTypeString, namespaces));
         FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
 
         String idString = getString(node, "id", null);

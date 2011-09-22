@@ -44,7 +44,9 @@ public class RecordWriter implements EntityWriter<Record> {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode recordNode = factory.objectNode();
 
-        recordNode.put("id", record.getId().toString());
+        if (record.getId() != null) {
+            recordNode.put("id", record.getId().toString());
+        }
 
         if (record.getVersion() != null) {
             recordNode.put("version", record.getVersion());
@@ -80,7 +82,7 @@ public class RecordWriter implements EntityWriter<Record> {
                 String fieldName = QNameConverter.toJson(fieldType.getName(), namespaces);
 
                 // fields entry
-                fieldsNode.put(fieldName, valueToJson(field.getValue(), fieldType.getValueType()));
+                fieldsNode.put(fieldName, valueToJson(field.getValue(), fieldType.getValueType(), options, namespaces, repository));
 
                 // schema entry
                 if (schemaNode != null) {
@@ -92,25 +94,25 @@ public class RecordWriter implements EntityWriter<Record> {
         return recordNode;
     }
 
-    private static JsonNode listToJson(Object value, ValueType valueType) {
+    private JsonNode listToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
         List list = (List)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object item : list) {
-            array.add(valueToJson(item, valueType));
+            array.add(valueToJson(item, valueType, options, namespaces, repository));
         }
         return array;
     }
 
-    private static JsonNode pathToJson(Object value, ValueType valueType) {
+    private JsonNode pathToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
         HierarchyPath path = (HierarchyPath)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object element : path.getElements()) {
-            array.add(valueToJson(element, valueType));
+            array.add(valueToJson(element, valueType, options, namespaces, repository));
         }
         return array;
     }
 
-    private static JsonNode valueToJson(Object value, ValueType valueType) {
+    private JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
         String name = valueType.getSimpleName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;
@@ -118,9 +120,9 @@ public class RecordWriter implements EntityWriter<Record> {
         JsonNode result;
 
         if (name.equals("LIST")) {
-            result = listToJson(value, valueType.getNestedValueType());
+            result = listToJson(value, valueType.getNestedValueType(), options, namespaces, repository);
         } else if (name.equals("PATH")) {
-            result = pathToJson(value, valueType.getNestedValueType());
+            result = pathToJson(value, valueType.getNestedValueType(), options, namespaces, repository);
         } else if (name.equals("STRING")) {
             result = factory.textNode((String)value);
         } else if (name.equals("LONG")) {
@@ -138,6 +140,8 @@ public class RecordWriter implements EntityWriter<Record> {
         } else if (name.equals("BLOB")) {
             Blob blob = (Blob)value;
             result = BlobConverter.toJson(blob);
+        } else if (name.equals("RECORD")){
+            result = toJson((Record)value, options, namespaces, repository);
         } else {
             throw new RuntimeException("Unsupported primitive value type: " + name);
         }
@@ -145,12 +149,13 @@ public class RecordWriter implements EntityWriter<Record> {
         return result;
     }
 
-    private static JsonNode typeToJson(QName name, long version, Namespaces namespaces) {
+    private static JsonNode typeToJson(QName name, Long version, Namespaces namespaces) {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode jsonType = factory.objectNode();
 
         jsonType.put("name", QNameConverter.toJson(name, namespaces));
-        jsonType.put("version", version);
+        if (version != null)
+            jsonType.put("version", version);
 
         return jsonType;
     }

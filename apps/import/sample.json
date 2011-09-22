@@ -59,6 +59,26 @@
       ]
     }
   ],
+  fieldTypes: [
+    {
+      name: "sample$linkwithrtfield",
+      valueType: "LINK<sample$MiscFields>",
+      scope: "non_versioned"
+    },
+    {
+      name: "sample$rtfield",
+      valueType: "RECORD<sample$MiscFields>",
+      scope: "non_versioned"
+    }
+  ],
+  recordTypes: [
+    {
+      name: "sample$RTWithRTField",
+      fields: [
+        {name: "sample$rtfield", mandatory: false }
+      ]
+    }
+  ],
   records: [
     {
       type: "sample$MiscFields",
@@ -74,7 +94,7 @@
     },
     {
       type: "sample$MiscFields",
-      id: "zoo",
+      id: "USER.zoo",
       fields: {
         "sample$stringfield": "A document with a user-defined ID"
       }
@@ -83,7 +103,19 @@
       type: "sample$MiscFields",
       fields: {
         "sample$stringfield": "A document with a link field",
-        "sample$linkfield": "USER.zoo"
+        "sample$linkfield": "USER.zoo",
+        "sample$linkwithrtfield": "USER.zoo"
+      }
+    },
+    {
+      type: "sample$RTWithRTField",
+      fields: {
+        "sample$rtfield": {
+          type: "sample$MiscFields",
+          fields: {
+            "sample$stringfield": "Nested document"
+          }
+        }
       }
     }
   ]
