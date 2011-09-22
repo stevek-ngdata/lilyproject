@@ -746,7 +746,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     // ValueType encoding
     private byte valueTypeEncodingVersion = (byte)1;
     
-    private byte[] encodeValueType(ValueType valueType) throws RepositoryException, InterruptedException {
+    private byte[] encodeValueType(ValueType valueType) {
         DataOutput dataOutput = new DataOutputImpl();
         dataOutput.writeByte(valueTypeEncodingVersion);
         dataOutput.writeUTF(valueType.getName());

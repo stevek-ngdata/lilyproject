@@ -29,6 +29,7 @@ import org.lilyproject.repository.impl.SchemaIdImpl;
 public class RecordValueType extends AbstractValueType implements ValueType {
 
     public static final String NAME = "RECORD";
+    private String fullName;
     
     private static final byte ENCODING_VERSION = (byte)1;
     private static final byte UNDEFINED = (byte)0;
@@ -40,28 +41,19 @@ public class RecordValueType extends AbstractValueType implements ValueType {
 
     public RecordValueType(TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.typeManager = typeManager;
-        if (recordTypeName != null)
+        if (recordTypeName != null) {
+            this.fullName = NAME+"<"+recordTypeName+">";
             this.recordTypeId = typeManager.getRecordTypeByName(QName.fromString(recordTypeName), null).getId();
-    }
-    
-    public RecordValueType(TypeManager typeManager, DataInput dataInput) {
-        this.typeManager = typeManager;
-        if (dataInput.readByte() == DEFINED) {
-            int length = dataInput.readVInt();
-            recordTypeId = new SchemaIdImpl(dataInput.readBytes(length));
-        }
+        } else
+            this.fullName = NAME;
     }
     
     public String getSimpleName() {
         return NAME;
     }
     
-    public String getName() throws RepositoryException, InterruptedException {
-        if (recordTypeId == null)
-            return NAME;
-        else {
-            return NAME+"<"+typeManager.getRecordTypeById(recordTypeId, null).getName()+">";
-        }
+    public String getName() {
+        return fullName;
     }
     
     public void encodeTypeParams(DataOutput dataOutput) {

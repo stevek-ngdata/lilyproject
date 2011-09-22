@@ -55,24 +55,12 @@ public class FieldTypeImport {
                     boolean updated = false;
 
                     // Check non-mutable fields are equal
-                    String oldPrimitive = oldFieldType.getValueType().getBaseValueType().getSimpleName();
-                    String newPrimitive = newFieldType.getValueType().getBaseValueType().getSimpleName();
-                    if (!oldPrimitive.equals(newPrimitive)) {
-                        return ImportResult.conflict("primitive type", oldPrimitive, newPrimitive);
+                    ValueType oldValueType = oldFieldType.getValueType();
+                    ValueType newValueType = newFieldType.getValueType();
+                    if (!oldValueType.equals(newValueType)) {
+                        return ImportResult.conflict("value type", oldValueType, newValueType);
                     }
-
-                    boolean oldMultivalue = oldFieldType.getValueType().isMultiValue();
-                    boolean newMultiValue = newFieldType.getValueType().isMultiValue();
-                    if (oldMultivalue != newMultiValue) {
-                        return ImportResult.conflict("multi-value", oldMultivalue, newMultiValue);
-                    }
-
-                    boolean oldHierarchical = oldFieldType.getValueType().isHierarchical();
-                    boolean newHierarchical = newFieldType.getValueType().isHierarchical();
-                    if (oldHierarchical != newHierarchical) {
-                        return ImportResult.conflict("hierarchical", oldMultivalue, newMultiValue);
-                    }
-
+                    
                     Scope oldScope = oldFieldType.getScope();
                     Scope newScope = newFieldType.getScope();
                     if (!oldScope.equals(newScope)) {

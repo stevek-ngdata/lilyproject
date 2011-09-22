@@ -80,7 +80,7 @@ public class RecordWriter implements EntityWriter<Record> {
                 String fieldName = QNameConverter.toJson(fieldType.getName(), namespaces);
 
                 // fields entry
-                fieldsNode.put(fieldName, valueToJson(field.getValue(), fieldType));
+                fieldsNode.put(fieldName, valueToJson(field.getValue(), fieldType.getValueType()));
 
                 // schema entry
                 if (schemaNode != null) {
@@ -92,58 +92,54 @@ public class RecordWriter implements EntityWriter<Record> {
         return recordNode;
     }
 
-    private static JsonNode valueToJson(Object value, FieldType fieldType) {
-        if (fieldType.getValueType().isMultiValue()) {
-            List list = (List)value;
-            ArrayNode array = JsonNodeFactory.instance.arrayNode();
-            for (Object item : list) {
-                array.add(hierarchicalValueToJson(item, fieldType));
-            }
-            return array;
-        } else {
-            return hierarchicalValueToJson(value, fieldType);
+    private static JsonNode listToJson(Object value, ValueType valueType) {
+        List list = (List)value;
+        ArrayNode array = JsonNodeFactory.instance.arrayNode();
+        for (Object item : list) {
+            array.add(valueToJson(item, valueType));
         }
+        return array;
     }
 
-    private static JsonNode hierarchicalValueToJson(Object value, FieldType fieldType) {
-        if (fieldType.getValueType().isHierarchical()) {
-            HierarchyPath path = (HierarchyPath)value;
-            ArrayNode array = JsonNodeFactory.instance.arrayNode();
-            for (Object element : path.getElements()) {
-                array.add(primitiveValueToJson(element, fieldType));
-            }
-            return array;
-        } else {
-            return primitiveValueToJson(value, fieldType);
+    private static JsonNode pathToJson(Object value, ValueType valueType) {
+        HierarchyPath path = (HierarchyPath)value;
+        ArrayNode array = JsonNodeFactory.instance.arrayNode();
+        for (Object element : path.getElements()) {
+            array.add(valueToJson(element, valueType));
         }
+        return array;
     }
 
-    private static JsonNode primitiveValueToJson(Object value, FieldType fieldType) {
-        String type = fieldType.getValueType().getBaseValueType().getSimpleName();
+    private static JsonNode valueToJson(Object value, ValueType valueType) {
+        String name = valueType.getSimpleName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;
 
         JsonNode result;
 
-        if (type.equals("STRING")) {
+        if (name.equals("LIST")) {
+            result = listToJson(value, valueType.getNestedValueType());
+        } else if (name.equals("PATH")) {
+            result = pathToJson(value, valueType.getNestedValueType());
+        } else if (name.equals("STRING")) {
             result = factory.textNode((String)value);
-        } else if (type.equals("LONG")) {
+        } else if (name.equals("LONG")) {
             result = factory.numberNode((Long)value);
-        } else if (type.equals("DOUBLE")) {
+        } else if (name.equals("DOUBLE")) {
             result = factory.numberNode((Double)value);
-        } else if (type.equals("BOOLEAN")) {
+        } else if (name.equals("BOOLEAN")) {
             result = factory.booleanNode((Boolean)value);
-        } else if (type.equals("INTEGER")) {
+        } else if (name.equals("INTEGER")) {
             result = factory.numberNode((Integer)value);
-        } else if (type.equals("URI") || type.equals("DATETIME") || type.equals("DATE") || type.equals("LINK")) {
+        } else if (name.equals("URI") || name.equals("DATETIME") || name.equals("DATE") || name.equals("LINK")) {
             result = factory.textNode(value.toString());
-        } else if (type.equals("DECIMAL")) {
+        } else if (name.equals("DECIMAL")) {
             result = factory.numberNode((BigDecimal)value);
-        } else if (type.equals("BLOB")) {
+        } else if (name.equals("BLOB")) {
             Blob blob = (Blob)value;
             result = BlobConverter.toJson(blob);
         } else {
-            throw new RuntimeException("Unsupported primitive value type: " + type);
+            throw new RuntimeException("Unsupported primitive value type: " + name);
         }
 
         return result;

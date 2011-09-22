@@ -49,18 +49,8 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
 
         fieldNode.put("scope", fieldType.getScope().toString().toLowerCase());
 
-        fieldNode.put("valueType", valueTypeToJson(fieldType.getValueType()));
+        fieldNode.put("valueType", fieldType.getValueType().getName());
 
         return fieldNode;
-    }
-
-    public static ObjectNode valueTypeToJson(ValueType valueType) {
-        ObjectNode vtNode = JsonNodeFactory.instance.objectNode();
-
-        vtNode.put("primitive", valueType.getBaseValueType().getSimpleName());
-        vtNode.put("multiValue", valueType.isMultiValue());
-        vtNode.put("hierarchical", valueType.isHierarchical());
-
-        return vtNode;
     }
 }

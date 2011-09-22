@@ -26,40 +26,30 @@ import org.lilyproject.repository.impl.SchemaIdImpl;
 public class LinkValueType extends AbstractValueType implements ValueType {
     
     public final static String NAME = "LINK";
+    private String fullName;
 
     private static final byte UNDEFINED = (byte)0;
     private static final byte DEFINED = (byte)1;
 
     private final IdGenerator idGenerator;
-    private final TypeManager typeManager;
     private SchemaId recordTypeId = null;
 
     public LinkValueType(IdGenerator idGenerator, TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.idGenerator = idGenerator;
-        this.typeManager = typeManager;
-        if (recordTypeName != null)
+        if (recordTypeName != null) {
+            this.fullName = NAME+"<"+recordTypeName+">"; 
             this.recordTypeId = typeManager.getRecordTypeByName(QName.fromString(recordTypeName), null).getId();
-    }
-    
-    public LinkValueType(IdGenerator idGenerator, TypeManager typeManager, DataInput dataInput) {
-        this.idGenerator = idGenerator;
-        this.typeManager = typeManager;
-        if (dataInput.readByte() == DEFINED) {
-            int length = dataInput.readVInt();
-            recordTypeId = new SchemaIdImpl(dataInput.readBytes(length));
         }
+        else 
+            fullName = NAME;
     }
     
     public String getSimpleName() {
         return NAME;
     }
     
-    public String getName() throws RepositoryException, InterruptedException {
-        if (recordTypeId == null)
-            return NAME;
-        else {
-            return NAME+"<"+typeManager.getRecordTypeById(recordTypeId, null).getName()+">";
-        }
+    public String getName() {
+        return fullName;
     }
     
     public ValueType getBaseValueType() {

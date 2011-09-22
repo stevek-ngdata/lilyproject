@@ -314,7 +314,7 @@ public class AvroConverter {
         return scope == null ? null : Scope.values()[scope.ordinal()];
     }
 
-    public AvroFieldType convert(FieldType fieldType) throws RepositoryException, InterruptedException {
+    public AvroFieldType convert(FieldType fieldType) {
         AvroFieldType avroFieldType = new AvroFieldType();
         
         avroFieldType.id = convert(fieldType.getId());
@@ -373,7 +373,7 @@ public class AvroConverter {
         return typeManager.getValueType(convert(valueType.valueType));
     }
 
-    public AvroValueType convert(ValueType valueType) throws RepositoryException, InterruptedException {
+    public AvroValueType convert(ValueType valueType) {
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = convert(valueType.getName());
         return avroValueType;
@@ -594,7 +594,7 @@ public class AvroConverter {
         return recordTypes;
     }
 
-    public List<AvroFieldType> convertFieldTypes(Collection<FieldType> fieldTypes) throws RepositoryException, InterruptedException {
+    public List<AvroFieldType> convertFieldTypes(Collection<FieldType> fieldTypes) {
         List<AvroFieldType> avroFieldTypes = new ArrayList<AvroFieldType>(fieldTypes.size());
         for (FieldType fieldType : fieldTypes) {
             avroFieldTypes.add(convert(fieldType));

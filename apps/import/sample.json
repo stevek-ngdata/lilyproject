@@ -11,42 +11,42 @@
   fieldTypes: [
     {
       name: "sample$stringfield",
-      valueType: { "primitive": "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
-      name: "sample$multiValueString",
-      valueType: { "primitive": "STRING", multiValue: true },
+      name: "sample$listOfStrings",
+      valueType: "LIST<STRING>",
       scope: "non_versioned"
     },
     {
       name: "sample$intfield",
-      valueType: { "primitive": "INTEGER" },
+      valueType: "INTEGER",
       scope: "non_versioned"
     },
     {
       name: "sample$longfield",
-      valueType: { "primitive": "LONG" },
+      valueType: "LONG",
       scope: "non_versioned"
     },
     {
       name: "sample$booleanfield",
-      valueType: { "primitive": "BOOLEAN" },
+      valueType: "BOOLEAN",
       scope: "non_versioned"
     },
     {
       name: "sample$linkfield",
-      valueType: { "primitive": "LINK" },
+      valueType: "LINK",
       scope: "non_versioned"
     },
     {
       name: "sample$datefield",
-      valueType: { "primitive": "DATE" },
+      valueType: "DATE",
       scope: "non_versioned"
     },
     {
       name: "sample$datetimefield",
-      valueType: { "primitive": "DATETIME" },
+      valueType: "DATETIME", 
       scope: "non_versioned"
     }
   ],
@@ -64,7 +64,7 @@
       type: "sample$MiscFields",
       fields: {
         "sample$stringfield": "My first document.",
-        "sample$multiValueString": ["first", "second", "third"],
+        "sample$listOfStrings": ["first", "second", "third"],
         "sample$intfield": 23,
         "sample$longfield": 242,
         "sample$datefield": "2010-07-09",

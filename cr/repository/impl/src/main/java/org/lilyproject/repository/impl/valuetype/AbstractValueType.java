@@ -47,7 +47,7 @@ public abstract class AbstractValueType implements ValueType {
         return dataOutput.toByteArray();
     }
     
-    public String getName() throws RepositoryException, InterruptedException {
+    public String getName() {
         return getSimpleName();
     }
     

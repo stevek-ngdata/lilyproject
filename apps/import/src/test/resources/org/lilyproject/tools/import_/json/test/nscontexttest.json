@@ -6,7 +6,7 @@
   fieldTypes: [
     {
       name: "i1a$f1",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "versioned",
       namespaces: {
         /* test for locally defined namespaces inside field type */
@@ -15,7 +15,7 @@
     },
     {
       name: "i2$f2",
-      valueType: { primitive: "INTEGER" },
+      valueType: "INTEGER",
       scope: "non_versioned"
     }
   ],

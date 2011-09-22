@@ -129,10 +129,8 @@ public interface ValueType {
     /**
      * @return the name of the value type where the optional parameters of the type are  
      * enclosed in "&lt;&gt;" after the simple name. For example: "LIST&lt;STRING&gt;"   
-     * @throws RepositoryException
-     * @throws InterruptedException
      */
-    String getName() throws RepositoryException, InterruptedException;
+    String getName();
     
     /**
      * ListValueType and PathValueType can again contain other value types. </br>
