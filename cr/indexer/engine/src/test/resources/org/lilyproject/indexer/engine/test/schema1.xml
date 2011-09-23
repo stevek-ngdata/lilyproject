@@ -121,6 +121,7 @@
    <field name="v_datetime" type="date" indexed="true" stored="true" required="false"/>
 
    <field name="year" type="int" indexed="true" stored="true" required="false"/>
+   <field name="firstValue" type="text" indexed="true" stored="true" required="false"/>
    <field name="inthierarchy" type="string" indexed="true" stored="true" required="false"/>
 
    <dynamicField name="*_string" type="text" indexed="true" stored="true"/>

@@ -16,6 +16,7 @@
     <!-- The formatters below will only be used when referred to explictly by name, because the
          above default formatter will handle all values. -->
     <formatter name="year" class="org.lilyproject.indexer.engine.test.DateYearFormatter"/>
+    <formatter name="firstValue" class="org.lilyproject.indexer.model.indexerconf.FirstValueFormatter"/>
   </formatters>
 
   <fields>
@@ -85,6 +86,8 @@
        -->
 
     <field name="year" value="ns2:v_datetime_field" formatter="year"/>
+
+    <field name="firstValue" value="ns2:v_string_mv_field" formatter="firstValue"/>
 
     <field name="inthierarchy" value="ns2:v_int_hier_field"/>
   </fields>

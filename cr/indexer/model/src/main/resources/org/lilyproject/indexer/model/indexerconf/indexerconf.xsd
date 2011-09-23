@@ -68,6 +68,7 @@
             <xs:attribute name="matchScope" type="xs:string"/>
             <xs:attribute name="name" type="xs:string"/>
             <xs:attribute name="extractContent" type="xs:string"/>
+            <xs:attribute name="continue" type="xs:string"/>
             <xs:attribute name="formatter" type="xs:string"/>
           </xs:complexType>
         </xs:element>

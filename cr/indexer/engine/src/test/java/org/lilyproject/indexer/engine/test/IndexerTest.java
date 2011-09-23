@@ -1020,12 +1020,15 @@ public class IndexerTest {
             Record record1 = repository.newRecord();
             record1.setRecordType(vRecordType1.getName());
             record1.setField(vDateTimeField.getName(), new DateTime(2058, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
+            record1.setField(vStringMvField.getName(), Arrays.asList("wood", "plastic"));
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), liveTag.getId());
+            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), vStringMvField.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             commitIndex();
             verifyResultCount("year:2058", 1);
+            verifyResultCount("firstValue:wood", 1);
+            verifyResultCount("firstValue:plastic", 0);
         }
 
         //
@@ -1318,13 +1321,45 @@ public class IndexerTest {
         //
         // Attention: we change the indexerconf here
         //
+        changeIndexUpdater("indexerconf_dynfields_continue.xml");
+
+        //
+        // Test the fall-through behavior (continue="true") of dynamic fields
+        //
+        {
+            log.debug("Begin test V303");
+
+            Record record = repository.newRecord();
+            record.setRecordType(rt.getName());
+
+            record.setField(field1.getName(), "mega");
+            record.setField(field2.getName(), "giga");
+
+            expectEvent(CREATE, record.getId(), 1L, null, field1.getId(), field2.getId());
+            record = repository.create(record);
+
+            commitIndex();
+
+            verifyResultCount("dyncont_field1_first_string:mega", 1);
+            verifyResultCount("dyncont_field2_first_string:giga", 1);
+
+            verifyResultCount("dyncont_field1_second_string:mega", 1);
+            verifyResultCount("dyncont_field2_second_string:giga", 1);
+
+            verifyResultCount("dyncont_field1_third_string:mega", 0);
+            verifyResultCount("dyncont_field2_third_string:giga", 0);
+        }
+
+        //
+        // Attention: we change the indexerconf here
+        //
         changeIndexUpdater("indexerconf_fulldynamic.xml");
 
         //
         // Test a 'fully dynamic' mapping
         //
         {
-            log.debug("Begin test V302");
+            log.debug("Begin test V304");
 
             Record record = repository.newRecord();
             record.setRecordType(rt.getName());
