@@ -37,15 +37,16 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     private static final byte DEFINED_IDENTICAL = (byte)2;
     
     private final TypeManager typeManager;
-    private SchemaId recordTypeId = null;
+    private QName valueTypeRecordTypeName = null;
 
     public RecordValueType(TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.typeManager = typeManager;
         if (recordTypeName != null) {
+            this.valueTypeRecordTypeName = QName.fromString(recordTypeName);
             this.fullName = NAME+"<"+recordTypeName+">";
-            this.recordTypeId = typeManager.getRecordTypeByName(QName.fromString(recordTypeName), null).getId();
-        } else
+        } else {
             this.fullName = NAME;
+        }
     }
     
     public String getSimpleName() {
@@ -54,24 +55,6 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     
     public String getName() {
         return fullName;
-    }
-    
-    public void encodeTypeParams(DataOutput dataOutput) {
-        if (recordTypeId == null) {
-            dataOutput.writeByte(UNDEFINED);
-        } else {
-            dataOutput.writeByte(DEFINED);
-            byte[] idBytes = recordTypeId.getBytes();
-            dataOutput.writeVInt(idBytes.length);
-            dataOutput.writeBytes(idBytes);
-        }
-    }
-    
-    @Override
-    public byte[] getTypeParams() {
-        DataOutput dataOutput = new DataOutputImpl();
-        encodeTypeParams(dataOutput);
-        return dataOutput.toByteArray();
     }
     
     public ValueType getBaseValueType() {
@@ -132,16 +115,16 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         Record record = (Record)value;
         
         RecordType recordType = null;
-        QName recordTypeName = record.getRecordTypeName();
-        if (recordTypeName != null) {
-            recordType = typeManager.getRecordTypeByName(recordTypeName, record.getRecordTypeVersion());
-            if (recordTypeId != null) {
+        QName recordRecordTypeName = record.getRecordTypeName();
+        if (recordRecordTypeName != null) {
+            if (valueTypeRecordTypeName != null) {
                 // Validate the same record type is being used
-                if (!recordType.getId().equals(recordTypeId))
-                    throw new RecordException("The record's Record Type '"+recordType.getId()+"' does not match the record value type's record type '" + recordTypeId + "'");
+                if (!valueTypeRecordTypeName.equals(recordRecordTypeName))
+                    throw new RecordException("The record's Record Type '"+ recordRecordTypeName +"' does not match the record value type's record type '" + valueTypeRecordTypeName + "'");
             }
-        } else if (recordTypeId != null) {
-                recordType = typeManager.getRecordTypeById(recordTypeId, null);
+            recordType = typeManager.getRecordTypeByName(recordRecordTypeName, null);
+        } else if (valueTypeRecordTypeName != null) {
+                recordType = typeManager.getRecordTypeByName(valueTypeRecordTypeName, null);
         } else {
             throw new RecordException("The record '" + record + "' should specify a record type");
         }
@@ -218,6 +201,24 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         return null;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + fullName.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        return fullName.equals(((RecordValueType) obj).fullName);
+    }
 
     //
     // Factory

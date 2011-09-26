@@ -20,7 +20,9 @@ import java.util.Comparator;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hbaseext.ContainsValueComparator;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
 public class BlobValueType extends AbstractValueType implements ValueType {
     public final static String NAME = "BLOB";
@@ -90,6 +92,25 @@ public class BlobValueType extends AbstractValueType implements ValueType {
     @Override
     public Comparator getComparator() {
         return null;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + NAME.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        return true;
     }
 
     //

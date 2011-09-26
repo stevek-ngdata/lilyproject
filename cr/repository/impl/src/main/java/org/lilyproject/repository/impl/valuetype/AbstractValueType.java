@@ -61,14 +61,6 @@ public abstract class AbstractValueType implements ValueType {
         return result;
     }
     
-    public void encodeTypeParams(DataOutput dataOutput) {
-        // Do nothing
-    }
-    
-    public byte[] getTypeParams() {
-        return null;
-    }
-    
     public boolean isMultiValue() {
         return false;
     }

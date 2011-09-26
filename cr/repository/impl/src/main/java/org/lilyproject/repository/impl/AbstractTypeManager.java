@@ -26,7 +26,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.valuetype.*;
 import org.lilyproject.util.ArgumentValidator;

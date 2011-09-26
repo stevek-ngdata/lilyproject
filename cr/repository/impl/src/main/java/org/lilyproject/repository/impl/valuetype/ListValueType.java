@@ -19,7 +19,6 @@ import java.util.*;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
@@ -29,12 +28,10 @@ public class ListValueType extends AbstractValueType implements ValueType {
     
     private ValueType valueType;
 
-    private final String typeParams;
     private final String fullName;
     
     public ListValueType(TypeManager typeManager, String typeParams) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(typeParams, "typeParams");
-        this.typeParams = typeParams;
         this.fullName = NAME+"<"+typeParams+">";
         this.valueType = typeManager.getValueType(typeParams);
     }
@@ -91,18 +88,6 @@ public class ListValueType extends AbstractValueType implements ValueType {
     }
 
     @Override
-    public void encodeTypeParams(DataOutput dataOutput) {
-        dataOutput.writeUTF(typeParams);
-    }
-    
-    @Override
-    public byte[] getTypeParams() {
-        DataOutput dataOutput = new DataOutputImpl();
-        encodeTypeParams(dataOutput);
-        return dataOutput.toByteArray();
-    }
-    
-    @Override
     public Set<Object> getValues(Object value) {
         Set<Object> result = new HashSet<Object>();
         for (Object element : ((List<Object>) value)) {
@@ -121,6 +106,25 @@ public class ListValueType extends AbstractValueType implements ValueType {
         return valueType.isHierarchical();
     }
     
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + fullName.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        return fullName.equals(((ListValueType) obj).fullName);
+    }
+
     //
     // Factory
     //

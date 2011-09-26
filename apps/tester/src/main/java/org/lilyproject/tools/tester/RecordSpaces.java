@@ -11,12 +11,10 @@ public class RecordSpaces {
 
     Map<String, RecordSpace> recordSpaces = new HashMap<String, RecordSpace>(); 
     
-    public RecordSpaces(JsonNode recordSpacesNode) {
-        for (JsonNode recordIdSpaceNode : recordSpacesNode) {
-            String name = JsonUtil.getString(recordIdSpaceNode, "name");
-            Integer limit = JsonUtil.getInt(recordIdSpaceNode, "limit");
-            recordSpaces.put(name, new RecordSpace(limit));
-        }
+    public void addRecordSpace(JsonNode recordSpaceNode) {
+        String name = JsonUtil.getString(recordSpaceNode, "name");
+        Integer limit = JsonUtil.getInt(recordSpaceNode, "limit");
+        recordSpaces.put(name, new RecordSpace(limit));
     }
     
     public void addRecord(String space, TestRecord record) {

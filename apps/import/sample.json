@@ -48,18 +48,7 @@
       name: "sample$datetimefield",
       valueType: "DATETIME", 
       scope: "non_versioned"
-    }
-  ],
-  recordTypes: [
-    {
-      name: "sample$MiscFields",
-      fields: [
-        {name: "sample$stringfield", mandatory: false },
-        {name: "sample$intfield", mandatory: false }
-      ]
-    }
-  ],
-  fieldTypes: [
+    },
     {
       name: "sample$linkwithrtfield",
       valueType: "LINK<sample$MiscFields>",
@@ -72,6 +61,13 @@
     }
   ],
   recordTypes: [
+    {
+      name: "sample$MiscFields",
+      fields: [
+        {name: "sample$stringfield", mandatory: false },
+        {name: "sample$intfield", mandatory: false }
+      ]
+    },
     {
       name: "sample$RTWithRTField",
       fields: [

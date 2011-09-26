@@ -19,26 +19,19 @@ import java.util.Comparator;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public class LinkValueType extends AbstractValueType implements ValueType {
     
     public final static String NAME = "LINK";
     private String fullName;
 
-    private static final byte UNDEFINED = (byte)0;
-    private static final byte DEFINED = (byte)1;
-
     private final IdGenerator idGenerator;
-    private SchemaId recordTypeId = null;
 
     public LinkValueType(IdGenerator idGenerator, TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.idGenerator = idGenerator;
         if (recordTypeName != null) {
             this.fullName = NAME+"<"+recordTypeName+">"; 
-            this.recordTypeId = typeManager.getRecordTypeByName(QName.fromString(recordTypeName), null).getId();
         }
         else 
             fullName = NAME;
@@ -56,24 +49,6 @@ public class LinkValueType extends AbstractValueType implements ValueType {
         return this;
     }
     
-    public void encodeTypeParams(DataOutput dataOutput) {
-        if (recordTypeId == null) {
-            dataOutput.writeByte(UNDEFINED);
-        } else {
-            dataOutput.writeByte(DEFINED);
-            byte[] idBytes = recordTypeId.getBytes();
-            dataOutput.writeVInt(idBytes.length);
-            dataOutput.writeBytes(idBytes);
-        }
-    }
-    
-    @Override
-    public byte[] getTypeParams() {
-        DataOutput dataOutput = new DataOutputImpl();
-        encodeTypeParams(dataOutput);
-        return dataOutput.toByteArray();
-    }
-
     @SuppressWarnings("unchecked")
     public Link read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
@@ -97,6 +72,25 @@ public class LinkValueType extends AbstractValueType implements ValueType {
         return null;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + fullName.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        return fullName.equals(((LinkValueType) obj).fullName);
+    }
+
     //
     // Factory
     //
@@ -114,8 +108,8 @@ public class LinkValueType extends AbstractValueType implements ValueType {
         }
         
         @Override
-        public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException, InterruptedException {
-            return new LinkValueType(idGenerator, typeManager, recordName);
+        public ValueType getValueType(String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
+            return new LinkValueType(idGenerator, typeManager, recordTypeName);
         }
     }
 }

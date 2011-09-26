@@ -64,7 +64,7 @@ public class DecimalValueType extends AbstractValueType implements ValueType {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+        result = prime * result + NAME.hashCode();
         return result;
     }
 
@@ -75,12 +75,6 @@ public class DecimalValueType extends AbstractValueType implements ValueType {
         if (obj == null)
             return false;
         if (getClass() != obj.getClass())
-            return false;
-        DecimalValueType other = (DecimalValueType) obj;
-        if (NAME == null) {
-            if (other.NAME != null)
-                return false;
-        } else if (!NAME.equals(other.NAME))
             return false;
         return true;
     }

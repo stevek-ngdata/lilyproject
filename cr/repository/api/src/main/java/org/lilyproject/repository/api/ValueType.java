@@ -23,35 +23,48 @@ import org.lilyproject.bytes.api.DataOutput;
 
 /**
  * A value type represents the type of the value of a {@link FieldType}.
- *
- * <p>It represents a particular kind of value like a String, Long, ...
  * 
- * <p>Value types exist also to represent java.util.List (ListValueType) and {@link HierarchyPath} (PathValueType)
- *  which can contain values of another value type including ListValueType and PathValueType again thus allowing 
- *  multiple levels of nesting.</br>
+ * <p>
+ * It represents a particular kind of value like a String, Long, ...
  * 
- * <p>A value type to represent a Record also exists. This record is used to represent what is also known as a complex type.</br>
- * It can be regarded as normal Record, but with a few restrictions:
+ * <p>
+ * Value types exist also to represent java.util.List (ListValueType) and
+ * {@link HierarchyPath} (PathValueType) which can contain values of another
+ * value type including ListValueType and PathValueType again thus allowing
+ * multiple levels of nesting.</br>
+ * 
+ * <p>
+ * A value type to represent a Record also exists. This record is used to
+ * represent what is also known as a complex type. It can be regarded as normal
+ * Record, but with a few restrictions:
  * <li>It has no version</li>
- * <li>It has one (non-versioned) record type, and all its fields must be defined in that record type</li>
+ * <li>It has one (non-versioned) record type, and all its fields must be
+ * defined in that record type</li>
  * <li>All its fields are non-versioned</li>
  * <li>It is stored in its entirety inside a field of the surrounding record</li>
  * <li>Blob fields are not allowed</li>
  * 
- * <p>It is the responsibility of a ValueType to convert the values to/from byte representation, as used for
- * storage in the repository. This should delegate to the PrimitiveValueType for the conversion of a single value.
+ * <p>
+ * It is the responsibility of a ValueType to convert the values to/from byte
+ * representation, as used for storage in the repository. This should delegate
+ * to the PrimitiveValueType for the conversion of a single value.
  * 
- * <p>A value type should be requested from the {@link TypeManager} using the method {@link TypeManager#getValueType(String, String)}.</br>
- * A name (e.g. "STRING") uniquely represents the value type, and some value types can include extra information (typeParams) 
- * defining the value type. For example to define a list should contain strings</br> 
- * See the javadoc of that method for the complete list of supported value types and the parameters needed to get an instance of them.
+ * <p>
+ * A value type should be requested from the {@link TypeManager} using the
+ * method {@link TypeManager#getValueType(String, String)}. A name (e.g.
+ * "STRING") uniquely represents the value type, and some value types can
+ * include extra information (typeParams) defining the value type. For example
+ * to define a list should contain strings. <br>
+ * See the javadoc of that method for the complete list of supported value types
+ * and the parameters needed to get an instance of them.
  * 
  */
 public interface ValueType {
  
     /**
-     * Read and decodes object of the type represented by this value type from a {@link DataInput}. </br>
-     * The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data. 
+     * Read and decodes object of the type represented by this value type from a {@link DataInput}.
+     * 
+     * <p>The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data. 
      * 
      * @param dataInput the DataInput from which the valueType should read and decode its data 
      * @throws UnknownValueTypeEncodingException 
@@ -63,8 +76,9 @@ public interface ValueType {
     <T> T read(byte[] data) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
     
     /**
-     * Encodes an object of the type represented by this value type to a {@link DataOutput}.</br>
-     * The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data.
+     * Encodes an object of the type represented by this value type to a {@link DataOutput}.
+     * 
+     * <p>The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data.
      *  
      * @param value the object to encode and write
      * @param dataOutput the DataOutput on which to write the data
@@ -74,8 +88,9 @@ public interface ValueType {
     void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
     
     /**
-     * Encodes an object of the type represented by this value type to a byte[].</br>
-     * Should only be used internally for Avro data transport.
+     * Encodes an object of the type represented by this value type to a byte[].
+     * 
+     * <p>Should only be used internally for Avro data transport.
      * 
      * @throws InterruptedException 
      * @throws RepositoryException 
@@ -83,32 +98,21 @@ public interface ValueType {
     byte[] toBytes(Object value) throws RepositoryException, InterruptedException;
 
     /**
-     * Returns the Java class for the values of this value type.</br>
+     * Returns the Java class for the values of this value type.
+     * 
+     * <p>
      * For example: java.util.List
      */
     Class getType();
 
     /**
-     * Encodes and writes the extra information (type params) a value type has onto a {@link DataOutput}. </br>
-     * This is used by the {@link TypeManager} when storing the schema (record types, field types, ...).</br>
-     *  
-     * @param dataOutput the DataOutput on which to write the encoded type params
-     */
-    void encodeTypeParams(DataOutput dataOutput);
-    
-    /**
-     * Encodes the extra information (type params) a value type has into a byte[]. </br>
-     * This is used when transporting the schema over Avro.
-     * @return the encoded type params
-     */
-    byte[] getTypeParams();
-    
-    /**
-     * Returns a set of all values contained in this value. </br>
+     * Returns a set of all values contained in this value.
+     * <p>
      * In case of a ListValueType or PathValueType, these are the nested values.
      */
     Set<Object> getValues(Object value);
     
+    public int hashCode();
     boolean equals(Object obj);
     
     /**
@@ -131,27 +135,34 @@ public interface ValueType {
      * enclosed in "&lt;&gt;" after the simple name. For example: "LIST&lt;STRING&gt;"   
      */
     String getName();
-    
+
     /**
-     * ListValueType and PathValueType can again contain other value types. </br>
-     * This method returns the nested value type (1 level deep) or itself if it is 
-     * not a ListValueType or PathValueType. 
+     * ListValueType and PathValueType can again contain other value types.
+     * 
+     * <p>
+     * This method returns the nested value type (1 level deep) or itself if it
+     * is not a ListValueType or PathValueType.
      */
     ValueType getNestedValueType();
 
     /**
-     * ListValueType and PathValueType can again contain other value types. </br>
+     * ListValueType and PathValueType can again contain other value types.
+     * 
+     * <p>
      * This method returns the deepest level (non List or Path) value type.
      */
     ValueType getBaseValueType();
-    
+
     /**
-     * ListValueType and PathValueType can again contain other value types. </br>
-     * This method returns the number of nesting levels until the base value type is reached.</br>
+     * ListValueType and PathValueType can again contain other value types.
+     * <p>
+     * This method returns the number of nesting levels until the base value
+     * type is reached.<br/>
      * For non List or Path value types the returned value is 1.
      * 
-     * This method is used by the Repository and BlobIncubator when checking if a blob is already
-     * used by the record. 
+     * <p>
+     * This method is used by the Repository and BlobIncubator when checking if
+     * a blob is already used by the record.
      */
     int getNestingLevel();
     
