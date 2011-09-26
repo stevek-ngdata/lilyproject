@@ -60,7 +60,12 @@ public abstract class AbstractValueType implements ValueType {
         result.add(value);
         return result;
     }
-    
+
+    @Override
+    public boolean isIndexBased() {
+        return false;
+    }
+
     public boolean isMultiValue() {
         return false;
     }

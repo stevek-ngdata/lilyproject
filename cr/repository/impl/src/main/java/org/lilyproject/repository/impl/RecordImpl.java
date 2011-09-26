@@ -164,14 +164,6 @@ public class RecordImpl implements Record {
     }
     
     private Object cloneValue(Object value, Record clone) {
-        if (value instanceof List) {
-            List<Object> newList = new ArrayList<Object>();
-            List<Object> values = (List<Object>)value;
-            for (Object object : values) {
-                newList.add(cloneValue(object, clone));
-            }
-            return newList;
-        }
         if (value instanceof HierarchyPath) {
             Object[] elements = ((HierarchyPath)value).getElements();
             Object[] newElements = new Object[elements.length];
@@ -179,6 +171,14 @@ public class RecordImpl implements Record {
                 newElements[i] = cloneValue(elements[i], clone);
             }
             return new HierarchyPath(newElements);
+        }
+        if (value instanceof List) {
+            List<Object> newList = new ArrayList<Object>();
+            List<Object> values = (List<Object>)value;
+            for (Object object : values) {
+                newList.add(cloneValue(object, clone));
+            }
+            return newList;
         }
         if (value instanceof Blob) {
             return ((Blob)value).clone();

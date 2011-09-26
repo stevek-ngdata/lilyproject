@@ -40,7 +40,7 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
 
         final QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());
 
-        Integer[] indexes = ResourceClassUtil.getIntegerArrayParam(uriInfo, "indexes", null);
+        int[] indexes = ResourceClassUtil.getIntegerArrayParam(uriInfo, "indexes", null);
 
         Long versionNr = null;
         if (version != null) {

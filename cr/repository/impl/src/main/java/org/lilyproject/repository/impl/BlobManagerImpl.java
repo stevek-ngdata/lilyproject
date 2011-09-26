@@ -43,12 +43,8 @@ public class BlobManagerImpl implements BlobManager {
         return registry.getOutputStream(blob);
     }
 
-    public BlobAccess getBlobAccess(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
-            FieldType fieldType) throws BlobNotFoundException, BlobException {
-        return getBlobAccess(record, fieldName, fieldType, multivalueIndex, hierarchyIndex);
-    }
-    
-    public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, Integer...indexes) throws BlobNotFoundException, BlobException {
+    public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int...indexes)
+            throws BlobException {
         if (!(fieldType.getValueType().getBaseValueType() instanceof BlobValueType)) {
             throw new BlobException("Cannot read a blob from a non-blob field type: " + fieldType.getName());
         }
@@ -122,11 +118,14 @@ public class BlobManagerImpl implements BlobManager {
         }
     }
     
-    private Blob getBlobFromRecord(Record record, QName fieldName, FieldType fieldType, Integer...indexes) throws BlobNotFoundException {
+    private Blob getBlobFromRecord(Record record, QName fieldName, FieldType fieldType, int... indexes)
+            throws BlobNotFoundException {
         Object value = record.getField(fieldName);
         ValueType valueType = fieldType.getValueType();
-        if (!valueType.getBaseValueType().getSimpleName().equals("BLOB"))
-            throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() + "', '" + fieldName + "' at index: " + indexes);
+        if (!valueType.getBaseValueType().getSimpleName().equals("BLOB")) {
+            throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() + "', '" +
+                    fieldName + "' at index: " + indexes);
+        }
         for (Integer index : indexes) {
             try {
                 if (valueType.getSimpleName().equals("LIST")) {
@@ -139,13 +138,17 @@ public class BlobManagerImpl implements BlobManager {
                     valueType = valueType.getNestedValueType();
                     continue;
                 }
-                throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() + "', '" + fieldName + "' : " + indexes);
+                throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() +
+                        "', '" + fieldName + "' : " + indexes);
             } catch (IndexOutOfBoundsException e) {
-                throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() + "', '" + fieldName + "' : " + indexes, e);
+                throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() +
+                        "', '" + fieldName + "' : " + indexes, e);
             }
         }
-        if (!valueType.getSimpleName().equals("BLOB"))
-            throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() + "', '" + fieldName + "' at index: " + indexes);
+        if (!valueType.getSimpleName().equals("BLOB")) {
+            throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() +
+                    "', '" + fieldName + "' at index: " + indexes);
+        }
         return (Blob)value;
     }
     

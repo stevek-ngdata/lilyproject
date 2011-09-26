@@ -15,55 +15,33 @@
  */
 package org.lilyproject.repository.api;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 
 /**
  * A hierarchical path value. This kind of value specifies a hierarchical path consisting of path segments.
  *
  * <p>See {@link ValueType}.
  *
- * <p>A HierarchyPath is mutable: the elements array is not cloned internally.
  */
-public class HierarchyPath {
-
-    private final Object[] elements;
+public class HierarchyPath extends ArrayList<Object> {
 
     public HierarchyPath(Object... elements) {
-        this.elements = elements;
+        super(elements.length);
+        for (Object element : elements) {
+            add(element);
+        }
     }
     
     public Object[] getElements() {
-        return elements;
+        return toArray();
     }
     
     public int length() {
-        return elements.length;
+        return size();
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + Arrays.hashCode(elements);
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        HierarchyPath other = (HierarchyPath) obj;
-        if (!Arrays.equals(elements, other.elements))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return Arrays.toString(elements);
+    public Object clone() {
+        return new HierarchyPath(getElements());
     }
 }

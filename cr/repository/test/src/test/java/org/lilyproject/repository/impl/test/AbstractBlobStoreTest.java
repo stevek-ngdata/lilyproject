@@ -907,14 +907,15 @@ public abstract class AbstractBlobStoreTest {
         }
 
         try {
-            repository.getInputStream(repoSetup.getIdGenerator().fromString("USER.nonexistingrecord"), null, absentField.getName(), (Integer[])null);
+            repository.getInputStream(repoSetup.getIdGenerator().fromString("USER.nonexistingrecord"), null,
+                    absentField.getName());
             fail("Expected exception");
         } catch (RecordNotFoundException e) {
             // ok
         }
     }
 
-    private Blob writeBlob(byte[] bytes, String mediaType, String name) throws BlobException, RepositoryException, InterruptedException,
+    private Blob writeBlob(byte[] bytes, String mediaType, String name) throws RepositoryException, InterruptedException,
             IOException {
         Blob blob = new Blob(mediaType, (long) bytes.length, name);
         OutputStream outputStream = repository.getOutputStream(blob);
@@ -928,7 +929,8 @@ public abstract class AbstractBlobStoreTest {
         return readBlob(recordId, null, fieldName, size);
     }
     
-    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, long size, Integer...indexes) throws RepositoryException, InterruptedException, IOException {
+    private byte[] readBlob(RecordId recordId, Long version, QName fieldName, long size, int...indexes)
+            throws RepositoryException, InterruptedException, IOException {
         InputStream inputStream = repository.getInputStream(recordId, version, fieldName, indexes);
         byte[] readBytes = new byte[(int)size];
         inputStream.read(readBytes);

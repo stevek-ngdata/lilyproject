@@ -75,21 +75,21 @@ public class ResourceClassUtil {
         }
     }
 
-    public static Integer[] getIntegerArrayParam(UriInfo uriInfo, String name, Integer[] defaultValue) {
+    public static int[] getIntegerArrayParam(UriInfo uriInfo, String name, int[] defaultValue) {
         String value = uriInfo.getQueryParameters().getFirst(name);
         if (value == null) {
             return defaultValue;
         }
         String[] values = value.split(",");
-        Integer[] integers = new Integer[values.length];
+        int[] integers = new int[values.length];
         try {
             for (int i = 0; i < values.length; i++) {
                 integers[i] = Integer.parseInt(values[i]);
             }
         } catch (NumberFormatException e) {
             throw new ResourceException("Request parameter '" + name
-                    + "' does not contain a comma separated list of integers: '" + value + "'.", BAD_REQUEST
-                    .getStatusCode());
+                    + "' does not contain a comma separated list of integers: '" + value + "'.",
+                    BAD_REQUEST.getStatusCode());
         }
         return integers;
     }

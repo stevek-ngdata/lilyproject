@@ -77,7 +77,7 @@ public interface ValueType {
     
     /**
      * Encodes an object of the type represented by this value type to a {@link DataOutput}.
-     * 
+     *
      * <p>The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data.
      *  
      * @param value the object to encode and write
@@ -165,7 +165,13 @@ public interface ValueType {
      * a blob is already used by the record.
      */
     int getNestingLevel();
-    
+
+    /**
+     * Returns true for value types which are index-based collections of other types,
+     * as is the case for ListValueType and PathValueType.
+     */
+    boolean isIndexBased();
+
     /**
      * @return true in case of a ListValueType, false in all other cases.
      */

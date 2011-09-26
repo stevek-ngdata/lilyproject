@@ -428,8 +428,20 @@ public interface Repository extends Closeable {
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
      * @throws BlobException thrown when opening an InputStream on the blob fails
      */
-    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
+    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException;
     
+    /**
+     * Backwards compatibility method, which accepts null arguments for the indexes.
+     *
+     * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
+     * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
+     *
+     * <p>See {@link #getBlob(RecordId, Long, QName, int...)}
+     */
+    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException;
+
     /**
      * Shortcut getBlob method where version and indexes are set to null.
      */
@@ -450,7 +462,19 @@ public interface Repository extends Closeable {
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
      * @throws BlobException thrown when opening an InputStream on the blob fails
      */
-    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
+    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException;
+
+    /**
+     * Backwards compatibility method, which accepts null arguments for the indexes.
+     *
+     * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
+     * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
+     *
+     * <p>See {@link #getInputStream(RecordId, Long, QName, int...)}
+     */
+    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Shortcut getInputStream method where version, and indexes are set to null.
@@ -460,10 +484,22 @@ public interface Repository extends Closeable {
     /**
      * getInputStream method where the record containing the blob is given instead of its recordId.
      * This avoids an extra call on the repository to read the record.
-     * This is especially usefull for inline blobs. 
+     * This is especially useful for inline blobs.
      */
-    InputStream getInputStream(Record record, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException;
-    
+    InputStream getInputStream(Record record, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException;
+
+    /**
+     * Backwards compatibility method, which accepts null arguments for the indexes.
+     *
+     * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
+     * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
+     *
+     * <p>See {@link #getInputStream(Record, QName, int...)}
+     */
+    InputStream getInputStream(Record record, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException;
+
     /**
      * Get all the variants that exist for the given recordId.
      *
@@ -475,7 +511,8 @@ public interface Repository extends Closeable {
     Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException;
 
     /**
-     * Returns a record builder object which can be used to compose a record object and create or update it on the repository.
+     * Returns a record builder object which can be used to compose a record object and create or update it on the
+     * repository.
      */
     RecordBuilder recordBuilder() throws RecordException, InterruptedException;
 }

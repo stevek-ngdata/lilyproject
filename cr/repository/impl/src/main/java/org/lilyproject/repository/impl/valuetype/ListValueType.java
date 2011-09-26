@@ -105,7 +105,12 @@ public class ListValueType extends AbstractValueType implements ValueType {
     public boolean isHierarchical() {
         return valueType.isHierarchical();
     }
-    
+
+    @Override
+    public boolean isIndexBased() {
+        return true;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

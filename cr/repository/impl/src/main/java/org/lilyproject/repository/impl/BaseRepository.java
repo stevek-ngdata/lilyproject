@@ -38,7 +38,8 @@ public abstract class BaseRepository implements Repository {
         return blobManager.getOutputStream(blob);
     }
 
-    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException {
         Record record = read(recordId, version, fieldName);
         return getInputStream(record, fieldName, indexes);
     }
@@ -48,18 +49,53 @@ public abstract class BaseRepository implements Repository {
         return getInputStream(recordId, null, fieldName);
     }
     
-    public InputStream getInputStream(Record record, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+    public InputStream getInputStream(Record record, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException {
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
         return blobManager.getBlobAccess(record, fieldName, fieldType, indexes).getInputStream();
     }
     
-    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer...indexes) throws RepositoryException, InterruptedException {
+    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException {
         Record record = read(recordId, version, fieldName);
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
         return blobManager.getBlobAccess(record, fieldName, fieldType, indexes);
     }
-    
+
+    @Override
+    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException {
+        return getBlob(recordId, version, fieldName, convertToIndexes(mvIndex, hIndex));
+    }
+
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException {
         return getBlob(recordId, null, fieldName);
+    }
+
+    @Override
+    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException {
+        return getInputStream(recordId, version, fieldName, convertToIndexes(mvIndex, hIndex));
+    }
+
+    @Override
+    public InputStream getInputStream(Record record, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException {
+        return getInputStream(record, fieldName, convertToIndexes(mvIndex, hIndex));
+    }
+
+    private int[] convertToIndexes(Integer mvIndex, Integer hIndex) {
+        int[] indexes;
+        if (mvIndex == null && hIndex == null) {
+            indexes = new int[0];
+        } else if (mvIndex == null) {
+            indexes = new int[] { hIndex };
+        } else if (hIndex == null) {
+            indexes = new int[] { mvIndex };
+        } else {
+            indexes = new int[] { mvIndex, hIndex };
+        }
+
+        return indexes;
     }
 }

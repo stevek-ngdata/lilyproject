@@ -60,6 +60,11 @@ public class PathValueType extends AbstractValueType implements ValueType {
         return 1 + valueType.getNestingLevel();
     }
 
+    @Override
+    public boolean isIndexBased() {
+        return true;
+    }
+
     @SuppressWarnings("unchecked")
     public HierarchyPath read(DataInput dataInput) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
