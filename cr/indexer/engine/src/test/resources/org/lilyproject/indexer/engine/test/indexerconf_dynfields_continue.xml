@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
+
+  <records>
+    <record matchVariant="*" vtags="last"/>
+  </records>
+
+  <dynamicFields>
+    <!-- First rule matches every field, but processing does not stop as it has continue=true -->
+    <dynamicField name="dyncont_${name}_first_string" continue="true"/>
+
+    <!-- Second rule matches everything, but has no continue -->
+    <dynamicField name="dyncont_${name}_second_string"/>
+
+    <!-- Third rule should never be reaches -->
+    <dynamicField name="dyncont_${name}_third_string"/>
+  </dynamicFields>
+
+</indexer>

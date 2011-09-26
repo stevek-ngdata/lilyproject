@@ -198,8 +198,10 @@ public class Indexer {
                                 }
                             }
 
-                            // Dynamic fields: stop on the first match
-                            break;
+                            if (!dynField.getContinue()) {
+                                // stop on first match, unless continue attribute is true
+                                break;
+                            }
                         }
                     }
                 }

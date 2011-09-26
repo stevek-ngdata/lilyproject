@@ -93,10 +93,6 @@ public class LilyClient implements Closeable {
     private void init() throws InterruptedException, KeeperException, NoServersException {
         zk.addDefaultWatcher(watcher);
         refreshServers();
-        Stat stat = zk.exists(nodesPath, false);
-        if (stat == null) {
-            throw new NoServersException("Repositories znode does not exist in ZooKeeper: " + nodesPath);
-        }
     }
 
     public void close() throws IOException {
@@ -239,7 +235,30 @@ public class LilyClient implements Closeable {
 
     private synchronized void refreshServers() throws InterruptedException, KeeperException {
         Set<String> currentServers = new HashSet<String>();
-        currentServers.addAll(zk.getChildren(nodesPath, true));
+
+        boolean retry;
+        do {
+            retry = false;
+            try {
+                currentServers.addAll(zk.getChildren(nodesPath, true));
+            } catch (KeeperException.NoNodeException e) {
+                // The path does not exist: this can happen if the client is started before
+                // any Lily server has ever been started, or when using the LilyLauncher
+                // from the test framework and calling its resetLilyState JMX operation.
+                // In this case, put a watcher to be notified when the path is created.
+                Stat stat = zk.exists(nodesPath, true);
+                if (stat == null) {
+                    if (log.isInfoEnabled()) {
+                        log.info("The path with Lily servers does not exist in ZooKeeper: " + nodesPath);
+                    }
+                    clearServers();
+                    return;
+                } else {
+                    // The node was created in between the getChildren and exists calls: retry
+                    retry = true;
+                }
+            }
+        } while (retry);
 
         Set<String> removedServers = new HashSet<String>();
         removedServers.addAll(serverAddresses);
@@ -277,10 +296,13 @@ public class LilyClient implements Closeable {
     }
 
     private synchronized void clearServers() {
-        if (log.isInfoEnabled()) {
-            log.info("Not connected to ZooKeeper, will clear list of servers.");
+        Iterator<ServerNode> serverIt = servers.iterator();
+        while (serverIt.hasNext()) {
+            ServerNode server = serverIt.next();
+            serverIt.remove();
+            Closer.close(server.repository);
         }
-        servers.clear();
+
         serverAddresses.clear();
     }
 
@@ -288,6 +310,9 @@ public class LilyClient implements Closeable {
         public void process(WatchedEvent event) {
             try {
                 if (event.getState() != Event.KeeperState.SyncConnected) {
+                    if (log.isInfoEnabled()) {
+                        log.info("Not connected to ZooKeeper, will clear list of servers.");
+                    }
                     clearServers();
                 } else {
                     // We refresh the servers not only when /lily/repositoryNodes has changed, but also

@@ -13,6 +13,7 @@ public class DynamicIndexField {
     private Boolean multiValue;
     private Boolean hierarchical;
     private Set<Scope> scopes;
+    private boolean continue_;
 
     private NameTemplate nameTemplate;
 
@@ -21,7 +22,7 @@ public class DynamicIndexField {
 
     public DynamicIndexField(WildcardPattern namespace, WildcardPattern name, Set<String> primitiveTypes,
             Boolean multiValue, Boolean hierarchical, Set<Scope> scopes, NameTemplate nameTemplate,
-            boolean extractContext, String formatter) {
+            boolean extractContext, boolean continue_, String formatter) {
         this.namespace = namespace;
         this.name = name;
         this.primitiveTypes = primitiveTypes;
@@ -30,6 +31,7 @@ public class DynamicIndexField {
         this.scopes = scopes;
         this.nameTemplate = nameTemplate;
         this.extractContext = extractContext;
+        this.continue_ = continue_;
         this.formatter = formatter;
     }
 
@@ -100,6 +102,10 @@ public class DynamicIndexField {
 
     public String getFormatter() {
         return formatter;
+    }
+
+    public boolean getContinue() {
+        return continue_;
     }
 
     public static class DynamicIndexFieldMatch {

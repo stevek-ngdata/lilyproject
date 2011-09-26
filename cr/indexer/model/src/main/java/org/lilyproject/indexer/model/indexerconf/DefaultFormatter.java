@@ -33,13 +33,13 @@ public class DefaultFormatter implements Formatter {
         return result;
     }
 
-    private void formatMultiValue(List<IndexValue> indexValues, ValueType valueType, List<String> result) {
+    protected void formatMultiValue(List<IndexValue> indexValues, ValueType valueType, List<String> result) {
         for (IndexValue item : indexValues) {
             formatHierarchicalValue(item, valueType, result);
         }
     }
 
-    private void formatHierarchicalValue(IndexValue indexValue, ValueType valueType, List<String> result) {
+    protected void formatHierarchicalValue(IndexValue indexValue, ValueType valueType, List<String> result) {
         if (valueType.isHierarchical()) {
             HierarchyPath path = (HierarchyPath)indexValue.value;
             StringBuffer formattedPath = new StringBuffer();

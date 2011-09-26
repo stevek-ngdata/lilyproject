@@ -360,14 +360,17 @@ public class IndexerConfBuilder {
             NameTemplate name = new NameTemplate(nameAttr, variables, booleanVariables);
 
             boolean extractContent = DocumentHelper.getBooleanAttribute(fieldEl, "extractContent", false);
+
             String formatter = DocumentHelper.getAttribute(fieldEl, "formatter", false);
             if (formatter != null && !conf.getFormatters().hasFormatter(formatter)) {
                 throw new IndexerConfException("Formatter does not exist: " + formatter + " at " +
                         LocationAttributes.getLocationString(fieldEl));
             }
 
+            boolean continue_ = DocumentHelper.getBooleanAttribute(fieldEl, "continue", false);
+
             DynamicIndexField field = new DynamicIndexField(matchNamespace, matchName, matchTypes, matchMultiValue,
-                    matchHierarchical, matchScopes, name, extractContent, formatter);
+                    matchHierarchical, matchScopes, name, extractContent, continue_, formatter);
 
             conf.addDynamicIndexField(field);
         }
