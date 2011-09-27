@@ -2,10 +2,9 @@ package org.lilyproject.repository.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import com.google.common.primitives.Ints;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Delete;
@@ -126,7 +125,9 @@ public class BlobManagerImpl implements BlobManager {
             throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() + "', '" +
                     fieldName + "' at index: " + indexes);
         }
-        for (Integer index : indexes) {
+
+        for (int i = 0; i < indexes.length; i++) {
+            int index = indexes[i];
             try {
                 if (valueType.getSimpleName().equals("LIST")) {
                     value = ((List<Object>) value).get(index);
@@ -139,15 +140,15 @@ public class BlobManagerImpl implements BlobManager {
                     continue;
                 }
                 throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() +
-                        "', '" + fieldName + "' : " + indexes);
+                        "', '" + fieldName + "' : " + Ints.join("/", Arrays.copyOf(indexes, i + 1)));
             } catch (IndexOutOfBoundsException e) {
                 throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() +
-                        "', '" + fieldName + "' : " + indexes, e);
+                        "', '" + fieldName + "' : " + Ints.join("/", Arrays.copyOf(indexes, i + 1)), e);
             }
         }
         if (!valueType.getSimpleName().equals("BLOB")) {
             throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() +
-                    "', '" + fieldName + "' at index: " + indexes);
+                    "', '" + fieldName + "' at index: " + Ints.join("/", indexes));
         }
         return (Blob)value;
     }
