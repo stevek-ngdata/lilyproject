@@ -89,7 +89,7 @@ public class LinkIndexTest {
         linkIndex.updateLinks(ids.newRecordId("idC"), liveTag, links2);
 
         // Test forward link retrieval
-        Set<FieldedLink> links = linkIndex.getForwardLinks(ids.newRecordId("idA"), liveTag);
+        Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
         assertEquals(2, links.size());
@@ -104,7 +104,7 @@ public class LinkIndexTest {
         links1.add(new FieldedLink(ids.newRecordId("id2a"), field1));
         linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
 
-        links = linkIndex.getForwardLinks(ids.newRecordId("idA"), liveTag);
+        links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2a"), field1)));
@@ -134,10 +134,20 @@ public class LinkIndexTest {
                 new QName("ns", "link3"), Scope.VERSIONED_MUTABLE);
         versionedMutableFt = typeManager.createFieldType(versionedMutableFt);
 
+        FieldType nestedFt = typeManager.newFieldType(typeManager.getValueType("LIST<LIST<PATH<LINK>>>"),
+                new QName("ns", "nestedLinks"), Scope.NON_VERSIONED);
+        nestedFt = typeManager.createFieldType(nestedFt);
+
+        FieldType complexFt = typeManager.newFieldType(typeManager.getValueType("LIST<RECORD>"),
+                new QName("ns", "complexLinks"), Scope.NON_VERSIONED);
+        complexFt = typeManager.createFieldType(complexFt);
+
         RecordType recordType = typeManager.newRecordType(new QName("ns", "MyRecordType"));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nonVersionedFt.getId(), false));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedFt.getId(), false));
         recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(versionedMutableFt.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(nestedFt.getId(), false));
+        recordType.addFieldTypeEntry(typeManager.newFieldTypeEntry(complexFt.getId(), false));
         recordType = typeManager.createRecordType(recordType);
 
         SchemaId lastVTag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
@@ -159,8 +169,85 @@ public class LinkIndexTest {
             assertEquals(0, referrers.size());
 
             // Now perform an update so that there is a version
-            record.setField(versionedFt.getName(), Arrays.asList(new Link(ids.newRecordId("foo2")), new Link(ids.newRecordId("foo3"))));
+            record.setField(versionedFt.getName(), Arrays.asList(new Link(ids.newRecordId("foo2")),
+                    new Link(ids.newRecordId("foo3"))));
             record = repository.update(record);
+
+            referrers = linkIndex.getReferrers(ids.newRecordId("foo1"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+
+            referrers = linkIndex.getReferrers(ids.newRecordId("foo2"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+        }
+
+        //
+        // Link extraction from nested types
+        //
+        {
+            Record record = repository
+                    .recordBuilder()
+                    .defaultNameSpace("ns")
+                    .recordType("MyRecordType")
+                    .field("nestedLinks",
+                            Arrays.asList(
+                                    Arrays.asList(
+                                            new HierarchyPath(new Link(ids.newRecordId("nl1"))),
+                                            new HierarchyPath(new Link(ids.newRecordId("nl2")))
+                                    ),
+                                    Arrays.asList(
+                                            new HierarchyPath(new Link(ids.newRecordId("nl3"))),
+                                            new HierarchyPath(new Link(ids.newRecordId("nl4")))
+                                    )
+                            ))
+                    .create();
+
+            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("nl1"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+
+            Set<RecordId> forwardLinks = linkIndex.getForwardLinks(record.getId(), lastVTag, nestedFt.getId());
+            assertEquals(4, forwardLinks.size());
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl1")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl2")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl3")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("nl4")));
+        }
+
+        //
+        // Link extraction from complex types
+        //
+        {
+            Record record = repository
+                    .recordBuilder()
+                    .defaultNameSpace("ns")
+                    .recordType("MyRecordType")
+                    .field("complexLinks",
+                            Arrays.asList(
+                                    repository
+                                            .recordBuilder()
+                                            .defaultNameSpace("ns")
+                                            .recordType("MyRecordType")
+                                            .field("link1", new Link(ids.newRecordId("cl1")))
+                                            .newRecord(),
+                                    repository
+                                            .recordBuilder()
+                                            .defaultNameSpace("ns")
+                                            .recordType("MyRecordType")
+                                            .field("link1", new Link(ids.newRecordId("cl2")))
+                                            .newRecord()
+                            ))
+                    .create();
+
+            Set<RecordId> referrers = linkIndex.getReferrers(ids.newRecordId("cl1"), lastVTag);
+            assertEquals(1, referrers.size());
+            assertTrue(referrers.contains(record.getId()));
+
+            Set<RecordId> forwardLinks = linkIndex.getForwardLinks(record.getId(), lastVTag, complexFt.getId());
+            assertEquals(2, forwardLinks.size());
+            assertTrue(forwardLinks.contains(ids.newRecordId("cl1")));
+            assertTrue(forwardLinks.contains(ids.newRecordId("cl2")));
         }
     }
 }
