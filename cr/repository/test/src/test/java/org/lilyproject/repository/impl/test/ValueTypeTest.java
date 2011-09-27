@@ -609,4 +609,42 @@ public class ValueTypeTest {
             
         }
     }
+
+    @Test
+    public void testInvalidValueTypeSyntax() throws Exception {
+        try {
+            typeManager.getValueType("LIST<");
+            fail("expected exception");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try {
+            typeManager.getValueType("LIST<>");
+            fail("expected exception");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try {
+            typeManager.getValueType("LIST<!");
+            fail("expected exception");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try {
+            typeManager.getValueType("LIST<STRING<>");
+            fail("expected exception");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try {
+            typeManager.getValueType("RECORD<!namespace}name>");
+            fail("expected exception");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
 }

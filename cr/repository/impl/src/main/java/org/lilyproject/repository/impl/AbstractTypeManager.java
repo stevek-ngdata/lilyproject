@@ -311,12 +311,29 @@ public abstract class AbstractTypeManager implements TypeManager {
         valueTypeFactories.put(valueTypeName, valueTypeFactory);
     }
 
-    public ValueType getValueType(String valueType) throws RepositoryException, InterruptedException {
-        int indexOfParams = valueType.indexOf("<");
-        if (indexOfParams == -1)
-            return valueTypeFactories.get(valueType).getValueType((String)null);
-        else 
-            return valueTypeFactories.get(valueType.substring(0, indexOfParams)).getValueType(valueType.substring(indexOfParams + 1, valueType.length()-1));
+    public ValueType getValueType(String valueTypeSpec) throws RepositoryException, InterruptedException {
+        ValueType valueType;
+
+        int indexOfParams = valueTypeSpec.indexOf("<");
+        if (indexOfParams == -1) {
+            valueType = valueTypeFactories.get(valueTypeSpec).getValueType(null);
+        } else {
+            if (!valueTypeSpec.endsWith(">")) {
+                throw new IllegalArgumentException("Invalid value type string, no closing angle bracket: '" +
+                        valueTypeSpec + "'");
+            }
+
+            String arg = valueTypeSpec.substring(indexOfParams + 1, valueTypeSpec.length() - 1);
+
+            if (arg.length() == 0) {
+                throw new IllegalArgumentException("Invalid value type string, type arg is zero length: '" +
+                        valueTypeSpec + "'");
+            }
+
+            valueType = valueTypeFactories.get(valueTypeSpec.substring(0, indexOfParams)).getValueType(arg);
+        }
+
+        return valueType;
     }
     
     // TODO get this from some configuration file
