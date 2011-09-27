@@ -81,6 +81,8 @@
 
     <field name="v_blob" value="ns2:v_blob_mv_hier_field" extractContent="true"/>
 
+    <field name="v_blob" value="ns2:v_blob_nested_field" extractContent="true"/>
+
     <!--
        | Formatters
        -->

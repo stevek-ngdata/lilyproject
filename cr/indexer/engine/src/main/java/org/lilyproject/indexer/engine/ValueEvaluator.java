@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.engine;
 
+import com.google.common.primitives.Ints;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tika.metadata.Metadata;
@@ -114,24 +115,38 @@ public class ValueEvaluator {
 
         List<String> result = new ArrayList<String>(indexValues.size());
 
+        Deque<Integer> indexes = new ArrayDeque<Integer>();
+
         for (IndexValue indexValue : indexValues) {
-            if (indexValue.fieldType.getValueType().isHierarchical()) {
-                Object[] hierValue = ((HierarchyPath)indexValue.value).getElements();
-                for (int i = 0; i < hierValue.length; i++) {
-                    extractContent(hierValue[i], indexValue.record, indexValue.fieldType, indexValue.multiValueIndex,
-                            i, result, repository);
-                }
-            } else {
-                extractContent(indexValue.value, indexValue.record, indexValue.fieldType, indexValue.multiValueIndex,
-                        null, result, repository);
-            }
+            indexes.clear();
+
+            if (indexValue.listIndex != null)
+                indexes.addLast(indexValue.listIndex);
+
+            extractContent(indexValue.value, indexes, indexValue.record, indexValue.fieldType, result, repository);
         }
 
         return result.isEmpty() ? null : result;
     }
 
-    private void extractContent(Object value, Record record, FieldType fieldType, Integer multiValueIndex,
-            Integer hierIndex, List<String> result, Repository repository) {
+    private void extractContent(Object value, Deque<Integer> indexes, Record record, FieldType fieldType,
+            List<String> result, Repository repository) {
+
+        if (value instanceof List) { // this covers both LIST and PATH types
+            List values = (List)value;
+            for (int i = 0; i < values.size(); i++) {
+                indexes.addLast(i);
+                extractContent(values.get(i), indexes, record, fieldType, result, repository);
+                indexes.removeLast();
+            }
+        } else {
+            extractContent(value, record, fieldType, Ints.toArray(indexes), result, repository);
+        }
+    }
+
+    private void extractContent(Object value, Record record, FieldType fieldType, int[] indexes, List<String> result,
+            Repository repository) {
+
         Blob blob = (Blob)value;
         InputStream is = null;
 
@@ -140,7 +155,7 @@ public class ValueEvaluator {
         BodyContentHandler ch = new BodyContentHandler(woh);
 
         try {
-            is = repository.getInputStream(record, fieldType.getName(), multiValueIndex, hierIndex);
+            is = repository.getInputStream(record, fieldType.getName(), indexes);
 
             Metadata metadata = new Metadata();
             metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());

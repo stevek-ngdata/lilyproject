@@ -90,6 +90,7 @@ public class IndexerTest {
     private static FieldType vLongField;
     private static FieldType vBlobField;
     private static FieldType vBlobMvHierField;
+    private static FieldType vBlobNestedField;
     private static FieldType vDateTimeField;
     private static FieldType vDateField;
     private static FieldType vIntHierField;
@@ -176,6 +177,7 @@ public class IndexerTest {
 
         ValueType blobValueType = typeManager.getValueType("BLOB");
         ValueType blobMvHierValueType = typeManager.getValueType("LIST<PATH<BLOB>>");
+        ValueType blobNestedValueType = typeManager.getValueType("LIST<LIST<LIST<BLOB>>>");
 
         ValueType dateTimeValueType = typeManager.getValueType("DATETIME");
         ValueType dateValueType = typeManager.getValueType("DATE");
@@ -261,6 +263,10 @@ public class IndexerTest {
         vBlobMvHierField = typeManager.newFieldType(blobMvHierValueType, vBlobMvHierFieldName, Scope.VERSIONED);
         vBlobMvHierField = typeManager.createFieldType(vBlobMvHierField);
 
+        QName vBlobNestedFieldName = new QName(NS2, "v_blob_nested_field");
+        vBlobNestedField = typeManager.newFieldType(blobNestedValueType, vBlobNestedFieldName, Scope.VERSIONED);
+        vBlobNestedField = typeManager.createFieldType(vBlobNestedField);
+
         QName vDateTimeFieldName = new QName(NS2, "v_datetime_field");
         vDateTimeField = typeManager.newFieldType(dateTimeValueType, vDateTimeFieldName, Scope.VERSIONED);
         vDateTimeField = typeManager.createFieldType(vDateTimeField);
@@ -284,6 +290,7 @@ public class IndexerTest {
         vRecordType1.addFieldTypeEntry(vLongField.getId(), false);
         vRecordType1.addFieldTypeEntry(vBlobField.getId(), false);
         vRecordType1.addFieldTypeEntry(vBlobMvHierField.getId(), false);
+        vRecordType1.addFieldTypeEntry(vBlobNestedField.getId(), false);
         vRecordType1.addFieldTypeEntry(vDateTimeField.getId(), false);
         vRecordType1.addFieldTypeEntry(vDateField.getId(), false);
         vRecordType1.addFieldTypeEntry(vIntHierField.getId(), false);
@@ -1010,6 +1017,40 @@ public class IndexerTest {
             verifyResultCount("v_blob:blob2", 1);
             verifyResultCount("v_blob:blob3", 1);
             verifyResultCount("+v_blob:blob4 +v_blob:\"Netherfield Park\"", 1);
+
+            // Nested blob field
+            log.debug("Begin test V72");
+            List<List<List<Blob>>> nestedBlobs = Arrays.asList(
+                    Arrays.<List<Blob>>asList(
+                            Arrays.<Blob>asList(
+                                    createBlob("niobium".getBytes(), "text/plain", "foo.txt"),
+                                    createBlob("tantalum".getBytes(), "text/plain", "foo.txt")
+                            ),
+                            Arrays.<Blob>asList(
+                                    createBlob("fermium".getBytes(), "text/plain", "foo.txt"),
+                                    createBlob("seaborgium".getBytes(), "text/plain", "foo.txt")
+                            )
+                    ),
+                    Arrays.<List<Blob>>asList(
+                            Arrays.<Blob>asList(
+                                    createBlob("einsteinium".getBytes(), "text/plain", "foo.txt")
+                            )
+                    )
+            );
+
+            Record record3 = repository.newRecord();
+            record3.setRecordType(vRecordType1.getName());
+            record3.setField(vBlobNestedField.getName(), nestedBlobs);
+            record3.setField(liveTag.getName(), 1L);
+            expectEvent(CREATE, record3.getId(), 1L, null, vBlobNestedField.getId(), liveTag.getId());
+            record3 = repository.create(record3);
+
+            commitIndex();
+            verifyResultCount("v_blob:niobium", 1);
+            verifyResultCount("v_blob:tantalum", 1);
+            verifyResultCount("v_blob:fermium", 1);
+            verifyResultCount("v_blob:seaborgium", 1);
+            verifyResultCount("v_blob:einsteinium", 1);
         }
 
         //
@@ -1584,6 +1625,18 @@ public class IndexerTest {
         OutputStream os = repository.getOutputStream(blob);
         try {
             os.write(mswordblob);
+        } finally {
+            os.close();
+        }
+
+        return blob;
+    }
+
+    private Blob createBlob(byte[] content, String mediaType, String fileName) throws Exception {
+        Blob blob = new Blob(mediaType, (long)content.length, fileName);
+        OutputStream os = repository.getOutputStream(blob);
+        try {
+            os.write(content);
         } finally {
             os.close();
         }
