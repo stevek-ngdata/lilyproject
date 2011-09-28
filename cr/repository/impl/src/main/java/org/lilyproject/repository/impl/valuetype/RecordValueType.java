@@ -39,11 +39,12 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     private final TypeManager typeManager;
     private QName valueTypeRecordTypeName = null;
 
-    public RecordValueType(TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
+    public RecordValueType(TypeManager typeManager, String recordTypeName) throws IllegalArgumentException,
+            RepositoryException, InterruptedException {
         this.typeManager = typeManager;
         if (recordTypeName != null) {
             this.valueTypeRecordTypeName = QName.fromString(recordTypeName);
-            this.fullName = NAME+"<"+recordTypeName+">";
+            this.fullName = NAME + "<" + recordTypeName + ">";
         } else {
             this.fullName = NAME;
         }
@@ -114,13 +115,14 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     private void encodeData(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
         Record record = (Record)value;
         
-        RecordType recordType = null;
+        RecordType recordType;
         QName recordRecordTypeName = record.getRecordTypeName();
         if (recordRecordTypeName != null) {
             if (valueTypeRecordTypeName != null) {
                 // Validate the same record type is being used
                 if (!valueTypeRecordTypeName.equals(recordRecordTypeName))
-                    throw new RecordException("The record's Record Type '"+ recordRecordTypeName +"' does not match the record value type's record type '" + valueTypeRecordTypeName + "'");
+                    throw new RecordException("The record's Record Type '"+ recordRecordTypeName +
+                            "' does not match the record value type's record type '" + valueTypeRecordTypeName + "'");
             }
             recordType = typeManager.getRecordTypeByName(recordRecordTypeName, null);
         } else if (valueTypeRecordTypeName != null) {
@@ -169,7 +171,8 @@ public class RecordValueType extends AbstractValueType implements ValueType {
 
         // Check if the record does contain fields that are not defined in the record type  
         if (!expectedFields.containsAll(recordFields.keySet())) {
-            throw new InvalidRecordException("Record contains fields not part of the record type '" + recordType + "'", record.getId());
+            throw new InvalidRecordException("Record contains fields not part of the record type '" +
+                    recordType.getName() + "'", record.getId());
         }
     }
 
@@ -183,11 +186,14 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         return fieldTypes;
     }
     
-    private Collection<FieldTypeEntry> getFieldTypeEntries(RecordType recordType) throws RepositoryException, InterruptedException {
+    private Collection<FieldTypeEntry> getFieldTypeEntries(RecordType recordType)
+            throws RepositoryException, InterruptedException {
+
         Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
         Map<SchemaId, Long> mixins = recordType.getMixins();
         for (Entry<SchemaId, Long> mixinEntry: mixins.entrySet()) {
-            fieldTypeEntries.addAll(getFieldTypeEntries(typeManager.getRecordTypeById(mixinEntry.getKey(), mixinEntry.getValue())));
+            RecordType mixinRecordType = typeManager.getRecordTypeById(mixinEntry.getKey(), mixinEntry.getValue());
+            fieldTypeEntries.addAll(getFieldTypeEntries(mixinRecordType));
         }
         return fieldTypeEntries;
     }
@@ -235,7 +241,8 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         }
         
         @Override
-        public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException, InterruptedException {
+        public ValueType getValueType(String recordName) throws IllegalArgumentException, RepositoryException,
+                InterruptedException {
             return new RecordValueType(typeManager, recordName);
         }
     }
