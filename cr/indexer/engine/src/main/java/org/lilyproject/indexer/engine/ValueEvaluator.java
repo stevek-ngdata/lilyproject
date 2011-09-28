@@ -71,11 +71,9 @@ public class ValueEvaluator {
             return extractContent(indexValues, repository);
         }
 
-        ValueType valueType = valueDef.getValueType();
-        Formatter formatter = valueDef.getFormatter() != null ?
-                conf.getFormatters().getFormatter(valueDef.getFormatter()) : conf.getFormatters().getFormatter(valueType);
+        Formatter formatter = conf.getFormatters().getFormatter(valueDef.getFormatter());
 
-        return formatter.format(indexValues, valueType);
+        return formatter.format(indexValues, repository);
     }
 
     /**
@@ -83,7 +81,7 @@ public class ValueEvaluator {
      * called if the field is present in the record.
      */
     public List<String> format(IdRecord record, FieldType fieldType, boolean extractContent, String formatterName,
-            Repository repository) {
+            Repository repository) throws InterruptedException {
         Object value = record.getField(fieldType.getId());
 
         List<IndexValue> indexValues;
@@ -102,11 +100,9 @@ public class ValueEvaluator {
             return extractContent(indexValues, repository);
         }
 
-        ValueType valueType = fieldType.getValueType();
-        Formatter formatter = formatterName != null ?
-                conf.getFormatters().getFormatter(formatterName) : conf.getFormatters().getFormatter(valueType);
+        Formatter formatter = conf.getFormatters().getFormatter(formatterName);
 
-        return formatter.format(indexValues, valueType);
+        return formatter.format(indexValues, repository);
     }
 
     private List<String> extractContent(List<IndexValue> indexValues, Repository repository) {

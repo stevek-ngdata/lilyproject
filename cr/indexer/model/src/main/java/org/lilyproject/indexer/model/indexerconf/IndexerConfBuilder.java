@@ -33,6 +33,7 @@ import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.lilyproject.util.xml.LocalXPathExpression;
+import org.lilyproject.util.xml.XPathUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.ErrorHandler;
@@ -141,50 +142,18 @@ public class IndexerConfBuilder {
             String className = DocumentHelper.getAttribute(formatterEl, "class", true);
             Formatter formatter = instantiateFormatter(className);
 
-            String name = DocumentHelper.getAttribute(formatterEl, "name", false);
-            String type = DocumentHelper.getAttribute(formatterEl, "type", false);
-
-            Set<String> types;
-            if (type == null) {
-                types = formatter.getSupportedPrimitiveValueTypes();
-            } else if (type.trim().equals("*")) {
-                types = Collections.emptySet();
-            } else {
-                // Check the specified types are a subset of those supported by the formatter
-                types = new HashSet<String>();
-                Set<String> supportedTypes = formatter.getSupportedPrimitiveValueTypes();
-                List<String> specifiedTypes = parseCSV(type);
-                for (String item : specifiedTypes) {
-                    if (supportedTypes.contains(item)) {
-                        types.add(item);
-                    } else {
-                        throw new IndexerConfException("Formatter definition error: primitive value type "
-                                + item + " is not supported by formatter " + className);
-                    }
-                }
-            }
-
-            boolean singleValue = DocumentHelper.getBooleanAttribute(formatterEl, "singleValue", formatter.supportsSingleValue());
-            boolean multiValue = DocumentHelper.getBooleanAttribute(formatterEl, "multiValue", formatter.supportsMultiValue());
-            boolean nonHierarchical = DocumentHelper.getBooleanAttribute(formatterEl, "nonHierarchical", formatter.supportsNonHierarchicalValue());
-            boolean hierarchical = DocumentHelper.getBooleanAttribute(formatterEl, "hierarchical", formatter.supportsHierarchicalValue());
-
-            String message = "Formatter does not support %1$s. Class " + className + " at " + LocationAttributes.getLocation(formatterEl);
-
-            if (singleValue && !formatter.supportsSingleValue())
-                throw new IndexerConfException(String.format(message, "singleValue"));
-            if (multiValue && !formatter.supportsMultiValue())
-                throw new IndexerConfException(String.format(message, "multiValue"));
-            if (hierarchical && !formatter.supportsHierarchicalValue())
-                throw new IndexerConfException(String.format(message, "hierarchical"));
-            if (nonHierarchical && !formatter.supportsNonHierarchicalValue())
-                throw new IndexerConfException(String.format(message, "nonHierarchical"));
+            String name = DocumentHelper.getAttribute(formatterEl, "name", true);
 
             if (name != null && conf.getFormatters().hasFormatter(name)) {
                 throw new IndexerConfException("Duplicate formatter name: " + name);
             }
 
-            conf.getFormatters().addFormatter(formatter, name, types, singleValue, multiValue, nonHierarchical, hierarchical);
+            conf.getFormatters().addFormatter(formatter, name);
+        }
+
+        String defaultFormatter = XPathUtils.evalString("/indexer/formatters/@default", doc);
+        if (defaultFormatter.length() != 0) {
+            conf.getFormatters().setDefaultFormatter(defaultFormatter);
         }
     }
 

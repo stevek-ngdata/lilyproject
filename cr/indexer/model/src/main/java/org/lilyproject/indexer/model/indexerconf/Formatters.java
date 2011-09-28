@@ -15,84 +15,42 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.ValueType;
-
 import java.util.*;
 
 public class Formatters {
-    private List<FormatterEntry> formatters = new ArrayList<FormatterEntry>();
-    private Map<String, FormatterEntry> formattersByName = new HashMap<String, FormatterEntry>();
-
-    private Formatter DEFAULT_FORMATTER = new DefaultFormatter();
+    private Map<String, Formatter> formattersByName = new HashMap<String, Formatter>();
+    private Formatter defaultFormatter = new DefaultFormatter();
     
-    public Formatter getFormatter(ValueType valueType) {
-        for (FormatterEntry entry : formatters) {
-            if (!entry.useForTypes.contains(valueType.getBaseValueType().getSimpleName())
-                    && !entry.useForTypes.isEmpty())
-                continue;
-
-            if (valueType.isMultiValue() && !entry.multiValue)
-                continue;
-
-            if (!valueType.isMultiValue() && !entry.singleValue)
-                continue;
-
-            if (valueType.isHierarchical() && !entry.hierarchical)
-                continue;
-
-            if (!valueType.isHierarchical() && !entry.nonHierarchical)
-                continue;
-
-            return entry.formatter;
+    public Formatter getFormatter(String name) {
+        if (name == null) {
+            return getDefaultFormatter();
         }
 
-        return DEFAULT_FORMATTER;
+        // During index configuration parsing, we will validate that all named formatters exist,
+        // so the following check should never be true.
+        if (!formattersByName.containsKey(name)) {
+            throw new RuntimeException("Formatter does not exist: '" + name + "'");
+        }
+
+        return formattersByName.get(name);
+    }
+
+    public Formatter getDefaultFormatter() {
+        return defaultFormatter;
     }
 
     protected boolean hasFormatter(String name) {
         return formattersByName.containsKey(name);
     }
 
-    public Formatter getFormatter(String name) {
-        // During index configuration parsing, we will validate that all named formatters exist,
-        // so the following check should never be true.
-        if (!formattersByName.containsKey(name)) {
-            throw new RuntimeException("Formatter with the following name does not exist: " + name);
-        }
-
-        return formattersByName.get(name).formatter;
+    protected void addFormatter(Formatter formatter, String name) {
+        formattersByName.put(name, formatter);
     }
 
-    protected void addFormatter(Formatter formatter, String name, Set<String> useForTypes, boolean singleValue,
-            boolean multiValue, boolean nonHierarchical, boolean hierarchical) {
-
-        FormatterEntry entry = new FormatterEntry(formatter, name, useForTypes, singleValue, multiValue,
-                nonHierarchical, hierarchical);
-
-        formatters.add(entry);
-
-        if (name != null)
-            formattersByName.put(name, entry);
-    }
-
-    private static class FormatterEntry {
-        String name;
-        Set<String> useForTypes;
-        Formatter formatter;
-        boolean singleValue;
-        boolean multiValue;
-        boolean nonHierarchical;
-        boolean hierarchical;
-
-        public FormatterEntry(Formatter formatter, String name, Set<String> useForTypes, boolean singleValue,
-            boolean multiValue, boolean nonHierarchical, boolean hierarchical) {
-            this.name = name;
-            this.useForTypes = useForTypes;
-            this.formatter = formatter;
-            this.singleValue = singleValue;
-            this.multiValue = multiValue;
-            this.nonHierarchical = nonHierarchical;
-            this.hierarchical = hierarchical;
+    protected void setDefaultFormatter(String name) {
+        defaultFormatter = formattersByName.get(name);
+        if (defaultFormatter == null) {
+            throw new RuntimeException("Default formatter does not exist: '" + name + "'");
         }
     }
 }

@@ -122,7 +122,10 @@
 
    <field name="year" type="int" indexed="true" stored="true" required="false"/>
    <field name="firstValue" type="text" indexed="true" stored="true" required="false"/>
-   <field name="inthierarchy" type="string" indexed="true" stored="true" required="false"/>
+
+   <field name="cf_nestedlists" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
+   <field name="cf_record" type="text" indexed="true" stored="true" required="false"/>
+   <field name="cf_recordlist" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
 
    <dynamicField name="*_string" type="text" indexed="true" stored="true"/>
    <dynamicField name="*_string_mv" type="text" indexed="true" stored="true" multiValued="true"/>

@@ -229,6 +229,7 @@ public class IndexerTest {
 
         nvRecordType1 = typeManager.newRecordType(new QName(NS, "NVRecordType1"));
         nvRecordType1.addFieldTypeEntry(nvfield1.getId(), false);
+        nvRecordType1.addFieldTypeEntry(nvfield2.getId(), false);
         nvRecordType1.addFieldTypeEntry(liveTag.getId(), false);
         nvRecordType1.addFieldTypeEntry(latestTag.getId(), false);
         nvRecordType1.addFieldTypeEntry(previewTag.getId(), false);
@@ -1073,22 +1074,6 @@ public class IndexerTest {
         }
 
         //
-        // Test field with auto-selected formatter
-        //
-        {
-            log.debug("Begin test V90");
-            Record record1 = repository.newRecord();
-            record1.setRecordType(vRecordType1.getName());
-            record1.setField(vIntHierField.getName(), new HierarchyPath(8, 16, 24, 32));
-            record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vIntHierField.getId(), liveTag.getId());
-            record1 = repository.create(record1);
-
-            commitIndex();
-            verifyResultCount("inthierarchy:\"8_16_24_32\"", 1);
-        }
-
-        //
         // Test inheritance of variant properties for link fields
         //
         {
@@ -1616,6 +1601,83 @@ public class IndexerTest {
         verifyResultCount("+recordType_deref_literal:" + qesc("{org.lilyproject.indexer.test}sf_rt2"), 1);
 
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
+    }
+
+    @Test
+    public void testComplexFields() throws Exception {
+        messageVerifier.init();
+
+        //
+        // Create schema
+        //
+        log.debug("Begin test V501");
+        FieldType nestedListsType = typeManager.createFieldType(typeManager.getValueType("LIST<LIST<STRING>>"),
+                new QName(NS, "cf_nestedlists"), Scope.NON_VERSIONED);
+
+        FieldType recordType = typeManager.createFieldType(typeManager.getValueType("RECORD"),
+                new QName(NS, "cf_record"), Scope.NON_VERSIONED);
+
+        FieldType recordListType = typeManager.createFieldType(typeManager.getValueType("LIST<RECORD>"),
+                new QName(NS, "cf_recordlist"), Scope.NON_VERSIONED);
+
+        RecordType cfRecordType = typeManager.rtBuilder()
+                .name(new QName(NS, "ComplexFieldsRecordType"))
+                .field(nestedListsType.getId(), false)
+                .field(recordType.getId(), false)
+                .field(recordListType.getId(), false)
+                .create();
+
+        //
+        // Change indexer conf
+        //
+        log.debug("Begin test V502");
+        changeIndexUpdater("indexerconf_complexfields.xml");
+
+        //
+        // Test
+        //
+        RecordId recordId = idGenerator.newRecordId();
+        expectEvent(CREATE, recordId, nestedListsType.getId(), recordType.getId(), recordListType.getId());
+
+        repository
+                .recordBuilder()
+                .recordId(recordId)
+                .recordType(cfRecordType.getName())
+                .field(nestedListsType.getName(),
+                        Arrays.asList(
+                                Arrays.asList("dutch", "french", "english"),
+                                Arrays.asList("italian", "greek")
+                        ))
+                .field(recordType.getName(),
+                        repository
+                                .recordBuilder()
+                                .recordType(nvRecordType1.getName())
+                                .field(nvfield1.getName(), "german")
+                                .field(nvfield2.getName(), "spanish")
+                                .newRecord())
+                .field(recordListType.getName(),
+                        Arrays.asList(
+                                repository
+                                        .recordBuilder()
+                                        .recordType(nvRecordType1.getName())
+                                        .field(nvfield1.getName(), "swedish")
+                                        .field(nvfield2.getName(), "chinese")
+                                        .newRecord(),
+                                repository
+                                        .recordBuilder()
+                                        .recordType(nvRecordType1.getName())
+                                        .field(nvfield1.getName(), "vietnamese")
+                                        .field(nvfield2.getName(), "wolof")
+                                        .newRecord()
+                                )
+                        )
+                .create();
+
+        commitIndex();
+
+        verifyResultCount("+cf_nestedlists:italian", 1);
+        verifyResultCount("+cf_record:german", 1);
+        verifyResultCount("+cf_recordlist:chinese", 1);
     }
 
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
