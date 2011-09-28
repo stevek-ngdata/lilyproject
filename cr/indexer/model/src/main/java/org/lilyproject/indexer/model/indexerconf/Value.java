@@ -35,13 +35,6 @@ public interface Value {
     boolean extractContent();
 
     /**
-     * Returns the value type of the actual value to index. This does not necessarily correspond
-     * to the value type of the field type returned by {@link #getTargetFieldType()} since it
-     * might be 'corrected' to multi-value in case of multi-value link field dereferencing.
-     */
-    public abstract ValueType getValueType();
-
-    /**
      * Get the FieldType of the field from which the actual data is taken, thus in case
      * of a dereference the last field in the chain.
      */

@@ -25,10 +25,6 @@ public class FieldValue extends BaseValue {
         this.fieldType = fieldType;
     }
 
-    public ValueType getValueType() {
-        return fieldType.getValueType();
-    }
-
     public FieldType getFieldType() {
         return fieldType;
     }

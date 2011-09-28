@@ -22,7 +22,6 @@ import java.util.*;
 public class DerefValue extends BaseValue {
     private List<Follow> follows = new ArrayList<Follow>();
     private FieldType fieldType;
-    private ValueType valueType;
 
     protected DerefValue(FieldType fieldType, boolean extractContent, String formatter) {
         super(extractContent, formatter);
@@ -32,35 +31,8 @@ public class DerefValue extends BaseValue {
     /**
      * This method should be called after all follow-expressions have been added.
      */
-    protected void init(TypeManager typeManager) throws TypeException, RepositoryException, InterruptedException {
+    protected void init(TypeManager typeManager) throws RepositoryException, InterruptedException {
         follows = Collections.unmodifiableList(follows);
-
-        // In case the deref field itself is not multi-valued, but one of the follow-fields is multivalued,
-        // then the value type of this Value is adjusted to to be multi-valued.
-
-        if (fieldType.getValueType().isMultiValue()) {
-            this.valueType = fieldType.getValueType();
-            return;
-        }
-
-        boolean multiValue = false;
-        for (Follow follow : follows) {
-            if (follow.isMultiValue()) {
-                multiValue = true;
-                break;
-            }
-        }
-
-        // TODO make this more generic for multiple levels of LIST and PATH nesting
-        if (multiValue) {
-            if (fieldType.getValueType().isHierarchical()) {
-                this.valueType = typeManager.getValueType("LIST<PATH<"+fieldType.getValueType().getDeepestValueType().getBaseName()+">>");
-            } else {
-                this.valueType = typeManager.getValueType("LIST<"+ fieldType.getValueType().getDeepestValueType().getBaseName()+">");
-            }
-        } else {
-            this.valueType = fieldType.getValueType();
-        }
     }
 
     protected void addFieldFollow(FieldType fieldType) {
@@ -88,7 +60,6 @@ public class DerefValue extends BaseValue {
     }
 
     public static interface Follow {
-        boolean isMultiValue();
     }
 
     public static class FieldFollow implements Follow {
@@ -96,10 +67,6 @@ public class DerefValue extends BaseValue {
 
         public FieldFollow(FieldType fieldType) {
             this.fieldType = fieldType;
-        }
-
-        public boolean isMultiValue() {
-            return fieldType.getValueType().isMultiValue();
         }
 
         public SchemaId getFieldId() {
@@ -112,9 +79,6 @@ public class DerefValue extends BaseValue {
     }
 
     public static class MasterFollow implements Follow {
-        public boolean isMultiValue() {
-            return false;
-        }
     }
 
     public static class VariantFollow implements Follow {
@@ -127,14 +91,6 @@ public class DerefValue extends BaseValue {
         public Set<String> getDimensions() {
             return dimensions;
         }
-
-        public boolean isMultiValue() {
-            return false;
-        }
-    }
-
-    public ValueType getValueType() {
-        return valueType;
     }
 
     public SchemaId getFieldDependency() {
