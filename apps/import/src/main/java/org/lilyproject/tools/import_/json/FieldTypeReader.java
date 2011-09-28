@@ -56,7 +56,7 @@ public class FieldTypeReader implements EntityReader<FieldType> {
             if (fieldType.getScope() != Scope.NON_VERSIONED)
                 throw new JsonFormatException("vtag fields should be in the non-versioned scope");
 
-            if (!fieldType.getValueType().getSimpleName().equals("LONG"))
+            if (!fieldType.getValueType().getBaseName().equals("LONG"))
                 throw new JsonFormatException("vtag fields should be of type LONG");
         }
 

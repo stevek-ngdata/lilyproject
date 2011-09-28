@@ -37,7 +37,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
             fullName = NAME;
     }
     
-    public String getSimpleName() {
+    public String getBaseName() {
         return NAME;
     }
     
@@ -45,7 +45,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
         return fullName;
     }
     
-    public ValueType getBaseValueType() {
+    public ValueType getDeepestValueType() {
         return this;
     }
     

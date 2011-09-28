@@ -26,9 +26,9 @@ public class DateYearFormatter extends DefaultFormatter {
 
     @Override
     protected ValueFormatter getFormatter(ValueType valueType) {
-        if (valueType.getSimpleName().equals("DATE")) {
+        if (valueType.getBaseName().equals("DATE")) {
             return DATE_FORMATTER;
-        } else if (valueType.getSimpleName().equals("DATETIME")) {
+        } else if (valueType.getBaseName().equals("DATETIME")) {
             return DATETIME_FORMATTER;
         } else {
             return super.getFormatter(valueType);

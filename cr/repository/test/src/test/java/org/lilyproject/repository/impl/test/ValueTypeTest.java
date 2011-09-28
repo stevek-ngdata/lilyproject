@@ -260,11 +260,11 @@ public class ValueTypeTest {
 
         public static final String NAME = "XY";
 
-        public String getSimpleName() {
+        public String getBaseName() {
             return NAME;
         }
         
-        public ValueType getBaseValueType() {
+        public ValueType getDeepestValueType() {
             return this;
         }
         

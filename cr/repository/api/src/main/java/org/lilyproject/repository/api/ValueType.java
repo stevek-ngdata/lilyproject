@@ -113,6 +113,7 @@ public interface ValueType {
     Set<Object> getValues(Object value);
     
     public int hashCode();
+
     boolean equals(Object obj);
     
     /**
@@ -125,10 +126,10 @@ public interface ValueType {
     Comparator getComparator();
     
     /**
-     * @return the simple name of the value type (e.g. "STRING") without any extra parameters for the type. 
+     * @return the base name of the value type (e.g. "STRING") without any extra parameters for the type.
      * See {@link TypeManager#getValueType(String)} for a list of all possible value types and their names.
      */
-    String getSimpleName();
+    String getBaseName();
     
     /**
      * @return the name of the value type where the optional parameters of the type are  
@@ -151,7 +152,7 @@ public interface ValueType {
      * <p>
      * This method returns the deepest level (non List or Path) value type.
      */
-    ValueType getBaseValueType();
+    ValueType getDeepestValueType();
 
     /**
      * ListValueType and PathValueType can again contain other value types.
@@ -165,12 +166,6 @@ public interface ValueType {
      * a blob is already used by the record.
      */
     int getNestingLevel();
-
-    /**
-     * Returns true for value types which are index-based collections of other types,
-     * as is the case for ListValueType and PathValueType.
-     */
-    boolean isIndexBased();
 
     /**
      * @return true in case of a ListValueType, false in all other cases.

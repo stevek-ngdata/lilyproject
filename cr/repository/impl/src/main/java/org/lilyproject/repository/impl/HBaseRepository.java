@@ -1399,7 +1399,7 @@ public class HBaseRepository extends BaseRepository {
                             Set<Entry<Long, byte[]>> cellsSet = cells.entrySet();
                             for (Entry<Long, byte[]> cell : cellsSet) {
                                 // Get blobs to delete
-                                if (valueType.getBaseValueType() instanceof BlobValueType) {
+                                if (valueType.getDeepestValueType() instanceof BlobValueType) {
                                     Object blobValue = null;
                                     if (fieldType.getScope() == Scope.NON_VERSIONED) {
                                         // Read the blob value from the original record, 
@@ -1483,7 +1483,7 @@ public class HBaseRepository extends BaseRepository {
     private Set<BlobReference> getReferencedBlobs(FieldTypeImpl fieldType, Object value) throws BlobException {
         HashSet<BlobReference> referencedBlobs = new HashSet<BlobReference>();
         ValueType valueType = fieldType.getValueType();
-        if ((valueType.getBaseValueType() instanceof BlobValueType) && ! isDeleteMarker(value)) {
+        if ((valueType.getDeepestValueType() instanceof BlobValueType) && ! isDeleteMarker(value)) {
             Set<Object> values = valueType.getValues(value);
             for (Object object : values) {
                 referencedBlobs.add(new BlobReference((Blob)object, null, fieldType));

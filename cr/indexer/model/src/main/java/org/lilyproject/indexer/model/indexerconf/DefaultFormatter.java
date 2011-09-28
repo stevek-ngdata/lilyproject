@@ -47,7 +47,7 @@ public class DefaultFormatter implements Formatter {
             FormatContext formatCtx = new FormatContext(repository);
 
             ValueType valueType = value.fieldType.getValueType();
-            if (valueType.getSimpleName().equals("LIST")) {
+            if (valueType.getBaseName().equals("LIST")) {
                 // The values of the first list-level are supplied as individual IndexValues
                 valueType = valueType.getNestedValueType();
             }
@@ -69,7 +69,7 @@ public class DefaultFormatter implements Formatter {
     }
 
     protected ValueFormatter getFormatter(ValueType valueType) {
-        ValueFormatter formatter = FORMATTERS.get(valueType.getSimpleName());
+        ValueFormatter formatter = FORMATTERS.get(valueType.getBaseName());
         return formatter == null ? ALL_FORMATTER : formatter;
     }
 

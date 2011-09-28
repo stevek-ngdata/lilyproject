@@ -50,7 +50,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         }
     }
     
-    public String getSimpleName() {
+    public String getBaseName() {
         return NAME;
     }
     
@@ -58,7 +58,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         return fullName;
     }
     
-    public ValueType getBaseValueType() {
+    public ValueType getDeepestValueType() {
         return this;
     }
     

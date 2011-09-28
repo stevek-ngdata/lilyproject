@@ -33,9 +33,9 @@ public abstract class AbstractValueType implements ValueType {
     
     public abstract void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
     
-    public abstract String getSimpleName();
+    public abstract String getBaseName();
     
-    public abstract ValueType getBaseValueType();
+    public abstract ValueType getDeepestValueType();
     
     public ValueType getNestedValueType() {
         return null;
@@ -48,7 +48,7 @@ public abstract class AbstractValueType implements ValueType {
     }
     
     public String getName() {
-        return getSimpleName();
+        return getBaseName();
     }
     
     public int getNestingLevel() {
@@ -59,11 +59,6 @@ public abstract class AbstractValueType implements ValueType {
         Set<Object> result = new HashSet<Object>();
         result.add(value);
         return result;
-    }
-
-    @Override
-    public boolean isIndexBased() {
-        return false;
     }
 
     public boolean isMultiValue() {

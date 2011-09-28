@@ -40,7 +40,7 @@ public class ListValueType extends AbstractValueType implements ValueType {
         this(typeManager, typeParamsDataInput.readUTF());
     }
     
-    public String getSimpleName() {
+    public String getBaseName() {
         return NAME;
     }
     
@@ -48,8 +48,8 @@ public class ListValueType extends AbstractValueType implements ValueType {
         return fullName;
     }
     
-    public ValueType getBaseValueType() {
-        return valueType.getBaseValueType();
+    public ValueType getDeepestValueType() {
+        return valueType.getDeepestValueType();
     }
     
     public ValueType getNestedValueType() {
@@ -104,11 +104,6 @@ public class ListValueType extends AbstractValueType implements ValueType {
     @Override
     public boolean isHierarchical() {
         return valueType.isHierarchical();
-    }
-
-    @Override
-    public boolean isIndexBased() {
-        return true;
     }
 
     @Override

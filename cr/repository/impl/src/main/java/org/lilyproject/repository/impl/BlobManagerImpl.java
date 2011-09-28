@@ -44,7 +44,7 @@ public class BlobManagerImpl implements BlobManager {
 
     public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int...indexes)
             throws BlobException {
-        if (!(fieldType.getValueType().getBaseValueType() instanceof BlobValueType)) {
+        if (!(fieldType.getValueType().getDeepestValueType() instanceof BlobValueType)) {
             throw new BlobException("Cannot read a blob from a non-blob field type: " + fieldType.getName());
         }
 
@@ -121,7 +121,7 @@ public class BlobManagerImpl implements BlobManager {
             throws BlobNotFoundException {
         Object value = record.getField(fieldName);
         ValueType valueType = fieldType.getValueType();
-        if (!valueType.getBaseValueType().getSimpleName().equals("BLOB")) {
+        if (!valueType.getDeepestValueType().getBaseName().equals("BLOB")) {
             throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() + "', '" +
                     fieldName + "' at index: " + indexes);
         }
@@ -129,12 +129,12 @@ public class BlobManagerImpl implements BlobManager {
         for (int i = 0; i < indexes.length; i++) {
             int index = indexes[i];
             try {
-                if (valueType.getSimpleName().equals("LIST")) {
+                if (valueType.getBaseName().equals("LIST")) {
                     value = ((List<Object>) value).get(index);
                     valueType = valueType.getNestedValueType();
                     continue;
                 } 
-                if (valueType.getSimpleName().equals("PATH")) {
+                if (valueType.getBaseName().equals("PATH")) {
                     value = ((HierarchyPath)value).getElements()[index];
                     valueType = valueType.getNestedValueType();
                     continue;
@@ -146,7 +146,7 @@ public class BlobManagerImpl implements BlobManager {
                         "', '" + fieldName + "' : " + Ints.join("/", Arrays.copyOf(indexes, i + 1)), e);
             }
         }
-        if (!valueType.getSimpleName().equals("BLOB")) {
+        if (!valueType.getBaseName().equals("BLOB")) {
             throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() +
                     "', '" + fieldName + "' at index: " + Ints.join("/", indexes));
         }

@@ -78,7 +78,7 @@ public class TestFieldType {
     }
     
     private ActionResult generateValue(TestAction testAction, ValueType valueType) {
-        String name = valueType.getSimpleName();
+        String name = valueType.getBaseName();
 
         if (name.equals("LIST")) {
             return generateList(testAction, valueType.getNestedValueType());

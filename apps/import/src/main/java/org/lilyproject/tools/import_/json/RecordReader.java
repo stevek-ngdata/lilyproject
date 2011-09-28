@@ -124,7 +124,7 @@ public class RecordReader implements EntityReader<Record> {
     public Object readValue(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 
-        String name = valueType.getSimpleName();
+        String name = valueType.getBaseName();
 
         if (name.equals("LIST")) {
             return readList(node, valueType.getNestedValueType(), prop, namespaces, repository);

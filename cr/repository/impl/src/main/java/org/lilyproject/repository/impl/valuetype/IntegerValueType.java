@@ -33,11 +33,11 @@ public class IntegerValueType extends AbstractValueType implements ValueType {
         }
     };
 
-    public String getSimpleName() {
+    public String getBaseName() {
         return NAME;
     }
 
-    public ValueType getBaseValueType() {
+    public ValueType getDeepestValueType() {
         return this;
     }
 

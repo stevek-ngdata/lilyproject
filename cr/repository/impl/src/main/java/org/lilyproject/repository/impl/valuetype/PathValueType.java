@@ -40,7 +40,7 @@ public class PathValueType extends AbstractValueType implements ValueType {
         this(typeManager, typeParamsDataInput.readUTF());
     }
     
-    public String getSimpleName() {
+    public String getBaseName() {
         return NAME;
     }
     
@@ -48,8 +48,8 @@ public class PathValueType extends AbstractValueType implements ValueType {
         return fullName;
     }
     
-    public ValueType getBaseValueType() {
-        return valueType.getBaseValueType();
+    public ValueType getDeepestValueType() {
+        return valueType.getDeepestValueType();
     }
     
     public ValueType getNestedValueType() {
@@ -58,11 +58,6 @@ public class PathValueType extends AbstractValueType implements ValueType {
     
     public int getNestingLevel() {
         return 1 + valueType.getNestingLevel();
-    }
-
-    @Override
-    public boolean isIndexBased() {
-        return true;
     }
 
     @SuppressWarnings("unchecked")

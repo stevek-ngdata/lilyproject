@@ -419,7 +419,7 @@ public class IndexerConfBuilder {
 
                 if (derefPart.contains(":")) { // Link field
                     FieldType followField = getFieldType(derefPart, fieldEl);
-                    if (!followField.getValueType().getBaseValueType().getSimpleName().equals("LINK")) {
+                    if (!followField.getValueType().getDeepestValueType().getBaseName().equals("LINK")) {
                         throw new IndexerConfException("A non-link field is used in a dereference expression. " +
                                 "Field: '" + derefPart + "', deref expression '" + valueExpr + "' " +
                                 "at " + LocationAttributes.getLocation(fieldEl));
@@ -470,7 +470,7 @@ public class IndexerConfBuilder {
             value = new FieldValue(fieldType, extractContent, formatter);
         }
 
-        if (extractContent && !fieldType.getValueType().getBaseValueType().getSimpleName().equals("BLOB")) {
+        if (extractContent && !fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
             throw new IndexerConfException("extractContent is used for a non-blob value at "
                     + LocationAttributes.getLocation(fieldEl));
         }

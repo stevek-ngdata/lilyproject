@@ -27,11 +27,11 @@ public class UriValueType extends AbstractValueType implements ValueType {
 
     public final static String NAME = "URI";
 
-    public String getSimpleName() {
+    public String getBaseName() {
         return NAME;
     }
 
-    public ValueType getBaseValueType() {
+    public ValueType getDeepestValueType() {
         return this;
     }
 

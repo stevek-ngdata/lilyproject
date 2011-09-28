@@ -66,7 +66,7 @@ public class RecordLinkExtractor {
 
         ValueType valueType = fieldType.getValueType();
 
-        String baseType = valueType.getBaseValueType().getSimpleName();
+        String baseType = valueType.getDeepestValueType().getBaseName();
 
         if (baseType.equals("LINK") || baseType.equals("RECORD")) {
             extract(value, collector, ctxField, ctxRecord, repository);
