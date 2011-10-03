@@ -41,6 +41,13 @@ public class FieldTypeReader implements EntityReader<FieldType> {
         Scope scope = parseScope(scopeName);
 
         TypeManager typeManager = repository.getTypeManager();
+
+        // Be gentle to users of Lily 1.0
+        if (node.has("valueType") && node.get("valueType").isObject() && node.get("valueType").has("primitive")) {
+            throw new JsonFormatException("Lily 1.1 format change: the valueType should now be specified as a string" +
+                    " rather than a nested object with the 'primitive' property.");
+        }
+
         String valueTypeString = getString(node, "valueType");
         ValueType valueType = typeManager.getValueType(ValueTypeNSConverter.fromJson(valueTypeString, namespaces));
         FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
