@@ -126,6 +126,10 @@ public class BlobManagerImpl implements BlobManager {
                     fieldName + "' at index: " + indexes);
         }
 
+        if (indexes == null) {
+            indexes = new int[0];
+        }
+
         for (int i = 0; i < indexes.length; i++) {
             int index = indexes[i];
             try {
