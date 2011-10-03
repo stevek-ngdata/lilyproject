@@ -235,7 +235,7 @@ public interface Repository extends Closeable {
     Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException;
     
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List<RecordId>, QName...)} instead.
+     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
      *
      * Reads a list of records limited to a subset of the fields. Only the fields specified in the fieldNames list will be
      * included.
@@ -248,7 +248,7 @@ public interface Repository extends Closeable {
      * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
      * Instead, the returned list will not contain an entry for that requested id. 
      *
-     * @param list or recordIds to read, null is not allowed
+     * @param recordIds or recordIds to read, null is not allowed
      * @param fieldNames list of names of the fields to read or null to read all fields
      * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
      */
@@ -268,7 +268,7 @@ public interface Repository extends Closeable {
      * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
      * Instead, the returned list will not contain an entry for that requested id. 
      *
-     * @param list or recordIds to read, null is not allowed
+     * @param recordIds or recordIds to read, null is not allowed
      * @param fieldNames names of the fields to read or null to read all fields
      * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
      */
@@ -294,7 +294,8 @@ public interface Repository extends Closeable {
     Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException;
     
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(RecordId, Long, Long, QName...)} instead.
+     * @deprecated in favor of using varargs for the fieldNames. Please use
+     * {@link #readVersions(RecordId, Long, Long, QName...)} instead.
      * 
      * Reads all versions of a record between fromVersion and toVersion (both included), limited to a subset of the fields.
      * 
@@ -312,10 +313,12 @@ public interface Repository extends Closeable {
      * 
      * <p>If the given list of fields is empty, all fields will be read.
      */
-    List<Record> readVersions(RecordId recordId, Long fromversion, Long toVersion, QName... fieldNames) throws RepositoryException, InterruptedException;
+    List<Record> readVersions(RecordId recordId, Long fromversion, Long toVersion, QName... fieldNames)
+            throws RepositoryException, InterruptedException;
 
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(RecordId, List<Long>, QName...)} instead.
+     * @deprecated in favor of using varargs for the fieldNames. Please use
+     *             {@link #read(RecordId, List<Long>, QName...)} instead.
      * 
      * Reads all versions of a record listed the <code>versions</code>, limited to a subset of the fields.
      * 
@@ -340,7 +343,8 @@ public interface Repository extends Closeable {
      * @return a list of records. The list can be smaller than the number of requested versions if some requested versions
      * have a higher number than the highest existing version.
      */
-    List<Record> readVersions(RecordId recordId, List<Long> version, QName... fieldNames) throws RepositoryException, InterruptedException;
+    List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
+            throws RepositoryException, InterruptedException;
     
     /**
      * Reads a Record and also returns the mapping from QNames to IDs.
@@ -350,7 +354,8 @@ public interface Repository extends Closeable {
      * @param version version to load. Optional, can be null.
      * @param fieldIds load only the fields with these ids. optional, can be null.
      */
-    IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException;
+    IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Delete a {@link Record} from the repository.
@@ -398,8 +403,7 @@ public interface Repository extends Closeable {
      * must be written to this outputStream and the stream must be closed before
      * the blob may be stored in a {@link Record}. The method
      * {@link Blob#setValue(byte[])} will be called internally to update the
-     * blob with information that will make it possible to retrieve that data
-     * again through {@link #getInputStream(Blob)}.
+     * blob with the reference to where the blob is stored (possibly inlined).
      *
      * <p>
      * The {@link BlobStoreAccessFactory} will decide to which underlying

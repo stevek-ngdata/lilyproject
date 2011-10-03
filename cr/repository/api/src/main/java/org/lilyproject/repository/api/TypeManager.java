@@ -19,8 +19,6 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
 
-import org.lilyproject.bytes.api.DataInput;
-
 // IMPORTANT:
 //   See the note on the requirement TypeException described in the Repository.java file.
 
@@ -80,8 +78,8 @@ public interface TypeManager extends Closeable {
     /**
      * Updates an existing record type.
      *
-     * <p>You can provide any RecordType object as argument, either retrieved via {@link #getRecordType(String, Long)} or
-     * newly instantiated via {@link #newRecordType(String)}.
+     * <p>You can provide any RecordType object as argument, either one retrieved from TypeManager, for example
+     * using {@link #getRecordTypeByName(QName, Long)} or a newly instantiated one, using {@link #newRecordType(QName)}.
      *
      * <p>The state of the record type will be updated to correspond to the given RecordType object. This also
      * concerns the list of fields: any fields that were previously in the record type but are not present in
