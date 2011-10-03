@@ -46,8 +46,7 @@ import org.lilyproject.bytes.api.DataOutput;
  * 
  * <p>
  * It is the responsibility of a ValueType to convert the values to/from byte
- * representation, as used for storage in the repository. This should delegate
- * to the PrimitiveValueType for the conversion of a single value.
+ * representation, as used for storage in the repository.
  * 
  * <p>
  * A value type should be requested from the {@link TypeManager} using the

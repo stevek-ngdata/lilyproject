@@ -6,22 +6,22 @@
   fieldTypes: [
     {
       name: "r$field1",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "r$field2",
-      valueType: { primitive: "INTEGER" },
+      valueType: "INTEGER",
       scope: "versioned"
     },
     {
       name: "r$field3",
-      valueType: { primitive: "STRING", multiValue: true },
+      valueType: "LIST<STRING>",
       scope: "non_versioned"
     },
     {
       name: "r$field4",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     }
   ],

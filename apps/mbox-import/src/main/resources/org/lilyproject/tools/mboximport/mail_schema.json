@@ -5,52 +5,52 @@
   fieldTypes: [
     {
       name: "m$to",
-      valueType: { primitive: "STRING", multiValue: true },
+      valueType: "LIST<STRING>",
       scope: "versioned"
     },
     {
       name: "m$cc",
-      valueType: { primitive: "STRING", multiValue: true },
+      valueType: "LIST<STRING>",
       scope: "versioned"
     },
     {
       name: "m$from",
-      valueType: { primitive: "STRING", multiValue: true },
+      valueType: "LIST<STRING>",
       scope: "versioned"
     },
     {
       name: "m$sender",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "m$listId",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "m$subject",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "m$parts",
-      valueType: { primitive: "LINK", multiValue: true },
+      valueType: "LIST<LINK>",
       scope: "versioned"
     },
     {
       name: "m$mediaType",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "m$content",
-      valueType: { primitive: "BLOB" },
+      valueType: "BLOB",
       scope: "versioned"
     },
     {
       name: "m$message",
-      valueType: { primitive: "LINK" },
+      valueType: "LINK",
       scope: "versioned"
     }
   ],

@@ -143,7 +143,7 @@ public class RecordWriter implements EntityWriter<Record> {
         } else if (name.equals("RECORD")){
             result = toJson((Record)value, options, namespaces, repository);
         } else {
-            throw new RuntimeException("Unsupported primitive value type: " + name);
+            throw new RuntimeException("Unsupported value type: " + name);
         }
 
         return result;

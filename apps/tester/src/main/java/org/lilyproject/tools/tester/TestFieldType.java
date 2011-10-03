@@ -105,7 +105,7 @@ public class TestFieldType {
                 throw new RuntimeException(e);
             }
         } else {
-            throw new RuntimeException("Unsupported primitive value type: " + name);
+            throw new RuntimeException("Unsupported value type: " + name);
         }
     }
 
