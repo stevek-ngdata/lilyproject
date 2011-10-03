@@ -8,7 +8,7 @@
       /* The 'p' refers to the namespace declared above, the dollar sign
          separates the namespace prefix from the name. */
       name: "p$field1",
-      valueType: { primitive: "STRING" },
+      valueType: "STRING",
       scope: "non_versioned"
     }
   ],
