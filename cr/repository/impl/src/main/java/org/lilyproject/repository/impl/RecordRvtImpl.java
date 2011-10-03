@@ -22,9 +22,9 @@ import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.valuetype.RecordValueType;
 
-public class RecordRvtImpl implements Record {
+public class RecordRvtImpl implements IdRecord {
 
-    private Record delegate;
+    private IdRecord delegate;
     private byte[] bytes;
     private RecordValueType recordValueType;
     
@@ -32,11 +32,17 @@ public class RecordRvtImpl implements Record {
         this.bytes = bytes;
         this.recordValueType = recordValueType;
     }
-    
+
+    /**
+     *
+     * @param clearBytes should be false for read operations, true for write operations.
+     *                   The idea is that as long as the record is not modified, the
+     *                   existing bytes can be reused.
+     */
     private synchronized void decode(boolean clearBytes) {
         if (delegate == null) {
             try {
-                delegate = recordValueType.read(new DataInputImpl(bytes));
+                delegate = (IdRecord)recordValueType.read(new DataInputImpl(bytes));
             } catch (RepositoryException e) {
                 throw new RuntimeException("Failed to decode record ");
             } catch (InterruptedException e) {
@@ -225,9 +231,8 @@ public class RecordRvtImpl implements Record {
         delegate.setVersion(version);
     }
 
-
     @Override
-    public Record clone() {
+    public IdRecord clone() {
         return new RecordRvtImpl(bytes, recordValueType);
     }
 
@@ -243,8 +248,45 @@ public class RecordRvtImpl implements Record {
         return delegate.equals(obj);
     }
     
+    @Override
     public Record getRecord() {
         decode(true);
         return delegate;
+    }
+
+    @Override
+    public Map<SchemaId, QName> getFieldIdToNameMapping() {
+        decode(false);
+        return delegate.getFieldIdToNameMapping();
+    }
+
+    @Override
+    public SchemaId getRecordTypeId() {
+        decode(false);
+        return delegate.getRecordTypeId();
+    }
+
+    @Override
+    public SchemaId getRecordTypeId(Scope scope) {
+        decode(false);
+        return delegate.getRecordTypeId(scope);
+    }
+
+    @Override
+    public <T> T getField(SchemaId fieldId) throws FieldNotFoundException {
+        decode(false);
+        return delegate.getField(fieldId);
+    }
+
+    @Override
+    public boolean hasField(SchemaId fieldId) {
+        decode(false);
+        return delegate.hasField(fieldId);
+    }
+
+    @Override
+    public Map<SchemaId, Object> getFieldsById() {
+        decode(false);
+        return delegate.getFieldsById();
     }
 }

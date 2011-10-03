@@ -243,7 +243,8 @@ public class Indexer {
             metrics.adds.inc();
 
             if (log.isDebugEnabled()) {
-                log.debug(String.format("Record %1$s, vtag %2$s: indexed", record.getId(), safeLoadTagName(vtag)));
+                log.debug(String.format("Record %1$s, vtag %2$s: indexed, doc = %3$s", record.getId(),
+                        safeLoadTagName(vtag), solrDoc));
             }
         }
     }

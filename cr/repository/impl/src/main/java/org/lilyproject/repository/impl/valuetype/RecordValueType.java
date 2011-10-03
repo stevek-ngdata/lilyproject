@@ -22,6 +22,7 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.RecordImpl;
 import org.lilyproject.repository.impl.RecordRvtImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
@@ -76,17 +77,24 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         Long recordTypeVersion = dataInput.readLong();
         RecordType recordType = typeManager.getRecordTypeById(new SchemaIdImpl(recordTypeId), recordTypeVersion);
         record.setRecordType(recordType.getName(), recordTypeVersion);
+
+        Map<SchemaId, QName> idToQNameMapping = new HashMap<SchemaId, QName>();
         List<FieldType> fieldTypes = getSortedFieldTypes(recordType);
         for (FieldType fieldType : fieldTypes) {
             byte readByte = dataInput.readByte();
             if (DEFINED == readByte) {
                 Object value = fieldType.getValueType().read(dataInput);
                 record.setField(fieldType.getName(), value);
+                idToQNameMapping.put(fieldType.getId(), fieldType.getName());
             } else if (DEFINED_IDENTICAL == readByte) { // The record is nested in itself
                 record.setField(fieldType.getName(), record);
             }
         }
-        return record;
+
+        Map<Scope, SchemaId> recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
+        recordTypeIds.put(Scope.NON_VERSIONED, recordType.getId());
+
+        return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
     }
     
     @Override

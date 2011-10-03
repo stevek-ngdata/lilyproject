@@ -75,11 +75,11 @@ public class IndexerConf {
             repoFieldDependencies.add(fieldDep);
 
         if (indexField.getValue() instanceof DerefValue) {
-            FieldType targetField = ((DerefValue)indexField.getValue()).getTargetField();
-            if (!systemFields.isSystemField(targetField.getId())) {
+            FieldType lastRealField = ((DerefValue)indexField.getValue()).getLastRealField();
+            if (lastRealField != null && !systemFields.isSystemField(lastRealField.getId())) {
                 derefIndexFields.add(indexField);
 
-                SchemaId fieldId = targetField.getId();
+                SchemaId fieldId = lastRealField.getId();
                 List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
                 if (fields == null) {
                     fields = new ArrayList<IndexField>();

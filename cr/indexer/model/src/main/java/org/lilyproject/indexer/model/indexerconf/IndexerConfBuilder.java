@@ -409,30 +409,50 @@ public class IndexerConfBuilder {
             //
             // Run over all children except the last
             //
+            boolean lastFollowIsRecord = false;
             for (int i = 0; i < derefParts.length - 1; i++) {
                 String derefPart = derefParts[i];
 
-                // A deref expression can contain 3 kinds of links:
-                //  - link stored in a link field (detected based on presence of a colon)
-                //  - link to the master variant (if it's the literal string 'master')
-                //  - link to a less-dimensioned variant (all other cases)
+                // A deref expression can navigate through 4 kinds of 'links':
+                //  - a link stored in a link field (detected based on presence of a colon)
+                //  - a nested record
+                //  - a link to the master variant (if it's the literal string 'master')
+                //  - a link to a less-dimensioned variant (all other cases)
 
-                if (derefPart.contains(":")) { // Link field
+                if (derefPart.contains(":")) { // It's a field name
                     FieldType followField = getFieldType(derefPart, fieldEl);
-                    if (!followField.getValueType().getDeepestValueType().getBaseName().equals("LINK")) {
-                        throw new IndexerConfException("A non-link field is used in a dereference expression. " +
-                                "Field: '" + derefPart + "', deref expression '" + valueExpr + "' " +
-                                "at " + LocationAttributes.getLocation(fieldEl));
+
+                    String type = followField.getValueType().getBaseName();
+                    if (type.equals("LIST")) {
+                        type = followField.getValueType().getNestedValueType().getBaseName();
                     }
-                    if (followField.getValueType().isHierarchical()) {
-                        throw new IndexerConfException("A hierarchical link field is used in a dereference " +
-                                "expression. Field: '" + derefPart + "', deref expression '" + valueExpr + "' " +
-                                "at " + LocationAttributes.getLocation(fieldEl));
+
+                    if (type.equals("RECORD")) {
+                        deref.addRecordFieldFollow(followField);
+                        lastFollowIsRecord = true;
+                    } else if (type.equals("LINK")) {
+                        deref.addLinkFieldFollow(followField);
+                        lastFollowIsRecord = false;
+                    } else {
+                        throw new IndexerConfException("Dereferencing is not possible on field of type " +
+                                followField.getValueType().getName() + ". Field: '" + derefPart +
+                                "', deref expression '" + valueExpr + "' at " +
+                                LocationAttributes.getLocation(fieldEl));
                     }
-                    deref.addFieldFollow(followField);
                 } else if (derefPart.equals("master")) { // Link to master variant
+                    if (lastFollowIsRecord) {
+                        throw new IndexerConfException("In dereferencing, master cannot follow on record-type field." +
+                                " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+                    }
+                    lastFollowIsRecord = false;
                     deref.addMasterFollow();
                 } else {  // Link to less dimensioned variant
+                    if (lastFollowIsRecord) {
+                        throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
+                                " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+                    }
+                    lastFollowIsRecord = false;
+
                     // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
                     boolean validConfig = true;
                     Set<String> dimensions = new HashSet<String>();
