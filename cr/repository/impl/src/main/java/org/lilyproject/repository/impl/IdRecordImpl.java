@@ -175,11 +175,11 @@ public class IdRecordImpl implements IdRecord {
 
     @Override
     public boolean equals(Object obj) {
-        throw new UnsupportedOperationException("IdRecordImpl does not support equals.");
+        return record.equals(obj);
     }
 
     public boolean softEquals(Object obj) {
-        throw new UnsupportedOperationException("IdRecordImpl does not support softEquals.");
+        return record.equals(obj);
     }
 
     @Override

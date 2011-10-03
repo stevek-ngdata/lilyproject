@@ -212,6 +212,9 @@ public class RecordImpl implements Record {
         if (obj instanceof RecordRvtImpl) {
             return equals(((RecordRvtImpl)obj).getRecord());
         }
+        if (obj instanceof IdRecordImpl) {
+            return softEquals(((IdRecordImpl)obj).getRecord());
+        }
 
         RecordImpl other = (RecordImpl) obj;
 
@@ -239,6 +242,9 @@ public class RecordImpl implements Record {
             return false;
         if (obj instanceof RecordRvtImpl) {
             return softEquals(((RecordRvtImpl)obj).getRecord());
+        }
+        if (obj instanceof IdRecordImpl) {
+            return softEquals(((IdRecordImpl)obj).getRecord());
         }
         if (getClass() != obj.getClass())
             return false;
