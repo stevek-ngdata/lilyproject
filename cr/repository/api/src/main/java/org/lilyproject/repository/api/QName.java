@@ -84,7 +84,7 @@ public class QName {
      */
     public static QName fromString(String qname) throws IllegalArgumentException {
         int indexBracket = qname.indexOf('}');
-        if (indexBracket < 1 || !qname.startsWith("}"))
+        if (indexBracket < 1 || !qname.startsWith("{"))
             throw new IllegalArgumentException("QName string should be of the format {namespace}name");
         return new QName(qname.substring(1,indexBracket), qname.substring(indexBracket + 1));
     }
