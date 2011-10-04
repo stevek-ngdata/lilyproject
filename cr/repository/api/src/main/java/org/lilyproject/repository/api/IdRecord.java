@@ -51,4 +51,6 @@ public interface IdRecord extends Record {
     Map<SchemaId, QName> getFieldIdToNameMapping();
 
     IdRecord clone();
+
+    IdRecord cloneRecord() throws RecordException;
 }

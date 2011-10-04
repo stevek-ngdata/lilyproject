@@ -284,7 +284,7 @@ public class ValueTypeTest {
             return new XYCoordinates(x, y);
         }
 
-        public void write(Object value, DataOutput dataOutput) {
+        public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
             if (random.nextBoolean()) {
                 dataOutput.writeByte((byte)1); // encoding version 1 
                 dataOutput.writeInt(((XYCoordinates) value).getX());

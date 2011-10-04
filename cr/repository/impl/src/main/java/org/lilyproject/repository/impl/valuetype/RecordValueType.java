@@ -22,10 +22,7 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.IdRecordImpl;
-import org.lilyproject.repository.impl.RecordImpl;
-import org.lilyproject.repository.impl.RecordRvtImpl;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.*;
 
 public class RecordValueType extends AbstractValueType implements ValueType {
 
@@ -35,7 +32,6 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     private static final byte ENCODING_VERSION = (byte)1;
     private static final byte UNDEFINED = (byte)0;
     private static final byte DEFINED = (byte)1;
-    private static final byte DEFINED_IDENTICAL = (byte)2;
     
     private final TypeManager typeManager;
     private QName valueTypeRecordTypeName = null;
@@ -86,8 +82,6 @@ public class RecordValueType extends AbstractValueType implements ValueType {
                 Object value = fieldType.getValueType().read(dataInput);
                 record.setField(fieldType.getName(), value);
                 idToQNameMapping.put(fieldType.getId(), fieldType.getName());
-            } else if (DEFINED_IDENTICAL == readByte) { // The record is nested in itself
-                record.setField(fieldType.getName(), record);
             }
         }
 
@@ -98,18 +92,20 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     }
     
     @Override
-    public byte[] toBytes(Object value) throws RepositoryException, InterruptedException {
+    public byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
+            InterruptedException {
         if (value instanceof RecordRvtImpl) {
             byte[] bytes = ((RecordRvtImpl)value).getBytes();
             if (bytes != null) 
                 return bytes;
         }
         DataOutput dataOutput = new DataOutputImpl();
-        encodeData(value, dataOutput);
+        encodeData(value, dataOutput, parentRecords);
         return dataOutput.toByteArray();
     }
 
-    public void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+            throws RepositoryException, InterruptedException {
         if (value instanceof RecordRvtImpl) {
             byte[] bytes = ((RecordRvtImpl)value).getBytes();
             if (bytes != null) { 
@@ -117,12 +113,16 @@ public class RecordValueType extends AbstractValueType implements ValueType {
                 return;
             }
         }
-        encodeData(value, dataOutput);
+        encodeData(value, dataOutput, parentRecords);
     }
     
-    private void encodeData(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
+    private void encodeData(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+            throws RepositoryException, InterruptedException {
         Record record = (Record)value;
-        
+        if (parentRecords.containsKey(record))
+            throw new RecordException("A record may not be nested in itself: " + record.getId());
+
+
         RecordType recordType;
         QName recordRecordTypeName = record.getRecordTypeName();
         if (recordRecordTypeName != null) {
@@ -168,12 +168,11 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             Object fieldValue = recordFields.get(name);
             if (fieldValue == null) 
                 dataOutput.writeByte(UNDEFINED);
-            else if (fieldValue == record) {
-                dataOutput.writeByte(DEFINED_IDENTICAL); // The record is nested in itself, avoid recursion
-            }
             else {
                 dataOutput.writeByte(DEFINED);
-                fieldType.getValueType().write(fieldValue, dataOutput);
+                parentRecords.put(record, null);
+                fieldType.getValueType().write(fieldValue, dataOutput, parentRecords);
+                parentRecords.remove(record);
             }
         }
 

@@ -17,9 +17,11 @@ package org.lilyproject.repository.impl.valuetype;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -47,7 +49,7 @@ public class DecimalValueType extends AbstractValueType implements ValueType {
         return new BigDecimal(dataInput.readUTF());
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeUTF(((BigDecimal)value).toString());
     }
 

@@ -286,7 +286,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testUpdate() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -391,7 +391,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testIdempotentUpdate() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
 
         Record updatedRecord = repository.update(updateRecord);
 
@@ -406,7 +406,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testUpdateIgnoresVersion() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setVersion(Long.valueOf(99));
         updateRecord.setField(fieldType1.getName(), "value2");
 
@@ -433,7 +433,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadOlderVersions() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -458,7 +458,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadAllVersions() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -474,7 +474,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadVersionsWideBoundaries() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -491,17 +491,17 @@ public abstract class AbstractRepositoryTest {
     public void testReadVersionsNarrowBoundaries() throws Exception {
         Record record = createDefaultRecord();
 
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
         repository.update(updateRecord);
 
-        updateRecord = record.clone();
+        updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType2.getName(), 790);
         repository.update(updateRecord);
         
-        updateRecord = record.clone();
+        updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType2.getName(), 791);
         repository.update(updateRecord);
 
@@ -514,7 +514,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadSpecificVersions() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         // Don't update this field, as a test that the internal version inheritance code works correctly
@@ -1028,7 +1028,7 @@ public abstract class AbstractRepositoryTest {
         record.setField(fieldType6.getName(), "value1");
         record = repository.create(record);
         
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType4.getName(), 456);
         updateRecord.setField(fieldType5.getName(), false);
         updateRecord.setField(fieldType6.getName(), "value2");
@@ -1071,7 +1071,7 @@ public abstract class AbstractRepositoryTest {
         Record record = createDefaultRecord();
         
         // Update the record, creates a second version
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -1148,7 +1148,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testUpdateMutableFieldCopiesValueToNext() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord = repository.update(updateRecord); // Leave mutable field
@@ -1178,7 +1178,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testDeleteMutableField() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -1211,7 +1211,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testDeleteMutableFieldCopiesValueToNext() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.clone();
+        Record updateRecord = record.cloneRecord();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord = repository.update(updateRecord); // Leave mutable field
@@ -1932,22 +1932,45 @@ public abstract class AbstractRepositoryTest {
         QName rtName = new QName(namespace, "rt");
         QName ft1Name = new QName(namespace, "ft1");
         QName ft2Name = new QName(namespace, "ft2");
-        
+
         typeManager.rtBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
         ValueType rvt = typeManager.getValueType("RECORD");
         FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
         FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
         typeManager.rtBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).create();
-        
-        Record ft1Value1 = repository.recordBuilder().recordType(rvtRTName).field(fieldType1.getName(), "ft1abc").newRecord();
-        
-        // Create record
+
+        Record ft1Value1 = repository.recordBuilder().recordType(rvtRTName).field(fieldType1.getName(), "ft1abc")
+                .newRecord();
+
+        // Create nested record
+
         Record record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).newRecord();
-        record.setField(ft2Name, record); // Nest record in itself
-        Record createdRecord = repository.create(record);
+        record.setField(ft2Name, record);
+        try {
+            repository.create(record);
+            fail("Expecting a Record Exception since a record may not be nested in itself");
+        } catch (RecordException expected) {
+        }
+
+        // Create with deep nesting
+
+        Record ft2Value2 = repository.recordBuilder().recordType(rvtRTName).field(ft1Name, record).newRecord();
+        record.setField(ft2Name, ft2Value2);
+        try {
+            repository.create(record);
+            fail("Expecting a Record Exception since a record may not be nested in itself");
+        } catch (RecordException expected) {
+        }
         
-        Record readRecord = repository.read(createdRecord.getId());
-        assertEquals("ft1abc", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
-        assertEquals("ft1abc", ((Record)((Record)readRecord.getField(ft2Name)).getField(ft1Name)).getField(fieldType1.getName()));
+        // Update with nested record
+
+        record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).newRecord();
+        record = repository.create(record);
+        record.setField(ft2Name, record); // Nest record in itself
+        try {
+            repository.update(record);
+            fail("Expecting a Record Exception since a record may not be nested in itself");
+        } catch (RecordException expected) {
+        }
     }
 }

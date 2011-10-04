@@ -16,6 +16,7 @@
 package org.lilyproject.repository.api;
 
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
@@ -84,8 +85,12 @@ public interface ValueType {
      * @throws RepositoryException
      * @throws InterruptedException
      */
-    void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
+    // void write(Object value, DataOutput dataOutput) throws
+    // RepositoryException, InterruptedException;
     
+    void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+            throws RepositoryException, InterruptedException;
+
     /**
      * Encodes an object of the type represented by this value type to a byte[].
      * 
@@ -94,7 +99,8 @@ public interface ValueType {
      * @throws InterruptedException 
      * @throws RepositoryException 
      */
-    byte[] toBytes(Object value) throws RepositoryException, InterruptedException;
+    byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
+            InterruptedException;
 
     /**
      * Returns the Java class for the values of this value type.

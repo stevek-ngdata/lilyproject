@@ -17,10 +17,12 @@ package org.lilyproject.repository.impl.valuetype;
 
 
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -50,7 +52,7 @@ public class DateTimeValueType extends AbstractValueType implements ValueType {
         return new DateTime(dataInput.readLong());
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         // Currently we only store the millis, not the chronology.
         dataOutput.writeLong(((DateTime)value).getMillis());

@@ -15,6 +15,7 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -234,6 +235,16 @@ public class RecordRvtImpl implements IdRecord {
     @Override
     public IdRecord clone() {
         return new RecordRvtImpl(bytes, recordValueType);
+    }
+
+    @Override
+    public IdRecord cloneRecord() throws RecordException {
+        return clone();
+    }
+
+    @Override
+    public IdRecord cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
+        return clone();
     }
 
     @Override

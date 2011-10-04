@@ -158,7 +158,7 @@ public class HBaseRepository extends BaseRepository {
         try {
             checkCreatePreconditions(record);
             
-            Record newRecord = record.clone();
+            Record newRecord = record.cloneRecord();
     
             RecordId recordId = newRecord.getId();
             if (recordId == null) {
@@ -323,7 +323,7 @@ public class HBaseRepository extends BaseRepository {
                 hook.beforeUpdate(record, originalRecord, this, fieldTypes);
             }
 
-            Record newRecord = record.clone();
+            Record newRecord = record.cloneRecord();
 
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
@@ -511,7 +511,7 @@ public class HBaseRepository extends BaseRepository {
         
         Map<QName, Object> fields = getFieldsToUpdate(record);
         
-        changedScopes.addAll(calculateUpdateFields(fields, originalFields, null, version, put, recordEvent,
+        changedScopes.addAll(calculateUpdateFields(record, fields, originalFields, null, version, put, recordEvent,
                 referencedBlobs, unReferencedBlobs, false, fieldTypes));
         for (BlobReference referencedBlob : referencedBlobs) {
             referencedBlob.setRecordId(record.getId());
@@ -562,7 +562,8 @@ public class HBaseRepository extends BaseRepository {
     }
 
     // Checks for each field if it is different from its previous value and indeed needs to be updated.
-    private Set<Scope> calculateUpdateFields(Map<QName, Object> fields, Map<QName, Object> originalFields,
+    private Set<Scope> calculateUpdateFields(Record parentRecord, Map<QName, Object> fields,
+            Map<QName, Object> originalFields,
             Map<QName, Object> originalNextFields, Long version, Put put, RecordEvent recordEvent,
             Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean mutableUpdate,
             FieldTypes fieldTypes) throws InterruptedException, TypeException, BlobException, RecordException, RepositoryException {
@@ -583,7 +584,7 @@ public class HBaseRepository extends BaseRepository {
                 Set<BlobReference> newReferencedBlobs = getReferencedBlobs(fieldType, newValue);
                 referencedBlobs.addAll(newReferencedBlobs);
 
-                byte[] encodedFieldValue = encodeFieldValue(fieldType, newValue);
+                byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, newValue);
 
                 // Check if the previousValue contained blobs which should be deleted since they are no longer used
                 // In case of a mutable update, it is checked later if no other versions use the blob before deciding to delete it
@@ -603,7 +604,8 @@ public class HBaseRepository extends BaseRepository {
                     // If it is a mutable update and the next version of the field was the same as the one that is being updated,
                     // the original value needs to be copied to that next version (due to sparseness of the table). 
                     if (originalNextFields != null && !fieldIsNewOrDeleted && originalNextFields.containsKey(fieldName)) {
-                        copyValueToNextVersionIfNeeded(version, put, originalNextFields, fieldName, originalValue, fieldTypes);
+                        copyValueToNextVersionIfNeeded(parentRecord, version, put, originalNextFields, fieldName,
+                                originalValue, fieldTypes);
                     }
                 }
                 
@@ -615,7 +617,8 @@ public class HBaseRepository extends BaseRepository {
         return changedScopes;
     }
     
-    private byte[] encodeFieldValue(FieldType fieldType, Object fieldValue) throws FieldTypeNotFoundException,
+    private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue)
+            throws FieldTypeNotFoundException,
             RecordTypeNotFoundException, RecordException, RepositoryException, InterruptedException {
         if (isDeleteMarker(fieldValue))
             return DELETE_MARKER;
@@ -623,7 +626,9 @@ public class HBaseRepository extends BaseRepository {
 
         DataOutput dataOutput = new DataOutputImpl();
         dataOutput.writeByte(EXISTS_FLAG);
-        valueType.write(fieldValue, dataOutput);
+        IdentityHashMap<Record, Object> parentRecords = new IdentityHashMap<Record, Object>();
+        parentRecords.put(parentRecord, null);
+        valueType.write(fieldValue, dataOutput, parentRecords);
         return dataOutput.toByteArray();
     }
 
@@ -634,7 +639,7 @@ public class HBaseRepository extends BaseRepository {
     private Record updateMutableFields(Record record, boolean latestRecordType, List<MutationCondition> conditions,
             RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
 
-        Record newRecord = record.clone();
+        Record newRecord = record.cloneRecord();
 
         RecordId recordId = record.getId();
         
@@ -670,7 +675,8 @@ public class HBaseRepository extends BaseRepository {
             recordEvent.setVersionUpdated(version);
 
             
-            Set<Scope> changedScopes = calculateUpdateFields(fields, originalFields, originalNextFields, version, put,
+            Set<Scope> changedScopes = calculateUpdateFields(record, fields, originalFields, originalNextFields,
+                    version, put,
                     recordEvent, referencedBlobs, unReferencedBlobs, true, fieldTypes);
             for (BlobReference referencedBlob : referencedBlobs) {
                 referencedBlob.setRecordId(recordId);
@@ -787,13 +793,14 @@ public class HBaseRepository extends BaseRepository {
      * and the record relies on what is in the previous cell's version.
      * The original value needs to be copied into it. Otherwise we loose that value.
      */
-    private void copyValueToNextVersionIfNeeded(Long version, Put put, Map<QName, Object> originalNextFields,
+    private void copyValueToNextVersionIfNeeded(Record parentRecord, Long version, Put put,
+            Map<QName, Object> originalNextFields,
             QName fieldName, Object originalValue, FieldTypes fieldTypes)
             throws RecordException, TypeException, RepositoryException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
             FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldName);
-            byte[] encodedValue = encodeFieldValue(fieldType, originalValue);
+            byte[] encodedValue = encodeFieldValue(parentRecord, fieldType, originalValue);
             put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version + 1, encodedValue);
         }
     }

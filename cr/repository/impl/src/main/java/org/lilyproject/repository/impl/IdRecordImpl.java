@@ -15,12 +15,9 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.*;
+import java.util.*;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.lilyproject.repository.api.*;
 
 public class IdRecordImpl implements IdRecord {
     private Record record;
@@ -173,6 +170,17 @@ public class IdRecordImpl implements IdRecord {
         return clone;
     }
 
+    public IdRecord cloneRecord() throws RecordException {
+        return cloneRecord(new IdentityHashMap<Record, Object>());
+    }
+
+    public IdRecord cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
+        Record recordClone = this.record.cloneRecord(parentRecords);
+        IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
+                new EnumMap<Scope, SchemaId>(recordTypeIds));
+        return clone;
+    }
+    
     @Override
     public boolean equals(Object obj) {
         return record.equals(obj);

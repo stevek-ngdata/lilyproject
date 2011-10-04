@@ -1,9 +1,9 @@
 package org.lilyproject.repository.impl;
 
+import java.util.*;
+
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.SystemFields;
-
-import java.util.*;
 
 public class MutationConditionVerifier {
     /**
@@ -73,7 +73,7 @@ public class MutationConditionVerifier {
         }
 
         if (!allSatisfied) {
-            Record responseRecord = record.clone();
+            Record responseRecord = record.cloneRecord();
             if (newRecord != null) {
                 // reduce the fields to return to those that were submitted
                 reduceFields(responseRecord, newRecord.getFields().keySet());

@@ -70,11 +70,12 @@ public class ListValueType extends AbstractValueType implements ValueType {
         return result;
     }
 
-    public void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+            throws RepositoryException, InterruptedException {
         List<Object> values = ((List<Object>) value);
         dataOutput.writeInt(values.size());
         for (Object element : values) {
-            valueType.write(element, dataOutput);
+            valueType.write(element, dataOutput, parentRecords);
         }
     }
 

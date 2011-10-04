@@ -16,6 +16,7 @@
 package org.lilyproject.repository.impl.valuetype;
 
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataOutput;
@@ -31,8 +32,13 @@ public abstract class AbstractValueType implements ValueType {
         return read(new DataInputImpl(data));
     }
     
-    public abstract void write(Object value, DataOutput dataOutput) throws RepositoryException, InterruptedException;
+
+    // public abstract void write(Object value, DataOutput dataOutput) throws
+    // RepositoryException, InterruptedException;
     
+    public abstract void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+            throws RepositoryException, InterruptedException;
+
     public abstract String getBaseName();
     
     public abstract ValueType getDeepestValueType();
@@ -41,9 +47,10 @@ public abstract class AbstractValueType implements ValueType {
         return null;
     }
     
-    public byte[] toBytes(Object value) throws RepositoryException, InterruptedException {
+    public byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
+            InterruptedException {
         DataOutput dataOutput = new DataOutputImpl();
-        write(value, dataOutput);
+        write(value, dataOutput, parentRecords);
         return dataOutput.toByteArray();
     }
     

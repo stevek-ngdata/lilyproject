@@ -119,12 +119,8 @@ public class RecordTest {
           .field(recordFieldName, recordValue)
           .newRecord();
       
-      // Put a record in itself
-      // This should normally not be done, but we need to test that the clone method does not choke on this.
-      record.setField(recordFieldName2, record);
-      
       // Clone record
-      record = record.clone();
+        record = record.cloneRecord();
       
       // Change mutable values
       listValue.add("def");
@@ -146,7 +142,15 @@ public class RecordTest {
       Record recordField = record.getField(recordFieldName);
       assertFalse(recordField.hasField(integerFieldName));
       
-      assertTrue(record == record.getField(recordFieldName2));
+      // Put a record in itself
+      // This should normally not be done, but we need to test that the clone method does not choke on this.
+
+      record.setField(recordFieldName2, record);
+        try {
+            record = record.cloneRecord();
+            Assert.fail("A record should not be nested in itself");
+        } catch (RecordException expected) {
+        }
   }
     
 }

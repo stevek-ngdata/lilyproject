@@ -24,7 +24,6 @@ import org.apache.avro.AvroRemoteException;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
@@ -188,6 +187,8 @@ public class AvroConverter {
 
         // Fields
         avroRecord.fields = new ArrayList<AvroField>(record.getFields().size());
+        IdentityHashMap<Record, Object> parentRecords = new IdentityHashMap<Record, Object>();
+        parentRecords.put(record, null);
         for (Entry<QName, Object> field : record.getFields().entrySet()) {
             AvroField avroField = new AvroField();
             avroField.name = convert(field.getKey());
@@ -197,7 +198,7 @@ public class AvroConverter {
                 fieldType = typeManager.getFieldTypeByName(field.getKey());
                 ValueType valueType = fieldType.getValueType();
                 avroField.valueType = valueType.getName();
-                byte[] value = valueType.toBytes(field.getValue());
+                byte[] value = valueType.toBytes(field.getValue(), parentRecords);
                 avroField.value = ByteBuffer.wrap(value);
             } catch (RepositoryException e) {
                 throw convert(e);
@@ -250,7 +251,7 @@ public class AvroConverter {
         return avroIdRecord;
     }
 
-    public List<AvroMutationCondition> convert(List<MutationCondition> conditions)
+    public List<AvroMutationCondition> convert(Record parentRecord, List<MutationCondition> conditions)
             throws AvroRepositoryException, AvroInterruptedException {
 
         if (conditions == null) {
@@ -260,6 +261,9 @@ public class AvroConverter {
         List<AvroMutationCondition> avroConditions = new ArrayList<AvroMutationCondition>(conditions.size());
 
         SystemFields systemFields = SystemFields.getInstance(typeManager, repository.getIdGenerator());
+
+        IdentityHashMap<Record, Object> parentRecords = new IdentityHashMap<Record, Object>();
+        parentRecords.put(parentRecord, null);
 
         for (MutationCondition condition : conditions) {
             FieldType fieldType;
@@ -278,7 +282,8 @@ public class AvroConverter {
                 if (condition.getValue() != null) {
                     ValueType valueType = fieldType.getValueType();
                     avroCond.valueType = convert(valueType.getName());
-                    byte[] value = valueType.toBytes(condition.getValue());
+
+                    byte[] value = valueType.toBytes(condition.getValue(), parentRecords);
                     avroCond.value = ByteBuffer.wrap(value);
                 }
                 avroCond.operator = convert(condition.getOp());
