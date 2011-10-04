@@ -146,7 +146,7 @@ public interface ValueType {
      * ListValueType and PathValueType can again contain other value types.
      * 
      * <p>
-     * This method returns the nested value type (1 level deep) or itself if it
+     * This method returns the nested value type (1 level deep) or null if it
      * is not a ListValueType or PathValueType.
      */
     ValueType getNestedValueType();
