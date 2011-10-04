@@ -27,6 +27,9 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import com.google.common.base.Splitter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.location.LocationAttributes;
 import org.lilyproject.util.repo.SystemFields;
@@ -55,6 +58,10 @@ public class IndexerConfBuilder {
 
     private static LocalXPathExpression DYNAMIC_INDEX_FIELDS =
             new LocalXPathExpression("/indexer/dynamicFields/dynamicField");
+
+    private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
+
+    private Log log = LogFactory.getLog(getClass());
 
     private Document doc;
 
@@ -177,20 +184,6 @@ public class IndexerConfBuilder {
         }
     }
 
-    private List<String> parseCSV(String csv) {
-        String[] parts = csv.split(",");
-
-        List<String> result = new ArrayList<String>(parts.length);
-
-        for (String part : parts) {
-            part = part.trim();
-            if (part.length() > 0)
-                result.add(part);
-        }
-
-        return result;
-    }
-
     private Map<String, String> parseVariantPropertiesPattern(Element caseEl) throws Exception {
         String variant = DocumentHelper.getAttribute(caseEl, "matchVariant", false);
 
@@ -199,23 +192,19 @@ public class IndexerConfBuilder {
         if (variant == null)
             return varPropsPattern;
 
-        String[] props = variant.split(",");
-        for (String prop : props) {
-            prop = prop.trim();
-            if (prop.length() > 0) {
-                int eqPos = prop.indexOf("=");
-                if (eqPos != -1) {
-                    String propName = prop.substring(0, eqPos);
-                    String propValue = prop.substring(eqPos + 1);
-                    if (propName.equals("*")) {
-                        throw new IndexerConfException(String.format("Error in matchVariant attribute: the character '*' " +
-                                "can only be used as wildcard, not as variant dimension name, attribute = %1$s, at: %2$s",
-                                variant, LocationAttributes.getLocation(caseEl)));
-                    }
-                    varPropsPattern.put(propName, propValue);
-                } else {
-                    varPropsPattern.put(prop, null);
+        for (String prop : COMMA_SPLITTER.split(variant)) {
+            int eqPos = prop.indexOf("=");
+            if (eqPos != -1) {
+                String propName = prop.substring(0, eqPos);
+                String propValue = prop.substring(eqPos + 1);
+                if (propName.equals("*")) {
+                    throw new IndexerConfException(String.format("Error in matchVariant attribute: the character '*' " +
+                            "can only be used as wildcard, not as variant dimension name, attribute = %1$s, at: %2$s",
+                            variant, LocationAttributes.getLocation(caseEl)));
                 }
+                varPropsPattern.put(propName, propValue);
+            } else {
+                varPropsPattern.put(prop, null);
             }
         }
 
@@ -228,17 +217,13 @@ public class IndexerConfBuilder {
         if (vtagsSpec == null)
             return vtags;
 
-        String[] tags = vtagsSpec.split(",");
-        for (String tag : tags) {
-            tag = tag.trim();
-            if (tag.length() > 0) {
-                try {
-                    vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
-                } catch (FieldTypeNotFoundException e) {
-                    throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
-                } catch (RepositoryException e) {
-                    throw new IndexerConfException("error loading field type for vtag: " + tag, e);
-                }
+        for (String tag : COMMA_SPLITTER.split(vtagsSpec)) {
+            try {
+                vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
+            } catch (FieldTypeNotFoundException e) {
+                throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
+            } catch (RepositoryException e) {
+                throw new IndexerConfException("error loading field type for vtag: " + tag, e);
             }
         }
 
@@ -264,8 +249,6 @@ public class IndexerConfBuilder {
             String matchNamespaceAttr = DocumentHelper.getAttribute(fieldEl, "matchNamespace", false);
             String matchNameAttr = DocumentHelper.getAttribute(fieldEl, "matchName", false);
             String matchTypeAttr = DocumentHelper.getAttribute(fieldEl, "matchType", false);
-            Boolean matchMultiValue = DocumentHelper.getBooleanAttribute(fieldEl, "matchMultiValue", null);
-            Boolean matchHierarchical = DocumentHelper.getBooleanAttribute(fieldEl, "matchHierarchical", null);
             String matchScopeAttr = DocumentHelper.getAttribute(fieldEl, "matchScope", false);
             String nameAttr = DocumentHelper.getAttribute(fieldEl, "name", true);
 
@@ -286,23 +269,15 @@ public class IndexerConfBuilder {
                 matchName = new WildcardPattern(matchNameAttr);
             }
 
-            Set<String> matchTypes = null;
+            TypePattern matchTypes = null;
             if (matchTypeAttr != null) {
-                matchTypes = new HashSet<String>();
-                String[] types = matchTypeAttr.split(",");
-                for (String type : types) {
-                    matchTypes.add(type.toUpperCase());
-                }
-                if (matchTypes.isEmpty()) {
-                    matchTypes = null;
-                }
+                matchTypes = new TypePattern(matchTypeAttr);
             }
 
             Set<Scope> matchScopes = null;
             if (matchScopeAttr != null) {
                 matchScopes = EnumSet.noneOf(Scope.class);
-                String[] scopes = matchScopeAttr.split(",");
-                for (String scope : scopes) {
+                for (String scope : COMMA_SPLITTER.split(matchScopeAttr)) {
                     matchScopes.add(Scope.valueOf(scope));
                 }
                 if (matchScopes.isEmpty()) {
@@ -310,21 +285,30 @@ public class IndexerConfBuilder {
                 }
             }
 
+            // Be gentle to users of Lily 1.0 and warn them about attributes that are not supported anymore
+            if (DocumentHelper.getAttribute(fieldEl, "matchMultiValue", false) != null) {
+                log.warn("The attribute matchMultiValue on dynamicField is not supported anymore, it will be ignored.");
+            }
+            if (DocumentHelper.getAttribute(fieldEl, "matchHierarchical", false) != null) {
+                log.warn("The attribute matchHierarchical on dynamicField is not supported anymore, it will be ignored.");
+            }
+
             Set<String> variables = new HashSet<String>();
             variables.add("namespace");
             variables.add("name");
-            variables.add("primitiveType");
-            variables.add("primitiveTypeLC");
-            variables.add("multiValue");
-            variables.add("hierarchical");
+            variables.add("type");
+            variables.add("baseType");
+            variables.add("nestedType");
+            variables.add("nestedBaseType");
+            variables.add("deepestNestedBaseType");
             if (matchName != null && matchName.hasWildcard())
                 variables.add("nameMatch");
             if (matchNamespace != null && matchNamespace.hasWildcard())
                 variables.add("namespaceMatch");
 
             Set<String> booleanVariables = new HashSet<String>();
+            booleanVariables.add("list");
             booleanVariables.add("multiValue");
-            booleanVariables.add("hierarchical");
 
             NameTemplate name = new NameTemplate(nameAttr, variables, booleanVariables);
 
@@ -338,8 +322,8 @@ public class IndexerConfBuilder {
 
             boolean continue_ = DocumentHelper.getBooleanAttribute(fieldEl, "continue", false);
 
-            DynamicIndexField field = new DynamicIndexField(matchNamespace, matchName, matchTypes, matchMultiValue,
-                    matchHierarchical, matchScopes, name, extractContent, continue_, formatter);
+            DynamicIndexField field = new DynamicIndexField(matchNamespace, matchName, matchTypes,
+                    matchScopes, name, extractContent, continue_, formatter);
 
             conf.addDynamicIndexField(field);
         }
@@ -456,9 +440,7 @@ public class IndexerConfBuilder {
                     // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
                     boolean validConfig = true;
                     Set<String> dimensions = new HashSet<String>();
-                    String[] ops = derefPart.split(",");
-                    for (String op : ops) {
-                        op = op.trim();
+                    for (String op : COMMA_SPLITTER.split(derefPart)) {
                         if (op.length() > 1 && op.startsWith("-")) {
                             String dimension = op.substring(1);
                             dimensions.add(dimension);

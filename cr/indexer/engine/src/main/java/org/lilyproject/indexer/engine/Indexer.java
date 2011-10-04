@@ -254,11 +254,23 @@ public class Indexer {
         Map<String, Object> nameContext = new HashMap<String, Object>();
         nameContext.put("namespace", fieldType.getName().getNamespace());
         nameContext.put("name", fieldType.getName().getName());
+
         ValueType valueType = fieldType.getValueType();
-        nameContext.put("primitiveType", valueType.getDeepestValueType().getBaseName());
-        nameContext.put("primitiveTypeLC", valueType.getDeepestValueType().getBaseName().toLowerCase());
-        nameContext.put("multiValue", valueType.isMultiValue());
-        nameContext.put("hierarchical", valueType.isHierarchical());
+        nameContext.put("type", formatValueTypeName(valueType));
+        nameContext.put("baseType", valueType.getBaseName().toLowerCase());
+
+        // If there's no nested value type, revert to the current value type. This is practical for dynamic
+        // fields that match on types like "*,LIST<+>".
+        ValueType nestedValueType = valueType.getNestedValueType() != null ? valueType.getNestedValueType() : valueType;
+        nameContext.put("nestedType", formatValueTypeName(nestedValueType));
+        nameContext.put("nestedBaseType", nestedValueType.getBaseName().toLowerCase());
+
+        nameContext.put("deepestNestedBaseType", valueType.getDeepestValueType().getBaseName().toLowerCase());
+
+        boolean isList = valueType.getBaseName().equals("LIST");
+        nameContext.put("multiValue", isList);
+        nameContext.put("list", isList);
+
         if (match.nameMatch != null) {
             nameContext.put("nameMatch", match.nameMatch);
         }
@@ -267,6 +279,19 @@ public class Indexer {
         }
         String fieldName = dynField.getNameTemplate().format(nameContext);
         return fieldName;
+    }
+
+    private String formatValueTypeName(ValueType valueType) {
+        StringBuilder builder = new StringBuilder();
+
+        while (valueType != null) {
+            if (builder.length() > 0)
+                builder.append("_");
+            builder.append(valueType.getBaseName().toLowerCase());
+            valueType = valueType.getNestedValueType();
+        }
+
+        return builder.toString();
     }
 
     /**

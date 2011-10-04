@@ -5,6 +5,14 @@ import org.lilyproject.util.Pair;
 /**
  * Simple wildcard matching: a star wildcard is supported at the start or the
  * end of the string.
+ *
+ * <p>A wildcard matches zero or more characters.
+ *
+ * <p>If the wildcard character would occur on both ends, the
+ * one on the start will take precedence and the other one will be interpreted
+ * as a literal character. If the wildcard character appears at any other
+ * position in the string, it is treated as a literal character.
+ *
  */
 public class WildcardPattern {
     private final Type type;
@@ -15,10 +23,10 @@ public class WildcardPattern {
     public WildcardPattern(String pattern) {
         // We require the pattern length to be at least 2, so that a star on itself
         // is not recognized as a wildcard.
-        if (pattern.length() > 1 && pattern.startsWith("*")) {
+        if (pattern.length() > 0 && pattern.startsWith("*")) {
             type = Type.ENDS_WITH;
             string = pattern.substring(1);
-        } else if (pattern.length() > 1 && pattern.endsWith("*")) {
+        } else if (pattern.length() > 0 && pattern.endsWith("*")) {
             type = Type.STARTS_WITH;
             string = pattern.substring(0, pattern.length() - 1);
         } else {
@@ -79,6 +87,6 @@ public class WildcardPattern {
     }
 
     public static boolean isWildcardExpression(String text) {
-        return text.length() > 1 && (text.startsWith("*") || text.endsWith("*"));
+        return text.length() > 0 && (text.startsWith("*") || text.endsWith("*"));
     }
 }
