@@ -87,7 +87,7 @@ public class ValueEvaluator {
 
         List<IndexValue> indexValues;
 
-        if (fieldType.getValueType().isMultiValue()) {
+        if (fieldType.getValueType().getBaseName().equals("LIST")) {
             List<Object> values = (List<Object>)value;
             indexValues = new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
@@ -224,7 +224,7 @@ public class ValueEvaluator {
             return null;
         }
 
-        if (fieldType.getValueType().isMultiValue()) {
+        if (fieldType.getValueType().getBaseName().equals("LIST")) {
             List<Object> values = (List<Object>)value;
             result = indexValues != null ? indexValues : new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
