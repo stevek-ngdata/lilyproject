@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!--
+   | A dynamic configuration for the indexer, which indexes all fields of the
+   | last version of each record.
+   |
+   | This is useful to start using the indexer without bothering to write a
+   | custom indexerconf.
+   -->
+<indexer>
+
+  <records>
+    <!-- A record tag without any match condition will match all records. -->
+    <record vtags="last"/>
+  </records>
+
+  <dynamicFields>
+    <!--
+       | In the matchType attribute, <+> means exactly one argument,
+       | <*> means one optional argument (in both cases, without further
+       | nesting). Since LIST and PATH always have a type argument, you
+       | could as well write LIST<*> instead of LIST<+>.
+       -->
+
+    <!--
+       | Index PATH, URI and LINK as strings.
+       -->
+    <dynamicField matchType="PATH&lt;+>,
+                             LIST&lt;PATH&lt;+>>,
+                             URI,
+                             LIST&lt;URI>,
+                             LINK&lt;*>,
+                             LIST&lt;LINK&lt;*>>"
+                  name="${name}_string${list?_mv}"/>
+
+    <!--
+       | Index STRING and RECORD as text.
+       -->
+    <dynamicField matchType="STRING,
+                             LIST&lt;STRING>,
+                             RECORD&lt;*>,
+                             LIST&lt;RECORD&lt;*>>,
+                             BLOB,
+                             LIST&lt;BLOB>"
+                  name="${name}_text${list?_mv}"
+                  extractContent="true"/>
+
+    <!--
+       | Index all other types using their value type name (without arguments).
+       |
+       | The expression '*' in matchType matches any type as long as it does
+       | not have arguments (otherwise it would have to be '*<*>')
+       |
+       | The expression ${nestedBaseType} will give the name without type
+       | argument of the nested type in case of LIST, or otherwise, when
+       | there is no nested type, the name of the type itself.
+       -->
+    <dynamicField matchType="*,LIST&lt;+>"
+                  name="${name}_${nestedBaseType}${list?_mv}"/>
+
+    <!--
+        | This rule will handle more deeply nested lists or paths.
+        | Since for deeper nested lists, the default formatter will
+        | concatenate the values (with a space between), these should
+        | be indexed as text rather than their original type.
+         -->
+    <dynamicField name="${name}_text${list?_mv}"
+                  extractContent="true"/>
+
+  </dynamicFields>
+
+</indexer>
