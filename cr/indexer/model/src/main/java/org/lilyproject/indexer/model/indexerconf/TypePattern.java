@@ -16,7 +16,12 @@ import java.util.regex.Pattern;
  * <p>The format for the patterns is described in the user documentation.</p>
  */
 public class TypePattern {
-    private static final Pattern TYPE_PATTERN = Pattern.compile("([^<>]+)(?:<(.+)>)?");
+    /**
+     * Explanation of the pattern: it first matches a name which cannot contain &lt;>
+     * or (), and then it has a parameter either surrounded by &lt;> or by (), or
+     * actually they can be mixed like (> but that's not really intentional.
+     */
+    private static final Pattern TYPE_PATTERN = Pattern.compile("([^<>\\(\\)]+)(?:[<\\(](.+)[>\\)])?");
     private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
 
     private List<SubTypePattern> patterns = new ArrayList<SubTypePattern>();

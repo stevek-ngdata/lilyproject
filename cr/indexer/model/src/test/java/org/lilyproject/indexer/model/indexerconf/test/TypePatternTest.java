@@ -112,6 +112,14 @@ public class TypePatternTest {
         assertTrue(pattern.matches("LIST<STRING>"));
         assertFalse(pattern.matches("LIST<LIST<STRING>>"));
         assertFalse(pattern.matches("STRING<STRING>"));
+    }
 
+    @Test
+    public void testRoundBracket() throws Exception {
+        // Because angle brackets are annoying to write in XML, one can use round brackets too.
+        TypePattern pattern = new TypePattern("LIST(LIST(RECORD(*)))");
+
+        assertTrue(pattern.matches("LIST(LIST(RECORD))"));
+        assertTrue(pattern.matches("LIST(LIST(RECORD(foobar)))"));
     }
 }

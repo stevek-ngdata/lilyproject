@@ -24,23 +24,23 @@
     <!--
        | Index PATH, URI and LINK as strings.
        -->
-    <dynamicField matchType="PATH&lt;+>,
-                             LIST&lt;PATH&lt;+>>,
+    <dynamicField matchType="PATH(+),
+                             LIST(PATH(+)),
                              URI,
-                             LIST&lt;URI>,
-                             LINK&lt;*>,
-                             LIST&lt;LINK&lt;*>>"
+                             LIST(URI),
+                             LINK(*),
+                             LIST(LINK(*))"
                   name="${name}_string${list?_mv}"/>
 
     <!--
        | Index STRING and RECORD as text.
        -->
     <dynamicField matchType="STRING,
-                             LIST&lt;STRING>,
-                             RECORD&lt;*>,
-                             LIST&lt;RECORD&lt;*>>,
+                             LIST(STRING),
+                             RECORD(*),
+                             LIST(RECORD(*)),
                              BLOB,
-                             LIST&lt;BLOB>"
+                             LIST(BLOB)"
                   name="${name}_text${list?_mv}"
                   extractContent="true"/>
 
@@ -54,7 +54,7 @@
        | argument of the nested type in case of LIST, or otherwise, when
        | there is no nested type, the name of the type itself.
        -->
-    <dynamicField matchType="*,LIST&lt;+>"
+    <dynamicField matchType="*,LIST(+)"
                   name="${name}_${nestedBaseType}${list?_mv}"/>
 
     <!--
