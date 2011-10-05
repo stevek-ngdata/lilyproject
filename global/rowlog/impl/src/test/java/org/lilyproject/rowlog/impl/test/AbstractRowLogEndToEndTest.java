@@ -66,8 +66,9 @@ public abstract class
     
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(rowLogConfigurationManager);
+        Closer.close(processor);
         Closer.close(rowLog);
+        Closer.close(rowLogConfigurationManager);
         Closer.close(zooKeeper);
         HBASE_PROXY.stop();
     }
