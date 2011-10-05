@@ -86,6 +86,7 @@ public class RowLogTest {
     @After
     public void tearDown() throws Exception {
         control.reset();
+        Closer.close(rowLog);
     }
     
     @Test

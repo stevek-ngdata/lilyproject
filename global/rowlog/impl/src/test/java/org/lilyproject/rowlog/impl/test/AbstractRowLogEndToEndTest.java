@@ -52,7 +52,7 @@ public abstract class
         configuration = HBASE_PROXY.getConf();
         rowTable = RowLogTableUtil.getRowTable(configuration);
         // Using a large ZooKeeper timeout, seems to help the build to succeed on Hudson (not sure if this is
-        // the problem or the sympton, but HBase's Sleeper thread also reports it slept to long, so it appears
+        // the problem or the symptom, but HBase's Sleeper thread also reports it slept to long, so it appears
         // to be JVM-level).
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 120000);
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
@@ -67,6 +67,7 @@ public abstract class
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         Closer.close(rowLogConfigurationManager);
+        Closer.close(rowLog);
         Closer.close(zooKeeper);
         HBASE_PROXY.stop();
     }
