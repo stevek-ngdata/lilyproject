@@ -144,5 +144,4 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         } catch (FieldTypeUpdateException e) {
         }
     }
-
 }

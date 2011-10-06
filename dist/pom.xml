@@ -76,6 +76,11 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-print-host</artifactId>
     </dependency>
+    
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-convert-fieldtypes</artifactId>
+    </dependency>
 
     <!--
        The following dependencies are not strictly required to launch Lily, but they are useful

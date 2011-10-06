@@ -19,21 +19,12 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
 import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.bytes.api.DataInput;
@@ -744,18 +735,25 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
     
     // ValueType encoding
-    private byte valueTypeEncodingVersion = (byte)1;
+    public static byte valueTypeEncodingVersion = (byte) 1;
     
-    private byte[] encodeValueType(ValueType valueType) {
+    public static byte[] encodeValueType(ValueType valueType) {
+        return encodeValueType(valueType.getName());
+    }
+
+    public static byte[] encodeValueType(String valueTypeName) {
         DataOutput dataOutput = new DataOutputImpl();
         dataOutput.writeByte(valueTypeEncodingVersion);
-        dataOutput.writeUTF(valueType.getName());
+        dataOutput.writeUTF(valueTypeName);
         return dataOutput.toByteArray();
     }
     
     private ValueType decodeValueType(byte[] bytes) throws RepositoryException, InterruptedException {
         DataInput dataInput = new DataInputImpl(bytes);
-        dataInput.readByte(); // Ignore since there is only one encoding version
+        if (valueTypeEncodingVersion != dataInput.readByte()) {
+            throw new TypeException("Unknown value type encoding version encountered in schema");
+        }
+
         return getValueType(dataInput.readUTF());
     }
    

@@ -55,12 +55,16 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     }
 
     /**
-     * Start should be called for the RemoteTypeManager after the typemanager has been assigned to the repository,
-     * after the repository has been assigned to the AvroConverter and before using the typemanager and repository.
+     * Start should be called for the RemoteTypeManager after the typemanager
+     * has been assigned to the repository, after the repository has been
+     * assigned to the AvroConverter and before using the typemanager and
+     * repository.
+     * 
      * @throws InterruptedException
      * @throws KeeperException
+     * @throws RepositoryException
      */
-    public void start() throws InterruptedException, KeeperException {
+    public void start() throws InterruptedException, KeeperException, RepositoryException {
         setupCaches();
     }
 

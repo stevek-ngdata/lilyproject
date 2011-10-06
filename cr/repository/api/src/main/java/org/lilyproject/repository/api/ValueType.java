@@ -74,20 +74,26 @@ public interface ValueType {
     <T> T read(DataInput dataInput) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
 
     <T> T read(byte[] data) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
-    
+
     /**
-     * Encodes an object of the type represented by this value type to a {@link DataOutput}.
-     *
-     * <p>The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data.
-     *  
-     * @param value the object to encode and write
-     * @param dataOutput the DataOutput on which to write the data
+     * Encodes an object of the type represented by this value type to a
+     * {@link DataOutput}.
+     * 
+     * <p>
+     * The ValueType is itself responsible for encoding (see
+     * {@link #write(Object, DataOutput)}) and decoding data.
+     * 
+     * @param value
+     *            the object to encode and write
+     * @param dataOutput
+     *            the DataOutput on which to write the data
+     * @param parentRecords
+     *            an IdentityHashMap of parentRecords to check for self-nested
+     *            records. The value of the map is not important and may be
+     *            null.
      * @throws RepositoryException
      * @throws InterruptedException
      */
-    // void write(Object value, DataOutput dataOutput) throws
-    // RepositoryException, InterruptedException;
-    
     void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
             throws RepositoryException, InterruptedException;
 

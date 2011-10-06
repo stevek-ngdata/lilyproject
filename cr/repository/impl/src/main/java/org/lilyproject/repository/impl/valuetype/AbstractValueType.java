@@ -32,10 +32,6 @@ public abstract class AbstractValueType implements ValueType {
         return read(new DataInputImpl(data));
     }
     
-
-    // public abstract void write(Object value, DataOutput dataOutput) throws
-    // RepositoryException, InterruptedException;
-    
     public abstract void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
             throws RepositoryException, InterruptedException;
 

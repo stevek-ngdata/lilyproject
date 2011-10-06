@@ -134,7 +134,7 @@ public abstract class AbstractTypeManager implements TypeManager {
                 } catch (InterruptedException e) {
                     return;
                 } catch (Throwable t) {
-                    log.error("Error refreshing type manager cache.", t);
+                    log.error("Error refreshing type manager cache. Cache is possibly out of date!", t);
                 }
             }
         }
@@ -143,13 +143,13 @@ public abstract class AbstractTypeManager implements TypeManager {
     protected void cacheInvalidationReconnected() throws InterruptedException {
     }
 
-    protected void setupCaches() throws InterruptedException, KeeperException {
+    protected void setupCaches() throws InterruptedException, KeeperException, RepositoryException {
         ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
         zooKeeper.addDefaultWatcher(new ConnectionWatcher());
         refreshCaches();
     }
 
-    private synchronized void refreshCaches() throws InterruptedException {
+    private synchronized void refreshCaches() throws InterruptedException, RepositoryException {
         try {
             zooKeeper.getData(CACHE_INVALIDATION_PATH, cacheWatcher, null);
         } catch (KeeperException e) {
@@ -157,31 +157,21 @@ public abstract class AbstractTypeManager implements TypeManager {
             // Relying on the ConnectionWatcher to put it again and initialize
             // the caches.
         }
-        try {
-            updatingFieldTypes.refresh(getFieldTypesWithoutCache());
-            updatedFieldTypes = true;
-        } catch (Exception e) {
-            // We keep on working with the old cache
-            log.warn("Exception while refreshing RecordType cache. Cache is possibly out of date.", e);
-        } 
+        updatingFieldTypes.refresh(getFieldTypesWithoutCache());
+        updatedFieldTypes = true;
         refreshRecordTypeCache();
     }
 
-    private synchronized void refreshRecordTypeCache() {
+    private synchronized void refreshRecordTypeCache() throws RepositoryException, InterruptedException {
         Map<QName, RecordType> newRecordTypeNameCache = new HashMap<QName, RecordType>();
         Map<SchemaId, RecordType> newRecordTypeIdCache = new HashMap<SchemaId, RecordType>();
-        try {
-            List<RecordType> recordTypes = getRecordTypesWithoutCache();
-            for (RecordType recordType : recordTypes) {
-                newRecordTypeNameCache.put(recordType.getName(), recordType);
-                newRecordTypeIdCache.put(recordType.getId(), recordType);
-            }
-            recordTypeNameCache = newRecordTypeNameCache;
-            recordTypeIdCache = newRecordTypeIdCache;
-        } catch (Exception e) {
-            // We keep on working with the old cache
-            log.warn("Exception while refreshing RecordType cache. Cache is possibly out of date.", e);
-        } 
+        List<RecordType> recordTypes = getRecordTypesWithoutCache();
+        for (RecordType recordType : recordTypes) {
+            newRecordTypeNameCache.put(recordType.getName(), recordType);
+            newRecordTypeIdCache.put(recordType.getId(), recordType);
+        }
+        recordTypeNameCache = newRecordTypeNameCache;
+        recordTypeIdCache = newRecordTypeIdCache;
     }
 
     public synchronized FieldTypesImpl getFieldTypesSnapshot() {
