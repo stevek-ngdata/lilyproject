@@ -279,6 +279,12 @@ public abstract class AbstractTypeManager implements TypeManager {
         return newFieldType(null, valueType, name, scope);
     }
 
+    @Override
+    public FieldType newFieldType(String valueType, QName name, Scope scope) throws RepositoryException,
+            InterruptedException {
+        return newFieldType(null, getValueType(valueType), name, scope);
+    }
+
     public FieldTypeEntry newFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
         ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
         ArgumentValidator.notNull(mandatory, "mandatory");
@@ -286,13 +292,9 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
 
-    public FieldType newFieldType(SchemaId id, ValueType valueType, QName name,
-            Scope scope) {
-                ArgumentValidator.notNull(valueType, "valueType");
-                ArgumentValidator.notNull(name, "name");
-                ArgumentValidator.notNull(scope, "scope");
-                return new FieldTypeImpl(id, valueType, name, scope);
-            }
+    public FieldType newFieldType(SchemaId id, ValueType valueType, QName name, Scope scope) {
+        return new FieldTypeImpl(id, valueType, name, scope);
+    }
 
     //
     // Value types

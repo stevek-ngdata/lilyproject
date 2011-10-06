@@ -71,4 +71,14 @@ public class FieldTypesImpl implements FieldTypes {
         }
         return fieldType.clone();
     }
+
+    public FieldType getFieldTypeByNameReturnNull(QName name) {
+        ArgumentValidator.notNull(name, "name");
+        FieldType fieldType = fieldTypeNameCache.get(name);
+        return fieldType != null ? fieldType.clone() : null;
+    }
+
+    public boolean fieldTypeExists(QName name) {
+        return fieldTypeNameCache.containsKey(name);
+    }
 }

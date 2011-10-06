@@ -90,6 +90,23 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
+    public RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
+        try {
+            RecordType newRecordType = converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType)));
+            updateRecordTypeCache(newRecordType.clone());
+            return newRecordType;
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
     protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException {
         try {
             long avroVersion;
@@ -132,11 +149,34 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         return createFieldType(newFieldType(valueType, name, scope));
     }
 
+    @Override
+    public FieldType createFieldType(String valueType, QName name, Scope scope) throws RepositoryException,
+            InterruptedException {
+        return createFieldType(newFieldType(getValueType(valueType), name, scope));
+    }
+
     public FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
         try {
             AvroFieldType avroFieldType = converter.convert(fieldType);
             AvroFieldType createFieldType = lilyProxy.createFieldType(avroFieldType);
             FieldType newFieldType = converter.convert(createFieldType);
+            updateFieldTypeCache(newFieldType);
+            return newFieldType;
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
+    @Override
+    public FieldType createOrUpdateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
+        try {
+            FieldType newFieldType = converter.convert(lilyProxy.createOrUpdateFieldType(converter.convert(fieldType)));
             updateFieldTypeCache(newFieldType);
             return newFieldType;
         } catch (AvroRepositoryException e) {

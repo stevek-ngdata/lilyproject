@@ -386,10 +386,13 @@ public class RecordImpl implements Record {
     private QName resolveNamespace(String name) throws RecordException {
         if (defaultNamespace != null)
             return new QName(defaultNamespace, name);
+
         QName recordTypeName = getRecordTypeName();
         if (recordTypeName != null)
             return new QName(recordTypeName.getNamespace(), name);
-        else throw new RecordException("Namespace could not be resolved for name '" + name + "'since no default namespace was given and no record type is set");
+
+        throw new RecordException("Namespace could not be resolved for name '" + name +
+            "' since no default namespace was given and no record type is set.");
     }
     
     public void setRecordType(String recordTypeName) throws RecordException {

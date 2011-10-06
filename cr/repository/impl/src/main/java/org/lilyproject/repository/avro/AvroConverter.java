@@ -375,10 +375,13 @@ public class AvroConverter {
     }
 
     public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {
-        return typeManager.getValueType(convert(valueType.valueType));
+        return valueType == null ? null : typeManager.getValueType(convert(valueType.valueType));
     }
 
     public AvroValueType convert(ValueType valueType) {
+        if (valueType == null)
+            return null;
+
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = convert(valueType.getName());
         return avroValueType;

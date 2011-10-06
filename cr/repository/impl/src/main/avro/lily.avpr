@@ -145,9 +145,11 @@
       "type": "record",
       "fields": [
         {"name": "id",   "type": ["AvroSchemaId", "null"]},
-        {"name": "name", "type": "AvroQName"},
-        {"name": "valueType", "type": "AvroValueType"},
-        {"name": "scope", "type": {"name": "AvroScope", "type": "enum", "symbols": ["NON_VERSIONED", "VERSIONED", "VERSIONED_MUTABLE"]}}
+        {"name": "name", "type": ["AvroQName", "null"]},
+        {"name": "valueType", "type": ["AvroValueType", "null"]},
+        {"name": "scope", "type":
+          [ {"name": "AvroScope", "type": "enum", "symbols": ["NON_VERSIONED", "VERSIONED", "VERSIONED_MUTABLE"]},
+            "null"]}
       ]
     },
 
@@ -294,6 +296,12 @@
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
 
+    "createOrUpdateRecordType": {
+      "request": [{"name": "recordType", "type": "AvroRecordType"}],
+      "response": "AvroRecordType",
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+
     "createFieldType": {
       "request": [{"name": "fieldType", "type": "AvroFieldType"}],
       "response": "AvroFieldType",
@@ -301,6 +309,12 @@
     },
 
     "updateFieldType": {
+      "request": [{"name": "fieldType", "type": "AvroFieldType"}],
+      "response": "AvroFieldType",
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+
+    "createOrUpdateFieldType": {
       "request": [{"name": "fieldType", "type": "AvroFieldType"}],
       "response": "AvroFieldType",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]

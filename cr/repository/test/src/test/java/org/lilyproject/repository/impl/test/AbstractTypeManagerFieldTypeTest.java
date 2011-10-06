@@ -17,6 +17,7 @@ package org.lilyproject.repository.impl.test;
 
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.util.UUID;
@@ -144,4 +145,97 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         } catch (FieldTypeUpdateException e) {
         }
     }
+    @Test
+    public void testCreateOrUpdate() throws Exception {
+        String NS = "testCreateOrUpdateFieldType";
+
+        //
+        // Use createOrUpdate to create a new field type
+        //
+        FieldType fieldType = typeManager.newFieldType("STRING", new QName(NS, "field1"), Scope.NON_VERSIONED);
+        fieldType = typeManager.createOrUpdateFieldType(fieldType);
+        assertNotNull(fieldType.getId());
+        assertEquals(new QName(NS, "field1"), fieldType.getName());
+
+        //
+        // Do a createOrUpdate with nothing changed
+        //
+        fieldType = typeManager.createOrUpdateFieldType(fieldType);
+        assertNotNull(fieldType.getId());
+        assertEquals(new QName(NS, "field1"), fieldType.getName());
+
+        //
+        // Use createOrUpdate to update the field type
+        //
+        fieldType.setName(new QName(NS, "field2"));
+        fieldType = typeManager.createOrUpdateFieldType(fieldType);
+        assertNotNull(fieldType.getId());
+        assertEquals(new QName(NS, "field2"), fieldType.getName());
+
+        //
+        // Call createOrUpdate without name: should just return the complete type
+        //
+        fieldType.setName(null);
+        fieldType = typeManager.createOrUpdateFieldType(fieldType);
+        assertNotNull(fieldType.getId());
+        assertEquals(new QName(NS, "field2"), fieldType.getName());
+
+        //
+        // Call createOrUpdate with a conflicting field type state
+        //
+        FieldType conflictFieldType = fieldType.clone();
+        conflictFieldType.setScope(Scope.VERSIONED);
+        try {
+            typeManager.createOrUpdateFieldType(conflictFieldType);
+            fail("expected exception");
+        } catch (FieldTypeUpdateException e) {
+            // expected
+        }
+
+        conflictFieldType = fieldType.clone();
+        conflictFieldType.setValueType(typeManager.getValueType("LIST<STRING>"));
+        try {
+            typeManager.createOrUpdateFieldType(conflictFieldType);
+            fail("expected exception");
+        } catch (FieldTypeUpdateException e) {
+            // expected
+        }
+
+        //
+        // Call createOrUpdate without name and with conflicting state
+        //
+        conflictFieldType = fieldType.clone();
+        conflictFieldType.setName(null);
+        conflictFieldType.setScope(Scope.VERSIONED_MUTABLE);
+        try {
+            typeManager.createOrUpdateFieldType(conflictFieldType);
+            fail("expected exception");
+        } catch (FieldTypeUpdateException e) {
+            // expected
+        }
+
+        //
+        // Call createOrUpdate with name and without id
+        //
+        SchemaId expectedId = fieldType.getId();
+        fieldType.setId(null);
+        fieldType = typeManager.createOrUpdateFieldType(fieldType);
+        assertEquals(expectedId, fieldType.getId());
+        assertEquals(new QName(NS, "field2"), fieldType.getName());
+
+        //
+        // Call createOrUpdate without scope
+        //
+        fieldType.setScope(null);
+        fieldType = typeManager.createOrUpdateFieldType(fieldType);
+        assertEquals(Scope.NON_VERSIONED, fieldType.getScope());
+
+        //
+        // Call createOrUpdate without value type
+        //
+        fieldType.setValueType(null);
+        fieldType = typeManager.createOrUpdateFieldType(fieldType);
+        assertEquals(typeManager.getValueType("STRING"), fieldType.getValueType());
+    }
+
 }

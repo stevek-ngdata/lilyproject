@@ -96,6 +96,18 @@ public interface TypeManager extends Closeable {
     RecordType updateRecordType(RecordType recordType) throws  RepositoryException, InterruptedException;
 
     /**
+     * Either creates or updates the record type, depending on whether it exists in
+     * the repository, and depending on the information supplied in the record type.
+     *
+     * <p>When the ID is supplied of the record type, this method will always do
+     * an update. If the name is supplied, it is checked whether it already exists,
+     * if so the record type is updated, and otherwise it is created.
+     *
+     * @return the created or updated record type
+     */
+    RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException;
+
+    /**
      * Get the list of all record types that exist in the repository. This returns the latest version of
      * each record type. 
      */
@@ -122,6 +134,13 @@ public interface TypeManager extends Closeable {
      *
      * <p>This is only a factory method, nothing is created in the repository.
      */
+    FieldType newFieldType(String valueType, QName name, Scope scope) throws RepositoryException, InterruptedException;
+
+    /**
+     * Instantiates a new FieldType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
+     */
     FieldType newFieldType(SchemaId id, ValueType valueType, QName name, Scope scope);
     
     /**
@@ -138,9 +157,15 @@ public interface TypeManager extends Closeable {
     FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
 
     /**
-     * Shortcut to create a field type without first creating the FieldType object.
+     * Creates a field type in the repository, using the given parameters.
      */
     FieldType createFieldType(ValueType valueType, QName name, Scope scope) throws RepositoryException,
+            InterruptedException;
+
+    /**
+     * Creates a field type in the repository, using the given parameters.
+     */
+    FieldType createFieldType(String valueType, QName name, Scope scope) throws RepositoryException,
             InterruptedException;
 
     /**
@@ -159,7 +184,26 @@ public interface TypeManager extends Closeable {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
-    
+
+    /**
+     * Creates or updates a field type, depending on whether it exists in the repository,
+     * and depending on the information supplied in the field type.
+     *
+     * <p>The only case in which an update is performed is when both the ID
+     * and name are supplied. This is because the name is the only mutable
+     * property of a field type, and you can obviously only change it if
+     * there is some other way to identify the field type, namely its ID.
+     *
+     * <p>If no create or update needs to be performed, it is still always
+     * validated that the immutable properties in the supplied field type
+     * object correspond to those in the repository, if not a
+     * {@link FieldTypeUpdateException} is produced. These properties could
+     * also be missing, the returned field type object will always contain
+     * the full state as stored in the repository.
+     *
+     */
+    FieldType createOrUpdateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
+
     /**
      * Gets a FieldType from the repository.
      *
