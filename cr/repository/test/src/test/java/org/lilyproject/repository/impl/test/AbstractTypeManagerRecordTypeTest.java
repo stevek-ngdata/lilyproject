@@ -390,7 +390,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
 
     @Test
     public void testRecordTypeBuilderBasics() throws Exception {
-        RecordTypeBuilder builder = typeManager.rtBuilder();
+        RecordTypeBuilder builder = typeManager.recordTypeBuilder();
         try {
             builder.create();
             fail("Exception expected since name of recordType is not specified");
@@ -442,13 +442,13 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         FieldType field28 = typeManager.createFieldType("STRING", new QName(NS, "field28"), VERSIONED);
         FieldType field29 = typeManager.createFieldType("STRING", new QName(NS, "field29"), VERSIONED);
 
-        RecordType mixinType1 = typeManager.rtBuilder().name(NS, "mixin1").fieldEntry().use(field21).add().create();
-        RecordType mixinType2 = typeManager.rtBuilder().name(NS, "mixin2").fieldEntry().use(field22).add().create();
-        RecordType mixinType3 = typeManager.rtBuilder().name(NS, "mixin3").fieldEntry().use(field23).add().create();
-        RecordType mixinType4 = typeManager.rtBuilder().name(NS, "mixin4").fieldEntry().use(field24).add().create();
-        RecordType mixinType5 = typeManager.rtBuilder().name(NS, "mixin5").fieldEntry().use(field25).add().create();
-        RecordType mixinType6 = typeManager.rtBuilder().name(NS, "mixin6").fieldEntry().use(field26).add().create();
-        RecordType mixinType7 = typeManager.rtBuilder().name(NS, "mixin7").fieldEntry().use(field27).add().create();
+        RecordType mixinType1 = typeManager.recordTypeBuilder().name(NS, "mixin1").fieldEntry().use(field21).add().create();
+        RecordType mixinType2 = typeManager.recordTypeBuilder().name(NS, "mixin2").fieldEntry().use(field22).add().create();
+        RecordType mixinType3 = typeManager.recordTypeBuilder().name(NS, "mixin3").fieldEntry().use(field23).add().create();
+        RecordType mixinType4 = typeManager.recordTypeBuilder().name(NS, "mixin4").fieldEntry().use(field24).add().create();
+        RecordType mixinType5 = typeManager.recordTypeBuilder().name(NS, "mixin5").fieldEntry().use(field25).add().create();
+        RecordType mixinType6 = typeManager.recordTypeBuilder().name(NS, "mixin6").fieldEntry().use(field26).add().create();
+        RecordType mixinType7 = typeManager.recordTypeBuilder().name(NS, "mixin7").fieldEntry().use(field27).add().create();
         // give mixin7 two more versions
         mixinType7.addFieldTypeEntry(field28.getId(), false);
         mixinType7 = typeManager.updateRecordType(mixinType7);
@@ -456,7 +456,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         mixinType7 = typeManager.updateRecordType(mixinType7);
 
         RecordType recordType = typeManager
-                .rtBuilder()
+                .recordTypeBuilder()
                 .defaultNamespace(NS)
                 .name("recordType1")
 
@@ -552,7 +552,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         RecordType recordType = null;
         for (int i = 0; i < 3; i++) {
             recordType = typeManager
-                    .rtBuilder()
+                    .recordTypeBuilder()
                     .defaultNamespace(NS)
                     .name("recordType1")
                     .fieldEntry().defineField().name("field1").createOrUpdate().add()
@@ -563,7 +563,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(new Long(1L), recordType.getVersion());
 
         recordType = typeManager
-                .rtBuilder()
+                .recordTypeBuilder()
                 .defaultNamespace(NS)
                 .name("recordType1")
                 .fieldEntry().defineField().name("field1").createOrUpdate().add()

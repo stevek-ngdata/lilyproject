@@ -874,11 +874,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             return cacheInvalidationEnabled;
         }
     }
-    
-    public RecordTypeBuilder rtBuilder() throws TypeException {
-        return new RecordTypeBuilderImpl(this);
-    }
-    
+
     // ValueType encoding
     public static byte valueTypeEncodingVersion = (byte) 1;
     

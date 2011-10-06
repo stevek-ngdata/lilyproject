@@ -24,7 +24,7 @@ package org.lilyproject.repository.api;
  * <p>Alternatively you should consider declaring the schema in an external
  * file and importing that, as is provided by Lily's JSON import tool.</p>
  *
- * <p>A new RecordTypeBuilder object can be obtained by calling {@link TypeManager#rtBuilder()}
+ * <p>A new RecordTypeBuilder object can be obtained by calling {@link TypeManager#recordTypeBuilder()}
  *
  * <p>Each method either returns a new RecordTypeBuilder object on which the next method can
  * be called, or returns an actual RecordType object.

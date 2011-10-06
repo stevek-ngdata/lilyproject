@@ -296,6 +296,16 @@ public abstract class AbstractTypeManager implements TypeManager {
         return new FieldTypeImpl(id, valueType, name, scope);
     }
 
+    @Override
+    public RecordTypeBuilder recordTypeBuilder() throws TypeException {
+        return new RecordTypeBuilderImpl(this);
+    }
+
+    @Override
+    public FieldTypeBuilder fieldTypeBuilder() throws TypeException {
+        return new FieldTypeBuilderImpl(this);
+    }
+
     //
     // Value types
     //

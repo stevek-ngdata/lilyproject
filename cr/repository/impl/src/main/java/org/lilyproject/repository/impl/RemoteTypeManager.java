@@ -238,8 +238,4 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
             throw e;
         }
     }
-    
-    public RecordTypeBuilder rtBuilder() throws TypeException {
-        return new RecordTypeBuilderImpl(this);
-    }
 }

@@ -288,7 +288,17 @@ public interface TypeManager extends Closeable {
     List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
     
     /**
-     * Returns a record type builder object which can be used to compose a record type object and create or update it on the repository.
+     * Returns a record type builder, providing a fluent API to manipulate record types.
      */
-    RecordTypeBuilder rtBuilder() throws TypeException;
+    RecordTypeBuilder recordTypeBuilder() throws TypeException;
+
+    /**
+     * Returns a field type builder, providing a fluent API to manipulate field types.
+     *
+     * <p>Note that field types can also be created in a single statement using
+     * {@link #createFieldType(String, QName, Scope)}, the field type builder just
+     * offers a little more flexibility in how to specify name and scope and what
+     * operations to do (update, createOrUpdate).
+     */
+    FieldTypeBuilder fieldTypeBuilder() throws TypeException;
 }

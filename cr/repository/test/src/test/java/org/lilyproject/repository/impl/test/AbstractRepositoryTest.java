@@ -1874,12 +1874,12 @@ public abstract class AbstractRepositoryTest {
         QName ft1Name = new QName(namespace, "ft1");
         QName ft2Name = new QName(namespace, "ft2");
         QName ft3Name = new QName(namespace, "ft3");
-        typeManager.rtBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
+        typeManager.recordTypeBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
         ValueType rvt = typeManager.getValueType("RECORD<"+rvtRTName.toString()+">");
         FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
         FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
         FieldType ft3 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft3Name, Scope.VERSIONED_MUTABLE));
-        typeManager.rtBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).field(ft3.getId(), false).create();
+        typeManager.recordTypeBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).field(ft3.getId(), false).create();
         
         Record ft1Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft1abc").newRecord();
         Record ft1Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft1def").newRecord();
@@ -1933,11 +1933,11 @@ public abstract class AbstractRepositoryTest {
         QName ft1Name = new QName(namespace, "ft1");
         QName ft2Name = new QName(namespace, "ft2");
 
-        typeManager.rtBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
+        typeManager.recordTypeBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
         ValueType rvt = typeManager.getValueType("RECORD");
         FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
         FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
-        typeManager.rtBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).create();
+        typeManager.recordTypeBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).create();
 
         Record ft1Value1 = repository.recordBuilder().recordType(rvtRTName).field(fieldType1.getName(), "ft1abc")
                 .newRecord();

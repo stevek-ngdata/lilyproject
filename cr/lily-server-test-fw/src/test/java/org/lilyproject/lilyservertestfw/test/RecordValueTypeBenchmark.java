@@ -116,7 +116,7 @@ public class RecordValueTypeBenchmark {
         QName rvtRTName = new QName(ns, "rvtRT");
         
         // Create field types and record types for the records containing complex types
-        RecordTypeBuilder rtBuilder = typeManager.rtBuilder().name(rvtRTName);
+        RecordTypeBuilder rtBuilder = typeManager.recordTypeBuilder().name(rvtRTName);
         for (int i = 0; i < nrOfFields; i++) {
             FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns,"stringField"+i), Scope.NON_VERSIONED));
             rtBuilder.field(fieldType.getId(), false);
@@ -126,11 +126,11 @@ public class RecordValueTypeBenchmark {
         ValueType rvt = typeManager.getValueType("RECORD<"+rvtRTName.toString()+">");
         
         FieldType rvtFT = typeManager.createFieldType(typeManager.newFieldType(rvt, new QName(ns, "rvtField"), Scope.NON_VERSIONED));
-        typeManager.rtBuilder().name(new QName(ns, "rvtFieldRT")).field(rvtFT.getId(), false).create();
+        typeManager.recordTypeBuilder().name(new QName(ns, "rvtFieldRT")).field(rvtFT.getId(), false).create();
         
         // Create field types and record types for the records containing serialized json
         FieldType jsonFT = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "jsonField"), Scope.NON_VERSIONED));
-        typeManager.rtBuilder().name(new QName(ns, "jsonFieldRT")).field(jsonFT.getId(), false).create();
+        typeManager.recordTypeBuilder().name(new QName(ns, "jsonFieldRT")).field(jsonFT.getId(), false).create();
 
         rvtRecordIds = new ArrayList<RecordId>();
         jsonRecordIds = new ArrayList<RecordId>();

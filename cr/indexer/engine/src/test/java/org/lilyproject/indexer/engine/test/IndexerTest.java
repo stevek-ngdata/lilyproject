@@ -1622,7 +1622,7 @@ public class IndexerTest {
         FieldType recordListField = typeManager.createFieldType(typeManager.getValueType("LIST<RECORD>"),
                 new QName(NS, "cf_recordlist"), Scope.NON_VERSIONED);
 
-        RecordType cfRecordType = typeManager.rtBuilder()
+        RecordType cfRecordType = typeManager.recordTypeBuilder()
                 .name(new QName(NS, "ComplexFieldsRecordType"))
                 .field(nestedListsField.getId(), false)
                 .field(recordField.getId(), false)
@@ -1718,7 +1718,7 @@ public class IndexerTest {
         FieldType recordListField = typeManager.createFieldType(typeManager.getValueType("LIST<RECORD>"),
                 new QName(NS, "recordlist"), Scope.NON_VERSIONED);
 
-        RecordType recordType = typeManager.rtBuilder()
+        RecordType recordType = typeManager.recordTypeBuilder()
                 .name(new QName(NS, "RecordType"))
                 .field(linkField.getId(), false)
                 .field(recordField.getId(), false)

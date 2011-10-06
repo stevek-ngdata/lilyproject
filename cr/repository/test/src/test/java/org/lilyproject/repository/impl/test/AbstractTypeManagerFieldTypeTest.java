@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import java.util.UUID;
 
+import junit.framework.Assert;
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.SchemaIdImpl;
@@ -145,6 +146,7 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         } catch (FieldTypeUpdateException e) {
         }
     }
+
     @Test
     public void testCreateOrUpdate() throws Exception {
         String NS = "testCreateOrUpdateFieldType";
@@ -238,4 +240,48 @@ public abstract class AbstractTypeManagerFieldTypeTest {
         assertEquals(typeManager.getValueType("STRING"), fieldType.getValueType());
     }
 
+    @Test
+    public void testFieldTypeBuilder() throws Exception {
+        String NS = "testFieldTypeBuilder";
+
+        FieldType fieldType = typeManager
+                .fieldTypeBuilder()
+                .name(NS, "field1")
+                .create();
+
+        // Verify setting of defaults
+        assertEquals(Scope.NON_VERSIONED, fieldType.getScope());
+        assertEquals(typeManager.getValueType("STRING"), fieldType.getValueType());
+
+        // Supplying ID only should be enough for createOrUpdate to return the stored state
+        fieldType = typeManager
+                .fieldTypeBuilder()
+                .id(fieldType.getId())
+                .createOrUpdate();
+
+        assertEquals(new QName(NS, "field1"), fieldType.getName());
+        assertEquals(Scope.NON_VERSIONED, fieldType.getScope());
+        assertEquals(typeManager.getValueType("STRING"), fieldType.getValueType());
+
+        fieldType = typeManager
+                .fieldTypeBuilder()
+                .name(NS, "field2")
+                .type("LIST<STRING>")
+                .scope(Scope.VERSIONED)
+                .createOrUpdate();
+
+        assertEquals(Scope.VERSIONED, fieldType.getScope());
+        assertEquals(typeManager.getValueType("LIST<STRING>"), fieldType.getValueType());
+
+        try {
+            typeManager
+                    .fieldTypeBuilder()
+                    .id(new SchemaIdImpl(UUID.randomUUID()))
+                    .name(NS, "field3")
+                    .update();
+            fail("expected exception");
+        } catch (FieldTypeNotFoundException e) {
+            // expected
+        }
+    }
 }
