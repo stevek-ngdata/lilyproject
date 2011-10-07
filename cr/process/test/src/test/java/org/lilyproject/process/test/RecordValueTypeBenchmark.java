@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.lilyservertestfw.test;
+package org.lilyproject.process.test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +22,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.MappingJsonFactory;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.*;
@@ -69,13 +70,23 @@ public class RecordValueTypeBenchmark {
         benchmark.stop();
     }
 
+    @Test
+    public void testBenchmark() throws Exception {
+        RecordValueTypeBenchmark benchmark = new RecordValueTypeBenchmark();
+        benchmark.initialize(new String[] { "f=200" });
+
+        benchmark.testRecordValueTypePerformance();
+
+        benchmark.stop();
+    }
+
     private void initialize(String[] args) throws Exception {
     	for (String arg : args) {
 			if (arg.startsWith("f=")) {
 				nrOfFields = Integer.valueOf(arg.substring(2));
 			}
 			if (arg.startsWith("r=")) {
-				nrOfFields = Integer.valueOf(arg.substring(2));
+                nrOfRecords = Integer.valueOf(arg.substring(2));
 			}
 			if (arg.startsWith("t=")) {
 				type = Type.valueOf(arg.substring(2));
@@ -110,7 +121,8 @@ public class RecordValueTypeBenchmark {
     }
     
     private void testRecordValueTypePerformance() throws Exception {
-    	System.out.println("Starting benchmark");
+        System.out.println("===> Starting benchmark with settings: fields=" + nrOfFields + ", records=" + nrOfRecords
+                + ", times=" + nrOfTimes + ", type=" + type.toString());
         
         ns = "testRecordValueTypePerformance";
         QName rvtRTName = new QName(ns, "rvtRT");
@@ -118,18 +130,21 @@ public class RecordValueTypeBenchmark {
         // Create field types and record types for the records containing complex types
         RecordTypeBuilder rtBuilder = typeManager.recordTypeBuilder().name(rvtRTName);
         for (int i = 0; i < nrOfFields; i++) {
-            FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns,"stringField"+i), Scope.NON_VERSIONED));
+            FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager
+                    .getValueType("STRING"), new QName(ns, "stringField" + i), Scope.NON_VERSIONED));
             rtBuilder.field(fieldType.getId(), false);
         }
         rtBuilder.create();
         
         ValueType rvt = typeManager.getValueType("RECORD<"+rvtRTName.toString()+">");
         
-        FieldType rvtFT = typeManager.createFieldType(typeManager.newFieldType(rvt, new QName(ns, "rvtField"), Scope.NON_VERSIONED));
+        FieldType rvtFT = typeManager.createFieldType(typeManager.newFieldType(rvt, new QName(ns, "rvtField"),
+                Scope.NON_VERSIONED));
         typeManager.recordTypeBuilder().name(new QName(ns, "rvtFieldRT")).field(rvtFT.getId(), false).create();
         
         // Create field types and record types for the records containing serialized json
-        FieldType jsonFT = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "jsonField"), Scope.NON_VERSIONED));
+        FieldType jsonFT = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
+                new QName(ns, "jsonField"), Scope.NON_VERSIONED));
         typeManager.recordTypeBuilder().name(new QName(ns, "jsonFieldRT")).field(jsonFT.getId(), false).create();
 
         rvtRecordIds = new ArrayList<RecordId>();
@@ -164,7 +179,7 @@ public class RecordValueTypeBenchmark {
 		default:
 			break;
 		}
-        
+        System.out.println("===> End benchmark");
     }
     
     private void runMixed() throws Exception {
@@ -210,8 +225,10 @@ public class RecordValueTypeBenchmark {
         long jsonTotal = jsonBuild + jsonCreate + jsonRead + jsonReadValues;
         long jsonAvg = jsonTotal / nrOfRecords;
         
-        System.out.println("RVT: total: " + rvtTotal + " avg: " + rvtAvg + " build: " + rvtBuild + " create: " + rvtCreate + " read: " + rvtRead + " readValues: " + rvtReadValues);
-        System.out.println("JSON: total: " + jsonTotal + " avg: " + jsonAvg + " build: " + jsonBuild + " create: " + jsonCreate + " read: " + jsonRead + " readValues: " + jsonReadValues);
+        System.out.println("===> RVT: total: " + rvtTotal + " avg: " + rvtAvg + " build: " + rvtBuild + " create: "
+                + rvtCreate + " read: " + rvtRead + " readValues: " + rvtReadValues);
+        System.out.println("===> JSON: total: " + jsonTotal + " avg: " + jsonAvg + " build: " + jsonBuild + " create: "
+                + jsonCreate + " read: " + jsonRead + " readValues: " + jsonReadValues);
         
 //      assertTrue("Complex types encoding is more than 10% slower than json encoding", rvtTotal < (jsonTotal + (jsonTotal / 10)));
 
