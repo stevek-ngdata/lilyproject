@@ -38,15 +38,13 @@ import org.lilyproject.util.io.Closer;
 public class RemoteRepository extends BaseRepository {
     private AvroLily lilyProxy;
     private final AvroConverter converter;
-    private IdGenerator idGenerator;
     private Transceiver client;
 
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
             IdGenerator idGenerator, BlobManager blobManager) throws IOException {
-        super(typeManager, blobManager);
+        super(typeManager, blobManager, idGenerator);
 
         this.converter = converter;
-        this.idGenerator = idGenerator;
 
         //client = new HttpTransceiver(new URL("http://" + address.getHostName() + ":" + address.getPort() + "/"));
         client = NettyTransceiverFactory.create(address);
@@ -81,7 +79,7 @@ public class RemoteRepository extends BaseRepository {
     public Record delete(RecordId recordId, List<MutationCondition> conditions)
             throws RepositoryException, InterruptedException {
         try {
-            AvroRecord record = lilyProxy.delete(converter.convert(recordId), converter.convert(conditions));
+            AvroRecord record = lilyProxy.delete(converter.convert(recordId), converter.convert(null, conditions));
             return record == null ? null : converter.convert(record);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
@@ -244,7 +242,7 @@ public class RemoteRepository extends BaseRepository {
             List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
         try {
             return converter.convert(lilyProxy.update(converter.convert(record), updateVersion, useLatestRecordType,
-                    converter.convert(conditions)));
+                    converter.convert(record, conditions)));
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {

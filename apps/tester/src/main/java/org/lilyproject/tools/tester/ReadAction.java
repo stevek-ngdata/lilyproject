@@ -9,7 +9,7 @@ import javax.naming.OperationNotSupportedException;
 
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
+import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.util.json.JsonUtil;
 
 public class ReadAction extends AbstractTestAction implements TestAction {
@@ -65,8 +65,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             QName fieldName = entry.getKey();
             FieldType fieldType = fieldTypes.get(fieldName);
             ValueType valueType = fieldType.getValueType();
-            PrimitiveValueType primitiveValueType = valueType.getPrimitive();
-            if (primitiveValueType instanceof BlobValueType) {
+            if (valueType.getDeepestValueType() instanceof BlobValueType) {
                 if (valueType.isMultiValue()) {
                     List<Object> multivalues = (List<Object>)(entry.getValue());
                     int multivalueIndex = randomIndex(multivalues.size());

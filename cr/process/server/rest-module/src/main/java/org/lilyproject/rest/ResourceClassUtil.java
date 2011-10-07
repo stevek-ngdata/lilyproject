@@ -15,16 +15,16 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.tools.import_.json.WriteOptions;
-
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.*;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.tools.import_.json.WriteOptions;
 
 public class ResourceClassUtil {
     public static QName parseQName(String name, MultivaluedMap<String, String> queryParams) {
@@ -73,6 +73,25 @@ public class ResourceClassUtil {
             throw new ResourceException("Request parameter '" + name + "' does not contain an integer: '" + value +
                     "'.", BAD_REQUEST.getStatusCode());
         }
+    }
+
+    public static int[] getIntegerArrayParam(UriInfo uriInfo, String name, int[] defaultValue) {
+        String value = uriInfo.getQueryParameters().getFirst(name);
+        if (value == null) {
+            return defaultValue;
+        }
+        String[] values = value.split(",");
+        int[] integers = new int[values.length];
+        try {
+            for (int i = 0; i < values.length; i++) {
+                integers[i] = Integer.parseInt(values[i]);
+            }
+        } catch (NumberFormatException e) {
+            throw new ResourceException("Request parameter '" + name
+                    + "' does not contain a comma separated list of integers: '" + value + "'.",
+                    BAD_REQUEST.getStatusCode());
+        }
+        return integers;
     }
 
     public static WriteOptions getWriteOptions(UriInfo uriInfo) {

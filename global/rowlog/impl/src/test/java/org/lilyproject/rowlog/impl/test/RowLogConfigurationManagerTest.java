@@ -49,7 +49,7 @@ public class RowLogConfigurationManagerTest {
         TestHelper.setupLogging();
         HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
-        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
+        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 120000);
     }
 
     @AfterClass
@@ -120,6 +120,8 @@ public class RowLogConfigurationManagerTest {
         // RowLogId2 was not updated nor removed
         callBack2.expect(rowLogConfig2);
         callBack2.validate();
+
+        rowLogConfigurationManager.shutdown();
     }
     
     private class RowLogCallBack implements RowLogObserver {

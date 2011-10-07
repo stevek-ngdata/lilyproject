@@ -19,6 +19,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.*;
+import static org.lilyproject.repository.api.Scope.VERSIONED;
 
 import java.util.Collection;
 import java.util.Map;
@@ -36,9 +37,9 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     private static FieldType fieldType3;
 
     protected static void setupFieldTypes() throws Exception {
-        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName("ns1", "field1"), Scope.NON_VERSIONED));
-        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(null, "field2"), Scope.VERSIONED));
-        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName("ns1", "field3"), Scope.VERSIONED_MUTABLE));
+        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("ns1", "field1"), Scope.NON_VERSIONED));
+        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName(null, "field2"), Scope.VERSIONED));
+        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"), new QName("ns1", "field3"), Scope.VERSIONED_MUTABLE));
     }
 
     @Test
@@ -320,7 +321,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     
     @Test
     public void testGetFieldTypes() throws Exception {
-        FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName("NS", "getFieldTypes"), Scope.NON_VERSIONED));
+        FieldType fieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("NS", "getFieldTypes"), Scope.NON_VERSIONED));
         Collection<FieldType> fieldTypes = typeManager.getFieldTypes();
         assertTrue(fieldTypes.contains(fieldType));
     }
@@ -361,12 +362,39 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     }
     
     @Test
-    public void testRecordTypeBuilder() throws Exception {
-        RecordTypeBuilder builder = typeManager.rtBuilder();
+    public void testCreateOrUpdate() throws Exception {
+        String NS = "testCreateOrUpdateRecordType";
+
+        FieldType field1 = typeManager.createFieldType("STRING", new QName(NS, "field1"), Scope.NON_VERSIONED);
+        FieldType field2 = typeManager.createFieldType("STRING", new QName(NS, "field2"), Scope.NON_VERSIONED);
+        FieldType field3 = typeManager.createFieldType("STRING", new QName(NS, "field3"), Scope.NON_VERSIONED);
+
+        RecordType recordType = typeManager.newRecordType(new QName(NS, "type1"));
+        recordType.addFieldTypeEntry(field1.getId(), false);
+        recordType.addFieldTypeEntry(field2.getId(), false);
+
+        recordType = typeManager.createOrUpdateRecordType(recordType);
+        assertNotNull(recordType.getId());
+
+        // Without changing anything, do an update
+        RecordType updatedRecordType = typeManager.createOrUpdateRecordType(recordType);
+        assertEquals(recordType, updatedRecordType);
+
+        // Remove the id from the record type and do a change
+        recordType.setId(null);
+        recordType.addFieldTypeEntry(field3.getId(), false);
+        typeManager.createOrUpdateRecordType(recordType);
+        recordType = typeManager.getRecordTypeByName(new QName(NS, "type1"), null);
+        assertEquals(3, recordType.getFieldTypeEntries().size());
+    }
+
+    @Test
+    public void testRecordTypeBuilderBasics() throws Exception {
+        RecordTypeBuilder builder = typeManager.recordTypeBuilder();
         try {
             builder.create();
-            fail("TypeException expected since name of recordType is not specified");
-        } catch (TypeException expected) {
+            fail("Exception expected since name of recordType is not specified");
+        } catch (Exception expected) {
         }
         QName rtName = new QName("builderNS", "builderName");
         builder.name(rtName);
@@ -386,5 +414,163 @@ public abstract class AbstractTypeManagerRecordTypeTest {
         assertEquals(recordType, readRecordType);
         assertEquals(Long.valueOf(2), readRecordType.getVersion());
         assertNull(readRecordType.getFieldTypeEntry(fieldType1.getId()));
+    }
+
+    @Test
+    public void testRecordTypeBuilderFieldsAndMixins() throws Exception {
+        String NS = "testRecordTypeBuilderFieldsAndMixins";
+
+        //
+        // Create some field types
+        //
+        FieldType field1 = typeManager.createFieldType("STRING", new QName(NS, "field1"), VERSIONED);
+        FieldType field2 = typeManager.createFieldType("STRING", new QName(NS, "field2"), VERSIONED);
+        FieldType field3 = typeManager.createFieldType("STRING", new QName(NS, "field3"), VERSIONED);
+        FieldType field4 = typeManager.createFieldType("STRING", new QName(NS, "field4"), VERSIONED);
+        FieldType field5 = typeManager.createFieldType("STRING", new QName(NS, "field5"), VERSIONED);
+
+        //
+        // Create some mixins
+        //
+        FieldType field21 = typeManager.createFieldType("STRING", new QName(NS, "field21"), VERSIONED);
+        FieldType field22 = typeManager.createFieldType("STRING", new QName(NS, "field22"), VERSIONED);
+        FieldType field23 = typeManager.createFieldType("STRING", new QName(NS, "field23"), VERSIONED);
+        FieldType field24 = typeManager.createFieldType("STRING", new QName(NS, "field24"), VERSIONED);
+        FieldType field25 = typeManager.createFieldType("STRING", new QName(NS, "field25"), VERSIONED);
+        FieldType field26 = typeManager.createFieldType("STRING", new QName(NS, "field26"), VERSIONED);
+        FieldType field27 = typeManager.createFieldType("STRING", new QName(NS, "field27"), VERSIONED);
+        FieldType field28 = typeManager.createFieldType("STRING", new QName(NS, "field28"), VERSIONED);
+        FieldType field29 = typeManager.createFieldType("STRING", new QName(NS, "field29"), VERSIONED);
+
+        RecordType mixinType1 = typeManager.recordTypeBuilder().name(NS, "mixin1").fieldEntry().use(field21).add().create();
+        RecordType mixinType2 = typeManager.recordTypeBuilder().name(NS, "mixin2").fieldEntry().use(field22).add().create();
+        RecordType mixinType3 = typeManager.recordTypeBuilder().name(NS, "mixin3").fieldEntry().use(field23).add().create();
+        RecordType mixinType4 = typeManager.recordTypeBuilder().name(NS, "mixin4").fieldEntry().use(field24).add().create();
+        RecordType mixinType5 = typeManager.recordTypeBuilder().name(NS, "mixin5").fieldEntry().use(field25).add().create();
+        RecordType mixinType6 = typeManager.recordTypeBuilder().name(NS, "mixin6").fieldEntry().use(field26).add().create();
+        RecordType mixinType7 = typeManager.recordTypeBuilder().name(NS, "mixin7").fieldEntry().use(field27).add().create();
+        // give mixin7 two more versions
+        mixinType7.addFieldTypeEntry(field28.getId(), false);
+        mixinType7 = typeManager.updateRecordType(mixinType7);
+        mixinType7.addFieldTypeEntry(field29.getId(), false);
+        mixinType7 = typeManager.updateRecordType(mixinType7);
+
+        RecordType recordType = typeManager
+                .recordTypeBuilder()
+                .defaultNamespace(NS)
+                .name("recordType1")
+
+                /* Adding previously defined fields */
+                /* By ID */
+                .fieldEntry().id(field1.getId()).add()
+                /* By object + test mandatory flag */
+                .fieldEntry().use(field2).mandatory().add()
+                /* By non-qualified name */
+                .fieldEntry().name("field3").add()
+                /* By qualified name */
+                .fieldEntry().name(new QName(NS, "field4")).add()
+                /* By indirect qualified name*/
+                .fieldEntry().name(NS, "field5").add()
+
+                /* Adding newly created fields */
+                /* Using default default scope */
+                .fieldEntry().defineField().name("field10").type("LIST<STRING>").create().add()
+                /* Using default type (STRING) */
+                .fieldEntry().defineField().name("field11").create().add()
+                /* Using QName */
+                .fieldEntry().defineField().name(new QName(NS, "field12")).create().add()
+                /* Using explicit scope */
+                .fieldEntry().defineField().name("field13").type("LONG").scope(VERSIONED).create().add()
+                /* Using different default scope */
+                .defaultScope(Scope.VERSIONED)
+                .fieldEntry().defineField().name("field14").create().add()
+                /* Using indirect qualified name*/
+                .fieldEntry().defineField().name(NS, "field15").create().add()
+
+                /* Adding mixins */
+                .mixin().id(mixinType1.getId()).add()
+                .mixin().name("mixin2").add()
+                .mixin().name(new QName(NS, "mixin3")).add()
+                .mixin().name(NS, "mixin4").add()
+                .mixin().use(mixinType5).add()
+                .mixin().name(NS, "mixin7").version(2L).add()
+
+                .create();
+
+        //
+        // Global checks
+        //
+        assertEquals(new QName(NS, "recordType1"), recordType.getName());
+
+        //
+        // Verify fields
+        //
+        assertEquals(11, recordType.getFieldTypeEntries().size());
+
+        assertFalse(recordType.getFieldTypeEntry(field1.getId()).isMandatory());
+        assertTrue(recordType.getFieldTypeEntry(field2.getId()).isMandatory());
+        assertFalse(recordType.getFieldTypeEntry(field3.getId()).isMandatory());
+
+        // Verify the inline created fields
+        FieldType field10 = typeManager.getFieldTypeByName(new QName(NS, "field10"));
+        assertEquals("LIST<STRING>", field10.getValueType().getName());
+        assertEquals(Scope.NON_VERSIONED, field10.getScope());
+        assertNotNull(recordType.getFieldTypeEntry(field10.getId()));
+
+        FieldType field11 = typeManager.getFieldTypeByName(new QName(NS, "field11"));
+        assertEquals("STRING", field11.getValueType().getName());
+        assertEquals(Scope.NON_VERSIONED, field11.getScope());
+        assertNotNull(recordType.getFieldTypeEntry(field11.getId()));
+
+        FieldType field13 = typeManager.getFieldTypeByName(new QName(NS, "field13"));
+        assertEquals(Scope.VERSIONED, field13.getScope());
+
+        FieldType field14 = typeManager.getFieldTypeByName(new QName(NS, "field14"));
+        assertEquals(Scope.VERSIONED, field14.getScope());
+
+        //
+        // Verify mixins
+        //
+        Map<SchemaId, Long> mixins = recordType.getMixins();
+        assertEquals(6, mixins.size());
+        assertTrue(mixins.containsKey(mixinType1.getId()));
+        assertTrue(mixins.containsKey(mixinType2.getId()));
+        assertTrue(mixins.containsKey(mixinType3.getId()));
+        assertTrue(mixins.containsKey(mixinType4.getId()));
+        assertTrue(mixins.containsKey(mixinType5.getId()));
+        assertFalse(mixins.containsKey(mixinType6.getId()));
+        assertTrue(mixins.containsKey(mixinType7.getId()));
+
+        assertEquals(new Long(1), mixins.get(mixinType1.getId()));
+        assertEquals(new Long(2), mixins.get(mixinType7.getId()));
+    }
+
+    @Test
+    public void testRecordTypeBuilderCreateOrUpdate() throws Exception {
+        String NS = "testRecordTypeBuilderCreateOrUpdate";
+
+        RecordType recordType = null;
+        for (int i = 0; i < 3; i++) {
+            recordType = typeManager
+                    .recordTypeBuilder()
+                    .defaultNamespace(NS)
+                    .name("recordType1")
+                    .fieldEntry().defineField().name("field1").createOrUpdate().add()
+                    .fieldEntry().defineField().name("field2").createOrUpdate().add()
+                    .createOrUpdate();
+        }
+
+        assertEquals(new Long(1L), recordType.getVersion());
+
+        recordType = typeManager
+                .recordTypeBuilder()
+                .defaultNamespace(NS)
+                .name("recordType1")
+                .fieldEntry().defineField().name("field1").createOrUpdate().add()
+                .fieldEntry().defineField().name("field2").createOrUpdate().add()
+                .fieldEntry().defineField().name("field3").createOrUpdate().add()
+                .createOrUpdate();
+
+        assertEquals(new Long(2L), recordType.getVersion());
     }
 }

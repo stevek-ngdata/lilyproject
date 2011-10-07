@@ -15,10 +15,9 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
@@ -28,7 +27,14 @@ public class RecordTypeImpl implements RecordType {
     private QName name;
     private Long version;
     private Map<SchemaId, Long> mixins = new HashMap<SchemaId, Long>();
-    private Map<SchemaId, FieldTypeEntry> fieldTypeEntries = new HashMap<SchemaId, FieldTypeEntry>();
+    private Map<SchemaId, FieldTypeEntry> fieldTypeEntries;
+    private static final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
+    private static final Comparator<SchemaId> comparator = new Comparator<SchemaId>() {
+        @Override
+        public int compare(SchemaId schemaId1, SchemaId schemaId2) {
+            return byteArrayComparator.compare(schemaId1.getBytes(), schemaId2.getBytes());
+        }
+    };
 
     /**
      * This constructor should not be called directly.
@@ -37,6 +43,9 @@ public class RecordTypeImpl implements RecordType {
     public RecordTypeImpl(SchemaId id, QName name) {
         this.id = id;
         this.name = name;
+        // Sort the fieldTypeEntries at creation time so we don't have to sort them
+        // each time they are requested.
+        fieldTypeEntries = new TreeMap<SchemaId, FieldTypeEntry>(comparator);
     }
     
     public void setId(SchemaId id) {

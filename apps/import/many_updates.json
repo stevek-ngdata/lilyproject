@@ -12,22 +12,22 @@
   fieldTypes: [
     {
       name: "s$stringfield1",
-      valueType: { "primitive": "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "s$stringfield2",
-      valueType: { "primitive": "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "s$stringfield3",
-      valueType: { "primitive": "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
       name: "s$stringfield4",
-      valueType: { "primitive": "STRING" },
+      valueType: "STRING",
       scope: "non_versioned"
     }
   ],

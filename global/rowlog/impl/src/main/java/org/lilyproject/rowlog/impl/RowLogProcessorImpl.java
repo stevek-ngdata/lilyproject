@@ -68,12 +68,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     public RowLog getRowLog() {
         return rowLog;
     }
-
-    @Override
-    protected synchronized void finalize() throws Throwable {
-        stop();
-        super.finalize();
-    }
     
     public synchronized void start() throws InterruptedException {
         if (stop) {

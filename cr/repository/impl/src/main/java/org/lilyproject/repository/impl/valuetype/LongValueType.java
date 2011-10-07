@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
+
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class LongValueType extends AbstractValueType  implements ValueType {
 
-public class LongValueType implements PrimitiveValueType {
-
-    private final String NAME = "LONG";
+    public final static String NAME = "LONG";
 
     private static final Comparator<Long> COMPARATOR = new Comparator<Long>() {
         @Override
@@ -32,15 +35,20 @@ public class LongValueType implements PrimitiveValueType {
         }
     };
 
-    public String getName() {
+    public String getBaseName() {
         return NAME;
     }
+    
+    public ValueType getDeepestValueType() {
+        return this;
+    }
 
+    @SuppressWarnings("unchecked")
     public Long read(DataInput dataInput) {
         return dataInput.readLong();
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeLong((Long)value);
     }
 
@@ -57,7 +65,7 @@ public class LongValueType implements PrimitiveValueType {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+        result = prime * result + NAME.hashCode();
         return result;
     }
 
@@ -69,12 +77,22 @@ public class LongValueType implements PrimitiveValueType {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        LongValueType other = (LongValueType) obj;
-        if (NAME == null) {
-            if (other.NAME != null)
-                return false;
-        } else if (!NAME.equals(other.NAME))
-            return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new LongValueTypeFactory();
+    }
+    
+    public static class LongValueTypeFactory implements ValueTypeFactory {
+        private static LongValueType instance = new LongValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
     }
 }

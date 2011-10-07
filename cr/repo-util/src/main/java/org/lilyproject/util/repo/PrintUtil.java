@@ -105,7 +105,24 @@ public class PrintUtil {
     private static void printFields(Map<QName, Object> fields, List<String> namespaces, PrintStream out) {
         for (Map.Entry<QName, Object> field : fields.entrySet()) {
             int nsNr = namespaces.indexOf(field.getKey().getNamespace()) + 1;
-            out.println("  n" + nsNr + ":" + field.getKey().getName() + " = " + field.getValue());
+            if (field.getValue() instanceof List) {
+                out.println("  n" + nsNr + ":" + field.getKey().getName() + " = ");
+                printListValue((List)field.getValue(), 4, out);
+            } else {
+                out.println("  n" + nsNr + ":" + field.getKey().getName() + " = " + field.getValue());
+            }
+        }
+    }
+
+    private static void printListValue(List values, int indent, PrintStream out) {
+        for (int i = 0; i < values.size(); i++) {
+            Object value = values.get(i);
+            if (value instanceof List) {
+                println(out, indent, "[" + i + "]");
+                printListValue((List)value, indent + 2, out);
+            } else {
+                println(out, indent, "[" + i + "] " + value);
+            }
         }
     }
 
@@ -201,9 +218,11 @@ public class PrintUtil {
         println(out, indent, "ID = " + fieldType.getId());
         println(out, indent, "Name = {" + fieldType.getName().getNamespace() + "}" + fieldType.getName().getName());
         println(out, indent, "Mandatory = " + fieldTypeEntry.isMandatory());
-        println(out, indent, "Multi-value = " + fieldType.getValueType().isMultiValue());
-        println(out, indent, "Hierarchical = " + fieldType.getValueType().isHierarchical());
-        println(out, indent, "Primitive type = " + fieldType.getValueType().getPrimitive().getName());
+        try {
+            println(out, indent, "ValueType = " + fieldType.getValueType().getName());
+        } catch (Throwable t) {
+            // value type failed to load
+        }
     }
 
     private static void println(PrintStream out, int indent, String text) {

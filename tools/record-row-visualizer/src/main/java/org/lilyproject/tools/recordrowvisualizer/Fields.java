@@ -16,7 +16,7 @@ public class Fields {
 
     Object DELETED = new Object();
 
-    public Fields(NavigableMap<byte[], NavigableMap<Long,byte[]>> cf, TypeManager typeMgr, Scope scope) throws Exception {
+    public Fields(NavigableMap<byte[], NavigableMap<Long,byte[]>> cf, TypeManager typeMgr, Repository repository, Scope scope) throws Exception {
         // The fields are rotated so that the version is the primary point of access.
         // Also, field values are decoded, etc. 
         for (Map.Entry<byte[], NavigableMap<Long,byte[]>> entry : cf.entrySet()) {
@@ -41,7 +41,7 @@ public class Fields {
                         if (EncodingUtil.isDeletedField(value)) {
                             decodedValue = DELETED;
                         } else {
-                            decodedValue = fieldType.getValueType().read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
+                            decodedValue = fieldType.getValueType().read(EncodingUtil.stripPrefix(value));
                         }
         
                         columns.put(fieldId, decodedValue);

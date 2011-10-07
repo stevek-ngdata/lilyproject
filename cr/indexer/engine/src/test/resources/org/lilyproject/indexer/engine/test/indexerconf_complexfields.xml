@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<indexer xmlns:ns="org.lilyproject.indexer.test">
+
+  <records>
+    <record matchNamespace="ns" matchName="ComplexFieldsRecordType" matchVariant="*" vtags="last"/>
+  </records>
+
+  <fields>
+    <field name="cf_nestedlists" value="ns:cf_nestedlists"/>
+
+    <field name="cf_record" value="ns:cf_record"/>
+
+    <field name="cf_recordlist" value="ns:cf_recordlist"/>
+
+    <field name="cf_record_field1" value="ns:cf_record=>ns:nv_field1"/>
+
+    <field name="cf_recordlist_field1" value="ns:cf_recordlist=>ns:nv_field1"/>
+  </fields>
+
+</indexer>

@@ -22,6 +22,7 @@ import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -117,7 +118,7 @@ public class RepositorySetup {
 
         repositorySetup = true;
     }
-
+    
     private BlobStoreAccessFactory createBlobAccess() throws Exception {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(hbaseProxy.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(hadoopConf);

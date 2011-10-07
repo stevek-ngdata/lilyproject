@@ -15,7 +15,7 @@
  */
 package org.lilyproject.repository.api;
 
-import java.io.ObjectInputStream.GetField;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -179,9 +179,53 @@ public interface Record {
     ResponseStatus getResponseStatus();
 
     void setResponseStatus(ResponseStatus status);
+
+    /**
+     * Creates a clone of the record object
+     * <p>
+     * A new record object is created with the same id, version, recordTypes,
+     * fields and deleteFields.
+     * <p>
+     * Of the fields that are not of an immutable type, a deep copy is
+     * performed. This includes List, HierarchyPath, Blob and Record.
+     * <p>
+     * The response status is not copied into the new Record object.
+     * 
+     * @throws RuntimeException
+     *             when a record is nested in itself
+     */
+    Record clone() throws RuntimeException;
+
+    /**
+     * Creates a clone of the record object
+     * <p>
+     * A new record object is created with the same id, version, recordTypes,
+     * fields and deleteFields. </br> The response status is not copied into the
+     * new Record object.
+     * <p>
+     * Of the fields that are not of an immutable type, a deep copy is
+     * performed. This includes List, HierarchyPath, Blob and Record.
+     * <p>
+     * When checking if the record is nested in itself, it is also checked if
+     * the record is contained in the map of parentRecords
+     * 
+     * @param parentRecords
+     *            a map parent records of the record used to check if the record
+     *            is nested in itself or one of its parents. Note: this does an
+     *            identity (==) check on the record. The value of this map is of
+     *            no meaning and may be null.
+     * @throws RecordException
+     *             when the record is contained in the parentRecords map or if
+     *             it is nested in itself.
+     */
+    Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException;
     
-    Record clone();
-    
+    /**
+     * Shortcut method for {@link #cloneRecord(IdentityHashMap)} with
+     * parentRecords set to an empty map
+     */
+    Record cloneRecord() throws RecordException;
+
     boolean equals(Object obj);
 
     /**

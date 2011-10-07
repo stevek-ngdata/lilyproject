@@ -264,6 +264,13 @@
       <fileMode>0755</fileMode>
     </file>
     -->
+  
+  <!-- FieldType conversion tool -->
+    <file>
+      <source>${basedir}/../tools/convert-fieldtypes/target/dist-scripts/lily-convert-fieldtypes</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
   </files>
 
   <fileSets>

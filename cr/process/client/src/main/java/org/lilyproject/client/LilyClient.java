@@ -33,9 +33,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
-import org.lilyproject.repository.api.BlobManager;
-import org.lilyproject.repository.api.BlobStoreAccess;
-import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -113,7 +111,8 @@ public class LilyClient implements Closeable {
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
      * repository instances. Most of the time, you will rather use {@link #getRepository()}.
      */
-    public synchronized Repository getPlainRepository() throws IOException, NoServersException, InterruptedException, KeeperException {
+    public synchronized Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
+            KeeperException, RepositoryException {
         if (servers.size() == 0) {
             throw new NoServersException("No servers available");
         }
@@ -144,7 +143,8 @@ public class LilyClient implements Closeable {
         this.retryConf = retryConf;
     }
 
-    private void constructRepository(ServerNode server) throws IOException, InterruptedException, KeeperException {
+    private void constructRepository(ServerNode server) throws IOException, InterruptedException, KeeperException,
+            RepositoryException {
         AvroConverter remoteConverter = new AvroConverter();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
         RemoteTypeManager typeManager = new RemoteTypeManager(parseAddressAndPort(server.lilyAddressAndPort),

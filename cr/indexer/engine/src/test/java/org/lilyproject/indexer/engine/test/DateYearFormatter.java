@@ -20,34 +20,34 @@ import org.joda.time.LocalDate;
 import org.lilyproject.indexer.model.indexerconf.DefaultFormatter;
 import org.lilyproject.repository.api.ValueType;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class DateYearFormatter extends DefaultFormatter {
-    private static Set<String> types;
-    static {
-        types = new HashSet<String>();
-        types.add("DATE");
-        types.add("DATETIME");
-    }
+    private static ValueFormatter DATE_FORMATTER = new DateFormatter();
+    private static ValueFormatter DATETIME_FORMATTER = new DateTimeFormatter();
 
     @Override
-    protected String formatPrimitiveValue(Object value, ValueType valueType) {
-        String type = valueType.getPrimitive().getName();
-        if (type.equals("DATE")) {
-            LocalDate date = (LocalDate)value;
-            return String.valueOf(date.getYear());
-        } else if (type.equals("DATETIME")) {
-            DateTime dateTime = (DateTime)value;
-            return String.valueOf(dateTime.getYear());
+    protected ValueFormatter getFormatter(ValueType valueType) {
+        if (valueType.getBaseName().equals("DATE")) {
+            return DATE_FORMATTER;
+        } else if (valueType.getBaseName().equals("DATETIME")) {
+            return DATETIME_FORMATTER;
         } else {
-            throw new RuntimeException("Unexpected type: " + type);
+            return super.getFormatter(valueType);
         }
     }
 
-    @Override
-    public Set<String> getSupportedPrimitiveValueTypes() {
-        return types;
+    protected static class DateFormatter implements ValueFormatter {
+        @Override
+        public String format(Object value, ValueType valueType, FormatContext formatCtx) throws InterruptedException {
+            LocalDate date = (LocalDate)value;
+            return String.valueOf(date.getYear());
+        }
     }
 
+    protected static class DateTimeFormatter implements ValueFormatter {
+        @Override
+        public String format(Object value, ValueType valueType, FormatContext formatCtx) throws InterruptedException {
+            DateTime dateTime = (DateTime)value;
+            return String.valueOf(dateTime.getYear());
+        }
+    }
 }

@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
 
+
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.joda.time.DateTime;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class DateTimeValueType extends AbstractValueType implements ValueType {
 
-public class DateTimeValueType implements PrimitiveValueType {
-
-    private final String NAME = "DATETIME";
+    public final static String NAME = "DATETIME";
 
     private static final Comparator<DateTime> COMPARATOR = new Comparator<DateTime>() {
         @Override
@@ -34,17 +37,22 @@ public class DateTimeValueType implements PrimitiveValueType {
         }
     };
 
-    public String getName() {
+    public String getBaseName() {
         return NAME;
     }
 
+    public ValueType getDeepestValueType() {
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
     public DateTime read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return new DateTime(dataInput.readLong());
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         // Currently we only store the millis, not the chronology.
         dataOutput.writeLong(((DateTime)value).getMillis());
@@ -76,5 +84,21 @@ public class DateTimeValueType implements PrimitiveValueType {
         if (getClass() != obj.getClass())
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new DateTimeValueTypeFactory();
+    }
+    
+    public static class DateTimeValueTypeFactory implements ValueTypeFactory {
+        private static DateTimeValueType instance = new DateTimeValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
     }
 }

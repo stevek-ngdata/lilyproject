@@ -1,10 +1,8 @@
 package org.lilyproject.repository.impl;
 
-import org.lilyproject.repository.api.*;
+import java.util.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import org.lilyproject.repository.api.*;
 
 /**
  * Wrapper around Record that disallows updates.
@@ -127,6 +125,16 @@ public class UnmodifiableRecord implements Record {
     @Override
     public Record clone() {
         return delegate.clone();
+    }
+
+    @Override
+    public Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
+        return delegate.cloneRecord(parentRecords);
+    }
+
+    @Override
+    public Record cloneRecord() throws RecordException {
+        return delegate.cloneRecord();
     }
 
     @Override

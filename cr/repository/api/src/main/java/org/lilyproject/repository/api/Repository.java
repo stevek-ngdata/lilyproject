@@ -235,7 +235,7 @@ public interface Repository extends Closeable {
     Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException;
     
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List<RecordId>, QName...)} instead.
+     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
      *
      * Reads a list of records limited to a subset of the fields. Only the fields specified in the fieldNames list will be
      * included.
@@ -248,7 +248,7 @@ public interface Repository extends Closeable {
      * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
      * Instead, the returned list will not contain an entry for that requested id. 
      *
-     * @param list or recordIds to read, null is not allowed
+     * @param recordIds or recordIds to read, null is not allowed
      * @param fieldNames list of names of the fields to read or null to read all fields
      * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
      */
@@ -268,7 +268,7 @@ public interface Repository extends Closeable {
      * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
      * Instead, the returned list will not contain an entry for that requested id. 
      *
-     * @param list or recordIds to read, null is not allowed
+     * @param recordIds or recordIds to read, null is not allowed
      * @param fieldNames names of the fields to read or null to read all fields
      * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
      */
@@ -294,7 +294,8 @@ public interface Repository extends Closeable {
     Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException;
     
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(RecordId, Long, Long, QName...)} instead.
+     * @deprecated in favor of using varargs for the fieldNames. Please use
+     * {@link #readVersions(RecordId, Long, Long, QName...)} instead.
      * 
      * Reads all versions of a record between fromVersion and toVersion (both included), limited to a subset of the fields.
      * 
@@ -312,10 +313,12 @@ public interface Repository extends Closeable {
      * 
      * <p>If the given list of fields is empty, all fields will be read.
      */
-    List<Record> readVersions(RecordId recordId, Long fromversion, Long toVersion, QName... fieldNames) throws RepositoryException, InterruptedException;
+    List<Record> readVersions(RecordId recordId, Long fromversion, Long toVersion, QName... fieldNames)
+            throws RepositoryException, InterruptedException;
 
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(RecordId, List<Long>, QName...)} instead.
+     * @deprecated in favor of using varargs for the fieldNames. Please use
+     *             {@link #read(RecordId, List<Long>, QName...)} instead.
      * 
      * Reads all versions of a record listed the <code>versions</code>, limited to a subset of the fields.
      * 
@@ -340,7 +343,8 @@ public interface Repository extends Closeable {
      * @return a list of records. The list can be smaller than the number of requested versions if some requested versions
      * have a higher number than the highest existing version.
      */
-    List<Record> readVersions(RecordId recordId, List<Long> version, QName... fieldNames) throws RepositoryException, InterruptedException;
+    List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
+            throws RepositoryException, InterruptedException;
     
     /**
      * Reads a Record and also returns the mapping from QNames to IDs.
@@ -350,7 +354,8 @@ public interface Repository extends Closeable {
      * @param version version to load. Optional, can be null.
      * @param fieldIds load only the fields with these ids. optional, can be null.
      */
-    IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException;
+    IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Delete a {@link Record} from the repository.
@@ -398,8 +403,7 @@ public interface Repository extends Closeable {
      * must be written to this outputStream and the stream must be closed before
      * the blob may be stored in a {@link Record}. The method
      * {@link Blob#setValue(byte[])} will be called internally to update the
-     * blob with information that will make it possible to retrieve that data
-     * again through {@link #getInputStream(Blob)}.
+     * blob with the reference to where the blob is stored (possibly inlined).
      *
      * <p>
      * The {@link BlobStoreAccessFactory} will decide to which underlying
@@ -417,49 +421,88 @@ public interface Repository extends Closeable {
      * read the blob's data.
      *
      * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
+     * And in case of ListValueType or PathValueType fields an array of indexes.
      *
      * @param recordId the id of the record containing the blob
-     * @param fieldName the QName of the field containing the blob
      * @param version optionally a version of the record, if null the latest record version is used
-     * @param multiValueIndex optionally, the position of the blob in a multi-value field
-     * @param hierarchyIndex optionally, the position of the blob in a hierarchical field
+     * @param fieldName the QName of the field containing the blob
+     * @param indexes optionally, the position of a blob in a List or Path field,
+     *        where each index gives the position at a deeper level
 
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
      * @throws BlobException thrown when opening an InputStream on the blob fails
      */
-    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException;
+    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException;
+    
+    /**
+     * Backwards compatibility method, which accepts null arguments for the indexes.
+     *
+     * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
+     * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
+     *
+     * <p>See {@link #getBlob(RecordId, Long, QName, int...)}
+     */
+    BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException;
 
     /**
-     * Shortcut getBlob method where version, multiValueIndex and hierarchyIndex are set to null.
+     * Shortcut getBlob method where version and indexes are set to null.
      */
     BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException;
 
     /**
      * Returns an {@link InputStream} from which the binary data of a blob can be read.
-     *
-     * <p>This is a shortcut for {@link #getBlob}.getInputStream().
-     *
+     * 
+     * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
+     * And in case of ListValueType or PathValueType fields an array of indexes.
+     * 
+     * @param recordId the id of the record containing the blob
+     * @param version optionally a version of the record, if null the latest record version is used
+     * @param fieldName the QName of the field containing the blob
+     * @param indexes optionally, the position of a blob in a List or Path field,
+     *        where each index gives the position at a deeper level
+
+     * @throws BlobNotFoundException thrown when no blob can be found at the given location
+     * @throws BlobException thrown when opening an InputStream on the blob fails
      */
-    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException;
+    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException;
 
     /**
-     * Shortcut getInputStream method where version, multiValueIndex and hierarchyIndex are set to null.
+     * Backwards compatibility method, which accepts null arguments for the indexes.
+     *
+     * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
+     * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
+     *
+     * <p>See {@link #getInputStream(RecordId, Long, QName, int...)}
+     */
+    InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException;
+
+    /**
+     * Shortcut getInputStream method where version, and indexes are set to null.
      */
     InputStream getInputStream(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException;
-    
+
     /**
      * getInputStream method where the record containing the blob is given instead of its recordId.
      * This avoids an extra call on the repository to read the record.
-     * This is especially usefull for inline blobs. 
+     * This is especially useful for inline blobs.
      */
-    InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws RepositoryException, InterruptedException;
+    InputStream getInputStream(Record record, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException;
 
     /**
-     * Shortcut getInputStream method where the record is given and multivalueIndex and hierarchyIndex are set to null. 
+     * Backwards compatibility method, which accepts null arguments for the indexes.
+     *
+     * <p>Due to autoboxing, this method will also be called in preference to the varargs variant when the number
+     * of indexes is two or less. Therefore I've not marked it as deprecated, though it really is deprecated.
+     *
+     * <p>See {@link #getInputStream(Record, QName, int...)}
      */
-    InputStream getInputStream(Record record, QName fieldName) throws RepositoryException, InterruptedException;
+    InputStream getInputStream(Record record, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Get all the variants that exist for the given recordId.
@@ -472,7 +515,8 @@ public interface Repository extends Closeable {
     Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException;
 
     /**
-     * Returns a record builder object which can be used to compose a record object and create or update it on the repository.
+     * Returns a record builder object which can be used to compose a record object and create or update it on the
+     * repository.
      */
     RecordBuilder recordBuilder() throws RecordException, InterruptedException;
 }

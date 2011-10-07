@@ -1,10 +1,10 @@
 package org.lilyproject.util.repo;
 
-import org.lilyproject.repository.api.*;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 
 import java.util.*;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import org.lilyproject.repository.api.*;
 
 /**
  * This is a record with added logic/state for version tag behavior.
@@ -79,7 +79,7 @@ public class VTaggedRecord {
                 // record has no version, so no versioned fields, so no cloning necessary
                 this.nonVersionedRecord = record;
             } else {
-                IdRecord nonVersionedRecord = record.clone();
+                IdRecord nonVersionedRecord = record.cloneRecord();
                 reduceToNonVersioned(nonVersionedRecord, typeManager);
                 this.nonVersionedRecord = nonVersionedRecord;
             }

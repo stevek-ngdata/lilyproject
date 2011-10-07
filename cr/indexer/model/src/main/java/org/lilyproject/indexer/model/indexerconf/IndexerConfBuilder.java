@@ -27,12 +27,16 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import com.google.common.base.Splitter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.location.LocationAttributes;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.lilyproject.util.xml.LocalXPathExpression;
+import org.lilyproject.util.xml.XPathUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.ErrorHandler;
@@ -54,6 +58,10 @@ public class IndexerConfBuilder {
 
     private static LocalXPathExpression DYNAMIC_INDEX_FIELDS =
             new LocalXPathExpression("/indexer/dynamicFields/dynamicField");
+
+    private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
+
+    private Log log = LogFactory.getLog(getClass());
 
     private Document doc;
 
@@ -141,50 +149,18 @@ public class IndexerConfBuilder {
             String className = DocumentHelper.getAttribute(formatterEl, "class", true);
             Formatter formatter = instantiateFormatter(className);
 
-            String name = DocumentHelper.getAttribute(formatterEl, "name", false);
-            String type = DocumentHelper.getAttribute(formatterEl, "type", false);
-
-            Set<String> types;
-            if (type == null) {
-                types = formatter.getSupportedPrimitiveValueTypes();
-            } else if (type.trim().equals("*")) {
-                types = Collections.emptySet();
-            } else {
-                // Check the specified types are a subset of those supported by the formatter
-                types = new HashSet<String>();
-                Set<String> supportedTypes = formatter.getSupportedPrimitiveValueTypes();
-                List<String> specifiedTypes = parseCSV(type);
-                for (String item : specifiedTypes) {
-                    if (supportedTypes.contains(item)) {
-                        types.add(item);
-                    } else {
-                        throw new IndexerConfException("Formatter definition error: primitive value type "
-                                + item + " is not supported by formatter " + className);
-                    }
-                }
-            }
-
-            boolean singleValue = DocumentHelper.getBooleanAttribute(formatterEl, "singleValue", formatter.supportsSingleValue());
-            boolean multiValue = DocumentHelper.getBooleanAttribute(formatterEl, "multiValue", formatter.supportsMultiValue());
-            boolean nonHierarchical = DocumentHelper.getBooleanAttribute(formatterEl, "nonHierarchical", formatter.supportsNonHierarchicalValue());
-            boolean hierarchical = DocumentHelper.getBooleanAttribute(formatterEl, "hierarchical", formatter.supportsHierarchicalValue());
-
-            String message = "Formatter does not support %1$s. Class " + className + " at " + LocationAttributes.getLocation(formatterEl);
-
-            if (singleValue && !formatter.supportsSingleValue())
-                throw new IndexerConfException(String.format(message, "singleValue"));
-            if (multiValue && !formatter.supportsMultiValue())
-                throw new IndexerConfException(String.format(message, "multiValue"));
-            if (hierarchical && !formatter.supportsHierarchicalValue())
-                throw new IndexerConfException(String.format(message, "hierarchical"));
-            if (nonHierarchical && !formatter.supportsNonHierarchicalValue())
-                throw new IndexerConfException(String.format(message, "nonHierarchical"));
+            String name = DocumentHelper.getAttribute(formatterEl, "name", true);
 
             if (name != null && conf.getFormatters().hasFormatter(name)) {
                 throw new IndexerConfException("Duplicate formatter name: " + name);
             }
 
-            conf.getFormatters().addFormatter(formatter, name, types, singleValue, multiValue, nonHierarchical, hierarchical);
+            conf.getFormatters().addFormatter(formatter, name);
+        }
+
+        String defaultFormatter = XPathUtils.evalString("/indexer/formatters/@default", doc);
+        if (defaultFormatter.length() != 0) {
+            conf.getFormatters().setDefaultFormatter(defaultFormatter);
         }
     }
 
@@ -208,20 +184,6 @@ public class IndexerConfBuilder {
         }
     }
 
-    private List<String> parseCSV(String csv) {
-        String[] parts = csv.split(",");
-
-        List<String> result = new ArrayList<String>(parts.length);
-
-        for (String part : parts) {
-            part = part.trim();
-            if (part.length() > 0)
-                result.add(part);
-        }
-
-        return result;
-    }
-
     private Map<String, String> parseVariantPropertiesPattern(Element caseEl) throws Exception {
         String variant = DocumentHelper.getAttribute(caseEl, "matchVariant", false);
 
@@ -230,23 +192,19 @@ public class IndexerConfBuilder {
         if (variant == null)
             return varPropsPattern;
 
-        String[] props = variant.split(",");
-        for (String prop : props) {
-            prop = prop.trim();
-            if (prop.length() > 0) {
-                int eqPos = prop.indexOf("=");
-                if (eqPos != -1) {
-                    String propName = prop.substring(0, eqPos);
-                    String propValue = prop.substring(eqPos + 1);
-                    if (propName.equals("*")) {
-                        throw new IndexerConfException(String.format("Error in matchVariant attribute: the character '*' " +
-                                "can only be used as wildcard, not as variant dimension name, attribute = %1$s, at: %2$s",
-                                variant, LocationAttributes.getLocation(caseEl)));
-                    }
-                    varPropsPattern.put(propName, propValue);
-                } else {
-                    varPropsPattern.put(prop, null);
+        for (String prop : COMMA_SPLITTER.split(variant)) {
+            int eqPos = prop.indexOf("=");
+            if (eqPos != -1) {
+                String propName = prop.substring(0, eqPos);
+                String propValue = prop.substring(eqPos + 1);
+                if (propName.equals("*")) {
+                    throw new IndexerConfException(String.format("Error in matchVariant attribute: the character '*' " +
+                            "can only be used as wildcard, not as variant dimension name, attribute = %1$s, at: %2$s",
+                            variant, LocationAttributes.getLocation(caseEl)));
                 }
+                varPropsPattern.put(propName, propValue);
+            } else {
+                varPropsPattern.put(prop, null);
             }
         }
 
@@ -259,17 +217,13 @@ public class IndexerConfBuilder {
         if (vtagsSpec == null)
             return vtags;
 
-        String[] tags = vtagsSpec.split(",");
-        for (String tag : tags) {
-            tag = tag.trim();
-            if (tag.length() > 0) {
-                try {
-                    vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
-                } catch (FieldTypeNotFoundException e) {
-                    throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
-                } catch (RepositoryException e) {
-                    throw new IndexerConfException("error loading field type for vtag: " + tag, e);
-                }
+        for (String tag : COMMA_SPLITTER.split(vtagsSpec)) {
+            try {
+                vtags.add(typeManager.getFieldTypeByName(VersionTag.qname(tag)).getId());
+            } catch (FieldTypeNotFoundException e) {
+                throw new IndexerConfException("unknown vtag used in indexer configuration: " + tag);
+            } catch (RepositoryException e) {
+                throw new IndexerConfException("error loading field type for vtag: " + tag, e);
             }
         }
 
@@ -295,8 +249,6 @@ public class IndexerConfBuilder {
             String matchNamespaceAttr = DocumentHelper.getAttribute(fieldEl, "matchNamespace", false);
             String matchNameAttr = DocumentHelper.getAttribute(fieldEl, "matchName", false);
             String matchTypeAttr = DocumentHelper.getAttribute(fieldEl, "matchType", false);
-            Boolean matchMultiValue = DocumentHelper.getBooleanAttribute(fieldEl, "matchMultiValue", null);
-            Boolean matchHierarchical = DocumentHelper.getBooleanAttribute(fieldEl, "matchHierarchical", null);
             String matchScopeAttr = DocumentHelper.getAttribute(fieldEl, "matchScope", false);
             String nameAttr = DocumentHelper.getAttribute(fieldEl, "name", true);
 
@@ -317,23 +269,15 @@ public class IndexerConfBuilder {
                 matchName = new WildcardPattern(matchNameAttr);
             }
 
-            Set<String> matchTypes = null;
+            TypePattern matchTypes = null;
             if (matchTypeAttr != null) {
-                matchTypes = new HashSet<String>();
-                String[] types = matchTypeAttr.split(",");
-                for (String type : types) {
-                    matchTypes.add(type.toUpperCase());
-                }
-                if (matchTypes.isEmpty()) {
-                    matchTypes = null;
-                }
+                matchTypes = new TypePattern(matchTypeAttr);
             }
 
             Set<Scope> matchScopes = null;
             if (matchScopeAttr != null) {
                 matchScopes = EnumSet.noneOf(Scope.class);
-                String[] scopes = matchScopeAttr.split(",");
-                for (String scope : scopes) {
+                for (String scope : COMMA_SPLITTER.split(matchScopeAttr)) {
                     matchScopes.add(Scope.valueOf(scope));
                 }
                 if (matchScopes.isEmpty()) {
@@ -341,21 +285,30 @@ public class IndexerConfBuilder {
                 }
             }
 
+            // Be gentle to users of Lily 1.0 and warn them about attributes that are not supported anymore
+            if (DocumentHelper.getAttribute(fieldEl, "matchMultiValue", false) != null) {
+                log.warn("The attribute matchMultiValue on dynamicField is not supported anymore, it will be ignored.");
+            }
+            if (DocumentHelper.getAttribute(fieldEl, "matchHierarchical", false) != null) {
+                log.warn("The attribute matchHierarchical on dynamicField is not supported anymore, it will be ignored.");
+            }
+
             Set<String> variables = new HashSet<String>();
             variables.add("namespace");
             variables.add("name");
-            variables.add("primitiveType");
-            variables.add("primitiveTypeLC");
-            variables.add("multiValue");
-            variables.add("hierarchical");
+            variables.add("type");
+            variables.add("baseType");
+            variables.add("nestedType");
+            variables.add("nestedBaseType");
+            variables.add("deepestNestedBaseType");
             if (matchName != null && matchName.hasWildcard())
                 variables.add("nameMatch");
             if (matchNamespace != null && matchNamespace.hasWildcard())
                 variables.add("namespaceMatch");
 
             Set<String> booleanVariables = new HashSet<String>();
+            booleanVariables.add("list");
             booleanVariables.add("multiValue");
-            booleanVariables.add("hierarchical");
 
             NameTemplate name = new NameTemplate(nameAttr, variables, booleanVariables);
 
@@ -369,8 +322,8 @@ public class IndexerConfBuilder {
 
             boolean continue_ = DocumentHelper.getBooleanAttribute(fieldEl, "continue", false);
 
-            DynamicIndexField field = new DynamicIndexField(matchNamespace, matchName, matchTypes, matchMultiValue,
-                    matchHierarchical, matchScopes, name, extractContent, continue_, formatter);
+            DynamicIndexField field = new DynamicIndexField(matchNamespace, matchName, matchTypes,
+                    matchScopes, name, extractContent, continue_, formatter);
 
             conf.addDynamicIndexField(field);
         }
@@ -440,36 +393,54 @@ public class IndexerConfBuilder {
             //
             // Run over all children except the last
             //
+            boolean lastFollowIsRecord = false;
             for (int i = 0; i < derefParts.length - 1; i++) {
                 String derefPart = derefParts[i];
 
-                // A deref expression can contain 3 kinds of links:
-                //  - link stored in a link field (detected based on presence of a colon)
-                //  - link to the master variant (if it's the literal string 'master')
-                //  - link to a less-dimensioned variant (all other cases)
+                // A deref expression can navigate through 4 kinds of 'links':
+                //  - a link stored in a link field (detected based on presence of a colon)
+                //  - a nested record
+                //  - a link to the master variant (if it's the literal string 'master')
+                //  - a link to a less-dimensioned variant (all other cases)
 
-                if (derefPart.contains(":")) { // Link field
+                if (derefPart.contains(":")) { // It's a field name
                     FieldType followField = getFieldType(derefPart, fieldEl);
-                    if (!followField.getValueType().getPrimitive().getName().equals("LINK")) {
-                        throw new IndexerConfException("A non-link field is used in a dereference expression. " +
-                                "Field: '" + derefPart + "', deref expression '" + valueExpr + "' " +
-                                "at " + LocationAttributes.getLocation(fieldEl));
+
+                    String type = followField.getValueType().getBaseName();
+                    if (type.equals("LIST")) {
+                        type = followField.getValueType().getNestedValueType().getBaseName();
                     }
-                    if (followField.getValueType().isHierarchical()) {
-                        throw new IndexerConfException("A hierarchical link field is used in a dereference " +
-                                "expression. Field: '" + derefPart + "', deref expression '" + valueExpr + "' " +
-                                "at " + LocationAttributes.getLocation(fieldEl));
+
+                    if (type.equals("RECORD")) {
+                        deref.addRecordFieldFollow(followField);
+                        lastFollowIsRecord = true;
+                    } else if (type.equals("LINK")) {
+                        deref.addLinkFieldFollow(followField);
+                        lastFollowIsRecord = false;
+                    } else {
+                        throw new IndexerConfException("Dereferencing is not possible on field of type " +
+                                followField.getValueType().getName() + ". Field: '" + derefPart +
+                                "', deref expression '" + valueExpr + "' at " +
+                                LocationAttributes.getLocation(fieldEl));
                     }
-                    deref.addFieldFollow(followField);
                 } else if (derefPart.equals("master")) { // Link to master variant
+                    if (lastFollowIsRecord) {
+                        throw new IndexerConfException("In dereferencing, master cannot follow on record-type field." +
+                                " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+                    }
+                    lastFollowIsRecord = false;
                     deref.addMasterFollow();
                 } else {  // Link to less dimensioned variant
+                    if (lastFollowIsRecord) {
+                        throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
+                                " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+                    }
+                    lastFollowIsRecord = false;
+
                     // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
                     boolean validConfig = true;
                     Set<String> dimensions = new HashSet<String>();
-                    String[] ops = derefPart.split(",");
-                    for (String op : ops) {
-                        op = op.trim();
+                    for (String op : COMMA_SPLITTER.split(derefPart)) {
                         if (op.length() > 1 && op.startsWith("-")) {
                             String dimension = op.substring(1);
                             dimensions.add(dimension);
@@ -501,7 +472,7 @@ public class IndexerConfBuilder {
             value = new FieldValue(fieldType, extractContent, formatter);
         }
 
-        if (extractContent && !fieldType.getValueType().getPrimitive().getName().equals("BLOB")) {
+        if (extractContent && !fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
             throw new IndexerConfException("extractContent is used for a non-blob value at "
                     + LocationAttributes.getLocation(fieldEl));
         }

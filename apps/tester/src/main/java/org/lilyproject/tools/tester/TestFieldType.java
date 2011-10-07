@@ -46,70 +46,66 @@ public class TestFieldType {
     }
     
     public ActionResult generateValue(TestAction testAction) {
-        return generateMultiValue(testAction);
+        return generateValue(testAction, fieldType.getValueType());
     }
     
-    private ActionResult generateMultiValue(TestAction testAction) {
-        if (fieldType.getValueType().isMultiValue()) {
-            int size = (int)Math.ceil(Math.random() * 2);
-            List<Object> values = new ArrayList<Object>();
-            long duration = 0;
-            for (int i = 0; i < size; i++) {
-                ActionResult result = generateHierarchical(testAction);
-                duration += result.duration;
-                if (result.success) 
-                    values.add(result.object);
-                else return new ActionResult(false, null, duration);
-            }
-            return new ActionResult(true, values, duration);
-        } else {
-            return generateHierarchical(testAction);
+    private ActionResult generateList(TestAction testAction, ValueType valueType) {
+        int size = (int)Math.ceil(Math.random() * 2);
+        List<Object> values = new ArrayList<Object>();
+        long duration = 0;
+        for (int i = 0; i < size; i++) {
+            ActionResult result = generateValue(testAction, valueType);
+            duration += result.duration;
+            if (result.success) 
+                values.add(result.object);
+            else return new ActionResult(false, null, duration);
         }
+        return new ActionResult(true, values, duration);
     }
 
-    private ActionResult generateHierarchical(TestAction testAction) {
-        if (fieldType.getValueType().isHierarchical()) {
+    private ActionResult generatePath(TestAction testAction, ValueType valueType) {
             int size = (int)Math.ceil(Math.random() * 3);
             Object[] elements = new Object[size];
             long duration = 0;
             for (int i = 0; i < size; i++) {
-                ActionResult result = generatePrimitiveValue(testAction);
+                ActionResult result = generateValue(testAction, valueType);
                 duration += result.duration;
                 if (result.success)
                     elements[i] = result.object;
                 else return new ActionResult(false, null, duration);
             }
             return new ActionResult(true, new HierarchyPath(elements), duration);
-        } else {
-            return generatePrimitiveValue(testAction);
-        }
     }
     
-    private ActionResult generatePrimitiveValue(TestAction testAction) {
-        String primitive = fieldType.getValueType().getPrimitive().getName();
+    private ActionResult generateValue(TestAction testAction, ValueType valueType) {
+        String name = valueType.getBaseName();
 
-        if (primitive.equals("STRING")) {
+        if (name.equals("LIST")) {
+            return generateList(testAction, valueType.getNestedValueType());
+        } else if (name.equals("PATH")) {
+            return generatePath(testAction, valueType.getNestedValueType());
+        } else if (name.equals("STRING")) {
             return new ActionResult(true, generateString(), 0);
-        } else if (primitive.equals("INTEGER")) {
+        } else if (name.equals("INTEGER")) {
             return new ActionResult(true, generateInt(), 0);
-        } else if (primitive.equals("LONG")) {
+        } else if (name.equals("LONG")) {
             return new ActionResult(true, generateLong(), 0);
-        } else if (primitive.equals("BOOLEAN")) {
+        } else if (name.equals("BOOLEAN")) {
             return new ActionResult(true, generateBoolean(), 0);
-        } else if (primitive.equals("DATE")) {
+        } else if (name.equals("DATE")) {
             return new ActionResult(true, generateLocalDate(), 0);
-        } else if (primitive.equals("DATETIME")) {
+        } else if (name.equals("DATETIME")) {
             return new ActionResult(true, generateDateTime(), 0);
-        } else if (primitive.equals("BLOB")) {
+        } else if (name.equals("BLOB")) {
             return new ActionResult(true, generateBlob(), 0);
-        } else if (primitive.equals("LINK")) {
+        } else if (name.equals("LINK")) {
             try {
                 return testAction.linkFieldAction(this, null);
             } catch (OperationNotSupportedException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            throw new RuntimeException("Unsupported primitive value type: " + primitive);
+            throw new RuntimeException("Unsupported value type: " + name);
         }
     }
 

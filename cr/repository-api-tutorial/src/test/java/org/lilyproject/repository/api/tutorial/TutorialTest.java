@@ -118,7 +118,7 @@ public class TutorialTest {
     @Test
     public void createRecordType() throws Exception {
         // (1)
-        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
+        ValueType stringValueType = typeManager.getValueType("STRING");
 
         // (2)
         FieldType title = typeManager.newFieldType(stringValueType, new QName(NS, "title"), Scope.VERSIONED);
@@ -139,12 +139,12 @@ public class TutorialTest {
 
     @Test
     public void updateRecordType() throws Exception {
-        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
-        ValueType stringMvValueType = typeManager.getValueType("STRING", true, false);
-        ValueType longValueType = typeManager.getValueType("LONG", false, false);
-        ValueType dateValueType = typeManager.getValueType("DATE", false, false);
-        ValueType blobValueType = typeManager.getValueType("BLOB", false, false);
-        ValueType linkValueType = typeManager.getValueType("LINK", false, false);
+        ValueType stringValueType = typeManager.getValueType("STRING");
+        ValueType stringMvValueType = typeManager.getValueType("LIST<STRING>");
+        ValueType longValueType = typeManager.getValueType("LONG");
+        ValueType dateValueType = typeManager.getValueType("DATE");
+        ValueType blobValueType = typeManager.getValueType("BLOB");
+        ValueType linkValueType = typeManager.getValueType("LINK");
 
         FieldType description = typeManager.newFieldType(blobValueType, new QName(NS, "description"), Scope.VERSIONED);
         description = typeManager.createFieldType(description);

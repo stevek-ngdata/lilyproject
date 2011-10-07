@@ -119,7 +119,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
             if (!valueNode.isNull()) {
                 FieldType fieldType = systemFields.isSystemField(fieldName) ? systemFields.get(fieldName) :
                         repository.getTypeManager().getFieldTypeByName(fieldName);
-                value = RecordReader.INSTANCE.readValue(fieldType, valueNode, "value", repository);
+                value = RecordReader.INSTANCE.readValue(valueNode, fieldType.getValueType(), "value", namespaces, repository);
             }
 
             boolean allowMissing = JsonUtil.getBoolean(conditionNode, "allowMissing", false);

@@ -61,10 +61,4 @@ public class RowLogProcessorNotifier {
     
     public void close() {
     }
-    
-    @Override
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
 }

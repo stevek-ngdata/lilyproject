@@ -9,9 +9,7 @@ import java.util.Set;
 public class DynamicIndexField {
     private WildcardPattern namespace;
     private WildcardPattern name;
-    private Set<String> primitiveTypes;
-    private Boolean multiValue;
-    private Boolean hierarchical;
+    private TypePattern typePattern;
     private Set<Scope> scopes;
     private boolean continue_;
 
@@ -20,14 +18,11 @@ public class DynamicIndexField {
     private boolean extractContext;
     private String formatter;
 
-    public DynamicIndexField(WildcardPattern namespace, WildcardPattern name, Set<String> primitiveTypes,
-            Boolean multiValue, Boolean hierarchical, Set<Scope> scopes, NameTemplate nameTemplate,
-            boolean extractContext, boolean continue_, String formatter) {
+    public DynamicIndexField(WildcardPattern namespace, WildcardPattern name, TypePattern typePattern,
+            Set<Scope> scopes, NameTemplate nameTemplate, boolean extractContext, boolean continue_, String formatter) {
         this.namespace = namespace;
         this.name = name;
-        this.primitiveTypes = primitiveTypes;
-        this.multiValue = multiValue;
-        this.hierarchical = hierarchical;
+        this.typePattern = typePattern;
         this.scopes = scopes;
         this.nameTemplate = nameTemplate;
         this.extractContext = extractContext;
@@ -58,22 +53,8 @@ public class DynamicIndexField {
             }
         }
 
-        if (primitiveTypes != null) {
-            if (!primitiveTypes.contains(fieldType.getValueType().getPrimitive().getName())) {
-                match.match = false;
-                return match;
-            }
-        }
-
-        if (multiValue != null) {
-            if (fieldType.getValueType().isMultiValue() != multiValue) {
-                match.match = false;
-                return match;
-            }
-        }
-
-        if (hierarchical != null) {
-            if (fieldType.getValueType().isHierarchical() != hierarchical) {
+        if (typePattern != null) {
+            if (!typePattern.matches(fieldType.getValueType().getName())) {
                 match.match = false;
                 return match;
             }

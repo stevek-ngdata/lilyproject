@@ -239,14 +239,7 @@ public class BlobIncubatorMonitor {
             ValueType valueType = fieldType.getValueType();
             Get get = new Get(recordId.getBytes());
             get.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
-            byte[] valueToCompare;
-            if (valueType.isMultiValue() && valueType.isHierarchical()) {
-                valueToCompare = Bytes.toBytes(2);
-            } else if (valueType.isMultiValue() || valueType.isHierarchical()) {
-                valueToCompare = Bytes.toBytes(1);
-            } else {
-                valueToCompare = Bytes.toBytes(0);
-            }
+            byte[] valueToCompare = Bytes.toBytes(valueType.getNestingLevel());
             valueToCompare = Bytes.add(valueToCompare, blobKey);
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);

@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
+
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class StringValueType extends AbstractValueType implements ValueType {
 
-public class StringValueType implements PrimitiveValueType {
-
-    private final String NAME = "STRING";
+    public static final String NAME = "STRING";
 
     private static final Comparator<String> COMPARATOR = new Comparator<String>() {
         @Override
@@ -32,17 +35,22 @@ public class StringValueType implements PrimitiveValueType {
         }
     };
 
-    public String getName() {
+    public String getBaseName() {
         return NAME;
     }
-
+    
+    public ValueType getDeepestValueType() {
+        return this;
+    }
+    
+    @SuppressWarnings("unchecked")
     public String read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return dataInput.readUTF();
     }
     
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         dataOutput.writeUTF((String)value);
     }
@@ -60,7 +68,7 @@ public class StringValueType implements PrimitiveValueType {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+        result = prime * result + NAME.hashCode();
         return result;
     }
 
@@ -72,13 +80,22 @@ public class StringValueType implements PrimitiveValueType {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        StringValueType other = (StringValueType) obj;
-        if (NAME == null) {
-            if (other.NAME != null)
-                return false;
-        } else if (!NAME.equals(other.NAME))
-            return false;
         return true;
     }
 
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new StringValueTypeFactory();
+    }
+    
+    public static class StringValueTypeFactory implements ValueTypeFactory {
+        private static StringValueType instance = new StringValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
+    }
 }

@@ -13,27 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
+
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hbaseext.ContainsValueComparator;
-import org.lilyproject.repository.api.Blob;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.*;
 
-import java.util.Comparator;
+public class BlobValueType extends AbstractValueType implements ValueType {
+    public final static String NAME = "BLOB";
 
-public class BlobValueType implements PrimitiveValueType {
-    private final String NAME = "BLOB";
-
-    public String getName() {
+    public String getBaseName() {
         return NAME;
+    }
+    
+    public ValueType getDeepestValueType() {
+        return this;
     }
 
     /**
      * See write for the byte format.
      */
-    public Object read(DataInput dataInput) {
+    @SuppressWarnings("unchecked")
+    public Blob read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         int keyLength = dataInput.readVInt();
@@ -60,7 +65,7 @@ public class BlobValueType implements PrimitiveValueType {
      * 
      * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
      */
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         Blob blob = (Blob)value;
         byte[] key = blob.getValue();
@@ -86,5 +91,40 @@ public class BlobValueType implements PrimitiveValueType {
     @Override
     public Comparator getComparator() {
         return null;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + NAME.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new BlobValueTypeFactory();
+    }
+    
+    public static class BlobValueTypeFactory implements ValueTypeFactory {
+        private static BlobValueType instance = new BlobValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
     }
 }

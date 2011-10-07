@@ -164,20 +164,26 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException {
-        return delegate.getBlob(recordId, version, fieldName, multiValueIndex, hierarchyIndex);
+    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException {
+        return delegate.getBlob(recordId, version, fieldName, indexes);
+    }
+
+    @Override
+    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException {
+        return delegate.getBlob(recordId, version, fieldName, mvIndex, hIndex);
     }
 
     @Override
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException {
         return delegate.getBlob(recordId, fieldName);
     }
-
+    
     @Override
-    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
-            Integer hierarchyIndex) throws RepositoryException, InterruptedException {
-        return delegate.getInputStream(recordId, version, fieldName, multivalueIndex, hierarchyIndex);
+    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, int... indexes)
+            throws RepositoryException, InterruptedException {
+        return delegate.getInputStream(recordId, version, fieldName, indexes);
     }
 
     @Override
@@ -187,14 +193,21 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
-    public InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex)
+    public InputStream getInputStream(Record record, QName fieldName, int...indexes)
             throws RepositoryException, InterruptedException {
-        return delegate.getInputStream(record, fieldName, multivalueIndex, hierarchyIndex);
+        return delegate.getInputStream(record, fieldName, indexes);
     }
 
     @Override
-    public InputStream getInputStream(Record record, QName fieldName) throws RepositoryException, InterruptedException {
-        return delegate.getInputStream(record, fieldName);
+    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException {
+        return delegate.getInputStream(recordId, version, fieldName, mvIndex, hIndex);
+    }
+
+    @Override
+    public InputStream getInputStream(Record record, QName fieldName, Integer mvIndex, Integer hIndex)
+            throws RepositoryException, InterruptedException {
+        return delegate.getInputStream(record, fieldName, mvIndex, hIndex);
     }
 
     @Override

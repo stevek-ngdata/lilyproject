@@ -11,42 +11,52 @@
   fieldTypes: [
     {
       name: "sample$stringfield",
-      valueType: { "primitive": "STRING" },
+      valueType: "STRING",
       scope: "versioned"
     },
     {
-      name: "sample$multiValueString",
-      valueType: { "primitive": "STRING", multiValue: true },
+      name: "sample$listOfStrings",
+      valueType: "LIST<STRING>",
       scope: "non_versioned"
     },
     {
       name: "sample$intfield",
-      valueType: { "primitive": "INTEGER" },
+      valueType: "INTEGER",
       scope: "non_versioned"
     },
     {
       name: "sample$longfield",
-      valueType: { "primitive": "LONG" },
+      valueType: "LONG",
       scope: "non_versioned"
     },
     {
       name: "sample$booleanfield",
-      valueType: { "primitive": "BOOLEAN" },
+      valueType: "BOOLEAN",
       scope: "non_versioned"
     },
     {
       name: "sample$linkfield",
-      valueType: { "primitive": "LINK" },
+      valueType: "LINK",
       scope: "non_versioned"
     },
     {
       name: "sample$datefield",
-      valueType: { "primitive": "DATE" },
+      valueType: "DATE",
       scope: "non_versioned"
     },
     {
       name: "sample$datetimefield",
-      valueType: { "primitive": "DATETIME" },
+      valueType: "DATETIME", 
+      scope: "non_versioned"
+    },
+    {
+      name: "sample$linkwithrtfield",
+      valueType: "LINK<sample$MiscFields>",
+      scope: "non_versioned"
+    },
+    {
+      name: "sample$rtfield",
+      valueType: "RECORD<sample$MiscFields>",
       scope: "non_versioned"
     }
   ],
@@ -57,6 +67,12 @@
         {name: "sample$stringfield", mandatory: false },
         {name: "sample$intfield", mandatory: false }
       ]
+    },
+    {
+      name: "sample$RTWithRTField",
+      fields: [
+        {name: "sample$rtfield", mandatory: false }
+      ]
     }
   ],
   records: [
@@ -64,7 +80,7 @@
       type: "sample$MiscFields",
       fields: {
         "sample$stringfield": "My first document.",
-        "sample$multiValueString": ["first", "second", "third"],
+        "sample$listOfStrings": ["first", "second", "third"],
         "sample$intfield": 23,
         "sample$longfield": 242,
         "sample$datefield": "2010-07-09",
@@ -74,7 +90,7 @@
     },
     {
       type: "sample$MiscFields",
-      id: "zoo",
+      id: "USER.zoo",
       fields: {
         "sample$stringfield": "A document with a user-defined ID"
       }
@@ -83,7 +99,19 @@
       type: "sample$MiscFields",
       fields: {
         "sample$stringfield": "A document with a link field",
-        "sample$linkfield": "USER.zoo"
+        "sample$linkfield": "USER.zoo",
+        "sample$linkwithrtfield": "USER.zoo"
+      }
+    },
+    {
+      type: "sample$RTWithRTField",
+      fields: {
+        "sample$rtfield": {
+          type: "sample$MiscFields",
+          fields: {
+            "sample$stringfield": "Nested document"
+          }
+        }
       }
     }
   ]

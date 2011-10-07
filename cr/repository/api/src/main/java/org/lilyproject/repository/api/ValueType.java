@@ -15,94 +15,177 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
 
 /**
  * A value type represents the type of the value of a {@link FieldType}.
- *
- * <p>It consists of:
- * <ul>
- *  <li>A {@link PrimitiveValueType}: this is a particular kind of value like a string, long, ... It could
- *      also be a composite value, e.g. a coordinate with x and y values.
- *  <li>a multi-value flag: to indicate if the value should be multi-value, in which case the value is a
- *      java.util.List.
- *  <li>a hierarchical flag: to indicate if the value should be a hierarchical path, in which case the value is
- *      a {@link HierarchyPath}.
- * </ul>
- *
- * <p>The reason for having the separate concept of a {@link PrimitiveValueType} is so that we could have a multi-value
- * and/or hierarchical variant of any kind of value.
- *
- * <p>A field can be either multi-value or hierarchical, or both at the same time. In the last case, the value
- * is a java.util.List of {@link HierarchyPath} objects, not the other way round.
- *
- * <p>So you can have a multi-valued string, a multi-valued date, a single-valued hierarchical string path,
- * a multi-valued hierarchical string path, ...
- *
- * <p>It is the responsibility of a ValueType to convert the values to/from byte representation, as used for
- * storage in the repository. This should delegate to the PrimitiveValueType for the conversion of a single value.
- *
- * <p>It is not necessary to create value types in the repository, they simply exist for any kind of primitive
- * value type. You can get access to ValueType instances via {@link TypeManager#getValueType(String, boolean, boolean)}.
- *
+ * 
+ * <p>
+ * It represents a particular kind of value like a String, Long, ...
+ * 
+ * <p>
+ * Value types exist also to represent java.util.List (ListValueType) and
+ * {@link HierarchyPath} (PathValueType) which can contain values of another
+ * value type including ListValueType and PathValueType again thus allowing
+ * multiple levels of nesting.</br>
+ * 
+ * <p>
+ * A value type to represent a Record also exists. This record is used to
+ * represent what is also known as a complex type. It can be regarded as normal
+ * Record, but with a few restrictions:
+ * <li>It has no version</li>
+ * <li>It has one (non-versioned) record type, and all its fields must be
+ * defined in that record type</li>
+ * <li>All its fields are non-versioned</li>
+ * <li>It is stored in its entirety inside a field of the surrounding record</li>
+ * <li>Blob fields are not allowed</li>
+ * 
+ * <p>
+ * It is the responsibility of a ValueType to convert the values to/from byte
+ * representation, as used for storage in the repository.
+ * 
+ * <p>
+ * A value type should be requested from the {@link TypeManager} using the
+ * method {@link TypeManager#getValueType(String, String)}. A name (e.g.
+ * "STRING") uniquely represents the value type, and some value types can
+ * include extra information (typeParams) defining the value type. For example
+ * to define a list should contain strings. <br>
+ * See the javadoc of that method for the complete list of supported value types
+ * and the parameters needed to get an instance of them.
+ * 
  */
 public interface ValueType {
-
+ 
     /**
-     * Is this a multi-value value type.
-     */
-    boolean isMultiValue();
-    
-    /**
-     * Is this a hierarchical value type. See also {@link HierarchyPath}.
-     */
-    boolean isHierarchical();
-
-    /**
-     * Is this a primitive value type. A value type is primitive if it is not hierarchical and not multi-value, thus
-     * if its values directly correspond to the {@link #getPrimitive PrimitiveValueType}. This is a shortcut method
-     * to avoid checking the other flags individually.
-     */
-    boolean isPrimitive();
-
-    /**
-     * Decodes a byte[] to an object of the type represented by this {@link ValueType}. See {@link ValueType#getType()} 
+     * Read and decodes object of the type represented by this value type from a {@link DataInput}.
+     * 
+     * <p>The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data. 
+     * 
+     * @param dataInput the DataInput from which the valueType should read and decode its data 
      * @throws UnknownValueTypeEncodingException 
+     * @throws InterruptedException 
+     * @throws RepositoryException 
      */
-    public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException;
-    
+    <T> T read(DataInput dataInput) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
+
+    <T> T read(byte[] data) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
 
     /**
-     * Encodes an object of the type represented by this {@link ValueType} to a byte[].
+     * Encodes an object of the type represented by this value type to a
+     * {@link DataOutput}.
+     * 
+     * <p>
+     * The ValueType is itself responsible for encoding (see
+     * {@link #write(Object, DataOutput)}) and decoding data.
+     * 
+     * @param value
+     *            the object to encode and write
+     * @param dataOutput
+     *            the DataOutput on which to write the data
+     * @param parentRecords
+     *            an IdentityHashMap of parentRecords to check for self-nested
+     *            records. The value of the map is not important and may be
+     *            null.
+     * @throws RepositoryException
+     * @throws InterruptedException
      */
-    byte[] toBytes(Object value);
+    void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+            throws RepositoryException, InterruptedException;
 
     /**
-     * Gets the primitive value type.
+     * Encodes an object of the type represented by this value type to a byte[].
+     * 
+     * <p>Should only be used internally for Avro data transport.
+     * 
+     * @throws InterruptedException 
+     * @throws RepositoryException 
      */
-    PrimitiveValueType getPrimitive();
-    
+    byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
+            InterruptedException;
+
     /**
-     * Returns the Java {@link Class} object for the values of this value type.
-     *
-     * <p>For multi-value fields (including those which are hierarchical), this will be java.util.List.
-     * For single-valued hierarchical fields this is {@link HierarchyPath}. In all other cases, this is the same
-     * as {@link PrimitiveValueType#getType}.
+     * Returns the Java class for the values of this value type.
+     * 
+     * <p>
+     * For example: java.util.List
      */
     Class getType();
 
     /**
-     * Returns an encoded byte[] representing this value type.
-     */
-    byte[] toBytes();
-    
-    /**
      * Returns a set of all values contained in this value.
-     * It flattens out the aspects of multivalue and hierarchy values.
+     * <p>
+     * In case of a ListValueType or PathValueType, these are the nested values.
      */
     Set<Object> getValues(Object value);
     
+    public int hashCode();
+
     boolean equals(Object obj);
+    
+    /**
+     * A comparator that can compare the values corresponding to this value type.
+     *
+     * <p>If comparing values is not supported, null is returned.</p>
+     *
+     * <p>This method should be lightweight to call, so preferably return the same instance on each invocation.</p>
+     */
+    Comparator getComparator();
+    
+    /**
+     * @return the base name of the value type (e.g. "STRING") without any extra parameters for the type.
+     * See {@link TypeManager#getValueType(String)} for a list of all possible value types and their names.
+     */
+    String getBaseName();
+    
+    /**
+     * @return the name of the value type where the optional parameters of the type are  
+     * enclosed in "&lt;&gt;" after the simple name. For example: "LIST&lt;STRING&gt;"   
+     */
+    String getName();
+
+    /**
+     * ListValueType and PathValueType can again contain other value types.
+     * 
+     * <p>
+     * This method returns the nested value type (1 level deep) or null if it
+     * is not a ListValueType or PathValueType.
+     */
+    ValueType getNestedValueType();
+
+    /**
+     * ListValueType and PathValueType can again contain other value types.
+     * 
+     * <p>
+     * This method returns the deepest level (non List or Path) value type.
+     */
+    ValueType getDeepestValueType();
+
+    /**
+     * ListValueType and PathValueType can again contain other value types.
+     * <p>
+     * This method returns the number of nesting levels until the base value
+     * type is reached.<br/>
+     * For non List or Path value types the returned value is 1.
+     * 
+     * <p>
+     * This method is used by the Repository and BlobIncubator when checking if
+     * a blob is already used by the record.
+     */
+    int getNestingLevel();
+
+    /**
+     * @return true in case of a ListValueType, false in all other cases.
+     */
+    boolean isMultiValue();
+    
+
+    /**
+     * @return true in case of a PathValueType or if a PathValueType is nested in a ListValueType 
+     */
+    boolean isHierarchical();
 }

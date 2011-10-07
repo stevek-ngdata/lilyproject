@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
+
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class BooleanValueType extends AbstractValueType implements ValueType {
 
-public class BooleanValueType implements PrimitiveValueType {
-
-    private final String NAME = "BOOLEAN";
+    public final static String NAME = "BOOLEAN";
 
     private static final Comparator<Boolean> COMPARATOR = new Comparator<Boolean>() {
         @Override
@@ -32,15 +35,20 @@ public class BooleanValueType implements PrimitiveValueType {
         }
     };
 
-    public String getName() {
+    public String getBaseName() {
         return NAME;
     }
+    
+    public ValueType getDeepestValueType() {
+        return this;
+    }
 
+    @SuppressWarnings("unchecked")
     public Boolean read(DataInput dataInput) {
         return dataInput.readBoolean();
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeBoolean((Boolean)value);
     }
 
@@ -57,7 +65,7 @@ public class BooleanValueType implements PrimitiveValueType {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+        result = prime * result + NAME.hashCode();
         return result;
     }
 
@@ -69,12 +77,22 @@ public class BooleanValueType implements PrimitiveValueType {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        BooleanValueType other = (BooleanValueType) obj;
-        if (NAME == null) {
-            if (other.NAME != null)
-                return false;
-        } else if (!NAME.equals(other.NAME))
-            return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new BooleanValueTypeFactory();
+    }
+    
+    public static class BooleanValueTypeFactory implements ValueTypeFactory {
+        private static BooleanValueType instance = new BooleanValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
     }
 }

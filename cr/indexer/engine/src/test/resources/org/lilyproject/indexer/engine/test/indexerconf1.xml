@@ -7,14 +7,8 @@
     <record matchNamespace="ns2" matchName="LastRecordType" matchVariant="*" vtags="last"/>
   </records>
 
-  <formatters>
-    <formatter class="org.lilyproject.indexer.engine.test.IntegerHierarchyUnderscoreFormatter"/>
-
-    <!-- Default formatter: handles any kind of value. -->
-    <formatter class="org.lilyproject.indexer.model.indexerconf.DefaultFormatter"/>
-
-    <!-- The formatters below will only be used when referred to explictly by name, because the
-         above default formatter will handle all values. -->
+  <formatters default="default">
+    <formatter name="default" class="org.lilyproject.indexer.model.indexerconf.DefaultFormatter"/>
     <formatter name="year" class="org.lilyproject.indexer.engine.test.DateYearFormatter"/>
     <formatter name="firstValue" class="org.lilyproject.indexer.model.indexerconf.FirstValueFormatter"/>
   </formatters>
@@ -80,6 +74,8 @@
     <field name="v_blob" value="ns2:v_blob_field" extractContent="true"/>
 
     <field name="v_blob" value="ns2:v_blob_mv_hier_field" extractContent="true"/>
+
+    <field name="v_blob" value="ns2:v_blob_nested_field" extractContent="true"/>
 
     <!--
        | Formatters

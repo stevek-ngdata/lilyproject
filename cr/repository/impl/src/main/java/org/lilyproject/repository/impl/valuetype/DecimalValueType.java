@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-public class DecimalValueType implements PrimitiveValueType {
+public class DecimalValueType extends AbstractValueType implements ValueType {
 
-    private final String NAME = "DECIMAL";
+    public final static String NAME = "DECIMAL";
 
     private static final Comparator<BigDecimal> COMPARATOR = new Comparator<BigDecimal>() {
         @Override
@@ -33,15 +36,20 @@ public class DecimalValueType implements PrimitiveValueType {
         }
     };
 
-    public String getName() {
+    public String getBaseName() {
         return NAME;
     }
 
+    public ValueType getDeepestValueType() {
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
     public BigDecimal read(DataInput dataInput) {
         return new BigDecimal(dataInput.readUTF());
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeUTF(((BigDecimal)value).toString());
     }
 
@@ -58,7 +66,7 @@ public class DecimalValueType implements PrimitiveValueType {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+        result = prime * result + NAME.hashCode();
         return result;
     }
 
@@ -70,12 +78,22 @@ public class DecimalValueType implements PrimitiveValueType {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        DecimalValueType other = (DecimalValueType) obj;
-        if (NAME == null) {
-            if (other.NAME != null)
-                return false;
-        } else if (!NAME.equals(other.NAME))
-            return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new DecimalValueTypeFactory();
+    }
+    
+    public static class DecimalValueTypeFactory implements ValueTypeFactory {
+        private static DecimalValueType instance = new DecimalValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
     }
 }

@@ -1,9 +1,9 @@
 package org.lilyproject.repository.impl;
 
+import java.util.*;
+
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.SystemFields;
-
-import java.util.*;
 
 public class MutationConditionVerifier {
     /**
@@ -73,7 +73,7 @@ public class MutationConditionVerifier {
         }
 
         if (!allSatisfied) {
-            Record responseRecord = record.clone();
+            Record responseRecord = record.cloneRecord();
             if (newRecord != null) {
                 // reduce the fields to return to those that were submitted
                 reduceFields(responseRecord, newRecord.getFields().keySet());
@@ -106,16 +106,11 @@ public class MutationConditionVerifier {
         }
 
         ValueType valueType = typeManager.getFieldTypeByName(cond.getField()).getValueType();
-        Comparator comparator = valueType.getPrimitive().getComparator();
-
-        if (!valueType.isPrimitive()) {
-            throw new RepositoryException("Other than (not-)equal operator in mutation condition is only allowed for "
-                    + "single-valued fields. Condition on field: " + cond.getField());
-        }
+        Comparator comparator = valueType.getComparator();
 
         if (comparator == null) {
             throw new RepositoryException("Other than (not-)equals operator in mutation condition used for value type "
-                    + "that does not support comparison: " + valueType.getPrimitive().getName());
+                    + "that does not support comparison: " + valueType.getName());
         }
 
         int result = comparator.compare(currentValue, cond.getValue());

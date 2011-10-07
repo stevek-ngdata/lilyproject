@@ -15,7 +15,6 @@
  */
 package org.lilyproject.tools.import_.json;
 
-import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.SchemaIdImpl;
@@ -37,16 +36,20 @@ public class FieldTypeReader implements EntityReader<FieldType> {
 
         QName name = QNameConverter.fromJson(getString(node, "name"), namespaces);
 
-        JsonNode vtNode = getNode(node, "valueType");
-        String primitive = getString(vtNode, "primitive");
-        boolean multiValue = getBoolean(vtNode, "multiValue", false);
-        boolean hierarchical = getBoolean(vtNode, "hierarchical", false);
 
         String scopeName = getString(node, "scope", "non_versioned");
         Scope scope = parseScope(scopeName);
 
         TypeManager typeManager = repository.getTypeManager();
-        ValueType valueType = typeManager.getValueType(primitive, multiValue, hierarchical);
+
+        // Be gentle to users of Lily 1.0
+        if (node.has("valueType") && node.get("valueType").isObject() && node.get("valueType").has("primitive")) {
+            throw new JsonFormatException("Lily 1.1 format change: the valueType should now be specified as a string" +
+                    " rather than a nested object with the 'primitive' property.");
+        }
+
+        String valueTypeString = getString(node, "valueType");
+        ValueType valueType = typeManager.getValueType(ValueTypeNSConverter.fromJson(valueTypeString, namespaces));
         FieldType fieldType = typeManager.newFieldType(valueType, name, scope);
 
         String idString = getString(node, "id", null);
@@ -60,14 +63,8 @@ public class FieldTypeReader implements EntityReader<FieldType> {
             if (fieldType.getScope() != Scope.NON_VERSIONED)
                 throw new JsonFormatException("vtag fields should be in the non-versioned scope");
 
-            if (!fieldType.getValueType().getPrimitive().getName().equals("LONG"))
+            if (!fieldType.getValueType().getBaseName().equals("LONG"))
                 throw new JsonFormatException("vtag fields should be of type LONG");
-
-            if (fieldType.getValueType().isMultiValue())
-                throw new JsonFormatException("vtag fields should not be multi-valued");
-
-            if (fieldType.getValueType().isHierarchical())
-                throw new JsonFormatException("vtag fields should not be hierarchical");
         }
 
         return fieldType;

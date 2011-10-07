@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.primitivevaluetype;
+package org.lilyproject.repository.impl.valuetype;
 
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput; 
-import org.lilyproject.repository.api.PrimitiveValueType;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 
-import java.util.Comparator;
+public class DateValueType extends AbstractValueType implements ValueType {
 
-public class DateValueType implements PrimitiveValueType {
-
-    private final String NAME = "DATE";
+    public final static String NAME = "DATE";
 
     private static final Comparator<LocalDate> COMPARATOR = new Comparator<LocalDate>() {
         @Override
@@ -35,17 +37,22 @@ public class DateValueType implements PrimitiveValueType {
         }
     };
 
-    public String getName() {
+    public String getBaseName() {
         return NAME;
     }
 
+    public ValueType getDeepestValueType() {
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
     public LocalDate read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
         return new LocalDate(dataInput.readLong(), DateTimeZone.UTC);
     }
 
-    public void write(Object value, DataOutput dataOutput) {
+    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         // Currently we only store the millis, not the chronology.
         dataOutput.writeLong(((LocalDate)value).toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis());
@@ -77,5 +84,21 @@ public class DateValueType implements PrimitiveValueType {
         if (getClass() != obj.getClass())
             return false;
         return true;
+    }
+
+    //
+    // Factory
+    //
+    public static ValueTypeFactory factory() {
+        return new DateValueTypeFactory();
+    }
+    
+    public static class DateValueTypeFactory implements ValueTypeFactory {
+        private static DateValueType instance = new DateValueType();
+        
+        @Override
+        public ValueType getValueType(String typeParams) {
+            return instance;
+        }
     }
 }

@@ -78,8 +78,8 @@ public interface TypeManager extends Closeable {
     /**
      * Updates an existing record type.
      *
-     * <p>You can provide any RecordType object as argument, either retrieved via {@link #getRecordType(String, Long)} or
-     * newly instantiated via {@link #newRecordType(String)}.
+     * <p>You can provide any RecordType object as argument, either one retrieved from TypeManager, for example
+     * using {@link #getRecordTypeByName(QName, Long)} or a newly instantiated one, using {@link #newRecordType(QName)}.
      *
      * <p>The state of the record type will be updated to correspond to the given RecordType object. This also
      * concerns the list of fields: any fields that were previously in the record type but are not present in
@@ -94,6 +94,18 @@ public interface TypeManager extends Closeable {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     RecordType updateRecordType(RecordType recordType) throws  RepositoryException, InterruptedException;
+
+    /**
+     * Either creates or updates the record type, depending on whether it exists in
+     * the repository, and depending on the information supplied in the record type.
+     *
+     * <p>When the ID is supplied of the record type, this method will always do
+     * an update. If the name is supplied, it is checked whether it already exists,
+     * if so the record type is updated, and otherwise it is created.
+     *
+     * @return the created or updated record type
+     */
+    RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException;
 
     /**
      * Get the list of all record types that exist in the repository. This returns the latest version of
@@ -122,6 +134,13 @@ public interface TypeManager extends Closeable {
      *
      * <p>This is only a factory method, nothing is created in the repository.
      */
+    FieldType newFieldType(String valueType, QName name, Scope scope) throws RepositoryException, InterruptedException;
+
+    /**
+     * Instantiates a new FieldType object.
+     *
+     * <p>This is only a factory method, nothing is created in the repository.
+     */
     FieldType newFieldType(SchemaId id, ValueType valueType, QName name, Scope scope);
     
     /**
@@ -138,9 +157,15 @@ public interface TypeManager extends Closeable {
     FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
 
     /**
-     * Shortcut to create a field type without first creating the FieldType object.
+     * Creates a field type in the repository, using the given parameters.
      */
     FieldType createFieldType(ValueType valueType, QName name, Scope scope) throws RepositoryException,
+            InterruptedException;
+
+    /**
+     * Creates a field type in the repository, using the given parameters.
+     */
+    FieldType createFieldType(String valueType, QName name, Scope scope) throws RepositoryException,
             InterruptedException;
 
     /**
@@ -159,7 +184,26 @@ public interface TypeManager extends Closeable {
      * @throws RepositoryException when an unexpected exception occurs on the repository
      */
     FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
-    
+
+    /**
+     * Creates or updates a field type, depending on whether it exists in the repository,
+     * and depending on the information supplied in the field type.
+     *
+     * <p>The only case in which an update is performed is when both the ID
+     * and name are supplied. This is because the name is the only mutable
+     * property of a field type, and you can obviously only change it if
+     * there is some other way to identify the field type, namely its ID.
+     *
+     * <p>If no create or update needs to be performed, it is still always
+     * validated that the immutable properties in the supplied field type
+     * object correspond to those in the repository, if not a
+     * {@link FieldTypeUpdateException} is produced. These properties could
+     * also be missing, the returned field type object will always contain
+     * the full state as stored in the repository.
+     *
+     */
+    FieldType createOrUpdateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException;
+
     /**
      * Gets a FieldType from the repository.
      *
@@ -184,45 +228,54 @@ public interface TypeManager extends Closeable {
     /**
      * Provides {@link ValueType} instances. These are used to set to value type of {@link FieldType}s.
      *
-     * <p>The built-in available primitive value types are listed in the following table.
+     * <p>The built-in available value types are listed in the following table. 
      *
      * <table>
      * <tbody>
-     * <tr><th>Name</th>     <th>Class</th></tr>
+     * <tr><th>Name</th>     <th>Class</th></tr> <th>
      * <tr><td>STRING</td>   <td>java.lang.String</td></tr>
      * <tr><td>INTEGER</td>  <td>java.lang.Integer</td></tr>
      * <tr><td>LONG</td>     <td>java.lang.Long</td></tr>
      * <tr><td>DOUBLE</td>   <td>java.lang.Double</td></tr>
-     * <tr><td>DECIMAL</td>   <td>java.math.BigDecimal</td></tr>
+     * <tr><td>DECIMAL</td>  <td>java.math.BigDecimal</td></tr>
      * <tr><td>BOOLEAN</td>  <td>java.lang.Boolean</td></tr>
      * <tr><td>DATE</td>     <td>org.joda.time.LocalDate</td></tr>
      * <tr><td>DATETIME</td> <td>org.joda.time.DateTime</td></tr>
      * <tr><td>BLOB</td>     <td>org.lilyproject.repository.api.Blob</td></tr>
      * <tr><td>LINK</td>     <td>org.lilyproject.repository.api.Link</td></tr>
      * <tr><td>URI</td>      <td>java.net.URI</td></tr>
+     * <tr><td>LIST</td>     <td>java.util.List</td></tr>
+     * <tr><td>PATH</td>     <td>org.lilyproject.repository.api.HierarchyPath</td></tr>
+     * <tr><td>RECORD</td>   <td>org.lilyproject.repository.api.Record</td></tr>
      * </tbody>
      * </table>
+     * 
+     * <p>Some value types accept extra parameters to define the exact value type.
+     * <p>For List and Path these parameters define the value type of the included values.
+     * It is mandatory to define this value type. 
+     * It should be specified by putting its name between brackets "&lt;&gt;"  
+     * and if that value type in its turn needs some extra parameters, 
+     * these should be appended again within brackets "&lt;&gt;".
+     * <br>For example: <code>getValueType("LIST&lt;PATH&lt;STRING&gt;&gt;");</code>
+     * 
+     * <p>For Record and Link valuetype it is possible to define the {@link RecordType} in the parameters.
+     * This is not mandatory. It is done by specifying the name of the RecordType in the format 
+     * <code>{namespace}name</code> between brackets "&lt;&gt;". 
+     * <br>For example: <code>getValueType("RECORD<{myNamespace}recordType1>");</code>
      *
-     * @param primitiveValueTypeName the name of the {@link PrimitiveValueType} to be encapsulated by this
-     *                               {@link ValueType}. See table above.
-     * @param multiValue if this {@link ValueType} should represent a multi value field or not
-     * @param hierarchical if this{@link ValueType} should represent a {@link HierarchyPath} field or not
+     * @see ValueType
+     * @param valueType the value type string representation. See table above.
      */
-    ValueType getValueType(String primitiveValueTypeName, boolean multiValue, boolean hierarchical) throws RepositoryException, InterruptedException;
-
+     ValueType getValueType(String valueType) throws RepositoryException, InterruptedException;
+    
     /**
-     * Shortcut for {@link #getValueType(String, boolean, boolean) getValueType(name, false, false)}.
-     */
-    ValueType getValueType(String primitiveValueTypeName) throws RepositoryException, InterruptedException;
-
-    /**
-     * Registers custom {@link PrimitiveValueType}s.
+     * Registers custom {@link ValueType}s.
      *
      * <p><b>TODO:</b> Maybe this should rather move to an SPI interface? Can this replace a built-in primitive
      * value type if the name corresponds? Does it make sense to allow registering at any time? Probably implies
      * registering on all Lily nodes? This needs more thought.
      */
-    void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) throws RepositoryException, InterruptedException;
+    void registerValueType(String name, ValueTypeFactory valueTypeFactory);
 
     /**
      * Returns a snapshot of the FieldTypes. To be used when a consistent snapshot is needed while performing a CRUD operation.
@@ -235,7 +288,17 @@ public interface TypeManager extends Closeable {
     List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
     
     /**
-     * Returns a record type builder object which can be used to compose a record type object and create or update it on the repository.
+     * Returns a record type builder, providing a fluent API to manipulate record types.
      */
-    RecordTypeBuilder rtBuilder() throws TypeException;
+    RecordTypeBuilder recordTypeBuilder() throws TypeException;
+
+    /**
+     * Returns a field type builder, providing a fluent API to manipulate field types.
+     *
+     * <p>Note that field types can also be created in a single statement using
+     * {@link #createFieldType(String, QName, Scope)}, the field type builder just
+     * offers a little more flexibility in how to specify name and scope and what
+     * operations to do (update, createOrUpdate).
+     */
+    FieldTypeBuilder fieldTypeBuilder() throws TypeException;
 }

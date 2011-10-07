@@ -61,10 +61,7 @@ public class QName {
         if (getClass() != obj.getClass())
             return false;
         QName other = (QName) obj;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
+        if (!name.equals(other.name))
             return false;
         if (namespace == null) {
             if (other.namespace != null)
@@ -77,5 +74,18 @@ public class QName {
     @Override
     public String toString() {
         return "{" + namespace + "}" + name;
+    }
+    
+    /**
+     * Creates a qname based on a string.
+     *
+     * <p>The format of the string needs to be the same as the string returned by {@link #toString()}:
+     * {namespace}name
+     */
+    public static QName fromString(String qname) throws IllegalArgumentException {
+        int indexBracket = qname.indexOf('}');
+        if (indexBracket < 1 || !qname.startsWith("{"))
+            throw new IllegalArgumentException("QName string should be of the format {namespace}name");
+        return new QName(qname.substring(1,indexBracket), qname.substring(indexBracket + 1));
     }
 }

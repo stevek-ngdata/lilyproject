@@ -53,20 +53,19 @@ public interface BlobManager {
      * @throws BlobException
      */
     OutputStream getOutputStream(Blob blob) throws BlobException;
-    
+
     /**
      * Returns a BlobAccess based on the given location of a blob in a record.
      *
      * @param record the record containing the blob
      * @param fieldName the name of the field containing the blob
-     * @param multivalueIndex the index of the blob in a multivalue field, can be null 
-     * @param hierarchyIndex the index of the blob in a  hierarchical field, can be null
      * @param fieldType the fieldType of the field
+     * @param indexes optionally, an array of indexes of  
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
      * @throws BlobException thrown when no InputStream can be opened on the blob
      */
-    BlobAccess getBlobAccess(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
-            FieldType fieldType) throws BlobNotFoundException, BlobException;
+    BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int... indexes)
+            throws BlobException;
 
     /**
      * The BlobManager manages the BlobStoreAccess functionality for the Repository. 

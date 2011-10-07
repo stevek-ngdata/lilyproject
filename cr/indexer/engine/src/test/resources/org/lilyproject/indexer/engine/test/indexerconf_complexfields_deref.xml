@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<indexer xmlns:ns="org.lilyproject.indexer.test.complexfieldsderef">
+
+  <records>
+    <record matchNamespace="ns" matchName="RecordType" matchVariant="*" vtags="last"/>
+  </records>
+
+  <fields>
+    <field name="cfd_case1" value="ns:link=>ns:record=>ns:string"/>
+
+    <field name="cfd_case2" value="ns:link=>ns:record=>ns:link=>ns:string"/>
+
+    <field name="cfd_case3" value="ns:record2=>ns:link=>ns:string"/>
+
+    <field name="cfd_case4" value="ns:link=>ns:recordlist=>ns:link=>ns:string"/>
+
+    <field name="cfd_case5" value="ns:link=>ns:record=>ns:record=>ns:string"/>
+  </fields>
+
+</indexer>

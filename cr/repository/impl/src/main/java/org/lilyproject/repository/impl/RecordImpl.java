@@ -16,6 +16,7 @@
 package org.lilyproject.repository.impl;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ObjectUtils;
@@ -147,17 +148,102 @@ public class RecordImpl implements Record {
         this.responseStatus = status;
     }
 
-    public Record clone() {
+    public Record clone() throws RuntimeException {
+        try {
+            return cloneRecord(new IdentityHashMap<Record, Object>());
+        } catch (RecordException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public Record cloneRecord() throws RecordException {
+        return cloneRecord(new IdentityHashMap<Record, Object>());
+    }
+
+    public Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
+        if (parentRecords.containsKey(this))
+            throw new RecordException("A record may not be nested in itself: " + id);
+
         RecordImpl record = new RecordImpl();
         record.id = id;
         record.version = version;
         record.recordTypes.putAll(recordTypes);
-        record.fields.putAll(fields);
+        parentRecords.put(this, null);
+        for (Entry<QName, Object> entry : fields.entrySet()) {
+            record.fields.put(entry.getKey(), cloneValue(entry.getValue(), record, parentRecords));
+        }
+        parentRecords.remove(this);
         if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
             record.fieldsToDelete.addAll(fieldsToDelete);
         }
         // the ResponseStatus is not cloned, on purpose
         return record;
+    }
+    
+    private boolean detectRecordRecursion(List<Record> parentRecords) {
+        for (Entry<QName, Object> entry : fields.entrySet()) {
+            if (detectRecordRecursion(entry.getValue(), parentRecords))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean detectRecordRecursion(Object value, List<Record> parentRecords) {
+        if (value instanceof HierarchyPath) {
+            Object[] elements = ((HierarchyPath) value).getElements();
+            for (Object object : elements) {
+                if (detectRecordRecursion(object, parentRecords))
+                    return true;
+            }
+        }
+        if (value instanceof List) {
+            List<Object> values = (List<Object>) value;
+            for (Object object : values) {
+                if (detectRecordRecursion(object, parentRecords))
+                    return true;
+            }
+        }
+        if (value instanceof Record) {
+            if (parentRecords.contains(value))
+                return true;
+            Record record = (Record) value;
+            parentRecords.add(record);
+            Map<QName, Object> fields = record.getFields();
+            for (Entry<QName, Object> entry : fields.entrySet()) {
+                if (detectRecordRecursion(entry.getValue(), parentRecords))
+                    return true;
+            }
+            parentRecords.remove(record);
+        }
+        return false; // Skip all other values
+    }
+
+    private Object cloneValue(Object value, Record clone, IdentityHashMap<Record, Object> parentRecords)
+            throws RecordException {
+        if (value instanceof HierarchyPath) {
+            Object[] elements = ((HierarchyPath)value).getElements();
+            Object[] newElements = new Object[elements.length];
+            for (int i = 0; i < newElements.length; i++) {
+                newElements[i] = cloneValue(elements[i], clone, parentRecords);
+            }
+            return new HierarchyPath(newElements);
+        }
+        if (value instanceof List) {
+            List<Object> newList = new ArrayList<Object>();
+            List<Object> values = (List<Object>)value;
+            for (Object object : values) {
+                newList.add(cloneValue(object, clone, parentRecords));
+            }
+            return newList;
+        }
+        if (value instanceof Blob) {
+            return ((Blob)value).clone();
+        }
+        if (value instanceof Record) {
+            Record record = (Record) value;
+            return (record).cloneRecord(parentRecords);
+        }
+        return value; // All other values are immutable
     }
 
     @Override
@@ -176,6 +262,13 @@ public class RecordImpl implements Record {
     public boolean equals(Object obj) {
         if (!softEquals(obj))
             return false;
+
+        if (obj instanceof RecordRvtImpl) {
+            return equals(((RecordRvtImpl)obj).getRecord());
+        }
+        if (obj instanceof IdRecordImpl) {
+            return softEquals(((IdRecordImpl)obj).getRecord());
+        }
 
         RecordImpl other = (RecordImpl) obj;
 
@@ -201,6 +294,12 @@ public class RecordImpl implements Record {
             return true;
         if (obj == null)
             return false;
+        if (obj instanceof RecordRvtImpl) {
+            return softEquals(((RecordRvtImpl)obj).getRecord());
+        }
+        if (obj instanceof IdRecordImpl) {
+            return softEquals(((IdRecordImpl)obj).getRecord());
+        }
         if (getClass() != obj.getClass())
             return false;
         RecordImpl other = (RecordImpl) obj;
@@ -287,10 +386,13 @@ public class RecordImpl implements Record {
     private QName resolveNamespace(String name) throws RecordException {
         if (defaultNamespace != null)
             return new QName(defaultNamespace, name);
+
         QName recordTypeName = getRecordTypeName();
         if (recordTypeName != null)
             return new QName(recordTypeName.getNamespace(), name);
-        else throw new RecordException("Namespace could not be resolved for name '" + name + "'since no default namespace was given and no record type is set");
+
+        throw new RecordException("Namespace could not be resolved for name '" + name +
+            "' since no default namespace was given and no record type is set.");
     }
     
     public void setRecordType(String recordTypeName) throws RecordException {

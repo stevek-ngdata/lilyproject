@@ -87,7 +87,7 @@ public class RestPerfTest extends BaseTestTool {
 
         // Create 5 field types
         for (int i = 1; i <= 5; i++) {
-            String body = json("{name: 'n$field" + i + "', valueType: { primitive: 'STRING' }, " +
+            String body = json("{name: 'n$field" + i + "', valueType: 'STRING', " +
                     "scope: 'versioned', namespaces: { 'org.lilyproject.rest-perftest': 'n' } }");
             put("/schema/fieldType/n$field" + i + "?ns.n=org.lilyproject.rest-perftest",
                     body.getBytes(), 200, 201);
