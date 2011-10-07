@@ -37,7 +37,7 @@ public class RecordBuilderImpl implements RecordBuilder {
     }
     
     @Override
-    public RecordBuilder defaultNameSpace(String namespace) {
+    public RecordBuilder defaultNamespace(String namespace) {
         record.setDefaultNamespace(namespace);
         return this;
     }

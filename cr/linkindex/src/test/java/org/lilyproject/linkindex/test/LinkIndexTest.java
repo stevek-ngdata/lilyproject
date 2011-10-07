@@ -188,7 +188,7 @@ public class LinkIndexTest {
         {
             Record record = repository
                     .recordBuilder()
-                    .defaultNameSpace("ns")
+                    .defaultNamespace("ns")
                     .recordType("MyRecordType")
                     .field("nestedLinks",
                             Arrays.asList(
@@ -221,19 +221,19 @@ public class LinkIndexTest {
         {
             Record record = repository
                     .recordBuilder()
-                    .defaultNameSpace("ns")
+                    .defaultNamespace("ns")
                     .recordType("MyRecordType")
                     .field("complexLinks",
                             Arrays.asList(
                                     repository
                                             .recordBuilder()
-                                            .defaultNameSpace("ns")
+                                            .defaultNamespace("ns")
                                             .recordType("MyRecordType")
                                             .field("link1", new Link(ids.newRecordId("cl1")))
                                             .build(),
                                     repository
                                             .recordBuilder()
-                                            .defaultNameSpace("ns")
+                                            .defaultNamespace("ns")
                                             .recordType("MyRecordType")
                                             .field("link1", new Link(ids.newRecordId("cl2")))
                                             .build()

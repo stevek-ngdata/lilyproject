@@ -42,7 +42,7 @@ public interface RecordBuilder {
      * @param namespace the default namespace to set
      * @return the builder
      */
-    RecordBuilder defaultNameSpace(String namespace);
+    RecordBuilder defaultNamespace(String namespace);
 
     /**
      * Sets record type of the record.

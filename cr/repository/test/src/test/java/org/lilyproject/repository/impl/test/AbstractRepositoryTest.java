@@ -1849,7 +1849,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testDefaultNamespace() throws Exception {
         RecordBuilder builder = repository.recordBuilder();
-        Record record = builder.defaultNameSpace(namespace)
+        Record record = builder.defaultNamespace(namespace)
             .recordType("RT1")
             .field("field1", "abc")
             .field("field2", 123)
@@ -1871,7 +1871,7 @@ public abstract class AbstractRepositoryTest {
         try {
             repository
                     .recordBuilder()
-                    .defaultNameSpace(namespace)
+                    .defaultNamespace(namespace)
                     .recordType("RT1")
                     .field("field1", "abc")
                     .createOrUpdate();
@@ -1883,7 +1883,7 @@ public abstract class AbstractRepositoryTest {
         Record record = repository
                 .recordBuilder()
                 .assignNewUuid()
-                .defaultNameSpace(namespace)
+                .defaultNamespace(namespace)
                 .recordType("RT1")
                 .field("field1", "abc")
                 .createOrUpdate();
@@ -1891,7 +1891,7 @@ public abstract class AbstractRepositoryTest {
         repository
                 .recordBuilder()
                 .id(record.getId())
-                .defaultNameSpace(namespace)
+                .defaultNamespace(namespace)
                 .field("field1", "def")
                 .createOrUpdate();
     }

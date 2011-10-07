@@ -298,11 +298,11 @@ public class RecordValueTypeBenchmark {
     }
     
     private Record buildRvtRecord(String ns, int nrOfFields) throws Exception {
-        RecordBuilder rvtRecordBuilder = repository.recordBuilder().defaultNameSpace(ns);
+        RecordBuilder rvtRecordBuilder = repository.recordBuilder().defaultNamespace(ns);
         for (int i = 0; i < nrOfFields; i++) {
             rvtRecordBuilder.field("stringField"+i, "value"+i);
         }
-        return repository.recordBuilder().defaultNameSpace(ns).recordType("rvtFieldRT").field("rvtField", rvtRecordBuilder.build()).build();
+        return repository.recordBuilder().defaultNamespace(ns).recordType("rvtFieldRT").field("rvtField", rvtRecordBuilder.build()).build();
     }
     
     private Record buildJsonRecord(String ns, int nrOfFields) throws Exception {
@@ -310,7 +310,7 @@ public class RecordValueTypeBenchmark {
         for (int i = 0; i < nrOfFields; i++) {
             node.put("stringField"+i, "value"+i);
         }
-        return repository.recordBuilder().defaultNameSpace(ns).recordType("jsonFieldRT").field("jsonField", node.toString()).build();
+        return repository.recordBuilder().defaultNamespace(ns).recordType("jsonFieldRT").field("jsonField", node.toString()).build();
     }
     
     private void readRvtValues(Record record, String ns, int nrOfFields) {
