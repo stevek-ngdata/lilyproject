@@ -109,7 +109,7 @@ public class RecordBuilderImpl implements RecordBuilder {
         return this;
     }
 
-    public Record newRecord() {
+    public Record build() {
         return record;
     }
 

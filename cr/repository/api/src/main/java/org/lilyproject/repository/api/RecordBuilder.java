@@ -179,5 +179,5 @@ public interface RecordBuilder {
      * to the builder without actually creating it on the repository.
      * @return a record
      */
-    Record newRecord();
+    Record build();
 }

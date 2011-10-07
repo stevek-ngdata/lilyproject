@@ -1656,7 +1656,7 @@ public class IndexerTest {
                                 .recordType(nvRecordType1.getName())
                                 .field(nvfield1.getName(), "german")
                                 .field(nvfield2.getName(), "spanish")
-                                .newRecord())
+                                .build())
                 .field(recordListField.getName(),
                         Arrays.asList(
                                 repository
@@ -1664,13 +1664,13 @@ public class IndexerTest {
                                         .recordType(nvRecordType1.getName())
                                         .field(nvfield1.getName(), "swedish")
                                         .field(nvfield2.getName(), "chinese")
-                                        .newRecord(),
+                                        .build(),
                                 repository
                                         .recordBuilder()
                                         .recordType(nvRecordType1.getName())
                                         .field(nvfield1.getName(), "vietnamese")
                                         .field(nvfield2.getName(), "wolof")
-                                        .newRecord()
+                                        .build()
                         )
                 )
                 .create();
@@ -1754,7 +1754,7 @@ public class IndexerTest {
                                             .recordBuilder()
                                             .recordType(recordType.getName())
                                             .field(stringField.getName(), "bordeaux")
-                                            .newRecord())
+                                            .build())
                                     .create()
                                     .getId()))
                     .create();
@@ -1774,7 +1774,7 @@ public class IndexerTest {
                             .recordBuilder()
                             .recordType(recordType.getName())
                             .field(stringField.getName(), "bordooo")
-                            .newRecord())
+                            .build())
                     .update();
 
             commitIndex();
@@ -1812,7 +1812,7 @@ public class IndexerTest {
                                                     .field(stringField.getName(), "beaujolais")
                                                     .create()
                                                     .getId()))
-                                            .newRecord())
+                                            .build())
                                     .create()
                                     .getId()))
                     .create();
@@ -1859,7 +1859,7 @@ public class IndexerTest {
                                             .field(stringField.getName(), "bourgogne")
                                             .create()
                                             .getId()))
-                            .newRecord())
+                            .build())
                     .create();
 
             commitIndex();
@@ -1915,7 +1915,7 @@ public class IndexerTest {
                                                                      .field(stringField.getName(), "champagne")
                                                                      .create()
                                                                      .getId()))
-                                                    .newRecord(),
+                                                    .build(),
                                                     repository
                                                     .recordBuilder()
                                                     .recordId(recordId4)
@@ -1928,7 +1928,7 @@ public class IndexerTest {
                                                                      .field(stringField.getName(), "languedoc")
                                                                      .create()
                                                                      .getId()))
-                                                    .newRecord()
+                                                    .build()
                                             ))
                                     .create()
                                     .getId()))
@@ -2005,8 +2005,8 @@ public class IndexerTest {
                                                     .recordBuilder()
                                                     .recordType(recordType.getName())
                                                     .field(stringField.getName(), "loire")
-                                                    .newRecord())
-                                            .newRecord())
+                                                    .build())
+                                            .build())
                                     .create()
                                     .getId()))
                     .create();
@@ -2031,8 +2031,8 @@ public class IndexerTest {
                                     .recordBuilder()
                                     .recordType(recordType.getName())
                                     .field(stringField.getName(), "lwaare")
-                                    .newRecord())
-                            .newRecord())
+                                    .build())
+                            .build())
                     .update();
 
             commitIndex();

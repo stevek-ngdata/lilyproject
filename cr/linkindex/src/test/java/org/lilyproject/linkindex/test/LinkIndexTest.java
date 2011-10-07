@@ -230,13 +230,13 @@ public class LinkIndexTest {
                                             .defaultNameSpace("ns")
                                             .recordType("MyRecordType")
                                             .field("link1", new Link(ids.newRecordId("cl1")))
-                                            .newRecord(),
+                                            .build(),
                                     repository
                                             .recordBuilder()
                                             .defaultNameSpace("ns")
                                             .recordType("MyRecordType")
                                             .field("link1", new Link(ids.newRecordId("cl2")))
-                                            .newRecord()
+                                            .build()
                             ))
                     .create();
 

@@ -100,7 +100,7 @@ public class RecordTest {
       List<String> listValue = new ArrayList<String>();
       listValue.add("abc");
       HierarchyPath pathValue = new HierarchyPath("abc");
-      Record recordValue = repository.recordBuilder().field(stringFieldName, "foo").newRecord();
+      Record recordValue = repository.recordBuilder().field(stringFieldName, "foo").build();
       
       Record record = repository.recordBuilder()
           .field(stringFieldName, stringValue)
@@ -117,7 +117,7 @@ public class RecordTest {
           .field(listFieldName, listValue)
           .field(pathFieldName, pathValue)
           .field(recordFieldName, recordValue)
-          .newRecord();
+          .build();
       
       // Clone record
         record = record.cloneRecord();

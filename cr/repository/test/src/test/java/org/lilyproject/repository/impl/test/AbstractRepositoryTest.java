@@ -1881,13 +1881,13 @@ public abstract class AbstractRepositoryTest {
         FieldType ft3 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft3Name, Scope.VERSIONED_MUTABLE));
         typeManager.recordTypeBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).field(ft3.getId(), false).create();
         
-        Record ft1Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft1abc").newRecord();
-        Record ft1Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft1def").newRecord();
-        Record ft2Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft2abc").newRecord();
-        Record ft2Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft2def").newRecord();
-        Record ft3Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft3abc").newRecord();
-        Record ft3Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft3def").newRecord();
-        Record ft3Value3 = repository.recordBuilder().field(fieldType1.getName(), "ft3xyz").newRecord();
+        Record ft1Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft1abc").build();
+        Record ft1Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft1def").build();
+        Record ft2Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft2abc").build();
+        Record ft2Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft2def").build();
+        Record ft3Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft3abc").build();
+        Record ft3Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft3def").build();
+        Record ft3Value3 = repository.recordBuilder().field(fieldType1.getName(), "ft3xyz").build();
         
         // Create record
         Record createdRecord = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).field(ft2Name, ft2Value1).field(ft3Name, ft3Value1).create();
@@ -1940,11 +1940,11 @@ public abstract class AbstractRepositoryTest {
         typeManager.recordTypeBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).create();
 
         Record ft1Value1 = repository.recordBuilder().recordType(rvtRTName).field(fieldType1.getName(), "ft1abc")
-                .newRecord();
+                .build();
 
         // Create nested record
 
-        Record record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).newRecord();
+        Record record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).build();
         record.setField(ft2Name, record);
         try {
             repository.create(record);
@@ -1954,7 +1954,7 @@ public abstract class AbstractRepositoryTest {
 
         // Create with deep nesting
 
-        Record ft2Value2 = repository.recordBuilder().recordType(rvtRTName).field(ft1Name, record).newRecord();
+        Record ft2Value2 = repository.recordBuilder().recordType(rvtRTName).field(ft1Name, record).build();
         record.setField(ft2Name, ft2Value2);
         try {
             repository.create(record);
@@ -1964,7 +1964,7 @@ public abstract class AbstractRepositoryTest {
         
         // Update with nested record
 
-        record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).newRecord();
+        record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).build();
         record = repository.create(record);
         record.setField(ft2Name, record); // Nest record in itself
         try {

@@ -134,17 +134,17 @@ public class ValueTypeTest {
             .recordType(valueTypeRT.getName(), 1L)
             .field(fieldType1.getName(), "abc")
             .field(fieldType2.getName(), 123)
-            .newRecord();
+            .build();
         Record recordField2 = repository.recordBuilder()
             .recordType(valueTypeRT.getName(), 1L)
             .field(fieldType1.getName(), "def")
             .field(fieldType2.getName(), 456)
-            .newRecord();
+            .build();
         Record recordField3 = repository.recordBuilder()
             .recordType(valueTypeRT.getName(), 1L)
             .field(fieldType1.getName(), "xyz")
             .field(fieldType2.getName(), 888)
-            .newRecord();
+            .build();
 
         testType("recordValueTypeId", "RECORD<{testRecordType}recordValueTypeRecordType>", recordField1);
         testType("recordValueTypeId", "LIST<RECORD<{testRecordType}recordValueTypeRecordType>>", Arrays.asList(recordField1, recordField2));
@@ -399,7 +399,7 @@ public class ValueTypeTest {
             .create();
         
         // Make a record to be used as field value
-        Record recordField = repository.recordBuilder().field(new QName(ns, "field1"), "abc").newRecord();
+        Record recordField = repository.recordBuilder().field(new QName(ns, "field1"), "abc").build();
         // Create a record with a record as field
         Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
         
@@ -443,9 +443,9 @@ public class ValueTypeTest {
             .create();
         
         // Make nested records 
-        Record recordField1 = repository.recordBuilder().field(new QName(ns, "field1"), "abc").newRecord();
+        Record recordField1 = repository.recordBuilder().field(new QName(ns, "field1"), "abc").build();
 
-        Record recordField2 = repository.recordBuilder().field(new QName(ns, "field2"), recordField1).newRecord();
+        Record recordField2 = repository.recordBuilder().field(new QName(ns, "field2"), recordField1).build();
 
         // Create a record with nested records
         Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt3")).field(new QName(ns,"field3"), recordField2).create();
@@ -481,7 +481,7 @@ public class ValueTypeTest {
             .create();
         
         // Make a record to be used as field value, specify the record type here
-        Record recordField = repository.recordBuilder().recordType(new QName(ns, "rt1")).field(new QName(ns, "field1"), "abc").newRecord();
+        Record recordField = repository.recordBuilder().recordType(new QName(ns, "rt1")).field(new QName(ns, "field1"), "abc").build();
         recordField.setRecordType(Scope.VERSIONED, new QName(ns, "vrt"), null); // This record type should be ignored
         recordField.setRecordType(Scope.VERSIONED_MUTABLE, new QName(ns, "vmrt"), null); // This record type should be ignored
         
@@ -521,7 +521,7 @@ public class ValueTypeTest {
             .create();
         
         // Make a record to be used as field value, don't specify the record type here either
-        Record recordField = repository.recordBuilder().field(new QName(ns, "field1"), "abc").newRecord();
+        Record recordField = repository.recordBuilder().field(new QName(ns, "field1"), "abc").build();
         
         // Create a record with a record as field
         try {
@@ -557,7 +557,7 @@ public class ValueTypeTest {
         
         // Make a record to be used as field value, specify the record type here
         // Only fill in field1, not field1b
-        Record recordField = repository.recordBuilder().recordType(new QName(ns, "rt1")).field(new QName(ns, "field1"), "abc").newRecord();
+        Record recordField = repository.recordBuilder().recordType(new QName(ns, "rt1")).field(new QName(ns, "field1"), "abc").build();
         
         // Create a record with a record as field
         Record createdRecord = repository.recordBuilder().recordType(new QName(ns, "rt2")).field(new QName(ns,"field2"), recordField).create();
@@ -599,7 +599,7 @@ public class ValueTypeTest {
             .recordType(new QName(ns, "rt1"))
             .field(new QName(ns, "field1"), "abc")
             .field(new QName(ns, "field1b"), "def") // Also fill in field1b, although the recordType does not specify it
-            .newRecord();
+            .build();
         
         // Create a record with a record as field
         try {
