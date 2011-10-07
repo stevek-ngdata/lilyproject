@@ -1867,6 +1867,36 @@ public abstract class AbstractRepositoryTest {
     }
     
     @Test
+    public void testRecordBuilderCreateOrUpdate() throws Exception {
+        try {
+            repository
+                    .recordBuilder()
+                    .defaultNameSpace(namespace)
+                    .recordType("RT1")
+                    .field("field1", "abc")
+                    .createOrUpdate();
+            fail("expected exception");
+        } catch (RecordException e) {
+            // expected
+        }
+
+        Record record = repository
+                .recordBuilder()
+                .assignNewUuid()
+                .defaultNameSpace(namespace)
+                .recordType("RT1")
+                .field("field1", "abc")
+                .createOrUpdate();
+
+        repository
+                .recordBuilder()
+                .id(record.getId())
+                .defaultNameSpace(namespace)
+                .field("field1", "def")
+                .createOrUpdate();
+    }
+
+    @Test
     public void testRecordValueType() throws Exception {
         String namespace = "testRecordValueType";
         QName rvtRTName = new QName(namespace, "rvtRT");
@@ -1897,7 +1927,7 @@ public abstract class AbstractRepositoryTest {
         assertEquals("ft3abc", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
         
         // Update record
-        repository.recordBuilder().recordId(createdRecord.getId()).field(ft1Name, ft1Value2).field(ft2Name, ft2Value2).field(ft3Name, ft3Value2).update();
+        repository.recordBuilder().id(createdRecord.getId()).field(ft1Name, ft1Value2).field(ft2Name, ft2Value2).field(ft3Name, ft3Value2).update();
         readRecord = repository.read(createdRecord.getId());
         assertEquals(new Long(2), readRecord.getVersion());
         assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
@@ -1911,7 +1941,7 @@ public abstract class AbstractRepositoryTest {
         assertEquals("ft3abc", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
 
         // Update mutable field record
-        repository.recordBuilder().recordId(createdRecord.getId()).version(1L).field(ft3Name, ft3Value3).updateVersion(true).update();
+        repository.recordBuilder().id(createdRecord.getId()).version(1L).field(ft3Name, ft3Value3).updateVersion(true).update();
         readRecord = repository.read(createdRecord.getId());
         assertEquals(new Long(2), readRecord.getVersion());
         assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));

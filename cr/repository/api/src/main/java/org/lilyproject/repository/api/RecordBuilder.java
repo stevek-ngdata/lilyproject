@@ -15,6 +15,8 @@
  */
 package org.lilyproject.repository.api;
 
+import java.util.Map;
+
 /**
  * The RecordBuilder is a builder utility that helps in setting the properties of
  * a record with the goal to create or update it on the repository. 
@@ -41,7 +43,7 @@ public interface RecordBuilder {
      * @return the builder
      */
     RecordBuilder defaultNameSpace(String namespace);
-    
+
     /**
      * Sets record type of the record.
      * @see {@link Record#setRecordType(QName)}
@@ -92,8 +94,38 @@ public interface RecordBuilder {
      * @param id the RecordId
      * @return the builder
      */
-    RecordBuilder recordId(RecordId id);
-    
+    RecordBuilder id(RecordId id);
+
+    /**
+     * Set the id of the record to a user specified ID.
+     *
+     * @see {@link IdGenerator#newRecordId(String)}
+     */
+    RecordBuilder id(String userId);
+
+    /**
+     * Set the id of the record to a user specified id and the supplied
+     * variant properties.
+     *
+     * @see {@link IdGenerator#newRecordId(String, java.util.Map)}
+     */
+    RecordBuilder id(String userId, Map<String, String> variantProperties);
+
+    /**
+     * Set the id of the record to a newly generated UUID.
+     *
+     * @see {@link IdGenerator#newRecordId()}
+     */
+    RecordBuilder assignNewUuid();
+
+    /**
+     * Set the id of the record to a newly generated UUID and the supplied
+     * variant properties.
+     *
+     * @see {@link IdGenerator#newRecordId(java.util.Map)}
+     */
+    RecordBuilder assignNewUuid(Map<String, String> variantProperties);
+
     /**
      * Adds a field to the record
      * @see {@link Record#setField(QName, Object)}

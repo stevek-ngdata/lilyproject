@@ -1643,7 +1643,7 @@ public class IndexerTest {
 
         repository
                 .recordBuilder()
-                .recordId(recordId)
+                .id(recordId)
                 .recordType(cfRecordType.getName())
                 .field(nestedListsField.getName(),
                         Arrays.asList(
@@ -1747,7 +1747,7 @@ public class IndexerTest {
                     .field(linkField.getName(),
                             new Link(repository
                                     .recordBuilder()
-                                    .recordId(recordId)
+                                    .id(recordId)
                                     .recordType(recordType.getName())
                                     .field(recordField.getName(),
                                             repository
@@ -1768,7 +1768,7 @@ public class IndexerTest {
 
             repository
                     .recordBuilder()
-                    .recordId(recordId)
+                    .id(recordId)
                     .field(recordField.getName(),
                             repository
                             .recordBuilder()
@@ -1798,7 +1798,7 @@ public class IndexerTest {
                     .field(linkField.getName(),
                             new Link(repository
                                     .recordBuilder()
-                                    .recordId(recordId1)
+                                    .id(recordId1)
                                     .recordType(recordType.getName())
                                     .field(recordField.getName(),
                                             repository
@@ -1807,7 +1807,7 @@ public class IndexerTest {
                                             .field(linkField.getName(),
                                                     new Link(repository
                                                     .recordBuilder()
-                                                    .recordId(recordId2)
+                                                    .id(recordId2)
                                                     .recordType(recordType.getName())
                                                     .field(stringField.getName(), "beaujolais")
                                                     .create()
@@ -1826,7 +1826,7 @@ public class IndexerTest {
 
             repository
                     .recordBuilder()
-                    .recordId(recordId2)
+                    .id(recordId2)
                     .field(stringField.getName(), "booojolais")
                     .update();
 
@@ -1854,7 +1854,7 @@ public class IndexerTest {
                             .field(linkField.getName(),
                                     new Link(repository
                                             .recordBuilder()
-                                            .recordId(recordId)
+                                            .id(recordId)
                                             .recordType(recordType.getName())
                                             .field(stringField.getName(), "bourgogne")
                                             .create()
@@ -1871,7 +1871,7 @@ public class IndexerTest {
 
             repository
                     .recordBuilder()
-                    .recordId(recordId)
+                    .id(recordId)
                     .field(stringField.getName(), "boerhonje")
                     .update();
 
@@ -1895,22 +1895,22 @@ public class IndexerTest {
             repository
                     .recordBuilder()
                     .recordType(recordType.getName())
-                    .recordId(recordId1)
+                    .id(recordId1)
                     .field(linkField.getName(),
                             new Link(repository
                                     .recordBuilder()
-                                    .recordId(recordId2)
+                                    .id(recordId2)
                                     .recordType(recordType.getName())
                                     .field(recordListField.getName(),
                                             Arrays.asList(
                                                     repository
                                                     .recordBuilder()
-                                                    .recordId(recordId3)
+                                                    .id(recordId3)
                                                     .recordType(recordType.getName())
                                                     .field(linkField.getName(),
                                                             new Link(repository
                                                                      .recordBuilder()
-                                                                     .recordId(recordId3)
+                                                                     .id(recordId3)
                                                                      .recordType(recordType.getName())
                                                                      .field(stringField.getName(), "champagne")
                                                                      .create()
@@ -1918,12 +1918,12 @@ public class IndexerTest {
                                                     .build(),
                                                     repository
                                                     .recordBuilder()
-                                                    .recordId(recordId4)
+                                                    .id(recordId4)
                                                     .recordType(recordType.getName())
                                                     .field(linkField.getName(),
                                                             new Link(repository
                                                                      .recordBuilder()
-                                                                     .recordId(recordId4)
+                                                                     .id(recordId4)
                                                                      .recordType(recordType.getName())
                                                                      .field(stringField.getName(), "languedoc")
                                                                      .create()
@@ -1944,7 +1944,7 @@ public class IndexerTest {
 
             repository
                     .recordBuilder()
-                    .recordId(recordId3)
+                    .id(recordId3)
                     .field(stringField.getName(), "sampanje")
                     .update();
 
@@ -1989,12 +1989,12 @@ public class IndexerTest {
 
             repository
                     .recordBuilder()
-                    .recordId(recordId1)
+                    .id(recordId1)
                     .recordType(recordType.getName())
                     .field(linkField.getName(),
                             new Link(repository
                                     .recordBuilder()
-                                    .recordId(recordId2)
+                                    .id(recordId2)
                                     .recordType(recordType.getName())
                                     .field(recordField.getName(),
                                             repository
@@ -2020,7 +2020,7 @@ public class IndexerTest {
 
             repository
                     .recordBuilder()
-                    .recordId(recordId2)
+                    .id(recordId2)
                     .recordType(recordType.getName())
                     .field(recordField.getName(),
                             repository
