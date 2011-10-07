@@ -1897,6 +1897,60 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
+    public void testRecordBuilderNestedRecords() throws Exception {
+        String NS = "testRecordBuilderNestedRecords";
+
+        typeManager
+                .recordTypeBuilder()
+                .defaultNamespace(NS)
+                .name("recordType")
+                .fieldEntry().defineField().name("field1").create().add()
+                .fieldEntry().defineField().name("field2").type("RECORD").create().add()
+                .fieldEntry().defineField().name("field3").type("LIST<RECORD>").create().add()
+                .create();
+
+
+        Record record = repository
+                .recordBuilder()
+                .defaultNamespace(NS)
+                .recordType("recordType")
+                .recordField("field2")
+                    .recordType("recordType")
+                    .field("field1", "value 1")
+                    .set()
+                .recordListField("field3")
+                    .recordType("recordType")
+                    .field("field1", "value 2")
+                    .add()
+                    .field("field1", "value 3")
+                    .add()
+                    .field("field1", "value 4")
+                    .endList()
+                .create();
+
+        record = repository.read(record.getId());
+        assertEquals("value 1", ((Record)record.getField("field2")).getField("field1"));
+        assertEquals("value 2", ((List<Record>)record.getField("field3")).get(0).getField("field1"));
+        assertEquals("value 3", ((List<Record>)record.getField("field3")).get(1).getField("field1"));
+        assertEquals("value 4", ((List<Record>)record.getField("field3")).get(2).getField("field1"));
+
+        // Calling create on a nested record should not work
+        try {
+            repository
+                    .recordBuilder()
+                    .defaultNamespace(NS)
+                    .recordType("recordType")
+                    .recordField("field2")
+                        .recordType("recordType")
+                        .field("field1", "value 1")
+                        .create();
+            fail("expected exception");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+    }
+
+    @Test
     public void testRecordValueType() throws Exception {
         String namespace = "testRecordValueType";
         QName rvtRTName = new QName(namespace, "rvtRT");

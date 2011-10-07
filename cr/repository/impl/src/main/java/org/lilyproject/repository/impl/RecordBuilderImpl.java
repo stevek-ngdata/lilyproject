@@ -30,14 +30,33 @@ public class RecordBuilderImpl implements RecordBuilder {
     private List<MutationCondition> mutationConditions = null;
     private boolean updateVersion = false;
     private boolean useLatestRecordType = true;
+    private String defaultNamespace;
+
+    // Fields related to nested builders
+    private RecordBuilderImpl parent;
+    private QName parentField;
+    private Mode mode;
+    private List<Record> records;
+    private enum Mode {ROOT_RECORD, NESTED_RECORD, NESTED_RECORD_LIST}
 
     public RecordBuilderImpl(Repository repository) throws RecordException {
         this.repository = repository;
+        this.mode = Mode.ROOT_RECORD;
         this.record = repository.newRecord();
     }
     
+    public RecordBuilderImpl(RecordBuilderImpl parent, QName parentField, Mode mode) throws RecordException {
+        this.repository = parent.repository;
+        this.mode = mode;
+        this.parent = parent;
+        this.parentField = parentField;
+        this.record = repository.newRecord();
+        defaultNamespace(parent.defaultNamespace);
+    }
+
     @Override
     public RecordBuilder defaultNamespace(String namespace) {
+        this.defaultNamespace = namespace;
         record.setDefaultNamespace(namespace);
         return this;
     }
@@ -145,23 +164,124 @@ public class RecordBuilderImpl implements RecordBuilder {
         return this;
     }
 
-    @Override
-    public Record build() {
+    private Record createRecord() {
         return record;
     }
 
     @Override
+    public Record build() {
+        if (mode == Mode.ROOT_RECORD) {
+            return createRecord();
+        } else {
+            throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
+        }
+    }
+
+    @Override
     public Record update() throws RepositoryException, InterruptedException {
-        return repository.update(record, updateVersion, useLatestRecordType, mutationConditions);
+        if (mode == Mode.ROOT_RECORD) {
+            return repository.update(record, updateVersion, useLatestRecordType, mutationConditions);
+        } else {
+            throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
+        }
     }
 
     @Override
     public Record create() throws RepositoryException, InterruptedException {
-        return repository.create(record);
+        if (mode == Mode.ROOT_RECORD) {
+            return repository.create(record);
+        } else {
+            throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
+        }
     }
     
     @Override
     public Record createOrUpdate() throws RepositoryException, InterruptedException {
-        return repository.createOrUpdate(record, useLatestRecordType);
+        if (mode == Mode.ROOT_RECORD) {
+            return repository.createOrUpdate(record, useLatestRecordType);
+        } else {
+            throw new IllegalStateException("update should only be called for root records, current mode is " + mode);
+        }
+    }
+
+    @Override
+    public RecordBuilder recordField(String name) throws RecordException {
+        return recordField(resolveNamespace(name));
+    }
+
+    @Override
+    public RecordBuilder recordField(QName name) throws RecordException {
+        return new RecordBuilderImpl(this, name, Mode.NESTED_RECORD);
+    }
+
+    @Override
+    public RecordBuilder set() {
+        if (mode == Mode.NESTED_RECORD) {
+            parent.record.setField(parentField, createRecord());
+            return parent;
+        } else {
+            throw new IllegalStateException("set should only be called for nested records, current mode is " + mode);
+        }
+    }
+
+    @Override
+    public RecordBuilder recordListField(String name) throws RecordException {
+        return recordListField(resolveNamespace(name));
+    }
+
+    @Override
+    public RecordBuilder recordListField(QName name) throws RecordException {
+        return new RecordBuilderImpl(this, name, Mode.NESTED_RECORD_LIST);
+    }
+
+    @Override
+    public RecordBuilder add() throws RecordException {
+        if (mode == Mode.NESTED_RECORD_LIST) {
+            if (records == null) {
+                records = new ArrayList<Record>();
+            }
+            records.add(createRecord());
+
+            // Reset, but keep the record type setting (and the default namespace)
+            QName prevRecordTypeName = record.getRecordTypeName();
+            Long prevRecordTypeVersion = record.getRecordTypeVersion();
+
+            reset();
+
+            recordType(prevRecordTypeName, prevRecordTypeVersion);
+
+            return this;
+        } else {
+            throw new IllegalStateException("add should only be called for a nested list of records, current mode is " +
+                    mode);
+        }
+    }
+
+    @Override
+    public RecordBuilder endList() {
+        if (mode == Mode.NESTED_RECORD_LIST) {
+            if (records == null) {
+                records = new ArrayList<Record>();
+            }
+            records.add(createRecord());
+
+            parent.field(parentField, records);
+
+            return parent;
+        } else {
+            throw new IllegalStateException("endList should only be called when creating a nested list of records");
+        }
+    }
+
+    protected QName resolveNamespace(String name) {
+        if (defaultNamespace != null)
+            return new QName(defaultNamespace, name);
+
+        QName recordTypeName = record.getRecordTypeName();
+        if (recordTypeName != null)
+            return new QName(recordTypeName.getNamespace(), name);
+
+        throw new IllegalStateException("Namespace could not be resolved for name '" + name +
+            "' since no default namespace was given and no record type is set.");
     }
 }

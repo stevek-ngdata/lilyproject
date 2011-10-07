@@ -144,7 +144,37 @@ public interface RecordBuilder {
      * @return the builder
      */
     RecordBuilder field(String name, Object value) throws RecordException;
+
+    /**
+     * Returns a new, nested, builder to create a record to set as value
+     * in a record field. Call {@link #set()} to return to the current
+     * record's builders.
+     */
+    RecordBuilder recordField(String name) throws RecordException;
     
+    /**
+     * Returns a new, nested, builder to create a record to set as value
+     * in a RECORD field. Call {@link #set()} to return to the current
+     * record's builders.
+     */
+    RecordBuilder recordField(QName name) throws RecordException;
+
+    /**
+     * Returns a new, nested, builder to create a list of records to set
+     * as value in a LIST&lt;RECORD> field. After creating each record, call
+     * {@link #add}, after the last record, call {@link #endList} instead
+     * of add.
+     */
+    RecordBuilder recordListField(String name) throws RecordException;
+
+    /**
+     * Returns a new, nested, builder to create a list of records to set
+     * as value in a LIST&lt;RECORD> field. After creating each record, call
+     * {@link #add}, after the last record, call {@link #endList} instead
+     * of add.
+     */
+    RecordBuilder recordListField(QName name) throws RecordException;
+
     /**
      * Adds a mutation condition that should be checked when updating a record.
      * <p>
@@ -212,4 +242,27 @@ public interface RecordBuilder {
      * @return a record
      */
     Record build();
+
+    /**
+     * Finishes the creation of a nested record and sets it as field value in
+     * the parent record. The parent record builder is returned.
+     * See {@link #recordField(String)}.
+     */
+    RecordBuilder set();
+
+    /**
+     * Finishes the creation of a nested record for a list record field.
+     * After calling this, a new record builder is returned to create the
+     * next record in the list. To finish the list, call {@link #endList()}.
+     * See {@link #recordListField(String)}.
+     */
+    RecordBuilder add() throws RecordException;
+
+    /**
+     * Finishes the creation of a nested record for a list record field,
+     * and also finishes the creation of the complete list. The list
+     * will be set as field value in the parent record, and the parent record
+     * builder is returned.
+     */
+    RecordBuilder endList();
 }
