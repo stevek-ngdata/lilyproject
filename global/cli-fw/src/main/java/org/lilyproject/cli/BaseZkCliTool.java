@@ -56,8 +56,10 @@ public abstract class BaseZkCliTool extends BaseCliTool {
             return result;
 
         if (!cmd.hasOption(zkOption.getOpt())) {
-            System.out.println("ZooKeeper connection string not specified, using default: " + DEFAULT_ZK_CONNECT);
-            System.out.println();
+            // to stderr: makes that sample config dumps of e.g. tester tool do not start with this line, and
+            // can thus be redirected to a file without further editing.
+            System.err.println("ZooKeeper connection string not specified, using default: " + DEFAULT_ZK_CONNECT);
+            System.err.println();
             zkConnectionString = DEFAULT_ZK_CONNECT;
         } else {
             zkConnectionString = cmd.getOptionValue(zkOption.getOpt());
