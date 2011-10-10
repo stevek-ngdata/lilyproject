@@ -74,14 +74,6 @@ public class AvroConverterTest {
         avroQName.name = "name";
         assertEquals(avroQName, converter.convert(qname));
         assertEquals(qname, converter.convert(avroQName));
-        
-        // No namespace
-        qname = new QName(null, "name");
-        avroQName = new AvroQName();
-        avroQName.name = "name";
-        control.verify();
-        assertEquals(avroQName, converter.convert(qname));
-        assertEquals(qname, converter.convert(avroQName));
     }
     
     @Test
@@ -400,7 +392,7 @@ public class AvroConverterTest {
         record.setRecordType(Scope.VERSIONED_MUTABLE, new QName("ns", "vmrt"), 3L);
         QName fieldName = new QName("ns", "aName");
         record.setField(fieldName, "aValue");
-        QName fieldName2 = new QName(null, "aName2");
+        QName fieldName2 = new QName("ns", "aName2");
         record.setField(fieldName2, "aValue2");
         record.addFieldsToDelete(Arrays.asList(new QName("devnull", "fieldToDelete")));
         

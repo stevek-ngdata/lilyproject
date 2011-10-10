@@ -20,8 +20,8 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-convert-fieldtypes</artifactId>
-  <name>Lily: convert field types </name>
+  <artifactId>lily-upgrade</artifactId>
+  <name>Lily: upgrade tools </name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
@@ -66,8 +66,8 @@
         <configuration>
           <scripts>
             <script>
-              <basename>lily-convert-fieldtypes</basename>
-              <mainClass>org.lilyproject.tools.convertfieldtypes.ConvertFieldTypesTool</mainClass>
+              <basename>lily-upgrade-from-1.0</basename>
+              <mainClass>org.lilyproject.tools.upgrade.UpgradeFrom1_0Tool</mainClass>
             </script>
           </scripts>
         </configuration>

@@ -1,16 +1,8 @@
 package org.lilyproject.tools.tester;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -24,11 +16,9 @@ import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
 import org.lilyproject.testclientfw.Util;
-import org.lilyproject.tools.import_.cli.DefaultImportListener;
-import org.lilyproject.tools.import_.cli.ImportConflictException;
-import org.lilyproject.tools.import_.cli.ImportException;
-import org.lilyproject.tools.import_.cli.JsonImport;
-import org.lilyproject.tools.import_.json.*;
+import org.lilyproject.tools.import_.cli.*;
+import org.lilyproject.tools.import_.json.JsonFormatException;
+import org.lilyproject.tools.import_.json.QNameConverter;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
@@ -123,17 +113,6 @@ public class Tester extends BaseRepositoryTestTool {
         InputStream is = new FileInputStream(configFileName);
         loadConfig(is);
         is.close();
-//        JsonNode configNode = JsonFormat.deserializeNonStd(is);
-
-//        openStreams(configNode); // Only failures stream
-//
-//        createSchema(configNode);
-//
-//        setupRecordSpaces(configNode);
-//
-//        prepareActions(configNode);
-//        
-//        readStopConditions(configNode);
         
         try {            
             System.out.println("Running tests...");

@@ -18,7 +18,9 @@ package org.lilyproject.repository.impl.test;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.lilyproject.repository.api.Scope.VERSIONED;
 
 import java.util.Collection;
@@ -31,15 +33,19 @@ import org.lilyproject.repository.impl.SchemaIdImpl;
 
 public abstract class AbstractTypeManagerRecordTypeTest {
 
+    private static String namespace1 = "ns1";
     protected static TypeManager typeManager;
     private static FieldType fieldType1;
     private static FieldType fieldType2;
     private static FieldType fieldType3;
 
     protected static void setupFieldTypes() throws Exception {
-        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName("ns1", "field1"), Scope.NON_VERSIONED));
-        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName(null, "field2"), Scope.VERSIONED));
-        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"), new QName("ns1", "field3"), Scope.VERSIONED_MUTABLE));
+        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
+                new QName(namespace1, "field1"), Scope.NON_VERSIONED));
+        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"),
+                new QName(namespace1, "field2"), Scope.VERSIONED));
+        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"),
+                new QName(namespace1, "field3"), Scope.VERSIONED_MUTABLE));
     }
 
     @Test
@@ -69,7 +75,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     
     @Test
     public void testCreateSameNameFails() throws Exception {
-        QName name = new QName(null, "testCreateSameNameFails");
+        QName name = new QName(namespace1, "testCreateSameNameFails");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
         
@@ -84,7 +90,7 @@ public abstract class AbstractTypeManagerRecordTypeTest {
 
     @Test
     public void testUpdate() throws Exception {
-        QName name = new QName(null, "testUpdate");
+        QName name = new QName(namespace1, "testUpdate");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
         assertEquals(Long.valueOf(1), recordType.getVersion());
@@ -328,12 +334,12 @@ public abstract class AbstractTypeManagerRecordTypeTest {
     
     @Test
     public void testUpdateName() throws Exception {
-        QName name = new QName(null, "testUpdateName");
+        QName name = new QName(namespace1, "testUpdateName");
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);
         assertEquals(name, recordType.getName());
         
-        QName name2 = new QName(null, "testUpdateName2");
+        QName name2 = new QName(namespace1, "testUpdateName2");
         recordType.setName(name2);
         recordType = typeManager.updateRecordType(recordType);
         recordType = typeManager.getRecordTypeById(recordType.getId(), null);
@@ -342,8 +348,8 @@ public abstract class AbstractTypeManagerRecordTypeTest {
 
     @Test
     public void testUpdateNameToExistingNameFails() throws Exception {
-        QName name = new QName(null, "testUpdateNameToExistingNameFails");
-        QName name2 = new QName(null, "testUpdateNameToExistingNameFails2");
+        QName name = new QName(namespace1, "testUpdateNameToExistingNameFails");
+        QName name2 = new QName(namespace1, "testUpdateNameToExistingNameFails2");
 
         RecordType recordType = typeManager.newRecordType(name);
         recordType = typeManager.createRecordType(recordType);

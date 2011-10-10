@@ -1,8 +1,0 @@
-This tool converts the FieldType schema on HBase from the encoding used in Lily 1.0 to the encoding used in Lily 1.1
-It is to be used when upgrading Lily from 1.0 to 1.1
-
-The encoded value type is converted to the new encoding.
-Multivalue types are converted to LIST types.
-Hierarchy types are converted to PATH types.  
-
-By default the changes are not applied, but only reported.

@@ -39,7 +39,7 @@ public class RecordValueTypeBenchmark {
 
 	private int nrOfFields = 20;
     private int nrOfRecords = 10000;
-    private int nrOfTimes = 1; // by default run same test 2 times, avoid warm-up issues
+    private int nrOfTimes = 10;
     private enum Type {MIXED, SEQ, RVT, JSON};
     private Type type = Type.MIXED;
     
@@ -73,7 +73,7 @@ public class RecordValueTypeBenchmark {
     @Test
     public void testBenchmark() throws Exception {
         RecordValueTypeBenchmark benchmark = new RecordValueTypeBenchmark();
-        benchmark.initialize(new String[] { "f=200" });
+        benchmark.initialize(new String[] { "f=2" });
 
         benchmark.testRecordValueTypePerformance();
 

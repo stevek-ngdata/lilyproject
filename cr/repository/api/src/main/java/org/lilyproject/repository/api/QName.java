@@ -30,6 +30,7 @@ public class QName {
     private final String name;
 
     public QName(String namespace, String name) {
+        ArgumentValidator.notNull(namespace, "namespace");
         ArgumentValidator.notNull(name, "name");
         this.namespace = namespace;
         this.name = name;

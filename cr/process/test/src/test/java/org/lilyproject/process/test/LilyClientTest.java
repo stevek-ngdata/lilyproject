@@ -59,7 +59,8 @@ public class LilyClientTest {
         // Obtain a repository
         Repository repository = client.getRepository();
 
-        String NS = "org.lilyproject.client.test";
+        // String NS = "org.lilyproject.client.test";
+        String NS = null;
 
         // Create a blob field type and record type
         TypeManager typeManager = repository.getTypeManager();

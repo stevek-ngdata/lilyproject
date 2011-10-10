@@ -7,7 +7,7 @@
       "name": "AvroQName",
       "type": "record",
       "fields": [
-        {"name": "namespace", "type": ["string", "null"]},
+        {"name": "namespace", "type": "string"},
         {"name": "name", "type": "string"}
       ]
     },

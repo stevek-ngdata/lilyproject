@@ -1,0 +1,15 @@
+This tool upgrades the Lily Schema on HBase from the schema used in Lily 1.0 to the schema used in Lily 1.1
+
+It performs two conversions:
+1) A conversion from 'null' namespaces in the names of record types and field types. 
+   By default 'null' is replaced by an empty string. 
+   If another namespace is required, specify this with the namespacevalue (-nsv) argument.
+
+2) An upgrade of the encoding of value types inside the field types, including a conversion of multivalue
+   and hierarchical value types to LIST and PATH value types. 
+
+By default this tool only performs a dry-run, reporting the changes that would be applied. 
+To really apply the changes, use the -a argument.
+
+By default all upgrades are perfomed. 
+To only run one or more upgrades, specify arguments of the required upgrades (-ns and -vt respectively).

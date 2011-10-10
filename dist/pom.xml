@@ -79,7 +79,7 @@
     
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-convert-fieldtypes</artifactId>
+      <artifactId>lily-upgrade</artifactId>
     </dependency>
 
     <!--

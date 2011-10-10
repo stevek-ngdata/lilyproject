@@ -96,8 +96,9 @@ public class RecordValueType extends AbstractValueType implements ValueType {
             InterruptedException {
         if (value instanceof RecordRvtImpl) {
             byte[] bytes = ((RecordRvtImpl)value).getBytes();
-            if (bytes != null) 
+            if (bytes != null) {
                 return bytes;
+            }
         }
         DataOutput dataOutput = new DataOutputImpl();
         encodeData(value, dataOutput, parentRecords);

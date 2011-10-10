@@ -111,7 +111,7 @@
     <module>tools/record-row-visualizer</module>
     <module>tools/print-host</module>
     <module>tools/archetype</module>
-    <module>tools/convert-fieldtypes</module>
+    <module>tools/upgrade</module>
 
 
     <module>apps/import</module>
@@ -365,7 +365,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-convert-fieldtypes</artifactId>
+        <artifactId>lily-upgrade</artifactId>
         <version>1.1-SNAPSHOT</version>
       </dependency>
       <dependency>
