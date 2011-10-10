@@ -27,8 +27,7 @@ import org.lilyproject.repository.api.*;
 public abstract class AbstractValueType implements ValueType {
 
     @Override
-    public <T> T read(byte[] data) throws UnknownValueTypeEncodingException,
-            RepositoryException, InterruptedException {
+    public <T> T read(byte[] data) throws RepositoryException, InterruptedException {
         return read(new DataInputImpl(data));
     }
     

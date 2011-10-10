@@ -70,7 +70,8 @@ public interface ValueType {
      * 
      * @param dataInput the DataInput from which the valueType should read and decode its data
      *
-     * @throws UnknownValueTypeEncodingException 
+     * @throws UnknownValueTypeEncodingException if the version of the encoding stored within the
+     *         input data is not supported.
      */
     <T> T read(DataInput dataInput) throws RepositoryException, InterruptedException;
 

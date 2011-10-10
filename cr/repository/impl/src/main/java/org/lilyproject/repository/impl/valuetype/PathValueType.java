@@ -61,7 +61,7 @@ public class PathValueType extends AbstractValueType implements ValueType {
     }
 
     @SuppressWarnings("unchecked")
-    public HierarchyPath read(DataInput dataInput) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException {
+    public HierarchyPath read(DataInput dataInput) throws RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
         List<Object> result = new ArrayList<Object>(nrOfValues);
         for (int i = 0 ; i < nrOfValues; i++) {
