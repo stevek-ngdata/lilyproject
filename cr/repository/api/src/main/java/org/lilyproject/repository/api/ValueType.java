@@ -38,23 +38,27 @@ import org.lilyproject.bytes.api.DataOutput;
  * A value type to represent a Record also exists. This record is used to
  * represent what is also known as a complex type. It can be regarded as normal
  * Record, but with a few restrictions:
- * <li>It has no version</li>
- * <li>It has one (non-versioned) record type, and all its fields must be
- * defined in that record type</li>
- * <li>All its fields are non-versioned</li>
- * <li>It is stored in its entirety inside a field of the surrounding record</li>
- * <li>Blob fields are not allowed</li>
+ * <ul>
+ *   <li>It has no version</li>
+ *   <li>It has one (non-versioned) record type, and all its fields must be
+ *   defined in that record type</li>
+ *   <li>All its fields are non-versioned</li>
+ *   <li>It is stored in its entirety inside a field of the surrounding record</li>
+ *   <li>Blob fields are not allowed</li>
+ * </ul>
  * 
  * <p>
  * It is the responsibility of a ValueType to convert the values to/from byte
- * representation, as used for storage in the repository.
+ * representation, as used for storage in the repository. See the methods
+ * {@link #write(Object, org.lilyproject.bytes.api.DataOutput, java.util.IdentityHashMap)}
+ * and {@link #read(org.lilyproject.bytes.api.DataInput)}.
  * 
  * <p>
- * A value type should be requested from the {@link TypeManager} using the
- * method {@link TypeManager#getValueType(String, String)}. A name (e.g.
+ * Value types are retrieved from the {@link TypeManager} using the
+ * method {@link TypeManager#getValueType(String)}. A name (e.g.
  * "STRING") uniquely represents the value type, and some value types can
  * include extra information (typeParams) defining the value type. For example
- * to define a list should contain strings. <br>
+ * to define a list should contain strings.
  * See the javadoc of that method for the complete list of supported value types
  * and the parameters needed to get an instance of them.
  * 
@@ -64,24 +68,17 @@ public interface ValueType {
     /**
      * Read and decodes object of the type represented by this value type from a {@link DataInput}.
      * 
-     * <p>The ValueType is itself responsible for encoding (see {@link #write(Object, DataOutput)}) and decoding data. 
-     * 
-     * @param dataInput the DataInput from which the valueType should read and decode its data 
+     * @param dataInput the DataInput from which the valueType should read and decode its data
+     *
      * @throws UnknownValueTypeEncodingException 
-     * @throws InterruptedException 
-     * @throws RepositoryException 
      */
-    <T> T read(DataInput dataInput) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
+    <T> T read(DataInput dataInput) throws RepositoryException, InterruptedException;
 
-    <T> T read(byte[] data) throws UnknownValueTypeEncodingException, RepositoryException, InterruptedException;
+    <T> T read(byte[] data) throws RepositoryException, InterruptedException;
 
     /**
      * Encodes an object of the type represented by this value type to a
      * {@link DataOutput}.
-     * 
-     * <p>
-     * The ValueType is itself responsible for encoding (see
-     * {@link #write(Object, DataOutput)}) and decoding data.
      * 
      * @param value
      *            the object to encode and write
@@ -89,10 +86,8 @@ public interface ValueType {
      *            the DataOutput on which to write the data
      * @param parentRecords
      *            an IdentityHashMap of parentRecords to check for self-nested
-     *            records. The value of the map is not important and may be
-     *            null.
-     * @throws RepositoryException
-     * @throws InterruptedException
+     *            records. Only the key-part of this map is used, as if it were
+     *            a set, the value is ignored.
      */
     void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
             throws RepositoryException, InterruptedException;
@@ -102,8 +97,6 @@ public interface ValueType {
      * 
      * <p>Should only be used internally for Avro data transport.
      * 
-     * @throws InterruptedException 
-     * @throws RepositoryException 
      */
     byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
             InterruptedException;
@@ -112,12 +105,13 @@ public interface ValueType {
      * Returns the Java class for the values of this value type.
      * 
      * <p>
-     * For example: java.util.List
+     * For example: java.util.List or java.lang.String
      */
     Class getType();
 
     /**
      * Returns a set of all values contained in this value.
+     *
      * <p>
      * In case of a ListValueType or PathValueType, these are the nested values.
      */
@@ -167,10 +161,10 @@ public interface ValueType {
 
     /**
      * ListValueType and PathValueType can again contain other value types.
+     *
      * <p>
      * This method returns the number of nesting levels until the base value
-     * type is reached.<br/>
-     * For non List or Path value types the returned value is 1.
+     * type is reached. For non List or Path value types the returned value is 1.
      * 
      * <p>
      * This method is used by the Repository and BlobIncubator when checking if
@@ -179,13 +173,18 @@ public interface ValueType {
     int getNestingLevel();
 
     /**
+     * @deprecated Use {@link #getBaseName()}.equals("LIST") instead.
+     *
      * @return true in case of a ListValueType, false in all other cases.
      */
     boolean isMultiValue();
     
 
     /**
-     * @return true in case of a PathValueType or if a PathValueType is nested in a ListValueType 
+     * @deprecated Use {@link #getBaseName()}.equals("PATH") or
+     *             {@link #getNestedValueType()}.{@link #getBaseName()}.equals("PATH") instead.
+     *
+     * @return true in case of a PathValueType or if a PathValueType is nested in a ListValueType
      */
     boolean isHierarchical();
 }
