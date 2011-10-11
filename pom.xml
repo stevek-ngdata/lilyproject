@@ -26,7 +26,7 @@
     <version.hadoop>0.20.2-cdh3u1</version.hadoop>
     <version.zookeeper>3.3.3</version.zookeeper>
     <version.maven>2.0.9</version.maven>
-    <version.solr>3.1.0</version.solr>
+    <version.solr>3.4.0</version.solr>
 
     <version.avro>1.5.0-747v2-813</version.avro>
 
