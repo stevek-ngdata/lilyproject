@@ -191,6 +191,7 @@ public class SolrTestingUtility {
                 new File(solrConfDir, "solrconfig.xml"), autoCommitSetting);
         createEmptyFile(new File(solrConfDir, "synonyms.txt"));
         createEmptyFile(new File(solrConfDir, "stopwords.txt"));
+        createEmptyFile(new File(solrConfDir, "stopwords_en.txt"));
         createEmptyFile(new File(solrConfDir, "protwords.txt"));
     }
 
