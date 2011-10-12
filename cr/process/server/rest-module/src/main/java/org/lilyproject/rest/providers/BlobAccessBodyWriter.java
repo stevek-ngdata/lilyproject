@@ -18,15 +18,18 @@ import java.lang.reflect.Type;
 
 @Provider
 public class BlobAccessBodyWriter implements MessageBodyWriter<BlobAccess> {
+    @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return BlobAccess.class.isAssignableFrom(type);
     }
 
+    @Override
     public long getSize(BlobAccess blobAccess, Class<?> type, Type genericType, Annotation[] annotations,
             MediaType mediaType) {
         return blobAccess.getBlob().getSize();
     }
 
+    @Override
     public void writeTo(BlobAccess blobAccess, Class<?> type, Type genericType, Annotation[] annotations,
             MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
             throws IOException, WebApplicationException {

@@ -71,6 +71,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
     }
     
     // RowLogs
+    @Override
     public synchronized void addRowLog(String rowLogId, RowLogConfig rowLogConfig) throws KeeperException, InterruptedException {
         final String path = rowLogPath(rowLogId);
         
@@ -78,10 +79,12 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         ZkUtil.createPath(zooKeeper, path, data);
     }
     
+    @Override
     public synchronized void updateRowLog(String rowLogId, RowLogConfig rowLogConfig) throws KeeperException, InterruptedException {
         final String path = rowLogPath(rowLogId);
         final byte[] data = RowLogConfigConverter.INSTANCE.toJsonBytes(rowLogId, rowLogConfig);
         zooKeeper.retryOperation(new ZooKeeperOperation<String>() {
+            @Override
             public String execute() throws KeeperException, InterruptedException {
                 zooKeeper.setData(path, data, -1);
                 return null;
@@ -89,6 +92,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         });
     }
 
+    @Override
     public synchronized void removeRowLog(String rowLogId) throws KeeperException, InterruptedException, RowLogException {
         if (subscriptionsExist(rowLogId)) 
             throw new RowLogException("Cannot remove rowlog " + rowLogId + " because it has subscriptions ");
@@ -101,25 +105,30 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
     private synchronized boolean subscriptionsExist(String rowLogId) throws KeeperException, InterruptedException {
         final String subscriptionsPath = subscriptionsPath(rowLogId);
         return zooKeeper.retryOperation(new ZooKeeperOperation<Boolean>() {
+           @Override
            public Boolean execute() throws KeeperException, InterruptedException {
                return zooKeeper.exists(subscriptionsPath, false) != null;
            }
         });
     } 
     
+    @Override
     public boolean rowLogExists(String rowLogId) throws InterruptedException, KeeperException {
         final String path = rowLogPath(rowLogId);
 
         return zooKeeper.retryOperation(new ZooKeeperOperation<Boolean>() {
+            @Override
             public Boolean execute() throws KeeperException, InterruptedException {
                 return zooKeeper.exists(path, false) != null;
             }
         });
     }
     
+    @Override
     public Map<String, RowLogConfig> getRowLogs() throws KeeperException, InterruptedException {
         Map<String, RowLogConfig> rowLogs = new HashMap<String, RowLogConfig>();
         List<String> rowLogIds = zooKeeper.retryOperation(new ZooKeeperOperation<List<String>>() {
+            @Override
             public List<String> execute() throws KeeperException, InterruptedException {
                 return zooKeeper.getChildren(rowLogPath, false);
             }
@@ -127,6 +136,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         
         for (final String rowLogId : rowLogIds) {
             byte[] data = zooKeeper.retryOperation(new ZooKeeperOperation<byte[]>() {
+                @Override
                 public byte[] execute() throws KeeperException, InterruptedException {
                     return zooKeeper.getData(rowLogPath(rowLogId), false, null);
                 }
@@ -136,34 +146,41 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         return rowLogs;
     }
     
+    @Override
     public void addRowLogObserver(String rowLogId, RowLogObserver observer) {
         observerSupport.addRowLogObserver(rowLogId, observer);
     }
     
+    @Override
     public void removeRowLogObserver(String rowLogId, RowLogObserver observer) {
         observerSupport.removeRowLogObserver(rowLogId, observer);
     }
     
     // Subscriptions
 
+    @Override
     public void addSubscriptionsObserver(String rowLogId, SubscriptionsObserver observer) {
         observerSupport.addSubscriptionsObserver(rowLogId, observer);
     }
 
+    @Override
     public void removeSubscriptionsObserver(String rowLogId, SubscriptionsObserver observer) {
         observerSupport.removeSubscriptionsObserver(rowLogId, observer);
     }
 
+    @Override
     public boolean subscriptionExists(String rowLogId, String subscriptionId) throws InterruptedException, KeeperException {
         final String path = subscriptionPath(rowLogId, subscriptionId);
 
         return zooKeeper.retryOperation(new ZooKeeperOperation<Boolean>() {
+            @Override
             public Boolean execute() throws KeeperException, InterruptedException {
                 return zooKeeper.exists(path, false) != null;
             }
         });
     }
 
+    @Override
     public synchronized void addSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type, int orderNr) throws KeeperException, InterruptedException, RowLogException {
 
         ZkUtil.createPath(zooKeeper, subscriptionsPath(rowLogId));
@@ -175,6 +192,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
 
         try {
             zooKeeper.retryOperation(new ZooKeeperOperation<String>() {
+                @Override
                 public String execute() throws KeeperException, InterruptedException {
                     return zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 }
@@ -187,6 +205,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         }
     }
     
+    @Override
     public synchronized void updateSubscription(String rowLogId, String subscriptionId, RowLogSubscription.Type type,
             int orderNr) throws KeeperException, InterruptedException, RowLogException {
         if (!subscriptionExists(rowLogId, subscriptionId))
@@ -199,6 +218,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
 
         try {
             zooKeeper.retryOperation(new ZooKeeperOperation<Object>() {
+                @Override
                 public String execute() throws KeeperException, InterruptedException {
                     zooKeeper.setData(path, data, -1);
                     return null;
@@ -209,6 +229,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         }
     }
     
+    @Override
     public synchronized void removeSubscription(String rowLogId, String subscriptionId) throws InterruptedException, KeeperException, RowLogException {
         // The children of the subscription are ephemeral listener nodes. These listeners should shut
         // down when the subscription is removed. Usually it is the task of the application to shut
@@ -227,6 +248,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             boolean removeChildren = false;
             try {
                 zooKeeper.retryOperation(new ZooKeeperOperation<Object>() {
+                    @Override
                     public Object execute() throws KeeperException, InterruptedException {
                         zooKeeper.delete(path, -1);
                         return null;
@@ -242,6 +264,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
 
             if (removeChildren) {
                 zooKeeper.retryOperation(new ZooKeeperOperation<Object>() {
+                    @Override
                     public Object execute() throws KeeperException, InterruptedException {
                         List<String> children;
                         try {
@@ -270,9 +293,11 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         return true;
     }
     
+    @Override
     public List<RowLogSubscription> getSubscriptions(final String rowLogId) throws KeeperException, InterruptedException {
         List<RowLogSubscription> subscriptions = new ArrayList<RowLogSubscription>();
         Boolean subscriptionsExist = zooKeeper.retryOperation(new ZooKeeperOperation<Boolean>() {
+            @Override
             public Boolean execute() throws KeeperException, InterruptedException {
                 return zooKeeper.exists(subscriptionsPath(rowLogId), false) != null;
             }
@@ -281,6 +306,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             return subscriptions; // Return an empty list
         
         List<String> subscriptionIds = zooKeeper.retryOperation(new ZooKeeperOperation<List<String>>() {
+            @Override
             public List<String> execute() throws KeeperException, InterruptedException {
                 return zooKeeper.getChildren(subscriptionsPath(rowLogId), false);
             }
@@ -288,6 +314,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         
         for (final String subscriptionId : subscriptionIds) {
             byte[] data = zooKeeper.retryOperation(new ZooKeeperOperation<byte[]>() {
+                @Override
                 public byte[] execute() throws KeeperException, InterruptedException {
                     return zooKeeper.getData(subscriptionPath(rowLogId, subscriptionId), false, null);
                 }
@@ -301,19 +328,23 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
     
     // Listeners
 
+    @Override
     public void addListenersObserver(String rowLogId, String subscriptionId, ListenersObserver observer) {
         observerSupport.addListenersObserver(new ListenerKey(rowLogId, subscriptionId), observer);
     }
 
+    @Override
     public void removeListenersObserver(String rowLogId, String subscriptionId, ListenersObserver observer) {
         observerSupport.removeListenersObserver(new ListenerKey(rowLogId, subscriptionId), observer);
     }
 
+    @Override
     public void addListener(String rowLogId, String subscriptionId, String listenerId) throws RowLogException,
             InterruptedException, KeeperException {
         final String path = listenerPath(rowLogId, subscriptionId, listenerId);
         try {
             zooKeeper.retryOperation(new ZooKeeperOperation<String>() {
+                @Override
                 public String execute() throws KeeperException, InterruptedException {
                     return zooKeeper.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
                 }
@@ -327,11 +358,13 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         }
     }
     
+    @Override
     public void removeListener(String rowLogId, String subscriptionId, String listenerId) throws RowLogException,
             InterruptedException, KeeperException {
         final String path = listenerPath(rowLogId, subscriptionId, listenerId);
         try {
             zooKeeper.retryOperation(new ZooKeeperOperation<Object>() {
+                @Override
                 public Object execute() throws KeeperException, InterruptedException {
                     zooKeeper.delete(path, -1);
                     return null;
@@ -342,8 +375,10 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         }
     }
     
+    @Override
     public List<String> getListeners(final String rowLogId, final String subscriptionId) throws KeeperException, InterruptedException  {
         List<String> listenerIds = zooKeeper.retryOperation(new ZooKeeperOperation<List<String>>() {
+            @Override
             public List<String> execute() throws KeeperException, InterruptedException {
                 return zooKeeper.getChildren(subscriptionPath(rowLogId, subscriptionId), false);
             }
@@ -354,14 +389,17 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
     }
     
     // Processor Notify
+    @Override
     public void addProcessorNotifyObserver(String rowLogId, String shardId, ProcessorNotifyObserver observer) {
     	observerSupport.addProcessorNotifyObserver(new ProcessorKey(rowLogId, shardId), observer);
     }
     
+    @Override
     public void removeProcessorNotifyObserver(String rowLogId, String shardId) {
     	observerSupport.removeProcessorNotifyObserver(new ProcessorKey(rowLogId, shardId));
     }
     
+    @Override
     public void notifyProcessor(String rowLogId, String shardId) throws InterruptedException, KeeperException {
     	try {
     		zooKeeper.setData(processorNotifyPath(rowLogId, shardId), null, -1);
@@ -436,6 +474,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             thread = null;
         }
 
+        @Override
         public void run() {
             while (!stop && !Thread.interrupted()) {
                 try {
@@ -919,6 +958,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             this.observerSupport = observerSupport;
         }
         
+        @Override
         public void process(WatchedEvent event) {
             EventType eventType = event.getType(); 
             if (!eventType.equals(Watcher.Event.EventType.None) && !eventType.equals(Watcher.Event.EventType.NodeChildrenChanged)) {
@@ -936,6 +976,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             this.observerSupport = observerSupport;
         }
         
+        @Override
         public void process(WatchedEvent event) {
             if (!event.getType().equals(Watcher.Event.EventType.None)) {
                 observerSupport.notifySubscriptionsChanged(rowLogId);
@@ -952,6 +993,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             this.observerSupport = observerSupport;
         }
         
+        @Override
         public void process(WatchedEvent event) {
             if (!event.getType().equals(Watcher.Event.EventType.None)) {
                 observerSupport.notifyListenersChanged(listenerKey);
@@ -968,7 +1010,8 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
     		this.observerSupport = observerSupport;
     	}
     	
-    	public void process(WatchedEvent event) {
+    	@Override
+        public void process(WatchedEvent event) {
     		if (!event.getType().equals(Watcher.Event.EventType.None)) {
     			observerSupport.notifyProcessor(processorKey);
     		}
@@ -982,6 +1025,7 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
             this.observerSupport = observerSupport;
         }
 
+        @Override
         public void process(WatchedEvent event) {
             if (event.getType() == Event.EventType.None && event.getState() == Event.KeeperState.SyncConnected) {
                 // Each time the connection is established, we trigger refreshing, since the previous refresh

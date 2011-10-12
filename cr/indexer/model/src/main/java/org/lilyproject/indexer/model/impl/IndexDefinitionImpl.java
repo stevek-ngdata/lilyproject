@@ -39,72 +39,88 @@ public class IndexDefinitionImpl implements IndexDefinition {
         this.name = name;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public IndexGeneralState getGeneralState() {
         return generalState;
     }
 
+    @Override
     public void setGeneralState(IndexGeneralState state) {
         checkIfMutable();
         this.generalState = state;
     }
 
+    @Override
     public IndexBatchBuildState getBatchBuildState() {
         return buildState;
     }
 
+    @Override
     public void setBatchBuildState(IndexBatchBuildState state) {
         checkIfMutable();
         this.buildState = state;
     }
 
+    @Override
     public IndexUpdateState getUpdateState() {
         return updateState;
     }
 
+    @Override
     public void setUpdateState(IndexUpdateState state) {
         checkIfMutable();
         this.updateState = state;
     }
 
+    @Override
     public String getQueueSubscriptionId() {
         return queueSubscriptionId;
     }
 
+    @Override
     public void setQueueSubscriptionId(String queueSubscriptionId) {
         checkIfMutable();
         this.queueSubscriptionId = queueSubscriptionId;
     }
 
+    @Override
     public byte[] getConfiguration() {
         // Note that while one could modify the returned byte array, it is very unlikely to do this
         // by accident, and we assume cooperating users.
         return configuration;
     }
 
+    @Override
     public void setConfiguration(byte[] configuration) {
         this.configuration = configuration;
     }
 
+    @Override
     public byte[] getShardingConfiguration() {
         return shardingConfiguration;
     }
 
+    @Override
     public void setShardingConfiguration(byte[] shardingConfiguration) {
         this.shardingConfiguration = shardingConfiguration;
     }
 
+    @Override
     public Map<String, String> getSolrShards() {
         return new HashMap<String, String>(solrShards);
     }
 
+    @Override
     public void setSolrShards(Map<String, String> shards) {
         this.solrShards = new HashMap<String, String>(shards);
     }
 
+    @Override
     public int getZkDataVersion() {
         return zkDataVersion;
     }
@@ -114,19 +130,23 @@ public class IndexDefinitionImpl implements IndexDefinition {
         this.zkDataVersion = zkDataVersion;
     }
 
+    @Override
     public BatchBuildInfo getLastBatchBuildInfo() {
         return lastBatchBuildInfo;
     }
 
+    @Override
     public void setLastBatchBuildInfo(BatchBuildInfo info) {
         checkIfMutable();
         this.lastBatchBuildInfo = info;
     }
 
+    @Override
     public ActiveBatchBuildInfo getActiveBatchBuildInfo() {
         return activeBatchBuildInfo;
     }
 
+    @Override
     public void setActiveBatchBuildInfo(ActiveBatchBuildInfo info) {
         checkIfMutable();
         this.activeBatchBuildInfo = info;

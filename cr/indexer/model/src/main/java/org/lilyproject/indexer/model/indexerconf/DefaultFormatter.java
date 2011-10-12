@@ -38,6 +38,7 @@ public class DefaultFormatter implements Formatter {
     }
     private static final ValueFormatter ALL_FORMATTER = new AllFormatter();
 
+    @Override
     public List<String> format(List<IndexValue> indexValues, Repository repository)
             throws InterruptedException {
 

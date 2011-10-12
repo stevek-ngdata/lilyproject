@@ -24,10 +24,12 @@ public abstract class BaseValue implements Value {
         this.formatterName = formatter;
     }
 
+    @Override
     public String getFormatter() {
         return formatterName;
     }
 
+    @Override
     public boolean extractContent() {
         return extractContent;
     }

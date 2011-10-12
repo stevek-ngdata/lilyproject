@@ -58,6 +58,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         cacheRefresher.start();
     }
     
+    @Override
     @PreDestroy
     public void close() throws IOException {
         try {
@@ -69,12 +70,14 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
     
     private class CacheWatcher implements Watcher {
+        @Override
         public void process(WatchedEvent event) {
             cacheRefresher.needsRefresh();
         }
     }
 
     protected class ConnectionWatcher implements Watcher {
+        @Override
         public void process(WatchedEvent event) {
             if (EventType.None.equals(event.getType()) && KeeperState.SyncConnected.equals(event.getState())) {
                 try {
@@ -116,6 +119,7 @@ public abstract class AbstractTypeManager implements TypeManager {
             }
         }
 
+        @Override
         public void run() {
             while (!stop && !Thread.interrupted()) {
                 try {
@@ -174,6 +178,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         recordTypeIdCache = newRecordTypeIdCache;
     }
 
+    @Override
     public synchronized FieldTypesImpl getFieldTypesSnapshot() {
         if (updatedFieldTypes) {
             fieldTypes = updatingFieldTypes.clone();
@@ -182,7 +187,9 @@ public abstract class AbstractTypeManager implements TypeManager {
         return fieldTypes;
     }
     
+    @Override
     abstract public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
+    @Override
     abstract public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
     
     protected synchronized void updateFieldTypeCache(FieldType fieldType) {
@@ -200,6 +207,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         recordTypeIdCache.put(recordType.getId(), recordType);
     }
     
+    @Override
     public synchronized Collection<RecordType> getRecordTypes() {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
         for (RecordType recordType : recordTypeNameCache.values()) {
@@ -208,6 +216,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordTypes;
     }
     
+    @Override
     public synchronized List<FieldType> getFieldTypes() {
         return getFieldTypesSnapshot().getFieldTypes();
     }
@@ -222,6 +231,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordTypeIdCache.get(id);
     }
     
+    @Override
     public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
         RecordType recordType = getRecordTypeFromCache(id);
@@ -238,6 +248,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordType.clone();
     }
     
+    @Override
     public RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(name, "name");
         RecordType recordType = getRecordTypeFromCache(name);
@@ -256,10 +267,12 @@ public abstract class AbstractTypeManager implements TypeManager {
     
     abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
     
+    @Override
     public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldTypeById(id);
     }
     
+    @Override
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldTypeByName(name);
     }
@@ -267,14 +280,17 @@ public abstract class AbstractTypeManager implements TypeManager {
     //
     // Object creation methods
     //
+    @Override
     public RecordType newRecordType(QName name) {
         return new RecordTypeImpl(null, name);
     }
     
+    @Override
     public RecordType newRecordType(SchemaId recordTypeId, QName name) {
         return new RecordTypeImpl(recordTypeId, name);
     }
 
+    @Override
     public FieldType newFieldType(ValueType valueType, QName name, Scope scope) {
         return newFieldType(null, valueType, name, scope);
     }
@@ -285,6 +301,7 @@ public abstract class AbstractTypeManager implements TypeManager {
         return newFieldType(null, getValueType(valueType), name, scope);
     }
 
+    @Override
     public FieldTypeEntry newFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
         ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
         ArgumentValidator.notNull(mandatory, "mandatory");
@@ -292,6 +309,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
 
+    @Override
     public FieldType newFieldType(SchemaId id, ValueType valueType, QName name, Scope scope) {
         return new FieldTypeImpl(id, valueType, name, scope);
     }
@@ -309,10 +327,12 @@ public abstract class AbstractTypeManager implements TypeManager {
     //
     // Value types
     //
+    @Override
     public void registerValueType(String valueTypeName, ValueTypeFactory valueTypeFactory) {
         valueTypeFactories.put(valueTypeName, valueTypeFactory);
     }
 
+    @Override
     public ValueType getValueType(String valueTypeSpec) throws RepositoryException, InterruptedException {
         ValueType valueType;
 

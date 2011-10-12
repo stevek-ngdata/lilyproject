@@ -48,69 +48,85 @@ public class RecordTypeImpl implements RecordType {
         fieldTypeEntries = new TreeMap<SchemaId, FieldTypeEntry>(comparator);
     }
     
+    @Override
     public void setId(SchemaId id) {
         this.id = id;
     }
     
+    @Override
     public SchemaId getId() {
         return id;
     }
     
+    @Override
     public void setName(QName name) {
         this.name = name;
     }
     
+    @Override
     public QName getName() {
         return name;
     }
 
+    @Override
     public Long getVersion() {
         return version;
     }
     
+    @Override
     public void setVersion(Long version){
         this.version = version;
     }
     
+    @Override
     public Collection<FieldTypeEntry> getFieldTypeEntries() {
         return fieldTypeEntries.values();
     }
     
+    @Override
     public FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId) {
         return fieldTypeEntries.get(fieldTypeId);
     }
     
+    @Override
     public void removeFieldTypeEntry(SchemaId fieldTypeId) {
         fieldTypeEntries.remove(fieldTypeId);
     }
     
+    @Override
     public void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry) {
         fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
     }
 
+    @Override
     public FieldTypeEntry addFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
         FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl(fieldTypeId, mandatory);
         addFieldTypeEntry(fieldTypeEntry);
         return fieldTypeEntry;
     }
 
+    @Override
     public void addMixin(SchemaId recordTypeId, Long recordTypeVersion) {
         ArgumentValidator.notNull(recordTypeId, "recordTypeId");
         mixins.put(recordTypeId, recordTypeVersion);
     }
     
+    @Override
     public void addMixin(SchemaId recordTypeId) {
         addMixin(recordTypeId, null);
     }
     
+    @Override
     public void removeMixin(SchemaId recordTypeId) {
         mixins.remove(recordTypeId);
     }
     
+    @Override
     public Map<SchemaId, Long> getMixins() {
         return mixins;
     }
 
+    @Override
     public RecordType clone() {
         RecordTypeImpl clone = new RecordTypeImpl(this.id, this.name);
         clone.version = this.version;

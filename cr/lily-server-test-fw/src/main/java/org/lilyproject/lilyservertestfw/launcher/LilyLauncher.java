@@ -216,6 +216,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
 
     private AtomicBoolean resetRunning = new AtomicBoolean();
 
+    @Override
     public void resetLilyState() {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         

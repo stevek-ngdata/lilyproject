@@ -118,6 +118,7 @@ public class IndexLocker {
 
                 try {
                     zk.retryOperation(new ZooKeeperOperation<Object>() {
+                        @Override
                         public Object execute() throws KeeperException, InterruptedException {
                             zk.create(lockPath, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
                             return null;
@@ -133,6 +134,7 @@ public class IndexLocker {
                 // of connection loss, we might not know if we actually succeeded creating the node, therefore
                 // read the owner and thread id to check.
                 boolean hasLock = zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+                    @Override
                     public Boolean execute() throws KeeperException, InterruptedException {
                         try {
                             Stat stat = new Stat();
@@ -178,6 +180,7 @@ public class IndexLocker {
         while (true) {
             try {
                 tokenOk = zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+                    @Override
                     public Boolean execute() throws KeeperException, InterruptedException {
                         Stat stat = new Stat();
                         byte[] data = zk.getData(lockPath, false, stat);
@@ -232,6 +235,7 @@ public class IndexLocker {
         final String lockPath = getPath(recordId);
 
         return zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+            @Override
             public Boolean execute() throws KeeperException, InterruptedException {
                 try {
                     Stat stat = new Stat();

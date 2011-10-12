@@ -87,6 +87,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
 
     }
 
+    @Override
     public Configuration getHBaseConf() {
         // To enable reuse of HBase connections, we should always return the same Configuration instance
         if (hbaseConfig == null) {
@@ -102,6 +103,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
         return hbaseConfig;
     }
 
+    @Override
     public Configuration getMapReduceConf() {
         Configuration hadoopConf = new Configuration();
 
@@ -114,6 +116,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
         return hadoopConf;
     }
 
+    @Override
     public Configuration getMapReduceConf(Conf subConf) {
         Configuration hadoopConf = new Configuration();
 
@@ -132,10 +135,12 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
         return hadoopConf;
     }
 
+    @Override
     public String getZooKeeperConnectString() {
         return zkConnectString;
     }
 
+    @Override
     public int getZooKeeperSessionTimeout() {
         return zkSessionTimeout;
     }

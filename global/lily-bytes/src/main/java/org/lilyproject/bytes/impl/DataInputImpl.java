@@ -67,10 +67,12 @@ public class DataInputImpl implements DataInput {
     }
 
     
+    @Override
     public byte readByte() {
         return source[pos++];
     }
 
+    @Override
     public byte[] readBytes(int length) {
         byte[] result = new byte[length];
         System.arraycopy(source, pos, result, 0, length);
@@ -84,6 +86,7 @@ public class DataInputImpl implements DataInput {
      * @return empty string when the utflen == 0, meaning an empty string was written by {@link DataOutputImpl#writeUTF(String)}
      * @return the string written {@link DataOutputImpl#writeUTF(String)} in all other cases.
      */
+    @Override
     public String readUTF() {
         int utflen = readInt();
         if (utflen == -1)
@@ -146,14 +149,17 @@ public class DataInputImpl implements DataInput {
         return chararr_count;
     }
 
+    @Override
     public boolean readBoolean() {
         return (source[pos++] != 0);
     }
 
+    @Override
     public double readDouble() {
         return Double.longBitsToDouble(readLong());
     }
 
+    @Override
     public int readInt() {
         return ((readByte() & 0xFF) << 24) 
             | ((readByte() & 0xFF) << 16)
@@ -161,14 +167,17 @@ public class DataInputImpl implements DataInput {
             | (readByte() & 0xFF);
     }
 
+    @Override
     public long readLong() {
         return (((long) readInt()) << 32) | (readInt() & 0xFFFFFFFFL);
     }
 
+    @Override
     public int readShort() {
         return (short) (((readByte() & 0xFF) << 8) | (readByte() & 0xFF));
     }
 
+    @Override
     public float readFloat() {
         return Float.intBitsToFloat(readInt());
     }
@@ -178,6 +187,7 @@ public class DataInputImpl implements DataInput {
     * five bytes. Smaller values take fewer bytes. Negative numbers are not
     * supported.
     */
+    @Override
     public int readVInt() {
         byte b = readByte();
         int i = b & 0x7F;
@@ -193,6 +203,7 @@ public class DataInputImpl implements DataInput {
     * nine bytes. Smaller values take fewer bytes. Negative numbers are not
     * supported.
     */
+    @Override
     public long readVLong() {
         byte b = readByte();
         long i = b & 0x7F;
@@ -203,18 +214,22 @@ public class DataInputImpl implements DataInput {
         return i;
     }
     
+    @Override
     public int getPosition() {
         return pos;
     }
     
+    @Override
     public void setPosition(int position) {
         this.pos = position;
     }
     
+    @Override
     public int getSize() {
         return size;
     }
 
+    @Override
     public void setSize(int size) {
         if (size < 0 || size > source.length) {
             throw new IllegalArgumentException("Invalid size: " + size + " (maximum: " + source.length + ")");

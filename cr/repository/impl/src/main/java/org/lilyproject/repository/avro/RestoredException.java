@@ -31,14 +31,17 @@ public class RestoredException extends Exception implements RemoteThrowableInfo 
         this.stackTrace = stackTrace;
     }
 
+    @Override
     public String getOriginalClass() {
         return originalClass;
     }
 
+    @Override
     public List<StackTraceElement> getOriginalStackTrace() {
         return stackTrace;
     }
 
+    @Override
     public String getOriginalMessage() {
         return originalMessage;
     }

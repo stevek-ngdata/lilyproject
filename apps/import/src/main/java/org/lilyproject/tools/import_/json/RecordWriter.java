@@ -28,6 +28,7 @@ import java.util.Map;
 public class RecordWriter implements EntityWriter<Record> {
     public static RecordWriter INSTANCE = new RecordWriter();
 
+    @Override
     public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,
             InterruptedException {
         Namespaces namespaces = new NamespacesImpl();
@@ -39,6 +40,7 @@ public class RecordWriter implements EntityWriter<Record> {
         return recordNode;
     }
 
+    @Override
     public ObjectNode toJson(Record record, WriteOptions options, Namespaces namespaces, Repository repository)
             throws RepositoryException, InterruptedException {
         JsonNodeFactory factory = JsonNodeFactory.instance;

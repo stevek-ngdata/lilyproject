@@ -56,6 +56,7 @@ public class MetricsIntervalLongValue extends MetricsBase {
         value = 0;
     }
 
+    @Override
     public synchronized void pushMetric(final MetricsRecord mr) {
         intervalHeartBeat();
         try {

@@ -21,6 +21,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         patternDetail = JsonUtil.getString(actionNode, "patternDetail", null);
     }
 
+    @Override
     public int run() {
         failureCount = 0;
         for (int i = 0; i < count; i++) {
@@ -129,6 +130,7 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         return new ActionResult(success, record, duration);
     }
     
+    @Override
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
         double duration = 0;
         String linkedRecordSource = testFieldType.getLinkedRecordSource();

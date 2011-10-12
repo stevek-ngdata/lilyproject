@@ -237,6 +237,7 @@ public class PrintUtil {
     private static QNameComparator QNAME_COMP = new QNameComparator();
 
     private static class QNameComparator implements Comparator<QName> {
+        @Override
         public int compare(QName o1, QName o2) {
             int cmp = o1.getNamespace().compareTo(o2.getNamespace());
             return cmp == 0 ? o1.getName().compareTo(o2.getName()) : cmp;
@@ -246,6 +247,7 @@ public class PrintUtil {
     private static FieldTypeByQNameComparator FT_COMP = new FieldTypeByQNameComparator();
 
     private static class FieldTypeByQNameComparator implements Comparator<Pair<FieldTypeEntry, FieldType>> {
+        @Override
         public int compare(Pair<FieldTypeEntry, FieldType> o1, Pair<FieldTypeEntry, FieldType> o2) {
             return QNAME_COMP.compare(o1.getV2().getName(), o2.getV2().getName());
         }

@@ -73,6 +73,7 @@ public class KauriRuntimeRepository extends AbstractMojo {
      */
     protected ArtifactResolver resolver;
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
                 artifactFactory, resolver, localRepository);

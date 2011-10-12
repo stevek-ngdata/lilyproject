@@ -182,6 +182,7 @@ public class DerefValue extends BaseValue {
         }
     }
 
+    @Override
     public SchemaId getFieldDependency() {
         if (follows.get(0) instanceof LinkFieldFollow) {
             return ((LinkFieldFollow)follows.get(0)).fieldType.getId();
@@ -192,6 +193,7 @@ public class DerefValue extends BaseValue {
         }
     }
 
+    @Override
     public FieldType getTargetFieldType() {
         return targetField;
     }

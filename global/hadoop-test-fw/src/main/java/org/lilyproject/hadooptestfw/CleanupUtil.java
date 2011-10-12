@@ -53,6 +53,7 @@ public class CleanupUtil {
         int sessionTimeout = 10000;
 
         ZooKeeper zk = new ZooKeeper(zkConnectString, sessionTimeout, new Watcher() {
+            @Override
             public void process(WatchedEvent event) {
                 if (event.getState() == Watcher.Event.KeeperState.Disconnected) {
                     System.err.println("ZooKeeper Disconnected.");

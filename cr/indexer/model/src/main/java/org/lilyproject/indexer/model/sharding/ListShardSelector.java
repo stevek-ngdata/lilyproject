@@ -36,6 +36,7 @@ public class ListShardSelector extends BaseShardSelector {
         valueToShard.put(value, shardName);
     }
 
+    @Override
     public String getShard(Comparable key) throws ShardSelectorException {
         String shardName = valueToShard.get(key);
         if (shardName == null) {
@@ -44,6 +45,7 @@ public class ListShardSelector extends BaseShardSelector {
         return shardName;
     }
 
+    @Override
     public Set<String> getShards() {
         return new HashSet<String>(valueToShard.values());
     }

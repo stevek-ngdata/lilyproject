@@ -28,6 +28,7 @@ public class SimpleNamespaceContext implements NamespaceContext {
         prefixToUri.put(prefix, uri);
     }
 
+    @Override
     public String getNamespaceURI(String prefix) {
         if (prefix == null)
             throw new IllegalArgumentException("NUll argument: prefix");
@@ -44,10 +45,12 @@ public class SimpleNamespaceContext implements NamespaceContext {
             return XMLConstants.NULL_NS_URI;
     }
 
+    @Override
     public String getPrefix(String namespaceURI) {
         throw new RuntimeException("Not implemented.");
     }
 
+    @Override
     public Iterator getPrefixes(String namespaceURI) {
         throw new RuntimeException("Not implemented.");
     }

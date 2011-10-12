@@ -52,15 +52,18 @@ public class RemoteRepository extends BaseRepository {
         lilyProxy = SpecificRequestor.getClient(AvroLily.class, client);
     }
 
+    @Override
     public void close() throws IOException {
         Closer.close(typeManager);
         Closer.close(client);
     }
 
+    @Override
     public IdGenerator getIdGenerator() {
         return idGenerator;
     }
     
+    @Override
     public Record create(Record record) throws RepositoryException, InterruptedException {
         try {
             return converter.convert(lilyProxy.create(converter.convert(record)));
@@ -92,6 +95,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
     public void delete(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
             lilyProxy.delete(converter.convert(recordId), null);
@@ -106,18 +110,22 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
     public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
     
+    @Override
     public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public List<Record> read(List<RecordId> recordIds, QName... fieldNames) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordIds, "recordIds");
         if (recordIds == null)
@@ -146,10 +154,12 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
     public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, version, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
@@ -171,10 +181,12 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return readVersions(recordId, fromVersion, toVersion, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames) throws RepositoryException, InterruptedException {
         try {
             List<AvroQName> avroFieldNames = null;
@@ -196,11 +208,13 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
     throws RepositoryException, InterruptedException {
         return readVersions(recordId, versions, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
         
+    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
     throws RepositoryException, InterruptedException {
         try {
@@ -223,6 +237,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
     
+    @Override
     public Record update(Record record) throws RepositoryException, InterruptedException {
         return update(record, false, true);
     }
@@ -233,11 +248,13 @@ public class RemoteRepository extends BaseRepository {
         return update(record, false, true, conditions);
     }
 
+    @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType)
             throws RepositoryException, InterruptedException {
         return update(record, updateVersion, useLatestRecordType, null);
     }
 
+    @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
             List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
         try {
@@ -254,10 +271,12 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
     public Record createOrUpdate(Record record) throws RepositoryException, InterruptedException {
         return createOrUpdate(record, true);
     }
 
+    @Override
     public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException, InterruptedException {
         try {
             return converter.convert(lilyProxy.createOrUpdate(converter.convert(record), useLatestRecordType));
@@ -272,6 +291,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
 
+    @Override
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroRecordIds(lilyProxy.getVariants(converter.convert(recordId)));
@@ -286,6 +306,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
     
+    @Override
     public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException {
         try {
             List<AvroSchemaId> avroFieldIds = null;
@@ -315,6 +336,7 @@ public class RemoteRepository extends BaseRepository {
         }
     }
     
+    @Override
     public RecordBuilder recordBuilder() throws RecordException {
         return new RecordBuilderImpl(this);
     }

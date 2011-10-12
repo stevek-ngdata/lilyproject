@@ -56,6 +56,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
         numberOfMessagesToBeExpected = i;
     }
 
+    @Override
     public synchronized boolean processMessage(RowLogMessage message) {
         count++;
         Integer times = processedMessages.get(message);

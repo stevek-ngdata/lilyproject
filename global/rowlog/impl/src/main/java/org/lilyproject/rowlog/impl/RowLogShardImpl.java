@@ -71,16 +71,19 @@ public class RowLogShardImpl implements RowLogShard {
         this.lastDelete = System.currentTimeMillis();
     }
 
+    @Override
     public String getId() {
         return id;
     }
 
+    @Override
     public void putMessage(RowLogMessage message) throws RowLogException {
         for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
             putMessage(message, subscription.getId());
         }
     }
 
+    @Override
     public void putMessage(RowLogMessage message, List<String> subscriptionIds) throws RowLogException {
         for (String subscriptionId : subscriptionIds) {
             putMessage(message, subscriptionId);
@@ -105,6 +108,7 @@ public class RowLogShardImpl implements RowLogShard {
      * In case many messages are being processed, this will reduce the number of delete calls on the HBase table to approximately 1
      * per batch. 
      */
+    @Override
     public void removeMessage(RowLogMessage message, String subscription) throws RowLogException {
         synchronized (messagesToDelete) {
             messagesToDelete.add(new Delete(createRowKey(message, subscription)));
@@ -131,10 +135,12 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
 
+    @Override
     public List<RowLogMessage> next(String subscription) throws RowLogException {
         return next(subscription, null);
     }
 
+    @Override
     public List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException {
         // Before collecting a new batch of messages, any outstanding deletes are executed first. 
         deleteMessages();
@@ -180,6 +186,7 @@ public class RowLogShardImpl implements RowLogShard {
         }
     }
 
+    @Override
     public int getBatchSize() {
         return batchSize;
     }

@@ -49,6 +49,7 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
         log.info("Setting limit "+ upperLimit+ " for blobstore " +blobStoreAccess.getId());
     }
     
+    @Override
     public BlobStoreAccess get(Blob blob) {
         Long size = blob.getSize();
         for (Long upperLimit: usedBlobStoreAccesses.keySet()) {
@@ -59,6 +60,7 @@ public class SizeBasedBlobStoreAccessFactory implements BlobStoreAccessFactory {
         return usedBlobStoreAccesses.get(Long.MAX_VALUE);
     }
     
+    @Override
     public Collection<BlobStoreAccess> getAll() {
         return usedBlobStoreAccesses.values();
     }

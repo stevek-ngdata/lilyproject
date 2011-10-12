@@ -58,6 +58,7 @@ public class UUIDRecordId implements RecordId {
         return uuidString;
     }
     
+    @Override
     public byte[] toBytes() {
         if (uuidBytes == null) {
             uuidBytes = idGenerator.toBytes(this);
@@ -65,6 +66,7 @@ public class UUIDRecordId implements RecordId {
         return uuidBytes;
     }
     
+    @Override
     public void writeBytes(DataOutput dataOutput) {
         if (uuidBytes == null) {
             idGenerator.writeBytes(this, dataOutput);
@@ -73,6 +75,7 @@ public class UUIDRecordId implements RecordId {
         }
     }
 
+    @Override
     public SortedMap<String, String> getVariantProperties() {
         return EMPTY_SORTED_MAP;
     }
@@ -117,10 +120,12 @@ public class UUIDRecordId implements RecordId {
         return true;
     }
 
+    @Override
     public RecordId getMaster() {
         return this;
     }
 
+    @Override
     public boolean isMaster() {
         return true;
     }

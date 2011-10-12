@@ -50,6 +50,7 @@ public class Conjunction extends BaseQueryResult {
         this.result2 = result2;
     }
 
+    @Override
     public byte[] next() throws IOException {
         byte[] key1 = result1.next();
         byte[] key2 = result2.next();
@@ -81,6 +82,7 @@ public class Conjunction extends BaseQueryResult {
         return key1;
     }
 
+    @Override
     public void close() {
         result1.close();
         result2.close();

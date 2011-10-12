@@ -32,10 +32,12 @@ public class NetworkInterfaceInfoImpl implements NetworkInterfaceInfo {
         hostAddress = new InetSocketAddress(hostName, 1).getAddress().getHostAddress();
     }
 
+    @Override
     public String getHostName() {
         return hostName;
     }
 
+    @Override
     public String getHostAddress() {
         return hostAddress;
     }

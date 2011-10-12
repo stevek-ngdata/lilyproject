@@ -35,23 +35,28 @@ public class LongValueType extends AbstractValueType  implements ValueType {
         }
     };
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
     
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Long read(DataInput dataInput) {
         return dataInput.readLong();
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeLong((Long)value);
     }
 
+    @Override
     public Class getType() {
         return Long.class;
     }

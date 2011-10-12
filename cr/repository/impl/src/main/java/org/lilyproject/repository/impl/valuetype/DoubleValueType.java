@@ -35,23 +35,28 @@ public class DoubleValueType extends AbstractValueType implements ValueType {
         }
     };
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
     
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Double read(DataInput dataInput) {
         return dataInput.readDouble();
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeDouble((Double)value);
     }
 
+    @Override
     public Class getType() {
         return Long.class;
     }

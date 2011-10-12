@@ -35,23 +35,28 @@ public class IntegerValueType extends AbstractValueType implements ValueType {
         }
     };
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
 
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Integer read(DataInput dataInput) {
         return dataInput.readInt();
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeInt((Integer)value);
     }
 
+    @Override
     public Class getType() {
         return Integer.class;
     }

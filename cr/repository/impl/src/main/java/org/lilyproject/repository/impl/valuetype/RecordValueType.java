@@ -47,23 +47,28 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         }
     }
     
+    @Override
     public String getBaseName() {
         return NAME;
     }
     
+    @Override
     public String getName() {
         return fullName;
     }
     
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
     
+    @Override
     @SuppressWarnings("unchecked")
     public Record read(byte[] data) throws RepositoryException, InterruptedException {
         return new RecordRvtImpl(data, this);
     }
     
+    @Override
     @SuppressWarnings("unchecked")
     public Record read(DataInput dataInput) throws RepositoryException, InterruptedException {
         Record record = new RecordImpl();
@@ -105,6 +110,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         return dataOutput.toByteArray();
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
             throws RepositoryException, InterruptedException {
         if (value instanceof RecordRvtImpl) {
@@ -206,6 +212,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         return fieldTypeEntries;
     }
 
+    @Override
     public Class getType() {
         return Record.class;
     }

@@ -267,6 +267,7 @@ public class IndexerWorker {
     }
 
     private class MyListener implements IndexerModelListener {
+        @Override
         public void process(IndexerModelEvent event) {
             try {
                 // Because the actions we take in response to events might take some time, we
@@ -318,6 +319,7 @@ public class IndexerWorker {
     }
 
     private class EventWorker implements Runnable {
+        @Override
         public void run() {
             while (true) {
                 if (Thread.interrupted()) {

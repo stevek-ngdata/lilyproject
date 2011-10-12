@@ -68,11 +68,13 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         setupCaches();
     }
 
+    @Override
     public void close() throws IOException {
         super.close();
         Closer.close(client);
     }
 
+    @Override
     public RecordType createRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
 
         try {
@@ -107,6 +109,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
     protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException {
         try {
             long avroVersion;
@@ -127,6 +130,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
     public RecordType updateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
         try {
             RecordType newRecordType = converter.convert(lilyProxy.updateRecordType(converter.convert(recordType)));
@@ -155,6 +159,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         return createFieldType(newFieldType(getValueType(valueType), name, scope));
     }
 
+    @Override
     public FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
         try {
             AvroFieldType avroFieldType = converter.convert(fieldType);
@@ -190,6 +195,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
     public FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
 
         try {
@@ -207,6 +213,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
     public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroFieldTypes(lilyProxy.getFieldTypesWithoutCache());
@@ -219,6 +226,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
     public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroRecordTypes(lilyProxy.getRecordTypesWithoutCache());

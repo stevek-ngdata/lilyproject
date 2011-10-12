@@ -129,6 +129,7 @@ public class RowLogConfigurationManagerTest {
         private RowLogConfig expectedRowLogConfig;
         private Semaphore semaphore = new Semaphore(0);
         
+        @Override
         public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
             this.rowLogConfig = rowLogConfig;
             semaphore.release();
@@ -195,6 +196,7 @@ public class RowLogConfigurationManagerTest {
         private List<RowLogSubscription> expectedSubscriptions;
         private Semaphore semaphore = new Semaphore(0);
         
+        @Override
         public void subscriptionsChanged(List<RowLogSubscription> subscriptions) {
             this.subscriptions = subscriptions;
             semaphore.release();
@@ -262,6 +264,7 @@ public class RowLogConfigurationManagerTest {
         
         private Semaphore semaphore = new Semaphore(0);
         
+        @Override
         public void listenersChanged(List<String> listeners) {
             this.listeners = listeners;
             semaphore.release();
@@ -321,6 +324,7 @@ public class RowLogConfigurationManagerTest {
         private Semaphore semaphore = new Semaphore(0);
 		private boolean expect = false;
         
+        @Override
         public void notifyProcessor() {
             semaphore.release();
         }

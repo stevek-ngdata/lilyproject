@@ -59,6 +59,7 @@ public class RemoteListenerHandler {
                         Executors.newCachedThreadPool(new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-boss")),
                         Executors.newCachedThreadPool(new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-worker"))));
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+            @Override
             public ChannelPipeline getPipeline() throws Exception {
                 ChannelPipeline pipeline = Channels.pipeline();
                 pipeline.addLast("messageDecoder", new MessageDecoder()); // Read enough bytes

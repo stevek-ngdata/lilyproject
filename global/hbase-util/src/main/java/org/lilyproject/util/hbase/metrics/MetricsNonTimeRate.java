@@ -57,6 +57,7 @@ public class MetricsNonTimeRate extends MetricsBase {
         value2 = 0;
     }
 
+    @Override
     public synchronized void pushMetric(final MetricsRecord mr) {
         intervalHeartBeat();
         try {

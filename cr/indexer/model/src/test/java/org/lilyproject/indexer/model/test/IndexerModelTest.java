@@ -131,6 +131,7 @@ public class IndexerModelTest {
     private class TestListener implements IndexerModelListener {
         private Set<IndexerModelEvent> events = new HashSet<IndexerModelEvent>();
 
+        @Override
         public void process(IndexerModelEvent event) {
             synchronized (this) {
                 events.add(event);

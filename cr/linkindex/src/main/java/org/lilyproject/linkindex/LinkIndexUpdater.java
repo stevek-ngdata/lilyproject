@@ -52,6 +52,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
         metrics = new LinkIndexUpdaterMetrics("linkIndexUpdater");
     }
 
+    @Override
     public boolean processMessage(RowLogMessage msg) {
         try {
             RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());

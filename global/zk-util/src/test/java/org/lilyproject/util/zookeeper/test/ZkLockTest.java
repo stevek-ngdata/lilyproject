@@ -91,6 +91,7 @@ public class ZkLockTest {
 
         // The following will block
         Thread t = new Thread(new Runnable() {
+            @Override
             public void run() {
                 try {
                     log.debug("Request second lock.");

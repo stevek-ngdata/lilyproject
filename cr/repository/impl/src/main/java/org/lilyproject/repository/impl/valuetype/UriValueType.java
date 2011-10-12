@@ -29,22 +29,27 @@ public class UriValueType extends AbstractValueType implements ValueType {
 
     public final static String NAME = "URI";
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
 
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
 
+    @Override
     public URI read(DataInput dataInput) {
         return URI.create(dataInput.readUTF());
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeUTF(((URI)value).toString());
     }
 
+    @Override
     public Class getType() {
         return Long.class;
     }

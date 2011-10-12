@@ -72,6 +72,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
     
+    @Override
     protected void cacheInvalidationReconnected() throws InterruptedException {
         super.cacheInvalidationReconnected();
         try {
@@ -91,6 +92,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
 
+    @Override
     public RecordType createRecordType(RecordType recordType) throws TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
         ArgumentValidator.notNull(recordType.getName(), "recordType.name");
@@ -162,6 +164,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return newMixinVersion;
     }
 
+    @Override
     public RecordType updateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordType, "recordType");
 
@@ -252,6 +255,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return newRecordType;
     }
 
+    @Override
     public RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
         if (recordType.getId() != null) {
             return updateRecordType(recordType);
@@ -301,6 +305,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return false;
     }
 
+    @Override
     protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RecordTypeNotFoundException,
             TypeException {
         ArgumentValidator.notNull(id, "recordTypeId");
@@ -483,6 +488,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return createFieldType(newFieldType(getValueType(valueType), name, scope));
     }
 
+    @Override
     public FieldType createFieldType(FieldType fieldType) throws RepositoryException {
         ArgumentValidator.notNull(fieldType, "fieldType");
         ArgumentValidator.notNull(fieldType.getName(), "fieldType.name");
@@ -539,6 +545,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return newFieldType;
     }
 
+    @Override
     public FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
 
         ArgumentValidator.notNull(fieldType, "fieldType");
@@ -611,6 +618,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return newFieldType;
     }
 
+    @Override
     public FieldType createOrUpdateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(fieldType, "fieldType");
 
@@ -772,6 +780,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return new FieldTypeImpl(id, valueType, name, scope);
     }
 
+    @Override
     public List<FieldType> getFieldTypesWithoutCache() throws FieldTypeNotFoundException,
             TypeException, RepositoryException, InterruptedException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
@@ -790,6 +799,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return fieldTypes;
     }
 
+    @Override
     public List<RecordType> getRecordTypesWithoutCache() throws RecordTypeNotFoundException,
             TypeException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
@@ -858,18 +868,22 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     // TODO this is temporary, should be removed once the reason mentioned in TypeManagerMBean is resolved
     public class TypeManagerMBeanImpl implements TypeManagerMBean {
+        @Override
         public void enableCacheInvalidationTrigger() {
             cacheInvalidationEnabled = true;
         }
 
+        @Override
         public void disableCacheInvalidationTrigger() {
             cacheInvalidationEnabled = false;
         }
 
+        @Override
         public void notifyCacheInvalidate() throws Exception {
             HBaseTypeManager.this.notifyCacheInvalidate();
         }
 
+        @Override
         public boolean isCacheInvalidationTriggerEnabled() {
             return cacheInvalidationEnabled;
         }

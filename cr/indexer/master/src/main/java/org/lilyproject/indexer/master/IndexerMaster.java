@@ -127,6 +127,7 @@ public class IndexerMaster {
     }
 
     private class MyLeaderElectionCallback implements LeaderElectionCallback {
+        @Override
         public void activateAsLeader() throws Exception {
             log.info("Starting up as indexer master.");
 
@@ -148,6 +149,7 @@ public class IndexerMaster {
             lilyInfo.setIndexerMaster(true);
         }
 
+        @Override
         public void deactivateAsLeader() throws Exception {
             log.info("Shutting down as indexer master.");
 
@@ -349,6 +351,7 @@ public class IndexerMaster {
     }
 
     private class MyListener implements IndexerModelListener {
+        @Override
         public void process(IndexerModelEvent event) {
             try {
                 // Let the events be processed by another thread. Especially important since
@@ -403,6 +406,7 @@ public class IndexerMaster {
             eventQueue.put(event);
         }
 
+        @Override
         public void run() {
             long startedAt = System.currentTimeMillis();
 
@@ -510,6 +514,7 @@ public class IndexerMaster {
             thread.start();
         }
 
+        @Override
         public void run() {
             JobClient jobClient = null;
             while (!stop && !Thread.interrupted()) {

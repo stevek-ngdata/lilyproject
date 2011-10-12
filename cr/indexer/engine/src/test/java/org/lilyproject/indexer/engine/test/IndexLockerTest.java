@@ -100,6 +100,7 @@ public class IndexLockerTest {
         final Variable<Throwable> throwable = new Variable<Throwable>();
 
         Runnable runnable = new Runnable() {
+            @Override
             public void run() {
                 try {
                     before.value = System.currentTimeMillis();
@@ -156,6 +157,7 @@ public class IndexLockerTest {
 
         // Sort by the time the lock was obtained
         Collections.sort(infos, new Comparator<Info>() {
+            @Override
             public int compare(Info o1, Info o2) {
                 return (int)(o1.lockObtainTime - o2.lockObtainTime);
             }
@@ -180,6 +182,7 @@ public class IndexLockerTest {
             this.recordId = recordId;
         }
 
+        @Override
         public void run() {
             try {
                 log.info("Thread " + number + " waiting to obtain lock");

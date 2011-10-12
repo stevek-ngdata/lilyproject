@@ -123,14 +123,17 @@ public class LocatedException extends Exception
         }
     }
 
+    @Override
     public Location getLocation() {
         return locations == null ? null : (Location) locations.get(0);
     }
 
+    @Override
     public List getLocations() {
         return locations == null ? Collections.EMPTY_LIST : locations;
     }
 
+    @Override
     public String getRawMessage() {
         return super.getMessage();
     }
@@ -157,10 +160,12 @@ public class LocatedException extends Exception
         return buf.toString();
     }
 
+    @Override
     public String getMessage() {
         return getMessage(super.getMessage(), locations);
     }
 
+    @Override
     public void addLocation(Location loc) {
         if (LocationUtils.isUnknown(loc)) {
             return;

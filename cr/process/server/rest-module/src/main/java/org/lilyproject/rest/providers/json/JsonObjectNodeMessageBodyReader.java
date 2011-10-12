@@ -31,6 +31,7 @@ import org.codehaus.jackson.node.ObjectNode;
 
 @Provider
 public class JsonObjectNodeMessageBodyReader implements MessageBodyReader<ObjectNode> {
+    @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
             if (type.isAssignableFrom(ObjectNode.class))
@@ -39,7 +40,8 @@ public class JsonObjectNodeMessageBodyReader implements MessageBodyReader<Object
         return false;
     }
 
-	public ObjectNode readFrom(Class<ObjectNode> clazz, Type type,
+	@Override
+    public ObjectNode readFrom(Class<ObjectNode> clazz, Type type,
 			Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, String> params, InputStream inputStream)
 			throws IOException, WebApplicationException {

@@ -23,6 +23,7 @@ public class DevNull implements RowLogMessageListener {
     public DevNull() {
     }
 
+    @Override
     public boolean processMessage(RowLogMessage message) {
         return true;
     }

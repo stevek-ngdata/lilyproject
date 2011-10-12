@@ -76,6 +76,7 @@ public class KauriRuntimeDependencyResolver extends AbstractMojo {
      */
     protected MavenProjectBuilder mavenProjectBuilder;
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
                 artifactFactory, resolver, localRepository);

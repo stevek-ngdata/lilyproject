@@ -19,6 +19,7 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
         this.useJmx = useJmx;
     }
 
+    @Override
     public void beforeReport(Metrics metrics) {
         if (!useJmx)
             return;
@@ -30,6 +31,7 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
         }
     }
 
+    @Override
     public void afterIncrement(Metrics metrics) {
         try {
             long now = System.currentTimeMillis();
@@ -43,6 +45,7 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
         }
     }
 
+    @Override
     public List<String> getExtraInfoLines() {
         try {
             ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();

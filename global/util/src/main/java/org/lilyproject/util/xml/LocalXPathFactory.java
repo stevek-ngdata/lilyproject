@@ -23,6 +23,7 @@ import javax.xml.xpath.XPath;
  */
 public class LocalXPathFactory {
     private static ThreadLocal<XPathFactory> LOCAL = new ThreadLocal<XPathFactory>() {
+        @Override
         protected XPathFactory initialValue() {
             XPathFactory factory = XPathFactory.newInstance();
             return factory;

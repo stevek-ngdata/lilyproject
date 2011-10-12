@@ -138,14 +138,17 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         Closer.close(processorNotifier);
     }
     
+    @Override
     public String getId() {
         return id;
     }
     
+    @Override
     public void registerShard(RowLogShard shard) {
         this.shard = shard;
     }
     
+    @Override
     public void unRegisterShard(RowLogShard shard) {
         this.shard = null;
     }
@@ -154,6 +157,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
     }
 
+    @Override
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
         byte[] rowKey = message.getRowKey();
         byte[] qualifier = payloadQualifier(message.getSeqNr(), message.getTimestamp());
@@ -168,6 +172,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return result.getValue(rowLogColumnFamily, qualifier);
     }
 
+    @Override
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws InterruptedException, RowLogException {
         try {
             // Take current snapshot of the subscriptions so that shard.putMessage and initializeSubscriptions
@@ -232,6 +237,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
     }
 
+    @Override
     public boolean processMessage(RowLogMessage message, RowLock lock) throws RowLogException, InterruptedException {
         if (message == null)
             return true;
@@ -333,24 +339,28 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return Bytes.toStringBinary(message.getRowKey()) + ":" + message.getSeqNr();
     }
     
+    @Override
     public List<RowLogSubscription> getSubscriptions() {
         synchronized (subscriptions) {
             return new ArrayList<RowLogSubscription>(subscriptions.values());
         }
     }
     
+    @Override
     public List<String> getSubscriptionIds() {
         synchronized(subscriptions) {
             return new ArrayList<String>(subscriptions.keySet());
         }
     }
     
+    @Override
     public RowLogSubscription[] getSubscriptionsAsArray() {
         synchronized (subscriptions) {
             return subscriptions.values().toArray(new RowLogSubscription[subscriptions.size()]);
         }
     }
 
+    @Override
     public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException, InterruptedException {
         if (rowLocker != null) { // If the rowLocker exists the lock should be a RowLock
             RowLock rowLock = null;
@@ -433,6 +443,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         getShard().removeMessage(message, subscriptionId);
     }
     
+    @Override
     public boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
         SubscriptionExecutionState executionState = getExecutionState(message);
         if (executionState == null) {
@@ -459,6 +470,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return executionState;
     }
 
+    @Override
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
         SubscriptionExecutionState executionState = getExecutionState(message);
         if (executionState == null) {
@@ -515,6 +527,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return shard;
     }
     
+    @Override
     public List<RowLogMessage> getMessages(byte[] rowKey, String ... subscriptionIds) throws RowLogException {
         List<RowLogMessage> messages = new ArrayList<RowLogMessage>();
         Get get = new Get(rowKey);
@@ -572,6 +585,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         removeMessageFromShard(message, subscriptionId);
     }
     
+    @Override
     public void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
         synchronized (subscriptions) {
             for (RowLogSubscription subscription : newSubscriptions) {
@@ -592,12 +606,14 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         }
     }
 
+    @Override
     public List<RowLogShard> getShards() {
         List<RowLogShard> shards = new ArrayList<RowLogShard>();
         shards.add(shard);
         return shards;
     }
     
+    @Override
     public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
         this.rowLogConfig = rowLogConfig;
         if (!initialRowLogConfigLoaded.get()) {

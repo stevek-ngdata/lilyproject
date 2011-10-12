@@ -49,10 +49,12 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
         this.defaultCfConfig = defaultCfConfig;
     }
 
+    @Override
     public HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException {
         return getTable(tableDescriptor, true);
     }
 
+    @Override
     public HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException {
         return getTable(tableDescriptor, getSplitKeys(tableDescriptor.getName()), create);
     }
@@ -87,6 +89,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
         return new LocalHTable(configuration, tableDescriptor.getName());
     }
 
+    @Override
     public void configure(HTableDescriptor tableDescriptor) {
         TableConfig tableConfig = getTableConfig(tableDescriptor.getName());
 
@@ -126,11 +129,13 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
         }
     }
 
+    @Override
     public TableConfig getTableConfig(byte[] tableName) {
         TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));
         return config != null ? config : new TableConfig();
     }
 
+    @Override
     public byte[][] getSplitKeys(byte[] tableName) {
         TableConfig config = tableConfigs.get(new ByteArrayKey(tableName));
         byte[][] splitKeys = config != null ? config.getSplitKeys() : null;

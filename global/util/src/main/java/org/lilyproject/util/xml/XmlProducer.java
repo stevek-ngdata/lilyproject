@@ -49,6 +49,7 @@ public class XmlProducer {
     private Attributes EMPTY_ATTRS = new AttributesImpl();
     private NamespaceSupport namespaceSupport = new NamespaceSupport();
     private static ThreadLocal LOCAL = new ThreadLocal() {
+        @Override
         protected Object initialValue() {
             SAXTransformerFactory transformerFactory = (SAXTransformerFactory)SAXTransformerFactory.newInstance();
             return transformerFactory;
@@ -211,30 +212,37 @@ public class XmlProducer {
             this.attrList = attrs.entrySet().toArray(new Map.Entry[0]);
         }
 
+        @Override
         public int getLength() {
             return attrs.size();
         }
 
+        @Override
         public String getURI(int index) {
             return "";
         }
 
+        @Override
         public String getLocalName(int index) {
             return attrList[index].getKey();
         }
 
+        @Override
         public String getQName(int index) {
             return attrList[index].getKey();
         }
 
+        @Override
         public String getType(int index) {
             return "CDATA";
         }
 
+        @Override
         public String getValue(int index) {
             return attrList[index].getValue();
         }
 
+        @Override
         public int getIndex(String uri, String localName) {
             if (uri.length() != 0)
                 return -1;
@@ -247,18 +255,22 @@ public class XmlProducer {
             return -1;
         }
 
+        @Override
         public int getIndex(String qName) {
             return getIndex(null, qName);
         }
 
+        @Override
         public String getType(String uri, String localName) {
             return "CDATA";
         }
 
+        @Override
         public String getType(String qName) {
             return "CDATA";
         }
 
+        @Override
         public String getValue(String uri, String localName) {
             if (uri.length() != 0)
                 return null;
@@ -266,6 +278,7 @@ public class XmlProducer {
             return attrs.get(localName);
         }
 
+        @Override
         public String getValue(String qName) {
             return attrs.get(qName);
         }

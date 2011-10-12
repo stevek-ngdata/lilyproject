@@ -131,6 +131,7 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
     protected XPathFactory xpathFactory = XPathFactory.newInstance();
     protected SourceLocations sourceLocations = new SourceLocations();
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if ((confDirectory == null && wiringXmlResource == null)
                 || (confDirectory != null && wiringXmlResource != null)) {
@@ -180,6 +181,7 @@ public class KauriProjectDependencyResolver extends AbstractMojo {
     }
 
     public class MyArtifactFilter implements KauriProjectClasspath.ArtifactFilter {
+        @Override
         public boolean include(Artifact artifact) {
             if (artifact.getGroupId().equals(projectGroupId)) {
                 // Do not try to download artifacts from current project

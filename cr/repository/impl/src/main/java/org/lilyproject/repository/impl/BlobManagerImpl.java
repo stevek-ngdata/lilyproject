@@ -34,14 +34,17 @@ public class BlobManagerImpl implements BlobManager {
         registry.setBlobStoreAccessFactory(blobStoreAccessFactory);
     }
     
+    @Override
     public void register(BlobStoreAccess blobStoreAccess) {
         registry.register(blobStoreAccess);
     }
     
+    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return registry.getOutputStream(blob);
     }
 
+    @Override
     public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int...indexes)
             throws BlobException {
         if (!(fieldType.getValueType().getDeepestValueType() instanceof BlobValueType)) {
@@ -52,6 +55,7 @@ public class BlobManagerImpl implements BlobManager {
         return registry.getBlobAccess(blob);
     }
 
+    @Override
     public void incubateBlob(byte[] blobKey) throws IOException {
         Put put = new Put(blobKey);
         // We put a byte[] because we need to put at least one column 
@@ -60,6 +64,7 @@ public class BlobManagerImpl implements BlobManager {
         blobIncubatorTable.put(put);
     }
     
+    @Override
     public Set<BlobReference> reserveBlobs(Set<BlobReference> blobs) throws IOException {
         Set<BlobReference> failedBlobs = new HashSet<BlobReference>();
         for (BlobReference referencedBlob : blobs) {
@@ -85,6 +90,7 @@ public class BlobManagerImpl implements BlobManager {
         return blobIncubatorTable.checkAndPut(row, family, recordQualifier, INCUBATE, put);
     }
     
+    @Override
     public void handleBlobReferences(RecordId recordId, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs) {
         // Remove references from the blobIncubator for the blobs that are still referenced.
         if (referencedBlobs != null) {
@@ -157,6 +163,7 @@ public class BlobManagerImpl implements BlobManager {
         return (Blob)value;
     }
     
+    @Override
     public void delete(byte[] blobKey) throws BlobException {
         registry.delete(blobKey);
     }

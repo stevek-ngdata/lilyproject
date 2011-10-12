@@ -26,6 +26,7 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         this.nestingLevelAndValue = nestingLevelAndValue;
     }
 
+    @Override
     public byte[] getValue() {
         return nestingLevelAndValue;
     }

@@ -9,6 +9,7 @@ public class NamespacesImpl implements Namespaces {
     private Map<String, String> prefixToNs = new HashMap<String, String>();
     private int counter = 0;
 
+    @Override
     public String getOrMakePrefix(String namespace) {
         String prefix = nsToPrefix.get(namespace);
         if (prefix == null) {
@@ -23,6 +24,7 @@ public class NamespacesImpl implements Namespaces {
         return prefix;
     }
 
+    @Override
     public void addMapping(String prefix, String namespace) {
         if (nsToPrefix.containsKey(namespace) && !nsToPrefix.get(namespace).equals(prefix)) {
             throw new RuntimeException("Namespace is already bound to another prefix. Namespace: " + namespace +
@@ -38,14 +40,17 @@ public class NamespacesImpl implements Namespaces {
         prefixToNs.put(prefix, namespace);
     }
 
+    @Override
     public String getNamespace(String prefix) {
         return prefixToNs.get(prefix);
     }
 
+    @Override
     public String getPrefix(String namespace) {
         return nsToPrefix.get(namespace);
     }
 
+    @Override
     public Map<String, String> getNsToPrefixMapping() {
         return nsToPrefix;
     }

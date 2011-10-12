@@ -35,12 +35,14 @@ import org.lilyproject.indexer.model.api.IndexDefinition;
 @Provider
 public class IndexDefinitionMessageBodyWriter implements MessageBodyWriter<IndexDefinition> {
 
-	public long getSize(IndexDefinition indexDefinition, Class<?> type,
+	@Override
+    public long getSize(IndexDefinition indexDefinition, Class<?> type,
 			Type genericType, Annotation[] annotations, MediaType mediaType) {
 		return -1;
 	}
 
-	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
+	@Override
+    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
 			MediaType mediaType) {
 		if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
 			return true;
@@ -48,7 +50,8 @@ public class IndexDefinitionMessageBodyWriter implements MessageBodyWriter<Index
 		return false;
 	}
 
-	public void writeTo(IndexDefinition indexDefinition, Class<?> type,
+	@Override
+    public void writeTo(IndexDefinition indexDefinition, Class<?> type,
 			Type genericType, Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
 			throws IOException, WebApplicationException {

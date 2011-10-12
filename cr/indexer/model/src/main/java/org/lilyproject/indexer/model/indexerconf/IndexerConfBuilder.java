@@ -550,13 +550,16 @@ public class IndexerConfBuilder {
     private static class MyErrorHandler implements ErrorHandler {
         private StringBuilder builder = new StringBuilder();
 
+        @Override
         public void warning(SAXParseException exception) throws SAXException {
         }
 
+        @Override
         public void error(SAXParseException exception) throws SAXException {
             addException(exception);
         }
 
+        @Override
         public void fatalError(SAXParseException exception) throws SAXException {
             addException(exception);
         }

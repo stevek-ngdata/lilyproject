@@ -94,10 +94,12 @@ public class BlobIncubatorMonitor {
             this.blobIncubatorMonitor = blobIncubatorMonitor;
         }
         
+        @Override
         public void activateAsLeader() throws Exception {
             blobIncubatorMonitor.startMonitoring();
         }
 
+        @Override
         public void deactivateAsLeader() throws Exception {
             blobIncubatorMonitor.stopMonitoring();
         }
@@ -120,6 +122,7 @@ public class BlobIncubatorMonitor {
             interrupt();
         }
         
+        @Override
         public void run() {
             while (!stopRequested) {
                 try {

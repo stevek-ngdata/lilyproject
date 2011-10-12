@@ -93,6 +93,7 @@ public class LilyClient implements Closeable {
         refreshServers();
     }
 
+    @Override
     public void close() throws IOException {
         zk.removeDefaultWatcher(watcher);
 
@@ -307,6 +308,7 @@ public class LilyClient implements Closeable {
     }
 
     private class ZkWatcher implements Watcher {
+        @Override
         public void process(WatchedEvent event) {
             try {
                 if (event.getState() != Event.KeeperState.SyncConnected) {

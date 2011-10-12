@@ -17,44 +17,53 @@ public abstract class BaseRepository implements Repository {
         this.idGenerator = idGenerator;
     }
     
+    @Override
     public TypeManager getTypeManager() {
         return typeManager;
     }
 
+    @Override
     public Record newRecord() {
         return new RecordImpl();
     }
 
+    @Override
     public Record newRecord(RecordId recordId) {
         ArgumentValidator.notNull(recordId, "recordId");
         return new RecordImpl(recordId);
     }
 
+    @Override
     public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
         blobManager.register(blobStoreAccess);
     }
 
+    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return blobManager.getOutputStream(blob);
     }
 
+    @Override
     public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException {
         Record record = read(recordId, version, fieldName);
         return getInputStream(record, fieldName, indexes);
     }
     
+    @Override
     public InputStream getInputStream(RecordId recordId, QName fieldName)
             throws RepositoryException, InterruptedException {
         return getInputStream(recordId, null, fieldName);
     }
     
+    @Override
     public InputStream getInputStream(Record record, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException {
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
         return blobManager.getBlobAccess(record, fieldName, fieldType, indexes).getInputStream();
     }
     
+    @Override
     public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException {
         Record record = read(recordId, version, fieldName);
@@ -68,6 +77,7 @@ public abstract class BaseRepository implements Repository {
         return getBlob(recordId, version, fieldName, convertToIndexes(mvIndex, hIndex));
     }
 
+    @Override
     public BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException {
         return getBlob(recordId, null, fieldName);
     }

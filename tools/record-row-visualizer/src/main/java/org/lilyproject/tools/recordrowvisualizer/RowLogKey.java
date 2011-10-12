@@ -34,6 +34,7 @@ public class RowLogKey implements Comparable<RowLogKey> {
         return (int)(sequenceNr + hbaseVersion);
     }
 
+    @Override
     public int compareTo(RowLogKey o) {
         if (sequenceNr < o.sequenceNr)
             return -1;

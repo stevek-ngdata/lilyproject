@@ -72,6 +72,7 @@ public class ZkLock {
             // Quote from ZK lock recipe:
             //    1. Call create( ) with a pathname of "_locknode_/lock-" and the sequence and ephemeral flags set.
             zk.retryOperation(new ZooKeeperOperation<String>() {
+                @Override
                 public String execute() throws KeeperException, InterruptedException {
                     return zk.create(lockPath + "/lock-" + threadId + "-", null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
                             CreateMode.EPHEMERAL_SEQUENTIAL);
@@ -83,6 +84,7 @@ public class ZkLock {
                 //    2. Call getChildren( ) on the lock node without setting the watch flag (this is important to avoid
                 //       the herd effect).
                 List<ZkLockNode> children = parseChildren(zk.retryOperation(new ZooKeeperOperation<List<String>>() {
+                    @Override
                     public List<String> execute() throws KeeperException, InterruptedException {
                         return zk.getChildren(lockPath, null);
                     }
@@ -96,6 +98,7 @@ public class ZkLock {
                     if (child.getThreadId() == threadId) {
                         final String childPath = lockPath + "/" + child.getName();
                         Stat stat = zk.retryOperation(new ZooKeeperOperation<Stat>() {
+                            @Override
                             public Stat execute() throws KeeperException, InterruptedException {
                                 return zk.exists(childPath, false);
                             }
@@ -107,6 +110,7 @@ public class ZkLock {
                                 // in case of connection loss. Delete this node to avoid that otherwise it would
                                 // never be released.
                                 zk.retryOperation(new ZooKeeperOperation<Object>() {
+                                    @Override
                                     public Object execute() throws KeeperException, InterruptedException {
                                         try {
                                             zk.delete(childPath, -1);
@@ -150,6 +154,7 @@ public class ZkLock {
                 final MyWatcher watcher = new MyWatcher(pathToWatch, condition);
 
                 Stat stat = zk.retryOperation(new ZooKeeperOperation<Stat>() {
+                    @Override
                     public Stat execute() throws KeeperException, InterruptedException {
                         return zk.exists(pathToWatch, watcher);
                     }
@@ -203,6 +208,7 @@ public class ZkLock {
 
         try {
             zk.retryOperation(new ZooKeeperOperation<Object>() {
+                @Override
                 public Object execute() throws KeeperException, InterruptedException {
                     zk.delete(lockId, -1);
                     return null;
@@ -231,6 +237,7 @@ public class ZkLock {
             String lockName = lockId.substring(lastSlashPos + 1);
 
             List<String> children = zk.retryOperation(new ZooKeeperOperation<List<String>>() {
+                @Override
                 public List<String> execute() throws KeeperException, InterruptedException {
                     return zk.getChildren(lockPath, null);
                 }
@@ -257,6 +264,7 @@ public class ZkLock {
             this.condition = condition;
         }
 
+        @Override
         public void process(WatchedEvent event) {
             if (path.equals(event.getPath())) {
                 synchronized (condition) {
@@ -302,6 +310,7 @@ public class ZkLock {
             return name;
         }
 
+        @Override
         public int compareTo(ZkLockNode o) {
             return seqNr - o.seqNr;
         }

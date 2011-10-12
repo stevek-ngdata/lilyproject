@@ -34,14 +34,17 @@ import java.lang.reflect.Type;
 
 @Provider
 public class BlobMessageBodyWriter implements MessageBodyWriter<Blob> {
+    @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type.equals(Blob.class) && mediaType.equals(MediaType.APPLICATION_JSON_TYPE);
     }
 
+    @Override
     public long getSize(Blob blob, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return -1;
     }
 
+    @Override
     public void writeTo(Blob blob, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
             throws IOException, WebApplicationException {

@@ -35,14 +35,17 @@ public class StringValueType extends AbstractValueType implements ValueType {
         }
     };
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
     
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
     
+    @Override
     @SuppressWarnings("unchecked")
     public String read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
@@ -50,11 +53,13 @@ public class StringValueType extends AbstractValueType implements ValueType {
         return dataInput.readUTF();
     }
     
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         dataOutput.writeUTF((String)value);
     }
 
+    @Override
     public Class getType() {
         return String.class;
     }

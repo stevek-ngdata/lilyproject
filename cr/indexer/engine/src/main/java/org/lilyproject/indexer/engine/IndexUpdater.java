@@ -103,6 +103,7 @@ public class IndexUpdater implements RowLogMessageListener {
         this.metrics = metrics;
     }
 
+    @Override
     public boolean processMessage(RowLogMessage msg) throws InterruptedException {
         long before = System.currentTimeMillis();
 

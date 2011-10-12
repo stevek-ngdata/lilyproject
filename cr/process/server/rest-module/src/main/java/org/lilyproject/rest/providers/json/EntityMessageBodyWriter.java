@@ -36,14 +36,17 @@ import java.lang.reflect.Type;
 
 @Provider
 public class EntityMessageBodyWriter extends RepositoryEnabled implements MessageBodyWriter<Entity> {
+    @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type.equals(Entity.class) && mediaType.equals(MediaType.APPLICATION_JSON_TYPE);
     }
 
+    @Override
     public long getSize(Entity o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return -1;
     }
 
+    @Override
     public void writeTo(Entity object, Class<?> type, Type genericType, Annotation[] annotations,
             MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
             throws IOException, WebApplicationException {

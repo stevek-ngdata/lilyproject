@@ -164,6 +164,7 @@ public class RowLogSetup {
     }
 
     private class DelayedWALProcessorStartup implements Runnable {
+        @Override
         public void run() {
             long timeOut = 5 * 60 * 1000; // 5 minutes
             long waitUntil = System.currentTimeMillis() + timeOut;

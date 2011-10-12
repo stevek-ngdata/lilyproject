@@ -29,6 +29,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
         }
     }
 
+    @Override
     public int run() {
         failureCount = 0;
         for (int i = 0; i < count; i++) {

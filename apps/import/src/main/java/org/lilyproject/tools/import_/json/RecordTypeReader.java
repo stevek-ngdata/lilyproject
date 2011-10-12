@@ -26,11 +26,13 @@ import static org.lilyproject.util.json.JsonUtil.*;
 public class RecordTypeReader implements EntityReader<RecordType> {
     public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
 
+    @Override
     public RecordType fromJson(ObjectNode node, Repository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
         return fromJson(node, null, repository);
     }
 
+    @Override
     public RecordType fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
 

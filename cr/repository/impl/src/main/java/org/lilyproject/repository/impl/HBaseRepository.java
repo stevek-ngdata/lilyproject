@@ -86,6 +86,7 @@ public class HBaseRepository extends BaseRepository {
         metrics = new RepositoryMetrics("hbaserepository");
     }
 
+    @Override
     public void close() throws IOException {
     }
 
@@ -97,14 +98,17 @@ public class HBaseRepository extends BaseRepository {
                 Collections.<RecordUpdateHook>emptyList() : recordUpdateHooks;
     }
 
+    @Override
     public IdGenerator getIdGenerator() {
         return idGenerator;
     }
 
+    @Override
     public Record createOrUpdate(Record record) throws RepositoryException {
         return createOrUpdate(record, true);
     }
 
+    @Override
     public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException {
 
         if (record.getId() == null) {
@@ -152,6 +156,7 @@ public class HBaseRepository extends BaseRepository {
                 " attempts, toggling between create and update mode.");
     }
 
+    @Override
     public Record create(Record record) throws RepositoryException {
 
         long before = System.currentTimeMillis();
@@ -260,18 +265,22 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
+    @Override
     public Record update(Record record) throws RepositoryException {
         return update(record, false, true);
     }
 
+    @Override
     public Record update(Record record, List<MutationCondition> conditions) throws RepositoryException {
         return update(record, false, true, conditions);
     }
 
+    @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException {
         return update(record, updateVersion, useLatestRecordType, null);
     }
 
+    @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
             List<MutationCondition> conditions) throws RepositoryException {
 
@@ -805,19 +814,23 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
+    @Override
     public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
     
+    @Override
     public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public List<Record> read(List<RecordId> recordIds, QName...fieldNames)
             throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
@@ -826,11 +839,13 @@ public class HBaseRepository extends BaseRepository {
         return read(recordIds, fields, fieldTypes);
     }
 
+    @Override
     public Record read(RecordId recordId, Long version, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         return read(recordId, version , fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
         List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
@@ -862,11 +877,13 @@ public class HBaseRepository extends BaseRepository {
         return fields;
     }
     
+    @Override
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
         throws RepositoryException, InterruptedException {
         return readVersions(recordId, fromVersion, toVersion, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
@@ -894,11 +911,13 @@ public class HBaseRepository extends BaseRepository {
         return getRecordsFromRowResult(recordId, versionsToRead, result, fieldTypes);
     }
     
+    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
     throws RepositoryException, InterruptedException {
         return readVersions(recordId, versions, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
     }
     
+    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
@@ -928,6 +947,7 @@ public class HBaseRepository extends BaseRepository {
         return getRecordsFromRowResult(recordId, validVersions, result, fieldTypes);
     }
     
+    @Override
     public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
         ReadContext readContext = new ReadContext();
@@ -1296,6 +1316,7 @@ public class HBaseRepository extends BaseRepository {
         get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
     }
 
+    @Override
     public void delete(RecordId recordId) throws RepositoryException {
         delete(recordId, null);
     }
@@ -1557,6 +1578,7 @@ public class HBaseRepository extends BaseRepository {
         return unReferencedBlobs;
     }
 
+    @Override
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException {
         byte[] masterRecordIdBytes = recordId.getMaster().toBytes();
         FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
@@ -1633,6 +1655,7 @@ public class HBaseRepository extends BaseRepository {
         }
     }
     
+    @Override
     public RecordBuilder recordBuilder() throws RecordException {
         return new RecordBuilderImpl(this);
     }

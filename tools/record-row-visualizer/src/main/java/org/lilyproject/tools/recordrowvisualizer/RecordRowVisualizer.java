@@ -289,24 +289,28 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     }
 
     public static class LongValueDecoder implements ValueDecoder<Long> {
+        @Override
         public Long decode(byte[] bytes) {
             return Bytes.toLong(bytes);
         }
     }
 
     public static class BooleanValueDecoder implements ValueDecoder<Boolean> {
+        @Override
         public Boolean decode(byte[] bytes) {
             return Bytes.toBoolean(bytes);
         }
     }
 
     public static class StringValueDecoder implements ValueDecoder<String> {
+        @Override
         public String decode(byte[] bytes) {
             return Bytes.toString(bytes);
         }
     }
 
     public static class Base64ValueDecoder implements ValueDecoder<String> {
+        @Override
         public String decode(byte[] bytes) {
             if (bytes == null)
                 return null;

@@ -18,10 +18,12 @@ public class BlobAccessImpl implements BlobAccess {
         this.blobKey = blobKey;
     }
 
+    @Override
     public Blob getBlob() {
         return blob;
     }
 
+    @Override
     public InputStream getInputStream() throws BlobException {
         return blobStoreAccess.getInputStream(blobKey);
     }

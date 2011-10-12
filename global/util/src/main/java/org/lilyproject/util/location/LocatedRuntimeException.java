@@ -73,22 +73,27 @@ public class LocatedRuntimeException extends RuntimeException
         addLocation(location);
     }
 
+    @Override
     public Location getLocation() {
         return locations == null ? null : (Location) locations.get(0);
     }
 
+    @Override
     public List getLocations() {
         return locations == null ? Collections.EMPTY_LIST : locations;
     }
 
+    @Override
     public String getRawMessage() {
         return super.getMessage();
     }
 
+    @Override
     public String getMessage() {
         return LocatedException.getMessage(super.getMessage(), locations);
     }
 
+    @Override
     public void addLocation(Location loc) {
         if (LocationUtils.isUnknown(loc)) {
             return;

@@ -40,6 +40,7 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
      */
     private MavenProject project;
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         List<Artifact> dependencies = (List<Artifact>)project.getRuntimeArtifacts();
         List<Artifact> excludes = new ArrayList<Artifact>(dependencies.size());

@@ -37,14 +37,17 @@ public class DateTimeValueType extends AbstractValueType implements ValueType {
         }
     };
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
 
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public DateTime read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
@@ -52,12 +55,14 @@ public class DateTimeValueType extends AbstractValueType implements ValueType {
         return new DateTime(dataInput.readLong());
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         // Currently we only store the millis, not the chronology.
         dataOutput.writeLong(((DateTime)value).getMillis());
     }
 
+    @Override
     public Class getType() {
         return DateTime.class;
     }

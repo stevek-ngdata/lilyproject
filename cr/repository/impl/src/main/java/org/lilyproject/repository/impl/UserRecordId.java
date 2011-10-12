@@ -45,6 +45,7 @@ public class UserRecordId implements RecordId {
         this.idGenerator = idGenerator;
     }
 
+    @Override
     public byte[] toBytes() {
         if (recordIdBytes == null) {
             recordIdBytes = idGenerator.toBytes(this);
@@ -52,6 +53,7 @@ public class UserRecordId implements RecordId {
         return recordIdBytes;
     }
     
+    @Override
     public void writeBytes(DataOutput dataOutput) {
         if (recordIdBytes == null) {
             idGenerator.writeBytes(this, dataOutput);
@@ -79,6 +81,7 @@ public class UserRecordId implements RecordId {
         return basicRecordIdString;
     }
 
+    @Override
     public SortedMap<String, String> getVariantProperties() {
         return EMPTY_SORTED_MAP;
     }
@@ -108,10 +111,12 @@ public class UserRecordId implements RecordId {
         return true;
     }
 
+    @Override
     public RecordId getMaster() {
         return this;
     }
 
+    @Override
     public boolean isMaster() {
         return true;
     }

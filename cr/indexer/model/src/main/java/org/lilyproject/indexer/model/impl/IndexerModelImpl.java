@@ -112,10 +112,12 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         indexCacheRefresher.shutdown();
     }
 
+    @Override
     public IndexDefinition newIndex(String name) {
         return new IndexDefinitionImpl(name);
     }
 
+    @Override
     public void addIndex(IndexDefinition index) throws IndexExistsException, IndexModelException, IndexValidityException {
         assertValid(index);        
 
@@ -124,6 +126,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
 
         try {
             zk.retryOperation(new ZooKeeperOperation<String>() {
+                @Override
                 public String execute() throws KeeperException, InterruptedException {
                     return zk.create(indexPath, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 }
@@ -206,6 +209,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         }
     }
 
+    @Override
     public void updateIndexInternal(final IndexDefinition index) throws InterruptedException, KeeperException,
             IndexNotFoundException, IndexConcurrentModificationException, IndexValidityException {
 
@@ -215,6 +219,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
 
         try {
             zk.retryOperation(new ZooKeeperOperation<Stat>() {
+                @Override
                 public Stat execute() throws KeeperException, InterruptedException {
                     return zk.setData(INDEX_COLLECTION_PATH_SLASH + index.getName(), newData, index.getZkDataVersion());
                 }
@@ -226,6 +231,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         }
     }
 
+    @Override
     public void updateIndex(final IndexDefinition index, String lock) throws InterruptedException, KeeperException,
             IndexNotFoundException, IndexConcurrentModificationException, ZkLockException, IndexUpdateException,
             IndexValidityException {
@@ -266,6 +272,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
 
     }
 
+    @Override
     public void deleteIndex(final String indexName) throws IndexModelException {
         final String indexPath = INDEX_COLLECTION_PATH_SLASH + indexName;
         final String indexLockPath = indexPath + "/lock";
@@ -273,6 +280,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         try {
             // Make a copy of the index data in the index trash
             zk.retryOperation(new ZooKeeperOperation<Object>() {
+                @Override
                 public Object execute() throws KeeperException, InterruptedException {
                     byte[] data = zk.getData(indexPath, false, null);
 
@@ -299,6 +307,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
             int tryCount = 0;
             while (true) {
                 boolean success = zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+                    @Override
                     public Boolean execute() throws KeeperException, InterruptedException {
                         try {
                             // Delete the index lock if it exists
@@ -351,6 +360,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         }
     }
 
+    @Override
     public String lockIndexInternal(String indexName, boolean checkDeleted) throws ZkLockException, IndexNotFoundException, InterruptedException,
             KeeperException, IndexModelException {
 
@@ -369,6 +379,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         // Create the lock path if necessary
         //
         Stat stat = zk.retryOperation(new ZooKeeperOperation<Stat>() {
+            @Override
             public Stat execute() throws KeeperException, InterruptedException {
                 return zk.exists(lockPath, null);
             }
@@ -380,6 +391,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
             // and we do not want to create an index path (with null data) like that.
             try {
                 zk.retryOperation(new ZooKeeperOperation<String>() {
+                    @Override
                     public String execute() throws KeeperException, InterruptedException {
                         return zk.create(lockPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     }
@@ -399,19 +411,23 @@ public class IndexerModelImpl implements WriteableIndexerModel {
     }
 
 
+    @Override
     public String lockIndex(String indexName) throws ZkLockException, IndexNotFoundException, InterruptedException,
             KeeperException, IndexModelException {
         return lockIndexInternal(indexName, true);
     }
 
+    @Override
     public void unlockIndex(String lock) throws ZkLockException {
         ZkLock.unlock(zk, lock);
     }
 
+    @Override
     public void unlockIndex(String lock, boolean ignoreMissing) throws ZkLockException {
         ZkLock.unlock(zk, lock, ignoreMissing);
     }
 
+    @Override
     public IndexDefinition getIndex(String name) throws IndexNotFoundException {
         IndexDefinition index = indexes.get(name);
         if (index == null) {
@@ -420,18 +436,22 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         return index;
     }
 
+    @Override
     public boolean hasIndex(String name) {
         return indexes.containsKey(name);
     }
 
+    @Override
     public IndexDefinition getMutableIndex(String name) throws InterruptedException, KeeperException, IndexNotFoundException {
         return loadIndex(name, false);
     }
 
+    @Override
     public Collection<IndexDefinition> getIndexes() {
         return new ArrayList<IndexDefinition>(indexes.values());
     }
 
+    @Override
     public Collection<IndexDefinition> getIndexes(IndexerModelListener listener) {
         synchronized (indexes_lock) {
             registerListener(listener);
@@ -452,6 +472,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
             } else {
                 // do retry, do not install watcher
                 data = zk.retryOperation(new ZooKeeperOperation<byte[]>() {
+                    @Override
                     public byte[] execute() throws KeeperException, InterruptedException {
                         return zk.getData(childPath, false, stat);
                     }
@@ -476,15 +497,18 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         }
     }
 
+    @Override
     public void registerListener(IndexerModelListener listener) {
         this.listeners.add(listener);
     }
 
+    @Override
     public void unregisterListener(IndexerModelListener listener) {
         this.listeners.remove(listener);
     }
 
     private class IndexModelChangeWatcher implements Watcher {
+        @Override
         public void process(WatchedEvent event) {
             if (stopped) {
                 return;
@@ -504,6 +528,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
     }
 
     public class ConnectStateWatcher implements Watcher {
+        @Override
         public void process(WatchedEvent event) {
             if (stopped) {
                 return;
@@ -563,6 +588,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
             }
         }
 
+        @Override
         public void run() {
             while (!Thread.interrupted()) {
                 try {

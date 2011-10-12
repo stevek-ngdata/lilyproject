@@ -21,10 +21,12 @@ public class PluginRegistryImpl implements PluginRegistry {
         this.mbeanServer = mbeanServer;
     }
 
+    @Override
     public synchronized <T> void addPlugin(Class<T> pluginType, String name, T plugin) {
         getManager(pluginType).addPlugin(name, plugin);
     }
 
+    @Override
     public synchronized <T> void removePlugin(Class<T> pluginType, String name, T plugin) {
         PluginManager<T> manager = getManager(pluginType);
         manager.removePlugin(name, plugin);
@@ -34,10 +36,12 @@ public class PluginRegistryImpl implements PluginRegistry {
         }
     }
 
+    @Override
     public synchronized <T> void setPluginUser(Class<T> pluginType, PluginUser<T> pluginUser) {
         getManager(pluginType).setPluginUser(pluginUser);
     }
 
+    @Override
     public synchronized <T> void unsetPluginUser(Class<T> pluginType, PluginUser<T> pluginUser) {
         getManager(pluginType).unsetPluginUser(pluginUser);
     }
@@ -187,6 +191,7 @@ public class PluginRegistryImpl implements PluginRegistry {
             }
         }
 
+        @Override
         public boolean isUserSet() {
             return user != null;
         }
@@ -203,6 +208,7 @@ public class PluginRegistryImpl implements PluginRegistry {
             return plugins;
         }
 
+        @Override
         public String[] getRegisteredNames() {
             synchronized (PluginRegistryImpl.this) {
                 String[] names = new String[plugins.size()];
@@ -239,10 +245,12 @@ public class PluginRegistryImpl implements PluginRegistry {
             return other.plugin == plugin && other.name.equals(name);
         }
 
+        @Override
         public T getPlugin() {
             return plugin;
         }
 
+        @Override
         public String getName() {
             return name;
         }

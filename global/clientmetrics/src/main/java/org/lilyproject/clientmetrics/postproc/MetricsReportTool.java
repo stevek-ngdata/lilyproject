@@ -463,6 +463,7 @@ public class MetricsReportTool extends BaseCliTool {
             }
         }
 
+        @Override
         public int compareTo(GroupName o) {
             return collator.compare(title, o.title);
         }

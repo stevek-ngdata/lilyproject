@@ -172,6 +172,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         private final ResultDecoder RESULT_DECODER = new ResultDecoder();
         private final MessageEncoder MESSAGE_ENCODER = new MessageEncoder();
 
+        @Override
         public ChannelPipeline getPipeline() {
             ChannelPipeline pipeline = Channels.pipeline();
             pipeline.addLast("resultDecoder", RESULT_DECODER); // Read enough bytes and decode the result

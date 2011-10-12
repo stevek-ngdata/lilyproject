@@ -40,26 +40,32 @@ public class PathValueType extends AbstractValueType implements ValueType {
         this(typeManager, typeParamsDataInput.readUTF());
     }
     
+    @Override
     public String getBaseName() {
         return NAME;
     }
     
+    @Override
     public String getName() {
         return fullName;
     }
     
+    @Override
     public ValueType getDeepestValueType() {
         return valueType.getDeepestValueType();
     }
     
+    @Override
     public ValueType getNestedValueType() {
         return valueType;
     }
     
+    @Override
     public int getNestingLevel() {
         return 1 + valueType.getNestingLevel();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public HierarchyPath read(DataInput dataInput) throws RepositoryException, InterruptedException {
         int nrOfValues = dataInput.readInt();
@@ -70,6 +76,7 @@ public class PathValueType extends AbstractValueType implements ValueType {
         return new HierarchyPath(result.toArray(new Object[result.size()]));
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
             throws RepositoryException, InterruptedException {
         Object[] elements = ((HierarchyPath) value).getElements();
@@ -79,6 +86,7 @@ public class PathValueType extends AbstractValueType implements ValueType {
         }
     }
 
+    @Override
     public Class getType() {
         return HierarchyPath.class;
     }

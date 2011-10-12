@@ -300,50 +300,61 @@ public class LocationAttributes {
             nextHandler = next;
         }
 
+        @Override
         public void setDocumentLocator(Locator locator) {
             this.locator = locator;
             nextHandler.setDocumentLocator(locator);
         }
 
+        @Override
         public void startDocument() throws SAXException {
             nextHandler.startDocument();
             nextHandler.startPrefixMapping(LocationAttributes.PREFIX, LocationAttributes.URI);
         }
 
+        @Override
         public void endDocument() throws SAXException {
             endPrefixMapping(LocationAttributes.PREFIX);
             nextHandler.endDocument();
         }
 
+        @Override
         public void startElement(String uri, String loc, String raw, Attributes attrs) throws SAXException {
             // Add location attributes to the element
             nextHandler.startElement(uri, loc, raw, LocationAttributes.addLocationAttributes(locator, attrs));
         }
 
+        @Override
         public void endElement(String arg0, String arg1, String arg2) throws SAXException {
             nextHandler.endElement(arg0, arg1, arg2);
         }
 
+        @Override
         public void startPrefixMapping(String arg0, String arg1) throws SAXException {
             nextHandler.startPrefixMapping(arg0, arg1);
         }
 
+        @Override
         public void endPrefixMapping(String arg0) throws SAXException {
             nextHandler.endPrefixMapping(arg0);
         }
 
+        @Override
         public void characters(char[] arg0, int arg1, int arg2) throws SAXException {
             nextHandler.characters(arg0, arg1, arg2);
         }
 
+        @Override
         public void ignorableWhitespace(char[] arg0, int arg1, int arg2) throws SAXException {
             nextHandler.ignorableWhitespace(arg0, arg1, arg2);
         }
 
+        @Override
         public void processingInstruction(String arg0, String arg1) throws SAXException {
             nextHandler.processingInstruction(arg0, arg1);
         }
 
+        @Override
         public void skippedEntity(String arg0) throws SAXException {
             nextHandler.skippedEntity(arg0);
         }

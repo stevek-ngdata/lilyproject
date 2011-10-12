@@ -98,6 +98,7 @@ public class LeaderElection {
             // retrying upon connection loss is important, so that we can continue with watching the leaders.
             // Later on, we do not look at the name of the node we created here, but at the owner.
             zk.retryOperation(new ZooKeeperOperation<String>() {
+                @Override
                 public String execute() throws KeeperException, InterruptedException {
                     return zk.create(electionPath + "/n_", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
                 }
@@ -155,6 +156,7 @@ public class LeaderElection {
     }
 
     public class ChildrenWatcher implements Watcher {
+        @Override
         public void process(WatchedEvent event) {
             if (stopped) {
                 return;
@@ -167,6 +169,7 @@ public class LeaderElection {
     }
 
     public class ConnectStateWatcher implements Watcher {
+        @Override
         public void process(WatchedEvent event) {
             if (stopped) {
                 return;
@@ -233,6 +236,7 @@ public class LeaderElection {
             thread.start();
         }
 
+        @Override
         public void run() {
             while (!Thread.interrupted() && !stop) {
                 try {

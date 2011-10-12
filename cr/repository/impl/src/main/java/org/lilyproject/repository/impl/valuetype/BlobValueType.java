@@ -26,10 +26,12 @@ import org.lilyproject.repository.api.*;
 public class BlobValueType extends AbstractValueType implements ValueType {
     public final static String NAME = "BLOB";
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
     
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
@@ -37,6 +39,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
     /**
      * See write for the byte format.
      */
+    @Override
     @SuppressWarnings("unchecked")
     public Blob read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
@@ -65,6 +68,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
      * 
      * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
      */
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         Blob blob = (Blob)value;
@@ -84,6 +88,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
         dataOutput.writeUTF(blob.getName());
     }
 
+    @Override
     public Class getType() {
         return Blob.class;
     }

@@ -56,6 +56,7 @@ public class IndexUpdaterMetrics implements Updater {
         context.unregisterUpdater(this);
     }
 
+    @Override
     public void doUpdates(MetricsContext metricsContext) {
         synchronized (this) {
           for (MetricsBase m : registry.getMetricsList()) {

@@ -101,6 +101,7 @@ public class Example {
     }
     
     private static class FooBarListener implements RowLogMessageListener {
+        @Override
         public boolean processMessage(RowLogMessage message) {
                 System.out.println("= Received a message =");
                 System.out.println(Bytes.toString(message.getRowKey()));

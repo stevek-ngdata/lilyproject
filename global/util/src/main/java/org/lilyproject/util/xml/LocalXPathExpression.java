@@ -26,6 +26,7 @@ public class LocalXPathExpression {
     private String expression;
 
     private ThreadLocal<HXPathExpression> LOCAL = new ThreadLocal<HXPathExpression>() {
+        @Override
         protected HXPathExpression initialValue() {
             HXPathExpression expr;
             try {

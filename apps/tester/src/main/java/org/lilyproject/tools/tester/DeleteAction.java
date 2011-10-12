@@ -10,6 +10,7 @@ public class DeleteAction extends AbstractTestAction implements TestAction {
         super(jsonNode, testActionContext);
     }
 
+    @Override
     public int run() {
         failureCount = 0;
         for (int i = 0; i < count; i++) {

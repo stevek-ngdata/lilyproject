@@ -65,10 +65,12 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         this.shard = rowLog.getShards().get(0); // TODO: For now we only work with one shard
     }
 
+    @Override
     public RowLog getRowLog() {
         return rowLog;
     }
     
+    @Override
     public synchronized void start() throws InterruptedException {
         if (stop) {
             stop = false;
@@ -96,6 +98,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     //  synchronized because we do not want to run this concurrently with the start/stop methods
+    @Override
     public synchronized void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
         synchronized (subscriptionThreads) {
             if (!stop) {
@@ -141,6 +144,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         }
     }
 
+    @Override
     public synchronized void stop() {
         stop = true;
         stopRowLogConfig();
@@ -188,6 +192,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         }
     }
 
+    @Override
     public boolean isRunning(int subscriptionId) {
         return subscriptionThreads.get(subscriptionId) != null;
     }
@@ -196,6 +201,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
      * Called when a message has been posted on the rowlog that needs to be processed by this RowLogProcessor. </p>
      * The notification will only be taken into account when a delay has passed since the previous notification.
      */
+    @Override
     synchronized public void notifyProcessor() {
     	long now = System.currentTimeMillis();
     	// Only consume the notification if the notifyDelay has expired to avoid too many wakeups
@@ -265,6 +271,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             interrupt();
         }
                 
+        @Override
         public void run() {
             try {
                 Long minimalTimestamp = null;
@@ -366,6 +373,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         }
     }
     
+    @Override
     public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
         this.rowLogConfig = rowLogConfig;
         if (!initialRowLogConfigLoaded.get()) {

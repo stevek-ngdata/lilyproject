@@ -163,6 +163,7 @@ public class GenScriptMojo extends AbstractMojo {
         private String templateSuffix;
     }
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         outputDirectories.put(Mode.DEV, devOutputDirectory);
         outputDirectories.put(Mode.DIST, distOutputDirectory);

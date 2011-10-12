@@ -52,6 +52,7 @@ public class BalancingAndRetryingRepository {
             this.lilyClient = lilyClient;
         }
 
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             long startedAt = System.currentTimeMillis();
             int attempt = 0;
@@ -83,6 +84,7 @@ public class BalancingAndRetryingRepository {
             this.typeManager = typeManager;
         }
 
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (method.getName().equals("getTypeManager")) {
                 return typeManager;

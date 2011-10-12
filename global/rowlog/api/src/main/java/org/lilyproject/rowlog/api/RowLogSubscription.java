@@ -93,6 +93,7 @@ public class RowLogSubscription implements Comparable<RowLogSubscription> {
         return true;
     }
 
+    @Override
     public int compareTo(RowLogSubscription other) {
         return orderNr - other.orderNr;
     }

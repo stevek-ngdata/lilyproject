@@ -36,23 +36,28 @@ public class DecimalValueType extends AbstractValueType implements ValueType {
         }
     };
 
+    @Override
     public String getBaseName() {
         return NAME;
     }
 
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public BigDecimal read(DataInput dataInput) {
         return new BigDecimal(dataInput.readUTF());
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         dataOutput.writeUTF(((BigDecimal)value).toString());
     }
 
+    @Override
     public Class getType() {
         return BigDecimal.class;
     }

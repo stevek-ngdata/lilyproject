@@ -57,6 +57,7 @@ public class ProcessorMetrics implements Updater {
         mbean.shutdown();
     }
 
+    @Override
     public void doUpdates(MetricsContext metricsContext) {
         synchronized (this) {
           for (MetricsBase m : registry.getMetricsList()) {

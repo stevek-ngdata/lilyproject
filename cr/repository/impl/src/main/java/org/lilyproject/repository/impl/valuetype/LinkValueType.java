@@ -38,18 +38,22 @@ public class LinkValueType extends AbstractValueType implements ValueType {
             fullName = NAME;
     }
     
+    @Override
     public String getBaseName() {
         return NAME;
     }
     
+    @Override
     public String getName() {
         return fullName;
     }
     
+    @Override
     public ValueType getDeepestValueType() {
         return this;
     }
     
+    @Override
     @SuppressWarnings("unchecked")
     public Link read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
@@ -57,6 +61,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
         return Link.read(dataInput, idGenerator);
     }
 
+    @Override
     public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
         // We're not storing any recordType information together with the data
         // The recordType information is only available in the schema
@@ -64,6 +69,7 @@ public class LinkValueType extends AbstractValueType implements ValueType {
         ((Link)value).write(dataOutput);
     }
 
+    @Override
     public Class getType() {
         return RecordId.class;
     }

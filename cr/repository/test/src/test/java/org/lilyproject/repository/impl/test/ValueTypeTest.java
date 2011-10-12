@@ -260,14 +260,17 @@ public class ValueTypeTest {
 
         public static final String NAME = "XY";
 
+        @Override
         public String getBaseName() {
             return NAME;
         }
         
+        @Override
         public ValueType getDeepestValueType() {
             return this;
         }
         
+        @Override
         public Object read(DataInput dataInput) throws UnknownValueTypeEncodingException {
             byte encodingVersion = dataInput.readByte();
             int x;
@@ -284,6 +287,7 @@ public class ValueTypeTest {
             return new XYCoordinates(x, y);
         }
 
+        @Override
         public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
             if (random.nextBoolean()) {
                 dataOutput.writeByte((byte)1); // encoding version 1 
@@ -297,6 +301,7 @@ public class ValueTypeTest {
             }
         }
 
+        @Override
         public Class getType() {
             return XYCoordinates.class;
         }

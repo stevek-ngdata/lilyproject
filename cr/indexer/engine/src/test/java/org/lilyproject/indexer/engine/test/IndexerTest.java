@@ -2188,6 +2188,7 @@ public class IndexerTest {
             this.expectedEvent = recordEvent;
         }
 
+        @Override
         public boolean processMessage(RowLogMessage message) {
             if (!enabled)
                 return true;

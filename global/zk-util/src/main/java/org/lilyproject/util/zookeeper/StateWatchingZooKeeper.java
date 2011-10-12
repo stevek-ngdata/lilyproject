@@ -110,6 +110,7 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
         log.info("ZooKeeper session ID is 0x" + Long.toHexString(zk.getSessionId()));
     }
 
+    @Override
     @PreDestroy
     public void shutdown() {
         super.shutdown();
@@ -141,6 +142,7 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
 
     private class MyWatcher implements Watcher {
 
+        @Override
         public void process(WatchedEvent event) {
             if (stopping) {
                 return;
@@ -212,6 +214,7 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
 
         private long startNotConnected;
 
+        @Override
         public void run() {
             startNotConnected = System.currentTimeMillis();
 

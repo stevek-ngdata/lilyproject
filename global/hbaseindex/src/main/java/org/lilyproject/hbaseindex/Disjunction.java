@@ -37,6 +37,7 @@ public class Disjunction extends BaseQueryResult {
         this.result2 = result2;
     }
 
+    @Override
     public byte[] next() throws IOException {
         if (!init) {
             key1 = result1.next();
@@ -79,6 +80,7 @@ public class Disjunction extends BaseQueryResult {
         }
     }
 
+    @Override
     public void close() {
         result1.close();
         result2.close();

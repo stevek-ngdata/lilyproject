@@ -82,6 +82,7 @@ public interface ZooKeeperItf extends Closeable {
 
     void register(Watcher watcher);
 
+    @Override
     void close();
 
     String create(String path, byte[] data, List<ACL> acl, CreateMode createMode) throws KeeperException, InterruptedException;

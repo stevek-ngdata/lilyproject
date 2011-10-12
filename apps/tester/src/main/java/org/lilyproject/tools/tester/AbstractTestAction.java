@@ -29,10 +29,12 @@ public abstract class AbstractTestAction implements TestAction {
         this.testActionContext = testActionContext;
     }
     
+    @Override
     public TestActionContext getContext() {
         return testActionContext;
     }
     
+    @Override
     abstract public int run();
     
     protected void report(boolean success, double duration) {
@@ -80,5 +82,6 @@ public abstract class AbstractTestAction implements TestAction {
         return testRecord;
     }
     
-    public abstract ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) throws OperationNotSupportedException; 
+    @Override
+    public abstract ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) throws OperationNotSupportedException;
 }

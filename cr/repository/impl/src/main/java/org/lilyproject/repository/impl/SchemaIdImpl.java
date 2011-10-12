@@ -30,6 +30,7 @@ public class SchemaIdImpl implements SchemaId {
         this.bytes = idToBytes(uuid);
     }
     
+    @Override
     public byte[] getBytes() {
         return bytes;
     }

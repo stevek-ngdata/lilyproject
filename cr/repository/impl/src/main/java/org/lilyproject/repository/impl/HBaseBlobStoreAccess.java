@@ -63,10 +63,12 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         table = tableFactory.getTable(tableDescriptor, !clientMode);
     }
     
+    @Override
     public String getId() {
         return ID;
     }
         
+    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         UUID uuid = UUID.randomUUID();
         byte[] blobKey = Bytes.toBytes(uuid.getMostSignificantBits());
@@ -74,6 +76,7 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         return new HBaseBlobOutputStream(table, blobKey, blob);
     }
 
+    @Override
     public InputStream getInputStream(byte[] blobKey) throws BlobException {
         Get get = new Get(blobKey);
         get.addColumn(BLOBS_COLUMN_FAMILY_BYTES, BLOB_COLUMN);
@@ -90,6 +93,7 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         return new ByteArrayInputStream(value);
     }
     
+    @Override
     public void delete(byte[] blobKey) throws BlobException {
         Delete delete = new Delete(blobKey);
         try {
@@ -99,6 +103,7 @@ public class HBaseBlobStoreAccess implements BlobStoreAccess {
         }
     }
     
+    @Override
     public boolean incubate() {
         return true;
     }

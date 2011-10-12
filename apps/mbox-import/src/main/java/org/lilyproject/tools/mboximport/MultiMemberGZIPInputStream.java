@@ -47,6 +47,7 @@ public class MultiMemberGZIPInputStream extends GZIPInputStream {
     private int size;
     private boolean eos;
 
+    @Override
     public int read(byte[] inputBuffer, int inputBufferOffset, int inputBufferLen) throws IOException {
 
         if (eos) { return -1;}

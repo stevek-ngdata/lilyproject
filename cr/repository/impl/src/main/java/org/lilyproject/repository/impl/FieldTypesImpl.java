@@ -13,6 +13,7 @@ public class FieldTypesImpl implements FieldTypes {
     private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
     private Map<SchemaId, FieldType> fieldTypeIdCache = new HashMap<SchemaId, FieldType>();
 
+    @Override
     public synchronized FieldTypesImpl clone() {
         FieldTypesImpl newFieldTypes = new FieldTypesImpl();
         newFieldTypes.fieldTypeNameCache.putAll(fieldTypeNameCache);
@@ -54,6 +55,7 @@ public class FieldTypesImpl implements FieldTypes {
         return fieldTypes;
     }
     
+    @Override
     public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(id, "id");
         FieldType fieldType = fieldTypeIdCache.get(id);
@@ -63,6 +65,7 @@ public class FieldTypesImpl implements FieldTypes {
         return fieldType.clone();
     }
 
+    @Override
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(name, "name");
         FieldType fieldType = fieldTypeNameCache.get(name);

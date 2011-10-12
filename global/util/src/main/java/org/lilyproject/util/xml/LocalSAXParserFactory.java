@@ -28,6 +28,7 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public final class LocalSAXParserFactory {
     private static ThreadLocal<SAXParserFactory> LOCAL = new ThreadLocal<SAXParserFactory>() {
+        @Override
         protected SAXParserFactory initialValue() {
             SAXParserFactory parserFactory = SAXParserFactory.newInstance();
             safeSetFeature(parserFactory, "http://xml.org/sax/features/validation", false);

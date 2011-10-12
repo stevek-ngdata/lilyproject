@@ -29,10 +29,12 @@ public class FieldValue extends BaseValue {
         return fieldType;
     }
 
+    @Override
     public SchemaId getFieldDependency() {
         return fieldType.getId();
     }
 
+    @Override
     public FieldType getTargetFieldType() {
         return fieldType;
     }

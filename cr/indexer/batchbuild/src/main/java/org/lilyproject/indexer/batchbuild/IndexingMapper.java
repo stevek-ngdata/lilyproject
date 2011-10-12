@@ -174,6 +174,7 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
         Closer.close(zk);
     }
 
+    @Override
     public void map(ImmutableBytesWritable key, Result value, Context context)
             throws IOException, InterruptedException {
 
@@ -189,6 +190,7 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             this.context = context;
         }
 
+        @Override
         public void run() {
             RecordId recordId = null;
             boolean locked = false;

@@ -87,42 +87,52 @@ public class LocalHTable extends ThreadLocal<HTable> implements HTableInterface 
         return table;
     }
 
+    @Override
     public byte[] getTableName() {
         return getTableSilent().getTableName();
     }
 
+    @Override
     public Configuration getConfiguration() {
         return getTableSilent().getConfiguration();
     }
 
+    @Override
     public HTableDescriptor getTableDescriptor() throws IOException {
         return getTable().getTableDescriptor();
     }
 
+    @Override
     public boolean exists(Get get) throws IOException {
         return getTable().exists(get);
     }
 
+    @Override
     public Result get(Get get) throws IOException {
         return getTable().get(get);
     }
 
+    @Override
     public Result getRowOrBefore(byte[] row, byte[] family) throws IOException {
         return getTable().getRowOrBefore(row, family);
     }
 
+    @Override
     public ResultScanner getScanner(Scan scan) throws IOException {
         return getTable().getScanner(scan);
     }
 
+    @Override
     public ResultScanner getScanner(byte[] family) throws IOException {
         return getTable().getScanner(family);
     }
 
+    @Override
     public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
         return getTable().getScanner(family, qualifier);
     }
 
+    @Override
     public void put(Put put) throws IOException {
         HTable table = getTable();
         try {
@@ -134,66 +144,82 @@ public class LocalHTable extends ThreadLocal<HTable> implements HTableInterface 
         }
     }
 
+    @Override
     public void put(List<Put> puts) throws IOException {
         getTable().put(puts);
     }
 
+    @Override
     public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) throws IOException {
         return getTable().checkAndPut(row, family, qualifier, value, put);
     }
 
+    @Override
     public void delete(Delete delete) throws IOException {
         getTable().delete(delete);
     }
 
+    @Override
     public void delete(List<Delete> deletes) throws IOException {
         getTable().delete(deletes);
     }
 
+    @Override
     public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
         return getTable().checkAndDelete(row, family, qualifier, value, delete);
     }
 
+    @Override
     public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) throws IOException {
         return getTable().incrementColumnValue(row, family, qualifier, amount);
     }
 
+    @Override
     public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL) throws IOException {
         return getTable().incrementColumnValue(row, family, qualifier, amount, writeToWAL);
     }
 
+    @Override
     public boolean isAutoFlush() {
         return getTableSilent().isAutoFlush();
     }
 
+    @Override
     public void flushCommits() throws IOException {
         getTable().flushCommits();
     }
 
+    @Override
     public void close() throws IOException {
         getTable().close();
     }
 
+    @Override
     public RowLock lockRow(byte[] row) throws IOException {
         return getTable().lockRow(row);
     }
 
+    @Override
     public void unlockRow(RowLock rl) throws IOException {
         getTable().unlockRow(rl);
     }
 
+    @Override
     public void batch(List<Row> actions, Object[] results) throws IOException, InterruptedException {
         getTable().batch(actions, results);
     }
 
+    @Override
     public Object[] batch(List<Row> actions) throws IOException, InterruptedException {
         return getTable().batch(actions);
     }
 
+    @Override
     public Result[] get(List<Get> gets) throws IOException {
         return getTable().get(gets);
     }
 
+    @Override
     public Result increment(Increment increment) throws IOException {
         return getTable().increment(increment);
     }

@@ -35,6 +35,7 @@ public class WaitPolicy implements RejectedExecutionHandler {
         _timeUnit = timeUnit;
     }
 
+    @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
         try {
             if (e.isShutdown() || !e.getQueue().offer(r, _time, _timeUnit)) {

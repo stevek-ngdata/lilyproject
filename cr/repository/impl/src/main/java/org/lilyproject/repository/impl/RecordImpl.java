@@ -47,38 +47,47 @@ public class RecordImpl implements Record {
         this.id = id;
     }
 
+    @Override
     public void setId(RecordId id) {
         this.id = id;
     }
     
+    @Override
     public RecordId getId() {
         return id;
     }
     
+    @Override
     public void setVersion(Long version) {
         this.version = version;
     }
     
+    @Override
     public Long getVersion() {
         return version;
     }
 
+    @Override
     public void setRecordType(QName name, Long version) {
         setRecordType(Scope.NON_VERSIONED, name, version);
     }
     
+    @Override
     public void setRecordType(QName name) {
         setRecordType(name, null);
     }
     
+    @Override
     public QName getRecordTypeName() {
         return getRecordTypeName(Scope.NON_VERSIONED);
     }
 
+    @Override
     public Long getRecordTypeVersion() {
         return getRecordTypeVersion(Scope.NON_VERSIONED);
     }
     
+    @Override
     public void setRecordType(Scope scope, QName name, Long version) {
         if (name == null && version == null) {
             recordTypes.remove(scope);
@@ -87,21 +96,25 @@ public class RecordImpl implements Record {
         }
     }
     
+    @Override
     public QName getRecordTypeName(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.name : null;
     }
     
+    @Override
     public Long getRecordTypeVersion(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.version : null;
     }
     
+    @Override
     public void setField(QName name, Object value) {
         fields.put(name, value);
         fieldsToDelete.remove(name);
     }
     
+    @Override
     public <T> T getField(QName name) throws FieldNotFoundException {
         Object field = fields.get(name);
         if (field == null) {
@@ -110,14 +123,17 @@ public class RecordImpl implements Record {
         return (T)field;
     }
 
+    @Override
     public boolean hasField(QName fieldName) {
         return fields.containsKey(fieldName);
     }
 
+    @Override
     public Map<QName, Object> getFields() {
         return fields;
     }
 
+    @Override
     public void delete(QName fieldName, boolean addToFieldsToDelete) {
         fields.remove(fieldName);
 
@@ -126,28 +142,34 @@ public class RecordImpl implements Record {
         }
     }
 
+    @Override
     public List<QName> getFieldsToDelete() {
         return fieldsToDelete;
     }
 
+    @Override
     public void addFieldsToDelete(List<QName> names) {
         if (!names.isEmpty()) {
             fieldsToDelete.addAll(names);
         }
     }
 
+    @Override
     public void removeFieldsToDelete(List<QName> names) {
         fieldsToDelete.removeAll(names);
     }
 
+    @Override
     public ResponseStatus getResponseStatus() {
         return responseStatus;
     }
 
+    @Override
     public void setResponseStatus(ResponseStatus status) {
         this.responseStatus = status;
     }
 
+    @Override
     public Record clone() throws RuntimeException {
         try {
             return cloneRecord(new IdentityHashMap<Record, Object>());
@@ -156,10 +178,12 @@ public class RecordImpl implements Record {
         }
     }
     
+    @Override
     public Record cloneRecord() throws RecordException {
         return cloneRecord(new IdentityHashMap<Record, Object>());
     }
 
+    @Override
     public Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
         if (parentRecords.containsKey(this))
             throw new RecordException("A record may not be nested in itself: " + id);
@@ -289,6 +313,7 @@ public class RecordImpl implements Record {
         return true;
     }
 
+    @Override
     public boolean softEquals(Object obj) {
         if (this == obj)
             return true;
@@ -379,6 +404,7 @@ public class RecordImpl implements Record {
         }
     }
     
+    @Override
     public void setDefaultNamespace(String namespace) {
         this.defaultNamespace = namespace;
     }
@@ -395,31 +421,38 @@ public class RecordImpl implements Record {
             "' since no default namespace was given and no record type is set.");
     }
     
+    @Override
     public void setRecordType(String recordTypeName) throws RecordException {
         setRecordType(resolveNamespace(recordTypeName));
     }
     
+    @Override
     public void setRecordType(String recordTypeName, Long version) throws RecordException {
         setRecordType(resolveNamespace(recordTypeName), version);
     }
     
+    @Override
     public void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException {
         setRecordType(scope, resolveNamespace(recordTypeName), version);
     }
     
+    @Override
     public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
         // The cast to (T) is only needed for a bug in JDK's < 1.6u24
         return (T)getField(resolveNamespace(fieldName));
     }
     
+    @Override
     public void setField(String fieldName, Object value) throws RecordException {
         setField(resolveNamespace(fieldName), value);
     }
     
+    @Override
     public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
         delete(resolveNamespace(fieldName), addFieldsToDelete);
     }
     
+    @Override
     public boolean hasField(String fieldName) throws RecordException {
         return hasField(resolveNamespace(fieldName));
     }

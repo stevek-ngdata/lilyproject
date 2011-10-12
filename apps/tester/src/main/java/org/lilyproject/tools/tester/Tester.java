@@ -326,6 +326,7 @@ public class Tester extends BaseRepositoryTestTool {
             this.testActions = testActions;
         }
         
+        @Override
         public void run() {
             for (int j = 0; j < nrOfIterations; j++) {
                 for (TestAction testAction : testActions) {

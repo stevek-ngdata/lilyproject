@@ -46,6 +46,7 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 @Provider
 public class PostActionMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<PostAction> {
 
+    @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         if (type.equals(PostAction.class) && mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
             if (genericType instanceof ParameterizedType) {
@@ -60,6 +61,7 @@ public class PostActionMessageBodyReader extends RepositoryEnabled implements Me
         return false;
     }
 
+    @Override
     public PostAction readFrom(Class<PostAction> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {

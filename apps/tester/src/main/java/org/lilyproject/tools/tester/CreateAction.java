@@ -19,6 +19,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         recordTypeToCreate = testActionContext.recordTypes.get(JsonUtil.getString(actionNode, "recordType"));
     }
     
+    @Override
     public int run() {
         failureCount = 0;
         for (int i = 0; i < count; i++) {
@@ -71,6 +72,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         return new ActionResult(success, record, duration);
     }
     
+    @Override
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
         String linkedRecordSource = testFieldType.getLinkedRecordSource();
         // Pick a link from the RecordSpace source

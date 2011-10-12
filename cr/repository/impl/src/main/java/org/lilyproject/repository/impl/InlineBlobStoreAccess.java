@@ -33,22 +33,27 @@ public class InlineBlobStoreAccess implements BlobStoreAccess {
     public InlineBlobStoreAccess() throws IOException {
     }
     
+    @Override
     public String getId() {
         return ID;
     }
         
+    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return new InlineBlobOutputStream(blob);
     }
 
+    @Override
     public InputStream getInputStream(byte[] blobKey) throws BlobException {
         return new ByteArrayInputStream(blobKey);
     }
     
+    @Override
     public void delete(byte[] blobKey) {
         // no-op
     }
     
+    @Override
     public boolean incubate() {
         return false;
     }

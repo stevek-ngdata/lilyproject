@@ -37,10 +37,12 @@ public abstract class AbstractListenersSubscriptionHandler extends AbstractSubsc
         this.rowLogConfigurationManager = rowLogConfigurationManager;
     }
 
+    @Override
     public void start() {
         rowLogConfigurationManager.addListenersObserver(rowLogId, subscriptionId, this);
     }
 
+    @Override
     public void shutdown() {
         stop = true;
         rowLogConfigurationManager.removeListenersObserver(rowLogId, subscriptionId, this);
@@ -48,6 +50,7 @@ public abstract class AbstractListenersSubscriptionHandler extends AbstractSubsc
             listenerUnregistered(listenerId);
     }
 
+    @Override
     public void listenersChanged(List<String> newListeners) {
         if (!stop) {
             for (String newListener : newListeners) {
