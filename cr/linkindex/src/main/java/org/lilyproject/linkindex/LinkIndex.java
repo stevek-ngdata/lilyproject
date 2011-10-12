@@ -41,13 +41,14 @@ import java.util.*;
 public class LinkIndex {
     private IdGenerator idGenerator;
     private LinkIndexMetrics metrics;
-    private static ThreadLocal<Index> FORWARD_INDEX;
-    private static ThreadLocal<Index> BACKWARD_INDEX;
+    private Index forwardIndex;
+    private Index backwardIndex;
 
     private static final byte[] SOURCE_FIELD_KEY = Bytes.toBytes("sf");
     private static final byte[] VTAG_KEY = Bytes.toBytes("vt");
 
-    public LinkIndex(final IndexManager indexManager, Repository repository) throws IndexNotFoundException, IOException {
+    public LinkIndex(final IndexManager indexManager, Repository repository) throws IndexNotFoundException, IOException,
+            InterruptedException {
         metrics = new LinkIndexMetrics("linkIndex");
         this.idGenerator = repository.getIdGenerator();
 
@@ -56,39 +57,21 @@ public class LinkIndex {
         //    entries for a record without having to know the vtags under which they occur
         //  - the sourcefield will often by optional in queries, that's why it comes last
 
-        FORWARD_INDEX = new ThreadLocal<Index>() {
-            @Override
-            protected Index initialValue() {
-                try {
-                    IndexDefinition indexDef = new IndexDefinition("links-forward");
-                    indexDef.addByteField("source");
-                    indexDef.addByteField("vtag");
-                    indexDef.addByteField("sourcefield");
-                    return indexManager.getIndex(indexDef);
-                } catch (Exception e) {
-                    throw new RuntimeException("Error accessing forward links index.", e);
-                }
-            }
-        };
+        {
+            IndexDefinition indexDef = new IndexDefinition("links-forward");
+            indexDef.addByteField("source");
+            indexDef.addByteField("vtag");
+            indexDef.addByteField("sourcefield");
+            forwardIndex = indexManager.getIndex(indexDef);
+        }
 
-        BACKWARD_INDEX = new ThreadLocal<Index>() {
-            @Override
-            protected Index initialValue() {
-                try {
-                    IndexDefinition indexDef = new IndexDefinition("links-backward");
-                    indexDef.addByteField("target");
-                    indexDef.addByteField("vtag");
-                    indexDef.addByteField("sourcefield");
-                    return indexManager.getIndex(indexDef);
-                } catch (Exception e) {
-                    throw new RuntimeException("Error accessing backward links index.", e);
-                }
-            }
-        };
-
-        // Do a get now to be sure the indexes exist or can be successfully created
-        FORWARD_INDEX.get();
-        BACKWARD_INDEX.get();
+        {
+            IndexDefinition indexDef = new IndexDefinition("links-backward");
+            indexDef.addByteField("target");
+            indexDef.addByteField("vtag");
+            indexDef.addByteField("sourcefield");
+            backwardIndex = indexManager.getIndex(indexDef);
+        }
     }
 
     /**
@@ -109,7 +92,7 @@ public class LinkIndex {
                 entry.setIdentifier(sourceAsBytes);
                 entries.add(entry);
             }
-            BACKWARD_INDEX.get().removeEntries(entries);
+            backwardIndex.removeEntries(entries);
     
             // Delete existing entries from the forwards table
             entries.clear();
@@ -118,7 +101,7 @@ public class LinkIndex {
                 entry.setIdentifier(link.getV1().getRecordId().toBytes());
                 entries.add(entry);
             }
-            FORWARD_INDEX.get().removeEntries(entries);
+            forwardIndex.removeEntries(entries);
         } catch (LinkIndexException e) {
             throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "'", e);
         } catch (IOException e) {
@@ -143,7 +126,7 @@ public class LinkIndex {
                 entry.setIdentifier(sourceAsBytes);
                 entries.add(entry);
             }
-            BACKWARD_INDEX.get().removeEntries(entries);
+            backwardIndex.removeEntries(entries);
     
             // Delete existing entries from the forwards table
             entries.clear();
@@ -152,7 +135,7 @@ public class LinkIndex {
                 entry.setIdentifier(link.getRecordId().toBytes());
                 entries.add(entry);
             }
-            FORWARD_INDEX.get().removeEntries(entries);
+            forwardIndex.removeEntries(entries);
         } catch (LinkIndexException e) {
             throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "', vtag '" + vtag + "'", e);
         } catch (IOException e) {
@@ -210,8 +193,8 @@ public class LinkIndex {
                     bkwdEntry.setIdentifier(sourceAsBytes);
                     bkwdEntries.add(bkwdEntry);
                 }
-                FORWARD_INDEX.get().addEntries(fwdEntries);
-                BACKWARD_INDEX.get().addEntries(bkwdEntries);
+                forwardIndex.addEntries(fwdEntries);
+                backwardIndex.addEntries(bkwdEntries);
             }
     
             // Apply removed links
@@ -233,8 +216,8 @@ public class LinkIndex {
                     fwdEntry.setIdentifier(link.getRecordId().toBytes());
                     fwdEntries.add(fwdEntry);
                 }
-                BACKWARD_INDEX.get().removeEntries(bkwdEntries);
-                FORWARD_INDEX.get().removeEntries(fwdEntries);
+                backwardIndex.removeEntries(bkwdEntries);
+                forwardIndex.removeEntries(fwdEntries);
             }
         } catch (IOException e) {
             throw new LinkIndexException("Error updating links for record '" + sourceRecord + "', vtag '" +
@@ -285,7 +268,7 @@ public class LinkIndex {
     
             Set<RecordId> result = new HashSet<RecordId>();
     
-            QueryResult qr = BACKWARD_INDEX.get().performQuery(query);
+            QueryResult qr = backwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 result.add(idGenerator.fromBytes(id));
@@ -310,7 +293,7 @@ public class LinkIndex {
     
             Set<FieldedLink> result = new HashSet<FieldedLink>();
     
-            QueryResult qr = BACKWARD_INDEX.get().performQuery(query);
+            QueryResult qr = backwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
@@ -334,7 +317,7 @@ public class LinkIndex {
 
             Set<Pair<FieldedLink, SchemaId>> result = new HashSet<Pair<FieldedLink, SchemaId>>();
     
-            QueryResult qr = FORWARD_INDEX.get().performQuery(query);
+            QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
@@ -369,7 +352,7 @@ public class LinkIndex {
 
             Set<RecordId> result = new HashSet<RecordId>();
     
-            QueryResult qr = FORWARD_INDEX.get().performQuery(query);
+            QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 result.add(idGenerator.fromBytes(id));
@@ -395,7 +378,7 @@ public class LinkIndex {
 
             Set<FieldedLink> result = new HashSet<FieldedLink>();
 
-            QueryResult qr = FORWARD_INDEX.get().performQuery(query);
+            QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));

@@ -103,7 +103,7 @@ public class IndexerWorker {
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
             Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, int listenersPerIndex,
             SolrClientConfig solrClientConfig, boolean enableLocking, String hostName)
-            throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException {
+            throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
         this.rowLog = rowLog;
