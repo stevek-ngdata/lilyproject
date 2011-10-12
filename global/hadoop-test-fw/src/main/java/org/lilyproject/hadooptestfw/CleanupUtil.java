@@ -17,6 +17,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -106,7 +107,7 @@ public class CleanupUtil {
         StringBuilder truncateReport = new StringBuilder();
         StringBuilder retainReport = new StringBuilder();
 
-        HBaseAdmin admin = new HBaseAdmin(conf);
+        HBaseAdmin admin = HBaseAdminFactory.get(conf);
         HTableDescriptor[] tables = admin.listTables();
         System.out.println("Found tables: " + tables.length);
 
@@ -221,7 +222,7 @@ public class CleanupUtil {
     public void majorCompact(String tableName, String[] columnFamilies) throws Exception {
         byte[] tmpRowKey = Bytes.toBytes("HBaseProxyDummyRow");
         byte[] COL = Bytes.toBytes("DummyColumn");
-        HBaseAdmin admin = new HBaseAdmin(conf);
+        HBaseAdmin admin = HBaseAdminFactory.get(conf);
         HTable htable = new HTable(conf, tableName);
 
         // Write a dummy row

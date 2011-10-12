@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.joda.time.DateTime;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.clientmetrics.*;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -121,7 +122,7 @@ public abstract class BaseTestTool extends BaseZkCliTool {
 
         File metricsFile = Util.getOutputFileRollOldOne(metricsFileName);
 
-        HBaseAdmin hbaseAdmin = new HBaseAdmin(getHBaseConf());
+        HBaseAdmin hbaseAdmin = HBaseAdminFactory.get(getHBaseConf());
 
         hbaseMetrics = new HBaseMetrics(hbaseAdmin);
         lilyMetrics = new LilyMetrics(getZooKeeper());

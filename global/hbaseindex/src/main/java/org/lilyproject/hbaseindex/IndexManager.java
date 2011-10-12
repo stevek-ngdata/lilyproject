@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.util.ObjectUtils;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LocalHTable;
@@ -53,7 +54,7 @@ public class IndexManager {
 
     public IndexManager(Configuration hbaseConf, HBaseTableFactory tableFactory) throws IOException {
         this.hbaseConf = hbaseConf;
-        hbaseAdmin = new HBaseAdmin(hbaseConf);
+        hbaseAdmin = HBaseAdminFactory.get(hbaseConf);
         this.tableFactory = tableFactory != null ? tableFactory : new HBaseTableFactoryImpl(hbaseConf);
     }
 
