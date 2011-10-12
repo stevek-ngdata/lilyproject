@@ -59,6 +59,8 @@
             <xs:attribute name="matchNamespace" type="xs:string"/>
             <xs:attribute name="matchName" type="xs:string"/>
             <xs:attribute name="matchType" type="xs:string"/>
+            <!-- matchMultiValue and matchHierarchical are not supported any more. Rather than
+                 removing them here, we log a warning when they are still used. -->
             <xs:attribute name="matchMultiValue" type="xs:string"/>
             <xs:attribute name="matchHierarchical" type="xs:string"/>
             <xs:attribute name="matchScope" type="xs:string"/>
