@@ -58,7 +58,7 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     }
 
     private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys, boolean create) throws IOException {
-        HBaseAdmin admin = new HBaseAdmin(configuration);
+        HBaseAdmin admin = HBaseAdminFactory.get(configuration);
 
         try {
             admin.getTableDescriptor(tableDescriptor.getName());

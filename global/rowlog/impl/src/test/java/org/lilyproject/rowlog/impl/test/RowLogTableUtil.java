@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.LocalHTable;
 
 public class RowLogTableUtil {
@@ -33,7 +34,7 @@ public class RowLogTableUtil {
     public static final byte[] ROWLOG_COLUMN_FAMILY = Bytes.toBytes("ROWLOGCF");
 
     public static HTableInterface getRowTable(Configuration configuration) throws IOException {
-        HBaseAdmin admin = new HBaseAdmin(configuration);
+        HBaseAdmin admin = HBaseAdminFactory.get(configuration);
         try {
             admin.getTableDescriptor(ROW_TABLE);
         } catch (TableNotFoundException e) {
