@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -131,7 +131,7 @@ LILY_JAVA_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4-SNAPSHOT</version>
         <inherited>false</inherited>
         <configuration>
           <kauriVersion>${version.kauri}</kauriVersion>
