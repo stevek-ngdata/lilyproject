@@ -139,33 +139,13 @@ public class TutorialTest {
 
     @Test
     public void updateRecordType() throws Exception {
-        ValueType stringValueType = typeManager.getValueType("STRING");
-        ValueType stringMvValueType = typeManager.getValueType("LIST<STRING>");
-        ValueType longValueType = typeManager.getValueType("LONG");
-        ValueType dateValueType = typeManager.getValueType("DATE");
-        ValueType blobValueType = typeManager.getValueType("BLOB");
-        ValueType linkValueType = typeManager.getValueType("LINK");
-
-        FieldType description = typeManager.newFieldType(blobValueType, new QName(NS, "description"), Scope.VERSIONED);
-        description = typeManager.createFieldType(description);
-
-        FieldType authors = typeManager.newFieldType(stringMvValueType, new QName(NS, "authors"), Scope.VERSIONED);
-        authors = typeManager.createFieldType(authors);
-
-        FieldType released = typeManager.newFieldType(dateValueType, new QName(NS, "released"), Scope.VERSIONED);
-        released = typeManager.createFieldType(released);
-
-        FieldType pages = typeManager.newFieldType(longValueType, new QName(NS, "pages"), Scope.VERSIONED);
-        pages = typeManager.createFieldType(pages);
-
-        FieldType sequelTo = typeManager.newFieldType(linkValueType, new QName(NS, "sequel_to"), Scope.VERSIONED);
-        sequelTo = typeManager.createFieldType(sequelTo);
-
-        FieldType manager = typeManager.newFieldType(stringValueType, new QName(NS, "manager"), Scope.NON_VERSIONED);
-        manager = typeManager.createFieldType(manager);
-
-        FieldType reviewStatus = typeManager.newFieldType(stringValueType, new QName(NS, "review_status"), Scope.VERSIONED_MUTABLE);
-        reviewStatus = typeManager.createFieldType(reviewStatus);
+        FieldType description = typeManager.createFieldType("BLOB", new QName(NS, "description"), Scope.VERSIONED);
+        FieldType authors = typeManager.createFieldType("LIST<STRING>", new QName(NS, "authors"), Scope.VERSIONED);
+        FieldType released = typeManager.createFieldType("DATE", new QName(NS, "released"), Scope.VERSIONED);
+        FieldType pages = typeManager.createFieldType("LONG", new QName(NS, "pages"), Scope.VERSIONED);
+        FieldType sequelTo = typeManager.createFieldType("LINK", new QName(NS, "sequel_to"), Scope.VERSIONED);
+        FieldType manager = typeManager.createFieldType("STRING", new QName(NS, "manager"), Scope.NON_VERSIONED);
+        FieldType reviewStatus = typeManager.createFieldType("STRING", new QName(NS, "review_status"), Scope.VERSIONED_MUTABLE);
 
         RecordType book = typeManager.getRecordTypeByName(new QName(NS, "Book"), null);
 
