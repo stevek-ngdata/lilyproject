@@ -186,8 +186,9 @@ public class TutorialTest {
     public void createRecordUserSpecifiedId() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
-        record.setRecordType(new QName(NS, "Book"));
-        record.setField(new QName(NS, "title"), "Lily, the definitive guide, 3rd edition");
+        record.setDefaultNamespace(NS);
+        record.setRecordType("Book");
+        record.setField("title", "Lily, the definitive guide, 3rd edition");
         record = repository.create(record);
 
         PrintUtil.print(record, repository);
@@ -197,9 +198,10 @@ public class TutorialTest {
     public void updateRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
-        record.setField(new QName(NS, "title"), "Lily, the definitive guide, third edition");
-        record.setField(new QName(NS, "pages"), Long.valueOf(912));
-        record.setField(new QName(NS, "manager"), "Manager M");
+        record.setDefaultNamespace(NS);
+        record.setField("title", "Lily, the definitive guide, third edition");
+        record.setField("pages", Long.valueOf(912));
+        record.setField("manager", "Manager M");
         record = repository.update(record);
 
         PrintUtil.print(record, repository);
@@ -209,9 +211,10 @@ public class TutorialTest {
     public void updateRecordViaRead() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.read(id);
-        record.setField(new QName(NS, "released"), new LocalDate());
-        record.setField(new QName(NS, "authors"), Arrays.asList("Author A", "Author B"));
-        record.setField(new QName(NS, "review_status"), "reviewed");
+        record.setDefaultNamespace(NS);
+        record.setField("released", new LocalDate());
+        record.setField("authors", Arrays.asList("Author A", "Author B"));
+        record.setField("review_status", "reviewed");
         record = repository.update(record);
 
         PrintUtil.print(record, repository);
