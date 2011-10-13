@@ -162,6 +162,7 @@ public class PrintUtil {
 
         int indent = 0;
 
+        println(out, indent, "Name = " + recordType.getName());
         println(out, indent, "ID = " + recordType.getId());
         println(out, indent, "Version = " + recordType.getVersion());
         println(out, indent, "Fields:");
@@ -215,8 +216,8 @@ public class PrintUtil {
         FieldTypeEntry fieldTypeEntry = pair.getV1();
         FieldType fieldType = pair.getV2();
 
+        println(out, indent, "Name = " + fieldType.getName());
         println(out, indent, "ID = " + fieldType.getId());
-        println(out, indent, "Name = {" + fieldType.getName().getNamespace() + "}" + fieldType.getName().getName());
         println(out, indent, "Mandatory = " + fieldTypeEntry.isMandatory());
         try {
             println(out, indent, "ValueType = " + fieldType.getValueType().getName());
