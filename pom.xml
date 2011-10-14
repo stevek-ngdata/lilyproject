@@ -665,8 +665,30 @@
   </distributionManagement>  
 
   <build>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+         <artifactId>wagon-ssh</artifactId>
+         <version>2.0</version>
+      </extension>
+    </extensions>
+
     <pluginManagement>
       <plugins>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>2.5</version>
+        </plugin>
+        <plugin>
+          <groupId>org.lilyproject</groupId>
+          <artifactId>lily-genscript-plugin</artifactId>
+          <version>${project.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.lilyproject</groupId>
+          <artifactId>lily-hbase-exclusions-plugin</artifactId>
+          <version>${project.version}</version>
+        </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
@@ -676,17 +698,16 @@
         </plugin>
         <plugin>
           <artifactId>maven-site-plugin</artifactId>
-          <version>2.2</version>
+          <version>3.0</version>
         </plugin>
           <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
-            <!-- This version fixes problems with files being added more than one in the archive -->
-            <version>2.2</version>
+            <version>2.2.1</version>
           </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.5</version>
+          <version>2.9</version>
           <configuration>
             <forkMode>always</forkMode>
             <argLine>-Xmx256m ${argLine}</argLine>
@@ -755,13 +776,14 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.8</version>
         <configuration>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.3.1</version>
+        <version>2.4</version>
         <configuration>
           <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
           <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
@@ -771,8 +793,6 @@
             <reports>
               <report>index</report>
               <report>dependencies</report>
-              <report>mailing-list</report>
-              <report>issue-tracking</report>
               <report>license</report>
               <report>scm</report>
             </reports>

@@ -13,12 +13,10 @@ http://docs.outerthought.org/lily-docs-1_0/414-lily.html
 Prerequisites
 =============
 
-Install Maven 2.2.x
+Install Maven 3.0.x
 -------------------
 
 From http://maven.apache.org
-
-Maven 3 is not yet supported!
 
 Building Lily
 =============
