@@ -47,6 +47,4 @@ public class SampleRepositoryDecorator extends BaseRepositoryDecorator {
         System.out.println("After record createOrUpdate");
         return record;
     }
-
-
 }

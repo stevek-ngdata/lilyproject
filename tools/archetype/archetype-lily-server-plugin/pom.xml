@@ -5,7 +5,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-archetype-repository-decorator</artifactId>
+  <artifactId>lily-archetype-lily-server-plugin</artifactId>
   <packaging>jar</packaging>
   <version>1.1-SNAPSHOT</version>
 
@@ -16,7 +16,7 @@
     <relativePath>../../..</relativePath>
   </parent>
 
-  <name>Lily: repository decorator archetype</name>
+  <name>Lily: server plugin archetype</name>
 
   <build>
     <plugins>

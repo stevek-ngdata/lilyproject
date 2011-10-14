@@ -9,7 +9,7 @@ http://maven.apache.org/plugins/maven-archetype-plugin/specification/archetype-m
       <defaultValue>com.mycompany</defaultValue>
     </requiredProperty>
     <requiredProperty key="artifactId">
-      <defaultValue>my-lily-decorator</defaultValue>
+      <defaultValue>my-lily-server-plugin</defaultValue>
     </requiredProperty>
     <requiredProperty key="version">
       <defaultValue>1.0-SNAPSHOT</defaultValue>

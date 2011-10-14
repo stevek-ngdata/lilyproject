@@ -20,4 +20,8 @@
     <constructor-arg ref="pluginRegistry"/>
   </bean>
 
+  <bean id="updateHook" class="${package}.SampleRecordUpdateHook">
+    <constructor-arg ref="pluginRegistry"/>
+  </bean>
+
 </beans>

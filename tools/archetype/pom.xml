@@ -19,7 +19,7 @@
 
   <modules>
     <module>archetype-basic</module>
-    <module>archetype-repository-decorator</module>
+    <module>archetype-lily-server-plugin</module>
   </modules>
 
 </project>
