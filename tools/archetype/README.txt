@@ -22,5 +22,5 @@ Repository Decorator
 
 mvn archetype:generate \
   -DarchetypeGroupId=org.lilyproject \
-  -DarchetypeArtifactId=lily-archetype-repository-decorator \
+  -DarchetypeArtifactId=lily-archetype-lily-server-plugin \
   -DarchetypeVersion=1.1-SNAPSHOT

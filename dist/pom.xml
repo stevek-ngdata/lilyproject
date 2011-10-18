@@ -95,7 +95,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-archetype-repository-decorator</artifactId>
+      <artifactId>lily-archetype-lily-server-plugin</artifactId>
     </dependency>
 
     <dependency>
