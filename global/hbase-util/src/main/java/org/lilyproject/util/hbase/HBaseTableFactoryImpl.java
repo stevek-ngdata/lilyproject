@@ -55,6 +55,11 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     }
 
     @Override
+    public HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
+        return getTable(tableDescriptor, splitKeys, true);
+    }
+
+    @Override
     public HTableInterface getTable(HTableDescriptor tableDescriptor, boolean create) throws IOException {
         return getTable(tableDescriptor, getSplitKeys(tableDescriptor.getName()), create);
     }

@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 
 /**
  * The WalRowLog is an optimized version of the RowLog for the WAL use case. 
@@ -28,8 +29,9 @@ public class WalRowLog extends RowLogImpl {
     public static final String WAL_SUBSCRIPTIONID = "WAL";
 
     public WalRowLog(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
-            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker) throws InterruptedException {
-        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker);
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker, HBaseTableFactory tableFactory)
+            throws InterruptedException, IOException {
+        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, tableFactory);
     }
     
     /**
@@ -38,7 +40,7 @@ public class WalRowLog extends RowLogImpl {
     @Override
     protected void putMessageOnShard(RowLogMessage message, List<RowLogSubscription> subscriptions) throws RowLogException {
         // Ignore subscriptions and put a message for the 'meta' wal subscription
-        getShard().putMessage(message, Arrays.asList(WAL_SUBSCRIPTIONID));
+        getShard(message).putMessage(message, Arrays.asList(WAL_SUBSCRIPTIONID));
     }
     
     /**
@@ -57,7 +59,7 @@ public class WalRowLog extends RowLogImpl {
     @Override
     protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier, byte[] previousValue, RowLock lock) throws IOException, RowLogException {
         // Remove the 'meta' message
-        getShard().removeMessage(message, WAL_SUBSCRIPTIONID);
+        getShard(message).removeMessage(message, WAL_SUBSCRIPTIONID);
         // Also make sure the execution state and payload are removed from the row-local queue
         return super.handleAllDone(message, rowKey, executionStateQualifier, previousValue, lock);
     }

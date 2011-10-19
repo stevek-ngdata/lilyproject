@@ -15,14 +15,7 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
@@ -43,7 +36,6 @@ import org.lilyproject.util.Logs;
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
     private volatile boolean stop = true;
     protected final RowLog rowLog;
-    private final RowLogShard shard;
     protected final Map<String, SubscriptionThread> subscriptionThreads = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
     private RowLogConfigurationManager rowLogConfigurationManager;
     private Log log = LogFactory.getLog(getClass());
@@ -62,7 +54,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     public RowLogProcessorImpl(RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
         this.rowLog = rowLog;
         this.rowLogConfigurationManager = rowLogConfigurationManager;
-        this.shard = rowLog.getShards().get(0); // TODO: For now we only work with one shard
     }
 
     @Override
@@ -81,7 +72,10 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     private void initializeNotifyObserver() {
-        rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), shard.getId(), this);
+        // TODO probably shouldn't do this per-shard?
+        for (RowLogShard shard : rowLog.getShards()) {
+            rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), shard.getId(), this);
+        }
     }
 
     protected void initializeSubscriptions() {
@@ -178,7 +172,9 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     private void stopNotifyObserver() {
-        rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), shard.getId());
+        for (RowLogShard shard : rowLog.getShards()) {
+            rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), shard.getId());
+        }
     }
 
     protected void stopSubscriptions() {
@@ -198,7 +194,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
     
     /**
-     * Called when a message has been posted on the rowlog that needs to be processed by this RowLogProcessor. </p>
+     * Called when a message has been posted on the rowlog that needs to be processed by this RowLogProcessor.
      * The notification will only be taken into account when a delay has passed since the previous notification.
      */
     @Override
@@ -281,7 +277,20 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         metrics.scans.inc();
 
                         long tsBeforeGetMessages = System.currentTimeMillis();
-                        List<RowLogMessage> messages = shard.next(subscriptionId, minimalTimestamp);
+                        List<RowLogMessage> messages = new ArrayList<RowLogMessage>( /* TODO init to expected size, based on batch size */ );
+                        for (RowLogShard shard : rowLog.getShards()) {
+                            // TODO we should do the scans in parallel
+                            messages.addAll(shard.next(subscriptionId, minimalTimestamp));
+                        }
+                        // Sort the messages from the different shards by timestamp
+                        // TODO maybe change this to a merge sort
+                        Collections.sort(messages, new Comparator<RowLogMessage>() {
+                            @Override
+                            public int compare(RowLogMessage o1, RowLogMessage o2) {
+                                return (int)(o1.getTimestamp() - o2.getTimestamp());
+                            }
+                        });
+
                         metrics.scanDuration.inc(System.currentTimeMillis() - tsBeforeGetMessages);
 
                         if (stopRequested) {
@@ -318,7 +327,11 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         // scanning for messages.
                         // Also: the minimalProcessDelay setting is not taken into account: as it currently is,
                         // this is only relevant for the WAL, which does not make use of the wake-up signal.
-                        if (messages.size() < shard.getBatchSize() && lastWakeup < tsBeforeGetMessages) {
+                        // TODO temporary batchSize determination fix
+                        int batchSize = rowLog.getShards().get(0).getBatchSize();
+                        // TODO this test should change: it should only be when all shards return less than
+                        //      batchSize messages...
+                        if (messages.size() < batchSize && lastWakeup < tsBeforeGetMessages) {
                             synchronized (this) {
                                 // The timeout covers two cases:
                                 //   (1) a safety fallback, in case a wake-up got lost or so

@@ -34,16 +34,6 @@ public class DummyRowLog implements RowLog {
     }
 
     @Override
-    public void registerShard(RowLogShard shard) {
-        throw new RuntimeException(failMessage);
-    }
-
-    @Override
-    public void unRegisterShard(RowLogShard shard) {
-        throw new RuntimeException(failMessage);
-    }
-
-    @Override
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
         throw new RuntimeException(failMessage);
     }

@@ -19,15 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlog.api.RowLog;
@@ -35,38 +27,27 @@ import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
 
 public class RowLogShardImpl implements RowLogShard {
 
-    private static final byte[] MESSAGES_CF = Bytes.toBytes("messages");
+    public static final byte[] MESSAGES_CF = Bytes.toBytes("messages");
     private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("msg");
     private HTableInterface table;
     private final RowLog rowLog;
     private final String id;
+    private byte[] rowKeyPrefix;
     private final int batchSize;
     private final List<Delete> messagesToDelete;
     private long lastDelete;
 
-    public RowLogShardImpl(String id, Configuration hbaseConf, RowLog rowLog, int batchSize) throws IOException {
-        this(id, hbaseConf, rowLog, batchSize, new HBaseTableFactoryImpl(hbaseConf));
-    }
-
-    public RowLogShardImpl(String id, Configuration configuration, RowLog rowLog, int batchSize,
-            HBaseTableFactory tableFactory) throws IOException {
-
+    public RowLogShardImpl(String id, byte[] rowKeyPrefix, HTableInterface table, RowLog rowLog, int batchSize) throws IOException {
         this.id = id;
+        this.rowKeyPrefix = rowKeyPrefix;
+        this.table = table;
         this.rowLog = rowLog;
         this.batchSize = batchSize;
 
-        String tableName = rowLog.getId() + "-" + id;
-        HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-        tableDescriptor.addFamily(new HColumnDescriptor(MESSAGES_CF));
-
-        table = tableFactory.getTable(tableDescriptor);
-        
         this.messagesToDelete = new ArrayList<Delete>(batchSize);
         this.lastDelete = System.currentTimeMillis();
     }
@@ -144,7 +125,7 @@ public class RowLogShardImpl implements RowLogShard {
     public List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException {
         // Before collecting a new batch of messages, any outstanding deletes are executed first. 
         deleteMessages();
-        byte[] rowPrefix = Bytes.toBytes(subscription);
+        byte[] rowPrefix = Bytes.add(rowKeyPrefix, Bytes.toBytes(subscription));
         byte[] startRow = rowPrefix;
         if (minimalTimestamp != null) 
             startRow = Bytes.add(startRow, Bytes.toBytes(minimalTimestamp));
@@ -195,13 +176,17 @@ public class RowLogShardImpl implements RowLogShard {
         byte[] subscriptionBytes = Bytes.toBytes(subscription);
         byte[] msgRowkey = message.getRowKey();
 
-        byte[] rowKey = new byte[subscriptionBytes.length +
+        byte[] rowKey = new byte[
+                rowKeyPrefix.length +
+                subscriptionBytes.length +
                 Bytes.SIZEOF_LONG +
                 Bytes.SIZEOF_LONG +
                 msgRowkey.length];
 
-        System.arraycopy(subscriptionBytes, 0, rowKey, 0, subscriptionBytes.length);
-        int offset = subscriptionBytes.length;
+        System.arraycopy(rowKeyPrefix, 0, rowKey, 0, rowKeyPrefix.length);
+        int offset = rowKeyPrefix.length;
+        System.arraycopy(subscriptionBytes, 0, rowKey, offset, subscriptionBytes.length);
+        offset += subscriptionBytes.length;
         Bytes.putLong(rowKey, offset, message.getTimestamp());
         offset += Bytes.SIZEOF_LONG;
         Bytes.putLong(rowKey, offset, message.getSeqNr());
