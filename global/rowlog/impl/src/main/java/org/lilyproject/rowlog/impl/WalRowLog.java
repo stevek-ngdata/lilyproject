@@ -34,6 +34,13 @@ public class WalRowLog extends RowLogImpl {
         super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, tableFactory);
     }
     
+    public WalRowLog(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker, HBaseTableFactory tableFactory,
+            int shardCount)
+            throws InterruptedException, IOException {
+        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, tableFactory, shardCount);
+    }
+
     /**
      * When the RowLogMessage needs to be put on the rowlog shard, we only put it there once with the 'meta' subscription id "WAL".
      */

@@ -26,7 +26,6 @@ import javax.management.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
@@ -51,6 +50,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private final byte[] rowLogColumnFamily;
     private RowLogConfig rowLogConfig;
     private HBaseTableFactory tableFactory;
+    private int shardCount;
     private RowLogShardRouter shardRouter;
 
     private final Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
@@ -67,6 +67,12 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private byte[] seqNrQualifier;
     private ObjectName mbeanName;
 
+    public RowLogImpl(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker,
+            HBaseTableFactory tableFactory) throws InterruptedException, IOException {
+        this(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, tableFactory, 1);
+    }
+
     /**
      * The RowLog should be instantiated with information about the table that contains the rows the messages are 
      * related to, and the column families it can use within this table to put the payload and execution state of the
@@ -79,7 +85,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
      */
     public RowLogImpl(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
             RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker,
-            HBaseTableFactory tableFactory) throws InterruptedException, IOException {
+            HBaseTableFactory tableFactory, int shardCount) throws InterruptedException, IOException {
         this.id = id;
         this.rowTable = rowTable;
         this.rowLogColumnFamily = rowLogColumnFamily;
@@ -89,6 +95,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         this.rowLogConfigurationManager = rowLogConfigurationManager;
         this.rowLocker = rowLocker;
         this.tableFactory = tableFactory;
+        this.shardCount = shardCount;
         rowLogConfigurationManager.addRowLogObserver(id, this);
         synchronized (initialRowLogConfigLoaded) {
             while(!initialRowLogConfigLoaded.get()) {
@@ -109,8 +116,10 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
 
     private void createShards() throws IOException {
-        // TODO read shardCount from config + validate it is smaller than 256
-        int shardCount = 10;
+        if (shardCount < 1 || shardCount > 255) {
+            throw new IllegalArgumentException("Number of rowlog shards should be > 0 and < 255, but it is: "
+                    + shardCount);
+        }
 
         this.shardRouter = new RowLogShardRouter(shardCount);
 
