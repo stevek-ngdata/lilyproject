@@ -355,6 +355,30 @@
       "request": [],
       "response": {"type": "array", "items": "AvroRecordType"},
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+    
+    "enableSchemaCacheRefresh": {
+      "request": [],
+      "response": ["null"],
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+    
+    "disableSchemaCacheRefresh": {
+      "request": [],
+      "response": ["null"],
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+    
+    "isSchemaCacheRefreshEnabled": {
+      "request": [],
+      "response": {"type": "boolean"},
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+    
+    "triggerSchemaCacheRefresh": {
+      "request": [],
+      "response": ["null"],
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     }
  }
 }

@@ -51,7 +51,8 @@ public abstract class AbstractTypeManager implements TypeManager {
     private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
     private Map<SchemaId, RecordType> recordTypeIdCache = new HashMap<SchemaId, RecordType>();
     private final CacheWatcher cacheWatcher = new CacheWatcher();
-    protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache";
+    protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache/invalidate";
+    protected static final String CACHE_REFRESHENABLED_PATH = "/lily/typemanager/cache/enabled";
     
     public AbstractTypeManager(ZooKeeperItf zooKeeper) {
         this.zooKeeper = zooKeeper;
@@ -85,9 +86,15 @@ public abstract class AbstractTypeManager implements TypeManager {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
+                readRefreshingEnabledState();
                 cacheRefresher.needsRefresh();
             }
         }
+    }
+
+    protected void readRefreshingEnabledState() {
+        // Should only do something on the HBaseTypeManager, not on the
+        // RemoteTypeManager
     }
 
     private class CacheRefresher implements Runnable {
@@ -149,7 +156,9 @@ public abstract class AbstractTypeManager implements TypeManager {
 
     protected void setupCaches() throws InterruptedException, KeeperException, RepositoryException {
         ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
+        ZkUtil.createPath(zooKeeper, CACHE_REFRESHENABLED_PATH);
         zooKeeper.addDefaultWatcher(new ConnectionWatcher());
+        readRefreshingEnabledState();
         refreshCaches();
     }
 
@@ -161,9 +170,13 @@ public abstract class AbstractTypeManager implements TypeManager {
             // Relying on the ConnectionWatcher to put it again and initialize
             // the caches.
         }
+        refreshFieldTypeCache();
+        refreshRecordTypeCache();
+    }
+
+    private void refreshFieldTypeCache() throws RepositoryException, InterruptedException {
         updatingFieldTypes.refresh(getFieldTypesWithoutCache());
         updatedFieldTypes = true;
-        refreshRecordTypeCache();
     }
 
     private synchronized void refreshRecordTypeCache() throws RepositoryException, InterruptedException {

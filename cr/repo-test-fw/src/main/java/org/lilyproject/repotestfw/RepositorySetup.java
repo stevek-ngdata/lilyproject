@@ -1,34 +1,32 @@
 package org.lilyproject.repotestfw;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.zookeeper.KeeperException;
 import org.junit.Assert;
+import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.avro.AvroLily;
-import org.lilyproject.repository.avro.AvroLilyImpl;
-import org.lilyproject.repository.avro.LilySpecificResponder;
+import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
-import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Helper class to instantiate and wire all the repository related services.
@@ -274,8 +272,21 @@ public class RepositorySetup {
         return remoteRepository;
     }
 
+    /**
+     * Returns a default typemanager.
+     */
     public TypeManager getTypeManager() {
         return typeManager;
+    }
+
+    /**
+     * Returns a new instance of a HBaseTypeManager, different than the default
+     * typemanager.
+     */
+    public TypeManager getNewTypeManager() throws IOException, InterruptedException, KeeperException,
+            RepositoryException {
+        return new HBaseTypeManager(new IdGeneratorImpl(), hadoopConf, zk, hbaseTableFactory);
+
     }
 
     public IdGenerator getIdGenerator() {

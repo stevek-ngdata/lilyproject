@@ -27,6 +27,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.Stat;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
@@ -47,8 +50,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     private HTableInterface typeTable;
 
-    // TODO this is temporary, should be removed once the reason mentioned in TypeManagerMBean is resolved
-    private boolean cacheInvalidationEnabled = true;
+    // Indicates if the cache refresh flag should be updated
+    // on zookeeper when an update on the schema happens
+    private boolean cacheRefreshingEnabled = true;
 
     public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper, HBaseTableFactory hbaseTableFactory)
             throws IOException, InterruptedException, KeeperException, RepositoryException {
@@ -72,26 +76,6 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         }
     }
     
-    @Override
-    protected void cacheInvalidationReconnected() throws InterruptedException {
-        super.cacheInvalidationReconnected();
-        try {
-            // A previous notify might have failed because of a disconnection
-            // To be sure we try to send a notify again
-            notifyCacheInvalidate();
-        } catch (KeeperException e) {
-            log.info("Exception occurred while sending a cache invalidation notification after reconnecting to zookeeper");
-        }
-    }
-    
-    // Only invalidate the cache from the server-side
-    // Updates from the RemoteTypeManager will have to pass through (server-side) HBaseTypeManager anyway
-    private void notifyCacheInvalidate() throws KeeperException, InterruptedException {
-        if (cacheInvalidationEnabled) {
-            zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
-        }
-    }
-
     @Override
     public RecordType createRecordType(RecordType recordType) throws TypeException {
         ArgumentValidator.notNull(recordType, "recordType");
@@ -140,7 +124,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             
             // Refresh the caches
             updateRecordTypeCache(newRecordType.clone());
-            notifyCacheInvalidate();
+            triggerSchemaCacheRefresh(false);
             
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
@@ -236,7 +220,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Refresh the caches
             updateRecordTypeCache(newRecordType);
-            notifyCacheInvalidate();
+            triggerSchemaCacheRefresh(false);
             
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
@@ -528,7 +512,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Refresh the caches
             updateFieldTypeCache(newFieldType);
-            notifyCacheInvalidate();
+            triggerSchemaCacheRefresh(false);
             
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
@@ -599,7 +583,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             
             // Refresh the caches
             updateFieldTypeCache(newFieldType.clone());
-            notifyCacheInvalidate();
+            triggerSchemaCacheRefresh(false);
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
                     e);
@@ -861,37 +845,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return typeTable;
     }
 
-    // TODO this is temporary, should be removed once the reason mentioned in TypeManagerMBean is resolved
-    public TypeManagerMBean getMBean() {
-        return new TypeManagerMBeanImpl();
-    }
-
-    // TODO this is temporary, should be removed once the reason mentioned in TypeManagerMBean is resolved
-    public class TypeManagerMBeanImpl implements TypeManagerMBean {
-        @Override
-        public void enableCacheInvalidationTrigger() {
-            cacheInvalidationEnabled = true;
-        }
-
-        @Override
-        public void disableCacheInvalidationTrigger() {
-            cacheInvalidationEnabled = false;
-        }
-
-        @Override
-        public void notifyCacheInvalidate() throws Exception {
-            HBaseTypeManager.this.notifyCacheInvalidate();
-        }
-
-        @Override
-        public boolean isCacheInvalidationTriggerEnabled() {
-            return cacheInvalidationEnabled;
-        }
-    }
-
     // ValueType encoding
     public static byte valueTypeEncodingVersion = (byte) 1;
-    
+
     public static byte[] encodeValueType(ValueType valueType) {
         return encodeValueType(valueType.getName());
     }
@@ -902,7 +858,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         dataOutput.writeUTF(valueTypeName);
         return dataOutput.toByteArray();
     }
-    
+
     private ValueType decodeValueType(byte[] bytes) throws RepositoryException, InterruptedException {
         DataInput dataInput = new DataInputImpl(bytes);
         if (valueTypeEncodingVersion != dataInput.readByte()) {
@@ -911,5 +867,126 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
         return getValueType(dataInput.readUTF());
     }
-   
+
+    // Schema cache refreshing
+
+    @Override
+    protected void cacheInvalidationReconnected() throws InterruptedException {
+        super.cacheInvalidationReconnected();
+        try {
+            // A previous notify might have failed because of a disconnection
+            // To be sure we try to send a notify again
+            triggerSchemaCacheRefresh(false);
+        } catch (KeeperException e) {
+            log
+                    .info("Exception occurred while sending a cache invalidation notification after reconnecting to zookeeper");
+        }
+    }
+
+    // Only invalidate the cache from the server-side
+    // Updates from the RemoteTypeManager will have to pass through
+    // (server-side) HBaseTypeManager anyway
+    // If force is true,
+    /**
+     * Sets the cache refresh flag on Zookeeper. This triggers the caches to
+     * refresh their data.
+     * 
+     * @param force
+     *            if true, it is ignored if cache refreshing is enabled.
+     */
+    private void triggerSchemaCacheRefresh(boolean force) throws KeeperException, InterruptedException {
+        if (force || cacheRefreshingEnabled) {
+            zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
+        }
+    }
+
+    @Override
+    public void enableSchemaCacheRefresh() throws TypeException, InterruptedException {
+        try {
+            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[] { (byte) 1 }, -1);
+            cacheRefreshingEnabled = true;
+            triggerSchemaCacheRefresh();
+        } catch (KeeperException e) {
+            throw new TypeException("Enabling cache refreshing failed", e);
+        } 
+    }
+
+    @Override
+    public void disableSchemaCacheRefresh() throws TypeException, InterruptedException {
+        try {
+            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[] { (byte) 0 }, -1);
+            cacheRefreshingEnabled = false;
+        } catch (KeeperException e) {
+            throw new TypeException("Enabling schema cache refreshing failed", e);
+        } 
+    }
+
+    @Override
+    public void triggerSchemaCacheRefresh() throws TypeException, InterruptedException {
+        try {
+            triggerSchemaCacheRefresh(true);
+        } catch (KeeperException e) {
+            throw new TypeException("Triggering a forced schema cache refresh failed", e);
+        }
+    }
+
+    @Override
+    public boolean isSchemaCacheRefreshEnabled() {
+        return cacheRefreshingEnabled;
+    }
+
+    public TypeManagerMBean getMBean() {
+        return new TypeManagerMBeanImpl();
+    }
+
+    public class TypeManagerMBeanImpl implements TypeManagerMBean {
+        @Override
+        public void enableSchemaCacheRefresh() throws TypeException, InterruptedException {
+            HBaseTypeManager.this.enableSchemaCacheRefresh();
+        }
+
+        @Override
+        public void disableSchemaCacheRefresh() throws TypeException, InterruptedException {
+            HBaseTypeManager.this.disableSchemaCacheRefresh();
+        }
+
+        @Override
+        public void triggerSchemaCacheRefresh() throws TypeException, InterruptedException {
+            HBaseTypeManager.this.triggerSchemaCacheRefresh();
+        }
+
+        @Override
+        public boolean isSchemaCacheRefreshEnabled() {
+            return HBaseTypeManager.this.isSchemaCacheRefreshEnabled();
+        }
+    }
+    
+    /**
+     * Cache refreshing enabled watcher monitors the state of the enabled
+     * boolean on Zookeeper.
+     */
+    private class CacheRefreshingEnabledWatcher implements Watcher {
+        @Override
+        public void process(WatchedEvent event) {
+            readRefreshingEnabledState();
+        }
+    }
+
+    // Reads the refreshing enabled state on zookeeper and puts a new watch
+    protected void readRefreshingEnabledState() {
+        byte[] data;
+        try {
+            data = zooKeeper.getData(CACHE_REFRESHENABLED_PATH, new CacheRefreshingEnabledWatcher(), new Stat());
+            if (data == null || data.length == 0 || data[0] == (byte) 1) {
+                cacheRefreshingEnabled = true;
+            } else {
+                cacheRefreshingEnabled = false;
+            }
+        } catch (KeeperException e) {
+            // Rely on connectionwatcher to put watcher again
+        } catch (InterruptedException e) {
+            // Stop processing
+        }
+    }
+
 }

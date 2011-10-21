@@ -321,4 +321,51 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
+
+    @Override
+    public Object disableSchemaCacheRefresh() throws AvroRepositoryException, AvroInterruptedException {
+        try {
+            typeManager.disableSchemaCacheRefresh();
+            return null;
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public Object enableSchemaCacheRefresh() throws AvroRepositoryException, AvroInterruptedException {
+        try {
+            typeManager.enableSchemaCacheRefresh();
+            return null;
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public boolean isSchemaCacheRefreshEnabled() throws AvroRepositoryException, AvroInterruptedException {
+        try {
+            return typeManager.isSchemaCacheRefreshEnabled();
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public Object triggerSchemaCacheRefresh() throws AvroRepositoryException, AvroInterruptedException {
+        try {
+            typeManager.triggerSchemaCacheRefresh();
+            return null;
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
 }

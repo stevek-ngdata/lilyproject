@@ -277,15 +277,6 @@ public interface TypeManager extends Closeable {
      */
     void registerValueType(String name, ValueTypeFactory valueTypeFactory);
 
-    /**
-     * Returns a snapshot of the FieldTypes. To be used when a consistent snapshot is needed while performing a CRUD operation.
-     * @return a snapshot of the FieldTypes cache
-     */
-    FieldTypes getFieldTypesSnapshot();
-
-    List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
-
-    List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
     
     /**
      * Returns a record type builder, providing a fluent API to manipulate record types.
@@ -301,4 +292,69 @@ public interface TypeManager extends Closeable {
      * operations to do (update, createOrUpdate).
      */
     FieldTypeBuilder fieldTypeBuilder() throws TypeException;
+
+    //
+    // Schema cache
+    //
+
+    /**
+     * Returns a snapshot of the FieldTypes cache.
+     * <p>
+     * To be used when a consistent snapshot is needed while performing a CRUD
+     * operation.
+     * 
+     * @return a snapshot of the FieldTypes cache
+     */
+    FieldTypes getFieldTypesSnapshot();
+
+    /**
+     * Returns the list of field types known by the repository.
+     * <p>
+     * This method bypasses the cache of the type manager.
+     */
+    List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
+
+    /**
+     * Returns the list of record types known by the repository.
+     * <p>
+     * This method bypasses the cache of the type manager.
+     */
+    List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
+
+    /**
+     * Enables the schema cache refreshing system.
+     * <p>
+     * When enabled the schema caches will get a trigger to update their data
+     * whenever a schema update was performed.
+     * 
+     * @throws RepositoryException
+     *             when setting the flag to enabled failed
+     */
+    void enableSchemaCacheRefresh() throws RepositoryException, InterruptedException;
+
+    /**
+     * Disables the schema cache refreshing system.
+     * 
+     * @throws RepositoryException
+     *             when setting the flag to disabled failed
+     */
+    void disableSchemaCacheRefresh() throws RepositoryException, InterruptedException;
+
+    /**
+     * Triggers a forced schema cache refresh.
+     * <p>
+     * Even if the schema cache refreshing system is disabled, this call will
+     * trigger the schema caches to refresh their data.
+     * 
+     * @throws RepositoryException
+     *             when setting the flag to refresh the caches failed
+     */
+    void triggerSchemaCacheRefresh() throws RepositoryException, InterruptedException;
+
+    /**
+     * Checks if the schema cache refreshing system is enabled or disabled
+     * 
+     * @return true when enabled
+     */
+    boolean isSchemaCacheRefreshEnabled() throws RepositoryException, InterruptedException;
 }

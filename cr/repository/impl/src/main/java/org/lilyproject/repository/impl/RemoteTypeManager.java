@@ -239,6 +239,58 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
+    @Override
+    public void disableSchemaCacheRefresh() throws RepositoryException, InterruptedException {
+        try {
+            lilyProxy.disableSchemaCacheRefresh();
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
+    @Override
+    public void enableSchemaCacheRefresh() throws RepositoryException, InterruptedException {
+        try {
+            lilyProxy.enableSchemaCacheRefresh();
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
+    @Override
+    public boolean isSchemaCacheRefreshEnabled() throws RepositoryException, InterruptedException {
+        try {
+            return lilyProxy.isSchemaCacheRefreshEnabled();
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
+    @Override
+    public void triggerSchemaCacheRefresh() throws RepositoryException, InterruptedException {
+        try {
+            lilyProxy.triggerSchemaCacheRefresh();
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
     private RuntimeException handleUndeclaredTypeThrowable(UndeclaredThrowableException e) throws TypeException {
         if (e.getCause() instanceof IOException) {
             throw new IOTypeException(e.getCause());
@@ -246,4 +298,5 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
             throw e;
         }
     }
+
 }
