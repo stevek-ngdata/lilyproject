@@ -264,6 +264,18 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file-->
+
+    <!-- Linkindex tool -->
+    <file>
+      <source>${basedir}/../apps/linkindex-cli/target/dist-scripts/lily-linkindex</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <!--file>
+      <source>${basedir}/../apps/linkindex-cli/target/dist-scripts/lily-linkindex.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
   </files>
 
   <fileSets>

@@ -103,6 +103,7 @@
     <module>apps/import</module>
     <module>apps/tester</module>
     <module>apps/mbox-import</module>
+    <module>apps/linkindex-cli</module>
 
     <module>dist</module>
   </modules>
@@ -301,6 +302,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mbox-import</artifactId>
+        <version>1.0.4-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-linkindex-cli</artifactId>
         <version>1.0.4-SNAPSHOT</version>
       </dependency>
       <dependency>
