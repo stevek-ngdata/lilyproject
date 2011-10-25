@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
@@ -160,8 +161,10 @@ public class RepositorySetup {
 
         AvroConverter remoteConverter = new AvroConverter();
 
-        remoteTypeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()),
-                remoteConverter, idGenerator, zk);
+        RemoteTestSchemaCache schemaCache = new RemoteTestSchemaCache(zk);
+        remoteTypeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
+                idGenerator, zk, schemaCache);
+        schemaCache.setTypeManager(remoteTypeManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
@@ -171,6 +174,7 @@ public class RepositorySetup {
 
         remoteConverter.setRepository(repository);
         remoteTypeManager.start();
+        schemaCache.start();
 
     }
 
@@ -331,5 +335,25 @@ public class RepositorySetup {
 
     public RowLocker getRowLocker() {
         return rowLocker;
+    }
+    
+    private class RemoteTestSchemaCache extends AbstractSchemaCache implements SchemaCache {
+
+        private TypeManager typeManager;
+
+        public RemoteTestSchemaCache(ZooKeeperItf zooKeeper) {
+            super(zooKeeper);
+            log = LogFactory.getLog(getClass());
+        }
+
+        public void setTypeManager(TypeManager typeManager) {
+            this.typeManager = typeManager;
+        }
+
+        @Override
+        protected TypeManager getTypeManager() {
+            return typeManager;
+        }
+        
     }
 }

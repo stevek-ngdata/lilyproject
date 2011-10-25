@@ -15,189 +15,31 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.io.IOException;
 import java.util.*;
 
-import javax.annotation.PreDestroy;
-
 import org.apache.commons.logging.Log;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.valuetype.*;
 import org.lilyproject.util.ArgumentValidator;
-import org.lilyproject.util.Logs;
-import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class AbstractTypeManager implements TypeManager {
     protected Log log;
 
-    protected CacheRefresher cacheRefresher = new CacheRefresher();
-    
     protected Map<String, ValueTypeFactory> valueTypeFactories = new HashMap<String, ValueTypeFactory>();
     protected IdGenerator idGenerator;
     
-    //
-    // Caching
-    //
     protected ZooKeeperItf zooKeeper;
-    private FieldTypesImpl fieldTypes;
-    private FieldTypesImpl updatingFieldTypes = new FieldTypesImpl();
-    private boolean updatedFieldTypes = false;
-    private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
-    private Map<SchemaId, RecordType> recordTypeIdCache = new HashMap<SchemaId, RecordType>();
-    private final CacheWatcher cacheWatcher = new CacheWatcher();
-    protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache/invalidate";
-    protected static final String CACHE_REFRESHENABLED_PATH = "/lily/typemanager/cache/enabled";
+
+    protected SchemaCache schemaCache;
     
     public AbstractTypeManager(ZooKeeperItf zooKeeper) {
         this.zooKeeper = zooKeeper;
-        cacheRefresher.start();
     }
     
     @Override
-    @PreDestroy
-    public void close() throws IOException {
-        try {
-            cacheRefresher.stop();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.debug("Interrupted", e);
-        }
-    }
-    
-    private class CacheWatcher implements Watcher {
-        @Override
-        public void process(WatchedEvent event) {
-            cacheRefresher.needsRefresh();
-        }
-    }
-
-    protected class ConnectionWatcher implements Watcher {
-        @Override
-        public void process(WatchedEvent event) {
-            if (EventType.None.equals(event.getType()) && KeeperState.SyncConnected.equals(event.getState())) {
-                try {
-                    cacheInvalidationReconnected();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                readRefreshingEnabledState();
-                cacheRefresher.needsRefresh();
-            }
-        }
-    }
-
-    protected void readRefreshingEnabledState() {
-        // Should only do something on the HBaseTypeManager, not on the
-        // RemoteTypeManager
-    }
-
-    private class CacheRefresher implements Runnable {
-        private volatile boolean needsRefresh;
-        private volatile boolean stop;
-        private final Object needsRefreshLock = new Object();
-        private Thread thread;
-
-        public void start() {
-            thread = new Thread(this, "TypeManager cache refresher");
-            thread.setDaemon(true); // Since this might be used in clients 
-            thread.start();
-        }
-
-        public void stop() throws InterruptedException {
-            stop = true;
-            if (thread != null) {
-                thread.interrupt();
-                Logs.logThreadJoin(thread);
-                thread.join();
-                thread = null;
-            }
-        }
-
-        public void needsRefresh() {
-            synchronized (needsRefreshLock) {
-                needsRefresh = true;
-                needsRefreshLock.notifyAll();
-            }
-        }
-
-        @Override
-        public void run() {
-            while (!stop && !Thread.interrupted()) {
-                try {
-                    if (needsRefresh) {
-                        synchronized (needsRefreshLock) {
-                            needsRefresh = false;
-                        }
-                        refreshCaches();
-                    }
-
-                    synchronized (needsRefreshLock) {
-                        if (!needsRefresh && !stop) {
-                            needsRefreshLock.wait();
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    return;
-                } catch (Throwable t) {
-                    log.error("Error refreshing type manager cache. Cache is possibly out of date!", t);
-                }
-            }
-        }
-    }
-
-    protected void cacheInvalidationReconnected() throws InterruptedException {
-    }
-
-    protected void setupCaches() throws InterruptedException, KeeperException, RepositoryException {
-        ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
-        ZkUtil.createPath(zooKeeper, CACHE_REFRESHENABLED_PATH);
-        zooKeeper.addDefaultWatcher(new ConnectionWatcher());
-        readRefreshingEnabledState();
-        refreshCaches();
-    }
-
-    private synchronized void refreshCaches() throws InterruptedException, RepositoryException {
-        try {
-            zooKeeper.getData(CACHE_INVALIDATION_PATH, cacheWatcher, null);
-        } catch (KeeperException e) {
-            // Failed to put our watcher.
-            // Relying on the ConnectionWatcher to put it again and initialize
-            // the caches.
-        }
-        refreshFieldTypeCache();
-        refreshRecordTypeCache();
-    }
-
-    private void refreshFieldTypeCache() throws RepositoryException, InterruptedException {
-        updatingFieldTypes.refresh(getFieldTypesWithoutCache());
-        updatedFieldTypes = true;
-    }
-
-    private synchronized void refreshRecordTypeCache() throws RepositoryException, InterruptedException {
-        Map<QName, RecordType> newRecordTypeNameCache = new HashMap<QName, RecordType>();
-        Map<SchemaId, RecordType> newRecordTypeIdCache = new HashMap<SchemaId, RecordType>();
-        List<RecordType> recordTypes = getRecordTypesWithoutCache();
-        for (RecordType recordType : recordTypes) {
-            newRecordTypeNameCache.put(recordType.getName(), recordType);
-            newRecordTypeIdCache.put(recordType.getId(), recordType);
-        }
-        recordTypeNameCache = newRecordTypeNameCache;
-        recordTypeIdCache = newRecordTypeIdCache;
-    }
-
-    @Override
-    public synchronized FieldTypesImpl getFieldTypesSnapshot() {
-        if (updatedFieldTypes) {
-            fieldTypes = updatingFieldTypes.clone();
-            updatedFieldTypes = false;
-        }
-        return fieldTypes;
+    public FieldTypes getFieldTypesSnapshot() {
+        return schemaCache.getFieldTypesSnapshot();
     }
     
     @Override
@@ -205,43 +47,30 @@ public abstract class AbstractTypeManager implements TypeManager {
     @Override
     abstract public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
     
-    protected synchronized void updateFieldTypeCache(FieldType fieldType) {
-        updatingFieldTypes.update(fieldType);
-        updatedFieldTypes = true;
+    protected void updateFieldTypeCache(FieldType fieldType) throws TypeException, InterruptedException {
+        schemaCache.updateFieldType(fieldType);
     }
     
-    protected synchronized void updateRecordTypeCache(RecordType recordType) {
-        RecordType oldType = getRecordTypeFromCache(recordType.getId());
-        if (oldType != null) {
-            recordTypeNameCache.remove(oldType.getName());
-            recordTypeIdCache.remove(oldType.getId());
-        }
-        recordTypeNameCache.put(recordType.getName(), recordType);
-        recordTypeIdCache.put(recordType.getId(), recordType);
+    protected void updateRecordTypeCache(RecordType recordType) throws TypeException, InterruptedException {
+        schemaCache.updateRecordType(recordType);
     }
     
     @Override
-    public synchronized Collection<RecordType> getRecordTypes() {
-        List<RecordType> recordTypes = new ArrayList<RecordType>();
-        for (RecordType recordType : recordTypeNameCache.values()) {
-            recordTypes.add(recordType.clone());
-        }
-        return recordTypes;
+    public Collection<RecordType> getRecordTypes() {
+        return schemaCache.getRecordTypes();
     }
     
     @Override
-    public synchronized List<FieldType> getFieldTypes() {
-        return getFieldTypesSnapshot().getFieldTypes();
+    public List<FieldType> getFieldTypes() {
+        return schemaCache.getFieldTypes();
     }
 
-    
-    
-    protected synchronized RecordType getRecordTypeFromCache(QName name) {
-        return recordTypeNameCache.get(name);
+    protected RecordType getRecordTypeFromCache(QName name) {
+        return schemaCache.getRecordType(name);
     }
 
-    protected synchronized RecordType getRecordTypeFromCache(SchemaId id) {
-        return recordTypeIdCache.get(id);
+    protected RecordType getRecordTypeFromCache(SchemaId id) {
+        return schemaCache.getRecordType(id);
     }
     
     @Override
@@ -282,12 +111,12 @@ public abstract class AbstractTypeManager implements TypeManager {
     
     @Override
     public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
-        return getFieldTypesSnapshot().getFieldTypeById(id);
+        return schemaCache.getFieldType(id);
     }
     
     @Override
     public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
-        return getFieldTypesSnapshot().getFieldTypeByName(name);
+        return schemaCache.getFieldType(name);
     }
     
     //

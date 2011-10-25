@@ -497,7 +497,7 @@ public class HBaseRepository extends BaseRepository {
         List<QName> fieldsToDelete = record.getFieldsToDelete();
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
             if (fieldTypeEntry.isMandatory()) {
-                FieldType fieldType = fieldTypes.getFieldTypeById(fieldTypeEntry.getFieldTypeId());
+                FieldType fieldType = fieldTypes.getFieldType(fieldTypeEntry.getFieldTypeId());
                 QName fieldName = fieldType.getName();
                 if (fieldsToDelete.contains(fieldName)) {
                     throw new InvalidRecordException("Field: '" + fieldName + "' is mandatory.", record.getId());
@@ -586,7 +586,7 @@ public class HBaseRepository extends BaseRepository {
                     ((newValue == null) && (originalValue == null))         // Don't update if both are null
                     || (isDeleteMarker(newValue) && fieldIsNewOrDeleted)    // Don't delete if it doesn't exist
                     || (newValue.equals(originalValue)))) {                 // Don't update if they didn't change
-                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldName);
+                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldName);
                 Scope scope = fieldType.getScope();
                 
                 // Check if the newValue contains blobs 
@@ -788,7 +788,7 @@ public class HBaseRepository extends BaseRepository {
             throws RecordException, TypeException, InterruptedException {
         Map<QName, Object> mutableFields = new HashMap<QName, Object>();
         for (Entry<QName, Object> field : fields.entrySet()) {
-            FieldType fieldType = fieldTypes.getFieldTypeByName(field.getKey());
+            FieldType fieldType = fieldTypes.getFieldType(field.getKey());
             if (Scope.VERSIONED_MUTABLE.equals(fieldType.getScope())) {
                 mutableFields.put(field.getKey(), field.getValue());
             }
@@ -808,7 +808,7 @@ public class HBaseRepository extends BaseRepository {
             throws RecordException, TypeException, RepositoryException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
-            FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldName);
+            FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldName);
             byte[] encodedValue = encodeFieldValue(parentRecord, fieldType, originalValue);
             put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version + 1, encodedValue);
         }
@@ -859,7 +859,7 @@ public class HBaseRepository extends BaseRepository {
         if (fieldNames != null) {
             fields = new ArrayList<FieldType>();
             for (QName fieldName : fieldNames) {
-                fields.add(fieldTypes.getFieldTypeByName(fieldName));
+                fields.add(fieldTypes.getFieldType(fieldName));
             }
         }
         return fields;
@@ -871,7 +871,7 @@ public class HBaseRepository extends BaseRepository {
         if (fieldIds != null) {
             fields = new ArrayList<FieldType>(fieldIds.size());
             for (SchemaId fieldId : fieldIds) {
-                fields.add(fieldTypes.getFieldTypeById(fieldId));
+                fields.add(fieldTypes.getFieldType(fieldId));
             }
         }
         return fields;
@@ -1285,7 +1285,7 @@ public class HBaseRepository extends BaseRepository {
         if (LilyHBaseSchema.DELETE_FLAG == prefix) {
             return null;
         }
-        FieldType fieldType = fieldTypes.getFieldTypeById(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
+        FieldType fieldType = fieldTypes.getFieldType(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
         if (context != null) 
             context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
@@ -1354,7 +1354,7 @@ public class HBaseRepository extends BaseRepository {
             // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
             Map<QName, Object> fields = originalRecord.getFields();
             for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
-                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldEntry.getKey());
+                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldEntry.getKey());
                 if (Scope.NON_VERSIONED == fieldType.getScope()) {
                     put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, DELETE_MARKER);
                 }

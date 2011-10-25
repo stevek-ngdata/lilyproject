@@ -322,18 +322,26 @@ public interface TypeManager extends Closeable {
     List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
 
     /**
-     * Enables the schema cache refreshing system.
+     * <b>EXPERT ONLY !</b> Enables the schema cache refreshing system.
      * <p>
      * When enabled the schema caches will get a trigger to update their data
      * whenever a schema update was performed.
      * 
+     * @see {@link #disableSchemaCacheRefresh()}
      * @throws RepositoryException
      *             when setting the flag to enabled failed
      */
     void enableSchemaCacheRefresh() throws RepositoryException, InterruptedException;
 
     /**
-     * Disables the schema cache refreshing system.
+     * <b>EXPERT ONLY !</b> Disables the schema cache refreshing system.
+     * <p>
+     * When disabling the schema cache refreshing system, a client performing
+     * schema updates should use a repository which it got through
+     * <code>LilyClient.getPlainRepository()</code> in order to have all updates
+     * performed on the same repository and related schema cache.<br/>
+     * Otherwise updates could be directed to servers lacking needed type
+     * information (due to the disabled cache refreshing).
      * 
      * @throws RepositoryException
      *             when setting the flag to disabled failed
@@ -341,19 +349,22 @@ public interface TypeManager extends Closeable {
     void disableSchemaCacheRefresh() throws RepositoryException, InterruptedException;
 
     /**
-     * Triggers a forced schema cache refresh.
+     * <b>EXPERT ONLY !</b> Triggers a forced schema cache refresh.
      * <p>
      * Even if the schema cache refreshing system is disabled, this call will
      * trigger the schema caches to refresh their data.
      * 
+     * @see {@link #disableSchemaCacheRefresh()}
      * @throws RepositoryException
      *             when setting the flag to refresh the caches failed
      */
     void triggerSchemaCacheRefresh() throws RepositoryException, InterruptedException;
 
     /**
-     * Checks if the schema cache refreshing system is enabled or disabled
+     * <b>EXPERT ONLY !</b> Checks if the schema cache refreshing system is
+     * enabled or disabled
      * 
+     * @see {@link #disableSchemaCacheRefresh()}
      * @return true when enabled
      */
     boolean isSchemaCacheRefreshEnabled() throws RepositoryException, InterruptedException;

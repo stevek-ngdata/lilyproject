@@ -15,13 +15,12 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -37,9 +36,12 @@ import org.apache.zookeeper.KeeperException;
 import org.kauriproject.runtime.module.javaservice.JavaServiceManager;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
-import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -163,7 +165,7 @@ public class LilyServerProxy {
     }
     
     public synchronized LilyClient getClient() throws IOException, InterruptedException, KeeperException,
-            ZkConnectException, NoServersException {
+            ZkConnectException, NoServersException, RepositoryException {
         if (lilyClient == null) {
             lilyClient = new LilyClient("localhost:2181", 30000);
         }

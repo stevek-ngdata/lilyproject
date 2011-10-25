@@ -20,6 +20,8 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.util.List;
 
+import javax.annotation.PreDestroy;
+
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -40,9 +42,11 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     private AvroConverter converter;
     private Transceiver client;
 
-    public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator, ZooKeeperItf zooKeeper)
+    public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator,
+            ZooKeeperItf zooKeeper, SchemaCache schemaCache)
             throws IOException {
         super(zooKeeper);
+        super.schemaCache = schemaCache;
         log = LogFactory.getLog(getClass());
         this.converter = converter;
         //TODO idGenerator should not be available or used in the remote implementation
@@ -65,12 +69,12 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
      * @throws RepositoryException
      */
     public void start() throws InterruptedException, KeeperException, RepositoryException {
-        setupCaches();
+        // schemaCache.start();
     }
 
     @Override
+    @PreDestroy
     public void close() throws IOException {
-        super.close();
         Closer.close(client);
     }
 

@@ -56,7 +56,7 @@ public class FieldTypesImpl implements FieldTypes {
     }
     
     @Override
-    public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
+    public FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(id, "id");
         FieldType fieldType = fieldTypeIdCache.get(id);
         if (fieldType == null) {
@@ -66,7 +66,7 @@ public class FieldTypesImpl implements FieldTypes {
     }
 
     @Override
-    public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
+    public FieldType getFieldType(QName name) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(name, "name");
         FieldType fieldType = fieldTypeNameCache.get(name);
         if (fieldType == null) {

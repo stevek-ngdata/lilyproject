@@ -22,14 +22,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.Stat;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
@@ -50,19 +49,16 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
     private HTableInterface typeTable;
 
-    // Indicates if the cache refresh flag should be updated
-    // on zookeeper when an update on the schema happens
-    private boolean cacheRefreshingEnabled = true;
-
     public HBaseTypeManager(IdGenerator idGenerator, Configuration configuration, ZooKeeperItf zooKeeper, HBaseTableFactory hbaseTableFactory)
             throws IOException, InterruptedException, KeeperException, RepositoryException {
         super(zooKeeper);
+        schemaCache = new LocalSchemaCache(zooKeeper, this);
         log = LogFactory.getLog(getClass());
         this.idGenerator = idGenerator;
 
         this.typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         registerDefaultValueTypes();
-        setupCaches();
+        schemaCache.start();
         
         // The 'last' vtag should always exist in the system (at least, for everything index-related). Therefore we
         // create it here.
@@ -74,6 +70,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         } catch (ConcurrentUpdateTypeException e) {
             // ok, another lily-server is starting up and doing the same thing
         }
+    }
+
+    @Override
+    @PreDestroy
+    public void close() throws IOException {
     }
     
     @Override
@@ -124,14 +125,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             
             // Refresh the caches
             updateRecordTypeCache(newRecordType.clone());
-            triggerSchemaCacheRefresh(false);
             
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while creating recordType '" + recordType.getName()
-                    + "' on HBase", e);
-        } catch (KeeperException e) {
             throw new TypeException("Exception occurred while creating recordType '" + recordType.getName()
                     + "' on HBase", e);
         } catch (InterruptedException e) {
@@ -220,12 +217,8 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Refresh the caches
             updateRecordTypeCache(newRecordType);
-            triggerSchemaCacheRefresh(false);
             
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
-                    + "' on HBase", e);
-        } catch (KeeperException e) {
             throw new TypeException("Exception occurred while updating recordType '" + newRecordType.getId()
                     + "' on HBase", e);
         } catch (InterruptedException e) {
@@ -517,14 +510,10 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
             // Refresh the caches
             updateFieldTypeCache(newFieldType);
-            triggerSchemaCacheRefresh(false);
             
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while creating fieldType '" + fieldType.getName()
-                    + "' version: '" + version + "' on HBase", e);
-        } catch (KeeperException e) {
             throw new TypeException("Exception occurred while creating fieldType '" + fieldType.getName()
                     + "' version: '" + version + "' on HBase", e);
         } catch (InterruptedException e) {
@@ -586,13 +575,9 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
                 getTypeTable().put(put);
             }
             
-            // Refresh the caches
+            // Update the caches
             updateFieldTypeCache(newFieldType.clone());
-            triggerSchemaCacheRefresh(false);
         } catch (IOException e) {
-            throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
-                    e);
-        } catch (KeeperException e) {
             throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
                     e);
         } catch (InterruptedException e) {
@@ -896,71 +881,24 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         return getValueType(dataInput.readUTF());
     }
 
-    // Schema cache refreshing
-
-    @Override
-    protected void cacheInvalidationReconnected() throws InterruptedException {
-        super.cacheInvalidationReconnected();
-        try {
-            // A previous notify might have failed because of a disconnection
-            // To be sure we try to send a notify again
-            triggerSchemaCacheRefresh(false);
-        } catch (KeeperException e) {
-            log
-                    .info("Exception occurred while sending a cache invalidation notification after reconnecting to zookeeper");
-        }
-    }
-
-    // Only invalidate the cache from the server-side
-    // Updates from the RemoteTypeManager will have to pass through
-    // (server-side) HBaseTypeManager anyway
-    // If force is true,
-    /**
-     * Sets the cache refresh flag on Zookeeper. This triggers the caches to
-     * refresh their data.
-     * 
-     * @param force
-     *            if true, it is ignored if cache refreshing is enabled.
-     */
-    private void triggerSchemaCacheRefresh(boolean force) throws KeeperException, InterruptedException {
-        if (force || cacheRefreshingEnabled) {
-            zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
-        }
-    }
-
     @Override
     public void enableSchemaCacheRefresh() throws TypeException, InterruptedException {
-        try {
-            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[] { (byte) 1 }, -1);
-            cacheRefreshingEnabled = true;
-            triggerSchemaCacheRefresh();
-        } catch (KeeperException e) {
-            throw new TypeException("Enabling cache refreshing failed", e);
-        } 
+        ((LocalSchemaCache) schemaCache).enableSchemaCacheRefresh();
     }
 
     @Override
     public void disableSchemaCacheRefresh() throws TypeException, InterruptedException {
-        try {
-            zooKeeper.setData(CACHE_REFRESHENABLED_PATH, new byte[] { (byte) 0 }, -1);
-            cacheRefreshingEnabled = false;
-        } catch (KeeperException e) {
-            throw new TypeException("Enabling schema cache refreshing failed", e);
-        } 
+        ((LocalSchemaCache) schemaCache).disableSchemaCacheRefresh();
     }
 
     @Override
     public void triggerSchemaCacheRefresh() throws TypeException, InterruptedException {
-        try {
-            triggerSchemaCacheRefresh(true);
-        } catch (KeeperException e) {
-            throw new TypeException("Triggering a forced schema cache refresh failed", e);
-        }
+        ((LocalSchemaCache) schemaCache).triggerRefresh();
     }
 
     @Override
     public boolean isSchemaCacheRefreshEnabled() {
-        return cacheRefreshingEnabled;
+        return ((LocalSchemaCache) schemaCache).isRefreshEnabled();
     }
 
     public TypeManagerMBean getMBean() {
@@ -988,33 +926,4 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             return HBaseTypeManager.this.isSchemaCacheRefreshEnabled();
         }
     }
-    
-    /**
-     * Cache refreshing enabled watcher monitors the state of the enabled
-     * boolean on Zookeeper.
-     */
-    private class CacheRefreshingEnabledWatcher implements Watcher {
-        @Override
-        public void process(WatchedEvent event) {
-            readRefreshingEnabledState();
-        }
-    }
-
-    // Reads the refreshing enabled state on zookeeper and puts a new watch
-    protected void readRefreshingEnabledState() {
-        byte[] data;
-        try {
-            data = zooKeeper.getData(CACHE_REFRESHENABLED_PATH, new CacheRefreshingEnabledWatcher(), new Stat());
-            if (data == null || data.length == 0 || data[0] == (byte) 1) {
-                cacheRefreshingEnabled = true;
-            } else {
-                cacheRefreshingEnabled = false;
-            }
-        } catch (KeeperException e) {
-            // Rely on connectionwatcher to put watcher again
-        } catch (InterruptedException e) {
-            // Stop processing
-        }
-    }
-
 }

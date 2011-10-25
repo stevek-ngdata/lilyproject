@@ -70,10 +70,12 @@ public class LilyClient implements Closeable {
     private ZkWatcher watcher = new ZkWatcher();
 
     private Repository balancingAndRetryingRepository = BalancingAndRetryingRepository.getInstance(this);
+    private RemoteSchemaCache schemaCache;
 
-    public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException,
-            ZkConnectException, NoServersException {
+    public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException, ZkConnectException,
+            NoServersException, RepositoryException {
         this.zk = zk;
+        schemaCache = new RemoteSchemaCache(zk, this);
         init();
     }
 
@@ -82,15 +84,17 @@ public class LilyClient implements Closeable {
      * @throws NoServersException if the znode under which the repositories are published does not exist
      */
     public LilyClient(String zookeeperConnectString, int sessionTimeout) throws IOException, InterruptedException,
-            KeeperException, ZkConnectException, NoServersException {
+            KeeperException, ZkConnectException, NoServersException, RepositoryException {
         managedZk = true;
         zk = ZkUtil.connect(zookeeperConnectString, sessionTimeout);
+        schemaCache = new RemoteSchemaCache(zk, this);
         init();
     }
 
-    private void init() throws InterruptedException, KeeperException, NoServersException {
+    private void init() throws InterruptedException, KeeperException, NoServersException, RepositoryException {
         zk.addDefaultWatcher(watcher);
         refreshServers();
+        schemaCache.start();
     }
 
     @Override
@@ -149,7 +153,7 @@ public class LilyClient implements Closeable {
         AvroConverter remoteConverter = new AvroConverter();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
         RemoteTypeManager typeManager = new RemoteTypeManager(parseAddressAndPort(server.lilyAddressAndPort),
-                remoteConverter, idGenerator, zk);
+                remoteConverter, idGenerator, zk, schemaCache);
         
         BlobManager blobManager = getBlobManager(zk);
         
