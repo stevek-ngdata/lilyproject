@@ -172,6 +172,15 @@
         {"name": "fieldTypeEntries", "type": {"type": "array", "items": "AvroFieldTypeEntry"}},
         {"name": "mixins", "type": {"type": "array", "items": "AvroMixin"}}
       ]
+    },
+    
+    {
+      "name": "AvroFieldAndRecordTypes",
+      "type": "record",
+      "fields": [
+        {"name": "fieldTypes", "type": {"type": "array", "items": "AvroFieldType"}},
+        {"name": "recordTypes", "type": {"type": "array", "items": "AvroRecordType"}}
+      ]
     }
   ],
 
@@ -357,6 +366,12 @@
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
     
+    "getFieldAndRecordTypesWithoutCache": {
+      "request": [],
+      "response": "AvroFieldAndRecordTypes",
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+
     "enableSchemaCacheRefresh": {
       "request": [],
       "response": ["null"],

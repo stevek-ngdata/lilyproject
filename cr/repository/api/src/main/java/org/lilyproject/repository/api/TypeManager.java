@@ -19,6 +19,8 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
 
+import org.lilyproject.util.Pair;
+
 // IMPORTANT:
 //   See the note on the requirement TypeException described in the Repository.java file.
 
@@ -320,6 +322,15 @@ public interface TypeManager extends Closeable {
      * This method bypasses the cache of the type manager.
      */
     List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
+
+    /**
+     * Returns bot the list of field types and record types known by the
+     * repository.
+     * <p>
+     * This method bypasses the cache of the type manager.
+     */
+    Pair<List<FieldType>, List<RecordType>> getFieldAndRecordTypesWithoutCache() throws RepositoryException,
+            InterruptedException;
 
     /**
      * <b>EXPERT ONLY !</b> Enables the schema cache refreshing system.

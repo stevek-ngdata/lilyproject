@@ -294,6 +294,17 @@ public class AvroLilyImpl implements AvroLily {
         } 
     }
 
+    public AvroFieldAndRecordTypes getFieldAndRecordTypesWithoutCache() throws AvroRepositoryException,
+            AvroInterruptedException {
+        try {
+            return converter.convertFieldAndRecordTypes(typeManager.getFieldAndRecordTypesWithoutCache());
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
+
     public List<CharSequence> getVariants(ByteBuffer recordId) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(repository.getVariants(converter.convertAvroRecordId(recordId)));

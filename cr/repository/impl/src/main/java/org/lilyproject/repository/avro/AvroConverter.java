@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.IdRecordImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.SystemFields;
 
 public class AvroConverter {
@@ -372,6 +373,35 @@ public class AvroConverter {
             avroRecordType.mixins.add(convert(mixinEntry));
         }
         return avroRecordType;
+    }
+
+    public AvroFieldAndRecordTypes convertFieldAndRecordTypes(Pair<List<FieldType>, List<RecordType>> types) {
+        AvroFieldAndRecordTypes avroTypes = new AvroFieldAndRecordTypes();
+        List<FieldType> fieldTypes = types.getV1();
+        avroTypes.fieldTypes = new ArrayList<AvroFieldType>(fieldTypes.size());
+        for (FieldType fieldType : fieldTypes) {
+            avroTypes.fieldTypes.add(convert(fieldType));
+        }
+        List<RecordType> recordTypes = types.getV2();
+        avroTypes.recordTypes = new ArrayList<AvroRecordType>(recordTypes.size());
+        for (RecordType recordType : recordTypes) {
+            avroTypes.recordTypes.add(convert(recordType));
+        }
+        return avroTypes;
+    }
+
+    public Pair<List<FieldType>, List<RecordType>> convertAvroFieldAndRecordTypes(AvroFieldAndRecordTypes types)
+            throws RepositoryException,
+            InterruptedException {
+        List<FieldType> fieldTypes = new ArrayList(types.fieldTypes.size());
+        for (AvroFieldType avroFieldType : types.fieldTypes) {
+            fieldTypes.add(convert(avroFieldType));
+        }
+        List<RecordType> recordTypes = new ArrayList(types.recordTypes.size());
+        for (AvroRecordType avroRecordType : types.recordTypes) {
+            recordTypes.add(convert(avroRecordType));
+        }
+        return new Pair<List<FieldType>, List<RecordType>>(fieldTypes, recordTypes);
     }
 
     public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {

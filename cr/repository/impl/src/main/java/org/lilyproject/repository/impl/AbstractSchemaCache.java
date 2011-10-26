@@ -28,6 +28,7 @@ import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.Logs;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -153,19 +154,20 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             // Relying on the ConnectionWatcher to put it again and initialize
             // the caches.
         }
-        refreshFieldTypeCache();
-        refreshRecordTypeCache();
+        Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getFieldAndRecordTypesWithoutCache();
+        refreshFieldTypeCache(types.getV1());
+        refreshRecordTypeCache(types.getV2());
     }
 
-    private void refreshFieldTypeCache() throws RepositoryException, InterruptedException {
-        updatingFieldTypes.refresh(getTypeManager().getFieldTypesWithoutCache());
+    private void refreshFieldTypeCache(List<FieldType> fieldTypes) throws RepositoryException, InterruptedException {
+        updatingFieldTypes.refresh(fieldTypes);
         updatedFieldTypes = true;
     }
 
-    private synchronized void refreshRecordTypeCache() throws RepositoryException, InterruptedException {
+    private synchronized void refreshRecordTypeCache(List<RecordType> recordTypes) throws RepositoryException,
+            InterruptedException {
         Map<QName, RecordType> newRecordTypeNameCache = new HashMap<QName, RecordType>();
         Map<SchemaId, RecordType> newRecordTypeIdCache = new HashMap<SchemaId, RecordType>();
-        List<RecordType> recordTypes = getTypeManager().getRecordTypesWithoutCache();
         for (RecordType recordType : recordTypes) {
             newRecordTypeNameCache.put(recordType.getName(), recordType);
             newRecordTypeIdCache.put(recordType.getId(), recordType);

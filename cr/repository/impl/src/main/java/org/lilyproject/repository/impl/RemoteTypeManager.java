@@ -29,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -234,6 +235,20 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroRecordTypes(lilyProxy.getRecordTypesWithoutCache());
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
+    @Override
+    public Pair<List<FieldType>, List<RecordType>> getFieldAndRecordTypesWithoutCache() throws RepositoryException,
+            InterruptedException {
+        try {
+            return converter.convertAvroFieldAndRecordTypes(lilyProxy.getFieldAndRecordTypesWithoutCache());
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {

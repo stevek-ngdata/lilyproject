@@ -35,6 +35,7 @@ import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
@@ -293,6 +294,12 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         Result result;
         try {
             result = getTypeTable().get(get);
+            // This covers the case where a given id would match a name that was
+            // used for setting the concurrent counters
+            if (result == null || result.isEmpty()
+                    || result.getValue(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes) == null) {
+                throw new RecordTypeNotFoundException(id, null);
+            }
         } catch (IOException e) {
             throw new TypeException("Exception occurred while retrieving recordType '" + id + "' from HBase table", e);
         }
@@ -300,12 +307,6 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     private RecordType extractRecordType(SchemaId id, Long version, Result result) throws RecordTypeNotFoundException {
-        // This covers the case where a given id would match a name that was
-        // used for setting the concurrent counters
-        if (result == null || result.isEmpty() || result.getValue(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes) == null) {
-            throw new RecordTypeNotFoundException(id, null);
-        }
-
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(TypeCf.DATA.bytes);
         QName name;
         name = decodeName(nonVersionableColumnFamily.get(TypeColumn.RECORDTYPE_NAME.bytes));
@@ -738,6 +739,12 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         Get get = new Get(id.getBytes());
         try {
             result = getTypeTable().get(get);
+            // This covers the case where a given id would match a name that was
+            // used for setting the concurrent counters
+            if (result == null || result.isEmpty()
+                    || result.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) == null) {
+                throw new FieldTypeNotFoundException(id);
+            }
         } catch (IOException e) {
             throw new TypeException("Exception occurred while retrieving fieldType '" + id + "' from HBase", e);
         }
@@ -745,13 +752,6 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     private FieldType extractFieldType(SchemaId id, Result result) throws RepositoryException, InterruptedException {
-        // This covers the case where a given id would match a name that was
-        // used for setting the concurrent counters
-        if (result == null || result.isEmpty()
-                || result.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) == null) {
-            throw new FieldTypeNotFoundException(id);
-        }
-
         NavigableMap<byte[], byte[]> nonVersionableColumnFamily = result.getFamilyMap(TypeCf.DATA.bytes);
         QName name;
         name = decodeName(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_NAME.bytes));
@@ -775,12 +775,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             throw new TypeException("Exception occurred while retrieving field types without cache ", e);
         }
         for (Result result : scanner) {
-            try {
-                fieldTypes.add(extractFieldType(new SchemaIdImpl(result.getRow()), result));
-            } catch (FieldTypeNotFoundException exception) {
-                // Skip
-                continue;
-            }
+            fieldTypes.add(extractFieldType(new SchemaIdImpl(result.getRow()), result));
         }
         Closer.close(scanner);
 
@@ -803,16 +798,48 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             throw new TypeException("Exception occurred while retrieving record types without cache ", e);
         }
         for (Result result : scanner) {
-            try {
-                recordTypes.add(extractRecordType(new SchemaIdImpl(result.getRow()), null, result));
-            } catch (RecordTypeNotFoundException exception) {
-                // Skip
-                continue;
-            }
+            recordTypes.add(extractRecordType(new SchemaIdImpl(result.getRow()), null, result));
         }
         Closer.close(scanner);
 
         return recordTypes;
+    }
+
+    @Override
+    public Pair<List<FieldType>, List<RecordType>> getFieldAndRecordTypesWithoutCache() throws RepositoryException,
+            InterruptedException {
+        List<FieldType> fieldTypes = new ArrayList<FieldType>();
+        List<RecordType> recordTypes = new ArrayList<RecordType>();
+
+        ResultScanner scanner;
+        try {
+            Scan scan = new Scan();
+            // Field type columns
+            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes);
+            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes);
+            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes);
+            // Record type columns
+            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
+            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
+            scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
+            scan.addFamily(TypeCf.MIXIN.bytes);
+
+            scanner = getTypeTable().getScanner(scan);
+        } catch (IOException e) {
+            throw new TypeException("Exception occurred while retrieving field types and record types without cache ",
+                    e);
+        }
+        for (Result result : scanner) {
+            if (result.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
+                fieldTypes.add(extractFieldType(new SchemaIdImpl(result.getRow()), result));
+            } else {
+                recordTypes.add(extractRecordType(new SchemaIdImpl(result.getRow()), null, result));
+            }
+        }
+        Closer.close(scanner);
+
+        return new Pair<List<FieldType>, List<RecordType>>(fieldTypes, recordTypes);
+
     }
 
     public static byte[] encodeName(QName qname) {
