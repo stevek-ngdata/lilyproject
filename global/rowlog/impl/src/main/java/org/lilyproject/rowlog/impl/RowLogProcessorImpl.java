@@ -51,11 +51,15 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     private RowLogConfig rowLogConfig;
 
     /*
-     * Maximum expected clock skew between servers.
-     * At the time of this writing, HBase checked this skew, but allowed up to 30s:
+     * Maximum expected clock skew between servers. In fact this is not just pure clock skew, but also
+     * encompasses the delay between the moment of timestamp determination and actual insertion onto HBase.
+     * The higher the skew, the more put-delete pairs of past messages that HBase will have to scan over.
+     * The shorter the skew, the more chance messages will get stuck unprocessed, either due to clock skews
+     * or due to slow processing of the put on the global queue, such as in case of HBase region recovery.
+     * At the time of this writing, HBase checked this skew, allowing up to 30s:
      * https://issues.apache.org/jira/browse/HBASE-3168
      */
-    private static final int MAX_CLOCK_SKEW_BETWEEN_SERVERS = 2000;
+    private static final int MAX_CLOCK_SKEW_BETWEEN_SERVERS = 120000; // 2 minutes
     
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     
@@ -111,9 +115,16 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                     newSubscriptionIds.add(subscriptionId);
                     SubscriptionThread existingSubscriptionThread = subscriptionThreads.get(subscriptionId);
                     if (existingSubscriptionThread == null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Starting subscription thread for new subscription " + newSubscription.getId());
+                        }
                         SubscriptionThread subscriptionThread = startSubscriptionThread(newSubscription);
                         subscriptionThreads.put(subscriptionId, subscriptionThread);
                     } else if (!existingSubscriptionThread.getSubscription().equals(newSubscription)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Stopping existing and starting new subscription thread for subscription "
+                                    + newSubscription.getId());
+                        }
                         stopSubscriptionThread(subscriptionId);
                         SubscriptionThread subscriptionThread = startSubscriptionThread(newSubscription);
                         subscriptionThreads.put(subscriptionId, subscriptionThread);
@@ -123,6 +134,9 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                 while (iterator.hasNext()) {
                     String subscriptionId = iterator.next();
                     if (!newSubscriptionIds.contains(subscriptionId)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Stopping subscription thread for subscription " + subscriptionId);
+                        }
                         stopSubscriptionThread(subscriptionId);
                         iterator.remove();
                     }
@@ -270,7 +284,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             subscriptionHandler.shutdown();
             interrupt();
         }
-                
+
         public void run() {
             try {
                 Long minimalTimestamp = null;
@@ -282,6 +296,11 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         long tsBeforeGetMessages = System.currentTimeMillis();
                         List<RowLogMessage> messages = shard.next(subscriptionId, minimalTimestamp);
                         metrics.scanDuration.inc(System.currentTimeMillis() - tsBeforeGetMessages);
+
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format("[%1$s - %2$s] Scanned with minimal timestamp of %3$s, got %4$s messages.",
+                                    rowLog.getId(), subscriptionId, minimalTimestamp, messages.size()));
+                        }
 
                         if (stopRequested) {
                             // Check if not stopped because HBase hides thread interruptions
@@ -295,6 +314,11 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 // minimalTimestamp manually so that we would not always scan from the start
                                 // of the table.
                                 minimalTimestamp = tsBeforeGetMessages - MAX_CLOCK_SKEW_BETWEEN_SERVERS;
+
+                                if (log.isDebugEnabled()) {
+                                    log.debug(String.format("[%1$s - %2$s] On initial scan, got no messages from HBase, " +
+                                            "setting minimal timestamp to %3$s", rowLog.getId(), subscriptionId, minimalTimestamp));
+                                }
                             }
                         }
 
@@ -307,7 +331,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
                                 if (checkMinimalProcessDelay(message))
                                 	break; // Rescan the messages since they might have been processed in the meanwhile
-                                
+
                                 messagesWorkQueue.offer(message);
                             }
                         }

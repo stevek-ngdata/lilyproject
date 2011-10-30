@@ -60,9 +60,9 @@ public class RowLogTest {
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         configurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
-        configurationManager.addRowLog(rowLogId, new RowLogConfig(true, true, 100L, 500L, 5000L));
+        configurationManager.addRowLog(rowLogId, new RowLogConfig(true, true, 100L, 500L, 5000L, 120000L));
         configurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
-        subscriptionIds = Arrays.asList(new String[]{subscriptionId1});
+        subscriptionIds = Arrays.asList(subscriptionId1);
         control = createControl();
         rowTable = RowLogTableUtil.getRowTable(HBASE_PROXY.getConf());
     }
@@ -167,8 +167,7 @@ public class RowLogTest {
 
         shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId1));
-        expectLastCall().times(2);
-        
+
         control.replay();
         rowLog.registerShard(shard);
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);

@@ -146,8 +146,10 @@ public class RowLogShardImpl implements RowLogShard {
             List<RowLogMessage> rowLogMessages = new ArrayList<RowLogMessage>();
             Scan scan = new Scan(startRow);
             scan.setCaching(batchSize);
-            if (minimalTimestamp != null)
-                scan.setTimeRange(minimalTimestamp, Long.MAX_VALUE);
+            // Don't filter on HBase timestamp: in some cases it could be behind our timestamp, or in case
+            // of clock skew it can even be before
+            //if (minimalTimestamp != null)
+            //    scan.setTimeRange(minimalTimestamp, Long.MAX_VALUE);
             scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
             // Add a filter to stop the scan as soon as we encounter a KV from another subscription, otherwise
             // we would end up scanning over a whole lot of deletion tombstones.

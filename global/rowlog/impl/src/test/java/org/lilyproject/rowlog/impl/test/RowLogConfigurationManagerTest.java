@@ -79,7 +79,7 @@ public class RowLogConfigurationManagerTest {
         callBack.validate();
 
         // Add rowlog
-        RowLogConfig rowLogConfig = new RowLogConfig(true, true, 100L, 5000L, 5000L);
+        RowLogConfig rowLogConfig = new RowLogConfig(true, true, 100L, 5000L, 5000L, 120000L);
         callBack.expect(rowLogConfig);
         rowLogConfigurationManager.addRowLog(rowLogId, rowLogConfig);
         callBack.validate();
@@ -88,7 +88,7 @@ public class RowLogConfigurationManagerTest {
         Assert.assertEquals(rowLogConfig, rowLogs.get(rowLogId));
         
         RowLogCallBack callBack2 = new RowLogCallBack();
-        RowLogConfig rowLogConfig2 = new RowLogConfig(true, true, 100L, 5000L, 2000L);
+        RowLogConfig rowLogConfig2 = new RowLogConfig(true, true, 100L, 5000L, 2000L, 120000L);
         callBack2.expect(rowLogConfig2);
         rowLogConfigurationManager.addRowLog(rowLogId2, rowLogConfig2);
         rowLogConfigurationManager.addRowLogObserver(rowLogId2, callBack2);
@@ -99,7 +99,7 @@ public class RowLogConfigurationManagerTest {
         Assert.assertEquals(rowLogConfig2, rowLogs.get(rowLogId2));
         
         // Update rowlog
-        RowLogConfig rowLogConfig1b = new RowLogConfig(false, true, 200L, 9L, 5000L);
+        RowLogConfig rowLogConfig1b = new RowLogConfig(false, true, 200L, 9L, 5000L, 120000L);
         callBack.expect(rowLogConfig1b);
         rowLogConfigurationManager.updateRowLog(rowLogId, rowLogConfig1b);
         callBack.validate();

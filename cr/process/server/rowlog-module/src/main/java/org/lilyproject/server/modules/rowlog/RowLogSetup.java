@@ -66,11 +66,11 @@ public class RowLogSetup {
     @PostConstruct
     public void start() throws InterruptedException, KeeperException, IOException, LeaderElectionSetupException, RowLogException {
         if (!confMgr.rowLogExists("wal")) {
-            confMgr.addRowLog("wal", new RowLogConfig(true, false, 200L, 5000L, 5000L));
+            confMgr.addRowLog("wal", new RowLogConfig(true, false, 200L, 5000L, 5000L, 120000L));
         }
         
         if (!confMgr.rowLogExists("mq")) {
-            confMgr.addRowLog("mq", new RowLogConfig(true, true, 200L, 0L, 5000L));
+            confMgr.addRowLog("mq", new RowLogConfig(false, true, 200L, 0L, 5000L, 120000L));
         }
         
         boolean linkIdxEnabled = rowLogConf.getChild("linkIndexUpdater").getAttributeAsBoolean("enabled", true);

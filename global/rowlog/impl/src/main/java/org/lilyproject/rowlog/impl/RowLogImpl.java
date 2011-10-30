@@ -47,7 +47,7 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     private final Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
     protected final String id;
     private RowLogProcessorNotifier processorNotifier = null;
-    private Log log = LogFactory.getLog(getClass());
+    private Log log = LogFactory.getLog(RowLogImpl.class);
     private RowLogConfigurationManager rowLogConfigurationManager;
 
     private final AtomicBoolean initialSubscriptionsLoaded = new AtomicBoolean(false);
@@ -165,6 +165,26 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
             RowLogMessage message = new RowLogMessageImpl(now, rowKey, seqnr, data, payload, this);
 
             putMessageOnShard(message, subscriptions);
+
+            /*
+            // The following code is useful for simulating the case where there is a big delay between putting
+            // the message on the global and local queue, and thus that the message on the global queue can
+            // be picked up by the processor before it is available on the local queue. Might be interesting
+            // to have a config to enable this dynamically.
+
+            if (rowLogConfig.isEnableNotify()) {
+                processorNotifier.notifyProcessor(id, getShard().getId());
+            }
+
+            Thread.sleep(400);
+
+            // the second notify is needed to flush the first one, there's no background thread which does this
+            if (rowLogConfig.isEnableNotify()) {
+                processorNotifier.notifyProcessor(id, getShard().getId());
+            }
+
+            Thread.sleep(1000);
+            */
 
             initializeSubscriptions(message, put, subscriptions);
 
@@ -353,9 +373,17 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 executionState.setState(subscriptionId, true);
                 if (executionState.allDone()) {
                     handleAllDone(message, rowKey, executionStateQualifier, previousValue, rowLock);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Message done: was last, removed exec state: " + message);
+                    }
                 } else {
-                    if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, rowLock))
+                    if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue, rowLock)) {
                         return false;
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Message done: marked in exec state: " + message);
+                        }
+                    }
                 }
             }
             removeMessageFromShard(message, subscriptionId);
@@ -382,9 +410,16 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
                 executionState.setState(subscriptionId, true);
                 if (executionState.allDone()) {
                     handleAllDone(message, rowKey, executionStateQualifier, previousValue, null);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Message done: was last, removed exec state: " + message);
+                    }
                 } else {
                     if (!updateExecutionState(rowKey, executionStateQualifier, executionState, previousValue)) {
                         return messageDone(message, subscriptionId, count + 1); // Retry
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Message done: marked in exec state: " + message);
+                        }
                     }
                 }
             }
@@ -514,8 +549,10 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
     }
     
     /**
-     * Checks if the message is orphaned, meaning there is a message on the global queue which has no representative on the row-local queue.
+     * Checks if the message is orphaned, meaning there is a message on the global queue which has no representative
+     * on the row-local queue after the {@link RowLogConfig#getOrphanedMessageDelay()} has expired.
      * If the message is orphaned it is removed from the shard.
+     *
      * @param message the message to check
      * @param subscriptionId the subscription to check the message for
      */
@@ -527,10 +564,20 @@ public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver
         try {
             result = rowTable.get(get);
             if (result.isEmpty()) {
-                removeOrphanMessageFromShard(message, subscriptionId);
+                if (message.getTimestamp() + rowLogConfig.getOrphanedMessageDelay() < System.currentTimeMillis()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Message orphaned, removing it: " + message);
+                    }
+                    removeOrphanMessageFromShard(message, subscriptionId);
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Message not on local queue and orphaned message delay not yet expired: " + message);
+                    }
+                }
             }
         } catch (IOException e) {
-            throw new RowLogException("Failed to check is message "+message+" is orphaned for subscription " + subscriptionId, e);
+            throw new RowLogException("Failed to check is message " + message + " is orphaned for subscription " +
+                    subscriptionId, e);
         }
     }
     
