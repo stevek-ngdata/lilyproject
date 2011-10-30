@@ -264,6 +264,18 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file-->
+
+    <!-- Rowlog visualizer tool -->
+    <file>
+      <source>${basedir}/../tools/rowlog-visualizer/target/dist-scripts/lily-rowlog-visualizer</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <!--file>
+      <source>${basedir}/../tools/rowlog-visualizer/target/dist-scripts/lily-rowlog-visualizer.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
   </files>
 
   <fileSets>

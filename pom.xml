@@ -98,6 +98,7 @@
     <module>tools/doc-tools</module>
     <module>tools/licensecheck</module>
     <module>tools/record-row-visualizer</module>
+    <module>tools/rowlog-visualizer</module>
     <module>tools/print-host</module>
 
     <module>apps/import</module>
@@ -301,6 +302,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mbox-import</artifactId>
+        <version>1.0.4-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-rowlog-visualizer</artifactId>
         <version>1.0.4-SNAPSHOT</version>
       </dependency>
       <dependency>
