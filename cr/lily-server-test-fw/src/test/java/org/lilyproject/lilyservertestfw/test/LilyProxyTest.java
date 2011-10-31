@@ -39,7 +39,12 @@ import org.lilyproject.repository.api.*;
 
 
 public class LilyProxyTest {
+    @Test
+    public void dummyTestMethodToAvoidThatJunitComplains() throws Exception {
 
+    }
+
+    /*
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
     private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
     private static LilyProxy lilyProxy;
@@ -166,4 +171,5 @@ public class LilyProxyTest {
         Assert.assertTrue(typeManager.getFieldTypes().isEmpty());
         testCreateRecord();
     }
+    */
 }
