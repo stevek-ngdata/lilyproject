@@ -193,6 +193,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+            log.debug("Receive response from listener: error occurred", e.getCause());
             RemoteWorkerDelegate worker = getWorkerDelegate(ctx);
             if (worker != null) {
                 worker.resultHandlerException = e.getCause();
@@ -202,6 +203,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
 
         @Override
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+            log.debug("Receive response from listener: channel was closed");
             RemoteWorkerDelegate worker = getWorkerDelegate(ctx);
             if (worker != null) {
                 worker.semaphore.release(); // The remoteProcessMessageResult will still be null
@@ -210,7 +212,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         }
     }
 
-    private static class ResultDecoder extends FrameDecoder {
+    private class ResultDecoder extends FrameDecoder {
         @Override
         protected Boolean decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
             if (buffer.readableBytes() < Bytes.SIZEOF_BOOLEAN) {
@@ -220,7 +222,7 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         }
     }
 
-    private static class MessageEncoder extends SimpleChannelDownstreamHandler {
+    private class MessageEncoder extends SimpleChannelDownstreamHandler {
         @Override
         public void writeRequested(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             ChannelBufferOutputStream outputStream = null;

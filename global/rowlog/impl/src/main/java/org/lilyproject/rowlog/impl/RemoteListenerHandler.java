@@ -69,7 +69,7 @@ public class RemoteListenerHandler {
                 return pipeline;
             }
         });
-        
+
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
     }
@@ -102,30 +102,46 @@ public class RemoteListenerHandler {
         }
     }
     
-    private static class MessageDecoder extends FrameDecoder {
-        private int msgLength = -1;
+    private class MessageDecoder extends FrameDecoder {
         @Override
         protected ChannelBuffer decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
-            if (msgLength == -1) {
-                // Read the message length bytes
-                if (buffer.readableBytes() < 4) {
-                    return null; 
-                } else {
-                    ChannelBufferInputStream channelBufferInputStream = new ChannelBufferInputStream(buffer.readBytes(4));
-                    msgLength = channelBufferInputStream.readInt();
-                    channelBufferInputStream.close();
-                    return null;
-                }
-            } else {
-                // Read the message bytes
-                if (buffer.readableBytes() < msgLength) {
-                    return null;
-                } else {
-                    ChannelBuffer message = buffer.readBytes(msgLength);
-                    msgLength = -1; // Read a message length again the next time decode is called
-                    return message; // Give the message to the RowLogMessageDecoder
-                }
+            // Make sure if the length field was received.
+            if (buffer.readableBytes() < 4) {
+                // The length field was not received yet - return null.
+                // This method will be invoked again when more packets are
+                // received and appended to the buffer.
+                return null;
             }
+
+            // The length field is in the buffer.
+
+            // Mark the current buffer position before reading the length field
+            // because the whole frame might not be in the buffer yet.
+            // We will reset the buffer position to the marked position if
+            // there's not enough bytes in the buffer.
+            buffer.markReaderIndex();
+
+            // Read the length field.
+            int length = buffer.readInt();
+
+            // Make sure if there's enough bytes in the buffer.
+            if (buffer.readableBytes() < length) {
+                // The whole bytes were not received yet - return null.
+                // This method will be invoked again when more packets are
+                // received and appended to the buffer.
+
+                // Reset to the marked position to read the length field again
+                // next time.
+                buffer.resetReaderIndex();
+
+                return null;
+            }
+
+            // There's enough bytes in the buffer. Read it.
+            ChannelBuffer frame = buffer.readBytes(length);
+
+            // Successfully decoded a frame.  Return the decoded frame.
+            return frame;
         }
     }
     
@@ -164,7 +180,7 @@ public class RemoteListenerHandler {
 
         private void writeResult(Channel channel, boolean result, RowLogMessage message) throws InterruptedException {
             if (channel.isOpen()) {
-                channel.write(new Boolean(result)).await();
+                channel.write(Boolean.valueOf(result)).await();
             } else {
                 log.warn("Failed to send processing result '"+result+"' for message '"+message+"' due to closed channel.");
             }
