@@ -404,6 +404,34 @@ public class AvroConverter {
         return new Pair<List<FieldType>, List<RecordType>>(fieldTypes, recordTypes);
     }
 
+    public AvroTypeBucket convertTypeBucket(TypeBucket typeBucket) {
+        AvroTypeBucket avroTypeBucket = new AvroTypeBucket();
+        avroTypeBucket.bucketId = typeBucket.getBucketId();
+        List<FieldType> fieldTypes = typeBucket.getFieldTypes();
+        avroTypeBucket.fieldTypes = new ArrayList<AvroFieldType>(fieldTypes.size());
+        for (FieldType fieldType : fieldTypes) {
+            avroTypeBucket.fieldTypes.add(convert(fieldType));
+        }
+        List<RecordType> recordTypes = typeBucket.getRecordTypes();
+        avroTypeBucket.recordTypes = new ArrayList<AvroRecordType>(recordTypes.size());
+        for (RecordType recordType : recordTypes) {
+            avroTypeBucket.recordTypes.add(convert(recordType));
+        }
+        return avroTypeBucket;
+    }
+
+    public TypeBucket convertAvroTypeBucket(AvroTypeBucket avroTypeBucket) throws RepositoryException,
+            InterruptedException {
+        TypeBucket typeBucket = new TypeBucket(convert(avroTypeBucket.bucketId));
+        for (AvroFieldType avroFieldType : avroTypeBucket.fieldTypes) {
+            typeBucket.add(convert(avroFieldType));
+        }
+        for (AvroRecordType avroRecordType : avroTypeBucket.recordTypes) {
+            typeBucket.add(convert(avroRecordType));
+        }
+        return typeBucket;
+    }
+
     public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {
         return valueType == null ? null : typeManager.getValueType(convert(valueType.valueType));
     }
@@ -709,5 +737,25 @@ public class AvroConverter {
             }
         }
         return names;
+    }
+
+    public List<String> convert(List<CharSequence> charSequences) {
+        if (charSequences == null)
+            return null;
+        List<String> result = new ArrayList<String>(charSequences.size());
+        for (CharSequence charSequence : charSequences) {
+            result.add(convert(charSequence));
+        }
+        return result;
+    }
+
+    public List<CharSequence> convertStrings(List<String> strings) {
+        if (strings == null)
+            return null;
+        List<CharSequence> result = new ArrayList<CharSequence>(strings.size());
+        for (String string : strings) {
+            result.add(string);
+        }
+        return result;
     }
 }

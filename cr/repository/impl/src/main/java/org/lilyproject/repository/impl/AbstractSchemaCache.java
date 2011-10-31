@@ -20,6 +20,7 @@ import java.util.*;
 
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -38,14 +39,15 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     protected ZooKeeperItf zooKeeper;
     protected Log log;
 
+    private final CacheRefresher cacheRefresher = new CacheRefresher();
+
     private FieldTypesImpl fieldTypes;
-    private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
-    private Map<SchemaId, RecordType> recordTypeIdCache = new HashMap<SchemaId, RecordType>();
+    private RecordTypesImpl recordTypes = new RecordTypesImpl();
     private FieldTypesImpl updatingFieldTypes = new FieldTypesImpl();
     private boolean updatedFieldTypes = false;
 
-    private final CacheWatcher cacheWatcher = new CacheWatcher();
-    private final CacheRefresher cacheRefresher = new CacheRefresher();
+    private Set<CacheWatcher> cacheWatchers = new HashSet<CacheWatcher>();
+    private AllCacheWatcher allCacheWatcher;
 
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache/invalidate";
     protected static final String CACHE_REFRESHENABLED_PATH = "/lily/typemanager/cache/enabled";
@@ -55,12 +57,78 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         cacheRefresher.start();
     }
 
+    /**
+     * Used to build output as Hex
+     */
+    private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+            'e', 'f' };
+
+    /**
+     * Simplified version of {@link Hex#encodeHex(byte[])}
+     * <p>
+     * In this version we avoid having to create a new byte[] to give to
+     * {@link Hex#encodeHex(byte[])}
+     */
+    public static String encodeHex(byte[] data) {
+        char[] out = new char[2];
+        // two characters form the hex value.
+        out[0] = DIGITS_LOWER[(0xF0 & data[0]) >>> 4];
+        out[1] = DIGITS_LOWER[0x0F & data[0]];
+        return new String(out);
+    }
+
+    /**
+     * Decodes a string containing 2 characters representing a hex value.
+     * <p>
+     * The returned byte[] contains the byte represented by the string and the
+     * next byte.
+     * <p>
+     * This code is based on {@link Hex#decodeHex(char[])}
+     * <p>
+     * 
+     */
+    public static byte[] decodeHexAndNextHex(String data) {
+        byte[] out = new byte[2];
+
+        // two characters form the hex value.
+        int f = Character.digit(data.charAt(0), 16) << 4;
+        f = f | Character.digit(data.charAt(1), 16);
+        out[0] = (byte) (f & 0xFF);
+        out[1] = (byte) ((f + 1) & 0xFF);
+
+        return out;
+    }
+    
+    public static byte[] decodeNextHex(String data) {
+        byte[] out = new byte[1];
+
+        // two characters form the hex value.
+        int f = Character.digit(data.charAt(0), 16) << 4;
+        f = f | Character.digit(data.charAt(1), 16);
+        f++;
+        out[0] = (byte) (f & 0xFF);
+
+        return out;
+    }
+
     public void start() throws InterruptedException, KeeperException, RepositoryException {
         ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
+        allCacheWatcher = new AllCacheWatcher();
+        for (int i = 0; i < 16; i++) {
+            for (int j = 0; j < 16; j++) {
+                String bucket = "" + DIGITS_LOWER[i] + DIGITS_LOWER[j];
+                ZkUtil.createPath(zooKeeper, bucketPath(bucket));
+                cacheWatchers.add(new CacheWatcher(bucket));
+            }
+        }
         ZkUtil.createPath(zooKeeper, CACHE_REFRESHENABLED_PATH);
         zooKeeper.addDefaultWatcher(new ConnectionWatcher());
         readRefreshingEnabledState();
-        refresh();
+        refreshAll();
+    }
+
+    private String bucketPath(String bucket) {
+        return CACHE_INVALIDATION_PATH + "/" + bucket;
     }
 
     @PreDestroy
@@ -95,40 +163,30 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     }
 
     public synchronized void updateRecordType(RecordType recordType) throws TypeException, InterruptedException {
-        RecordType oldType = getRecordType(recordType.getId());
-        if (oldType != null) {
-            recordTypeNameCache.remove(oldType.getName());
-            recordTypeIdCache.remove(oldType.getId());
-        }
-        recordTypeNameCache.put(recordType.getName(), recordType);
-        recordTypeIdCache.put(recordType.getId(), recordType);
+        recordTypes.update(recordType);
     }
 
     public synchronized Collection<RecordType> getRecordTypes() {
-        List<RecordType> recordTypes = new ArrayList<RecordType>();
-        for (RecordType recordType : recordTypeNameCache.values()) {
-            recordTypes.add(recordType.clone());
-        }
-        return recordTypes;
+        return recordTypes.getRecordTypes();
     }
 
     public synchronized RecordType getRecordType(QName name) {
-        return recordTypeNameCache.get(name);
+        return recordTypes.getRecordType(name);
     }
 
     public synchronized RecordType getRecordType(SchemaId id) {
-        return recordTypeIdCache.get(id);
+        return recordTypes.getRecordType(id);
     }
 
-    public synchronized FieldType getFieldType(QName name) throws FieldTypeNotFoundException {
+    public FieldType getFieldType(QName name) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldType(name);
     }
 
-    public synchronized FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException {
+    public FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException {
         return getFieldTypesSnapshot().getFieldType(id);
     }
 
-    public synchronized List<FieldType> getFieldTypes() {
+    public List<FieldType> getFieldTypes() {
         return getFieldTypesSnapshot().getFieldTypes();
     }
 
@@ -146,34 +204,59 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      * Refresh the caches and put the cacheWatcher again on the cache
      * invalidation zookeeper-node.
      */
-    private synchronized void refresh() throws InterruptedException, RepositoryException {
+    private synchronized void refreshAll() throws InterruptedException, RepositoryException {
+        if (log.isDebugEnabled())
+            log.debug("Refreshing all types in the schema cache");
+
+        List<String> buckets = null;
+        // Set a watch again on all buckets
+        for (CacheWatcher watcher : cacheWatchers) {
+            try {
+                zooKeeper.getData(bucketPath(watcher.getBucket()), watcher, null);
+            } catch (KeeperException e) {
+                // Failed to put our watcher.
+                // Relying on the ConnectionWatcher to put it again and
+                // initialize the caches.
+            }
+        }
+        // Set a watch on the parent path, in case everything needs to be
+        // refreshed
         try {
-            zooKeeper.getData(CACHE_INVALIDATION_PATH, cacheWatcher, null);
+            zooKeeper.getData(CACHE_INVALIDATION_PATH, allCacheWatcher, null);
         } catch (KeeperException e) {
             // Failed to put our watcher.
-            // Relying on the ConnectionWatcher to put it again and initialize
-            // the caches.
+            // Relying on the ConnectionWatcher to put it again and
+            // initialize the caches.
         }
-        Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getFieldAndRecordTypesWithoutCache();
-        refreshFieldTypeCache(types.getV1());
-        refreshRecordTypeCache(types.getV2());
-    }
-
-    private void refreshFieldTypeCache(List<FieldType> fieldTypes) throws RepositoryException, InterruptedException {
-        updatingFieldTypes.refresh(fieldTypes);
+        Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getTypesWithoutCache();
+        updatingFieldTypes.refreshFieldTypes(types.getV1());
         updatedFieldTypes = true;
+        recordTypes.refreshRecordTypes(types.getV2());
     }
 
-    private synchronized void refreshRecordTypeCache(List<RecordType> recordTypes) throws RepositoryException,
-            InterruptedException {
-        Map<QName, RecordType> newRecordTypeNameCache = new HashMap<QName, RecordType>();
-        Map<SchemaId, RecordType> newRecordTypeIdCache = new HashMap<SchemaId, RecordType>();
-        for (RecordType recordType : recordTypes) {
-            newRecordTypeNameCache.put(recordType.getName(), recordType);
-            newRecordTypeIdCache.put(recordType.getId(), recordType);
+    /**
+     * Refresh the caches for the buckets identified by the watchers and put the
+     * cacheWatcher again on the cache invalidation zookeeper-node.
+     */
+    private synchronized void refresh(Set<CacheWatcher> watchers) throws InterruptedException, RepositoryException {
+        List<String> buckets = new ArrayList<String>(watchers.size());
+        for (CacheWatcher watcher : watchers) {
+            buckets.add(watcher.getBucket());
+            try {
+                zooKeeper.getData(bucketPath(watcher.getBucket()), watcher, null);
+            } catch (KeeperException e) {
+                // Failed to put our watcher.
+                // Relying on the ConnectionWatcher to put it again and
+                // initialize the caches.
+            }
         }
-        recordTypeNameCache = newRecordTypeNameCache;
-        recordTypeIdCache = newRecordTypeIdCache;
+        if (log.isDebugEnabled())
+            log.debug("Refreshing schema cache buckets: " + Arrays.toString(buckets.toArray()));
+
+        List<TypeBucket> typeBuckets = getTypeManager().getTypeBucketsWithoutCache(buckets);
+        updatingFieldTypes.refreshFieldTypeBuckets(typeBuckets);
+        updatedFieldTypes = true;
+        recordTypes.refreshRecordTypeBuckets(typeBuckets);
     }
 
     /**
@@ -192,8 +275,10 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      */
     private class CacheRefresher implements Runnable {
         private volatile boolean needsRefresh;
+        private volatile boolean needsRefreshAll;
         private volatile boolean stop;
         private final Object needsRefreshLock = new Object();
+        private Set<CacheWatcher> needsRefreshWatchers = new HashSet<CacheWatcher>();
         private Thread thread;
 
         public void start() {
@@ -212,9 +297,18 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             }
         }
 
-        public void needsRefresh() {
+        public void needsRefreshAll() {
             synchronized (needsRefreshLock) {
                 needsRefresh = true;
+                needsRefreshAll = true;
+                needsRefreshLock.notifyAll();
+            }
+        }
+
+        public void needsRefresh(CacheWatcher watcher) {
+            synchronized (needsRefreshLock) {
+                needsRefresh = true;
+                needsRefreshWatchers.add(watcher);
                 needsRefreshLock.notifyAll();
             }
         }
@@ -224,10 +318,20 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             while (!stop && !Thread.interrupted()) {
                 try {
                     if (needsRefresh) {
+                        Set<CacheWatcher> watchers = null;
                         synchronized (needsRefreshLock) {
+                            if (!needsRefreshAll) {
+                                watchers = new HashSet<CacheWatcher>(needsRefreshWatchers);
+                            }
+                            needsRefreshWatchers.clear();
                             needsRefresh = false;
+                            needsRefreshAll = false;
                         }
-                        refresh();
+                        if (watchers == null || watchers.isEmpty()) {
+                            refreshAll();
+                        } else {
+                            refresh(watchers);
+                        }
                     }
 
                     synchronized (needsRefreshLock) {
@@ -248,9 +352,26 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      * The Cache watcher monitors events on the cache invalidation flag.
      */
     private class CacheWatcher implements Watcher {
+        private final String bucket;
+
+        public CacheWatcher(String bucket) {
+            this.bucket = bucket;
+        }
+
+        public String getBucket() {
+            return bucket;
+        }
+
         @Override
         public void process(WatchedEvent event) {
-            cacheRefresher.needsRefresh();
+            cacheRefresher.needsRefresh(this);
+        }
+    }
+
+    private class AllCacheWatcher implements Watcher {
+        @Override
+        public void process(WatchedEvent event) {
+            cacheRefresher.needsRefreshAll();
         }
     }
 
@@ -272,9 +393,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                     // TODO
                 }
                 readRefreshingEnabledState();
-                cacheRefresher.needsRefresh();
+                cacheRefresher.needsRefreshAll();
             }
         }
     }
-
 }

@@ -324,13 +324,22 @@ public interface TypeManager extends Closeable {
     List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
 
     /**
-     * Returns bot the list of field types and record types known by the
+     * Returns both the list of field types and record types known by the
      * repository.
      * <p>
      * This method bypasses the cache of the type manager.
      */
-    Pair<List<FieldType>, List<RecordType>> getFieldAndRecordTypesWithoutCache() throws RepositoryException,
-            InterruptedException;
+    Pair<List<FieldType>, List<RecordType>> getTypesWithoutCache()
+            throws RepositoryException, InterruptedException;
+
+    /**
+     * Returns both the list of field types and record types known by the
+     * repository for each given bucket
+     * <p>
+     * This method bypasses the cache of the type manager.
+     */
+    List<TypeBucket> getTypeBucketsWithoutCache(List<String> bucket)
+            throws RepositoryException, InterruptedException;
 
     /**
      * <b>EXPERT ONLY !</b> Enables the schema cache refreshing system.

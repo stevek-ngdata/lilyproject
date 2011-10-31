@@ -181,6 +181,16 @@
         {"name": "fieldTypes", "type": {"type": "array", "items": "AvroFieldType"}},
         {"name": "recordTypes", "type": {"type": "array", "items": "AvroRecordType"}}
       ]
+    },
+    
+    {
+      "name": "AvroTypeBucket",
+      "type": "record",
+      "fields": [
+        {"name": "bucketId", "type": "string"},
+        {"name": "fieldTypes", "type": {"type": "array", "items": "AvroFieldType"}},
+        {"name": "recordTypes", "type": {"type": "array", "items": "AvroRecordType"}}
+      ]
     }
   ],
 
@@ -365,13 +375,21 @@
       "response": {"type": "array", "items": "AvroRecordType"},
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
-    
-    "getFieldAndRecordTypesWithoutCache": {
+
+    "getTypesWithoutCache": {
       "request": [],
       "response": "AvroFieldAndRecordTypes",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
-
+        
+    "getTypeBucketsWithoutCache": {
+      "request": [
+        {"name": "rowPrefixes", "type": [{"type": "array", "items": "string"}, "null"]}
+      ],
+      "response": {"type": "array", "items": "AvroTypeBucket"},
+      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+    
     "enableSchemaCacheRefresh": {
       "request": [],
       "response": ["null"],

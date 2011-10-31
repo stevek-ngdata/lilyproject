@@ -1,29 +1,23 @@
 package org.lilyproject.hadooptestfw;
 
+import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.*;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HServerAddress;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.ipc.HRegionInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.*;
-
-import static org.apache.zookeeper.ZooKeeper.States.CONNECTED;
 
 public class CleanupUtil {
     private Configuration conf;
@@ -91,7 +85,7 @@ public class CleanupUtil {
         for (String child : children) {
             String childPath = path + "/" + child;
             deleteChildren(childPath, zk);
-            System.out.println("Deleting " + path);
+            System.out.println("Deleting " + childPath);
             zk.delete(childPath, -1);
         }
     }

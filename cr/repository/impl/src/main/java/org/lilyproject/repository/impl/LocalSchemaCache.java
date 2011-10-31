@@ -41,19 +41,22 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
 
     public synchronized void updateFieldType(FieldType fieldType) throws TypeException, InterruptedException {
         super.updateFieldType(fieldType);
-        triggerRefresh(false);
+        triggerRefresh(fieldType.getId().getBytes(), false);
     }
 
     public synchronized void updateRecordType(RecordType recordType) throws TypeException, InterruptedException {
         super.updateRecordType(recordType);
-        triggerRefresh(false);
+        triggerRefresh(recordType.getId().getBytes(), false);
     }
 
     @Override
     protected void cacheInvalidationReconnected() throws TypeException, InterruptedException {
+
         // A previous notify might have failed because of a disconnection
         // To be sure we try to send a notify again
-        triggerRefresh(false);
+        
+        // TODO : rethink this situation 
+        triggerRefresh(null, false);
     }
 
     /**
@@ -63,10 +66,19 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
      * @param force
      *            if true, it is ignored if cache refreshing is enabled or not.
      */
-    public void triggerRefresh(boolean force) throws TypeException, InterruptedException {
+    public void triggerRefresh(byte[] rowKey, boolean force) throws TypeException, InterruptedException {
         if (force || cacheRefreshingEnabled) {
             try {
-                zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
+                if (rowKey == null) {
+                    if (log.isDebugEnabled())
+                        log.debug("Triggering schema cache refresh for all types.");
+                    zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
+                } else {
+                    String bucketId = encodeHex(rowKey);
+                    if (log.isDebugEnabled())
+                        log.debug("Triggering schema cache refresh for bucket: " + bucketId);
+                    zooKeeper.setData(CACHE_INVALIDATION_PATH + "/" + bucketId, null, -1);
+                }
             } catch (KeeperException e) {
                 throw new TypeException("Exception while triggering cache refresh", e);
             }
@@ -129,7 +141,7 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
     }
 
     public void triggerRefresh() throws TypeException, InterruptedException {
-        triggerRefresh(true);
+        triggerRefresh(null, true);
     }
 
     public boolean isRefreshEnabled() {

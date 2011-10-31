@@ -18,6 +18,7 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PreDestroy;
@@ -245,10 +246,31 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     }
 
     @Override
-    public Pair<List<FieldType>, List<RecordType>> getFieldAndRecordTypesWithoutCache() throws RepositoryException,
+    public Pair<List<FieldType>, List<RecordType>> getTypesWithoutCache() throws RepositoryException,
             InterruptedException {
         try {
-            return converter.convertAvroFieldAndRecordTypes(lilyProxy.getFieldAndRecordTypesWithoutCache());
+            return converter.convertAvroFieldAndRecordTypes(lilyProxy.getTypesWithoutCache());
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw converter.convert(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
+    @Override
+    public List<TypeBucket> getTypeBucketsWithoutCache(List<String> bucketIds) throws RepositoryException,
+            InterruptedException {
+        try {
+
+            List<AvroTypeBucket> avroTypeBuckets = lilyProxy.getTypeBucketsWithoutCache(converter
+                    .convertStrings(bucketIds));
+            List<TypeBucket> typeBuckets = new ArrayList<TypeBucket>(avroTypeBuckets.size());
+            for (AvroTypeBucket avroTypeBucket : avroTypeBuckets) {
+                typeBuckets.add(converter.convertAvroTypeBucket(avroTypeBucket));
+            }
+            return typeBuckets;
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {

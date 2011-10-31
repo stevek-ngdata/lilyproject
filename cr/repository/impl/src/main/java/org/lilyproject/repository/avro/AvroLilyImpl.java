@@ -294,10 +294,28 @@ public class AvroLilyImpl implements AvroLily {
         } 
     }
 
-    public AvroFieldAndRecordTypes getFieldAndRecordTypesWithoutCache() throws AvroRepositoryException,
+    public AvroFieldAndRecordTypes getTypesWithoutCache()
+            throws AvroRepositoryException,
             AvroInterruptedException {
         try {
-            return converter.convertFieldAndRecordTypes(typeManager.getFieldAndRecordTypesWithoutCache());
+            return converter.convertFieldAndRecordTypes(typeManager.getTypesWithoutCache());
+        } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    public List<AvroTypeBucket> getTypeBucketsWithoutCache(List<CharSequence> rowPrefixes)
+            throws AvroRepositoryException, AvroInterruptedException {
+        try {
+            List<TypeBucket> typeBuckets = typeManager.getTypeBucketsWithoutCache(converter
+                    .convert(rowPrefixes));
+            List<AvroTypeBucket> avroTypeBuckets = new ArrayList<AvroTypeBucket>(typeBuckets.size());
+            for (TypeBucket typeBucket : typeBuckets) {
+                avroTypeBuckets.add(converter.convertTypeBucket(typeBucket));
+            }
+            return avroTypeBuckets;
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {

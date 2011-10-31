@@ -31,7 +31,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.*;
 
@@ -40,16 +42,16 @@ public class LilyProxyTest {
 
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
     private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
-    private static Repository repository;
     private static LilyProxy lilyProxy;
+    private static LilyClient lilyClient;
+    private Repository repository;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
         lilyProxy.start(schemaData);
-        LilyClient lilyClient = lilyProxy.getLilyServerProxy().getClient();
-        repository = lilyClient.getRepository();
+        lilyClient = lilyProxy.getLilyServerProxy().getClient();
     }
     
     @AfterClass
@@ -59,6 +61,7 @@ public class LilyProxyTest {
     
     @Test
     public void testCreateRecord() throws Exception {
+        repository = lilyClient.getRepository();
         // Create schema
         TypeManager typeManager = repository.getTypeManager();
         FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"),
@@ -150,4 +153,17 @@ public class LilyProxyTest {
         return recordIds;
     }
 
+    @Test
+    public void test2() throws Exception {
+        repository = lilyClient.getRepository();
+        // Create schema
+        TypeManager typeManager = repository.getTypeManager();
+        try {
+            typeManager.getFieldTypeByName(FIELD1);
+            Assert.fail();
+        } catch (FieldTypeNotFoundException expected) {
+        }
+        Assert.assertTrue(typeManager.getFieldTypes().isEmpty());
+        testCreateRecord();
+    }
 }

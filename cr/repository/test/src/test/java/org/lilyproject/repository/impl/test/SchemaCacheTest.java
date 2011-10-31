@@ -49,6 +49,8 @@ public class SchemaCacheTest {
     public void tearDown() throws Exception {
     }
 
+
+
     @Test
     public void testRefresh() throws Exception {
         String namespace = "testRefresh";
@@ -118,19 +120,27 @@ public class SchemaCacheTest {
     }
 
     // This test is mainly introduced to do some JProfiling
-    @Test
+    // @Test
     public void testManyTypeManagers() throws Exception {
         String namespace = "testManyTypeManagers";
         final List<TypeManager> typeManagers = new ArrayList<TypeManager>();
+        List<Thread> typeManagerThreads = new ArrayList<Thread>();
         for (int i = 0; i < 10; i++) {
-            new Thread(new Runnable() {
+            typeManagerThreads.add(new Thread() {
                 public void run() {
                     try {
                         typeManagers.add(repoSetup.getNewTypeManager());
                     } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
                 }
-            }).start();
+            });
+        }
+        for (Thread thread : typeManagerThreads) {
+            thread.start();
+        }
+        for (Thread thread : typeManagerThreads) {
+            thread.join();
         }
 
         Thread.sleep(1000);
@@ -153,5 +163,24 @@ public class SchemaCacheTest {
                             null));
         }
 
+    }
+
+    // This test is introduced to do some profiling
+    // @Test
+    public void testManyTypesSameCache() throws Exception {
+        String namespace = "testManyTypesSameCache";
+        TypeManager typeManager = repoSetup.getTypeManager();
+
+        long before = System.currentTimeMillis();
+        for (int i = 0; i < 10000; i++) {
+            typeManager.recordTypeBuilder().defaultNamespace(namespace).name("recordType" + i).fieldEntry()
+                    .defineField().name("fieldType" + i).create().add().create();
+        }
+        System.out.println("Creating 10000 record types and 10000 field types took: "
+                + (System.currentTimeMillis() - before));
+        for (int j = 0; j < 10000; j++) {
+            typeManager.getFieldTypeByName(new QName(namespace, "fieldType" + j));
+            typeManager.getRecordTypeByName(new QName(namespace, "recordType" + j), null);
+        }
     }
 }
