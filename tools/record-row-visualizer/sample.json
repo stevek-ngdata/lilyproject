@@ -20,9 +20,9 @@
       scope: "non_versioned"
     },
     {
-      name: "r$field4",
-      valueType: { primitive: "STRING" },
-      scope: "versioned"
+      name: "r$field6",
+      valueType: { primitive: "STRING", multiValue: true },
+      scope: "versioned_mutable"
     }
   ],
   recordTypes: [
@@ -41,7 +41,8 @@
       id: "USER.rr1",
       fields: {
         "r$field1": "field 1 v1",
-        "r$field3": ["val1", "val2", "val3"]
+        "r$field3": ["val1", "val2", "val3"],
+        "r$field6": ["val1", "val2", "val3"]
       }
     },
     {

@@ -11,70 +11,36 @@ import java.util.*;
 public class RecordRow {
     public RecordId recordId;
 
-    // non-versioned system fields
-    public VersionedValue<String> lock = new VersionedValue<String>();
-    public VersionedValue<Boolean> deleted = new VersionedValue<Boolean>();
-    public VersionedValue<Type> nvRecordType = new VersionedValue<Type>();
-    public VersionedValue<Type> version = new VersionedValue<Type>();
-    public List<String> unknownNvColumns = new ArrayList<String>();
+    public List<String> unknownColumns = new ArrayList<String>();
+    public SystemFields systemFields = new SystemFields();
+    public Fields fields = new Fields();
 
-    // versioned system fields
-    public VersionedValue<Type> vRecordType = new VersionedValue<Type>();
-    public List<String> unknownVColumns = new ArrayList<String>();
-
-    // non-versioned fields
-    public Fields nvFields;
-
-    // versioned fields
-    public Fields vFields;
-
-    // Row log
+    // MQ row log
     public SortedMap<RowLogKey, List<String>> mqPayload = new TreeMap<RowLogKey, List<String>>();
     public SortedMap<RowLogKey, List<ExecutionData>> mqState = new TreeMap<RowLogKey, List<ExecutionData>>();
 
+    // WAL row log
     public SortedMap<RowLogKey, List<String>> walPayload = new TreeMap<RowLogKey, List<String>>();
     public SortedMap<RowLogKey, List<ExecutionData>> walState = new TreeMap<RowLogKey, List<ExecutionData>>();
 
     public List<String> unknownColumnFamilies = new ArrayList<String>();
 
+    private TreeSet<Long> allVersions;
+
     public RecordId getRecordId() {
         return recordId;
     }
 
-    public VersionedValue getDeleted() {
-        return deleted;
+    public List<String> getUnknownColumns() {
+        return unknownColumns;
     }
 
-    public VersionedValue<String> getLock() {
-        return lock;
+    public Fields getFields() {
+        return fields;
     }
 
-    public VersionedValue<Type> getNvRecordType() {
-        return nvRecordType;
-    }
-
-    public VersionedValue<Type> getVersion() {
-        return version;
-    }
-
-    public List<String> getUnknownNvColumns() {
-        return unknownNvColumns;
-    }
-
-    public Fields getNvFields() {
-        return nvFields;
-    }
-
-    public Fields getvFields() {
-        return vFields;
-    }
-
-    public VersionedValue<Type> getvRecordType() {
-        return vRecordType;
-    }
-
-    public List<String> getUnknownVColumns() {
-        return unknownVColumns;
+    public SystemFields getSystemFields() {
+        return systemFields;
     }
 
     public SortedMap<RowLogKey, List<String>> getMqPayload() {
@@ -95,5 +61,18 @@ public class RecordRow {
 
     public List<String> getUnknownColumnFamilies() {
         return unknownColumnFamilies;
+    }
+
+    public Set<Long> getAllVersions() {
+        if (allVersions == null) {
+            allVersions = new TreeSet<Long>();
+            fields.collectVersions(allVersions);
+            systemFields.collectVersions(allVersions);
+        }
+        return allVersions;
+    }
+
+    public int getAllVersionsLength() {
+        return getAllVersions().size();
     }
 }

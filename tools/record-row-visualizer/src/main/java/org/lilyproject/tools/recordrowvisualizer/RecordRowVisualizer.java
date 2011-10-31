@@ -14,11 +14,10 @@ import org.kauriproject.template.*;
 import org.kauriproject.template.source.ClasspathSourceResolver;
 import org.kauriproject.template.source.Source;
 import org.kauriproject.template.source.SourceResolver;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.cli.BaseZkCliTool;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
@@ -46,7 +45,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
     @Override
     protected String getCmdName() {
-        return "lily-record-row";
+        return "lily-record-row-visualizer";
     }
 
     @Override
@@ -87,10 +86,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
         // HBase record table
         Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", zkConnectionString);
         HTableInterface table = new HTable(conf, Table.RECORD.bytes);
 
         // Type manager
-        // TODO should be able to avoid ZK for this use-case?
         final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
         typeMgr = new HBaseTypeManager(idGenerator, conf, zk, new HBaseTableFactoryImpl(conf));
 
@@ -100,11 +99,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long,byte[]>>> root = row.getMap();
 
-        readSystemFields(root.get(RecordCf.DATA.bytes));
+        readColumns(root.get(RecordCf.DATA.bytes));
 
-        readFields(root.get(RecordCf.DATA.bytes));
-
-        readRowLog(recordRow.walState, recordRow.walPayload, recordRow.mqState, recordRow.mqPayload, root.get(RecordCf.ROWLOG.bytes));
+        readRowLog(recordRow.walState, recordRow.walPayload, recordRow.mqState, recordRow.mqPayload,
+                root.get(RecordCf.ROWLOG.bytes));
 
         byte[][] treatedColumnFamilies = {
                 RecordCf.DATA.bytes,
@@ -131,49 +129,65 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         return false;
     }
 
-    private void readSystemFields(NavigableMap<byte[], NavigableMap<Long, byte[]>> cf) throws Exception {
-        for (Map.Entry<byte[], NavigableMap<Long, byte[]>> columnEntry : cf.entrySet()) {
-            byte[] columnKey = columnEntry.getKey();
+    private void readColumns(NavigableMap<byte[], NavigableMap<Long, byte[]>> cf) throws Exception {
+        Fields fields = recordRow.fields;
 
-            if (Arrays.equals(columnKey, RecordColumn.DELETED.bytes)) {
-                setVersionedValue(recordRow.deleted, columnEntry.getValue(), BOOLEAN_DECODER);
-            } else if (Arrays.equals(columnKey, RecordColumn.NON_VERSIONED_RT_ID.bytes)) {
-                setTypeId(recordRow.nvRecordType, columnEntry.getValue());
-            } else if (Arrays.equals(columnKey, RecordColumn.NON_VERSIONED_RT_VERSION.bytes)) {
-                setTypeVersion(recordRow.nvRecordType, columnEntry.getValue());
-            } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_RT_ID.bytes)) {
-                setTypeId(recordRow.vRecordType, columnEntry.getValue());
-            } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_RT_VERSION.bytes)) {
-                    setTypeVersion(recordRow.vRecordType, columnEntry.getValue());
-            } else if (Arrays.equals(columnKey, RecordColumn.LOCK.bytes)) {
-                setVersionedValue(recordRow.lock, columnEntry.getValue(), BASE64_DECODER);
-            } else if (Arrays.equals(columnKey, RecordColumn.VERSION.bytes)) {
-                setVersionedValue(recordRow.version, columnEntry.getValue(), LONG_DECODER);
-            } else {
-                if (columnKey[0] != RecordColumn.DATA_PREFIX) {
-                    recordRow.unknownNvColumns.add(Bytes.toString(columnKey));
+        for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : cf.entrySet()) {
+            byte[] columnKey = column.getKey();
+
+            if (columnKey[0] == RecordColumn.DATA_PREFIX) {
+                SchemaId fieldId = new SchemaIdImpl(Arrays.copyOfRange(columnKey, 1, columnKey.length));
+
+                for (Map.Entry<Long, byte[]> version : column.getValue().entrySet()) {
+                    long versionNr = version.getKey();
+                    byte[] value = version.getValue();
+
+                    FieldType fieldType = fields.registerFieldType(fieldId, typeMgr);
+
+                    Map<SchemaId, Object> columns = fields.values.get(versionNr);
+                    if (columns == null) {
+                        columns = new HashMap<SchemaId, Object>();
+                        fields.values.put(versionNr, columns);
+                    }
+
+                    Object decodedValue;
+                    if (EncodingUtil.isDeletedField(value)) {
+                        decodedValue = Fields.DELETED;
+                    } else {
+                        decodedValue = fieldType.getValueType().read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
+                    }
+
+                    columns.put(fieldId, decodedValue);
                 }
+            } else if (Arrays.equals(columnKey, RecordColumn.DELETED.bytes)) {
+                setSystemField("Deleted", column.getValue(), BOOLEAN_DECODER);
+            } else if (Arrays.equals(columnKey, RecordColumn.NON_VERSIONED_RT_ID.bytes)) {
+                setSystemField("Non-versioned Record Type ID", column.getValue(), new RecordTypeValueDecoder(typeMgr));
+            } else if (Arrays.equals(columnKey, RecordColumn.NON_VERSIONED_RT_VERSION.bytes)) {
+                setSystemField("Non-versioned Record Type Version", column.getValue(), LONG_DECODER);
+            } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_RT_ID.bytes)) {
+                setSystemField("Versioned Record Type ID", column.getValue(), new RecordTypeValueDecoder(typeMgr));
+            } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_RT_VERSION.bytes)) {
+                setSystemField("Versioned Record Type Version", column.getValue(), LONG_DECODER);
+            } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes)) {
+                setSystemField("Versioned-mutable Record Type ID", column.getValue(), new RecordTypeValueDecoder(typeMgr));
+            } else if (Arrays.equals(columnKey, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes)) {
+                setSystemField("Versioned-mutable Record Type Version", column.getValue(), LONG_DECODER);
+            } else if (Arrays.equals(columnKey, RecordColumn.LOCK.bytes)) {
+                setSystemField("Lock", column.getValue(), BASE64_DECODER);
+            } else if (Arrays.equals(columnKey, RecordColumn.VERSION.bytes)) {
+                setSystemField("Record Version", column.getValue(), LONG_DECODER);
+            } else {
+                recordRow.unknownColumns.add(Bytes.toString(columnKey));
             }
         }
-
-        for (Type type : recordRow.nvRecordType.getValues().values()) {
-            type.object = typeMgr.getRecordTypeById(type.getId(), type.getVersion());
-        }
-        
-        for (Type type : recordRow.vRecordType.getValues().values()) {
-            type.object = typeMgr.getRecordTypeById(type.getId(), type.getVersion());
-        }
     }
 
-    private void readFields(NavigableMap<byte[], NavigableMap<Long,byte[]>> cf) throws Exception {
-        if (cf == null)
-            return;
+    private void readRowLog(Map<RowLogKey, List<ExecutionData>> walStateByKey, Map<RowLogKey,
+            List<String>> walPayloadByKey, Map<RowLogKey, List<ExecutionData>> mqStateByKey,
+            Map<RowLogKey, List<String>> mqPayloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf)
+            throws IOException {
 
-        recordRow.nvFields = new Fields(cf, typeMgr, Scope.NON_VERSIONED);
-        recordRow.vFields = new Fields(cf, typeMgr, Scope.VERSIONED);
-    }
-
-    private void readRowLog(Map<RowLogKey, List<ExecutionData>> walStateByKey, Map<RowLogKey, List<String>> walPayloadByKey, Map<RowLogKey, List<ExecutionData>> mqStateByKey, Map<RowLogKey, List<String>> mqPayloadByKey, NavigableMap<byte[], NavigableMap<Long, byte[]>> cf) throws IOException {
         if (cf == null)
             return;
         
@@ -195,16 +209,20 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     private static final byte ES_BYTE = (byte)2;
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
     
-    private void readRowLog(Map<RowLogKey, List<ExecutionData>> stateByKey, Map<RowLogKey, List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells, byte[] key) throws IOException {
+    private void readRowLog(Map<RowLogKey, List<ExecutionData>> stateByKey, Map<RowLogKey,
+            List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells, byte[] key) throws IOException {
+
         NavigableMap<Long, byte[]> maxSeqNr = null;
         
         if (Arrays.equals(key, SEQ_NR)) { // key could be "SEQNR"
             maxSeqNr = columnCells;
         } else { // or is prefixed by payload or executionState byte
+            long seqNr = Bytes.toLong(key, 1);
+            long timestamp = Bytes.toLong(key, 1 + Bytes.SIZEOF_LONG);
             if (key[0] == PL_BYTE) {
-                readPayload(payloadByKey, columnCells, Bytes.toLong(key, 1));
+                readPayload(payloadByKey, columnCells, seqNr, timestamp);
             } else if (key[0] == ES_BYTE) {
-                readExecutionState(stateByKey, columnCells, Bytes.toLong(key, 1));
+                readExecutionState(stateByKey, columnCells, seqNr, timestamp);
             } else {
                 // TODO unexpected
             }
@@ -215,9 +233,11 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         }
     }
     
-    private void readExecutionState(Map<RowLogKey, List<ExecutionData>> stateByKey, NavigableMap<Long, byte[]> columnCells, long seqNr) throws IOException {
+    private void readExecutionState(Map<RowLogKey, List<ExecutionData>> stateByKey,
+            NavigableMap<Long, byte[]> columnCells, long seqNr, long timestamp) throws IOException {
+
         for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
-            RowLogKey key = new RowLogKey(seqNr, columnEntry.getKey());
+            RowLogKey key = new RowLogKey(seqNr, timestamp, columnEntry.getKey());
 
             List<ExecutionData> states = stateByKey.get(key);
             if (states == null) {
@@ -238,9 +258,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         }
     }
 
-    private void readPayload(Map<RowLogKey, List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells, long seqNr) throws UnsupportedEncodingException {
+    private void readPayload(Map<RowLogKey, List<String>> payloadByKey, NavigableMap<Long, byte[]> columnCells,
+            long seqNr, long timestamp) throws UnsupportedEncodingException {
         for (Map.Entry<Long, byte[]> columnEntry : columnCells.entrySet()) {
-            RowLogKey key = new RowLogKey(seqNr, columnEntry.getKey());
+            RowLogKey key = new RowLogKey(seqNr, timestamp, columnEntry.getKey());
             List<String> payloads = payloadByKey.get(key);
             if (payloads == null) {
                 payloads = new ArrayList<String>();
@@ -250,38 +271,11 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         }
     }
 
-    
-
-    
-    private void setVersionedValue(VersionedValue value, NavigableMap<Long, byte[]> valuesByVersion, ValueDecoder decoder) {
+    private void setSystemField(String name, NavigableMap<Long, byte[]> valuesByVersion, ValueDecoder decoder) {
+        SystemFields systemFields = recordRow.systemFields;
+        SystemFields.SystemField systemField = systemFields.getOrCreateSystemField(name);
         for (Map.Entry<Long, byte[]> entry : valuesByVersion.entrySet()) {
-            value.put(entry.getKey(), decoder.decode(entry.getValue()));
-        }
-    }
-
-    private void setTypeId(VersionedValue value, NavigableMap<Long, byte[]> valuesByVersion) {
-        for (Map.Entry<Long, byte[]> entry : valuesByVersion.entrySet()) {
-            Type type = (Type)value.get(entry.getKey());
-            if (type != null) {
-                type.id = new SchemaIdImpl(entry.getValue());
-            } else {
-                type = new Type();
-                type.id = new SchemaIdImpl(entry.getValue());
-                value.put(entry.getKey(), type);
-            }
-        }
-    }
-
-    private void setTypeVersion(VersionedValue value, NavigableMap<Long, byte[]> valuesByVersion) {
-        for (Map.Entry<Long, byte[]> entry : valuesByVersion.entrySet()) {
-            Type type = (Type)value.get(entry.getKey());
-            if (type != null) {
-                type.version = LONG_DECODER.decode(entry.getValue());
-            } else {
-                type = new Type();
-                type.version = LONG_DECODER.decode(entry.getValue());
-                value.put(entry.getKey(), type);
-            }
+            systemField.values.put(entry.getKey(), decoder.decode(entry.getValue()));
         }
     }
 
@@ -321,6 +315,25 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             }
 
             return new String(result);
+        }
+    }
+
+    public static class RecordTypeValueDecoder implements ValueDecoder<RecordTypeInfo> {
+        private TypeManager typeManager;
+
+        public RecordTypeValueDecoder(TypeManager typeManager) {
+            this.typeManager = typeManager;
+        }
+
+        public RecordTypeInfo decode(byte[] bytes) {
+            SchemaId id = new SchemaIdImpl(bytes);
+            QName name;
+            try {
+                name = typeManager.getRecordTypeById(id, null).getName();
+            } catch (Exception e) {
+                name = new QName("", "Failure retrieving record type name");
+            }
+            return new RecordTypeInfo(id, name);
         }
     }
 
