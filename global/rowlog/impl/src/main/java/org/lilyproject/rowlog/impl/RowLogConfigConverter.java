@@ -43,8 +43,11 @@ public class RowLogConfigConverter {
         long notifyDelay = JsonUtil.getLong(node, "notifyDelay");
         long minimalProcessDelay = JsonUtil.getLong(node, "minimalProcessDelay");
         long wakeupTimeout = JsonUtil.getLong(node, "wakeupTimeout");
+        // For orphanedMessageDelay we supply a default because the parameter was new in Lily 1.0.4
+        long orphanedMessageDelay = JsonUtil.getLong(node, "orphanedMessageDelay", 120000L);
 
-        return new RowLogConfig(respectOrder, enableNotify, notifyDelay, minimalProcessDelay, wakeupTimeout);
+        return new RowLogConfig(respectOrder, enableNotify, notifyDelay, minimalProcessDelay, wakeupTimeout,
+                orphanedMessageDelay);
     }
 
     public byte[] toJsonBytes(String rowLogId, RowLogConfig config) {
@@ -64,6 +67,7 @@ public class RowLogConfigConverter {
         node.put("notifyDelay", config.getNotifyDelay());
         node.put("minimalProcessDelay", config.getMinimalProcessDelay());
         node.put("wakeupTimeout", config.getWakeupTimeout());
+        node.put("orphanedMessageDelay", config.getOrphanedMessageDelay());
 
         return node;
     }

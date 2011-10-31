@@ -17,6 +17,7 @@ package org.lilyproject.rowlog.impl;
 
 import java.util.Arrays;
 
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -101,7 +102,7 @@ public class RowLogMessageImpl implements RowLogMessage {
     @Override
     public String toString() {
         return "RowLogMessageImpl [rowLog=" + rowLog.getId() + ", timestamp=" + timestamp + ", rowKey="
-                + Arrays.toString(rowKey) + ", seqnr=" + seqnr + "]";
+                + Bytes.toStringBinary(rowKey) + ", seqnr=" + seqnr + "]";
     }    
     
     

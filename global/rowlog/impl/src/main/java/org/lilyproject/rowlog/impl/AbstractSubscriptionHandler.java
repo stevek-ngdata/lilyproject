@@ -25,7 +25,7 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
     protected final String rowLogId;
     protected final String subscriptionId;
     protected final MessagesWorkQueue messagesWorkQueue;
-    private Log log = LogFactory.getLog(getClass());
+    private Log log = LogFactory.getLog(AbstractSubscriptionHandler.class);
 	private SubscriptionHandlerMetrics metrics;
     
     public AbstractSubscriptionHandler(String subscriptionId, MessagesWorkQueue messagesWorkQueue, RowLog rowLog) {
@@ -99,8 +99,9 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                                 } catch (RemoteListenerIOException e) {
                                     metrics.ioExceptionRate.inc();
                                     // Logging to info to avoid log-flooding in case of network connection problems
-                                    log.info(String.format("RemoteListenerIOException occurred while processing message %1$s by subscription %2$s of rowLog %3$s", message, subscriptionId, rowLogId), e);
-                                    break;
+                                    if (log.isInfoEnabled()) {
+                                        log.info(String.format("[%1$s - %2$s] RemoteListenerIOException occurred while processing message %3$s", rowLogId, subscriptionId, message), e);
+                                    }
                                 }
                                 if (processMessageResult) {
                                 	metrics.successRate.inc();
@@ -108,17 +109,23 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
                                 } else {
                                 	metrics.failureRate.inc();
                                 }
-                            } 
+                            } else {
+                                if (log.isDebugEnabled()) {
+                                    log.debug(String.format("[%1$s - %2$s] Message is not available: %3$s", rowLogId, subscriptionId, message));
+                                }
+                            }
                         } catch (InterruptedException e) {
-                            break;                            
+                            break;
                         } catch (Throwable e) {
-                            log.warn(String.format("RowLogException occurred while processing message %1$s by subscription %2$s of rowLog %3$s", message, subscriptionId, rowLogId), e);
+                            log.warn(String.format("[%1$s - %2$s] RowLogException occurred while processing message %3$s", rowLogId, subscriptionId, message), e);
                         } finally {
                             messagesWorkQueue.done(message);
                         }
                     }
                 } catch (InterruptedException e) {
                     break;
+                } catch (Throwable t) {
+                    log.error(String.format("[%1$s - %2$s] Error in subscription handler thread", rowLogId, subscriptionId), t);
                 }
             }
         }
