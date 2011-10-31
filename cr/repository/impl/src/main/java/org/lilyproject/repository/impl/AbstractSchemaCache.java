@@ -41,10 +41,11 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     private final CacheRefresher cacheRefresher = new CacheRefresher();
 
-    private FieldTypesImpl fieldTypes;
-    private RecordTypesImpl recordTypes = new RecordTypesImpl();
-    private FieldTypesImpl updatingFieldTypes = new FieldTypesImpl();
+    private FieldTypes fieldTypesSnapshot;
+    private FieldTypesCache fieldTypesCache = new FieldTypesCache();
     private boolean updatedFieldTypes = false;
+
+    private RecordTypesImpl recordTypes = new RecordTypesImpl();
 
     private Set<CacheWatcher> cacheWatchers = new HashSet<CacheWatcher>();
     private AllCacheWatcher allCacheWatcher;
@@ -149,16 +150,20 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     protected abstract TypeManager getTypeManager();
 
     @Override
-    public synchronized FieldTypesImpl getFieldTypesSnapshot() {
-        if (updatedFieldTypes) {
-            fieldTypes = updatingFieldTypes.clone();
-            updatedFieldTypes = false;
+    public FieldTypes getFieldTypesSnapshot() {
+        if (!updatedFieldTypes)
+            return fieldTypesSnapshot;
+        synchronized (this) {
+            if (updatedFieldTypes) {
+                fieldTypesSnapshot = fieldTypesCache.getSnapshot();
+                updatedFieldTypes = false;
+            }
+            return fieldTypesSnapshot;
         }
-        return fieldTypes;
     }
     
     public synchronized void updateFieldType(FieldType fieldType) throws TypeException, InterruptedException {
-        updatingFieldTypes.update(fieldType);
+        fieldTypesCache.update(fieldType);
         updatedFieldTypes = true;
     }
 
@@ -178,16 +183,24 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         return recordTypes.getRecordType(id);
     }
 
-    public FieldType getFieldType(QName name) throws FieldTypeNotFoundException {
-        return getFieldTypesSnapshot().getFieldType(name);
+    public FieldType getFieldType(QName name) throws InterruptedException, TypeException {
+        return fieldTypesCache.getFieldType(name);
     }
 
-    public FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException {
-        return getFieldTypesSnapshot().getFieldType(id);
+    public FieldType getFieldType(SchemaId id) throws TypeException, InterruptedException {
+        return fieldTypesCache.getFieldType(id);
     }
 
-    public List<FieldType> getFieldTypes() {
-        return getFieldTypesSnapshot().getFieldTypes();
+    public List<FieldType> getFieldTypes() throws TypeException, InterruptedException {
+        return fieldTypesCache.getFieldTypes();
+    }
+
+    public boolean fieldTypeExists(QName name) {
+        return fieldTypesCache.fieldTypeExists(name);
+    }
+
+    public FieldType getFieldTypeByNameReturnNull(QName name) throws InterruptedException {
+        return fieldTypesCache.getFieldTypeByNameReturnNull(name);
     }
 
     protected void readRefreshingEnabledState() {
@@ -229,7 +242,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             // initialize the caches.
         }
         Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getTypesWithoutCache();
-        updatingFieldTypes.refreshFieldTypes(types.getV1());
+        fieldTypesCache.refreshFieldTypes(types.getV1());
         updatedFieldTypes = true;
         recordTypes.refreshRecordTypes(types.getV2());
     }
@@ -254,7 +267,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             log.debug("Refreshing schema cache buckets: " + Arrays.toString(buckets.toArray()));
 
         List<TypeBucket> typeBuckets = getTypeManager().getTypeBucketsWithoutCache(buckets);
-        updatingFieldTypes.refreshFieldTypeBuckets(typeBuckets);
+        fieldTypesCache.refreshFieldTypeBuckets(typeBuckets);
         updatedFieldTypes = true;
         recordTypes.refreshRecordTypeBuckets(typeBuckets);
     }

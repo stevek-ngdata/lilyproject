@@ -21,9 +21,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
 
-/**
- *
- */
 public class RecordTypesImpl {
     private Log log = LogFactory.getLog(getClass());
 

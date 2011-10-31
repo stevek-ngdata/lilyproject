@@ -61,7 +61,7 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
     
     @Override
-    public List<FieldType> getFieldTypes() {
+    public List<FieldType> getFieldTypes() throws TypeException, InterruptedException {
         return schemaCache.getFieldTypes();
     }
 
@@ -110,12 +110,12 @@ public abstract class AbstractTypeManager implements TypeManager {
     abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
     
     @Override
-    public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeById(SchemaId id) throws TypeException, InterruptedException {
         return schemaCache.getFieldType(id);
     }
     
     @Override
-    public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeByName(QName name) throws InterruptedException, TypeException {
         return schemaCache.getFieldType(name);
     }
     

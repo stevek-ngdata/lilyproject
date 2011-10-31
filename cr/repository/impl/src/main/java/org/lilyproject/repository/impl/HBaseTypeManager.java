@@ -497,7 +497,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             newFieldType.setId(id);
 
             // Check if there is already a fieldType with this name 
-            if (getFieldTypesSnapshot().fieldTypeExists(fieldType.getName()))
+            if (schemaCache.fieldTypeExists(fieldType.getName()))
                 throw new FieldTypeExistsException(fieldType);
 
             // FIXME: the flow here is different than for record types, were first the name reservation is taken
@@ -619,7 +619,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         } else { // if (fieldType.getName() != null) {
             int attempts;
             for (attempts = 0; attempts < 3; attempts++) {
-                FieldType existingFieldType = getFieldTypesSnapshot().getFieldTypeByNameReturnNull(fieldType.getName());
+                FieldType existingFieldType = schemaCache.getFieldTypeByNameReturnNull(fieldType.getName());
                 if (existingFieldType != null) {
                     // Field types cannot be deleted so there is no possibility that it would have been deleted
                     // in the meantime.

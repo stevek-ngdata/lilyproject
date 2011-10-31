@@ -1,5 +1,7 @@
 package org.lilyproject.repository.api;
 
+import java.util.List;
+
 /**
  * The FieldTypes contains a snapshot of the field types in the Lily Schema. 
  * 
@@ -22,6 +24,8 @@ public interface FieldTypes {
      */
     FieldType getFieldType(QName name) throws TypeException, InterruptedException;
 
+    List<FieldType> getFieldTypes() throws TypeException, InterruptedException;
+
     /**
      * Gets a FieldType from the FieldTypes.
      * <p>
@@ -30,14 +34,14 @@ public interface FieldTypes {
      * 
      * @return the field type or null if not known
      */
-    FieldType getFieldTypeByNameReturnNull(QName name);
+    FieldType getFieldTypeByNameReturnNull(QName name) throws InterruptedException;
 
     /**
      * Checks if a field type is known by the FieldTypes
      * 
      * @return true if the field type is known
      */
-    boolean fieldTypeExists(QName name);
+    boolean fieldTypeExists(QName name) throws InterruptedException;
 
 
 }
