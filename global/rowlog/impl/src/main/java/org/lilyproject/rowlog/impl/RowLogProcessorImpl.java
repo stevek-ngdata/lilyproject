@@ -15,18 +15,14 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.rowlog.api.ProcessorNotifyObserver;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
@@ -39,16 +35,19 @@ import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.api.SubscriptionsObserver;
 import org.lilyproject.util.Logs;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
     private volatile boolean stop = true;
     protected final RowLog rowLog;
-    private final RowLogShard shard;
     protected final Map<String, SubscriptionThread> subscriptionThreads = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
     private RowLogConfigurationManager rowLogConfigurationManager;
     private Log log = LogFactory.getLog(getClass());
     private long lastNotify = -1;
     private RowLogConfig rowLogConfig;
+    private ThreadPoolExecutor globalQScanExecutor;
+    private ScheduledExecutorService scheduledServices;
+    private Configuration hbaseConf;
 
     /*
      * Maximum expected clock skew between servers. In fact this is not just pure clock skew, but also
@@ -63,10 +62,11 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     
-    public RowLogProcessorImpl(RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
+    public RowLogProcessorImpl(RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
+            final Configuration hbaseConf) {
         this.rowLog = rowLog;
         this.rowLogConfigurationManager = rowLogConfigurationManager;
-        this.shard = rowLog.getShards().get(0); // TODO: For now we only work with one shard
+        this.hbaseConf = hbaseConf;
     }
 
     @Override
@@ -75,17 +75,76 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
     
     @Override
-    public synchronized void start() throws InterruptedException {
+    public synchronized void start() throws InterruptedException, IOException {
         if (stop) {
             stop = false;
+
+            // Init the executor service for the scan jobs
+            int regionServerCnt = HBaseAdminFactory.get(hbaseConf).getClusterStatus().getServers();
+            int threadCnt = getScanThreadCount(regionServerCnt);
+            this.globalQScanExecutor = new ThreadPoolExecutor(threadCnt, threadCnt,
+                    30, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
+
+            // Start the service that will monitor the number of region servers and adjust number
+            // of scan threads accordingly
+            this.scheduledServices = Executors.newScheduledThreadPool(1);
+            this.scheduledServices.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        int regionServerCnt = HBaseAdminFactory.get(hbaseConf).getClusterStatus().getServers();
+                        int threadCnt = getScanThreadCount(regionServerCnt);
+                        if (globalQScanExecutor.getMaximumPoolSize() != threadCnt) {
+                            log.warn("Changing number of global queue scan threads to " + threadCnt);
+                            globalQScanExecutor.setMaximumPoolSize(threadCnt);
+                            globalQScanExecutor.setCorePoolSize(threadCnt);
+                        }
+                    } catch (Throwable t) {
+                        log.error("Error determining or adjusting global queue scan thread pool size", t);
+                    }
+                }
+            }, 5, 10, TimeUnit.MINUTES);
+
             initializeRowLogConfig();
             initializeSubscriptions();
             initializeNotifyObserver();
         }
     }
 
+    @Override
+    public synchronized void stop() {
+        stop = true;
+        scheduledServices.shutdownNow();
+        stopRowLogConfig();
+        stopSubscriptions();
+        stopNotifyObserver();
+        stopSubscriptionThreads();
+        globalQScanExecutor.shutdownNow();
+    }
+
+    private int getScanThreadCount(int regionServerCnt) {
+        // TODO should become configurable
+        // Use up to 3 requests per region server (on average).
+        // Lily-specific note: keep in mind that there are 2 rowlog processors (one for MQ, one for the WAL), so
+        // there could be up to twice this number of threads in a server! (though not necessarily, both may be
+        // running on different servers)
+        int threads = regionServerCnt * 3;
+
+        // at least one, at most 30
+        threads = threads > 30 ? 30 : threads < 1 ? 1 : threads;
+
+        // don't need more threads than there are shards
+        int shardCount = rowLog.getShards().size();
+        threads = threads > shardCount ? shardCount : threads;
+
+        return threads;
+    }
+
     private void initializeNotifyObserver() {
-        rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), shard.getId(), this);
+        // TODO probably shouldn't do this per-shard?
+        for (RowLogShard shard : rowLog.getShards()) {
+            rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), shard.getId(), this);
+        }
     }
 
     protected void initializeSubscriptions() {
@@ -158,15 +217,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         }
     }
 
-    @Override
-    public synchronized void stop() {
-        stop = true;
-        stopRowLogConfig();
-        stopSubscriptions();
-        stopNotifyObserver();
-        stopSubscriptionThreads();
-    }
-
     private void stopSubscriptionThreads() {
         Collection<SubscriptionThread> threadsToStop;
         synchronized (subscriptionThreads) {
@@ -192,7 +242,9 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     private void stopNotifyObserver() {
-        rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), shard.getId());
+        for (RowLogShard shard : rowLog.getShards()) {
+            rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), shard.getId());
+        }
     }
 
     protected void stopSubscriptions() {
@@ -212,7 +264,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
     
     /**
-     * Called when a message has been posted on the rowlog that needs to be processed by this RowLogProcessor. </p>
+     * Called when a message has been posted on the rowlog that needs to be processed by this RowLogProcessor.
      * The notification will only be taken into account when a delay has passed since the previous notification.
      */
     @Override
@@ -290,12 +342,54 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             try {
                 Long minimalTimestamp = null;
                 while (!isInterrupted() && !stopRequested) {
-                    String subscriptionId = subscription.getId();
+                    final String subscriptionId = subscription.getId();
                     try {
                         metrics.scans.inc();
 
                         long tsBeforeGetMessages = System.currentTimeMillis();
-                        List<RowLogMessage> messages = shard.next(subscriptionId, minimalTimestamp);
+
+                        // Scan in parallel over the different regions
+                        // Ideally, we would figure out on what servers what regions are deployed and then do the
+                        // requests such that we touch the maximum number of different servers. For now, we keep
+                        // it simple and assume the requests will be distributed enough by chance.
+                        List<RowLogMessage> messages = new ArrayList<RowLogMessage>( /* TODO init to expected size, based on batch size */ );
+                        int maxMessagesFromOneShard = 0;
+                        List<Future<List<RowLogMessage>>> scanFutures = new ArrayList<Future<List<RowLogMessage>>>();
+                        final Long currentMinimalTimestamp = minimalTimestamp;
+                        for (final RowLogShard shard : rowLog.getShards()) {
+                            // TODO we should do the scans in parallel
+                            try {
+                                scanFutures.add(globalQScanExecutor.submit(new Callable<List<RowLogMessage>>() {
+                                    @Override
+                                    public List<RowLogMessage> call() throws Exception {
+                                        return shard.next(subscriptionId, currentMinimalTimestamp);
+                                    }
+                                }));
+                            } catch (RejectedExecutionException e) {
+                                // The only reason this could occur is because we're shutting down, since there
+                                // is no limit on the size of the queue
+                                log.info("Got RejectedExecutionException", e);
+                                break;
+                            }
+                        }
+
+                        for (Future<List<RowLogMessage>> future : scanFutures) {
+                            List<RowLogMessage> shardMessages = future.get();
+                            messages.addAll(shardMessages);
+                            if (shardMessages.size() > maxMessagesFromOneShard) {
+                                 maxMessagesFromOneShard = shardMessages.size();
+                            }
+                        }
+
+                        // Sort the messages from the different shards by timestamp
+                        // TODO this could be improved, knowing that the lists from shard.next() are already sorted
+                        Collections.sort(messages, new Comparator<RowLogMessage>() {
+                            @Override
+                            public int compare(RowLogMessage o1, RowLogMessage o2) {
+                                return (int)(o1.getTimestamp() - o2.getTimestamp());
+                            }
+                        });
+
                         metrics.scanDuration.inc(System.currentTimeMillis() - tsBeforeGetMessages);
 
                         if (log.isDebugEnabled()) {
@@ -342,7 +436,9 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         // scanning for messages.
                         // Also: the minimalProcessDelay setting is not taken into account: as it currently is,
                         // this is only relevant for the WAL, which does not make use of the wake-up signal.
-                        if (messages.size() < shard.getBatchSize() && lastWakeup < tsBeforeGetMessages) {
+                        // TODO temporary batchSize determination fix
+                        int batchSize = rowLog.getShards().get(0).getBatchSize();
+                        if (maxMessagesFromOneShard < batchSize && lastWakeup < tsBeforeGetMessages) {
                             synchronized (this) {
                                 // The timeout covers two cases:
                                 //   (1) a safety fallback, in case a wake-up got lost or so
@@ -360,9 +456,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
                     } catch (InterruptedException e) {
                         return;
-                    } catch (RowLogException e) {
-                        // The message will be retried later
-                        log.info("Error processing message for subscription " + subscriptionId + " (message will be retried later).", e);
                     } catch (Throwable t) {
                         if (Thread.currentThread().isInterrupted())
                             return;

@@ -26,12 +26,15 @@ import javax.management.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 
 /**
@@ -42,11 +45,14 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private static final byte PL_BYTE = (byte)1;
     private static final byte ES_BYTE = (byte)2;
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
-    protected RowLogShard shard; // TODO: We only work with one shard for now
+    protected List<RowLogShard> shards;
     private final HTableInterface rowTable;
     private final byte[] rowLogColumnFamily;
     private RowLogConfig rowLogConfig;
-    
+    private HBaseTableFactory tableFactory;
+    private int shardCount;
+    private RowLogShardRouter shardRouter;
+
     private final Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
     protected final String id;
     private RowLogProcessorNotifier processorNotifier = null;
@@ -61,6 +67,12 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private byte[] seqNrQualifier;
     private ObjectName mbeanName;
 
+    public RowLogImpl(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker,
+            HBaseTableFactory tableFactory) throws InterruptedException, IOException {
+        this(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, tableFactory, 1);
+    }
+
     /**
      * The RowLog should be instantiated with information about the table that contains the rows the messages are 
      * related to, and the column families it can use within this table to put the payload and execution state of the
@@ -72,7 +84,8 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
      * @throws RowLogException
      */
     public RowLogImpl(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
-            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker) throws InterruptedException {
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker,
+            HBaseTableFactory tableFactory, int shardCount) throws InterruptedException, IOException {
         this.id = id;
         this.rowTable = rowTable;
         this.rowLogColumnFamily = rowLogColumnFamily;
@@ -81,6 +94,8 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         this.seqNrQualifier = Bytes.add(new byte[]{rowLogId}, SEQ_NR);
         this.rowLogConfigurationManager = rowLogConfigurationManager;
         this.rowLocker = rowLocker;
+        this.tableFactory = tableFactory;
+        this.shardCount = shardCount;
         rowLogConfigurationManager.addRowLogObserver(id, this);
         synchronized (initialRowLogConfigLoaded) {
             while(!initialRowLogConfigLoaded.get()) {
@@ -94,8 +109,51 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
                 initialSubscriptionsLoaded.wait();
             }
         }
+
+        createShards();
         
         registerMBean();
+    }
+
+    private void createShards() throws IOException {
+        if (shardCount < 1 || shardCount > 255) {
+            throw new IllegalArgumentException("Number of rowlog shards should be > 0 and < 255, but it is: "
+                    + shardCount);
+        }
+
+        this.shardRouter = new RowLogShardRouter(shardCount);
+
+        //
+        // Create the rowlog table with its splits (if it does not exist yet)
+        //
+        byte[][] splits = new byte[shardCount - 1][];
+        for (int i = 0; i < shardCount - 1 /* HBase adds last shard automatically (up to 'null' key) */ ; i++) {
+            // region end keys are exclusive (everything lower than the end key is in the region)
+            byte[] endKey = new byte[] { (byte)(i + 1) };
+            splits[i] = endKey;
+        }
+
+        String tableName = "rowlog-" + getId();
+        HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+
+        // Avoid any further splitting than the one we configured. The only reason to allow further splitting
+        // is when the queue tables would get very large (due to messages not being consumed). But then we need
+        // to deal with deleting splits afterwards if we don't want to end up with empty splits which would
+        // negatively impact balancing. Therefore, for now, go for simple behavior: no further splitting.
+        tableDescriptor.setMaxFileSize(Long.MAX_VALUE);
+
+        tableDescriptor.addFamily(new HColumnDescriptor(RowLogShardImpl.MESSAGES_CF));
+
+        HTableInterface table = tableFactory.getTable(tableDescriptor, splits);
+
+        //
+        // Create the RowLogShard instances
+        //
+        this.shards = new ArrayList<RowLogShard>(shardCount);
+        for (int i = 0; i < shardCount; i++) {
+            byte[] rowKeyPrefix = new byte[] { (byte)i };
+            shards.add(new RowLogShardImpl("shard" + i, rowKeyPrefix, table, this, 100));
+        }
     }
 
     private void registerMBean() {
@@ -142,17 +200,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     public String getId() {
         return id;
     }
-    
-    @Override
-    public void registerShard(RowLogShard shard) {
-        this.shard = shard;
-    }
-    
-    @Override
-    public void unRegisterShard(RowLogShard shard) {
-        this.shard = null;
-    }
-    
+
     private void putPayload(long seqnr, byte[] payload, long timestamp, Put put) throws IOException {
         put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
     }
@@ -227,7 +275,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             }
 
             if (rowLogConfig.isEnableNotify()) {
-                processorNotifier.notifyProcessor(id, getShard().getId());
+                processorNotifier.notifyProcessor(id, getShard(message).getId());
             }
             return message;
         } catch (IOException e) {
@@ -241,7 +289,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         for (RowLogSubscription subscription : subscriptions) {
             subscriptionIds.add(subscription.getId());
         }
-        getShard().putMessage(message, subscriptionIds);
+        getShard(message).putMessage(message, subscriptionIds);
     }
 
     
@@ -475,7 +523,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
  
     protected void removeMessageFromShard(RowLogMessage message, String subscriptionId) throws RowLogException {
-        getShard().removeMessage(message, subscriptionId);
+        getShard(message).removeMessage(message, subscriptionId);
     }
     
     @Override
@@ -555,11 +603,9 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
     
     // For now we work with only one shard
-    protected RowLogShard getShard() throws RowLogException {
-        if (shard == null) {
-            throw new RowLogException("No shards registerd");
-        }
-        return shard;
+    protected RowLogShard getShard(RowLogMessage message) throws RowLogException {
+        int shardIndex = shardRouter.getShard(message);
+        return shards.get(shardIndex);
     }
     
     @Override
@@ -655,9 +701,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
 
     @Override
     public List<RowLogShard> getShards() {
-        List<RowLogShard> shards = new ArrayList<RowLogShard>();
-        shards.add(shard);
-        return shards;
+        return Collections.unmodifiableList(shards);
     }
     
     @Override

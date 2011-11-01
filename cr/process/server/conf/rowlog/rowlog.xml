@@ -20,4 +20,7 @@
        If disabled, the message queue will not be fed with messages.
   -->
   <mqFeeder enabled="true"/>
+
+  <!-- Number of shards (splits) to create for the rowlog. Only has effect on initial table creation. -->
+  <shardCount>6</shardCount>
 </rowlog>

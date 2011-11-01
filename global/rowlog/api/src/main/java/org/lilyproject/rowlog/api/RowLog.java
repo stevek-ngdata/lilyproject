@@ -61,19 +61,7 @@ public interface RowLog {
      * The id of a RowLog uniquely identifies the rowlog amongst all rowlog instances.
      */
     String getId();
-    
-    /**
-     * Registers a shard on the RowLog. (Note: the current implementation only allows for one shard to be registered.)
-     * @param shard a {@link RowLogShard} 
-     */
-    void registerShard(RowLogShard shard);
-    
-    /**
-     * Unregisters a shard from the RowLog.
-     * @param shard a {@link RowLogShard} 
-     */
-    void unRegisterShard(RowLogShard shard);
-    
+
     /**
      * Retrieves the payload of a {@link RowLogMessage} from the RowLog.
      * The preferred way to get the payload for a message is to request this through the message itself 

@@ -28,7 +28,7 @@ import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
 import org.lilyproject.rowlog.impl.RowLogImpl;
 import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
-import org.lilyproject.rowlog.impl.RowLogShardImpl;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -59,11 +59,8 @@ public class Example {
 
         // Create a RowLog instance
         configurationManager.addRowLog("Example", new RowLogConfig(false, true, 100L, 0L, 5000L, 120000L));
-        RowLog rowLog = new RowLogImpl("Example", rowTable, ROWLOG_COLUMN_FAMILY, (byte)1, configurationManager, null);
-        
-        // Create a shard and register it with the rowlog
-        RowLogShard shard = new RowLogShardImpl("AShard", configuration, rowLog, 100);
-        rowLog.registerShard(shard);
+        RowLog rowLog = new RowLogImpl("Example", rowTable, ROWLOG_COLUMN_FAMILY, (byte)1, configurationManager, null,
+                new HBaseTableFactoryImpl(configuration));
         
         // Register a listener class on the RowLogMessageListenerMapping
         RowLogMessageListenerMapping.INSTANCE.put("FooBar", new FooBarListener());
@@ -87,7 +84,7 @@ public class Example {
         // The MQ use case
         
         // Create a processor and start it
-        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, configurationManager);
+        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, configurationManager, configuration);
         processor.start();
         
         message  = rowLog.putMessage(row1, Bytes.toBytes("SomeMoreInfo"), Bytes.toBytes("Re-evaluate:AUserField"), null);

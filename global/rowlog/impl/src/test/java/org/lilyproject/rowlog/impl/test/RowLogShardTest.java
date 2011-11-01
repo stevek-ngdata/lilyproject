@@ -22,8 +22,12 @@ import static org.easymock.classextension.EasyMock.createControl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.List;
 
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.classextension.IMocksControl;
 import org.junit.After;
@@ -39,6 +43,7 @@ import org.lilyproject.rowlog.impl.RowLogMessageImpl;
 import org.lilyproject.rowlog.impl.RowLogShardImpl;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 
 public class RowLogShardTest {
 
@@ -74,6 +79,14 @@ public class RowLogShardTest {
     public void tearDown() throws Exception {
         control.reset();
     }
+
+    private HTableInterface createRowLogTable() throws IOException {
+        String tableName = "rowlog";
+        HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+        tableDescriptor.addFamily(new HColumnDescriptor(RowLogShardImpl.MESSAGES_CF));
+        HTableInterface table = new HBaseTableFactoryImpl(HBASE_PROXY.getConf()).getTable(tableDescriptor);
+        return table;
+    }
     
     @Test
     public void testSingleMessage() throws Exception {
@@ -81,7 +94,7 @@ public class RowLogShardTest {
         rowLog.getSubscriptions();
         expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 1))).anyTimes();
         control.replay();
-        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
         RowLogMessageImpl message1 = new RowLogMessageImpl(System.currentTimeMillis(), Bytes.toBytes("row1"), 0L, null, rowLog);
         shard.putMessage(message1); 
         
@@ -101,7 +114,7 @@ public class RowLogShardTest {
         expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 1))).anyTimes();
         
         control.replay();
-        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
         long timestamp1 = System.currentTimeMillis();
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 0L, null, rowLog);
         long timestamp2 = System.currentTimeMillis()+1;
@@ -130,7 +143,7 @@ public class RowLogShardTest {
         
         RowLogMessage[] expectedMessages = new RowLogMessage[7];
         control.replay();
-        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
         long now = System.currentTimeMillis();
         for (int i = 0; i < 7; i++) {
             RowLogMessageImpl message = new RowLogMessageImpl(now + i, Bytes.toBytes("row1"), 0L, null, rowLog);
@@ -168,7 +181,7 @@ public class RowLogShardTest {
                 new RowLogSubscription("id", subscriptionId2, Type.VM, 2))).anyTimes();
         
         control.replay();
-        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
         long timestamp1 = System.currentTimeMillis();
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 1L, null, rowLog);
         long timestamp2 = timestamp1 + 1;
@@ -203,7 +216,7 @@ public class RowLogShardTest {
         expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId1, Type.VM, 1))).anyTimes();
         
         control.replay();
-        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
         long timestamp1 = System.currentTimeMillis();
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 1L, null, rowLog);
 
