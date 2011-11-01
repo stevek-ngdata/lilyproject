@@ -8,6 +8,15 @@ Nonetheless, the tool shows all versions for each column, even if we know
 Lily only store one, to be able to detect unexpected situations or version
 numbers. It also shows the names of unexpected columns and column families.
 
-Tip: to render the HTML on the command line, you can use something like this:
+The output of this tool is an HTML page.
 
-lily-record-row | w3m -T text/html -dump -cols 120
+You can view it in two ways:
+
+ 1. by redirecting the output to a file and opening it in your browser
+
+    lily-record-row-visualizer > out.html
+    firefox out.html
+
+ 2. render it on the command line using w3m
+
+    lily-record-row-visualizer | w3m -T text/html -dump -cols 120

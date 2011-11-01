@@ -21,8 +21,8 @@
     },
     {
       name: "r$field4",
-      valueType: "STRING",
-      scope: "versioned"
+      valueType: "LIST<STRING>",
+      scope: "versioned_mutable"
     }
   ],
   recordTypes: [
@@ -41,7 +41,8 @@
       id: "USER.rr1",
       fields: {
         "r$field1": "field 1 v1",
-        "r$field3": ["val1", "val2", "val3"]
+        "r$field3": ["val1", "val2", "val3"],
+        "r$field4": ["val1", "val2", "val3"]
       }
     },
     {

@@ -283,6 +283,18 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+
+    <!-- Record row visualizer tool -->
+    <file>
+      <source>${basedir}/../tools/record-row-visualizer/target/dist-scripts/lily-record-row-visualizer</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <!--file>
+      <source>${basedir}/../tools/record-row-visualizer/target/dist-scripts/lily-record-row-visualizer.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
   </files>
 
   <fileSets>
