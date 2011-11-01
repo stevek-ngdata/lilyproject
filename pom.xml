@@ -109,6 +109,7 @@
     <module>tools/doc-tools</module>
     <module>tools/licensecheck</module>
     <module>tools/record-row-visualizer</module>
+    <module>tools/rowlog-visualizer</module>
     <module>tools/print-host</module>
     <module>tools/archetype</module>
     <module>tools/upgrade</module>
@@ -366,6 +367,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-upgrade</artifactId>
+        <version>1.1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-rowlog-visualizer</artifactId>
         <version>1.1-SNAPSHOT</version>
       </dependency>
       <dependency>

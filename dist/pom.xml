@@ -102,6 +102,11 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-kauri-plugin</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-rowlog-visualizer</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
