@@ -16,6 +16,7 @@
 package org.lilyproject.server.modules.rowlog;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -71,6 +72,16 @@ public class RowLogSetup {
         
         if (!confMgr.rowLogExists("mq")) {
             confMgr.addRowLog("mq", new RowLogConfig(false, true, 200L, 0L, 5000L, 120000L));
+        } else {
+            // Before Lily 1.0.4, the respectOrder parameter for the MQ was true. Change it if necessary.
+            for (Map.Entry<String, RowLogConfig> entry : confMgr.getRowLogs().entrySet()) {
+                if (entry.getKey().equals("mq") && entry.getValue().isRespectOrder()) {
+                    log.warn("Changing MQ respect order to false.");
+                    RowLogConfig config = entry.getValue();
+                    config.setRespectOrder(false);
+                    confMgr.updateRowLog("mq", config);
+                }
+            }
         }
         
         boolean linkIdxEnabled = rowLogConf.getChild("linkIndexUpdater").getAttributeAsBoolean("enabled", true);
