@@ -47,6 +47,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
             if (bucket == null) {
                 bucket = new HashMap<SchemaId, FieldType>();
+                buckets.put(bucketId, bucket);
             }
             bucket.put(fieldType.getId(), fieldType);
         }

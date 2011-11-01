@@ -61,6 +61,7 @@ public class RecordTypesImpl {
             Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
             if (bucket == null) {
                 bucket = new HashMap<SchemaId, RecordType>();
+                buckets.put(bucketId, bucket);
             }
             bucket.put(recordType.getId(), recordType);
         }
