@@ -39,12 +39,6 @@ import org.lilyproject.repository.api.*;
 
 
 public class LilyProxyTest {
-    @Test
-    public void dummyTestMethodToAvoidThatJunitComplains() throws Exception {
-
-    }
-
-    /*
     private static final QName RECORDTYPE1 = new QName("org.lilyproject.lilytestutility", "TestRecordType");
     private static final QName FIELD1 = new QName("org.lilyproject.lilytestutility","name");
     private static LilyProxy lilyProxy;
@@ -157,19 +151,4 @@ public class LilyProxyTest {
         }
         return recordIds;
     }
-
-    @Test
-    public void test2() throws Exception {
-        repository = lilyClient.getRepository();
-        // Create schema
-        TypeManager typeManager = repository.getTypeManager();
-        try {
-            typeManager.getFieldTypeByName(FIELD1);
-            Assert.fail();
-        } catch (FieldTypeNotFoundException expected) {
-        }
-        Assert.assertTrue(typeManager.getFieldTypes().isEmpty());
-        testCreateRecord();
-    }
-    */
 }
