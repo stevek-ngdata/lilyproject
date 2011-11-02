@@ -788,6 +788,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         ResultScanner scanner;
         try {
             Scan scan = new Scan();
+            scan.setCaching(1000);
             scan.addColumn(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
             scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
             scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
@@ -851,6 +852,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
         for (String bucketId : bucketIds) {
             Scan scan = new Scan();
+            scan.setCaching(100);
             // Field type columns
             scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes);
             scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes);
