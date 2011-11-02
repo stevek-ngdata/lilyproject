@@ -102,6 +102,7 @@ public class RowLogVisualizer extends BaseZkCliTool {
             long hbaseTimestamp = rowlogRow.getColumnLatest(MESSAGES_CF, MESSAGE_COLUMN).getTimestamp();
 
             // First byte it the shard key (the 'region selector')
+            byte shardKey = rowkey[0];
             rowkey = Bytes.tail(rowkey, rowkey.length - 1);
 
             // Find out where the subscription name ends
@@ -144,6 +145,7 @@ public class RowLogVisualizer extends BaseZkCliTool {
             System.out.println("-------------------------------------------------------------------------");
             System.out.println("   Subscription: " + subscriptionName);
             System.out.println("         Record: " + recordId);
+            System.out.println("   Rowlog shard: " + (int)shardKey);
             System.out.println("      Timestamp: " + new LocalDateTime(timestamp) + " - " + timestamp);
             System.out.println("HBase timestamp: " + new LocalDateTime(hbaseTimestamp) + " - " + hbaseTimestamp);
             System.out.println("          Seqnr: " + seqNr);
