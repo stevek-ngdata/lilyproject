@@ -121,9 +121,11 @@ public class RowLogSetup {
         RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
 
         // Start the message queue processor
-        boolean mqProcEnabled = rowLogConf.getChild("mqProcessor").getAttributeAsBoolean("enabled", true);
+        Conf mqProcessorConf = rowLogConf.getChild("mqProcessor");
+        boolean mqProcEnabled = mqProcessorConf.getAttributeAsBoolean("enabled", true);
         if (mqProcEnabled) {
-            RowLogProcessor processor = new RowLogProcessorImpl(messageQueue, confMgr, hbaseConf);
+            RowLogProcessorSettings settings = createProcessorSettings(mqProcessorConf);
+            RowLogProcessor processor = new RowLogProcessorImpl(messageQueue, confMgr, hbaseConf, settings);
             messageQueueProcessorLeader = new RowLogProcessorElection(zk, processor, lilyInfo);
             messageQueueProcessorLeader.start();
         } else {
@@ -139,9 +141,11 @@ public class RowLogSetup {
         }
 
         // Start the wal processor
-        boolean walProcEnabled = rowLogConf.getChild("walProcessor").getAttributeAsBoolean("enabled", true);
+        Conf walProcessorConf = rowLogConf.getChild("walProcessor");
+        boolean walProcEnabled = walProcessorConf.getAttributeAsBoolean("enabled", true);
         if (walProcEnabled) {
-            RowLogProcessor processor = new WalProcessor(writeAheadLog, confMgr, hbaseConf);
+            RowLogProcessorSettings settings = createProcessorSettings(walProcessorConf);
+            RowLogProcessor processor = new WalProcessor(writeAheadLog, confMgr, hbaseConf, settings);
             writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, processor, lilyInfo);
             // The WAL processor should only be started once the LinkIndexUpdater listener is available
             walProcessorStartupThread = new Thread(new DelayedWALProcessorStartup());
@@ -149,6 +153,17 @@ public class RowLogSetup {
         } else {
             log.info("Not participating in WAL processor election.");
         }
+    }
+
+    private RowLogProcessorSettings createProcessorSettings(Conf conf) {
+        RowLogProcessorSettings settings = new RowLogProcessorSettings();
+
+        settings.setMsgTimestampMargin(conf.getChild("messageTimestampMargin").
+                getValueAsInteger(RowLogProcessor.DEFAULT_MSG_TIMESTAMP_MARGIN));
+
+        settings.setScanThreadCount(conf.getChild("scanThreadCount").getValueAsInteger(-1));
+
+        return settings;
     }
 
     @PreDestroy

@@ -42,31 +42,27 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     protected final RowLog rowLog;
     protected final Map<String, SubscriptionThread> subscriptionThreads = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
     private RowLogConfigurationManager rowLogConfigurationManager;
-    private Log log = LogFactory.getLog(getClass());
+    private Log log = LogFactory.getLog(RowLogProcessorImpl.class);
     private long lastNotify = -1;
     private RowLogConfig rowLogConfig;
     private ThreadPoolExecutor globalQScanExecutor;
     private ScheduledExecutorService scheduledServices;
     private Configuration hbaseConf;
+    private RowLogProcessorSettings settings;
 
-    /*
-     * Maximum expected clock skew between servers. In fact this is not just pure clock skew, but also
-     * encompasses the delay between the moment of timestamp determination and actual insertion onto HBase.
-     * The higher the skew, the more put-delete pairs of past messages that HBase will have to scan over.
-     * The shorter the skew, the more chance messages will get stuck unprocessed, either due to clock skews
-     * or due to slow processing of the put on the global queue, such as in case of HBase region recovery.
-     * At the time of this writing, HBase checked this skew, allowing up to 30s:
-     * https://issues.apache.org/jira/browse/HBASE-3168
-     */
-    private static final int MAX_CLOCK_SKEW_BETWEEN_SERVERS = 120000; // 2 minutes
-    
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     
     public RowLogProcessorImpl(RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
             final Configuration hbaseConf) {
+        this(rowLog, rowLogConfigurationManager, hbaseConf, new RowLogProcessorSettings());
+    }
+
+    public RowLogProcessorImpl(RowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
+            final Configuration hbaseConf, RowLogProcessorSettings settings) {
         this.rowLog = rowLog;
         this.rowLogConfigurationManager = rowLogConfigurationManager;
         this.hbaseConf = hbaseConf;
+        this.settings = settings;
     }
 
     @Override
@@ -123,7 +119,10 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     private int getScanThreadCount(int regionServerCnt) {
-        // TODO should become configurable
+        if (settings.getScanThreadCount() > 0) {
+            return settings.getScanThreadCount();
+        }
+
         // Use up to 3 requests per region server (on average).
         // Lily-specific note: keep in mind that there are 2 rowlog processors (one for MQ, one for the WAL), so
         // there could be up to twice this number of threads in a server! (though not necessarily, both may be
@@ -408,7 +407,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 // If on startup of this processor, we have no messages, we initialize the
                                 // minimalTimestamp manually so that we would not always scan from the start
                                 // of the table.
-                                minimalTimestamp = tsBeforeGetMessages - MAX_CLOCK_SKEW_BETWEEN_SERVERS;
+                                minimalTimestamp = tsBeforeGetMessages - settings.getMsgTimestampMargin();
 
                                 if (log.isDebugEnabled()) {
                                     log.debug(String.format("[%1$s - %2$s] On initial scan, got no messages from HBase, " +
@@ -419,7 +418,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
                         metrics.messagesPerScan.inc(messages != null ? messages.size() : 0);
 						if (messages != null && !messages.isEmpty()) {
-						    minimalTimestamp = messages.get(0).getTimestamp() - MAX_CLOCK_SKEW_BETWEEN_SERVERS;
+						    minimalTimestamp = messages.get(0).getTimestamp() - settings.getMsgTimestampMargin();
                             for (RowLogMessage message : messages) {
                                 if (stopRequested)
                                     return;

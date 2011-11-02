@@ -1,6 +1,5 @@
 package org.lilyproject.rowlog.impl;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -25,6 +24,10 @@ public class WalProcessor extends RowLogProcessorImpl {
         super(rowLog, rowLogConfigurationManager, hbaseConf);
     }
 
+    public WalProcessor(WalRowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
+            Configuration hbaseConf, RowLogProcessorSettings settings) {
+        super(rowLog, rowLogConfigurationManager, hbaseConf, settings);
+    }
 
     /**
      * Instead of creating SubscriptionThread for each subscription, only one SubscriptionThread is created for the

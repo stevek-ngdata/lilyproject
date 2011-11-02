@@ -26,6 +26,8 @@ import java.util.List;
  * So, one RowLogProcessor should be started for each registered {@link RowLogShard}.
  */
 public interface RowLogProcessor {
+    public static final int DEFAULT_MSG_TIMESTAMP_MARGIN = 120000;
+
     /**
      * Starts the RowLogProcessor. The execution should start in a separate thread, and the start call should return immediately. 
      * @throws InterruptedException 
