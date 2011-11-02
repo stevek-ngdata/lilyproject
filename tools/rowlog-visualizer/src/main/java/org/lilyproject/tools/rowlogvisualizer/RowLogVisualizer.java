@@ -2,6 +2,7 @@ package org.lilyproject.tools.rowlogvisualizer;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
@@ -17,6 +18,8 @@ import org.lilyproject.util.hbase.LilyHBaseSchema;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+
 public class RowLogVisualizer extends BaseZkCliTool {
 
     private static final byte[] MESSAGES_CF = Bytes.toBytes("messages");
@@ -28,6 +31,8 @@ public class RowLogVisualizer extends BaseZkCliTool {
     private byte[] executionStatePrefix;
     private byte[] payloadPrefix;
 
+    private Option rowlogIdOption;
+
     @Override
     protected String getCmdName() {
         return "lily-show-rowlog";
@@ -36,6 +41,14 @@ public class RowLogVisualizer extends BaseZkCliTool {
     @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
+
+        rowlogIdOption = OptionBuilder
+                .withArgName("id")
+                .hasArg()
+                .withDescription("Rowlog id: mq (default) or wal")
+                .withLongOpt("id")
+                .create("id");
+        options.add(rowlogIdOption);
 
         return options;
     }
@@ -53,15 +66,24 @@ public class RowLogVisualizer extends BaseZkCliTool {
         Configuration hbaseConf = HBaseConfiguration.create();
         hbaseConf.set("hbase.zookeeper.quorum", zkConnectionString);
 
-        HTableInterface rowlogTable = new HTable(hbaseConf, "rowlog-mq");
+        String rowLogId = "mq";
+        if (cmd.hasOption(rowlogIdOption.getOpt())) {
+            rowLogId = cmd.getOptionValue(rowlogIdOption.getOpt());
+            if (!rowLogId.equals("mq") && !rowLogId.equals("wal")) {
+                System.err.println("Unsupported rowlog id: " + rowLogId);
+                return -1;
+            }
+        }
+
+        HTableInterface rowlogTable = new HTable(hbaseConf, "rowlog-" + rowLogId);
         HTableInterface recordsTable = new HTable(hbaseConf, "record");
 
         IdGenerator idGenerator = new IdGeneratorImpl();
 
         // General parameters
-        byte rowLogId = LilyHBaseSchema.RecordColumn.MQ_PREFIX;
-        this.executionStatePrefix = new byte[] {rowLogId, ES_BYTE};
-        this.payloadPrefix = new byte[] {rowLogId, PL_BYTE};
+        byte rowLogIdByte = rowLogId.equals("mq") ? RecordColumn.MQ_PREFIX : RecordColumn.WAL_PREFIX;
+        this.executionStatePrefix = new byte[] {rowLogIdByte, ES_BYTE};
+        this.payloadPrefix = new byte[] {rowLogIdByte, PL_BYTE};
         byte[] rowLogColumnFamily = LilyHBaseSchema.RecordCf.ROWLOG.bytes;
 
         //
