@@ -50,8 +50,9 @@ public interface RowLogShard {
      * @throws RowLogException when an unexpected exception occurs
      */
     void removeMessage(RowLogMessage message, String subscription) throws RowLogException;
-    
-    
+
+    void flushMessageDeleteBuffer() throws RowLogException;
+
     /**
      * Retrieves the next messages to be processed by the indicated subscription.
      * 

@@ -97,11 +97,11 @@ public class RowLogShardImpl implements RowLogShard {
             messagesToDelete.add(new Delete(createRowKey(message, subscription)));
         }
         if (messagesToDelete.size() >= batchSize || (lastDelete + 300000 < System.currentTimeMillis())) {
-            deleteMessages();
+            flushMessageDeleteBuffer();
         }
     }
 
-    private void deleteMessages() throws RowLogException {
+    public void flushMessageDeleteBuffer() throws RowLogException {
         List<Delete> deletes = null;
         synchronized (messagesToDelete) {
             if (!messagesToDelete.isEmpty()) {
@@ -126,7 +126,7 @@ public class RowLogShardImpl implements RowLogShard {
     @Override
     public List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException {
         // Before collecting a new batch of messages, any outstanding deletes are executed first. 
-        deleteMessages();
+        flushMessageDeleteBuffer();
         byte[] rowPrefix = Bytes.add(rowKeyPrefix, Bytes.toBytes(subscription), END_OF_SUBSCRIPTION_NAME_MARKER);
         byte[] startRow = rowPrefix;
         if (minimalTimestamp != null) 
