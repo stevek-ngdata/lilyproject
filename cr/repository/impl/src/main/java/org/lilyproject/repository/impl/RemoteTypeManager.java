@@ -18,7 +18,6 @@ package org.lilyproject.repository.impl;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PreDestroy;
@@ -260,17 +259,12 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     }
 
     @Override
-    public List<TypeBucket> getTypeBucketsWithoutCache(List<String> bucketIds) throws RepositoryException,
+    public TypeBucket getTypeBucketWithoutCache(String bucketId) throws RepositoryException,
             InterruptedException {
         try {
 
-            List<AvroTypeBucket> avroTypeBuckets = lilyProxy.getTypeBucketsWithoutCache(converter
-                    .convertStrings(bucketIds));
-            List<TypeBucket> typeBuckets = new ArrayList<TypeBucket>(avroTypeBuckets.size());
-            for (AvroTypeBucket avroTypeBucket : avroTypeBuckets) {
-                typeBuckets.add(converter.convertAvroTypeBucket(avroTypeBucket));
-            }
-            return typeBuckets;
+            AvroTypeBucket avroTypeBucket = lilyProxy.getTypeBucketWithoutCache(bucketId);
+            return converter.convertAvroTypeBucket(avroTypeBucket);
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {

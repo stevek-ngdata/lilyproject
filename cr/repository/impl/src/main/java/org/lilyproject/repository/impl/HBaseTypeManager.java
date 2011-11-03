@@ -76,6 +76,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     @Override
     @PreDestroy
     public void close() throws IOException {
+        schemaCache.close();
     }
     
     @Override
@@ -846,51 +847,45 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
     }
 
     @Override
-    public List<TypeBucket> getTypeBucketsWithoutCache(List<String> bucketIds)
-            throws RepositoryException, InterruptedException {
-        List<TypeBucket> typeBuckets = new ArrayList<TypeBucket>();
+    public TypeBucket getTypeBucketWithoutCache(String bucketId) throws RepositoryException, InterruptedException {
+        Scan scan = new Scan();
+        // With 20000 types, each bucket will have around 80 rows
+        // Putting the cache size to 50 or 100 seems to slow things down
+        // significantly.
+        scan.setCaching(10);
+        // Field type columns
+        scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes);
+        scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes);
+        scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes);
+        // Record type columns
+        scan.addColumn(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
+        scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
+        scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
+        scan.addFamily(TypeCf.MIXIN.bytes);
 
-
-        for (String bucketId : bucketIds) {
-            Scan scan = new Scan();
-            scan.setCaching(10);
-            // Field type columns
-            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes);
-            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes);
-            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_SCOPE.bytes);
-            // Record type columns
-            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes);
-            scan.addColumn(TypeCf.DATA.bytes, TypeColumn.VERSION.bytes);
-            scan.addFamily(TypeCf.FIELDTYPE_ENTRY.bytes);
-            scan.addFamily(TypeCf.MIXIN.bytes);
-
-            TypeBucket typeBucket = new TypeBucket(bucketId);
-            ResultScanner scanner = null;
-            try {
-                byte[] rowPrefix = AbstractSchemaCache.decodeHexAndNextHex(bucketId);
-                scan.setStartRow(new byte[] { rowPrefix[0] });
-                if (!bucketId.equals("ff")) // In case of ff, just scan until
-                                            // the end
-                    scan.setStopRow(new byte[] { rowPrefix[1] });
-                scanner = getTypeTable().getScanner(scan);
-                for (Result scanResult : scanner) {
-                    if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
-                        typeBucket.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
-                    } else {
-                        typeBucket.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
-                    }
+        TypeBucket typeBucket = new TypeBucket(bucketId);
+        ResultScanner scanner = null;
+        try {
+            byte[] rowPrefix = AbstractSchemaCache.decodeHexAndNextHex(bucketId);
+            scan.setStartRow(new byte[] { rowPrefix[0] });
+            if (!bucketId.equals("ff")) // In case of ff, just scan until
+                // the end
+                scan.setStopRow(new byte[] { rowPrefix[1] });
+            scanner = getTypeTable().getScanner(scan);
+            for (Result scanResult : scanner) {
+                if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
+                    typeBucket.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
+                } else {
+                    typeBucket.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
                 }
-            } catch (IOException e) {
-                throw new TypeException(
-                        "Exception occurred while retrieving field types and record types without cache ", e);
-            } finally {
-                Closer.close(scanner);
             }
-            typeBuckets.add(typeBucket);
+        } catch (IOException e) {
+            throw new TypeException("Exception occurred while retrieving field types and record types without cache ",
+                    e);
+        } finally {
+            Closer.close(scanner);
         }
-
-        return typeBuckets;
-
+        return typeBucket;
     }
 
     public static byte[] encodeName(QName qname) {

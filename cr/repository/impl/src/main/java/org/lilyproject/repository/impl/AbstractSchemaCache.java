@@ -171,15 +171,15 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         recordTypes.update(recordType);
     }
 
-    public synchronized Collection<RecordType> getRecordTypes() {
+    public Collection<RecordType> getRecordTypes() {
         return recordTypes.getRecordTypes();
     }
 
-    public synchronized RecordType getRecordType(QName name) {
+    public RecordType getRecordType(QName name) {
         return recordTypes.getRecordType(name);
     }
 
-    public synchronized RecordType getRecordType(SchemaId id) {
+    public RecordType getRecordType(SchemaId id) {
         return recordTypes.getRecordType(id);
     }
 
@@ -217,7 +217,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      * Refresh the caches and put the cacheWatcher again on the cache
      * invalidation zookeeper-node.
      */
-    private synchronized void refreshAll() throws InterruptedException, RepositoryException {
+    private void refreshAll() throws InterruptedException, RepositoryException {
         if (log.isDebugEnabled())
             log.debug("Refreshing all types in the schema cache");
 
@@ -241,20 +241,25 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             // Relying on the ConnectionWatcher to put it again and
             // initialize the caches.
         }
-        Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getTypesWithoutCache();
-        fieldTypesCache.refreshFieldTypes(types.getV1());
-        updatedFieldTypes = true;
-        recordTypes.refreshRecordTypes(types.getV2());
+        // Avoid updating the cache while refreshing
+        synchronized (this) {
+            Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getTypesWithoutCache();
+            fieldTypesCache.refreshFieldTypes(types.getV1());
+            updatedFieldTypes = true;
+            recordTypes.refreshRecordTypes(types.getV2());
+        }
     }
 
     /**
      * Refresh the caches for the buckets identified by the watchers and put the
      * cacheWatcher again on the cache invalidation zookeeper-node.
      */
-    private synchronized void refresh(Set<CacheWatcher> watchers) throws InterruptedException, RepositoryException {
-        List<String> buckets = new ArrayList<String>(watchers.size());
+    private void refresh(Set<CacheWatcher> watchers) throws InterruptedException, RepositoryException {
+        // Only update one bucket at a time
+        // Meanwhile updates on the other buckets could happen.
+        // Since the watchers for those other buckets are not set back again
+        // this will not trigger extra refreshes.
         for (CacheWatcher watcher : watchers) {
-            buckets.add(watcher.getBucket());
             try {
                 zooKeeper.getData(bucketPath(watcher.getBucket()), watcher, null);
             } catch (KeeperException e) {
@@ -262,14 +267,17 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 // Relying on the ConnectionWatcher to put it again and
                 // initialize the caches.
             }
-        }
-        if (log.isDebugEnabled())
-            log.debug("Refreshing schema cache buckets: " + Arrays.toString(buckets.toArray()));
+            if (log.isDebugEnabled())
+                log.debug("Refreshing schema cache bucket: " + watcher.getBucket());
 
-        List<TypeBucket> typeBuckets = getTypeManager().getTypeBucketsWithoutCache(buckets);
-        fieldTypesCache.refreshFieldTypeBuckets(typeBuckets);
-        updatedFieldTypes = true;
-        recordTypes.refreshRecordTypeBuckets(typeBuckets);
+            // Avoid updating the cache while refreshing the buckets
+            synchronized (this) {
+                TypeBucket typeBucket = getTypeManager().getTypeBucketWithoutCache(watcher.getBucket());
+                fieldTypesCache.refreshFieldTypeBucket(typeBucket);
+                updatedFieldTypes = true;
+                recordTypes.refreshRecordTypeBucket(typeBucket);
+            }
+        }
     }
 
     /**

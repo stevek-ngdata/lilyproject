@@ -382,11 +382,9 @@
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
         
-    "getTypeBucketsWithoutCache": {
-      "request": [
-        {"name": "rowPrefixes", "type": [{"type": "array", "items": "string"}, "null"]}
-      ],
-      "response": {"type": "array", "items": "AvroTypeBucket"},
+    "getTypeBucketWithoutCache": {
+      "request": [{"name": "bucketId", "type": "string"}],
+      "response": "AvroTypeBucket",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
     

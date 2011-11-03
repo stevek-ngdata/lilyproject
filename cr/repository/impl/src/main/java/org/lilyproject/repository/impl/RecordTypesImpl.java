@@ -67,13 +67,9 @@ public class RecordTypesImpl {
         }
     }
 
-    public synchronized void refreshRecordTypeBuckets(List<TypeBucket> typeBuckets) {
-        for (TypeBucket typeBucket : typeBuckets) {
-            refresh(typeBucket.getBucketId(), typeBucket.getRecordTypes());
-        }
-    }
-
-    public synchronized void refresh(String bucketId, List<RecordType> recordTypes) {
+    public synchronized void refreshRecordTypeBucket(TypeBucket typeBucket) {
+        String bucketId = typeBucket.getBucketId();
+        List<RecordType> recordTypes = typeBucket.getRecordTypes();
         Map<SchemaId, RecordType> newBucket = new HashMap<SchemaId, RecordType>(recordTypes.size());
         Map<SchemaId, RecordType> oldBucket = buckets.get(bucketId);
         if (oldBucket == null) {

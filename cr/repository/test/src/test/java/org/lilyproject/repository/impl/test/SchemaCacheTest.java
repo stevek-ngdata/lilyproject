@@ -29,6 +29,7 @@ import org.lilyproject.repotestfw.RepositorySetup;
 public class SchemaCacheTest {
     private static final RepositorySetup repoSetup = new RepositorySetup();
 
+    private List<TypeManager> typeManagersToClose = new ArrayList<TypeManager>();
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
@@ -47,27 +48,33 @@ public class SchemaCacheTest {
 
     @After
     public void tearDown() throws Exception {
+        for (TypeManager typeManager : typeManagersToClose) {
+            typeManager.close();
+        }
+        typeManagersToClose.clear();
     }
-
-
 
     @Test
     public void testRefresh() throws Exception {
         String namespace = "testRefresh";
         TypeManager typeManager = repoSetup.getTypeManager();
         TypeManager typeManager2 = repoSetup.getNewTypeManager();
+        typeManagersToClose.add(typeManager2);
 
         RecordType recordType1 = typeManager.recordTypeBuilder().defaultNamespace(namespace).name("recordType1")
                 .fieldEntry().defineField().name("type1").create().add().create();
 
-        Assert.assertEquals(recordType1, typeManager2.getRecordTypeByName(new QName(namespace, "recordType1"), null));
+        RecordType rt = waitForRecordType(1000, new QName(namespace, "recordType1"), typeManager2);
+        Assert.assertEquals(recordType1, rt);
     }
+
 
     @Test
     public void testDisableRefresh() throws Exception {
         String namespace = "testDisableRefresh";
         TypeManager typeManager = repoSetup.getTypeManager();
         TypeManager typeManager2 = repoSetup.getNewTypeManager();
+        typeManagersToClose.add(typeManager2);
 
         // Disable the cache refreshing
         typeManager.disableSchemaCacheRefresh();
@@ -92,10 +99,7 @@ public class SchemaCacheTest {
         // Force a cache refresh
         typeManager.triggerSchemaCacheRefresh();
 
-        // Give all caches time to refresh
-        Thread.sleep(1000);
-
-        Assert.assertEquals(recordType1, typeManager2.getRecordTypeByName(new QName(namespace, "recordType1"), null));
+        Assert.assertEquals(recordType1, waitForRecordType(5000, new QName(namespace, "recordType1"), typeManager2));
 
         RecordType recordType2 = typeManager.recordTypeBuilder().defaultNamespace(namespace).name("recordType2")
                 .fieldEntry().defineField().name("type2").create().add().create();
@@ -112,15 +116,15 @@ public class SchemaCacheTest {
         // Assert that the record type created before enabling the cache
         // refreshing
         // is now seen. i.e. the cache of typeManager2 is refreshed
-        Assert.assertEquals(recordType2, typeManager2.getRecordTypeByName(new QName(namespace, "recordType2"), null));
+        Assert.assertEquals(recordType2, waitForRecordType(5000, new QName(namespace, "recordType2"), typeManager2));
 
         RecordType recordType3 = typeManager.recordTypeBuilder().defaultNamespace(namespace).name("recordType3")
                 .fieldEntry().defineField().name("type3").create().add().create();
-        Assert.assertEquals(recordType3, typeManager2.getRecordTypeByName(new QName(namespace, "recordType3"), null));
+        Assert.assertEquals(recordType3, waitForRecordType(5000, new QName(namespace, "recordType3"), typeManager2));
     }
 
     // This test is mainly introduced to do some JProfiling
-    // @Test
+    @Test
     public void testManyTypeManagers() throws Exception {
         String namespace = "testManyTypeManagers";
         final List<TypeManager> typeManagers = new ArrayList<TypeManager>();
@@ -142,6 +146,7 @@ public class SchemaCacheTest {
         for (Thread thread : typeManagerThreads) {
             thread.join();
         }
+        typeManagersToClose.addAll(typeManagers);
 
         Thread.sleep(1000);
 
@@ -155,32 +160,75 @@ public class SchemaCacheTest {
         }
         // Give all caches time to refresh
         typeManagers.get(0).enableSchemaCacheRefresh();
-        Thread.sleep(1000);
 
         for (TypeManager typeManager : typeManagers) {
-            Assert
-                    .assertEquals(recordType, typeManager.getRecordTypeByName(new QName(namespace, "recordType99"),
-                            null));
+            Assert.assertEquals(recordType, waitForRecordType(5000, new QName(namespace, "recordType99"), typeManager));
         }
-
     }
 
     // This test is introduced to do some profiling
-    // @Test
+    @Test
     public void testManyTypesSameCache() throws Exception {
         String namespace = "testManyTypesSameCache";
         TypeManager typeManager = repoSetup.getTypeManager();
 
+        long total = 0;
+        int iterations = 10;
+        int nrOfTypes = 100; // Set to a low number to reduce automated test
+                             // time
+        for (int i = 0; i < iterations; i++) {
+            long before = System.currentTimeMillis();
+            for (int j = 0; j < nrOfTypes; j++) {
+                typeManager.recordTypeBuilder().defaultNamespace(namespace).name("recordType" + (i * nrOfTypes + j))
+                        .fieldEntry().defineField().name("fieldType" + (i * nrOfTypes + j)).create().add().create();
+            }
+            long duration = (System.currentTimeMillis() - before);
+            total += duration;
+            System.out.println(i + " :Creating " + nrOfTypes + " record types and " + nrOfTypes + " field types took: "
+                    + duration);
+        }
+        System.out.println("Creating " + (iterations * nrOfTypes) + " record types and " + (iterations * nrOfTypes)
+                + " field types took: " + total);
+
+        // Make sure all types are known by the typeManager
+        for (int i = 0; i < iterations * nrOfTypes; i++) {
+            typeManager.getFieldTypeByName(new QName(namespace, "fieldType" + i));
+            typeManager.getRecordTypeByName(new QName(namespace, "recordType" + i), null);
+        }
+
         long before = System.currentTimeMillis();
-        for (int i = 0; i < 10000; i++) {
-            typeManager.recordTypeBuilder().defaultNamespace(namespace).name("recordType" + i).fieldEntry()
-                    .defineField().name("fieldType" + i).create().add().create();
+        for (int i = 0; i < 5; i++) {
+            typeManager.recordTypeBuilder().defaultNamespace(namespace).name("extraRecordType" + i).fieldEntry()
+                    .defineField().name("extraFieldType" + i).create().add().create();
         }
-        System.out.println("Creating 10000 record types and 10000 field types took: "
+        System.out.println("Creating 5 extra record types and 5 extra field types took: "
                 + (System.currentTimeMillis() - before));
-        for (int j = 0; j < 10000; j++) {
-            typeManager.getFieldTypeByName(new QName(namespace, "fieldType" + j));
-            typeManager.getRecordTypeByName(new QName(namespace, "recordType" + j), null);
-        }
     }
+
+    private RecordType waitForRecordType(long timeout, QName name, TypeManager typeManager2)
+            throws RepositoryException, InterruptedException {
+        long before = System.currentTimeMillis();
+        while (System.currentTimeMillis() < before + timeout) {
+            try {
+                return typeManager2.getRecordTypeByName(name, null);
+            } catch (RecordTypeNotFoundException e) {
+                // continue
+            }
+        }
+        throw new RecordTypeNotFoundException(name, null);
+    }
+
+    private FieldType waitForFieldType(long timeout, QName name, TypeManager typeManager2) throws RepositoryException,
+            InterruptedException {
+        long before = System.currentTimeMillis();
+        while (System.currentTimeMillis() < before + timeout) {
+            try {
+                return typeManager2.getFieldTypeByName(name);
+            } catch (FieldTypeNotFoundException e) {
+                // continue
+            }
+        }
+        throw new FieldTypeNotFoundException(name);
+    }
+
 }

@@ -67,6 +67,7 @@ public class RepositorySetup {
 
     private long hbaseBlobLimit = -1;
     private long inlineBlobLimit = -1;
+    private RemoteTestSchemaCache remoteSchemaCache;
 
     public void setupCore() throws Exception {
         if (coreSetup)
@@ -161,10 +162,10 @@ public class RepositorySetup {
 
         AvroConverter remoteConverter = new AvroConverter();
 
-        RemoteTestSchemaCache schemaCache = new RemoteTestSchemaCache(zk);
+        remoteSchemaCache = new RemoteTestSchemaCache(zk);
         remoteTypeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                idGenerator, zk, schemaCache);
-        schemaCache.setTypeManager(remoteTypeManager);
+                idGenerator, zk, remoteSchemaCache);
+        remoteSchemaCache.setTypeManager(remoteTypeManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
@@ -174,7 +175,7 @@ public class RepositorySetup {
 
         remoteConverter.setRepository(repository);
         remoteTypeManager.start();
-        schemaCache.start();
+        remoteSchemaCache.start();
 
     }
 
@@ -224,6 +225,7 @@ public class RepositorySetup {
             mqProcessor.stop();
 
         Closer.close(remoteTypeManager);
+        Closer.close(remoteSchemaCache);
         Closer.close(remoteRepository);
 
         Closer.close(typeManager);
