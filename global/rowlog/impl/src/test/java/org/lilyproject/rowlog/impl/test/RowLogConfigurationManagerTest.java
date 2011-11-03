@@ -289,9 +289,7 @@ public class RowLogConfigurationManagerTest {
     @Test
     public void testProcessorNotify() throws Exception {
     	String rowLogId = "testProcessorNotifyRowLogId";
-    	String shardId1 = "testProcessorNotifyShardId1";
-    	String shardId2 = "testProcessorNotifyShardId2";
-    	
+
         // Initialize
         RowLogConfigurationManagerImpl rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
 
@@ -301,20 +299,20 @@ public class RowLogConfigurationManagerTest {
         // Add observers and expect an initial notify
         callBack1.expect(true);
         callBack2.expect(false);
-        rowLogConfigurationManager.addProcessorNotifyObserver(rowLogId, shardId1, callBack1);
+        rowLogConfigurationManager.addProcessorNotifyObserver(rowLogId, callBack1);
         callBack1.validate();
         callBack2.validate();
 
         callBack1.expect(false);
         callBack2.expect(true);
-        rowLogConfigurationManager.addProcessorNotifyObserver(rowLogId, shardId2, callBack2);
+        rowLogConfigurationManager.addProcessorNotifyObserver("someOtherRowLogId", callBack2);
         callBack1.validate();
         callBack2.validate();
 
         // Notify one processor
         callBack1.expect(true);
         callBack2.expect(false);
-        rowLogConfigurationManager.notifyProcessor(rowLogId, shardId1);
+        rowLogConfigurationManager.notifyProcessor(rowLogId);
         callBack1.validate();
         callBack2.validate();
     }

@@ -143,10 +143,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     private void initializeNotifyObserver() {
-        // TODO probably shouldn't do this per-shard?
-        for (RowLogShard shard : rowLog.getShards()) {
-            rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), shard.getId(), this);
-        }
+        rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), this);
     }
 
     protected void initializeSubscriptions() {
@@ -245,7 +242,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
     private void stopNotifyObserver() {
         for (RowLogShard shard : rowLog.getShards()) {
-            rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), shard.getId());
+            rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId());
         }
     }
 

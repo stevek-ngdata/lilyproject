@@ -275,7 +275,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             }
 
             if (rowLogConfig.isEnableNotify()) {
-                processorNotifier.notifyProcessor(id, getShard(message).getId());
+                processorNotifier.notifyProcessor(id);
             }
             return message;
         } catch (IOException e) {
@@ -602,7 +602,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return rowLocker.delete(delete, rowLock);
     }
     
-    // For now we work with only one shard
     protected RowLogShard getShard(RowLogMessage message) throws RowLogException {
         int shardIndex = shardRouter.getShard(message);
         return shards.get(shardIndex);
