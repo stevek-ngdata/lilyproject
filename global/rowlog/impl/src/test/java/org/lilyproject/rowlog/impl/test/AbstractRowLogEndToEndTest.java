@@ -30,8 +30,11 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-public abstract class
-        AbstractRowLogEndToEndTest {
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+
+public abstract class AbstractRowLogEndToEndTest {
     protected static HBaseProxy HBASE_PROXY;
     protected static RowLog rowLog;
     protected static RowLogProcessor processor;
@@ -84,8 +87,6 @@ public abstract class
         validationListener.validate();
     }
 
-    /*
-    TODO disabled this test temporarily as it refers directly to a shard
     @Test(timeout=150000)
     public void testRemovalFromShardFailed() throws Exception {
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
@@ -95,7 +96,11 @@ public abstract class
         validationListener.waitUntilMessagesConsumed(120000);
         processor.stop();
         validationListener.validate();
-        
+
+        List<RowLogShard> shards = rowLog.getShardList().getShards();
+        assertEquals(1, shards.size());
+        RowLogShard shard = shards.get(0);
+
         shard.putMessage(message);
         Assert.assertFalse(shard.next(subscriptionId).isEmpty());
         processor.start();
@@ -103,7 +108,6 @@ public abstract class
         processor.stop();
         Assert.assertTrue("The message should have been cleaned up since it was already processed",shard.next(subscriptionId).isEmpty());
     }
-     */
 
     @Test(timeout=150000)
     public void testAtomicMessage() throws Exception {

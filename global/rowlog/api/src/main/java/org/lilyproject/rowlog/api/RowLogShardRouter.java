@@ -5,5 +5,5 @@ import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogShardList;
 
 public interface RowLogShardRouter {
-    RowLogShard getShard(RowLogMessage message, RowLogShardList shardList);
+    RowLogShard getShard(RowLogMessage message, RowLogShardList shardList) throws RowLogException;
 }
