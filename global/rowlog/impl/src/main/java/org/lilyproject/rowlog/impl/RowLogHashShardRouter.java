@@ -1,17 +1,18 @@
 package org.lilyproject.rowlog.impl;
 
 import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogShard;
+import org.lilyproject.rowlog.api.RowLogShardList;
+import org.lilyproject.rowlog.api.RowLogShardRouter;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
-public class RowLogShardRouter {
-    private int shardCount;
+public class RowLogHashShardRouter implements RowLogShardRouter {
     private final MessageDigest mdAlgorithm;
 
-    public RowLogShardRouter(int shardCount) {
-        this.shardCount = shardCount;
-
+    public RowLogHashShardRouter() {
         try {
             mdAlgorithm = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
@@ -19,10 +20,14 @@ public class RowLogShardRouter {
         }
     }
 
-    public int getShard(RowLogMessage message) {
+    public RowLogShard getShard(RowLogMessage message, RowLogShardList shardList) {
+        List<RowLogShard> shards = shardList.getShards();
+        if (shards.isEmpty()) {
+            throw new IllegalStateException("There are not rowlog shards registered.");
+        }
         long hash = hash(message.getRowKey());
-        int selectedShard = (int)(hash % shardCount);
-        return selectedShard;
+        int selectedShard = (int)(hash % shards.size());
+        return shards.get(selectedShard);
     }
 
     private long hash(byte[] rowKey) {
@@ -36,4 +41,5 @@ public class RowLogShardRouter {
             throw new RuntimeException(e);
         }
     }
+
 }

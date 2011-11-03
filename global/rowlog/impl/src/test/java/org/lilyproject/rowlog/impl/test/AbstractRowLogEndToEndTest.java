@@ -59,7 +59,8 @@ public abstract class
         // The orphanedMessageDelay is smaller than usual on purpose, since some tests wait on this cleanup
         rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(true, true, 100L, 0L, 5000L, 5000L));
         rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.ROWLOG_COLUMN_FAMILY,
-                (byte)1, rowLogConfigurationManager, null, new HBaseTableFactoryImpl(configuration));
+                (byte)1, rowLogConfigurationManager, null, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(1, rowLog, new HBaseTableFactoryImpl(configuration));
         processor = new RowLogProcessorImpl(rowLog, rowLogConfigurationManager, configuration);
     }    
     

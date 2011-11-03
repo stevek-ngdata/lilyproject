@@ -79,6 +79,11 @@ public class DummyRowLog implements RowLog {
     }
 
     @Override
+    public RowLogShardList getShardList() {
+        throw new RuntimeException(failMessage);
+    }
+
+    @Override
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }

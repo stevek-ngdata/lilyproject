@@ -83,6 +83,11 @@ public class ManualProcessRowLog implements RowLog {
     }
 
     @Override
+    public RowLogShardList getShardList() {
+        return delegate.getShardList();
+    }
+
+    @Override
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
         return delegate.isMessageAvailable(message, subscriptionId);
     }

@@ -125,10 +125,12 @@ public class RowLogSetup {
         int shardCount = rowLogConf.getChild("shardCount").getValueAsInteger();
 
         messageQueue = new RowLogImpl("mq", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.MQ_PREFIX, confMgr, null, hbaseTableFactory, shardCount);
+                RecordColumn.MQ_PREFIX, confMgr, null, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(shardCount, messageQueue, hbaseTableFactory);
 
         writeAheadLog = new WalRowLog("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.WAL_PREFIX, confMgr, rowLocker, hbaseTableFactory, shardCount);
+                RecordColumn.WAL_PREFIX, confMgr, rowLocker, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(shardCount, writeAheadLog, hbaseTableFactory);
 
         RowLogMessageListenerMapping.INSTANCE.put(WalListener.ID, new WalListener(writeAheadLog, rowLocker));
         RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));

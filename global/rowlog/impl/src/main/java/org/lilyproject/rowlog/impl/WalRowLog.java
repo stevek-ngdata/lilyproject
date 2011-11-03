@@ -8,7 +8,6 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
-import org.lilyproject.util.hbase.HBaseTableFactory;
 
 /**
  * The WalRowLog is an optimized version of the RowLog for the WAL use case. 
@@ -29,16 +28,9 @@ public class WalRowLog extends RowLogImpl {
     public static final String WAL_SUBSCRIPTIONID = "WAL";
 
     public WalRowLog(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
-            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker, HBaseTableFactory tableFactory)
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker, RowLogShardRouter shardRouter)
             throws InterruptedException, IOException {
-        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, tableFactory);
-    }
-    
-    public WalRowLog(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
-            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker, HBaseTableFactory tableFactory,
-            int shardCount)
-            throws InterruptedException, IOException {
-        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, tableFactory, shardCount);
+        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, shardRouter);
     }
 
     /**

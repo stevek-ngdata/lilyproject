@@ -35,6 +35,8 @@ import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
+import org.lilyproject.rowlog.impl.RowLogShardSetup;
 import org.lilyproject.rowlog.impl.WalRowLog;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
@@ -99,7 +101,8 @@ public class TutorialTest {
         HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(true, false, 0L, 5000L, 5000L, 120000L));
         wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker, hbaseTableFactory);
+                RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
     }
 
     @AfterClass

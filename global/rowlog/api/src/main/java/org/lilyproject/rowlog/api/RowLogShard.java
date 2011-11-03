@@ -28,7 +28,7 @@ public interface RowLogShard {
      * The id of a RowLogShard uniquely identifies a shard in the context of a {@link RowLog}
      */
     String getId();
-    
+
     /**
      * Puts a RowLogMessage onto the table.
      * 

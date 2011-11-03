@@ -163,6 +163,8 @@ public interface RowLog {
      */
     List<RowLogShard> getShards();
 
+    RowLogShardList getShardList();
+
     /**
      * Checks if a message is available for processing for a certain subscription.
      * <p>A message will not be available if it is either already done, 
