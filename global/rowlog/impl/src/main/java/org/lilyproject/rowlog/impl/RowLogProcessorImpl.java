@@ -112,7 +112,8 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     @Override
     public synchronized void stop() {
         stop = true;
-        scheduledServices.shutdownNow();
+        if (scheduledServices != null)
+            scheduledServices.shutdownNow();
         stopRowLogConfig();
         stopSubscriptions();
         stopNotifyObserver();
