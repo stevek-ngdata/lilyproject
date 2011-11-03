@@ -83,23 +83,25 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
             // Start the service that will monitor the number of region servers and adjust number
             // of scan threads accordingly
-            this.scheduledServices = Executors.newScheduledThreadPool(1);
-            this.scheduledServices.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        int regionServerCnt = HBaseAdminFactory.get(hbaseConf).getClusterStatus().getServers();
-                        int threadCnt = getScanThreadCount(regionServerCnt);
-                        if (globalQScanExecutor.getMaximumPoolSize() != threadCnt) {
-                            log.warn("Changing number of global queue scan threads to " + threadCnt);
-                            globalQScanExecutor.setMaximumPoolSize(threadCnt);
-                            globalQScanExecutor.setCorePoolSize(threadCnt);
+            if (settings.getScanThreadCount() < 1) {
+                this.scheduledServices = Executors.newScheduledThreadPool(1);
+                this.scheduledServices.scheduleWithFixedDelay(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            int regionServerCnt = HBaseAdminFactory.get(hbaseConf).getClusterStatus().getServers();
+                            int threadCnt = getScanThreadCount(regionServerCnt);
+                            if (globalQScanExecutor.getMaximumPoolSize() != threadCnt) {
+                                log.warn("Changing number of global queue scan threads to " + threadCnt);
+                                globalQScanExecutor.setMaximumPoolSize(threadCnt);
+                                globalQScanExecutor.setCorePoolSize(threadCnt);
+                            }
+                        } catch (Throwable t) {
+                            log.error("Error determining or adjusting global queue scan thread pool size", t);
                         }
-                    } catch (Throwable t) {
-                        log.error("Error determining or adjusting global queue scan thread pool size", t);
                     }
-                }
-            }, 5, 10, TimeUnit.MINUTES);
+                }, 5, 10, TimeUnit.MINUTES);
+            }
 
             initializeRowLogConfig();
             initializeSubscriptions();
