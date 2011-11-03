@@ -114,7 +114,7 @@ public class RowLogVisualizer extends BaseZkCliTool {
                 }
             }
 
-            String subscriptionName = new String(Bytes.head(rowkey, endOfPrefixPos + 1));
+            String subscriptionName = new String(Bytes.head(rowkey, endOfPrefixPos));
 
             // Copied from RowLogShardImpl.decodeMessage
             byte[] messageId = Bytes.tail(rowkey, rowkey.length - (endOfPrefixPos + 1));
