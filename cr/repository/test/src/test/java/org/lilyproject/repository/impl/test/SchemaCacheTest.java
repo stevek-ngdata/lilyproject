@@ -64,7 +64,7 @@ public class SchemaCacheTest {
         RecordType recordType1 = typeManager.recordTypeBuilder().defaultNamespace(namespace).name("recordType1")
                 .fieldEntry().defineField().name("type1").create().add().create();
 
-        RecordType rt = waitForRecordType(1000, new QName(namespace, "recordType1"), typeManager2);
+        RecordType rt = waitForRecordType(5000, new QName(namespace, "recordType1"), typeManager2);
         Assert.assertEquals(recordType1, rt);
     }
 
