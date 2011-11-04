@@ -18,9 +18,11 @@ package org.lilyproject.rowlog.api;
 import java.util.List;
 
 /**
- * A RowLogShard manages the actual RowLogMessages on a HBase table. It needs to be registered to a RowLog.
- * 
- * <p> This API will be changed so that the putMessage can be called once for all related subscriptions.
+ * A RowLogShard is a shard of the "global rowlog queue", that is the index that points to the rows
+ * that might have outstanding messages to be processed. The reason why this is sharded is explained
+ * over at {@link RowLog}.
+ *
+ * <p>A RowLogShard is added to the {@link RowLogShardList} obtained from {@link RowLog#getShardList()}</p>
  */
 public interface RowLogShard {
 
@@ -66,7 +68,7 @@ public interface RowLogShard {
      * Retrieves the next messages to be processed by the indicated subscription.
      * 
      * @param subscription the id of the subscription for which the next messages should be retrieved
-     * @param startTimestamp the minimal timestamp of the messages to be retrieved
+     * @param minimalTimestamp the minimal timestamp of the messages to be retrieved
      * @return the next {@link #getBatchSize}, or less {@link RowLogMessage}s to be processed
      * @throws RowLogException when an unexpected exception occurs
      */
