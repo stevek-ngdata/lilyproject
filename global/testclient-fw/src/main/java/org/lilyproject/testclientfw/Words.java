@@ -58,7 +58,7 @@ public class Words {
      * Returns a space-separated string containing the specified amount of words.
      */
     public static String get(WordList list, int amount) {
-        StringBuffer buffer = new StringBuffer(20 * amount);
+        StringBuilder buffer = new StringBuilder(20 * amount);
         for (int i = 0; i < amount; i++) {
             if (i > 0)
                 buffer.append(' ');

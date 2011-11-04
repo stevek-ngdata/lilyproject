@@ -50,7 +50,7 @@ public class Table {
     public void finishDefinition() {
         defined = true;
 
-        StringBuffer columnSepLine = new StringBuffer();
+        StringBuilder columnSepLine = new StringBuilder();
         columnSepLine.append('+');
         for (Column column : columns) {
             columnSepLine.append(repeat('-', column.width));
@@ -67,7 +67,7 @@ public class Table {
         inBetweenWidth -= 2;
         this.crossColumnLineFormat = "| %1$-" + inBetweenWidth + "." + inBetweenWidth + "s |\n";
 
-        StringBuffer columnFormat = new StringBuffer();
+        StringBuilder columnFormat = new StringBuilder();
         columnFormat.append('|');
         int i = 0;
         for (Column column : columns) {
@@ -110,7 +110,7 @@ public class Table {
     }
 
     public void titles() {
-        StringBuffer titleFormat = new StringBuffer();
+        StringBuilder titleFormat = new StringBuilder();
         titleFormat.append("|");
         for (int i = 0; i < columns.size(); i++) {
             Column column = columns.get(i);
@@ -129,7 +129,7 @@ public class Table {
     }
 
     private String repeat(char ch, int count) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < count; i++) {
             buffer.append(ch);
         }

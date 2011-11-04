@@ -183,7 +183,7 @@ public class MiniMRCluster {
       File localDirBase = 
         new File(conf.get("mapred.local.dir")).getAbsoluteFile();
       localDirBase.mkdirs();
-      StringBuffer localPath = new StringBuffer();
+      StringBuilder localPath = new StringBuilder();
       for(int i=0; i < numDir; ++i) {
         File ttDir = new File(localDirBase, 
                               Integer.toString(trackerId) + "_" + i);

@@ -227,7 +227,7 @@ public class PrintUtil {
     }
 
     private static void println(PrintStream out, int indent, String text) {
-        StringBuffer buffer = new StringBuffer(indent);
+        StringBuilder buffer = new StringBuilder(indent);
         for (int i = 0; i < indent; i++) {
             buffer.append(" ");
         }
