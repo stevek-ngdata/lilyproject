@@ -20,9 +20,11 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.collect.ComparisonChain;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlog.api.ProcessorNotifyObserver;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
@@ -126,11 +128,11 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             return settings.getScanThreadCount();
         }
 
-        // Use up to 3 requests per region server (on average).
+        // Use up to 2 requests per region server (on average).
         // Lily-specific note: keep in mind that there are 2 rowlog processors (one for MQ, one for the WAL), so
         // there could be up to twice this number of threads in a server! (though not necessarily, both may be
         // running on different servers)
-        int threads = regionServerCnt * 3;
+        int threads = regionServerCnt * 2;
 
         // at least one, at most 30
         threads = threads > 30 ? 30 : threads < 1 ? 1 : threads;
@@ -385,7 +387,11 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         Collections.sort(messages, new Comparator<RowLogMessage>() {
                             @Override
                             public int compare(RowLogMessage o1, RowLogMessage o2) {
-                                return (int)(o1.getTimestamp() - o2.getTimestamp());
+                                return ComparisonChain.start()
+                                        .compare(o1.getTimestamp(), o2.getTimestamp())
+                                        .compare(o1.getRowKey(), o2.getRowKey(), Bytes.BYTES_RAWCOMPARATOR)
+                                        .compare(o1.getSeqNr(), o2.getSeqNr())
+                                        .result();
                             }
                         });
 
