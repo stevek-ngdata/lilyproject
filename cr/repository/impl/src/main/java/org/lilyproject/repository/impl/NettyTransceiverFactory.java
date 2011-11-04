@@ -4,13 +4,14 @@ import org.apache.avro.ipc.NettyTransceiver;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.lilyproject.util.concurrent.NamedThreadFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 public class NettyTransceiverFactory {
 
-    public static NettyTransceiver create(InetSocketAddress address) {
+    public static NettyTransceiver create(InetSocketAddress address) throws IOException {
         return new NettyTransceiver(address, new NioClientSocketChannelFactory(
                 Executors.newCachedThreadPool(new DaemonThreadFactory(new NamedThreadFactory("avro-client-boss"))),
                 Executors.newCachedThreadPool(new DaemonThreadFactory(new NamedThreadFactory("avro-client-worker")))));
