@@ -224,8 +224,8 @@ public class RepositorySetup {
         if (mqProcessor != null)
             mqProcessor.stop();
 
-        Closer.close(remoteTypeManager);
         Closer.close(remoteSchemaCache);
+        Closer.close(remoteTypeManager);
         Closer.close(remoteRepository);
 
         Closer.close(typeManager);

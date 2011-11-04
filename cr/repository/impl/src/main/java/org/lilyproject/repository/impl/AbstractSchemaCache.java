@@ -17,6 +17,7 @@ package org.lilyproject.repository.impl;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.annotation.PreDestroy;
 
@@ -27,6 +28,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.data.Stat;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.Pair;
@@ -48,7 +50,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     private RecordTypesImpl recordTypes = new RecordTypesImpl();
 
     private Set<CacheWatcher> cacheWatchers = new HashSet<CacheWatcher>();
-    private AllCacheWatcher allCacheWatcher;
+    private Map<String, Integer> bucketVersions = new HashMap<String, Integer>();
+    private ParentWatcher parentWatcher = new ParentWatcher();
+    private Integer parentVersion = null;
 
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache/invalidate";
     protected static final String CACHE_REFRESHENABLED_PATH = "/lily/typemanager/cache/enabled";
@@ -63,6 +67,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      */
     private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
             'e', 'f' };
+    private ConnectionWatcher connectionWatcher;
 
     /**
      * Simplified version of {@link Hex#encodeHex(byte[])}
@@ -114,7 +119,6 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     public void start() throws InterruptedException, KeeperException, RepositoryException {
         ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
-        allCacheWatcher = new AllCacheWatcher();
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++) {
                 String bucket = "" + DIGITS_LOWER[i] + DIGITS_LOWER[j];
@@ -123,7 +127,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             }
         }
         ZkUtil.createPath(zooKeeper, CACHE_REFRESHENABLED_PATH);
-        zooKeeper.addDefaultWatcher(new ConnectionWatcher());
+        connectionWatcher = new ConnectionWatcher();
+        zooKeeper.addDefaultWatcher(connectionWatcher);
         readRefreshingEnabledState();
         refreshAll();
     }
@@ -132,9 +137,11 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         return CACHE_INVALIDATION_PATH + "/" + bucket;
     }
 
+    @Override
     @PreDestroy
     public void close() throws IOException {
         try {
+            zooKeeper.removeDefaultWatcher(connectionWatcher);
             cacheRefresher.stop();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -208,45 +215,88 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         // RemoteTypeManager
     }
 
-    protected void cacheInvalidationReconnected() throws InterruptedException, TypeException {
-        // Should only do something on the HBaseTypeManager, not on the
-        // RemoteTypeManager
-    }
-
     /**
      * Refresh the caches and put the cacheWatcher again on the cache
      * invalidation zookeeper-node.
      */
-    private void refreshAll() throws InterruptedException, RepositoryException {
-        if (log.isDebugEnabled())
-            log.debug("Refreshing all types in the schema cache");
+    private synchronized void refreshAll() throws InterruptedException, RepositoryException {
 
-        List<String> buckets = null;
-        // Set a watch again on all buckets
-        for (CacheWatcher watcher : cacheWatchers) {
-            try {
-                zooKeeper.getData(bucketPath(watcher.getBucket()), watcher, null);
-            } catch (KeeperException e) {
-                // Failed to put our watcher.
-                // Relying on the ConnectionWatcher to put it again and
-                // initialize the caches.
-            }
-        }
         // Set a watch on the parent path, in case everything needs to be
         // refreshed
         try {
-            zooKeeper.getData(CACHE_INVALIDATION_PATH, allCacheWatcher, null);
+            Stat stat = new Stat();
+            ZkUtil.getData(zooKeeper, CACHE_INVALIDATION_PATH, parentWatcher, stat);
+            if (parentVersion == null || (stat.getVersion() != parentVersion)) {
+                // An explicit refresh was triggered
+                parentVersion = stat.getVersion();
+                bucketVersions.clear();
+            }
         } catch (KeeperException e) {
+            log.warn("Failed to put parent watcher on " + CACHE_INVALIDATION_PATH);
             // Failed to put our watcher.
             // Relying on the ConnectionWatcher to put it again and
             // initialize the caches.
         }
-        // Avoid updating the cache while refreshing
-        synchronized (this) {
+
+        if (bucketVersions.isEmpty()) {
+            // All buckets need to be refreshed
+
+            if (log.isDebugEnabled())
+                log.debug("Refreshing all types in the schema cache, no bucket versions known yet");
+            // Set a watch again on all buckets
+            for (CacheWatcher watcher : cacheWatchers) {
+                String bucketId = watcher.getBucket();
+                String bucketPath = bucketPath(bucketId);
+                Stat stat = new Stat();
+                try {
+                    ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
+                    bucketVersions.put(bucketId, stat.getVersion());
+                } catch (KeeperException e) {
+                    log.warn("Failed to put watcher on bucket " + bucketPath);
+                    // Failed to put our watcher.
+                    // Relying on the ConnectionWatcher to put it again and
+                    // initialize the caches.
+                }
+            }
+            // Read all types in one go
             Pair<List<FieldType>, List<RecordType>> types = getTypeManager().getTypesWithoutCache();
             fieldTypesCache.refreshFieldTypes(types.getV1());
             updatedFieldTypes = true;
             recordTypes.refreshRecordTypes(types.getV2());
+        } else {
+            // Only the changed buckets need to be refreshed.
+            // Upon a re-connection event it could be that some updates were
+            // missed and the watches were not triggered.
+            // By checking the version number of the buckets we know which
+            // buckets to refresh.
+
+            Map<String, Integer> newBucketVersions = new HashMap<String, Integer>();
+            // Set a watch again on all buckets
+            for (CacheWatcher watcher : cacheWatchers) {
+                String bucketId = watcher.getBucket();
+                String bucketPath = bucketPath(bucketId);
+                Stat stat = new Stat();
+                try {
+                    ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
+                    Integer oldVersion = bucketVersions.get(bucketId); 
+                    if (oldVersion == null || (oldVersion != stat.getVersion()))
+                        newBucketVersions.put(bucketId, stat.getVersion());
+                } catch (KeeperException e) {
+                    log.warn("Failed to put watcher on bucket " + bucketPath);
+                    // Failed to put our watcher.
+                    // Relying on the ConnectionWatcher to put it again and
+                    // initialize the caches.
+                }
+            }
+            if (log.isDebugEnabled())
+                log.debug("Refreshing all types in the schema cache, limiting to buckets" + newBucketVersions.keySet());
+            for (Entry<String, Integer> entry : newBucketVersions.entrySet()) {
+                bucketVersions.put(entry.getKey(), entry.getValue());
+                TypeBucket typeBucket = getTypeManager().getTypeBucketWithoutCache(entry.getKey());
+                fieldTypesCache.refreshFieldTypeBucket(typeBucket);
+                updatedFieldTypes = true;
+                recordTypes.refreshRecordTypeBucket(typeBucket);
+            }
         }
     }
 
@@ -254,30 +304,35 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      * Refresh the caches for the buckets identified by the watchers and put the
      * cacheWatcher again on the cache invalidation zookeeper-node.
      */
-    private void refresh(Set<CacheWatcher> watchers) throws InterruptedException, RepositoryException {
+    private synchronized void refresh(Set<CacheWatcher> watchers) throws InterruptedException, RepositoryException {
         // Only update one bucket at a time
         // Meanwhile updates on the other buckets could happen.
         // Since the watchers for those other buckets are not set back again
         // this will not trigger extra refreshes.
         for (CacheWatcher watcher : watchers) {
+            String bucketId = watcher.getBucket();
+            String bucketPath = bucketPath(watcher.getBucket());
+            Stat stat = new Stat();
             try {
-                zooKeeper.getData(bucketPath(watcher.getBucket()), watcher, null);
+                ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
+                if (stat.getVersion() == bucketVersions.get(bucketId))
+                        continue; // The bucket is up to date
             } catch (KeeperException e) {
+                log.warn("Failed to put watcher on bucket " + bucketPath);
                 // Failed to put our watcher.
                 // Relying on the ConnectionWatcher to put it again and
                 // initialize the caches.
             }
             if (log.isDebugEnabled())
-                log.debug("Refreshing schema cache bucket: " + watcher.getBucket());
+                log.debug("Refreshing schema cache bucket: " + bucketId);
 
             // Avoid updating the cache while refreshing the buckets
-            synchronized (this) {
-                TypeBucket typeBucket = getTypeManager().getTypeBucketWithoutCache(watcher.getBucket());
-                fieldTypesCache.refreshFieldTypeBucket(typeBucket);
-                updatedFieldTypes = true;
-                recordTypes.refreshRecordTypeBucket(typeBucket);
-            }
+            bucketVersions.put(bucketId, stat.getVersion());
+            TypeBucket typeBucket = getTypeManager().getTypeBucketWithoutCache(bucketId);
+            fieldTypesCache.refreshFieldTypeBucket(typeBucket);
+            recordTypes.refreshRecordTypeBucket(typeBucket);
         }
+        updatedFieldTypes = true;
     }
 
     /**
@@ -340,15 +395,18 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 try {
                     if (needsRefresh) {
                         Set<CacheWatcher> watchers = null;
+                        boolean refreshAll = false;
                         synchronized (needsRefreshLock) {
-                            if (!needsRefreshAll) {
+                            if (needsRefreshAll) {
+                                refreshAll = true;
+                            } else {
                                 watchers = new HashSet<CacheWatcher>(needsRefreshWatchers);
                             }
                             needsRefreshWatchers.clear();
                             needsRefresh = false;
                             needsRefreshAll = false;
                         }
-                        if (watchers == null || watchers.isEmpty()) {
+                        if (refreshAll) {
                             refreshAll();
                         } else {
                             refresh(watchers);
@@ -385,14 +443,25 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
         @Override
         public void process(WatchedEvent event) {
-            cacheRefresher.needsRefresh(this);
+            if (EventType.NodeDataChanged.equals(event.getType())) {
+                cacheRefresher.needsRefresh(this);
+            }
         }
     }
 
-    private class AllCacheWatcher implements Watcher {
+    /**
+     * This watcher will be triggered when an explicit refresh is requested.
+     * <p>
+     * It is put on the parent path: CACHE_INVALIDATION_PATH
+     * 
+     * @see {@link TypeManager#triggerSchemaCacheRefresh()}
+     */
+    private class ParentWatcher implements Watcher {
         @Override
         public void process(WatchedEvent event) {
-            cacheRefresher.needsRefreshAll();
+            if (EventType.NodeDataChanged.equals(event.getType())) {
+                cacheRefresher.needsRefreshAll();
+            }
         }
     }
 
@@ -406,13 +475,6 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         @Override
         public void process(WatchedEvent event) {
             if (EventType.None.equals(event.getType()) && KeeperState.SyncConnected.equals(event.getState())) {
-                try {
-                    cacheInvalidationReconnected();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } catch (TypeException e) {
-                    // TODO
-                }
                 readRefreshingEnabledState();
                 cacheRefresher.needsRefreshAll();
             }

@@ -865,26 +865,25 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
 
         TypeBucket typeBucket = new TypeBucket(bucketId);
         ResultScanner scanner = null;
-        try {
             byte[] rowPrefix = AbstractSchemaCache.decodeHexAndNextHex(bucketId);
             scan.setStartRow(new byte[] { rowPrefix[0] });
             if (!bucketId.equals("ff")) // In case of ff, just scan until
                 // the end
                 scan.setStopRow(new byte[] { rowPrefix[1] });
+        try {
             scanner = getTypeTable().getScanner(scan);
-            for (Result scanResult : scanner) {
-                if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
-                    typeBucket.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
-                } else {
-                    typeBucket.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
-                }
-            }
         } catch (IOException e) {
             throw new TypeException("Exception occurred while retrieving field types and record types without cache ",
                     e);
-        } finally {
-            Closer.close(scanner);
         }
+        for (Result scanResult : scanner) {
+            if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
+                typeBucket.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
+            } else {
+                typeBucket.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
+            }
+        }
+        Closer.close(scanner);
         return typeBucket;
     }
 

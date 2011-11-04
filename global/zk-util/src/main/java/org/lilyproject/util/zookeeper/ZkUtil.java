@@ -16,11 +16,11 @@
 package org.lilyproject.util.zookeeper;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.*;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
 
@@ -118,5 +118,44 @@ public class ZkUtil {
                 }
             });
         }
+    }
+
+    /**
+     * Updates data on a zookeeper node.
+     * 
+     * <p>
+     * The supplied data is used for the last node in the path. The path must
+     * already exist. It is not checked if the data is changed or not. This will
+     * cause the version of the node to be increased.
+     * <p>
+     * This operation is retried until it succeeds.
+     */
+    public static void update(final ZooKeeperItf zk, final String path, final byte[] data, final int version)
+            throws InterruptedException, KeeperException {
+        zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+            @Override
+            public Boolean execute() throws KeeperException, InterruptedException {
+                zk.setData(path, data, version);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Gets data from a zookeeper node.
+     * <p>
+     * This operation is retried until it succeeds.
+     */
+    public static byte[] getData(final ZooKeeperItf zk, final String path, final Watcher watcher, final Stat stat)
+            throws InterruptedException, KeeperException {
+        final List<byte[]> data = new ArrayList<byte[]>(1);
+        zk.retryOperation(new ZooKeeperOperation<Boolean>() {
+            @Override
+            public Boolean execute() throws KeeperException, InterruptedException {
+                data.add(zk.getData(path, watcher, stat));
+                return null;
+            }
+        });
+        return data.get(0);
     }
 }

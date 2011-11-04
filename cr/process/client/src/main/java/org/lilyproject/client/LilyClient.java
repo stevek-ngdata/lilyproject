@@ -108,6 +108,7 @@ public class LilyClient implements Closeable {
         if (managedZk && zk != null) {
             zk.close();
         }
+        schemaCache.close();
     }
 
     /**
