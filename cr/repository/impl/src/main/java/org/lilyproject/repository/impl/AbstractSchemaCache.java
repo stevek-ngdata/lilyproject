@@ -47,7 +47,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     private FieldTypesCache fieldTypesCache = new FieldTypesCache();
     private boolean updatedFieldTypes = false;
 
-    private RecordTypesImpl recordTypes = new RecordTypesImpl();
+    private RecordTypesCache recordTypes = new RecordTypesCache();
 
     private Set<CacheWatcher> cacheWatchers = new HashSet<CacheWatcher>();
     private Map<String, Integer> bucketVersions = new HashMap<String, Integer>();

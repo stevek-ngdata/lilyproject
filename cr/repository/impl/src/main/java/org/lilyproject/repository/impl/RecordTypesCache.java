@@ -21,13 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
 
-public class RecordTypesImpl {
+public class RecordTypesCache {
     private Log log = LogFactory.getLog(getClass());
 
     private Map<QName, RecordType> nameCache;
     private Map<String, Map<SchemaId, RecordType>> buckets;
 
-    public RecordTypesImpl() {
+    public RecordTypesCache() {
         nameCache = new HashMap<QName, RecordType>();
         buckets = new HashMap<String, Map<SchemaId, RecordType>>();
     }
