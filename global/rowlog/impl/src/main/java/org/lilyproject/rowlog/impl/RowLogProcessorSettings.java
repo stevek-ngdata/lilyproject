@@ -7,6 +7,8 @@ public class RowLogProcessorSettings {
 
     private int msgTimestampMargin = RowLogProcessor.DEFAULT_MSG_TIMESTAMP_MARGIN;
 
+    private int scanBatchSize = 30;
+
     public int getScanThreadCount() {
         return scanThreadCount;
     }
@@ -34,5 +36,16 @@ public class RowLogProcessorSettings {
      */
     public void setMsgTimestampMargin(int msgTimestampMargin) {
         this.msgTimestampMargin = msgTimestampMargin;
+    }
+
+    public int getScanBatchSize() {
+        return scanBatchSize;
+    }
+
+    /**
+     * The amount of messages to fetch in one scan operation on a {@link org.lilyproject.rowlog.api.RowLogShard}.
+     */
+    public void setScanBatchSize(int scanBatchSize) {
+        this.scanBatchSize = scanBatchSize;
     }
 }

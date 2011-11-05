@@ -37,20 +37,21 @@ public class RowLogShardImpl implements RowLogShard {
     private final RowLog rowLog;
     private final String id;
     private byte[] rowKeyPrefix;
-    private final int batchSize;
+    private final int deleteBufferSize;
     private final List<Delete> messagesToDelete;
     private long lastDelete;
     // while 0 is a valid unicode codepoint, it will only occur in utf-8 when using the NULL char
     private byte[] END_OF_SUBSCRIPTION_NAME_MARKER = new byte[] { (byte)0 };
 
-    public RowLogShardImpl(String id, byte[] rowKeyPrefix, HTableInterface table, RowLog rowLog, int batchSize) throws IOException {
+    public RowLogShardImpl(String id, byte[] rowKeyPrefix, HTableInterface table, RowLog rowLog, int deleteBufferSize)
+            throws IOException {
         this.id = id;
         this.rowKeyPrefix = rowKeyPrefix;
         this.table = table;
         this.rowLog = rowLog;
-        this.batchSize = batchSize;
+        this.deleteBufferSize = deleteBufferSize;
 
-        this.messagesToDelete = new ArrayList<Delete>(batchSize);
+        this.messagesToDelete = new ArrayList<Delete>(deleteBufferSize);
         this.lastDelete = System.currentTimeMillis();
     }
 
@@ -85,9 +86,10 @@ public class RowLogShardImpl implements RowLogShard {
     }
 
     /**
-     * Removing a message is batched. 
-     * A message will only be removed, either when the batchSize is reached, the last time messages were removed was 5 minutes ago
-     * or new batch of messages is requested from the shard. See {@link #next(String, Long)}.
+     * Removing a message is batched.
+     *
+     * <p>A message will only be removed, either when the deleteBufferSize is reached, the last time messages were
+     * removed was 5 minutes ago or new batch of messages is requested from the shard. See {@link #next(String, Long, int)}.
      * In case many messages are being processed, this will reduce the number of delete calls on the HBase table to approximately 1
      * per batch. 
      */
@@ -96,7 +98,7 @@ public class RowLogShardImpl implements RowLogShard {
         synchronized (messagesToDelete) {
             messagesToDelete.add(new Delete(createRowKey(message, subscription)));
         }
-        if (messagesToDelete.size() >= batchSize || (lastDelete + 300000 < System.currentTimeMillis())) {
+        if (messagesToDelete.size() >= deleteBufferSize || (lastDelete + 300000 < System.currentTimeMillis())) {
             flushMessageDeleteBuffer();
         }
     }
@@ -119,12 +121,12 @@ public class RowLogShardImpl implements RowLogShard {
     }
 
     @Override
-    public List<RowLogMessage> next(String subscription) throws RowLogException {
-        return next(subscription, null);
+    public List<RowLogMessage> next(String subscription, int batchSize) throws RowLogException {
+        return next(subscription, null, batchSize);
     }
 
     @Override
-    public List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException {
+    public List<RowLogMessage> next(String subscription, Long minimalTimestamp, int batchSize) throws RowLogException {
         // Before collecting a new batch of messages, any outstanding deletes are executed first. 
         flushMessageDeleteBuffer();
         byte[] rowPrefix = Bytes.add(rowKeyPrefix, Bytes.toBytes(subscription), END_OF_SUBSCRIPTION_NAME_MARKER);
@@ -169,11 +171,6 @@ public class RowLogShardImpl implements RowLogShard {
         } catch (IOException e) {
             throw new RowLogException("Failed to fetch next message from RowLogShard", e);
         }
-    }
-
-    @Override
-    public int getBatchSize() {
-        return batchSize;
     }
 
     private byte[] createRowKey(RowLogMessage message, String subscription) {

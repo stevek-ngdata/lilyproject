@@ -98,12 +98,12 @@ public class RowLogShardTest {
         RowLogMessageImpl message1 = new RowLogMessageImpl(System.currentTimeMillis(), Bytes.toBytes("row1"), 0L, null, rowLog);
         shard.putMessage(message1); 
         
-        List<RowLogMessage> messages = shard.next(subscriptionId);
+        List<RowLogMessage> messages = shard.next(subscriptionId, batchSize);
         assertEquals(1, messages.size());
         assertEquals(message1, messages.get(0));
         
         shard.removeMessage(message1, subscriptionId);
-        assertTrue(shard.next(subscriptionId).isEmpty());
+        assertTrue(shard.next(subscriptionId, batchSize).isEmpty());
         control.verify();
     }
     
@@ -123,7 +123,7 @@ public class RowLogShardTest {
         shard.putMessage(message1);
         shard.putMessage(message2);
 
-        List<RowLogMessage> messages = shard.next(subscriptionId);
+        List<RowLogMessage> messages = shard.next(subscriptionId, batchSize);
         assertEquals(2, messages.size());
         assertEquals(message1, messages.get(0));
 
@@ -131,7 +131,7 @@ public class RowLogShardTest {
         assertEquals(message2, messages.get(1));
         
         shard.removeMessage(message2, subscriptionId);
-        assertTrue(shard.next(subscriptionId).isEmpty());
+        assertTrue(shard.next(subscriptionId, batchSize).isEmpty());
         control.verify();
     }
     
@@ -151,7 +151,7 @@ public class RowLogShardTest {
             shard.putMessage(message);
         }
 
-        List<RowLogMessage> messages = shard.next(subscriptionId);
+        List<RowLogMessage> messages = shard.next(subscriptionId, batchSize);
         assertEquals(batchSize , messages.size());
 
         int i = 0;
@@ -159,14 +159,14 @@ public class RowLogShardTest {
             assertEquals(expectedMessages[i++], message);
             shard.removeMessage(message, subscriptionId);
         }
-        messages = shard.next(subscriptionId);
+        messages = shard.next(subscriptionId, batchSize);
         assertEquals(2, messages.size());
         for (RowLogMessage message : messages) {
             assertEquals(expectedMessages[i++], message);
             shard.removeMessage(message, subscriptionId);
         }
         
-        assertTrue(shard.next(subscriptionId).isEmpty());
+        assertTrue(shard.next(subscriptionId, batchSize).isEmpty());
         control.verify();
     }
     
@@ -189,22 +189,22 @@ public class RowLogShardTest {
         
         shard.putMessage(message1);
         shard.putMessage(message2);
-        List<RowLogMessage> messages = shard.next(subscriptionId1);
+        List<RowLogMessage> messages = shard.next(subscriptionId1, batchSize);
         assertEquals(2, messages.size());
         assertEquals(message1, messages.get(0));
         shard.removeMessage(message1, subscriptionId1);
         assertEquals(message2, messages.get(1));
         shard.removeMessage(message2, subscriptionId1);
         
-        messages = shard.next(subscriptionId2);
+        messages = shard.next(subscriptionId2, batchSize);
         assertEquals(2, messages.size());
         assertEquals(message1, messages.get(0));
         shard.removeMessage(message1, subscriptionId2);
         assertEquals(message2, messages.get(1));
         shard.removeMessage(message2, subscriptionId2);
         
-        assertTrue(shard.next(subscriptionId1).isEmpty());
-        assertTrue(shard.next(subscriptionId2).isEmpty());
+        assertTrue(shard.next(subscriptionId1, batchSize).isEmpty());
+        assertTrue(shard.next(subscriptionId2, batchSize).isEmpty());
         control.verify();
     }
     
@@ -221,14 +221,14 @@ public class RowLogShardTest {
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 1L, null, rowLog);
 
         shard.putMessage(message1);
-        assertTrue(shard.next(subscriptionId2).isEmpty());
+        assertTrue(shard.next(subscriptionId2, batchSize).isEmpty());
 
         shard.removeMessage(message1, subscriptionId2);
-        List<RowLogMessage> messages = shard.next(subscriptionId1);
+        List<RowLogMessage> messages = shard.next(subscriptionId1, batchSize);
         assertEquals(message1, messages.get(0));
         // Cleanup
         shard.removeMessage(message1, subscriptionId1);
-        assertTrue(shard.next(subscriptionId1).isEmpty());
+        assertTrue(shard.next(subscriptionId1, batchSize).isEmpty());
         control.verify();
     }
 }

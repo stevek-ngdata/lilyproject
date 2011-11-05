@@ -243,9 +243,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     private void stopNotifyObserver() {
-        for (RowLogShard shard : rowLog.getShards()) {
-            rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId());
-        }
+        rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId());
     }
 
     protected void stopSubscriptions() {
@@ -342,6 +340,12 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         public void run() {
             try {
                 Long minimalTimestamp = null;
+                // scanFirstMessageOnly: for the WAL use case, where there is a minimal process delay and messages
+                // are normally processed directly and only in case of recovery by the RowLogProcessor, it does not
+                // make sense to scan e.g. 200 messages just to see their minimalProcessDelay has not yet passed.
+                // Therefore, this boolean indicates that just one message should be scanned. Note that this assumes
+                // that the minimalProcessDelay parameter will only be used for WAL-type uses.
+                boolean scanFirstMessageOnly = false;
                 while (!isInterrupted() && !stopRequested) {
                     final String subscriptionId = subscription.getId();
                     try {
@@ -353,17 +357,17 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         // Ideally, we would figure out on what servers what regions are deployed and then do the
                         // requests such that we touch the maximum number of different servers. For now, we keep
                         // it simple and assume the requests will be distributed enough by chance.
-                        List<RowLogMessage> messages = new ArrayList<RowLogMessage>( /* TODO init to expected size, based on batch size */ );
+                        final int batchSize = scanFirstMessageOnly ? 1 : settings.getScanBatchSize();
+                        List<RowLogMessage> messages = new ArrayList<RowLogMessage>();
                         int maxMessagesFromOneShard = 0;
                         List<Future<List<RowLogMessage>>> scanFutures = new ArrayList<Future<List<RowLogMessage>>>();
                         final Long currentMinimalTimestamp = minimalTimestamp;
                         for (final RowLogShard shard : rowLog.getShards()) {
-                            // TODO we should do the scans in parallel
                             try {
                                 scanFutures.add(globalQScanExecutor.submit(new Callable<List<RowLogMessage>>() {
                                     @Override
                                     public List<RowLogMessage> call() throws Exception {
-                                        return shard.next(subscriptionId, currentMinimalTimestamp);
+                                        return shard.next(subscriptionId, currentMinimalTimestamp, batchSize);
                                     }
                                 }));
                             } catch (RejectedExecutionException e) {
@@ -429,8 +433,12 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                                 if (stopRequested)
                                     return;
 
-                                if (checkMinimalProcessDelay(message))
+                                if (checkMinimalProcessDelay(message)) {
+                                    scanFirstMessageOnly = true;
                                 	break; // Rescan the messages since they might have been processed in the meanwhile
+                                } else {
+                                    scanFirstMessageOnly = false;
+                                }
 
                                 messagesWorkQueue.offer(message);
                             }
@@ -441,9 +449,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         // scanning for messages.
                         // Also: the minimalProcessDelay setting is not taken into account: as it currently is,
                         // this is only relevant for the WAL, which does not make use of the wake-up signal.
-                        // TODO temporary batchSize determination fix
-                        int batchSize = rowLog.getShards().get(0).getBatchSize();
-                        if (maxMessagesFromOneShard < batchSize && lastWakeup < tsBeforeGetMessages) {
+                        if (maxMessagesFromOneShard < settings.getScanBatchSize() && lastWakeup < tsBeforeGetMessages) {
                             synchronized (this) {
                                 // The timeout covers two cases:
                                 //   (1) a safety fallback, in case a wake-up got lost or so

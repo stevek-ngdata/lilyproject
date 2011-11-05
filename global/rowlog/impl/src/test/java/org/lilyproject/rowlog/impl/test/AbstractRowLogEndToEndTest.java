@@ -102,11 +102,12 @@ public abstract class AbstractRowLogEndToEndTest {
         RowLogShard shard = shards.get(0);
 
         shard.putMessage(message);
-        Assert.assertFalse(shard.next(subscriptionId).isEmpty());
+        Assert.assertFalse(shard.next(subscriptionId, 20).isEmpty());
         processor.start();
         Thread.sleep(10000); // Give processor some time to cleanup the message
         processor.stop();
-        Assert.assertTrue("The message should have been cleaned up since it was already processed",shard.next(subscriptionId).isEmpty());
+        Assert.assertTrue("The message should have been cleaned up since it was already processed",
+                shard.next(subscriptionId, 20).isEmpty());
     }
 
     @Test(timeout=150000)
