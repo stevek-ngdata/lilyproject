@@ -120,7 +120,8 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         stopSubscriptions();
         stopNotifyObserver();
         stopSubscriptionThreads();
-        globalQScanExecutor.shutdownNow();
+        if (globalQScanExecutor != null)
+            globalQScanExecutor.shutdownNow();
     }
 
     private int getScanThreadCount(int regionServerCnt) {
