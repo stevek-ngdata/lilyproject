@@ -322,7 +322,7 @@ public class HBaseProxy {
      * @return false if the timeout was reached before all messages were processed
      */
     public boolean waitWalMessagesProcessed(long timeout) throws Exception {
-        String tableName = "wal" + "-" + "shard1";
+        String tableName = "rowlog-mq";
         HTable hTable = new HTable(conf, Bytes.toBytes(tableName));
         try {
             return waitRowLogMessagesProcessed(timeout, hTable);
@@ -339,7 +339,7 @@ public class HBaseProxy {
      * @return false if the timeout was reached before all messages were processed
      */
     public boolean waitMQMessagesProcessed(long timeout) throws Exception {
-        String tableName = "mq" + "-" + "shard1";
+        String tableName = "rowlog-mq";
         HTable hTable = new HTable(conf, Bytes.toBytes(tableName));
         try {
             return waitRowLogMessagesProcessed(timeout, hTable);

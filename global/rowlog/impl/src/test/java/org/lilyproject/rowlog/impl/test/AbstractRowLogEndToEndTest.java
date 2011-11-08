@@ -25,15 +25,18 @@ import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-public abstract class
-        AbstractRowLogEndToEndTest {
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+
+public abstract class AbstractRowLogEndToEndTest {
     protected static HBaseProxy HBASE_PROXY;
     protected static RowLog rowLog;
-    protected static RowLogShard shard;
     protected static RowLogProcessor processor;
     protected static RowLogConfigurationManagerImpl rowLogConfigurationManager;
     protected String subscriptionId = "Subscription1";
@@ -59,10 +62,9 @@ public abstract class
         // The orphanedMessageDelay is smaller than usual on purpose, since some tests wait on this cleanup
         rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(true, true, 100L, 0L, 5000L, 5000L));
         rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.ROWLOG_COLUMN_FAMILY,
-                (byte)1, rowLogConfigurationManager, null);
-        shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog, 100);
-        rowLog.registerShard(shard);
-        processor = new RowLogProcessorImpl(rowLog, rowLogConfigurationManager);
+                (byte)1, rowLogConfigurationManager, null, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(1, rowLog, new HBaseTableFactoryImpl(configuration));
+        processor = new RowLogProcessorImpl(rowLog, rowLogConfigurationManager, configuration);
     }    
     
     @AfterClass
@@ -84,7 +86,7 @@ public abstract class
         processor.stop();
         validationListener.validate();
     }
-    
+
     @Test(timeout=150000)
     public void testRemovalFromShardFailed() throws Exception {
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
@@ -94,13 +96,18 @@ public abstract class
         validationListener.waitUntilMessagesConsumed(120000);
         processor.stop();
         validationListener.validate();
-        
+
+        List<RowLogShard> shards = rowLog.getShardList().getShards();
+        assertEquals(1, shards.size());
+        RowLogShard shard = shards.get(0);
+
         shard.putMessage(message);
-        Assert.assertFalse(shard.next(subscriptionId).isEmpty());
+        Assert.assertFalse(shard.next(subscriptionId, 20).isEmpty());
         processor.start();
         Thread.sleep(10000); // Give processor some time to cleanup the message
         processor.stop();
-        Assert.assertTrue("The message should have been cleaned up since it was already processed",shard.next(subscriptionId).isEmpty());
+        Assert.assertTrue("The message should have been cleaned up since it was already processed",
+                shard.next(subscriptionId, 20).isEmpty());
     }
 
     @Test(timeout=150000)

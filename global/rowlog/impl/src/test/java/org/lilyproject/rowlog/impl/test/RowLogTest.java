@@ -32,6 +32,7 @@ import org.junit.*;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
 import org.lilyproject.rowlog.impl.RowLogImpl;
 import org.lilyproject.rowlog.impl.RowLogMessageImpl;
 import org.lilyproject.hadooptestfw.HBaseProxy;
@@ -77,7 +78,8 @@ public class RowLogTest {
 
     @Before
     public void setUp() throws Exception {
-        rowLog = new RowLogImpl(rowLogId, rowTable, rowLogColumnFamily, (byte)1, configurationManager, null);
+        rowLog = new RowLogImpl(rowLogId, rowTable, rowLogColumnFamily, (byte)1, configurationManager, null,
+                new RowLogHashShardRouter());
         shard = control.createMock(RowLogShard.class);
         shard.getId();
         expectLastCall().andReturn("ShardId").anyTimes();
@@ -93,7 +95,7 @@ public class RowLogTest {
     public void testPutMessage() throws Exception {
         shard.putMessage(isA(RowLogMessage.class), eq(subscriptionIds));
         control.replay();
-        rowLog.registerShard(shard);
+        rowLog.getShardList().addShard(shard);
         byte[] rowKey = Bytes.toBytes("row1");
         RowLogMessage message = rowLog.putMessage(rowKey, null, null, null);
         List<RowLogMessage> messages = rowLog.getMessages(rowKey);
@@ -113,7 +115,7 @@ public class RowLogTest {
                 break;
         }
         control.replay();
-        rowLog.registerShard(shard);
+        rowLog.getShardList().addShard(shard);
         byte[] rowKey = Bytes.toBytes("row1B");
         assertNull(rowLog.putMessage(rowKey, null, null, null));
         assertTrue(rowLog.getMessages(rowKey).isEmpty());
@@ -129,7 +131,7 @@ public class RowLogTest {
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId1));
         
         control.replay();
-        rowLog.registerShard(shard);
+        rowLog.getShardList().addShard(shard);
         byte[] rowKey = Bytes.toBytes("row2");
         RowLogMessage message1 = rowLog.putMessage(rowKey, null, null, null);
         RowLogMessage message2 = rowLog.putMessage(rowKey, null, null, null);
@@ -171,7 +173,7 @@ public class RowLogTest {
         shard.removeMessage(isA(RowLogMessage.class), eq(subscriptionId1));
 
         control.replay();
-        rowLog.registerShard(shard);
+        rowLog.getShardList().addShard(shard);
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
 
         rowLog.messageDone(message, subscriptionId1);
@@ -202,7 +204,7 @@ public class RowLogTest {
 
         control.replay();
 
-        rowLog.registerShard(shard);
+        rowLog.getShardList().addShard(shard);
         byte[] rowKey = Bytes.toBytes("row3");
         RowLogMessage message1 = rowLog.putMessage(rowKey, null, null, null);
         RowLogMessage message2 = rowLog.putMessage(rowKey, null, null, null);

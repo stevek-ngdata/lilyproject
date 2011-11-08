@@ -119,14 +119,14 @@ public class TestFieldType {
             String wordString = JsonUtil.getString(properties, "enum", null);
             if (wordString != null) {
                 String[] words = wordString.split(",");
-                StringBuffer stringBuffer = new StringBuffer(20 * wordCount);
+                StringBuilder stringBuilder = new StringBuilder(20 * wordCount);
                 for (int i = 0; i < wordCount; i++) {
                     if (i > 0)
-                        stringBuffer.append(' ');
+                        stringBuilder.append(' ');
                     int index = (int) (Math.random() * words.length);
-                    stringBuffer.append(words[index]);
+                    stringBuilder.append(words[index]);
                 }
-                value = stringBuffer.toString();
+                value = stringBuilder.toString();
             } else {
                 value = Words.get(Words.WordList.BIG_LIST,wordCount);
             }

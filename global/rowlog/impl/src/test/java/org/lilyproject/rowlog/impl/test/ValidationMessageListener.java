@@ -73,7 +73,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
     public void waitUntilMessagesConsumed(long timeout) throws Exception {
         long waitUntil = System.currentTimeMillis() + timeout;
         RowLogShard shard = rowLog.getShards().get(0);
-        List<RowLogMessage> messages = shard.next(subscriptionId);
+        List<RowLogMessage> messages = shard.next(subscriptionId, 20);
         while(true) {
             if (System.currentTimeMillis() >= waitUntil) {
                 System.out.println("ValidationMessageListener#waitUntilMessagesConsumed: Timeout expired, nr of messages=" + messages.size() + ", count=" + count);
@@ -84,7 +84,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
                 break;
             }
             Thread.sleep(1000);
-            messages = shard.next(subscriptionId);
+            messages = shard.next(subscriptionId, 20);
         }
     }
 
@@ -97,7 +97,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
             validationMessage.append("\n"+name+ " did not process the same amount of messages <"+count+"> as expected <"+numberOfMessagesToBeExpected+">");
         }
         RowLogShard shard = rowLog.getShards().get(0);
-        List<RowLogMessage> messages = shard.next(subscriptionId);
+        List<RowLogMessage> messages = shard.next(subscriptionId, 20);
         if (!messages.isEmpty()) {
             success = false;
             validationMessage.append("\n"+name+ " has messages to be processed: <" + messages.size()+">");

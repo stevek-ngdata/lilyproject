@@ -9,7 +9,34 @@
        not be a candidate to run the WAL or MQ processor. If they are disabled on all
        Lily servers, no processing at all will happen. -->
   <walProcessor enabled="true"/>
-  <mqProcessor enabled="true"/>
+
+  <mqProcessor enabled="true">
+    <!--
+       The number of client threads to perform scans against the different rowlog
+       table splits. For example, if you put this equal to the number of region servers,
+       and there is one rowlog region per server, then all region servers will be queried
+       in parallel.
+       Set this to a value less than 1 to enable automatic determination of the number
+       of threads, based on the number of region servers.
+    -->
+    <!--
+    <scanThreadCount>3</scanThreadCount>
+    -->
+
+    <!--
+       For each message, a Lily server takes the 'now' timestamp to use
+       in the key of the message when adding it to the rowlog table. Due to clock skew
+       between servers, and because it might take some time before the actual insertion
+       is performed on HBase (e.g. loaded servers, region server downtime, region
+       moves, ...), the entry might only become visible on the rowlog table some time
+       when 'now' has passed. Therefore, the rowlog processor, when scanning this table,
+       needs to take a bit of margin on the timestamps.
+       Setting in milliseconds.
+    -->
+    <!--
+    <messageTimestampMargin>120000</messageTimestampMargin>
+    -->
+  </mqProcessor>
 
   <!-- linkIndexUpdater: if enabled, the wal-rowlog subscription will be made if necessary, if false,
        the subscription will be removed if present (effectively disabling updating of the
@@ -20,4 +47,10 @@
        If disabled, the message queue will not be fed with messages.
   -->
   <mqFeeder enabled="true"/>
+
+  <!-- Number of shards (splits) to create for the rowlog. Only has effect on initial table creation,
+       this parameter should not be changed afterwards and be the same on all Lily nodes.
+       A good choice is to make this twice the number of HBase region servers.
+  -->
+  <shardCount>6</shardCount>
 </rowlog>

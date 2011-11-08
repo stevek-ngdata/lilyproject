@@ -169,12 +169,12 @@ public interface RowLogConfigurationManager {
     /**
      * Add a new {@link ProcessorNotifyObserver}.
      */
-    void addProcessorNotifyObserver(String rowLogId, String shardId, ProcessorNotifyObserver observer);
+    void addProcessorNotifyObserver(String rowLogId, ProcessorNotifyObserver observer);
     
     /**
      * Removes a {@link ProcessorNotifyObserver} from the configuration manager. 
      */
-    void removeProcessorNotifyObserver(String rowLogId, String shardId);
+    void removeProcessorNotifyObserver(String rowLogId);
     
     /**
      *
@@ -207,7 +207,7 @@ public interface RowLogConfigurationManager {
      * Notify the processor that a new message has been put on the rowlog.
      * <p>If the processor was in a wait mode, it will wake up and check the rowlog for new messages.
      */
-	void notifyProcessor(String rowLogId, String shardId)
+	void notifyProcessor(String rowLogId)
 			throws InterruptedException, KeeperException;
 
 }

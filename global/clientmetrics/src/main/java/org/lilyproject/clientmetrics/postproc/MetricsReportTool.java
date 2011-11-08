@@ -201,7 +201,7 @@ public class MetricsReportTool extends BaseCliTool {
         System.out.println("Writing data file " + file);
         PrintStream ps = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
 
-        StringBuffer titleLine = new StringBuffer();
+        StringBuilder titleLine = new StringBuilder();
         titleLine.append(STRING_QUOTE).append("time").append(STRING_QUOTE);
         titleLine.append(SEP);
         titleLine.append(STRING_QUOTE).append("seq").append(STRING_QUOTE);
@@ -326,7 +326,7 @@ public class MetricsReportTool extends BaseCliTool {
 
         int numberOfValues = lastPlotValue - firstPlotValue + 1;
 
-        StringBuffer plot = new StringBuffer();
+        StringBuilder plot = new StringBuilder();
         plot.append("plot ");
         for (int i = 0; i < metricNames.size(); i++) {
             int colorStart = i * numberOfValues;

@@ -25,16 +25,6 @@ public class ManualProcessRowLog implements RowLog {
     }
 
     @Override
-    public void registerShard(RowLogShard shard) {
-        delegate.registerShard(shard);
-    }
-
-    @Override
-    public void unRegisterShard(RowLogShard shard) {
-        delegate.unRegisterShard(shard);
-    }
-
-    @Override
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
         return delegate.getPayload(message);
     }
@@ -90,6 +80,11 @@ public class ManualProcessRowLog implements RowLog {
     @Override
     public List<RowLogShard> getShards() {
         return delegate.getShards();
+    }
+
+    @Override
+    public RowLogShardList getShardList() {
+        return delegate.getShardList();
     }
 
     @Override

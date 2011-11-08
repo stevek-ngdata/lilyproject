@@ -18,9 +18,11 @@ package org.lilyproject.rowlog.api;
 import java.util.List;
 
 /**
- * A RowLogShard manages the actual RowLogMessages on a HBase table. It needs to be registered to a RowLog.
- * 
- * <p> This API will be changed so that the putMessage can be called once for all related subscriptions.
+ * A RowLogShard is a shard of the "global rowlog queue", that is the index that points to the rows
+ * that might have outstanding messages to be processed. The reason why this is sharded is explained
+ * over at {@link RowLog}.
+ *
+ * <p>A RowLogShard is added to the {@link RowLogShardList} obtained from {@link RowLog#getShardList()}</p>
  */
 public interface RowLogShard {
 
@@ -28,7 +30,7 @@ public interface RowLogShard {
      * The id of a RowLogShard uniquely identifies a shard in the context of a {@link RowLog}
      */
     String getId();
-    
+
     /**
      * Puts a RowLogMessage onto the table.
      * 
@@ -50,29 +52,29 @@ public interface RowLogShard {
      * @throws RowLogException when an unexpected exception occurs
      */
     void removeMessage(RowLogMessage message, String subscription) throws RowLogException;
-    
-    
-    /**
-     * Retrieves the next messages to be processed by the indicated subscription.
-     * 
-     * @param subscription the id of the subscription for which the next messages should be retrieved
-     * @return the next {@link #getBatchSize}, or less {@link RowLogMessage}s to be processed
-     * @throws RowLogException when an unexpected exception occurs
-     */
-    List<RowLogMessage> next(String subscription) throws RowLogException;
-    
-    /**
-     * Retrieves the next messages to be processed by the indicated subscription.
-     * 
-     * @param subscription the id of the subscription for which the next messages should be retrieved
-     * @param startTimestamp the minimal timestamp of the messages to be retrieved
-     * @return the next {@link #getBatchSize}, or less {@link RowLogMessage}s to be processed
-     * @throws RowLogException when an unexpected exception occurs
-     */
-    List<RowLogMessage> next(String subscription, Long minimalTimestamp) throws RowLogException;
+
+    void flushMessageDeleteBuffer() throws RowLogException;
 
     /**
-     * Returns the maximum amount of messages that are returned by a call to {@link #next}.
+     * Retrieves the next messages to be processed by the indicated subscription.
+     * 
+     * @param subscription the id of the subscription for which the next messages should be retrieved
+     * @param batchSize how many messages to fetch (at most)
+     *
+     * @return the next batchSize, or less, {@link RowLogMessage}s to be processed
+     * @throws RowLogException when an unexpected exception occurs
      */
-    int getBatchSize();
+    List<RowLogMessage> next(String subscription, int batchSize) throws RowLogException;
+    
+    /**
+     * Retrieves the next messages to be processed by the indicated subscription.
+     * 
+     * @param subscription the id of the subscription for which the next messages should be retrieved
+     * @param minimalTimestamp the minimal timestamp of the messages to be retrieved
+     * @param batchSize how many messages to fetch (at most)
+     *
+     * @return the next batchSize, or less, {@link RowLogMessage}s to be processed
+     * @throws RowLogException when an unexpected exception occurs
+     */
+    List<RowLogMessage> next(String subscription, Long minimalTimestamp, int batchSize) throws RowLogException;
 }

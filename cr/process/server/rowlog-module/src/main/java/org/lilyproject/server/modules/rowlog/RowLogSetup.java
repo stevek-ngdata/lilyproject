@@ -109,23 +109,26 @@ public class RowLogSetup {
             }
         }
 
+        int shardCount = rowLogConf.getChild("shardCount").getValueAsInteger();
+
         messageQueue = new RowLogImpl("mq", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.MQ_PREFIX, confMgr, null);
-        RowLogShard mqShard = new RowLogShardImpl("shard1", hbaseConf, messageQueue, 100, hbaseTableFactory);
-        messageQueue.registerShard(mqShard);
+                RecordColumn.MQ_PREFIX, confMgr, null, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(shardCount, messageQueue, hbaseTableFactory);
 
         writeAheadLog = new WalRowLog("wal", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.WAL_PREFIX, confMgr, rowLocker);
-        RowLogShard walShard = new RowLogShardImpl("shard1", hbaseConf, writeAheadLog, 100, hbaseTableFactory);
-        writeAheadLog.registerShard(walShard);
+                RecordColumn.WAL_PREFIX, confMgr, rowLocker, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(shardCount, writeAheadLog, hbaseTableFactory);
 
         RowLogMessageListenerMapping.INSTANCE.put(WalListener.ID, new WalListener(writeAheadLog, rowLocker));
         RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
 
         // Start the message queue processor
-        boolean mqProcEnabled = rowLogConf.getChild("mqProcessor").getAttributeAsBoolean("enabled", true);
+        Conf mqProcessorConf = rowLogConf.getChild("mqProcessor");
+        boolean mqProcEnabled = mqProcessorConf.getAttributeAsBoolean("enabled", true);
         if (mqProcEnabled) {
-            messageQueueProcessorLeader = new RowLogProcessorElection(zk, new RowLogProcessorImpl(messageQueue, confMgr), lilyInfo);
+            RowLogProcessorSettings settings = createProcessorSettings(mqProcessorConf);
+            RowLogProcessor processor = new RowLogProcessorImpl(messageQueue, confMgr, hbaseConf, settings);
+            messageQueueProcessorLeader = new RowLogProcessorElection(zk, processor, lilyInfo);
             messageQueueProcessorLeader.start();
         } else {
             log.info("Not participating in MQ processor election.");
@@ -140,15 +143,29 @@ public class RowLogSetup {
         }
 
         // Start the wal processor
-        boolean walProcEnabled = rowLogConf.getChild("walProcessor").getAttributeAsBoolean("enabled", true);
+        Conf walProcessorConf = rowLogConf.getChild("walProcessor");
+        boolean walProcEnabled = walProcessorConf.getAttributeAsBoolean("enabled", true);
         if (walProcEnabled) {
-            writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, new WalProcessor(writeAheadLog, confMgr), lilyInfo);
+            RowLogProcessorSettings settings = createProcessorSettings(walProcessorConf);
+            RowLogProcessor processor = new WalProcessor(writeAheadLog, confMgr, hbaseConf, settings);
+            writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, processor, lilyInfo);
             // The WAL processor should only be started once the LinkIndexUpdater listener is available
             walProcessorStartupThread = new Thread(new DelayedWALProcessorStartup());
             walProcessorStartupThread.start();
         } else {
             log.info("Not participating in WAL processor election.");
         }
+    }
+
+    private RowLogProcessorSettings createProcessorSettings(Conf conf) {
+        RowLogProcessorSettings settings = new RowLogProcessorSettings();
+
+        settings.setMsgTimestampMargin(conf.getChild("messageTimestampMargin").
+                getValueAsInteger(RowLogProcessor.DEFAULT_MSG_TIMESTAMP_MARGIN));
+
+        settings.setScanThreadCount(conf.getChild("scanThreadCount").getValueAsInteger(-1));
+
+        return settings;
     }
 
     @PreDestroy

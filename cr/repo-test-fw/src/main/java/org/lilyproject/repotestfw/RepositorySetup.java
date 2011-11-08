@@ -109,9 +109,8 @@ public class RepositorySetup {
             HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
             rowLogConfManager.addRowLog("WAL", new RowLogConfig(true, false, 100L, 5000L, 5000L, 120000L));
             wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                    LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker);
-            RowLogShard walShard = new RowLogShardImpl("WS1", hadoopConf, wal, 100);
-            wal.registerShard(walShard);
+                    LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker, new RowLogHashShardRouter());
+            RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
         }
 
         repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
@@ -195,11 +194,11 @@ public class RepositorySetup {
         rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 1);
 
         mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null);
+                LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null, new RowLogHashShardRouter());
+        RowLogShardSetup.setupShards(1, mq, hbaseTableFactory);
         if (withManualProcessing) {
             mq = new ManualProcessRowLog(mq);
         }
-        mq.registerShard(new RowLogShardImpl("MQS1", hadoopConf, mq, 100));
 
         RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;
         listenerClassMapping.put("MQFeeder", new MessageQueueFeeder(mq));
@@ -207,7 +206,7 @@ public class RepositorySetup {
         waitForSubscription(wal, "MQFeeder");
 
         if (withProcessor) {
-            mqProcessor = new RowLogProcessorImpl(mq, rowLogConfManager);
+            mqProcessor = new RowLogProcessorImpl(mq, rowLogConfManager, getHadoopConf());
             mqProcessor.start();
         }
     }
