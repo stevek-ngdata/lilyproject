@@ -48,6 +48,9 @@
   -->
   <mqFeeder enabled="true"/>
 
-  <!-- Number of shards (splits) to create for the rowlog. Only has effect on initial table creation. -->
+  <!-- Number of shards (splits) to create for the rowlog. Only has effect on initial table creation,
+       this parameter should not be changed afterwards and be the same on all Lily nodes.
+       A good choice is to make this twice the number of HBase region servers.
+  -->
   <shardCount>6</shardCount>
 </rowlog>
