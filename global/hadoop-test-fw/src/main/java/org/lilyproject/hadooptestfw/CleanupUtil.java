@@ -82,10 +82,11 @@ public class CleanupUtil {
 
     private void deleteChildren(String path, ZooKeeper zk) throws InterruptedException, KeeperException {
         List<String> children = zk.getChildren(path, false);
+        if (!children.isEmpty())
+            System.out.println("Deleting path " + path + " and its " + children.size() + " children");
         for (String child : children) {
             String childPath = path + "/" + child;
             deleteChildren(childPath, zk);
-            System.out.println("Deleting " + childPath);
             zk.delete(childPath, -1);
         }
     }

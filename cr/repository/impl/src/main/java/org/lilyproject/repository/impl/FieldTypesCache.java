@@ -53,13 +53,9 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
         }
     }
 
-    public synchronized void refreshFieldTypeBuckets(List<TypeBucket> typeBuckets) {
-        for (TypeBucket typeBucket : typeBuckets) {
-            refresh(typeBucket.getBucketId(), typeBucket.getFieldTypes());
-        }
-    }
-
-    private void refresh(String bucketId, List<FieldType> fieldTypes) {
+    public synchronized void refreshFieldTypeBucket(TypeBucket typeBucket) {
+        String bucketId = typeBucket.getBucketId();
+        List<FieldType> fieldTypes = typeBucket.getFieldTypes();
         Map<SchemaId, FieldType> newBucket = new HashMap<SchemaId, FieldType>(fieldTypes.size());
         Map<SchemaId, FieldType> oldBucket = buckets.get(bucketId);
         if (oldBucket == null) {

@@ -21,6 +21,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache {
@@ -49,16 +50,6 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
         triggerRefresh(recordType.getId().getBytes(), false);
     }
 
-    @Override
-    protected void cacheInvalidationReconnected() throws TypeException, InterruptedException {
-
-        // A previous notify might have failed because of a disconnection
-        // To be sure we try to send a notify again
-        
-        // TODO : rethink this situation 
-        triggerRefresh(null, false);
-    }
-
     /**
      * Sets the cache refresh flag on Zookeeper. This triggers the caches to
      * refresh their data.
@@ -72,12 +63,12 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
                 if (rowKey == null) {
                     if (log.isDebugEnabled())
                         log.debug("Triggering schema cache refresh for all types.");
-                    zooKeeper.setData(CACHE_INVALIDATION_PATH, null, -1);
+                    ZkUtil.update(zooKeeper, CACHE_INVALIDATION_PATH, null, -1);
                 } else {
                     String bucketId = encodeHex(rowKey);
                     if (log.isDebugEnabled())
                         log.debug("Triggering schema cache refresh for bucket: " + bucketId);
-                    zooKeeper.setData(CACHE_INVALIDATION_PATH + "/" + bucketId, null, -1);
+                    ZkUtil.update(zooKeeper, CACHE_INVALIDATION_PATH + "/" + bucketId, null, -1);
                 }
             } catch (KeeperException e) {
                 throw new TypeException("Exception while triggering cache refresh", e);

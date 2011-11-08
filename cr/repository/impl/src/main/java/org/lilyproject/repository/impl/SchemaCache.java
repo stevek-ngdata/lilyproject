@@ -15,6 +15,7 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,6 +32,11 @@ public interface SchemaCache {
      */
     void start() throws InterruptedException, KeeperException, RepositoryException;
 
+    /**
+     * Stops the schema cache.
+     * 
+     */
+    void close() throws IOException;
 
     /**
      * Updates a field type on the cache.

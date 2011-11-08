@@ -21,13 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
 
-public class RecordTypesImpl {
+public class RecordTypesCache {
     private Log log = LogFactory.getLog(getClass());
 
     private Map<QName, RecordType> nameCache;
     private Map<String, Map<SchemaId, RecordType>> buckets;
 
-    public RecordTypesImpl() {
+    public RecordTypesCache() {
         nameCache = new HashMap<QName, RecordType>();
         buckets = new HashMap<String, Map<SchemaId, RecordType>>();
     }
@@ -67,13 +67,9 @@ public class RecordTypesImpl {
         }
     }
 
-    public synchronized void refreshRecordTypeBuckets(List<TypeBucket> typeBuckets) {
-        for (TypeBucket typeBucket : typeBuckets) {
-            refresh(typeBucket.getBucketId(), typeBucket.getRecordTypes());
-        }
-    }
-
-    public synchronized void refresh(String bucketId, List<RecordType> recordTypes) {
+    public synchronized void refreshRecordTypeBucket(TypeBucket typeBucket) {
+        String bucketId = typeBucket.getBucketId();
+        List<RecordType> recordTypes = typeBucket.getRecordTypes();
         Map<SchemaId, RecordType> newBucket = new HashMap<SchemaId, RecordType>(recordTypes.size());
         Map<SchemaId, RecordType> oldBucket = buckets.get(bucketId);
         if (oldBucket == null) {
