@@ -67,20 +67,7 @@ public class RowLogSetup {
     @PostConstruct
     public void start() throws InterruptedException, KeeperException, IOException, LeaderElectionSetupException, RowLogException {
         if (!confMgr.rowLogExists("wal")) {
-            confMgr.addRowLog("wal", new RowLogConfig(true, false, 200L, 10000L, 5000L, 120000L));
-        } else {
-            // Before Lily 1.1, the minimalProcessDelay parameter was 5s, Lily 1.1 increased it to 10s, because
-            // of the introduction of the MessageDeleteBufferFlusher which runs every 5s: it is more
-            // efficient to have deletes flushed before the rowlog processor scans the global queue,
-            // and flushing deletes less than every 5 seconds seemed very short.
-            for (Map.Entry<String, RowLogConfig> entry : confMgr.getRowLogs().entrySet()) {
-                if (entry.getKey().equals("wal") && entry.getValue().getMinimalProcessDelay() < 10000L) {
-                    log.warn("Changing WAL minimal process delay to 10s.");
-                    RowLogConfig config = entry.getValue();
-                    config.setMinimalProcessDelay(10000L);
-                    confMgr.updateRowLog("wal", config);
-                }
-            }
+            confMgr.addRowLog("wal", new RowLogConfig(true, false, 200L, 5000L, 5000L, 120000L));
         }
         
         if (!confMgr.rowLogExists("mq")) {
