@@ -1,18 +1,18 @@
 <?xml version="1.0"?>
 <wiring>
   <modules>
-    <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="1.0.4-SNAPSHOT">
+    <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="1.0.4">
     </artifact>
 
-    <artifact id="rowlog" groupId="org.lilyproject" artifactId="lily-rowlog-module" version="1.0.4-SNAPSHOT">
+    <artifact id="rowlog" groupId="org.lilyproject" artifactId="lily-rowlog-module" version="1.0.4">
     </artifact>
 
-    <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="1.0.4-SNAPSHOT">
+    <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="1.0.4">
       <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
       <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:writeAheadLog"/>
     </artifact>
 
-    <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="1.0.4-SNAPSHOT">
+    <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="1.0.4">
       <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
       <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:writeAheadLog"/>
     </artifact>
@@ -26,13 +26,13 @@
     <artifact id="routing" groupId="org.kauriproject" artifactId="kauri-routing-impl">
     </artifact>
 
-    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="1.0.4-SNAPSHOT">
+    <artifact id="rest" groupId="org.lilyproject" artifactId="lily-rest-module" version="1.0.4">
       <mount name="repository" path="/repository/" canonical="/repository/"/>
       <mount name="index" path="/index" canonical="/index"/>
       <mount name="rowlog" path="/rowlog" canonical="/rowlog"/>
     </artifact>
 
-    <artifact id="webui" groupId="org.lilyproject" artifactId="lily-webui-module" version="1.0.4-SNAPSHOT">
+    <artifact id="webui" groupId="org.lilyproject" artifactId="lily-webui-module" version="1.0.4">
       <mount name="main" path="" canonical=""/>
       <inject-restservice name="repository" ref="rest:repository"/>
     </artifact>
