@@ -89,7 +89,7 @@ public class LinkIndexTest {
         linkIndex.updateLinks(ids.newRecordId("idC"), liveTag, links2);
 
         // Test forward link retrieval
-        Set<FieldedLink> links = linkIndex.getForwardLinks(ids.newRecordId("idA"), liveTag);
+        Set<FieldedLink> links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
         assertEquals(2, links.size());
@@ -104,7 +104,7 @@ public class LinkIndexTest {
         links1.add(new FieldedLink(ids.newRecordId("id2a"), field1));
         linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
 
-        links = linkIndex.getForwardLinks(ids.newRecordId("idA"), liveTag);
+        links = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id1"), field1)));
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2"), field1)));
         assertTrue(links.contains(new FieldedLink(ids.newRecordId("id2a"), field1)));
