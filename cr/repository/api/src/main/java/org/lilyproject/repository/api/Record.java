@@ -15,7 +15,6 @@
  */
 package org.lilyproject.repository.api;
 
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -136,7 +135,7 @@ public interface Record {
      * @throws FieldNotFoundException if the field is not present in this Record object. To avoid the exception,
      *         use {@link #hasField}.
      */
-    <T> T getField(QName fieldName) throws FieldNotFoundException;
+    Object getField(QName fieldName) throws FieldNotFoundException;
 
     /**
      * Checks if the field with the given name is present in this Record object.
@@ -179,53 +178,9 @@ public interface Record {
     ResponseStatus getResponseStatus();
 
     void setResponseStatus(ResponseStatus status);
-
-    /**
-     * Creates a clone of the record object
-     * <p>
-     * A new record object is created with the same id, version, recordTypes,
-     * fields and deleteFields.
-     * <p>
-     * Of the fields that are not of an immutable type, a deep copy is
-     * performed. This includes List, HierarchyPath, Blob and Record.
-     * <p>
-     * The response status is not copied into the new Record object.
-     * 
-     * @throws RuntimeException
-     *             when a record is nested in itself
-     */
-    Record clone() throws RuntimeException;
-
-    /**
-     * Creates a clone of the record object
-     * <p>
-     * A new record object is created with the same id, version, recordTypes,
-     * fields and deleteFields. </br> The response status is not copied into the
-     * new Record object.
-     * <p>
-     * Of the fields that are not of an immutable type, a deep copy is
-     * performed. This includes List, HierarchyPath, Blob and Record.
-     * <p>
-     * When checking if the record is nested in itself, it is also checked if
-     * the record is contained in the map of parentRecords
-     * 
-     * @param parentRecords
-     *            a map parent records of the record used to check if the record
-     *            is nested in itself or one of its parents. Note: this does an
-     *            identity (==) check on the record. The value of this map is of
-     *            no meaning and may be null.
-     * @throws RecordException
-     *             when the record is contained in the parentRecords map or if
-     *             it is nested in itself.
-     */
-    Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException;
     
-    /**
-     * Shortcut method for {@link #cloneRecord(IdentityHashMap)} with
-     * parentRecords set to an empty map
-     */
-    Record cloneRecord() throws RecordException;
-
+    Record clone();
+    
     boolean equals(Object obj);
 
     /**
@@ -241,98 +196,4 @@ public interface Record {
      * </ul>
      */
     boolean softEquals(Object obj);
-    
-    /**
-     * Sets a default namespace on a record object.
-     * <p> 
-     * The default namespace is used to resovle a QName when only the name part is given, 
-     * like for instance in {@link #getField(String)}. </br> 
-     * When resolving a name into a QName, it is first checked if the default namespace is set.
-     * If not, the namespace of the recordType is used. If that is not set either, 
-     * a RecordException is thrown. </br>
-     * The resolving happens at the moment a related method is called. 
-     * This means that if the default namespace or record type is changed afterwards, this has
-     * no influence on the already resolved QNames.</br>
-     * <p>
-     * The default namespace is only used for resolving names into QNames. It is not sent to
-     * the server, nor stored on the repository.
-     * 
-     * @param namespace the default namespace to use
-     */
-    void setDefaultNamespace(String namespace);
-    
-    /**
-     * Resolves the QName of the record type and sets it on the record.
-     * <p>
-     * @see {@link #setDefaultNamespace(String)} 
-     * @see {@link #setRecordType(QName)}
-     * @param recordTypeName the name part of the record type to set
-     * @throws RecordException when the QName cannot be resolved
-     */
-    void setRecordType(String recordTypeName) throws RecordException;
-    
-    /**
-     * Resolves the QName of the record type and sets it on the record.
-     * <p>
-     * @see {@link #setDefaultNamespace(String)} 
-     * @see {@link #setRecordType(QName, Long)}
-     * @param recordTypeName the name part of the record type to set
-     * @throws RecordException when the QName cannot be resolved
-     */
-    void setRecordType(String recordTypeName, Long version) throws RecordException;
-    
-    /**
-     * Resolves the QName of the record type and sets it on the record.
-     * <p>
-     * @see {@link #setDefaultNamespace(String)} 
-     * @see {@link #setRecordType(Scope, QName, Long)}
-     * @param recordTypeName the name part of the record type to set
-     * @throws RecordException when the QName cannot be resolved
-     */
-    void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException;
-    
-    /**
-     * Resolves the QName of the field and sets it on the record.
-     * <p>
-     * @see {@link #setDefaultNamespace(String)} 
-     * @see {@link #setField(QName)}
-     * @param fieldName the name part of the field to set
-     * @param value the value to set on the field
-     * @throws RecordException when the QName cannot be resolved
-     */
-    void setField(String fieldName, Object value) throws RecordException;
-
-    /**
-     * Resolves the QName of the field and gets it from the record.
-     * <p>
-     * @see {@link #setDefaultNamespace(String)} 
-     * @see {@link #getField(QName)}
-     * @param fieldName the name part of the field to get
-     * @return the value of the field
-     * @throws FieldNotFoundException if the field does not exist on the record
-     * @throws RecordException when the QName cannot be resolved
-     */
-    <T> T getField(String fieldName) throws FieldNotFoundException, RecordException;
-    
-    /**
-     * Resolves the QName of the field and deletes it from the record.
-     * <p>
-     * @see {@link #setDefaultNamespace(String)} 
-     * @see {@link #delete(QName, boolean)}
-     * @param fieldName the name part of the field to delete
-     * @param addToFieldsToDelete true if the field needs to be deleted from the record in the repository as well
-     * @throws RecordException when the QName cannot be resolved
-     */
-    void delete(String fieldName, boolean addToFieldsToDelete) throws RecordException;
-    
-    /**
-     * Resolves the QName of the field and checks if it exists.
-     * <p>
-     * @see {@link #setDefaultNamespace(String)} 
-     * @see {@link #hasField(QName)}
-     * @param fieldName the name part of the field to check 
-     * @return true if the field exists on the record
-     * @throws RecordException when the QName cannot be resolved
-     */
-    boolean hasField(String fieldName) throws RecordException;
 }

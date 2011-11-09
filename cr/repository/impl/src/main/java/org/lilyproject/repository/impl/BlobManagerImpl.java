@@ -2,16 +2,16 @@ package org.lilyproject.repository.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import com.google.common.primitives.Ints;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.valuetype.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.BlobIncubatorCf;
@@ -34,28 +34,25 @@ public class BlobManagerImpl implements BlobManager {
         registry.setBlobStoreAccessFactory(blobStoreAccessFactory);
     }
     
-    @Override
     public void register(BlobStoreAccess blobStoreAccess) {
         registry.register(blobStoreAccess);
     }
     
-    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return registry.getOutputStream(blob);
     }
 
-    @Override
-    public BlobAccess getBlobAccess(Record record, QName fieldName, FieldType fieldType, int...indexes)
-            throws BlobException {
-        if (!(fieldType.getValueType().getDeepestValueType() instanceof BlobValueType)) {
+    public BlobAccess getBlobAccess(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
+            FieldType fieldType) throws BlobNotFoundException, BlobException {
+
+        if (!fieldType.getValueType().getPrimitive().getName().equals("BLOB")) {
             throw new BlobException("Cannot read a blob from a non-blob field type: " + fieldType.getName());
         }
 
-        Blob blob = getBlobFromRecord(record, fieldName, fieldType, indexes);
+        Blob blob = getBlobFromRecord(record, fieldName, multivalueIndex, hierarchyIndex, fieldType);
         return registry.getBlobAccess(blob);
     }
 
-    @Override
     public void incubateBlob(byte[] blobKey) throws IOException {
         Put put = new Put(blobKey);
         // We put a byte[] because we need to put at least one column 
@@ -64,7 +61,6 @@ public class BlobManagerImpl implements BlobManager {
         blobIncubatorTable.put(put);
     }
     
-    @Override
     public Set<BlobReference> reserveBlobs(Set<BlobReference> blobs) throws IOException {
         Set<BlobReference> failedBlobs = new HashSet<BlobReference>();
         for (BlobReference referencedBlob : blobs) {
@@ -90,7 +86,6 @@ public class BlobManagerImpl implements BlobManager {
         return blobIncubatorTable.checkAndPut(row, family, recordQualifier, INCUBATE, put);
     }
     
-    @Override
     public void handleBlobReferences(RecordId recordId, Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs) {
         // Remove references from the blobIncubator for the blobs that are still referenced.
         if (referencedBlobs != null) {
@@ -123,47 +118,52 @@ public class BlobManagerImpl implements BlobManager {
         }
     }
     
-    private Blob getBlobFromRecord(Record record, QName fieldName, FieldType fieldType, int... indexes)
-            throws BlobNotFoundException {
-        Object value = record.getField(fieldName);
+    private Blob getBlobFromRecord(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex,
+            FieldType fieldType) throws BlobNotFoundException {
+        Blob blob;
+        Object field = record.getField(fieldName);
         ValueType valueType = fieldType.getValueType();
-        if (!valueType.getDeepestValueType().getBaseName().equals("BLOB")) {
-            throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() + "', '" +
-                    fieldName + "' at index: " + indexes);
-        }
-
-        if (indexes == null) {
-            indexes = new int[0];
-        }
-
-        for (int i = 0; i < indexes.length; i++) {
-            int index = indexes[i];
-            try {
-                if (valueType.getBaseName().equals("LIST")) {
-                    value = ((List<Object>) value).get(index);
-                    valueType = valueType.getNestedValueType();
-                    continue;
-                } 
-                if (valueType.getBaseName().equals("PATH")) {
-                    value = ((HierarchyPath)value).getElements()[index];
-                    valueType = valueType.getNestedValueType();
-                    continue;
+        if (valueType.isMultiValue()) {
+            if (multivalueIndex == null)
+                throw new BlobNotFoundException("A multivalueIndex is needed to get a BlobInputStream from " + record.getId() + " since the field " + fieldName + " is multivalue");
+            if (valueType.isHierarchical()) {
+                if (hierarchyIndex == null)
+                    throw new BlobNotFoundException("A hierarchyIndex is needed to get a BlobInputStream from " + record.getId() + " since the field " + fieldName + " is hierarchycal");
+                List<HierarchyPath> paths = (List<HierarchyPath>)field;
+                HierarchyPath hierarchyPath;
+                try {
+                    hierarchyPath = paths.get(multivalueIndex);
+                } catch (IndexOutOfBoundsException e) {
+                    throw new BlobNotFoundException("Unable to get a BlobInputStream from " + record.getId() + ", " + fieldName + "since the multivalueIndex " + multivalueIndex + " is invalid", e);
                 }
-                throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() +
-                        "', '" + fieldName + "' : " + Ints.join("/", Arrays.copyOf(indexes, i + 1)));
-            } catch (IndexOutOfBoundsException e) {
-                throw new BlobNotFoundException("Invalid index to retrieve Blob from '" + record.getId() +
-                        "', '" + fieldName + "' : " + Ints.join("/", Arrays.copyOf(indexes, i + 1)), e);
+                
+                Object[] blobs = hierarchyPath.getElements();
+                try {
+                    blob = (Blob)blobs[hierarchyIndex];
+                } catch (IndexOutOfBoundsException e) {
+                    throw new BlobNotFoundException("Unable to get a BlobInputStream from " + record.getId() + ", " + fieldName + "since the hierarchyIndex " + hierarchyIndex + " is invalid", e);
+                }
+            } else {
+                try {
+                    blob = ((List<Blob>) field).get(multivalueIndex);
+                } catch (IndexOutOfBoundsException e) {
+                    throw new BlobNotFoundException("Unable to get a BlobInputStream from " + record.getId() + ", " + fieldName + "since the multivalueIndex " + multivalueIndex + " is invalid", e);
+                }
             }
+        } else if (valueType.isHierarchical()) {
+            if (hierarchyIndex == null)
+                throw new BlobNotFoundException("A hierarchyIndex is needed to get a BlobInputStream from " + record.getId() + " since the field " + fieldName + " is hierarchycal");
+            try {
+                blob = (Blob)((HierarchyPath)field).getElements()[hierarchyIndex];
+            } catch (IndexOutOfBoundsException e) {
+                throw new BlobNotFoundException("Unable to get a BlobInputStream from " + record.getId() + ", " + fieldName + "since the hierarchyIndex " + hierarchyIndex + " is invalid", e);
+            }
+        } else {
+            blob = (Blob)field; 
         }
-        if (!valueType.getBaseName().equals("BLOB")) {
-            throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() +
-                    "', '" + fieldName + "' at index: " + Ints.join("/", indexes));
-        }
-        return (Blob)value;
+        return blob;
     }
-    
-    @Override
+
     public void delete(byte[] blobKey) throws BlobException {
         registry.delete(blobKey);
     }

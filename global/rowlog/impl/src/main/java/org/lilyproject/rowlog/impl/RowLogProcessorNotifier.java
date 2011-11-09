@@ -40,25 +40,31 @@ public class RowLogProcessorNotifier {
         this.delay = delay;
     }
     
-    protected void notifyProcessor(String rowLogId) throws InterruptedException {
+    protected void notifyProcessor(String rowLogId, String shardId) throws InterruptedException {
         long now = System.currentTimeMillis();
-        Long delayUntil = wakeupDelays.get(rowLogId);
+        Long delayUntil = wakeupDelays.get(rowLogId+shardId);
         if (delayUntil == null || now >= delayUntil) {
-            sendNotification(rowLogId);
+            sendNotification(rowLogId, shardId);
             // Wait at least <delay>miliseconds before sending another notification 
-            wakeupDelays.put(rowLogId, now + delay);
+            wakeupDelays.put(rowLogId+shardId, now + delay);
         }
     }
 
-	private void sendNotification(String rowLogId)
+	private void sendNotification(String rowLogId, String shardId)
 			throws InterruptedException {
 		try {
-			rowLogConfigurationManager.notifyProcessor(rowLogId);
+			rowLogConfigurationManager.notifyProcessor(rowLogId, shardId);
 		} catch (KeeperException e) {
-			log.debug("Exception while notifying processor of rowLog '" + rowLogId + "'", e);
+			log.debug("Exception while notifying processor of rowLog '" + rowLogId + "' and shard '" + shardId + "'", e);
 		}
 	}
     
     public void close() {
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        close();
+        super.finalize();
     }
 }

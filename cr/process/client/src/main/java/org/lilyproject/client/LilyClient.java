@@ -33,7 +33,9 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
@@ -70,12 +72,10 @@ public class LilyClient implements Closeable {
     private ZkWatcher watcher = new ZkWatcher();
 
     private Repository balancingAndRetryingRepository = BalancingAndRetryingRepository.getInstance(this);
-    private RemoteSchemaCache schemaCache;
 
-    public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException, ZkConnectException,
-            NoServersException, RepositoryException {
+    public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException,
+            ZkConnectException, NoServersException {
         this.zk = zk;
-        schemaCache = new RemoteSchemaCache(zk, this);
         init();
     }
 
@@ -84,20 +84,21 @@ public class LilyClient implements Closeable {
      * @throws NoServersException if the znode under which the repositories are published does not exist
      */
     public LilyClient(String zookeeperConnectString, int sessionTimeout) throws IOException, InterruptedException,
-            KeeperException, ZkConnectException, NoServersException, RepositoryException {
+            KeeperException, ZkConnectException, NoServersException {
         managedZk = true;
         zk = ZkUtil.connect(zookeeperConnectString, sessionTimeout);
-        schemaCache = new RemoteSchemaCache(zk, this);
         init();
     }
 
-    private void init() throws InterruptedException, KeeperException, NoServersException, RepositoryException {
+    private void init() throws InterruptedException, KeeperException, NoServersException {
         zk.addDefaultWatcher(watcher);
         refreshServers();
-        schemaCache.start();
+        Stat stat = zk.exists(nodesPath, false);
+        if (stat == null) {
+            throw new NoServersException("Repositories znode does not exist in ZooKeeper: " + nodesPath);
+        }
     }
 
-    @Override
     public void close() throws IOException {
         zk.removeDefaultWatcher(watcher);
 
@@ -108,7 +109,6 @@ public class LilyClient implements Closeable {
         if (managedZk && zk != null) {
             zk.close();
         }
-        schemaCache.close();
     }
 
     /**
@@ -117,8 +117,7 @@ public class LilyClient implements Closeable {
      * over multiple Lily servers, you need to recall this method regularly to retrieve other
      * repository instances. Most of the time, you will rather use {@link #getRepository()}.
      */
-    public synchronized Repository getPlainRepository() throws IOException, NoServersException, InterruptedException,
-            KeeperException, RepositoryException {
+    public synchronized Repository getPlainRepository() throws IOException, NoServersException, InterruptedException, KeeperException {
         if (servers.size() == 0) {
             throw new NoServersException("No servers available");
         }
@@ -149,12 +148,11 @@ public class LilyClient implements Closeable {
         this.retryConf = retryConf;
     }
 
-    private void constructRepository(ServerNode server) throws IOException, InterruptedException, KeeperException,
-            RepositoryException {
+    private void constructRepository(ServerNode server) throws IOException, InterruptedException, KeeperException {
         AvroConverter remoteConverter = new AvroConverter();
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
         RemoteTypeManager typeManager = new RemoteTypeManager(parseAddressAndPort(server.lilyAddressAndPort),
-                remoteConverter, idGenerator, zk, schemaCache);
+                remoteConverter, idGenerator, zk);
         
         BlobManager blobManager = getBlobManager(zk);
         
@@ -177,7 +175,7 @@ public class LilyClient implements Closeable {
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(fs, blobRootPath);
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(configuration, true);
         BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
-        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess);
+        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess});
         
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, getBlobStoreAccessConfig(zk));
         
@@ -241,30 +239,7 @@ public class LilyClient implements Closeable {
 
     private synchronized void refreshServers() throws InterruptedException, KeeperException {
         Set<String> currentServers = new HashSet<String>();
-
-        boolean retry;
-        do {
-            retry = false;
-            try {
-                currentServers.addAll(zk.getChildren(nodesPath, true));
-            } catch (KeeperException.NoNodeException e) {
-                // The path does not exist: this can happen if the client is started before
-                // any Lily server has ever been started, or when using the LilyLauncher
-                // from the test framework and calling its resetLilyState JMX operation.
-                // In this case, put a watcher to be notified when the path is created.
-                Stat stat = zk.exists(nodesPath, true);
-                if (stat == null) {
-                    if (log.isInfoEnabled()) {
-                        log.info("The path with Lily servers does not exist in ZooKeeper: " + nodesPath);
-                    }
-                    clearServers();
-                    return;
-                } else {
-                    // The node was created in between the getChildren and exists calls: retry
-                    retry = true;
-                }
-            }
-        } while (retry);
+        currentServers.addAll(zk.getChildren(nodesPath, true));
 
         Set<String> removedServers = new HashSet<String>();
         removedServers.addAll(serverAddresses);
@@ -302,24 +277,17 @@ public class LilyClient implements Closeable {
     }
 
     private synchronized void clearServers() {
-        Iterator<ServerNode> serverIt = servers.iterator();
-        while (serverIt.hasNext()) {
-            ServerNode server = serverIt.next();
-            serverIt.remove();
-            Closer.close(server.repository);
+        if (log.isInfoEnabled()) {
+            log.info("Not connected to ZooKeeper, will clear list of servers.");
         }
-
+        servers.clear();
         serverAddresses.clear();
     }
 
     private class ZkWatcher implements Watcher {
-        @Override
         public void process(WatchedEvent event) {
             try {
                 if (event.getState() != Event.KeeperState.SyncConnected) {
-                    if (log.isInfoEnabled()) {
-                        log.info("Not connected to ZooKeeper, will clear list of servers.");
-                    }
                     clearServers();
                 } else {
                     // We refresh the servers not only when /lily/repositoryNodes has changed, but also

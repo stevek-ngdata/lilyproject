@@ -2,7 +2,6 @@ package org.lilyproject.rowlog.impl;
 
 import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 
@@ -19,15 +18,10 @@ import org.lilyproject.rowlog.api.RowLogSubscription.Type;
  * <br>The meta message on the rowlog shard will only be removed once all subscriptions have processed the message.  
  */
 public class WalProcessor extends RowLogProcessorImpl {
-    public WalProcessor(WalRowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
-            Configuration hbaseConf) {
-        super(rowLog, rowLogConfigurationManager, hbaseConf);
+    public WalProcessor(WalRowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager) {
+        super(rowLog, rowLogConfigurationManager);
     }
 
-    public WalProcessor(WalRowLog rowLog, RowLogConfigurationManager rowLogConfigurationManager,
-            Configuration hbaseConf, RowLogProcessorSettings settings) {
-        super(rowLog, rowLogConfigurationManager, hbaseConf, settings);
-    }
 
     /**
      * Instead of creating SubscriptionThread for each subscription, only one SubscriptionThread is created for the

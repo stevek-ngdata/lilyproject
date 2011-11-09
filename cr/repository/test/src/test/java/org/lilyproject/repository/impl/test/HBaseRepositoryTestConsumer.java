@@ -29,7 +29,6 @@ public class HBaseRepositoryTestConsumer implements RowLogMessageListener {
         processedMessage = null;
     }
     
-    @Override
     public boolean processMessage(RowLogMessage message) {
         if (HBaseRepositoryTestConsumer.message == null) {
             HBaseRepositoryTestConsumer.message = message;

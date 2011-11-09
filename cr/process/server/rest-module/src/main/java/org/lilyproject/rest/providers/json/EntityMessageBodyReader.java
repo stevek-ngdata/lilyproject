@@ -37,7 +37,6 @@ import static javax.ws.rs.core.Response.Status.*;
 @Provider
 public class EntityMessageBodyReader extends RepositoryEnabled implements MessageBodyReader<Object> {
 
-    @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
             for (Class clazz : EntityRegistry.SUPPORTED_TYPES.keySet()) {
@@ -48,7 +47,6 @@ public class EntityMessageBodyReader extends RepositoryEnabled implements Messag
         return false;
     }
 
-    @Override
     public Object readFrom(Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {

@@ -24,9 +24,8 @@ import org.lilyproject.repository.api.ValueType;
 public class FieldTypeWriter implements EntityWriter<FieldType> {
     public static EntityWriter<FieldType> INSTANCE = new FieldTypeWriter();
 
-    @Override
     public ObjectNode toJson(FieldType fieldType, WriteOptions options, Repository repository) {
-        Namespaces namespaces = new NamespacesImpl();
+        Namespaces namespaces = new Namespaces();
 
         ObjectNode fieldNode = toJson(fieldType, options, namespaces, repository);
 
@@ -35,7 +34,6 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
         return fieldNode;
     }
 
-    @Override
     public ObjectNode toJson(FieldType fieldType, WriteOptions options, Namespaces namespaces, Repository repository) {
         return toJson(fieldType, namespaces, true);
     }
@@ -51,8 +49,18 @@ public class FieldTypeWriter implements EntityWriter<FieldType> {
 
         fieldNode.put("scope", fieldType.getScope().toString().toLowerCase());
 
-        fieldNode.put("valueType", ValueTypeNSConverter.toJson(fieldType.getValueType().getName(), namespaces));
+        fieldNode.put("valueType", valueTypeToJson(fieldType.getValueType()));
 
         return fieldNode;
+    }
+
+    public static ObjectNode valueTypeToJson(ValueType valueType) {
+        ObjectNode vtNode = JsonNodeFactory.instance.objectNode();
+
+        vtNode.put("primitive", valueType.getPrimitive().getName());
+        vtNode.put("multiValue", valueType.isMultiValue());
+        vtNode.put("hierarchical", valueType.isHierarchical());
+
+        return vtNode;
     }
 }

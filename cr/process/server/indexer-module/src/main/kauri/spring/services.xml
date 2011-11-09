@@ -67,13 +67,16 @@
       id="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
-  <kauri:import-service
-      id="indexerModel"
-      service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
-
   <bean id="hbaseConf"
       factory-bean="hadoopConfFactory"
       factory-method="getHBaseConf"/>
+
+  <bean id="indexerModel" class="org.lilyproject.indexer.model.impl.IndexerModelImpl">
+    <constructor-arg ref="zooKeeper"/>
+  </bean>
+
+  <kauri:export-service
+      ref="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
   <bean id="solrClientConfig" class="org.lilyproject.indexer.engine.SolrClientConfig">
     <property name="requestWriter" value="${indexer:solr/requestWriter}"/>

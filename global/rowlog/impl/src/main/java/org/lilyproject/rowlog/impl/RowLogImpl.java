@@ -16,13 +16,10 @@
 package org.lilyproject.rowlog.impl;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.management.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,17 +34,16 @@ import org.lilyproject.util.io.Closer;
 /**
  * See {@link RowLog}
  */
-public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserver, RowLogObserver {
+public class RowLogImpl implements RowLog, SubscriptionsObserver, RowLogObserver {
 
     private static final byte PL_BYTE = (byte)1;
     private static final byte ES_BYTE = (byte)2;
     private static final byte[] SEQ_NR = Bytes.toBytes("SEQNR");
+    protected RowLogShard shard; // TODO: We only work with one shard for now
     private final HTableInterface rowTable;
     private final byte[] rowLogColumnFamily;
     private RowLogConfig rowLogConfig;
-    private RowLogShardRouter shardRouter;
-    private RowLogShardList shardList = new RowLogShardList();
-
+    
     private final Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
     protected final String id;
     private RowLogProcessorNotifier processorNotifier = null;
@@ -60,7 +56,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private byte[] payloadPrefix;
     private byte[] executionStatePrefix;
     private byte[] seqNrQualifier;
-    private ObjectName mbeanName;
 
     /**
      * The RowLog should be instantiated with information about the table that contains the rows the messages are 
@@ -73,8 +68,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
      * @throws RowLogException
      */
     public RowLogImpl(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
-            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker,
-            RowLogShardRouter shardRouter) throws InterruptedException, IOException {
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker) throws InterruptedException {
         this.id = id;
         this.rowTable = rowTable;
         this.rowLogColumnFamily = rowLogColumnFamily;
@@ -83,8 +77,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         this.seqNrQualifier = Bytes.add(new byte[]{rowLogId}, SEQ_NR);
         this.rowLogConfigurationManager = rowLogConfigurationManager;
         this.rowLocker = rowLocker;
-        this.shardRouter = shardRouter;
-
         rowLogConfigurationManager.addRowLogObserver(id, this);
         synchronized (initialRowLogConfigLoaded) {
             while(!initialRowLogConfigLoaded.get()) {
@@ -98,39 +90,9 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
                 initialSubscriptionsLoaded.wait();
             }
         }
-
-        registerMBean();
     }
 
-    private void registerMBean() {
-        try {
-            mbeanName = new ObjectName("Lily:name=RowLog,id=" + this.id);
-            ManagementFactory.getPlatformMBeanServer().registerMBean(this, mbeanName);
-        } catch (InstanceAlreadyExistsException e) {
-            log.warn("MBean '"+ mbeanName +"' for rowlog '" + this.id + "' already registered", e);
-        } catch (MBeanRegistrationException e) {
-            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
-        } catch (NotCompliantMBeanException e) {
-            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
-        } catch (MalformedObjectNameException e) {
-            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
-        } catch (NullPointerException e) {
-            log.warn("Failed registering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
-        }
-    }
-    
-    private void unregisterMBean() {
-        try {
-            ManagementFactory.getPlatformMBeanServer().unregisterMBean(mbeanName);
-        } catch (MBeanRegistrationException e) {
-            log.warn("Failed unRegistering MBean '"+ mbeanName +"' for rowlog '"+ this.id + "'", e);
-        } catch (InstanceNotFoundException e) {
-            log.info("MBean '"+ mbeanName +"' for rowlog '" + this.id + "' was not registered", e);
-        }
-    }
-    
     public void stop() {
-        unregisterMBean();
         rowLogConfigurationManager.removeRowLogObserver(id, this);
         synchronized (initialRowLogConfigLoaded) {
             initialRowLogConfigLoaded.set(false);
@@ -143,15 +105,27 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
     
     @Override
+    protected void finalize() throws Throwable {
+        stop();
+        super.finalize();
+    }
+    
     public String getId() {
         return id;
     }
-
+    
+    public void registerShard(RowLogShard shard) {
+        this.shard = shard;
+    }
+    
+    public void unRegisterShard(RowLogShard shard) {
+        this.shard = null;
+    }
+    
     private void putPayload(long seqnr, byte[] payload, long timestamp, Put put) throws IOException {
         put.add(rowLogColumnFamily, payloadQualifier(seqnr, timestamp), payload);
     }
 
-    @Override
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
         byte[] rowKey = message.getRowKey();
         byte[] qualifier = payloadQualifier(message.getSeqNr(), message.getTimestamp());
@@ -166,7 +140,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return result.getValue(rowLogColumnFamily, qualifier);
     }
 
-    @Override
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws InterruptedException, RowLogException {
         try {
             // Take current snapshot of the subscriptions so that shard.putMessage and initializeSubscriptions
@@ -221,7 +194,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             }
 
             if (rowLogConfig.isEnableNotify()) {
-                processorNotifier.notifyProcessor(id);
+                processorNotifier.notifyProcessor(id, getShard().getId());
             }
             return message;
         } catch (IOException e) {
@@ -235,7 +208,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         for (RowLogSubscription subscription : subscriptions) {
             subscriptionIds.add(subscription.getId());
         }
-        getShard(message).putMessage(message, subscriptionIds);
+        getShard().putMessage(message, subscriptionIds);
     }
 
     
@@ -251,7 +224,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
     }
 
-    @Override
     public boolean processMessage(RowLogMessage message, RowLock lock) throws RowLogException, InterruptedException {
         if (message == null)
             return true;
@@ -353,28 +325,18 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return Bytes.toStringBinary(message.getRowKey()) + ":" + message.getSeqNr();
     }
     
-    @Override
     public List<RowLogSubscription> getSubscriptions() {
         synchronized (subscriptions) {
             return new ArrayList<RowLogSubscription>(subscriptions.values());
         }
     }
     
-    @Override
-    public List<String> getSubscriptionIds() {
-        synchronized(subscriptions) {
-            return new ArrayList<String>(subscriptions.keySet());
-        }
-    }
-    
-    @Override
     public RowLogSubscription[] getSubscriptionsAsArray() {
         synchronized (subscriptions) {
             return subscriptions.values().toArray(new RowLogSubscription[subscriptions.size()]);
         }
     }
 
-    @Override
     public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException, InterruptedException {
         if (rowLocker != null) { // If the rowLocker exists the lock should be a RowLock
             RowLock rowLock = null;
@@ -469,10 +431,9 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
  
     protected void removeMessageFromShard(RowLogMessage message, String subscriptionId) throws RowLogException {
-        getShard(message).removeMessage(message, subscriptionId);
+        getShard().removeMessage(message, subscriptionId);
     }
     
-    @Override
     public boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
         SubscriptionExecutionState executionState = getExecutionState(message);
         if (executionState == null) {
@@ -499,7 +460,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return executionState;
     }
 
-    @Override
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
         SubscriptionExecutionState executionState = getExecutionState(message);
         if (executionState == null) {
@@ -548,11 +508,14 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return rowLocker.delete(delete, rowLock);
     }
     
-    protected RowLogShard getShard(RowLogMessage message) throws RowLogException {
-        return shardRouter.getShard(message, shardList);
+    // For now we work with only one shard
+    protected RowLogShard getShard() throws RowLogException {
+        if (shard == null) {
+            throw new RowLogException("No shards registerd");
+        }
+        return shard;
     }
     
-    @Override
     public List<RowLogMessage> getMessages(byte[] rowKey, String ... subscriptionIds) throws RowLogException {
         List<RowLogMessage> messages = new ArrayList<RowLogMessage>();
         Get get = new Get(rowKey);
@@ -622,7 +585,6 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         removeMessageFromShard(message, subscriptionId);
     }
     
-    @Override
     public void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
         synchronized (subscriptions) {
             for (RowLogSubscription subscription : newSubscriptions) {
@@ -643,17 +605,12 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         }
     }
 
-    @Override
     public List<RowLogShard> getShards() {
-        return shardList.getShards();
+        List<RowLogShard> shards = new ArrayList<RowLogShard>();
+        shards.add(shard);
+        return shards;
     }
-
-    @Override
-    public RowLogShardList getShardList() {
-        return shardList;
-    }
-
-    @Override
+    
     public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
         this.rowLogConfig = rowLogConfig;
         if (!initialRowLogConfigLoaded.get()) {
@@ -679,6 +636,4 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         buffer.putLong(timestamp);
         return buffer.array();
     }
-    
-    
  }

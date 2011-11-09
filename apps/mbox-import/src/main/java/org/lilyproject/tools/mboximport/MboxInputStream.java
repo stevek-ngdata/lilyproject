@@ -73,7 +73,6 @@ public class MboxInputStream extends InputStream {
         return buffer[currentLinePos];
     }
 
-    @Override
     public int read(byte b[], int off, int len) throws IOException {
         if (atFromLine || eof)
             return -1;

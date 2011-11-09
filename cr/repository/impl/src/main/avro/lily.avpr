@@ -7,7 +7,7 @@
       "name": "AvroQName",
       "type": "record",
       "fields": [
-        {"name": "namespace", "type": "string"},
+        {"name": "namespace", "type": ["string", "null"]},
         {"name": "name", "type": "string"}
       ]
     },
@@ -16,8 +16,10 @@
       "name": "AvroField",
       "type": "record",
       "fields": [
-        {"name": "name", "type": "AvroQName"},
-        {"name": "valueType", "type": "string"},
+        {"name": "name", "type": "string"},
+        {"name": "primitiveType", "type": "string"},
+        {"name": "multiValue", "type": "boolean"},
+        {"name": "hierarchical", "type": "boolean"},
         {"name": "value", "type": "bytes"}
       ]
     },
@@ -33,29 +35,15 @@
         {"name": "scopeRecordTypeNames", "type": {"type": "map", "values": ["AvroQName", "null"]}},
         {"name": "scopeRecordTypeVersions", "type": {"type": "map", "values": "long"}},
         {"name": "fields", "type": {"type": "array", "items": "AvroField"}},
-        {"name": "fieldsToDelete", "type": {"type": "array", "items": "AvroQName"}},
+        {"name": "fieldsToDelete", "type": {"type": "array", "items": "string"}},
         {"name": "responseStatus", "type": [
-          {"name": "AvroResponseStatus", "type": "enum", "symbols": ["CREATED", "UPDATED", "UP_TO_DATE", "CONFLICT"]},
+          {"name": "AvroResponseStatus", "type": "enum", "symbols": ["CREATED", "UPDATED", "UP_TO_DATE"]},
           "null"
         ]
         }
       ]
     },
     
-    {
-      "name": "AvroMutationCondition",
-      "type": "record",
-      "fields": [
-        {"name": "name", "type": "AvroQName"},
-        {"name": "valueType", "type": ["null", "string"]},
-        {"name": "value", "type": ["null", "bytes"]},
-        {"name": "operator", "type":
-          {"name": "AvroCompareOp", "type": "enum",
-           "symbols": ["LESS", "LESS_OR_EQUAL", "EQUAL", "NOT_EQUAL", "GREATER_OR_EQUAL", "GREATER"]}},
-        {"name": "allowMissing", "type": "boolean"}
-      ]
-    },
-
     {
       "name": "AvroSchemaId",
       "type": "record",
@@ -72,6 +60,17 @@
         {"name": "idToQNameMappingIds", "type": {"type": "array", "items": "AvroSchemaId"}},
         {"name": "idToQNameMappingNames", "type": {"type": "array", "items": "AvroQName"}},
         {"name": "scopeRecordTypeIds", "type": {"type": "map", "values": ["AvroSchemaId", "null"]}}
+      ]
+    },
+    
+    {
+      "name": "AvroBlob",
+      "type": "record",
+      "fields": [
+        {"name": "mediaType", "type": ["string", "null"]},
+        {"name": "size", "type": "long"},
+        {"name": "name", "type": ["string", "null"]},
+        {"name": "value", "type": ["bytes", "null"]}
       ]
     },
 
@@ -127,7 +126,9 @@
       "name": "AvroValueType",
       "type": "record",
       "fields": [
-        {"name": "valueType", "type": "string"}
+        {"name": "primitiveValueType", "type": "string"},
+        {"name": "multivalue", "type": "boolean"},
+        {"name": "hierarchical", "type": "boolean"}
       ]
     },
 
@@ -145,11 +146,9 @@
       "type": "record",
       "fields": [
         {"name": "id",   "type": ["AvroSchemaId", "null"]},
-        {"name": "name", "type": ["AvroQName", "null"]},
-        {"name": "valueType", "type": ["AvroValueType", "null"]},
-        {"name": "scope", "type":
-          [ {"name": "AvroScope", "type": "enum", "symbols": ["NON_VERSIONED", "VERSIONED", "VERSIONED_MUTABLE"]},
-            "null"]}
+        {"name": "name", "type": "AvroQName"},
+        {"name": "valueType", "type": "AvroValueType"},
+        {"name": "scope", "type": {"name": "AvroScope", "type": "enum", "symbols": ["NON_VERSIONED", "VERSIONED", "VERSIONED_MUTABLE"]}}
       ]
     },
 
@@ -167,29 +166,10 @@
       "type": "record",
       "fields": [
         {"name": "id", "type": ["AvroSchemaId", "null"]},
-        {"name": "name", "type": ["AvroQName", "null"]},
+        {"name": "name", "type": "AvroQName"},
         {"name": "version", "type": ["long", "null"]},
         {"name": "fieldTypeEntries", "type": {"type": "array", "items": "AvroFieldTypeEntry"}},
         {"name": "mixins", "type": {"type": "array", "items": "AvroMixin"}}
-      ]
-    },
-    
-    {
-      "name": "AvroFieldAndRecordTypes",
-      "type": "record",
-      "fields": [
-        {"name": "fieldTypes", "type": {"type": "array", "items": "AvroFieldType"}},
-        {"name": "recordTypes", "type": {"type": "array", "items": "AvroRecordType"}}
-      ]
-    },
-    
-    {
-      "name": "AvroTypeBucket",
-      "type": "record",
-      "fields": [
-        {"name": "bucketId", "type": "string"},
-        {"name": "fieldTypes", "type": {"type": "array", "items": "AvroFieldType"}},
-        {"name": "recordTypes", "type": {"type": "array", "items": "AvroRecordType"}}
       ]
     }
   ],
@@ -205,8 +185,7 @@
       "request": [
         {"name": "record", "type": "AvroRecord"},
         {"name": "updateVersion", "type": "boolean"},
-        {"name": "useLatestRecordType", "type": "boolean"},
-        {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]}],
+        {"name": "useLatestRecordType", "type": "boolean"}],
       "response": "AvroRecord",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
@@ -261,11 +240,8 @@
      },
 
     "delete": {
-      "request": [
-        {"name": "recordId", "type": "bytes"},
-        {"name": "conditions", "type": [{"type": "array", "items": "AvroMutationCondition"}, "null"]}
-      ],
-      "response": ["null", "AvroRecord"],
+      "request": [{"name": "recordId", "type": "bytes"}],
+      "response": "null",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
     
@@ -315,12 +291,6 @@
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     },
 
-    "createOrUpdateRecordType": {
-      "request": [{"name": "recordType", "type": "AvroRecordType"}],
-      "response": "AvroRecordType",
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-
     "createFieldType": {
       "request": [{"name": "fieldType", "type": "AvroFieldType"}],
       "response": "AvroFieldType",
@@ -328,12 +298,6 @@
     },
 
     "updateFieldType": {
-      "request": [{"name": "fieldType", "type": "AvroFieldType"}],
-      "response": "AvroFieldType",
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-
-    "createOrUpdateFieldType": {
       "request": [{"name": "fieldType", "type": "AvroFieldType"}],
       "response": "AvroFieldType",
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
@@ -373,42 +337,6 @@
     "getRecordTypesWithoutCache": {
       "request": [],
       "response": {"type": "array", "items": "AvroRecordType"},
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-
-    "getTypesWithoutCache": {
-      "request": [],
-      "response": "AvroFieldAndRecordTypes",
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-        
-    "getTypeBucketWithoutCache": {
-      "request": [{"name": "bucketId", "type": "string"}],
-      "response": "AvroTypeBucket",
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-    
-    "enableSchemaCacheRefresh": {
-      "request": [],
-      "response": ["null"],
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-    
-    "disableSchemaCacheRefresh": {
-      "request": [],
-      "response": ["null"],
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-    
-    "isSchemaCacheRefreshEnabled": {
-      "request": [],
-      "response": {"type": "boolean"},
-      "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
-    },
-    
-    "triggerSchemaCacheRefresh": {
-      "request": [],
-      "response": ["null"],
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
     }
  }

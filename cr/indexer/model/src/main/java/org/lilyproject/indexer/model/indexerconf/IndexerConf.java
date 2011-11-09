@@ -18,7 +18,6 @@ package org.lilyproject.indexer.model.indexerconf;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.util.repo.SystemFields;
 
 import java.util.*;
 
@@ -75,11 +74,11 @@ public class IndexerConf {
             repoFieldDependencies.add(fieldDep);
 
         if (indexField.getValue() instanceof DerefValue) {
-            FieldType lastRealField = ((DerefValue)indexField.getValue()).getLastRealField();
-            if (lastRealField != null && !systemFields.isSystemField(lastRealField.getId())) {
+            FieldType targetField = ((DerefValue)indexField.getValue()).getTargetField();
+            if (!systemFields.isSystemField(targetField.getId())) {
                 derefIndexFields.add(indexField);
 
-                SchemaId fieldId = lastRealField.getId();
+                SchemaId fieldId = targetField.getId();
                 List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
                 if (fields == null) {
                     fields = new ArrayList<IndexField>();

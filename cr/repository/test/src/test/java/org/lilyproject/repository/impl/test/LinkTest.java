@@ -17,7 +17,6 @@ package org.lilyproject.repository.impl.test;
 
 import static org.junit.Assert.*;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.lilyproject.bytes.api.DataOutput;
@@ -229,32 +228,5 @@ public class LinkTest {
         } catch (UnsupportedOperationException e) {
             // ok
         }
-    }
-    
-    @Test
-    public void testEquals() {
-        RecordId recordId1 = idGenerator.newRecordId("123");
-        RecordId recordId2 = idGenerator.newRecordId("678");
-        Link link1 = Link.newBuilder().recordId(recordId1).copyAll(false).create();
-        Link link2 = Link.newBuilder().recordId(recordId2).copyAll(false).create();
-
-        Assert.assertEquals(link1, link1);
-        Assert.assertFalse(link1.equals(link2));
-        
-        Map<String, String> varProps1 = new HashMap<String, String>();
-        varProps1.put("lang", "en");
-        varProps1.put("branch", "dev");
-
-        Map<String, String> varProps2 = new HashMap<String, String>();
-        varProps1.put("lang", "fr");
-        varProps1.put("branch", "dev");
-
-        RecordId recordId3 = idGenerator.newRecordId("123", varProps1);
-        RecordId recordId4 = idGenerator.newRecordId("123", varProps2);
-        Link link3 = Link.newBuilder().recordId(recordId3).copyAll(false).create();
-        Link link4 = Link.newBuilder().recordId(recordId4).copyAll(false).create();
-
-        Assert.assertEquals(link3, link3);
-        Assert.assertFalse(link3.equals(link4));
     }
 }

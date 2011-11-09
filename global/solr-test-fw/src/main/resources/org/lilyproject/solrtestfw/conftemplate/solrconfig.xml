@@ -50,7 +50,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
     -->
-  <luceneMatchVersion>LUCENE_34</luceneMatchVersion>
+  <luceneMatchVersion>LUCENE_31</luceneMatchVersion>
 
   <!-- lib directives can be used to instruct Solr to load an Jars
        identified and use them to resolve any "plugins" specified in
@@ -110,12 +110,7 @@
   <!-- The DirectoryFactory to use for indexes.
        
        solr.StandardDirectoryFactory, the default, is filesystem
-       based and tries to pick the best implementation for the current
-       JVM and platform.  One can force a particular implementation
-       via solr.MMapDirectoryFactory, solr.NIOFSDirectoryFactory, or
-       solr.SimpleFSDirectoryFactory.
-
-       solr.RAMDirectoryFactory is memory based, not
+       based.  solr.RAMDirectoryFactory is memory based, not
        persistent, and doesn't work with replication.
     -->
   <directoryFactory name="DirectoryFactory" 
@@ -151,9 +146,7 @@
     <!-- Expert: Merge Policy 
 
          The Merge Policy in Lucene controls how merging is handled by
-         Lucene.  The default in Solr 3.3 is TieredMergePolicy.
-         
-         The default in 2.3 was the LogByteSizeMergePolicy,
+         Lucene.  The default in 2.3 is the LogByteSizeMergePolicy,
          previous versions used LogDocMergePolicy.
          
          LogByteSizeMergePolicy chooses segments to merge based on
@@ -164,7 +157,7 @@
          constructor
       -->
     <!--
-       <mergePolicy class="org.apache.lucene.index.TieredMergePolicy"/>
+       <mergePolicy class="org.apache.lucene.index.LogByteSizeMergePolicy"/>
        -->
 
     <!-- Expert: Merge Scheduler
@@ -267,7 +260,7 @@
          of detailed information when indexing.
 
          Setting The value to true will instruct the underlying Lucene
-         IndexWriter to write its debugging info the specified file
+         IndexWriter to write it's debugging info the specified file
       -->
      <infoStream file="INFOSTREAM.txt">false</infoStream> 
 
@@ -303,7 +296,7 @@
          http://wiki.apache.org/solr/UpdateXmlMessages
 
          maxDocs - Maximum number of documents to add since the last
-                   commit before automatically triggering a new commit.
+                   commit before automaticly triggering a new commit.
 
          maxTime - Maximum amount of time that is allowed to pass
                    since a document was added before automaticly
@@ -322,7 +315,7 @@
 
     <!-- Update Related Event Listeners
          
-         Various IndexWriter related events can trigger Listeners to
+         Various IndexWriter realted events can trigger Listeners to
          take actions.
 
          postCommit - fired after every commit or optimize command
@@ -518,7 +511,7 @@
         that.
 
         For most situations, this will not be useful unless you
-        frequently get the same search repeatedly with different sort
+        frequently get the same search repeatedly with differnet sort
         options, and none of them ever use "score"
      -->
    <!--
@@ -569,7 +562,7 @@
       </arr>
     </listener>
     -->
-    <!-- Lily change: disabled this -->
+    <!-- Lily change: disabled this-->
     <!--
     <listener event="firstSearcher" class="solr.QuerySenderListener">
       <arr name="queries">
@@ -612,7 +605,7 @@
 
        handleSelect="true" will cause the SolrDispatchFilter to process
        the request and will result in consistent error handling and
-       formatting for all types of requests.
+       formating for all types of requests.
 
        handleSelect="false" will cause the SolrDispatchFilter to
        ignore "/select" requests and fallback to using the legacy
@@ -626,10 +619,10 @@
          those requests
 
          enableRemoteStreaming - enables use of the stream.file
-         and stream.url parameters for specifying remote streams.
+         and stream.url paramaters for specifying remote streams.
 
          multipartUploadLimitInKB - specifies the max size of
-         Multipart File Uploads that Solr will allow in a Request.
+         Multipart File Uploads that Solr will alow in a Request.
          
          *** WARNING ***
          The settings below authorize Solr to fetch remote files, You
@@ -662,7 +655,7 @@
          <cacheControl>max-age=30, public</cacheControl> 
        </httpCaching>
       -->
-    <!-- To enable Solr to respond with automatically generated HTTP
+    <!-- To enable Solr to responde with automaticly generated HTTP
          Caching headers, and to response to Cache Validation requests
          correctly, set the value of never304="false"
          
@@ -676,12 +669,12 @@
          Last-Modified value (and validation against If-Modified-Since
          requests) will all be relative to when the current Searcher
          was opened.  You can change it to lastModFrom="dirLastMod" if
-         you want the value to exactly correspond to when the physical
+         you want the value to exactly corrispond to when the physical
          index was last modified.
 
          etagSeed="..." is an option you can change to force the ETag
          header (and validation against If-None-Match requests) to be
-         different even if the index has not changed (ie: when making
+         differnet even if the index has not changed (ie: when making
          significant changes to your config file)
 
          (lastModifiedFrom and etagSeed are both ignored if you use
@@ -790,7 +783,7 @@
        This example SearchHandler declaration shows off usage of the
        SearchHandler with many defaults declared
 
-       Note that multiple instances of the same Request Handler
+       Note that multiple instances of hte same Request Handler
        (SearchHandler) can be registered multiple times with different
        names (and different init parameters)
     -->
@@ -826,15 +819,11 @@
        <str name="facet.query">GB</str>
        <str name="facet.mincount">1</str>
        <str name="facet.pivot">cat,inStock</str>
-       <str name="facet.range.other">after</str>
        <str name="facet.range">price</str>
        <int name="f.price.facet.range.start">0</int>
        <int name="f.price.facet.range.end">600</int>
        <int name="f.price.facet.range.gap">50</int>
-       <str name="facet.range">popularity</str>
-       <int name="f.popularity.facet.range.start">0</int>
-       <int name="f.popularity.facet.range.end">10</int>
-       <int name="f.popularity.facet.range.gap">3</int>
+       <str name="f.price.facet.range.other">after</str>
        <str name="facet.range">manufacturedate_dt</str>
        <str name="f.manufacturedate_dt.facet.range.start">NOW/YEAR-10YEARS</str>
        <str name="f.manufacturedate_dt.facet.range.end">NOW</str>
@@ -876,7 +865,7 @@
       -->
     <!--
        <lst name="defaults">
-         <str name="update.chain">dedupe</str>
+         <str name="update.processor">dedupe</str>
        </lst>
        -->
     </requestHandler>
@@ -922,13 +911,6 @@
     </lst>
   </requestHandler>
 
-  <!-- XSLT Update Request Handler
-       Transforms incoming XML with stylesheet identified by tr=
-  -->
-  <requestHandler name="/update/xslt"
-                   startup="lazy"
-                   class="solr.XsltUpdateRequestHandler"/>
-
   <!-- Field Analysis Request Handler
 
        RequestHandler that provides much the same functionality as
@@ -972,12 +954,12 @@
        </docs>
 
     Note: Each document must contain a field which serves as the
-    unique key. This key is used in the returned response to associate
-    an analysis breakdown to the analyzed document.
+    unique key. This key is used in the returned response to assoicate
+    ananalysis breakdown to the analyzed document.
 
     Like the FieldAnalysisRequestHandler, this handler also supports
     query analysis by sending either an "analysis.query" or "q"
-    request parameter that holds the query text to be analyzed. It
+    request paraemter that holds the query text to be analyized. It
     also supports the "analysis.showmatch" parameter which when set to
     true, all field tokens that match the query tokens will be marked
     as a "match". 
@@ -993,7 +975,7 @@
     -->
   <requestHandler name="/admin/" 
                   class="solr.admin.AdminHandlers" />
-  <!-- This single handler is equivalent to the following... -->
+  <!-- This single handler is equivilent to the following... -->
   <!--
      <requestHandler name="/admin/luke"       class="solr.admin.LukeRequestHandler" />
      <requestHandler name="/admin/system"     class="solr.admin.SystemInfoHandler" />
@@ -1017,11 +999,9 @@
 
   <!-- ping/healthcheck -->
   <requestHandler name="/admin/ping" class="solr.PingRequestHandler">
-    <lst name="invariants">
+    <lst name="defaults">
       <str name="qt">search</str>
       <str name="q">solrpingquery</str>
-    </lst>
-    <lst name="defaults">
       <str name="echoParams">all</str>
     </lst>
   </requestHandler>
@@ -1064,7 +1044,7 @@
        Search components are registered to SolrCore and used by 
        instances of SearchHandler (which can access them by name)
        
-       By default, the following components are available:
+       By default, the following components are avaliable:
        
        <searchComponent name="query"     class="solr.QueryComponent" />
        <searchComponent name="facet"     class="solr.FacetComponent" />
@@ -1117,16 +1097,13 @@
          component
       -->
 
-    <!-- a spellchecker built from a field of the main index, and
+    <!-- a spellchecker built from a field of hte main index, and
          written to disk
       -->
     <lst name="spellchecker">
       <str name="name">default</str>
       <str name="field">name</str>
       <str name="spellcheckIndexDir">spellchecker</str>
-      <!-- uncomment this to require terms to occur in 1% of the documents in order to be included in the dictionary
-      	<float name="thresholdTokenFrequency">.01</float>
-      -->
     </lst>
 
     <!-- a spellchecker that uses a different distance measure -->
@@ -1233,20 +1210,17 @@
     <lst name="engine">
       <!-- The name, only one can be named "default" -->
       <str name="name">default</str>
-
       <!-- Class name of Carrot2 clustering algorithm. 
            
            Currently available algorithms are:
            
            * org.carrot2.clustering.lingo.LingoClusteringAlgorithm
            * org.carrot2.clustering.stc.STCClusteringAlgorithm
-           * org.carrot2.clustering.kmeans.BisectingKMeansClusteringAlgorithm
            
            See http://project.carrot2.org/algorithms.html for the
            algorithm's characteristics.
         -->
       <str name="carrot.algorithm">org.carrot2.clustering.lingo.LingoClusteringAlgorithm</str>
-
       <!-- Overriding values for Carrot2 default algorithm attributes.
 
            For a description of all available attributes, see:
@@ -1258,19 +1232,6 @@
         -->
       <str name="LingoClusteringAlgorithm.desiredClusterCountBase">20</str>
       
-      <!-- Location of Carrot2 lexical resources.
-
-           A directory from which to load Carrot2-specific stop words
-           and stop labels. Absolute or relative to Solr config directory.
-           If a specific resource (e.g. stopwords.en) is present in the
-           specified dir, it will completely override the corresponding
-           default one that ships with Carrot2.
-
-           For an overview of Carrot2 lexical resources, see:
-           http://download.carrot2.org/head/manual/#chapter.lexical-resources
-        -->
-      <str name="carrot.lexicalResourcesDir">clustering/carrot2</str>
-
       <!-- The language to assume for the documents.
            
            For a list of allowed values, see:
@@ -1417,6 +1378,7 @@
 
       <!-- Configure the standard encoder -->
       <encoder name="html" 
+               default="true"
                class="solr.highlight.HtmlEncoder" />
 
       <!-- Configure the standard fragListBuilder -->

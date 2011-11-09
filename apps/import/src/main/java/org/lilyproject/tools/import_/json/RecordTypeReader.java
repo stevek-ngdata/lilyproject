@@ -26,17 +26,14 @@ import static org.lilyproject.util.json.JsonUtil.*;
 public class RecordTypeReader implements EntityReader<RecordType> {
     public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
 
-    @Override
     public RecordType fromJson(ObjectNode node, Repository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
-        return fromJson(node, null, repository);
+        Namespaces namespaces = NamespacesConverter.fromContextJson(node);
+        return fromJson(node, namespaces, repository);
     }
 
-    @Override
     public RecordType fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
-
-        namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
         TypeManager typeManager = repository.getTypeManager();
         QName name = QNameConverter.fromJson(getString(node, "name"), namespaces);

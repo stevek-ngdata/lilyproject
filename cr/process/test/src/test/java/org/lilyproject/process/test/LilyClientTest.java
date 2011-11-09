@@ -15,33 +15,40 @@
  */
 package org.lilyproject.process.test;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.ByteArrayInputStream;
-import java.io.OutputStream;
-
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.testfw.HBaseProxy;
+import static org.junit.Assert.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
 
 public class LilyClientTest {
-    private static LilyProxy lilyProxy;
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
+    private final static KauriTestUtility KAURI_TEST_UTIL = new KauriTestUtility("../server/");
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        lilyProxy = new LilyProxy();
-        lilyProxy.start();
+        HBASE_PROXY.start();
+
+        KAURI_TEST_UTIL.createDefaultConf(HBASE_PROXY);
+        KAURI_TEST_UTIL.start();
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         try {
-            if (lilyProxy != null)
-                lilyProxy.stop();
+            KAURI_TEST_UTIL.stop();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+
+        try {
+            HBASE_PROXY.stop();
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -54,7 +61,7 @@ public class LilyClientTest {
      */
     @Test
     public void testBlob() throws Exception {
-        LilyClient client = lilyProxy.getLilyServerProxy().getClient();
+        LilyClient client = new LilyClient(HBASE_PROXY.getZkConnectString(), 10000);
 
         // Obtain a repository
         Repository repository = client.getRepository();
@@ -63,7 +70,7 @@ public class LilyClientTest {
 
         // Create a blob field type and record type
         TypeManager typeManager = repository.getTypeManager();
-        ValueType blobType = typeManager.getValueType("BLOB");
+        ValueType blobType = typeManager.getValueType("BLOB", false, false);
         FieldType blobFieldType = typeManager.newFieldType(blobType, new QName(NS, "data"), Scope.VERSIONED);
         blobFieldType = typeManager.createFieldType(blobFieldType);
 

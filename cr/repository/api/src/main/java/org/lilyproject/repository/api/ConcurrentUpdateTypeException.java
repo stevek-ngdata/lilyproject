@@ -36,7 +36,8 @@ public class ConcurrentUpdateTypeException extends TypeException {
     }
     
     public ConcurrentUpdateTypeException(String typeName) {
-        this.type = typeName;
+        if (type != null)
+            this.type = typeName;
     }
 
     @Override

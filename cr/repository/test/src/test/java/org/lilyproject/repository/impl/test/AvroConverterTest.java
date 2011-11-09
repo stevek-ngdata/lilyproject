@@ -21,16 +21,24 @@ import static org.easymock.EasyMock.isA;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.easymock.IMocksControl;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
-import org.lilyproject.repository.impl.valuetype.StringValueType;
+import org.lilyproject.repository.impl.primitivevaluetype.StringValueType;
 
 
 public class AvroConverterTest {
@@ -74,19 +82,30 @@ public class AvroConverterTest {
         avroQName.name = "name";
         assertEquals(avroQName, converter.convert(qname));
         assertEquals(qname, converter.convert(avroQName));
+        
+        // No namespace
+        qname = new QName(null, "name");
+        avroQName = new AvroQName();
+        avroQName.name = "name";
+        control.verify();
+        assertEquals(avroQName, converter.convert(qname));
+        assertEquals(qname, converter.convert(avroQName));
     }
     
     @Test
     public void testValueType() throws Exception {
-        ValueType valueType = new StringValueType();
-        typeManager.getValueType("STRING");
+        PrimitiveValueType primitiveValueType = new StringValueType();
+        ValueType valueType = new ValueTypeImpl(primitiveValueType , false, true);
+        typeManager.getValueType("STRING", false, true);
         expectLastCall().andReturn(valueType);
         
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
         AvroValueType avroValueType = new AvroValueType();
-        avroValueType.valueType = "STRING";
+        avroValueType.primitiveValueType = "STRING";
+        avroValueType.multivalue = false;
+        avroValueType.hierarchical = true;
         
         assertEquals(valueType, converter.convert(avroValueType));
         assertEquals(avroValueType, converter.convert(valueType));
@@ -115,8 +134,8 @@ public class AvroConverterTest {
     
     @Test
     public void testFieldType() throws Exception {
-        ValueType valueType = new StringValueType();
-        typeManager.getValueType("STRING");
+        ValueType valueType = new ValueTypeImpl(new StringValueType(), true, true);
+        typeManager.getValueType("STRING", true, true);
         expectLastCall().andReturn(valueType);
         QName name = new QName("aNamespace", "aName");
         SchemaId fieldTypeId = new SchemaIdImpl(UUID.randomUUID());
@@ -137,7 +156,9 @@ public class AvroConverterTest {
         avroFieldType.name = avroQName ;
         avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
-        avroValueType.valueType = "STRING";
+        avroValueType.primitiveValueType = "STRING";
+        avroValueType.hierarchical = true;
+        avroValueType.multivalue = true;
         avroFieldType.valueType = avroValueType;
         
         assertEquals(fieldType, converter.convert(avroFieldType));
@@ -147,8 +168,8 @@ public class AvroConverterTest {
     
     @Test
     public void testFieldTypeWithoutId() throws Exception {
-        ValueType valueType = new StringValueType();
-        typeManager.getValueType("LIST<STRING>");
+        ValueType valueType = new ValueTypeImpl(new StringValueType(), true, true);
+        typeManager.getValueType("STRING", true, true);
         expectLastCall().andReturn(valueType);
         QName name = new QName("aNamespace", "aName");
         FieldType fieldType = new FieldTypeImpl(null, valueType , name, Scope.NON_VERSIONED);
@@ -165,12 +186,13 @@ public class AvroConverterTest {
         avroFieldType.name = avroQName ;
         avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
-        avroValueType.valueType = "LIST<STRING>";
+        avroValueType.primitiveValueType = "STRING";
+        avroValueType.hierarchical = true;
+        avroValueType.multivalue = true;
         avroFieldType.valueType = avroValueType;
         
-        converter.convert(avroFieldType);
-//        assertEquals(fieldType, converter.convert(avroFieldType));
-//        assertEquals(avroFieldType, converter.convert(fieldType));
+        assertEquals(fieldType, converter.convert(avroFieldType));
+        assertEquals(avroFieldType, converter.convert(fieldType));
         control.verify();
     }
     
@@ -366,7 +388,7 @@ public class AvroConverterTest {
     @Test
     public void testRecord() throws Exception {
         FieldType fieldType = control.createMock(FieldType.class);
-        ValueType valueType = new StringValueType();
+        ValueType valueType = new ValueTypeImpl(new StringValueType(), false, false);
         IdGenerator idGenerator = new IdGeneratorImpl();
         
         repository.newRecord();
@@ -377,7 +399,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(fieldType).anyTimes();
         fieldType.getValueType();
         expectLastCall().andReturn(valueType).anyTimes();
-        typeManager.getValueType("STRING");
+        typeManager.getValueType("STRING", false, false);
         expectLastCall().andReturn(valueType).anyTimes();
         control.replay();
 
@@ -392,9 +414,9 @@ public class AvroConverterTest {
         record.setRecordType(Scope.VERSIONED_MUTABLE, new QName("ns", "vmrt"), 3L);
         QName fieldName = new QName("ns", "aName");
         record.setField(fieldName, "aValue");
-        QName fieldName2 = new QName("ns", "aName2");
+        QName fieldName2 = new QName(null, "aName2");
         record.setField(fieldName2, "aValue2");
-        record.addFieldsToDelete(Arrays.asList(new QName("devnull", "fieldToDelete")));
+        record.addFieldsToDelete(Arrays.asList(new QName[]{new QName("devnull", "fieldToDelete")}));
         
         assertEquals(record, converter.convert(converter.convert(record)));
         control.verify();

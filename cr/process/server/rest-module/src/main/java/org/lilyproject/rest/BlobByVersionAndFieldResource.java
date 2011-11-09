@@ -15,13 +15,13 @@
  */
 package org.lilyproject.rest;
 
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import org.lilyproject.repository.api.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import org.lilyproject.repository.api.*;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("record/{id}/version/{version:\\d+}/field/{fieldName}/data")
 public class BlobByVersionAndFieldResource extends RepositoryEnabled {
@@ -40,7 +40,8 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
 
         final QName fieldQName = ResourceClassUtil.parseQName(fieldName, uriInfo.getQueryParameters());
 
-        int[] indexes = ResourceClassUtil.getIntegerArrayParam(uriInfo, "indexes", null);
+        Integer mvIndex = ResourceClassUtil.getIntegerParam(uriInfo, "mvIndex", null);
+        Integer hIndex = ResourceClassUtil.getIntegerParam(uriInfo, "hIndex", null);
 
         Long versionNr = null;
         if (version != null) {
@@ -48,7 +49,7 @@ public class BlobByVersionAndFieldResource extends RepositoryEnabled {
         }
 
         try {
-            final BlobAccess blobAccess = repository.getBlob(recordId, versionNr, fieldQName, indexes);
+            final BlobAccess blobAccess = repository.getBlob(recordId, versionNr, fieldQName, mvIndex, hIndex);
             return Response.ok(blobAccess, MediaType.valueOf(blobAccess.getBlob().getMediaType())).build();
         } catch (RecordNotFoundException e) {
             throw new ResourceException(e, NOT_FOUND.getStatusCode());

@@ -13,7 +13,7 @@
    height="744.09448"
    id="svg4011"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.0 r9654"
    sodipodi:docname="lily_repository_model.svg"
    inkscape:export-filename="/home/bruno/tmp/lily repository model.png"
    inkscape:export-xdpi="64.300003"
@@ -49,15 +49,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4142136"
-     inkscape:cx="444.74469"
+     inkscape:cx="443.33048"
      inkscape:cy="246.96111"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1680"
-     inkscape:window-height="975"
+     inkscape:window-height="996"
      inkscape:window-x="0"
-     inkscape:window-y="25"
+     inkscape:window-y="1"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata4016">
@@ -67,7 +67,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -94,6 +94,13 @@
        height="196"
        x="90"
        y="416.36218" />
+    <rect
+       style="fill:#ffffff;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect5320"
+       width="270"
+       height="75"
+       x="667"
+       y="878.36218" />
     <rect
        style="fill:#ffffff;stroke:#000000;stroke-width:0.97031915000000002;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        id="rect5318"
@@ -421,25 +428,58 @@
        y="727.36218"
        id="text5296"><tspan
          sodipodi:role="line"
+         id="tspan5298"
          x="737"
-         y="727.36218"
-         id="tspan5316">* string, long, date, link,</tspan><tspan
+         y="727.36218">* adds multivalue and</tspan><tspan
          sodipodi:role="line"
          x="737"
          y="744.86218"
-         id="tspan3224">   record, list, path, ...</tspan><tspan
+         id="tspan5300">   hierarchical aspects to</tspan><tspan
          sodipodi:role="line"
          x="737"
          y="762.36218"
-         id="tspan5302">* converts values from &amp;</tspan><tspan
+         id="tspan5316">   primitive value type</tspan><tspan
          sodipodi:role="line"
          x="737"
          y="779.86218"
+         id="tspan5302">* converts values from &amp;</tspan><tspan
+         sodipodi:role="line"
+         x="737"
+         y="797.36218"
          id="tspan5304">   to bytes</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="674"
+       y="902.36218"
+       id="text5306"><tspan
+         sodipodi:role="line"
+         id="tspan5308"
+         x="674"
+         y="902.36218">PRIMITIVE VALUE TYPE</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="688"
+       y="921.36218"
+       id="text5310"><tspan
+         sodipodi:role="line"
+         id="tspan5312"
+         x="688"
+         y="921.36218">* e.g. string, long, date, link, ...</tspan><tspan
+         sodipodi:role="line"
+         x="688"
+         y="938.86218"
+         id="tspan5314">* converts values from &amp; to bytes</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 667,750.36218 54,0"
        id="path5322"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 809,813.36218 0,65"
+       id="path5324"
        sodipodi:nodetypes="cc" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"

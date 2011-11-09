@@ -69,7 +69,6 @@ public class RowLogProcessorElection {
     }
 
     private class MyLeaderElectionCallback implements LeaderElectionCallback {
-        @Override
         public void activateAsLeader() throws Exception {
             String rowLogId = rowLogProcessor.getRowLog().getId();
             log.info("Starting row log processor for " + rowLogId);
@@ -83,7 +82,6 @@ public class RowLogProcessorElection {
             }
         }
 
-        @Override
         public void deactivateAsLeader() throws Exception {
             String rowLogId = rowLogProcessor.getRowLog().getId();
             log.info("Shutting down row log processor for " + rowLogId);

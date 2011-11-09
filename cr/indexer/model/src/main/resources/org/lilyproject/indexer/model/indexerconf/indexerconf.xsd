@@ -31,10 +31,14 @@
           <xs:complexType>
             <xs:attribute name="class" type="xs:string" use="required"/>
             <xs:attribute name="name" type="xs:string" use="optional"/>
+            <xs:attribute name="type" type="xs:string" use="optional"/>
+            <xs:attribute name="singleValue" type="xs:boolean" use="optional"/>
+            <xs:attribute name="multiValue" type="xs:boolean" use="optional"/>
+            <xs:attribute name="hierarchical" type="xs:boolean" use="optional"/>
+            <xs:attribute name="nonHierarchical" type="xs:boolean" use="optional"/>
           </xs:complexType>
         </xs:element>
       </xs:sequence>
-      <xs:attribute name="default" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="fields">
@@ -59,14 +63,11 @@
             <xs:attribute name="matchNamespace" type="xs:string"/>
             <xs:attribute name="matchName" type="xs:string"/>
             <xs:attribute name="matchType" type="xs:string"/>
-            <!-- matchMultiValue and matchHierarchical are not supported any more. Rather than
-                 removing them here, we log a warning when they are still used. -->
             <xs:attribute name="matchMultiValue" type="xs:string"/>
             <xs:attribute name="matchHierarchical" type="xs:string"/>
             <xs:attribute name="matchScope" type="xs:string"/>
             <xs:attribute name="name" type="xs:string"/>
             <xs:attribute name="extractContent" type="xs:string"/>
-            <xs:attribute name="continue" type="xs:string"/>
             <xs:attribute name="formatter" type="xs:string"/>
           </xs:complexType>
         </xs:element>

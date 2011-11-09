@@ -9,13 +9,13 @@ import org.lilyproject.repository.api.IdRecord;
 public class IndexValue {
     public IdRecord record;
     public FieldType fieldType;
-    public Integer listIndex;
+    public Integer multiValueIndex;
     public Object value;
 
-    public IndexValue(IdRecord record, FieldType fieldType, Integer listIndex, Object value) {
+    public IndexValue(IdRecord record, FieldType fieldType, Integer multiValueIndex, Object value) {
         this.record = record;
         this.fieldType = fieldType;
-        this.listIndex = listIndex;
+        this.multiValueIndex = multiValueIndex;
         this.value = value;
     }
 

@@ -34,22 +34,21 @@ import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.api.SubscriptionsObserver;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class RowLogConfigurationManagerTest {
-    protected static HBaseProxy HBASE_PROXY;
+    protected final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     private static ZooKeeperItf zooKeeper;
     
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
-        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 120000);
+        zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
     }
 
     @AfterClass
@@ -120,8 +119,6 @@ public class RowLogConfigurationManagerTest {
         // RowLogId2 was not updated nor removed
         callBack2.expect(rowLogConfig2);
         callBack2.validate();
-
-        rowLogConfigurationManager.shutdown();
     }
     
     private class RowLogCallBack implements RowLogObserver {
@@ -129,7 +126,6 @@ public class RowLogConfigurationManagerTest {
         private RowLogConfig expectedRowLogConfig;
         private Semaphore semaphore = new Semaphore(0);
         
-        @Override
         public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
             this.rowLogConfig = rowLogConfig;
             semaphore.release();
@@ -196,7 +192,6 @@ public class RowLogConfigurationManagerTest {
         private List<RowLogSubscription> expectedSubscriptions;
         private Semaphore semaphore = new Semaphore(0);
         
-        @Override
         public void subscriptionsChanged(List<RowLogSubscription> subscriptions) {
             this.subscriptions = subscriptions;
             semaphore.release();
@@ -234,24 +229,24 @@ public class RowLogConfigurationManagerTest {
 
         // Add subscription
         rowLogConfigurationManager.addSubscription(rowLogId, subscriptionId1, Type.VM, 1);
-        callBack.expect(Collections.<String>emptyList());
+        callBack.expect(Collections.EMPTY_LIST);
         callBack.validate();
 
         // Add listener
-        callBack.expect(Arrays.asList("Listener1"));
+        callBack.expect(Arrays.asList(new String[]{"Listener1"}));
         rowLogConfigurationManager.addListener(rowLogId, subscriptionId1, "Listener1");
         callBack.validate();
 
-        callBack.expect(Arrays.asList("Listener1", "Listener2"));
+        callBack.expect(Arrays.asList(new String[]{"Listener1", "Listener2"}));
         rowLogConfigurationManager.addListener(rowLogId, subscriptionId1, "Listener2");
         callBack.validate();
 
         // Remove subscription
-        callBack.expect(Arrays.asList("Listener2"));
+        callBack.expect(Arrays.asList(new String[]{"Listener2"}));
         rowLogConfigurationManager.removeListener(rowLogId, subscriptionId1, "Listener1");
         callBack.validate();
         
-        callBack.expect(Collections.<String>emptyList());
+        callBack.expect(Collections.EMPTY_LIST);
         rowLogConfigurationManager.removeListener(rowLogId, subscriptionId1, "Listener2");
         callBack.validate();
 
@@ -264,7 +259,6 @@ public class RowLogConfigurationManagerTest {
         
         private Semaphore semaphore = new Semaphore(0);
         
-        @Override
         public void listenersChanged(List<String> listeners) {
             this.listeners = listeners;
             semaphore.release();
@@ -289,7 +283,9 @@ public class RowLogConfigurationManagerTest {
     @Test
     public void testProcessorNotify() throws Exception {
     	String rowLogId = "testProcessorNotifyRowLogId";
-
+    	String shardId1 = "testProcessorNotifyShardId1";
+    	String shardId2 = "testProcessorNotifyShardId2";
+    	
         // Initialize
         RowLogConfigurationManagerImpl rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
 
@@ -299,20 +295,20 @@ public class RowLogConfigurationManagerTest {
         // Add observers and expect an initial notify
         callBack1.expect(true);
         callBack2.expect(false);
-        rowLogConfigurationManager.addProcessorNotifyObserver(rowLogId, callBack1);
+        rowLogConfigurationManager.addProcessorNotifyObserver(rowLogId, shardId1, callBack1);
         callBack1.validate();
         callBack2.validate();
 
         callBack1.expect(false);
         callBack2.expect(true);
-        rowLogConfigurationManager.addProcessorNotifyObserver("someOtherRowLogId", callBack2);
+        rowLogConfigurationManager.addProcessorNotifyObserver(rowLogId, shardId2, callBack2);
         callBack1.validate();
         callBack2.validate();
 
         // Notify one processor
         callBack1.expect(true);
         callBack2.expect(false);
-        rowLogConfigurationManager.notifyProcessor(rowLogId);
+        rowLogConfigurationManager.notifyProcessor(rowLogId, shardId1);
         callBack1.validate();
         callBack2.validate();
     }
@@ -322,7 +318,6 @@ public class RowLogConfigurationManagerTest {
         private Semaphore semaphore = new Semaphore(0);
 		private boolean expect = false;
         
-        @Override
         public void notifyProcessor() {
             semaphore.release();
         }

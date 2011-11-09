@@ -15,9 +15,10 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
@@ -27,14 +28,7 @@ public class RecordTypeImpl implements RecordType {
     private QName name;
     private Long version;
     private Map<SchemaId, Long> mixins = new HashMap<SchemaId, Long>();
-    private Map<SchemaId, FieldTypeEntry> fieldTypeEntries;
-    private static final ByteArrayComparator byteArrayComparator = new ByteArrayComparator();
-    private static final Comparator<SchemaId> comparator = new Comparator<SchemaId>() {
-        @Override
-        public int compare(SchemaId schemaId1, SchemaId schemaId2) {
-            return byteArrayComparator.compare(schemaId1.getBytes(), schemaId2.getBytes());
-        }
-    };
+    private Map<SchemaId, FieldTypeEntry> fieldTypeEntries = new HashMap<SchemaId, FieldTypeEntry>();
 
     /**
      * This constructor should not be called directly.
@@ -43,90 +37,71 @@ public class RecordTypeImpl implements RecordType {
     public RecordTypeImpl(SchemaId id, QName name) {
         this.id = id;
         this.name = name;
-        // Sort the fieldTypeEntries at creation time so we don't have to sort them
-        // each time they are requested.
-        fieldTypeEntries = new TreeMap<SchemaId, FieldTypeEntry>(comparator);
     }
     
-    @Override
     public void setId(SchemaId id) {
         this.id = id;
     }
     
-    @Override
     public SchemaId getId() {
         return id;
     }
     
-    @Override
     public void setName(QName name) {
         this.name = name;
     }
     
-    @Override
     public QName getName() {
         return name;
     }
 
-    @Override
     public Long getVersion() {
         return version;
     }
     
-    @Override
     public void setVersion(Long version){
         this.version = version;
     }
     
-    @Override
     public Collection<FieldTypeEntry> getFieldTypeEntries() {
         return fieldTypeEntries.values();
     }
     
-    @Override
     public FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId) {
         return fieldTypeEntries.get(fieldTypeId);
     }
     
-    @Override
     public void removeFieldTypeEntry(SchemaId fieldTypeId) {
         fieldTypeEntries.remove(fieldTypeId);
     }
     
-    @Override
     public void addFieldTypeEntry(FieldTypeEntry fieldTypeEntry) {
         fieldTypeEntries.put(fieldTypeEntry.getFieldTypeId(), fieldTypeEntry);
     }
 
-    @Override
     public FieldTypeEntry addFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
         FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl(fieldTypeId, mandatory);
         addFieldTypeEntry(fieldTypeEntry);
         return fieldTypeEntry;
     }
 
-    @Override
     public void addMixin(SchemaId recordTypeId, Long recordTypeVersion) {
         ArgumentValidator.notNull(recordTypeId, "recordTypeId");
         mixins.put(recordTypeId, recordTypeVersion);
     }
     
-    @Override
     public void addMixin(SchemaId recordTypeId) {
         addMixin(recordTypeId, null);
     }
     
-    @Override
     public void removeMixin(SchemaId recordTypeId) {
         mixins.remove(recordTypeId);
     }
     
-    @Override
     public Map<SchemaId, Long> getMixins() {
         return mixins;
     }
 
-    @Override
     public RecordType clone() {
         RecordTypeImpl clone = new RecordTypeImpl(this.id, this.name);
         clone.version = this.version;

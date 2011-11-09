@@ -1,2 +1,0 @@
-Launch a complete Lily, Solr, Hadoop, ZooKeeper & HBase stack within one VM,
-without requiring to configure anything.

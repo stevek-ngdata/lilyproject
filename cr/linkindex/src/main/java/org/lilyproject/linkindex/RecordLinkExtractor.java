@@ -35,57 +35,35 @@ public class RecordLinkExtractor {
                 // Can not do anything with a field if we cannot load its type
                 continue;
             }
-            extract(field.getValue(), fieldType, collector, fieldType, record.getId(), repository);
-        }
-    }
+            ValueType valueType = fieldType.getValueType();
+            Object value = field.getValue();
 
-    /**
-     * This is for link extraction from nested records.
-     */
-    private static void extractRecord(Record record, LinkCollector collector, FieldType ctxField, RecordId ctxRecord,
-            Repository repository)
-            throws RepositoryException, InterruptedException {
-        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {
-            FieldType fieldType;
-            try {
-                fieldType = repository.getTypeManager().getFieldTypeByName(field.getKey());
-            } catch (FieldTypeNotFoundException e) {
-                // Can not do anything with a field if we cannot load its type
-                continue;
+            if (valueType.getPrimitive().getName().equals("LINK")) {
+                extract(value, collector, fieldType.getId(), record.getId(), repository.getIdGenerator());
+            } else if (valueType.getPrimitive().getName().equals("BLOB")) {
+                // TODO implement link extraction from blob fields
+                //      However: since blob link extraction is more expensive, we might not want to do
+                //               it as a secondary action. Maybe the link index for blobs should be a
+                //               completely different index.
             }
-
-            // The ctxField and ctxRecord need to stay the top-level ones! It does not matter how
-            // deeply nested a link occurs, as far as the link index is concerned, it still occurs
-            // with the field of the top level record.
-            extract(field.getValue(), fieldType, collector, ctxField, ctxRecord, repository);
         }
     }
 
-    private static void extract(Object value, FieldType fieldType, LinkCollector collector, FieldType ctxField,
-            RecordId ctxRecord, Repository repository) throws RepositoryException, InterruptedException {
-
-        ValueType valueType = fieldType.getValueType();
-
-        String baseType = valueType.getDeepestValueType().getBaseName();
-
-        if (baseType.equals("LINK") || baseType.equals("RECORD")) {
-            extract(value, collector, ctxField, ctxRecord, repository);
-        }
-    }
-
-    private static void extract(Object value, LinkCollector collector, FieldType ctxField, RecordId ctxRecord,
-            Repository repository) throws RepositoryException, InterruptedException {
-
+    private static void extract(Object value, LinkCollector collector, SchemaId fieldTypeId, RecordId ctx,
+            IdGenerator idGenerator) {
         if (value instanceof List) {
             List list = (List)value;
             for (Object item : list) {
-                extract(item, collector, ctxField, ctxRecord, repository);
+                extract(item, collector, fieldTypeId, ctx, idGenerator);
             }
-        } else if (value instanceof Record) {
-            extractRecord((Record)value, collector, ctxField, ctxRecord, repository);
+        } else if (value instanceof HierarchyPath) {
+            HierarchyPath path = (HierarchyPath)value;
+            for (Object item : path.getElements()) {
+                extract(item, collector, fieldTypeId, ctx, idGenerator);
+            }
         } else if (value instanceof Link) {
-            RecordId recordId = ((Link)value).resolve(ctxRecord, repository.getIdGenerator());
-            collector.addLink(recordId, ctxField.getId());
+            RecordId recordId = ((Link)value).resolve(ctx, idGenerator);
+            collector.addLink(recordId, fieldTypeId);
         } else {
             throw new RuntimeException("Encountered an unexpected kind of object from a link field: " +
                     value.getClass().getName());

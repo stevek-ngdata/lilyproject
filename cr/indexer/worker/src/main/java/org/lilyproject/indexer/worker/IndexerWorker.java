@@ -103,7 +103,7 @@ public class IndexerWorker {
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
             Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, int listenersPerIndex,
             SolrClientConfig solrClientConfig, boolean enableLocking, String hostName)
-            throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
+            throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException {
         this.indexerModel = indexerModel;
         this.repository = repository;
         this.rowLog = rowLog;
@@ -210,9 +210,6 @@ public class IndexerWorker {
                 try {
                     handle.stop();
                 } catch (Throwable t2) {
-                    if (t instanceof InterruptedException) {
-                        Thread.currentThread().interrupt();
-                    }
                     log.error("Problem stopping listeners for failed-to-start index updater for index '" +
                             index.getName() + "'", t2);
                 }
@@ -267,7 +264,6 @@ public class IndexerWorker {
     }
 
     private class MyListener implements IndexerModelListener {
-        @Override
         public void process(IndexerModelEvent event) {
             try {
                 // Because the actions we take in response to events might take some time, we
@@ -319,13 +315,8 @@ public class IndexerWorker {
     }
 
     private class EventWorker implements Runnable {
-        @Override
         public void run() {
             while (true) {
-                if (Thread.interrupted()) {
-                    return;
-                }
-
                 try {
                     int queueSize = eventQueue.size();
                     if (queueSize >= 10) {

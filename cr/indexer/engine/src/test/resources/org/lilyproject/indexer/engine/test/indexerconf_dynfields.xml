@@ -12,35 +12,35 @@
 
   <dynamicFields>
     <dynamicField matchNamespace="org.lilyproject.indexer.test.dyn1"
-        name="dyn1_${name}_${baseType}${list?_mv}"/>
+        name="dyn1_${name}_${primitiveTypeLC}${multiValue?_mv}"/>
 
     <dynamicField matchName="name_*"
-        name="nameMatch_${nameMatch}_${nestedBaseType}${list?_mv}"/>
+        name="nameMatch_${nameMatch}_${primitiveTypeLC}${multiValue?_mv}"/>
 
     <dynamicField matchName="scope_*" matchScope="NON_VERSIONED"
-        name="scopeMatch_${nameMatch}_${baseType}${list?_mv}"/>
+        name="scopeMatch_${nameMatch}_${primitiveTypeLC}${multiValue?_mv}"/>
 
     <!-- Just as an extra, the following rule test the ability to specify the namespace prefix
          instead of the namespace. -->
-    <dynamicField matchNamespace="dyn2" matchType="DATE"
-        name="typeMatch_${name}_${baseType}"/>
+    <dynamicField matchNamespace="dyn2" matchType="DATE" matchMultiValue="false"
+        name="typeMatch_${name}_${primitiveTypeLC}"/>
 
-    <dynamicField matchName="mv_*" matchType="LIST&lt;+>"
-        name="multiValueMatch_${nameMatch}_${deepestNestedBaseType}_mv"/>
+    <dynamicField matchName="mv_*" matchMultiValue="true"
+        name="multiValueMatch_${nameMatch}_${primitiveTypeLC}_mv"/>
 
-    <dynamicField matchName="hier_*" matchType="PATH&lt;+>"
-        name="hierarchicalMatch_${nameMatch}_hier_literal"/>
+    <dynamicField matchName="hier_*" matchHierarchical="true"
+        name="hierarchicalMatch_${nameMatch}${hierarchical?_hier}_literal"/>
 
     <!-- versioned mutable scope -->
-    <dynamicField matchName="field12" matchType="*"
+    <dynamicField matchName="field12" matchHierarchical="false" matchMultiValue="false"
         name="field12_string"/>
 
     <!-- blob field without extractContent -->
-    <dynamicField matchName="field13" matchType="BLOB"
+    <dynamicField matchName="field13" matchType="BLOB" matchHierarchical="false" matchMultiValue="false"
         name="field13_string"/>
 
     <!-- blob field with extractContent -->
-    <dynamicField matchName="field14" matchType="BLOB"
+    <dynamicField matchName="field14" matchType="BLOB" matchHierarchical="false" matchMultiValue="false"
         name="field14_string" extractContent="true"/>
   </dynamicFields>
 

@@ -15,7 +15,6 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ValueType;
 
 import java.util.List;
@@ -23,36 +22,43 @@ import java.util.Set;
 
 /**
  * Formats field values to string for transfer to Solr.
+ *
+ * <p>Concerning the supports* methods: you should have at least one of singleValue
+ * or multiValue return true, and at least one of nonHierarchical or hierarchical return
+ * true. Thus if your formatter can only format simple plain values, you should have
+ * both supportsSingleValue() and supportsNonHierarchicalValue() return true.
  */
 public interface Formatter {
     /**
-     * Formats the given values.
      *
-     * <p>All the supplied values are of the same type, but not necessarily from the
-     * same field:
-     *
-     * <ul>
-     *     <li>In case of a simple LIST-type field, each value of the field will be
-     *     a separate IndexValue in the supplied list.
-     *     <li>In case of nested lists, such as a LIST&lt;LIST&lt;LIST&lt;STRING>>>,
-     *     the first list-level will be converted to IndexValues in the supplied list,
-     *     the value of each IndexValue is then a List&lt;List&lt;String>>.
-     *     <li>In case of a LIST&lt;LINK>-type field on which a dereference (=>)
-     *     is performed to a single-valued field, each IndexValue will be the value
-     *     of that single-valued field from a different record.
-     *     <li>In case of a LIST&lt;LINK>-type field (with M values) dereferencing
-     *     towards a LIST field (with N values), there will be IndexValues for
-     *     each value of the dereferenced field, that is MxN values.
-     *     <li>...
-     * </ul>
-     *
-     * <p>The above is just to explain why the first list level is treated differently
-     * (i.e., supplied as IndexValue objects) then nested lists.
-     *
-     * <p>It is not required that the items in the returned list correspond to
-     * those in the input list: they can be more or less items or they can be
-     * in a different order.
+     * @param indexValues if {@link #supportsMultiValue} is false, one can be sure that this
+     *                    list will contain exactly one non-null element.
      */
-    List<String> format(List<IndexValue> indexValues, Repository repository)
-            throws InterruptedException;
+    List<String> format(List<IndexValue> indexValues, ValueType valueType);
+
+    /**
+     * Returning an empty set means this formatter accepts any kind of value (even non-built-in
+     * value types one might not know about when implementing the formatter).
+     */
+    Set<String> getSupportedPrimitiveValueTypes();
+
+    /**
+     * Returns true if this formatter can format single (= non-multi-value) values.
+     */
+    boolean supportsSingleValue();
+
+    /**
+     * Returns true if this formatter can format multi-valued values.
+     */
+    boolean supportsMultiValue();
+
+    /**
+     * Returns true if this formatter can format non-hierarchical values.
+     */
+    boolean supportsNonHierarchicalValue();
+
+    /**
+     * Returns true if this formatter can format hierarchical values.
+     */
+    boolean supportsHierarchicalValue();
 }

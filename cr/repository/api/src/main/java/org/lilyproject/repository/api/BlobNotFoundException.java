@@ -57,10 +57,6 @@ public class BlobNotFoundException extends BlobException {
     
     @Override
     public String getMessage() {
-        if (blob != null) {
-            return "Blob '" + blob + "' could not be found: " + info;
-        } else {
-            return "Blob could not be found: " + info;
-        }
+        return "Blob '" + blob + "' could not be found: " + info;
     }
 }

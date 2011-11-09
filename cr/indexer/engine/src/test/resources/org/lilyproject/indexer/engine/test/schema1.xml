@@ -121,21 +121,7 @@
    <field name="v_datetime" type="date" indexed="true" stored="true" required="false"/>
 
    <field name="year" type="int" indexed="true" stored="true" required="false"/>
-   <field name="firstValue" type="text" indexed="true" stored="true" required="false"/>
-
-   <!-- complex field type test -->
-   <field name="cf_nestedlists" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
-   <field name="cf_record" type="text" indexed="true" stored="true" required="false"/>
-   <field name="cf_recordlist" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
-   <field name="cf_record_field1" type="text" indexed="true" stored="true" required="false"/>
-   <field name="cf_recordlist_field1" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
-
-   <!-- complex field type update denormalized data test -->
-   <field name="cfd_case1" type="text" indexed="true" stored="true" required="false"/>
-   <field name="cfd_case2" type="text" indexed="true" stored="true" required="false"/>
-   <field name="cfd_case3" type="text" indexed="true" stored="true" required="false"/>
-   <field name="cfd_case4" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
-   <field name="cfd_case5" type="text" indexed="true" stored="true" required="false"/>
+   <field name="inthierarchy" type="string" indexed="true" stored="true" required="false"/>
 
    <dynamicField name="*_string" type="text" indexed="true" stored="true"/>
    <dynamicField name="*_string_mv" type="text" indexed="true" stored="true" multiValued="true"/>

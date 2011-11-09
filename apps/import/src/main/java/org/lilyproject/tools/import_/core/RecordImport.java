@@ -17,8 +17,6 @@ package org.lilyproject.tools.import_.core;
 
 import org.lilyproject.repository.api.*;
 
-import java.util.List;
-
 //
 // This class stems from a time when the repository did not yet offer 'create or update' behavior, nor did it
 // have the Record.ResponseStatus to indicate what happened. At that time, that kind of functionality was
@@ -28,12 +26,6 @@ import java.util.List;
 
 public class RecordImport {
     public static ImportResult<Record> importRecord(Record newRecord, ImportMode impMode, Repository repository)
-            throws RepositoryException, InterruptedException {
-        return importRecord(newRecord, impMode, null, repository);
-    }
-
-    public static ImportResult<Record> importRecord(Record newRecord, ImportMode impMode,
-            List<MutationCondition> conditions, Repository repository)
             throws RepositoryException, InterruptedException {
 
         // If the user specified both record type name and version, we assume he wants to use that version, otherwise
@@ -49,7 +41,7 @@ public class RecordImport {
                     return ImportResult.cannotUpdateDoesNotExist();
                 }
                 try {
-                    Record updatedRecord = repository.update(newRecord, false, useLatestRecordType, conditions);
+                    Record updatedRecord = repository.update(newRecord, false, useLatestRecordType);
 
                     switch (updatedRecord.getResponseStatus()) {
                         case UP_TO_DATE:
@@ -57,9 +49,6 @@ public class RecordImport {
                             break;
                         case UPDATED:
                             result = ImportResult.updated(updatedRecord);
-                            break;
-                        case CONFLICT:
-                            result = ImportResult.conditionConflict(updatedRecord);
                             break;
                         default:
                             throw new RuntimeException("Unexpected status: " + updatedRecord.getResponseStatus());

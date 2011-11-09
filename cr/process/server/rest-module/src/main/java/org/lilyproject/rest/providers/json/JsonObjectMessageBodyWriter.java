@@ -35,14 +35,12 @@ import org.codehaus.jackson.node.ObjectNode;
 @Provider
 public class JsonObjectMessageBodyWriter implements MessageBodyWriter<ObjectNode> {
 
-	@Override
-    public long getSize(ObjectNode objectNode, Class<?> type,
+	public long getSize(ObjectNode objectNode, Class<?> type,
 			Type genericType, Annotation[] annotations, MediaType mediaType) {
 		return -1;
 	}
 
-	@Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
+	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
 			MediaType mediaType) {
 		if (mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
 			return true;
@@ -50,8 +48,7 @@ public class JsonObjectMessageBodyWriter implements MessageBodyWriter<ObjectNode
 		return false;
 	}
 
-	@Override
-    public void writeTo(ObjectNode objectNode, Class<?> type,
+	public void writeTo(ObjectNode objectNode, Class<?> type,
 			Type genericType, Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
 			throws IOException, WebApplicationException {

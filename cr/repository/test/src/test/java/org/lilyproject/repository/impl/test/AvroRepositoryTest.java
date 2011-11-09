@@ -18,7 +18,7 @@ package org.lilyproject.repository.impl.test;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.testfw.TestHelper;
 
 public class AvroRepositoryTest extends AbstractRepositoryTest {
 

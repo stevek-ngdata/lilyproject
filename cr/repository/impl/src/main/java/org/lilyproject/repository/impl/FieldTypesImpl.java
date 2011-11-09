@@ -10,58 +10,65 @@ import org.lilyproject.util.ArgumentValidator;
 public class FieldTypesImpl implements FieldTypes {
     private Log log = LogFactory.getLog(getClass());
     
-    protected Map<QName, FieldType> nameCache;
-    protected Map<String, Map<SchemaId, FieldType>> buckets;
+    private Map<QName, FieldType> fieldTypeNameCache = new HashMap<QName, FieldType>();
+    private Map<SchemaId, FieldType> fieldTypeIdCache = new HashMap<SchemaId, FieldType>();
 
-    public FieldTypesImpl() {
-        nameCache = new HashMap<QName, FieldType>();
-        buckets = new HashMap<String, Map<SchemaId, FieldType>>();
+    public synchronized FieldTypesImpl clone() {
+        FieldTypesImpl newFieldTypes = new FieldTypesImpl();
+        newFieldTypes.fieldTypeNameCache.putAll(fieldTypeNameCache);
+        newFieldTypes.fieldTypeIdCache.putAll(fieldTypeIdCache);
+        return newFieldTypes;
     }
-
-    public List<FieldType> getFieldTypes() {
+    
+    public synchronized void refresh(List<FieldType> fieldTypes) {
+        Map<QName, FieldType> newFieldTypeNameCache = new HashMap<QName, FieldType>();
+        Map<SchemaId, FieldType> newFieldTypeIdCache = new HashMap<SchemaId, FieldType>();
+        try {
+            for (FieldType fieldType : fieldTypes) {
+                newFieldTypeNameCache.put(fieldType.getName(), fieldType);
+                newFieldTypeIdCache.put(fieldType.getId(), fieldType);
+            }
+            fieldTypeNameCache = newFieldTypeNameCache;
+            fieldTypeIdCache = newFieldTypeIdCache;
+        } catch (Exception e) {
+            // We keep on working with the old cache
+            log.warn("Exception while refreshing FieldType cache. Cache is possibly out of date.", e);
+        }
+    }
+    
+    public synchronized void update(FieldType fieldType) {
+        FieldType oldFieldType = fieldTypeIdCache.get(fieldType.getId());
+        if (oldFieldType != null) {
+            fieldTypeNameCache.remove(oldFieldType.getName());
+            fieldTypeIdCache.remove(oldFieldType.getId());
+        }
+        fieldTypeNameCache.put(fieldType.getName(), fieldType);
+        fieldTypeIdCache.put(fieldType.getId(), fieldType);
+    }
+    
+    public synchronized List<FieldType> getFieldTypes() {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
-        for (FieldType fieldType : nameCache.values()) {
+        for (FieldType fieldType : fieldTypeNameCache.values()) {
             fieldTypes.add(fieldType.clone());
         }
         return fieldTypes;
     }
     
-    // No synchronize needed since these methods will only be called on a cloned
-    // FieldTypes
-    // On this cloned FieldTypes no refresh or update methods will be called
-    @Override
-    public FieldType getFieldType(SchemaId id) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(id, "id");
-        String bucket = AbstractSchemaCache.encodeHex(id.getBytes());
-        
-        Map<SchemaId, FieldType> fieldTypeIdCacheBucket = buckets.get(bucket);
-        if (fieldTypeIdCacheBucket == null) {
-            throw new FieldTypeNotFoundException(id);
-        }
-        FieldType fieldType = fieldTypeIdCacheBucket.get(id);
+        FieldType fieldType = fieldTypeIdCache.get(id);
         if (fieldType == null) {
             throw new FieldTypeNotFoundException(id);
         }
         return fieldType.clone();
     }
 
-    @Override
-    public FieldType getFieldType(QName name) throws FieldTypeNotFoundException {
+    public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
         ArgumentValidator.notNull(name, "name");
-        FieldType fieldType = nameCache.get(name);
+        FieldType fieldType = fieldTypeNameCache.get(name);
         if (fieldType == null) {
             throw new FieldTypeNotFoundException(name);
         }
         return fieldType.clone();
-    }
-
-    public FieldType getFieldTypeByNameReturnNull(QName name) {
-        ArgumentValidator.notNull(name, "name");
-        FieldType fieldType = nameCache.get(name);
-        return fieldType != null ? fieldType.clone() : null;
-    }
-
-    public boolean fieldTypeExists(QName name) {
-        return nameCache.containsKey(name);
     }
 }

@@ -28,27 +28,22 @@ public class StaticQueryResult implements QueryResult {
         this.iterator = values.iterator();
     }
 
-    @Override
     public byte[] next() throws IOException {
         return iterator.hasNext() ? iterator.next() : null;
     }
     
-    @Override
     public byte[] getData(byte[] qualifier) {
         return null;
     }
 
-    @Override
     public String getDataAsString(String qualifier) {
         return null;
     }
 
-    @Override
     public byte[] getData(String qualifier) {
         return null;
     }
 
-    @Override
     public void close() {
         // nothing to do
     }

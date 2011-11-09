@@ -21,8 +21,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.lilyproject.hbaseindex.*;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.testfw.TestHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -32,12 +32,11 @@ import java.util.*;
 // when done using the QueryResult.
 
 public class IndexTest {
-    private static HBaseProxy HBASE_PROXY;
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
     }
 

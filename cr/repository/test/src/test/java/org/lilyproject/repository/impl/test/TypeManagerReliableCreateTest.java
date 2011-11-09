@@ -33,8 +33,8 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.hbase.*;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeCf;
 import org.lilyproject.util.hbase.LilyHBaseSchema.TypeColumn;
@@ -44,7 +44,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class TypeManagerReliableCreateTest {
 
-    private static HBaseProxy HBASE_PROXY;
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("data");
     private static final byte[] CONCURRENT_COUNTER_COLUMN_NAME = Bytes.toBytes("cc");
     private static ValueType valueType;
@@ -57,13 +57,12 @@ public class TypeManagerReliableCreateTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 10000);
         hbaseTableFactory = new HBaseTableFactoryImpl(HBASE_PROXY.getConf());
         typeTable = LilyHBaseSchema.getTypeTable(hbaseTableFactory);
         typeManager = new HBaseTypeManager(new IdGeneratorImpl(), HBASE_PROXY.getConf(), zooKeeper, hbaseTableFactory);
-        valueType = typeManager.getValueType("LONG");
+        valueType = typeManager.getValueType("LONG", false, false);
     }
     
     @AfterClass

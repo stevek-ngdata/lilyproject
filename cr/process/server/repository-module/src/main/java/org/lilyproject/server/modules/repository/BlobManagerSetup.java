@@ -32,13 +32,10 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.DfsUri;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import javax.annotation.PreDestroy;
 
 public class BlobManagerSetup {
     private final String lilyPath = "/lily";
@@ -46,13 +43,12 @@ public class BlobManagerSetup {
     private final String blobHBaseConfigPath = lilyPath + "/blobStoresConfig/hbaseConfig";
     private final String blobStoreAccessConfigPath = lilyPath + "/blobStoresConfig/accessConfig";
 
-    private FileSystem fs;
     private BlobManager blobManager;
 
     public BlobManagerSetup(URI dfsUri, Configuration configuration, HBaseTableFactory tableFactory, ZooKeeperItf zk,
             Conf blobManagerConf, Configuration hbaseConf) throws IOException, InterruptedException, KeeperException {
 
-        fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
+        FileSystem fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));
 
         BlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(fs, blobRootPath);
@@ -76,11 +72,6 @@ public class BlobManagerSetup {
 
         publishBlobAccessParams(zk, dfsUri.toString(), hbaseConf);
         publishBlobStoreAccessConfig(zk, blobStoreAccessConfig.toBytes());
-    }
-
-    @PreDestroy
-    public void stop() {
-        Closer.close(fs);
     }
 
     public BlobManager getBlobManager() {

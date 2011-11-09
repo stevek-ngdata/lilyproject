@@ -40,12 +40,10 @@ public class FieldTypeImpl implements FieldType {
 
     private FieldTypeImpl(){}
     
-    @Override
     public QName getName() {
         return name;
     }
 
-    @Override
     public SchemaId getId() {
         return id;
     }
@@ -57,37 +55,30 @@ public class FieldTypeImpl implements FieldType {
         return idQualifier;
     }
 
-    @Override
     public ValueType getValueType() {
         return valueType;
     }
 
-    @Override
     public Scope getScope() {
         return scope;
     }
 
-    @Override
     public void setId(SchemaId id) {
         this.id = id;
     }
     
-    @Override
     public void setName(QName name) {
         this.name = name;
     }
 
-    @Override
     public void setValueType(ValueType valueType) {
         this.valueType = valueType;
     }
 
-    @Override
     public void setScope(Scope scope) {
         this.scope = scope;
     }
     
-    @Override
     public FieldType clone() {
         FieldTypeImpl newFieldType = new FieldTypeImpl();
         newFieldType.id = this.id;

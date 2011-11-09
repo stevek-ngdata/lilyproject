@@ -67,10 +67,6 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
     private Runnable endProcessHook;
 
     public StateWatchingZooKeeper(String connectString, int sessionTimeout) throws IOException {
-        this(connectString, sessionTimeout, sessionTimeout);
-    }
-
-    public StateWatchingZooKeeper(String connectString, int sessionTimeout, int startupTimeOut) throws IOException {
         this.requestedSessionTimeout = sessionTimeout;
         this.sessionTimeout = sessionTimeout;
 
@@ -80,19 +76,12 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
 
         // Wait for connection to come up: if we fail to connect to ZK now, we do not want to continue
         // starting up the Lily node.
-        long waitUntil = System.currentTimeMillis() + startupTimeOut;
-        int count = 0;
+        long waitUntil = System.currentTimeMillis() + sessionTimeout;
         while (zk.getState() != CONNECTED && waitUntil > System.currentTimeMillis()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 break;
-            }
-            count++;
-            if (count == 30) {
-                // Output a message every 3s
-                log.info("Waiting for ZooKeeper connection to be established");
-                count = 0;
             }
         }
 
@@ -103,14 +92,13 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
             } catch (Throwable t) {
                 // ignore
             }
-            throw new IOException("Failed to connect with Zookeeper within timeout " + startupTimeOut +
+            throw new IOException("Failed to connect with Zookeeper within timeout " + sessionTimeout +
                     ", connection string: " + connectString);
         }
 
         log.info("ZooKeeper session ID is 0x" + Long.toHexString(zk.getSessionId()));
     }
 
-    @Override
     @PreDestroy
     public void shutdown() {
         super.shutdown();
@@ -142,7 +130,6 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
 
     private class MyWatcher implements Watcher {
 
-        @Override
         public void process(WatchedEvent event) {
             if (stopping) {
                 return;
@@ -214,7 +201,6 @@ public class StateWatchingZooKeeper extends ZooKeeperImpl {
 
         private long startNotConnected;
 
-        @Override
         public void run() {
             startNotConnected = System.currentTimeMillis();
 

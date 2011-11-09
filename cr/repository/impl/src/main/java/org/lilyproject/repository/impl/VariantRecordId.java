@@ -81,7 +81,6 @@ public class VariantRecordId implements RecordId {
         return recordIdString;
     }
     
-    @Override
     public byte[] toBytes() {
         if (recordIdBytes == null) {
             recordIdBytes = idGenerator.toBytes(this); 
@@ -89,7 +88,6 @@ public class VariantRecordId implements RecordId {
         return recordIdBytes;
     }
     
-    @Override
     public void writeBytes(DataOutput dataOutput) {
         if (recordIdBytes == null) {
             idGenerator.writeBytes(this, dataOutput);
@@ -119,17 +117,14 @@ public class VariantRecordId implements RecordId {
         dataOutput.writeInt(masterRecordIdLength);
     }
     
-    @Override
     public RecordId getMaster() {
         return masterRecordId;
     }
 
-    @Override
     public boolean isMaster() {
         return false;
     }
 
-    @Override
     public SortedMap<String, String> getVariantProperties() {
         return variantProperties;
     }

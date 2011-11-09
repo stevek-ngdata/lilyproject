@@ -94,12 +94,10 @@ public class BlobIncubatorMonitor {
             this.blobIncubatorMonitor = blobIncubatorMonitor;
         }
         
-        @Override
         public void activateAsLeader() throws Exception {
             blobIncubatorMonitor.startMonitoring();
         }
 
-        @Override
         public void deactivateAsLeader() throws Exception {
             blobIncubatorMonitor.stopMonitoring();
         }
@@ -122,7 +120,6 @@ public class BlobIncubatorMonitor {
             interrupt();
         }
         
-        @Override
         public void run() {
             while (!stopRequested) {
                 try {
@@ -242,7 +239,14 @@ public class BlobIncubatorMonitor {
             ValueType valueType = fieldType.getValueType();
             Get get = new Get(recordId.getBytes());
             get.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
-            byte[] valueToCompare = Bytes.toBytes(valueType.getNestingLevel());
+            byte[] valueToCompare;
+            if (valueType.isMultiValue() && valueType.isHierarchical()) {
+                valueToCompare = Bytes.toBytes(2);
+            } else if (valueType.isMultiValue() || valueType.isHierarchical()) {
+                valueToCompare = Bytes.toBytes(1);
+            } else {
+                valueToCompare = Bytes.toBytes(0);
+            }
             valueToCompare = Bytes.add(valueToCompare, blobKey);
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
             Filter filter = new SingleColumnValueFilter(RecordCf.DATA.bytes, fieldType.getQualifier(), CompareOp.EQUAL, valueComparator);

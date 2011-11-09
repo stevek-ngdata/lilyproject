@@ -25,16 +25,18 @@ public class FieldValue extends BaseValue {
         this.fieldType = fieldType;
     }
 
+    public ValueType getValueType() {
+        return fieldType.getValueType();
+    }
+
     public FieldType getFieldType() {
         return fieldType;
     }
 
-    @Override
     public SchemaId getFieldDependency() {
         return fieldType.getId();
     }
 
-    @Override
     public FieldType getTargetFieldType() {
         return fieldType;
     }

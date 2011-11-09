@@ -1,10 +1,10 @@
 package org.lilyproject.util.repo;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import org.lilyproject.repository.api.*;
 
 import java.util.*;
 
-import org.lilyproject.repository.api.*;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 
 /**
  * This is a record with added logic/state for version tag behavior.
@@ -79,7 +79,7 @@ public class VTaggedRecord {
                 // record has no version, so no versioned fields, so no cloning necessary
                 this.nonVersionedRecord = record;
             } else {
-                IdRecord nonVersionedRecord = record.cloneRecord();
+                IdRecord nonVersionedRecord = record.clone();
                 reduceToNonVersioned(nonVersionedRecord, typeManager);
                 this.nonVersionedRecord = nonVersionedRecord;
             }
@@ -263,8 +263,8 @@ public class VTaggedRecord {
         }
 
         // Remove versioned record type info
-        record.setRecordType(Scope.VERSIONED, (QName)null, null);
-        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName)null, null);
+        record.setRecordType(Scope.VERSIONED, null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, null, null);
     }
 
     private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds)

@@ -105,24 +105,7 @@ public class PrintUtil {
     private static void printFields(Map<QName, Object> fields, List<String> namespaces, PrintStream out) {
         for (Map.Entry<QName, Object> field : fields.entrySet()) {
             int nsNr = namespaces.indexOf(field.getKey().getNamespace()) + 1;
-            if (field.getValue() instanceof List) {
-                out.println("  n" + nsNr + ":" + field.getKey().getName() + " = ");
-                printListValue((List)field.getValue(), 4, out);
-            } else {
-                out.println("  n" + nsNr + ":" + field.getKey().getName() + " = " + field.getValue());
-            }
-        }
-    }
-
-    private static void printListValue(List values, int indent, PrintStream out) {
-        for (int i = 0; i < values.size(); i++) {
-            Object value = values.get(i);
-            if (value instanceof List) {
-                println(out, indent, "[" + i + "]");
-                printListValue((List)value, indent + 2, out);
-            } else {
-                println(out, indent, "[" + i + "] " + value);
-            }
+            out.println("  n" + nsNr + ":" + field.getKey().getName() + " = " + field.getValue());
         }
     }
 
@@ -162,7 +145,6 @@ public class PrintUtil {
 
         int indent = 0;
 
-        println(out, indent, "Name = " + recordType.getName());
         println(out, indent, "ID = " + recordType.getId());
         println(out, indent, "Version = " + recordType.getVersion());
         println(out, indent, "Fields:");
@@ -216,18 +198,16 @@ public class PrintUtil {
         FieldTypeEntry fieldTypeEntry = pair.getV1();
         FieldType fieldType = pair.getV2();
 
-        println(out, indent, "Name = " + fieldType.getName());
         println(out, indent, "ID = " + fieldType.getId());
+        println(out, indent, "Name = {" + fieldType.getName().getNamespace() + "}" + fieldType.getName().getName());
         println(out, indent, "Mandatory = " + fieldTypeEntry.isMandatory());
-        try {
-            println(out, indent, "ValueType = " + fieldType.getValueType().getName());
-        } catch (Throwable t) {
-            // value type failed to load
-        }
+        println(out, indent, "Multi-value = " + fieldType.getValueType().isMultiValue());
+        println(out, indent, "Hierarchical = " + fieldType.getValueType().isHierarchical());
+        println(out, indent, "Primitive type = " + fieldType.getValueType().getPrimitive().getName());
     }
 
     private static void println(PrintStream out, int indent, String text) {
-        StringBuilder buffer = new StringBuilder(indent);
+        StringBuffer buffer = new StringBuffer(indent);
         for (int i = 0; i < indent; i++) {
             buffer.append(" ");
         }
@@ -238,7 +218,6 @@ public class PrintUtil {
     private static QNameComparator QNAME_COMP = new QNameComparator();
 
     private static class QNameComparator implements Comparator<QName> {
-        @Override
         public int compare(QName o1, QName o2) {
             int cmp = o1.getNamespace().compareTo(o2.getNamespace());
             return cmp == 0 ? o1.getName().compareTo(o2.getName()) : cmp;
@@ -248,7 +227,6 @@ public class PrintUtil {
     private static FieldTypeByQNameComparator FT_COMP = new FieldTypeByQNameComparator();
 
     private static class FieldTypeByQNameComparator implements Comparator<Pair<FieldTypeEntry, FieldType>> {
-        @Override
         public int compare(Pair<FieldTypeEntry, FieldType> o1, Pair<FieldTypeEntry, FieldType> o2) {
             return QNAME_COMP.compare(o1.getV2().getName(), o2.getV2().getName());
         }

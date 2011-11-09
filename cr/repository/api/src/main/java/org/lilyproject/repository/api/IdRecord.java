@@ -34,7 +34,7 @@ public interface IdRecord extends Record {
 
     SchemaId getRecordTypeId(Scope scope);
 
-    <T> T getField(SchemaId fieldId) throws FieldNotFoundException;
+    Object getField(SchemaId fieldId) throws FieldNotFoundException;
 
     boolean hasField(SchemaId fieldId);
 
@@ -50,9 +50,5 @@ public interface IdRecord extends Record {
      */
     Map<SchemaId, QName> getFieldIdToNameMapping();
 
-    @Override
     IdRecord clone();
-
-    @Override
-    IdRecord cloneRecord() throws RecordException;
 }

@@ -78,7 +78,7 @@ public class LocatedException extends Exception
             Throwable parent = thr.getCause();
             if (parent != null) {
                 try {
-                    INIT_CAUSE_METHOD.invoke(thr, parent);
+                    INIT_CAUSE_METHOD.invoke(thr, new Object[]{ parent });
                 } catch (Exception e) {
                     // can happen if parent already set on exception
                 }
@@ -123,17 +123,14 @@ public class LocatedException extends Exception
         }
     }
 
-    @Override
     public Location getLocation() {
         return locations == null ? null : (Location) locations.get(0);
     }
 
-    @Override
     public List getLocations() {
         return locations == null ? Collections.EMPTY_LIST : locations;
     }
 
-    @Override
     public String getRawMessage() {
         return super.getMessage();
     }
@@ -160,12 +157,10 @@ public class LocatedException extends Exception
         return buf.toString();
     }
 
-    @Override
     public String getMessage() {
         return getMessage(super.getMessage(), locations);
     }
 
-    @Override
     public void addLocation(Location loc) {
         if (LocationUtils.isUnknown(loc)) {
             return;

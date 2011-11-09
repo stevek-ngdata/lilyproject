@@ -33,19 +33,16 @@ import java.util.Map;
 import static org.lilyproject.util.json.JsonUtil.*;
 
 public class RecordReader implements EntityReader<Record> {
-    public static RecordReader INSTANCE = new RecordReader();
+    public static EntityReader<Record> INSTANCE = new RecordReader();
 
-    @Override
     public Record fromJson(ObjectNode node, Repository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
-        return fromJson(node, null, repository);
+        Namespaces namespaces = NamespacesConverter.fromContextJson(node);
+        return fromJson(node, namespaces, repository);
     }
 
-    @Override
     public Record fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
-
-        namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 
         Record record = repository.newRecord();
 
@@ -73,7 +70,7 @@ public class RecordReader implements EntityReader<Record> {
 
                 QName qname = QNameConverter.fromJson(entry.getKey(), namespaces);
                 FieldType fieldType = repository.getTypeManager().getFieldTypeByName(qname);
-                Object value = readValue(fields.get(entry.getKey()), fieldType.getValueType(), entry.getKey(), namespaces, repository);
+                Object value = readMultiValue(fields.get(entry.getKey()), fieldType, entry.getKey(), repository);
                 record.setField(qname, value);
             }
         }
@@ -94,70 +91,75 @@ public class RecordReader implements EntityReader<Record> {
         return record;
     }
 
-    private Object readList(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, Repository repository)
-            throws JsonFormatException, RepositoryException, InterruptedException {
-        if (!node.isArray()) {
-            throw new JsonFormatException("List value should be specified as array in " + prop);
+    private Object readMultiValue(JsonNode node, FieldType fieldType, String prop, Repository repository)
+            throws JsonFormatException {
+
+        if (fieldType.getValueType().isMultiValue()) {
+            if (!node.isArray()) {
+                throw new JsonFormatException("Multi-value value should be specified as array in " + prop);
+            }
+
+            List<Object> value = new ArrayList<Object>();
+            for (int i = 0; i < node.size(); i++) {
+                value.add(readHierarchical(node.get(i), fieldType, prop, repository));
+            }
+
+            return value;
+        } else {
+            return readHierarchical(node, fieldType, prop, repository);
         }
-        
-        List<Object> value = new ArrayList<Object>();
-        for (int i = 0; i < node.size(); i++) {
-            value.add(readValue(node.get(i), valueType, prop, namespaces, repository));
-        }
-        
-        return value;
     }
 
-    private Object readPath(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, Repository repository)
-            throws JsonFormatException, RepositoryException, InterruptedException {
+    private Object readHierarchical(JsonNode node, FieldType fieldType, String prop, Repository repository)
+            throws JsonFormatException {
 
-        if (!node.isArray()) {
-            throw new JsonFormatException("Path value should be specified as an array in " + prop);
+        if (fieldType.getValueType().isHierarchical()) {
+            if (!node.isArray()) {
+                throw new JsonFormatException("Hierarchical value should be specified as an array in " + prop);
+            }
+
+            Object[] elements = new Object[node.size()];
+            for (int i = 0; i < node.size(); i++) {
+                elements[i] = readPrimitive(node.get(i), fieldType, prop, repository);
+            }
+
+            return new HierarchyPath(elements);
+        } else {
+            return readPrimitive(node, fieldType, prop, repository);
         }
-
-        Object[] elements = new Object[node.size()];
-        for (int i = 0; i < node.size(); i++) {
-            elements[i] = readValue(node.get(i), valueType, prop, namespaces, repository);
-        }
-
-        return new HierarchyPath(elements);
     }
 
-    public Object readValue(JsonNode node, ValueType valueType, String prop, Namespaces namespaces, Repository repository)
-            throws JsonFormatException, RepositoryException, InterruptedException {
+    private Object readPrimitive(JsonNode node, FieldType fieldType, String prop, Repository repository)
+            throws JsonFormatException {
 
-        String name = valueType.getBaseName();
+        String primitive = fieldType.getValueType().getPrimitive().getName();
 
-        if (name.equals("LIST")) {
-            return readList(node, valueType.getNestedValueType(), prop, namespaces, repository);
-        } else if (name.equals("PATH")) {
-            return readPath(node, valueType.getNestedValueType(), prop, namespaces, repository);
-        } else if (name.equals("STRING")) {
+        if (primitive.equals("STRING")) {
             if (!node.isTextual())
                 throw new JsonFormatException("Expected text value for " + prop);
 
             return node.getTextValue();
-        } else if (name.equals("INTEGER")) {
+        } else if (primitive.equals("INTEGER")) {
             if (!node.isIntegralNumber())
                 throw new JsonFormatException("Expected int value for " + prop);
 
             return node.getIntValue();
-        } else if (name.equals("LONG")) {
+        } else if (primitive.equals("LONG")) {
             if (!node.isIntegralNumber())
                 throw new JsonFormatException("Expected long value for " + prop);
 
             return node.getLongValue();
-        } else if (name.equals("DOUBLE")) {
+        } else if (primitive.equals("DOUBLE")) {
             if (!node.isNumber())
                 throw new JsonFormatException("Expected double value for " + prop);
 
             return node.getDoubleValue();
-        } else if (name.equals("DECIMAL")) {
+        } else if (primitive.equals("DECIMAL")) {
             if (!node.isNumber())
                 throw new JsonFormatException("Expected decimal value for " + prop);
 
             return node.getDecimalValue();
-        } else if (name.equals("URI")) {
+        } else if (primitive.equals("URI")) {
             if (!node.isTextual())
                 throw new JsonFormatException("Expected URI (string) value for " + prop);
 
@@ -166,36 +168,34 @@ public class RecordReader implements EntityReader<Record> {
             } catch (URISyntaxException e) {
                 throw new JsonFormatException("Invalid URI in property " + prop + ": " + node.getTextValue());
             }
-        } else if (name.equals("BOOLEAN")) {
+        } else if (primitive.equals("BOOLEAN")) {
             if (!node.isBoolean())
                 throw new JsonFormatException("Expected boolean value for " + prop);
 
             return node.getBooleanValue();
-        } else if (name.equals("LINK")) {
+        } else if (primitive.equals("LINK")) {
             if (!node.isTextual())
                 throw new JsonFormatException("Expected text value for " + prop);
 
             return Link.fromString(node.getTextValue(), repository.getIdGenerator());
-        } else if (name.equals("DATE")) {
+        } else if (primitive.equals("DATE")) {
             if (!node.isTextual())
                 throw new JsonFormatException("Expected text value for " + prop);
 
             return new LocalDate(node.getTextValue());
-        } else if (name.equals("DATETIME")) {
+        } else if (primitive.equals("DATETIME")) {
             if (!node.isTextual())
                 throw new JsonFormatException("Expected text value for " + prop);
 
             return new DateTime(node.getTextValue());
-        } else if (name.equals("BLOB")) {
+        } else if (primitive.equals("BLOB")) {
             if (!node.isObject())
                 throw new JsonFormatException("Expected object value for " + prop);
 
             ObjectNode blobNode = (ObjectNode)node;
             return BlobConverter.fromJson(blobNode);
-        } else if (name.equals("RECORD")) {
-            return fromJson((ObjectNode)node, namespaces, repository);
         } else {
-            throw new JsonFormatException("Value type not supported: " + name);
+            throw new JsonFormatException("Primitive value type not supported: " + primitive);
         }
     }
 }

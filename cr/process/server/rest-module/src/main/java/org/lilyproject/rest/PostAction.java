@@ -15,26 +15,13 @@
  */
 package org.lilyproject.rest;
 
-import org.lilyproject.repository.api.MutationCondition;
-
-import java.util.List;
-
 public class PostAction<T> {
     private String action;
     private T entity;
-    // MutationConditions are only relevant for records. If the post-envelope would be extended
-    // with many more attributes, we could think of splitting it up according to application.
-    private List<MutationCondition> conditions;
 
     public PostAction(String action, T entity) {
         this.action = action;
         this.entity = entity;
-    }
-
-    public PostAction(String action, T entity, List<MutationCondition> conditions) {
-        this.action = action;
-        this.entity = entity;
-        this.conditions = conditions;
     }
 
     public String getAction() {
@@ -43,9 +30,5 @@ public class PostAction<T> {
 
     public T getEntity() {
         return entity;
-    }
-
-    public List<MutationCondition> getConditions() {
-        return conditions;
     }
 }

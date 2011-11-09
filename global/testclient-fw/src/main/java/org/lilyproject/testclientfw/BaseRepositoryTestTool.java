@@ -1,9 +1,5 @@
 package org.lilyproject.testclientfw;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -14,8 +10,14 @@ import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.zookeeper.ZkConnectException;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.List;
 
 public abstract class BaseRepositoryTestTool extends BaseTestTool {
     private static final String DEFAULT_SOLR_URL = "http://localhost:8983/solr";
@@ -67,8 +69,7 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
         return 0;
     }
 
-    public void setupLily() throws IOException, ZkConnectException, NoServersException, InterruptedException,
-            KeeperException, RepositoryException {
+    public void setupLily() throws IOException, ZkConnectException, NoServersException, InterruptedException, KeeperException {
         lilyClient = new LilyClient(getZooKeeper());
         repository = lilyClient.getRepository();
         idGenerator = repository.getIdGenerator();

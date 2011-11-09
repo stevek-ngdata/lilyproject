@@ -38,12 +38,6 @@
       <outputDirectory>/</outputDirectory>
     </file>
 
-    <!-- versions.xml forcing the version number for org.lilyproject artifacts -->
-    <file>
-      <source>${basedir}/target/classes/conf/kauri/versions.xml</source>
-      <outputDirectory>/conf/kauri</outputDirectory>
-    </file>
-
     <!-- Service wrapper -->
     <file>
       <source>${basedir}/target/classes/service/wrapper.conf</source>
@@ -54,23 +48,21 @@
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <!--  
-    <file>
+    <!--file>
       <source>${basedir}/src/main/resources/service/lily-service.bat</source>
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
-    <file>
+    </file-->
+    <!--file>
       <source>${basedir}/src/main/resources/service/install-lily-service.bat</source>
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
-    <file>
+    </file-->
+    <!--file>
       <source>${basedir}/src/main/resources/service/uninstall-lily-service.bat</source>
       <outputDirectory>/service</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
-    -->
+    </file-->
     <file>
       <source>${basedir}/src/main/resources/service/README.txt</source>
       <outputDirectory>/service</outputDirectory>
@@ -94,13 +86,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <!-- 
-    <file>
+    <!--file>
       <source>${basedir}/../cr/process/server/target/dist-scripts/lily-server.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
-    -->
+    </file-->
 
     <!-- Import tool -->
     <file>
@@ -108,11 +98,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../apps/import/target/dist-scripts/lily-import.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- MBOX Import tool -->
     <file>
@@ -120,11 +110,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../apps/mbox-import/target/dist-scripts/lily-mbox-import.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Tester tool -->
     <file>
@@ -132,11 +122,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../apps/tester/target/dist-scripts/lily-tester.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Tester tool -->
     <file>
@@ -151,61 +141,61 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-add-index.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-update-index</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-update-index.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-list-indexes</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-list-indexes.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-indexerconf</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-indexerconf.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-shardingconf</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-get-shardingconf.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-touch-index</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../cr/indexer/admin-cli/target/dist-scripts/lily-touch-index.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!--  Rowlog Admin Cli -->
     <file>
@@ -213,43 +203,55 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-list-rowlogs.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-rowlog</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-rowlog.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-subscription</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../global/rowlog/admin-cli/target/dist-scripts/lily-update-subscription.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
-    <!-- Launch lily -->
+    <!-- Launch hadoop -->
     <file>
-      <source>${basedir}/../cr/lily-server-test-fw-loader/target/dist-scripts/launch-test-lily</source>
+      <source>${basedir}/../global/test-fw/target/dist-scripts/launch-hadoop</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+    <!--file>
+      <source>${basedir}/../global/test-fw/target/dist-scripts/launch-hadoop.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
+
+    <!-- Launch Solr -->
     <file>
-      <source>${basedir}/../cr/lily-server-test-fw-loader/target/dist-scripts/launch-test-lily.bat</source>
+      <source>${basedir}/../global/solr-test-fw/target/dist-scripts/launch-solr</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+    <!--file>
+      <source>${basedir}/../global/solr-test-fw/target/dist-scripts/launch-solr.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
 
     <!-- Print host tool -->
     <file>
@@ -257,20 +259,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <!-- 
-    <file>
+    <!--file>
       <source>${basedir}/../tools/print-host/target/dist-scripts/lily-print-host.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
-    -->
-  
-    <!-- Lily schema upgrade tool for upgrade from Lily 1.0 to Lily 1.1 -->
-    <file>
-      <source>${basedir}/../tools/upgrade/target/dist-scripts/lily-upgrade-from-1.0</source>
-      <outputDirectory>/bin/</outputDirectory>
-      <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Rowlog visualizer tool -->
     <file>
@@ -278,11 +271,11 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
-    <file>
+    <!--file>
       <source>${basedir}/../tools/rowlog-visualizer/target/dist-scripts/lily-rowlog-visualizer.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
-    </file>
+    </file-->
 
     <!-- Record row visualizer tool -->
     <file>
@@ -292,6 +285,18 @@
     </file>
     <!--file>
       <source>${basedir}/../tools/record-row-visualizer/target/dist-scripts/lily-record-row-visualizer.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file-->
+
+    <!-- Linkindex tool -->
+    <file>
+      <source>${basedir}/../apps/linkindex-cli/target/dist-scripts/lily-linkindex</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <!--file>
+      <source>${basedir}/../apps/linkindex-cli/target/dist-scripts/lily-linkindex.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file-->
@@ -330,13 +335,6 @@
       <excludes>
         <exclude>*</exclude>
       </excludes>
-    </fileSet>
-
-    <!-- Plugins directory -->
-    <fileSet>
-      <directory>${basedir}/src/main/resources/plugins</directory>
-      <outputDirectory>/plugins</outputDirectory>
-      <useDefaultExcludes>true</useDefaultExcludes>
     </fileSet>
 
     <!-- Java service wrapper -->

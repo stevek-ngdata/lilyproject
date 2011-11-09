@@ -21,11 +21,11 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
-import org.lilyproject.indexer.batchbuild.hbasemr_patched.TableMapReduceUtil;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
@@ -94,7 +94,7 @@ public class BatchIndexBuilder {
         scan.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
 
         TableMapReduceUtil.initTableMapperJob(Table.RECORD.name, scan,
-                IndexingMapper.class, null, null, job);
+            IndexingMapper.class, null, null, job);
 
         //
         // Provide properties to connect to HBase

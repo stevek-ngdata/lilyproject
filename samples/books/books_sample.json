@@ -8,32 +8,32 @@
       /* The 'b' refers to the namespace declared above, the dollar sign
          separates the namespace prefix from the name. */
       name: "b$title",
-      valueType: "STRING",
+      valueType: { primitive: "STRING" },
       scope: "versioned"
     },
     {
       name: "b$pages",
-      valueType: "INTEGER",
+      valueType: { primitive: "INTEGER" },
       scope: "versioned"
     },
     {
       name: "b$language",
-      valueType: "STRING",
+      valueType: { primitive: "STRING" },
       scope: "versioned"
     },
     {
       name: "b$authors",
-      valueType: "LIST<LINK>",
+      valueType: { primitive: "LINK", multiValue: true },
       scope: "versioned"
     },
     {
       name: "b$name",
-      valueType: "STRING",
+      valueType: { primitive: "STRING" },
       scope: "versioned"
     },
     {
       name: "b$bio",
-      valueType: "STRING",
+      valueType: { primitive: "STRING" },
       scope: "versioned"
     }
   ],

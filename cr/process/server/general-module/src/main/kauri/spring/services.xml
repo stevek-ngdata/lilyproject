@@ -59,15 +59,8 @@
       ref="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
-  <kauri:export-service
-      ref="indexerModel"
-      service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
-
-  <!-- The depends-on zooKeeper is so that Lily's ZooKeeper connection establishment code
-       is the reference with regards to waiting until ZooKeeper is available. -->
   <bean id="hbaseConfiguration"
-      class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl"
-      depends-on="zooKeeper">
+      class="org.lilyproject.server.modules.general.HadoopConfigurationFactoryImpl">
     <constructor-arg><kauri:conf path="hbase"/></constructor-arg>
     <constructor-arg><kauri:conf path="mapreduce"/></constructor-arg>
     <constructor-arg value="${zookeeper:connectString}"/>
@@ -88,7 +81,6 @@
         class="org.lilyproject.util.zookeeper.StateWatchingZooKeeper">
     <constructor-arg value="${zookeeper:connectString}"/>
     <constructor-arg value="${zookeeper:sessionTimeout}"/>
-    <constructor-arg value="${zookeeper:startupTimeout}"/>
   </bean>
 
   <bean id="hbaseConf"
@@ -112,7 +104,6 @@
 
   <bean id="connectionDisposer"
         class="org.lilyproject.server.modules.general.HBaseConnectionDisposer">
-    <constructor-arg ref="hbaseConf"/>
   </bean>
 
   <bean id="zooKeeperMXBean" class="org.lilyproject.util.zookeeper.ZooKeeperMXBean">
@@ -148,10 +139,6 @@
     <constructor-arg value="lock"/>
     <constructor-arg value="10000"/>
     <constructor-arg ref="rowLockerMetrics"/>
-  </bean>
-
-  <bean id="indexerModel" class="org.lilyproject.indexer.model.impl.IndexerModelImpl">
-    <constructor-arg ref="zooKeeper"/>
   </bean>
 
 </beans>

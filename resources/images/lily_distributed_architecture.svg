@@ -15,9 +15,9 @@
    version="1.1"
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="lily_distributed_architecture.svg"
-   inkscape:export-filename="/home/mpo/projects/lilyproject/lily-training.git/material/diagrams/lily-distributed-architecture.png"
-   inkscape:export-xdpi="145.83"
-   inkscape:export-ydpi="145.83">
+   inkscape:export-filename="/home/bruno/tmp/lily distributed architecture.png"
+   inkscape:export-xdpi="81.489998"
+   inkscape:export-ydpi="81.489998">
   <defs
      id="defs9640">
     <marker
@@ -61,23 +61,19 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.1382963"
-     inkscape:cx="482.66532"
-     inkscape:cy="431.34382"
+     inkscape:zoom="0.7"
+     inkscape:cx="840.90788"
+     inkscape:cy="456.20609"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      showguides="true"
      inkscape:guide-bbox="true"
      inkscape:window-width="1680"
-     inkscape:window-height="1026"
+     inkscape:window-height="996"
      inkscape:window-x="0"
-     inkscape:window-y="24"
-     inkscape:window-maximized="1">
-    <inkscape:grid
-       type="xygrid"
-       id="grid4113" />
-  </sodipodi:namedview>
+     inkscape:window-y="1"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata9643">
     <rdf:RDF>
@@ -666,11 +662,9 @@
        transform="translate(0,308.2677)" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
-       d="m 792.96975,180.08003 35.35534,0 0,232.68442 -300.01531,0 0,-27.27412"
+       d="m 792.96975,164.26692 35.35534,0 0,248.49753 -300.01531,0 0,-27.27412"
        id="path12537"
-       transform="translate(0,308.2677)"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
+       transform="translate(0,308.2677)" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
        d="m 635,413.02305 0,-27.14285"
@@ -853,26 +847,6 @@
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
        d="m 501.54074,218.81516 0,-19.69798"
        id="path5095"
-       transform="translate(0,308.2677)" />
-    <path
-       sodipodi:nodetypes="cc"
-       transform="translate(0,308.2677)"
-       id="path3145"
-       d="m 458.60926,282.71106 79.40472,-0.44343"
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
-       d="m 685.23459,93.121624 166.91612,0 0,468.243636 -52.71036,0"
-       id="path3147"
-       inkscape:connector-curvature="0"
-       transform="translate(0,308.2677)"
-       sodipodi:nodetypes="cccc" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 792.41231,162.52359 59.7384,0"
-       id="path4115"
-       inkscape:connector-curvature="0"
        transform="translate(0,308.2677)" />
   </g>
 </svg>

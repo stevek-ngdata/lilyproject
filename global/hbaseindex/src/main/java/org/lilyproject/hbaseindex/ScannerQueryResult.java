@@ -31,7 +31,6 @@ class ScannerQueryResult extends BaseQueryResult {
         this.invertIdentifier = invertIdentifier;
     }
 
-    @Override
     public byte[] next() throws IOException {
         currentResult = scanner.next();
         if (currentResult == null) {
@@ -45,7 +44,6 @@ class ScannerQueryResult extends BaseQueryResult {
         return identifier;
     }
 
-    @Override
     public void close() {
         scanner.close();
     }

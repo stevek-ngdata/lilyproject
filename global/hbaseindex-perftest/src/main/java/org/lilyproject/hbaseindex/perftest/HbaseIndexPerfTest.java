@@ -141,7 +141,6 @@ public class HbaseIndexPerfTest extends BaseTestTool {
             this.amount = amount;
         }
 
-        @Override
         public void run() {
             try {
                 List<IndexEntry> entries = new ArrayList<IndexEntry>(amount);
@@ -165,7 +164,6 @@ public class HbaseIndexPerfTest extends BaseTestTool {
     }
 
     private class SingleFieldEqualsQuery implements Runnable {
-        @Override
         public void run() {
             try {
                 Query query = new Query();
@@ -189,7 +187,6 @@ public class HbaseIndexPerfTest extends BaseTestTool {
     }
 
     private class StringRangeQuery implements Runnable {
-        @Override
         public void run() {
             try {
                 String word = "";

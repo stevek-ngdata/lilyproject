@@ -44,7 +44,6 @@ public class HBaseRowLocker implements RowLocker {
         this.metrics = metrics;
     }
     
-    @Override
     public RowLock lockRow(byte[] rowKey) throws IOException {
         RowLock rowLock = lockRow(rowKey, null);
         if (rowLock != null) {
@@ -92,7 +91,6 @@ public class HBaseRowLocker implements RowLocker {
         return null;
     }
 
-    @Override
     public RowLock lockRow(byte[] rowKey, long timeout) throws IOException, InterruptedException {
         long tryUntil = System.currentTimeMillis() + timeout;
         while (System.currentTimeMillis() < tryUntil) {
@@ -105,7 +103,6 @@ public class HBaseRowLocker implements RowLocker {
         return null;
     }
 
-    @Override
     public boolean unlockRow(RowLock lock) throws IOException {
         byte[] rowKey = lock.getRowKey();
         Put put = new Put(rowKey);
@@ -113,7 +110,6 @@ public class HBaseRowLocker implements RowLocker {
         return table.checkAndPut(rowKey, family, qualifier, lock.getPermit(), put); // If it fails, we already lost the lock
     }
     
-    @Override
     public boolean isLocked(byte[] rowKey) throws IOException {
         long now = System.currentTimeMillis();
         Get get = new Get(rowKey);
@@ -131,14 +127,12 @@ public class HBaseRowLocker implements RowLocker {
 
     }
     
-    @Override
     public boolean put(Put put, RowLock lock) throws IOException {
         if (!Bytes.equals(put.getRow(), lock.getRowKey()))
                 return false;
         return table.checkAndPut(lock.getRowKey(), family, qualifier, lock.getPermit(), put);
     }
     
-    @Override
     public boolean delete(Delete delete, RowLock lock) throws IOException {
         if (!Bytes.equals(delete.getRow(), lock.getRowKey()))
                 return false;

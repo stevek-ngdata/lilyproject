@@ -52,12 +52,10 @@ public class IdGeneratorImpl implements IdGenerator {
         IDENTIFIERS[2] = IdIdentifier.VARIANT;
     }
 
-    @Override
     public RecordId newRecordId() {
         return new UUIDRecordId(this);
     }
 
-    @Override
     public RecordId newRecordId(RecordId masterRecordId, Map<String, String> variantProperties) {
         ArgumentValidator.notNull(masterRecordId, "masterRecordId");
         ArgumentValidator.notNull(variantProperties, "variantProperties");
@@ -73,19 +71,16 @@ public class IdGeneratorImpl implements IdGenerator {
         return new VariantRecordId(masterRecordId, variantProperties, this);
     }
 
-    @Override
     public RecordId newRecordId(Map<String, String> variantProperties) {
         return newRecordId(newRecordId(), variantProperties);
     }
 
-    @Override
     public RecordId newRecordId(String userProvidedId) {
         ArgumentValidator.notNull(userProvidedId, "userProvidedId");
         checkIdString(userProvidedId, "record id");
         return new UserRecordId(userProvidedId, this);
     }
     
-    @Override
     public RecordId newRecordId(String userProvidedId, Map<String, String> variantProperties) {
         return newRecordId(newRecordId(userProvidedId), variantProperties);
     }
@@ -126,12 +121,10 @@ public class IdGeneratorImpl implements IdGenerator {
         dataOutput.writeByte(IdIdentifier.VARIANT.getIdentifierByte());
     }
     
-    @Override
     public RecordId fromBytes(byte[] bytes) {
         return fromBytes(new DataInputImpl(bytes));
     }
 
-    @Override
     public RecordId fromBytes(DataInput dataInput) {
         // Read the identifier byte at the end of the input
         int pos = dataInput.getPosition();
@@ -205,7 +198,6 @@ public class IdGeneratorImpl implements IdGenerator {
         return stringBuilder.toString();
     }
     
-    @Override
     public RecordId fromString(String recordIdString) {
         int firstDotPos = recordIdString.indexOf('.');
 
@@ -295,17 +287,14 @@ public class IdGeneratorImpl implements IdGenerator {
         }
     }
     
-    @Override
     public SchemaId getSchemaId(byte[] id) {
         return new SchemaIdImpl(id);
     }
 
-    @Override
     public SchemaId getSchemaId(String id) {
         return new SchemaIdImpl(id);
     }
     
-    @Override
     public SchemaId getSchemaId(UUID id) {
         return new SchemaIdImpl(id);
     }

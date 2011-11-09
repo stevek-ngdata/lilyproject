@@ -113,7 +113,6 @@ public class LocationImpl implements Location, Serializable {
      *
      * @return the description (can be <code>null</code>)
      */
-    @Override
     public String getDescription() {
         return this.description;
     }
@@ -123,7 +122,6 @@ public class LocationImpl implements Location, Serializable {
      *
      * @return the URI (<code>null</code> if unknown).
      */
-    @Override
     public String getURI() {
         return this.uri;
     }
@@ -133,7 +131,6 @@ public class LocationImpl implements Location, Serializable {
      *
      * @return the line number (<code>-1</code> if unknown)
      */
-    @Override
     public int getLineNumber() {
         return this.line;
     }
@@ -143,7 +140,6 @@ public class LocationImpl implements Location, Serializable {
      *
      * @return the column number (<code>-1</code> if unknown)
      */
-    @Override
     public int getColumnNumber() {
         return this.column;
     }

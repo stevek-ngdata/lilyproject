@@ -25,10 +25,6 @@
       name: "recordsRT2",
       limit: 10000
     },
-    {
-      name: "recordsRT3",
-      limit: 10000
-    },
     { 
       name: "subRecords",
       limit: 10000
@@ -79,68 +75,62 @@
   fieldTypes: [
     {
       name: "tester$field1",
-      valueType: "STRING",
+      valueType: { "primitive": "STRING" },
       scope: "versioned",
       properties: {enum: "foo,bar,something", wordCount: 3}
     },
     {
       name: "tester$field2",
-      valueType: "LIST<STRING>",
+      valueType: { "primitive": "STRING", "multiValue": true },
       scope: "non_versioned"
     },
     {
       name: "tester$field3",
-      valueType: "PATH<STRING>",
+      valueType: { "primitive": "STRING", "hierarchical": true },
       scope: "versioned"
     },
     {
       name: "tester$field4",
-      valueType: "LIST<PATH<STRING>>",
+      valueType: { "primitive": "STRING", "multiValue": true, "hierarchical": true },
       scope: "non_versioned"
     },
     {
       name: "tester$field5",
-      valueType: "INTEGER",
+      valueType: { "primitive": "INTEGER" },
       scope: "versioned",
       properties: {enum: "5,55,555"}
     },
     {
       name: "tester$field6",
-      valueType: "LONG",
+      valueType: { "primitive": "LONG" },
       scope: "non_versioned",
       properties: {min: 3000000000, max: 4000000000}
     },
     {
       name: "tester$field7",
-      valueType: "DATE",
+      valueType: { "primitive": "DATE" },
       scope: "versioned"
     },
     {
       name: "tester$field8",
-      valueType: "DATETIME",
+      valueType: { "primitive": "DATETIME" },
       scope: "non_versioned"
     },
     {
       name: "tester$field9",
-      valueType: "LINK",
+      valueType: { "primitive": "LINK" },
       scope: "versioned",
       properties: {recordType: "tester$RTSub", recordSource: "subRecords"}
     },
     {
       name: "tester$field10",
-      valueType: "BOOLEAN",
+      valueType: { "primitive": "BOOLEAN" },
       scope: "versioned"
     },
     {
       name: "tester$field11",
-      valueType: "BLOB",
+      valueType: { "primitive": "BLOB" },
       scope: "versioned"
-    },
-    {
-      name: "tester$field12",
-      valueType: "LINK<tester$RT1>",
-      scope: "versioned",
-      properties: {recordType: "tester$RTSub", recordSource: "subRecords"}
     }
   ],
 
@@ -188,16 +178,8 @@
           name: "tester$field9"
         }
       ]
-    },
-    {
-      name: "tester$RT3",
-      fields: [
-        {
-          name: "tester$field12"
-        }
-      ]
     }
-  ],
+  ], 
 
 /* Scenario :
    
@@ -240,13 +222,6 @@
       recordType: "tester$RT2",
       count: 2,
       destination: "recordsRT2"
-    },
-    {
-      name: "create4",
-      action: "create",
-      recordType: "tester$RT3",
-      count: 2,
-      destination: "recordsRT3"
     },
     {
       name: "read1",

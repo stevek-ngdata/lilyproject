@@ -45,12 +45,10 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         }
     }
     
-    @Override
     public String getId() {
         return ID;
     }
         
-    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         UUID uuid = UUID.randomUUID();
         byte[] blobKey = Bytes.toBytes(uuid.getMostSignificantBits());
@@ -65,7 +63,6 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
     }
 
 
-    @Override
     public InputStream getInputStream(byte[] blobKey) throws BlobException {
         UUID uuid = decode(blobKey);
         try {
@@ -85,7 +82,6 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         return path;
     }
 
-    @Override
     public void delete(byte[] blobKey) throws BlobException {
         UUID uuid = decode(blobKey);
         try {
@@ -95,7 +91,6 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         }
     }
 
-    @Override
     public boolean incubate() {
         return true;
     }

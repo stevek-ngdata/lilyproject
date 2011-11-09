@@ -8,10 +8,6 @@ rem
 rem LILY_JAVA_OPTIONS
 rem    additional options to be passed to the java executable
 rem
-rem LILY_MAVEN_REPO
-rem    additional directory path(s) (comma-separated) to Maven-style
-rem    repositories where jar artifacts should be searched
-rem
 
 :: ----- Verify and Set Required Environment Variables -------------------------
 
@@ -29,14 +25,7 @@ set LILY_HOME=%~dp0..
 
 :: ----- Run -------------------------------------------------------------------
 
-rem The repository suitable for bootstrapping Kauri
-set LAUNCHER_M2_REPO=%LILY_HOME%\lib
-
-rem The repository(ies) to be used by Kauri for loading the application
 set M2_REPO=%LILY_HOME%\lib
-if "%LILY_MAVEN_REPO%"=="" goto noExtraRepoPath
-set M2_REPO=%M2_REPO%,%LILY_MAVEN_REPO%
-:noExtraRepoPath
 
 set CLASSPATH="$$$CLASSPATH_PREFIX$$$$$$CLASSPATH$$$"
 
@@ -46,10 +35,9 @@ if "%LILY_CLI_CLASSPATH%"=="" goto noExtraClassPath
 set CLASSPATH=%CLASSPATH%;%LILY_CLI_CLASSPATH%
 :noExtraClassPath
 
-set LILY_OPTIONS=%LILY_JAVA_OPTIONS%
 $$$BEFORE_JAVA_HOOK$$$
 
-"%JAVA_HOME%/bin/java" -classpath "%CLASSPATH%" %LILY_OPTIONS% $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ %*
+"%JAVA_HOME%/bin/java" -classpath "%CLASSPATH%" %LILY_JAVA_OPTIONS% $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ %*
 goto end
 
 :end

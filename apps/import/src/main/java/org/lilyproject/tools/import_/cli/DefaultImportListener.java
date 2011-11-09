@@ -28,19 +28,16 @@ public class DefaultImportListener implements ImportListener {
         this.out = out;
     }
 
-    @Override
     public void conflict(EntityType entityType, String entityName, String propName, Object oldValue, Object newValue)
             throws ImportConflictException {
         throw new ImportConflictException(String.format("%1$s %2$s exists but with %3$s %4$s instead of %5$s",
                 toText(entityType), entityName, propName, oldValue, newValue));
     }
 
-    @Override
     public void existsAndEqual(EntityType entityType, String entityName, String entityId) {
         out.println(String.format("%1$s already exists and is equal: %2$s", toText(entityType), id(entityName, entityId)));
     }
 
-    @Override
     public void updated(EntityType entityType, String entityName, String entityId, long version) {
         if (entityType == EntityType.RECORD || entityType == EntityType.RECORD_TYPE) {
             out.println(String.format("%1$s updated: %2$s (version %3$s)", toText(entityType), id(entityName, entityId), version));
@@ -49,7 +46,6 @@ public class DefaultImportListener implements ImportListener {
         }
     }
 
-    @Override
     public void created(EntityType entityType, String entityName, String entityId) {
         out.println(String.format("%1$s created: %2$s", toText(entityType), id(entityName, entityId)));
     }

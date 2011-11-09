@@ -123,7 +123,6 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
         this.caseSensitive = caseSensitive;
     }
 
-    @Override
     public int getLength() {
         return -1;
     }
@@ -160,7 +159,6 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     private static class Utf8StringEncoder implements StringEncoder {
-        @Override
         public byte[] toBytes(String string, Locale locale) {
             try {
                 return string.getBytes("UTF-8");
@@ -171,7 +169,6 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     private static class AsciiFoldingStringEncoder implements StringEncoder {
-        @Override
         public byte[] toBytes(String string, Locale locale) {
             try {
                 return ASCIIFoldingUtil.foldToASCII(string).getBytes("UTF-8");
@@ -182,7 +179,6 @@ public class StringIndexFieldDefinition extends IndexFieldDefinition {
     }
 
     private static class CollatorStringEncoder implements StringEncoder {
-        @Override
         public byte[] toBytes(String string, Locale locale) {
             Collator collator = Collator.getInstance(locale);
             return collator.getCollationKey(string).toByteArray();

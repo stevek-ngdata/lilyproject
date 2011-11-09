@@ -3,12 +3,6 @@ package org.lilyproject.repository.api;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Thrown by a {@link ValueType} implementation in case the encoding version of a value
- * is not supported. Some value types encode as part of the value a version number to
- * allow for future evolutions in the encoding. This exception will typically occur
- * when running older code against a newer data.
- */
 public class UnknownValueTypeEncodingException extends TypeException {
 
     private final String valueType;
@@ -26,7 +20,7 @@ public class UnknownValueTypeEncodingException extends TypeException {
 
     @Override
     public String getMessage() {
-        return "Unknown encoding '" + encodingVersion + "' encountered for a field of value type '" + valueType + "'";
+        return "Unknown encoding '"+ encodingVersion+ "' encountered for a field of value type '" + valueType + "'";
     }
     
     @Override

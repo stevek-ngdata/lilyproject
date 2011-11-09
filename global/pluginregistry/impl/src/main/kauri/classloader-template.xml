@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<classloader>
-  <classpath>
-    <artifact groupId="org.lilyproject" artifactId="lily-pluginregistry-api" share="required"/>
-  </classpath>
-</classloader>

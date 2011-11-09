@@ -6,6 +6,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.LocalDateTime;
 import org.lilyproject.cli.BaseZkCliTool;
@@ -18,9 +19,9 @@ import org.lilyproject.util.hbase.LilyHBaseSchema;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
-
 public class RowLogVisualizer extends BaseZkCliTool {
+
+    protected Option subscriptionOption;
 
     private static final byte[] MESSAGES_CF = Bytes.toBytes("messages");
     private static final byte[] MESSAGE_COLUMN = Bytes.toBytes("msg");
@@ -31,8 +32,6 @@ public class RowLogVisualizer extends BaseZkCliTool {
     private byte[] executionStatePrefix;
     private byte[] payloadPrefix;
 
-    private Option rowlogIdOption;
-
     @Override
     protected String getCmdName() {
         return "lily-show-rowlog";
@@ -42,13 +41,15 @@ public class RowLogVisualizer extends BaseZkCliTool {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
-        rowlogIdOption = OptionBuilder
-                .withArgName("id")
+        subscriptionOption = OptionBuilder
+                .withArgName("subscription")
+                .isRequired()
                 .hasArg()
-                .withDescription("Rowlog id: mq (default) or wal")
-                .withLongOpt("id")
-                .create("id");
-        options.add(rowlogIdOption);
+                .withDescription("Name of the subscription")
+                .withLongOpt("subscription")
+                .create("sub");
+
+        options.add(subscriptionOption);
 
         return options;
     }
@@ -57,67 +58,46 @@ public class RowLogVisualizer extends BaseZkCliTool {
         new RowLogVisualizer().start(args);
     }
 
+
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result =  super.run(cmd);
         if (result != 0)
             return result;
 
+        String subscriptionName = cmd.getOptionValue(subscriptionOption.getOpt());
+        byte[] rowPrefix = Bytes.toBytes(subscriptionName);
+
         Configuration hbaseConf = HBaseConfiguration.create();
         hbaseConf.set("hbase.zookeeper.quorum", zkConnectionString);
 
-        String rowLogId = "mq";
-        if (cmd.hasOption(rowlogIdOption.getOpt())) {
-            rowLogId = cmd.getOptionValue(rowlogIdOption.getOpt());
-            if (!rowLogId.equals("mq") && !rowLogId.equals("wal")) {
-                System.err.println("Unsupported rowlog id: " + rowLogId);
-                return -1;
-            }
-        }
-
-        HTableInterface rowlogTable = new HTable(hbaseConf, "rowlog-" + rowLogId);
+        HTableInterface rowlogTable = new HTable(hbaseConf, "mq-shard1");
         HTableInterface recordsTable = new HTable(hbaseConf, "record");
 
         IdGenerator idGenerator = new IdGeneratorImpl();
 
         // General parameters
-        byte rowLogIdByte = rowLogId.equals("mq") ? RecordColumn.MQ_PREFIX : RecordColumn.WAL_PREFIX;
-        this.executionStatePrefix = new byte[] {rowLogIdByte, ES_BYTE};
-        this.payloadPrefix = new byte[] {rowLogIdByte, PL_BYTE};
+        byte rowLogId = LilyHBaseSchema.RecordColumn.MQ_PREFIX;
+        this.executionStatePrefix = new byte[] {rowLogId, ES_BYTE};
+        this.payloadPrefix = new byte[] {rowLogId, PL_BYTE};
         byte[] rowLogColumnFamily = LilyHBaseSchema.RecordCf.ROWLOG.bytes;
 
         //
-        Scan scan = new Scan();
+        Scan scan = new Scan(rowPrefix);
         scan.setCacheBlocks(false);
         scan.setCaching(1000);
+        scan.setFilter(new PrefixFilter(rowPrefix));
         scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
 
         ResultScanner scanner = rowlogTable.getScanner(scan);
         Result rowlogRow;
-        int counter = 0;
         while ((rowlogRow = scanner.next()) != null) {
-            counter++;
             byte[] rowkey = rowlogRow.getRow();
 
             long hbaseTimestamp = rowlogRow.getColumnLatest(MESSAGES_CF, MESSAGE_COLUMN).getTimestamp();
 
-            // First byte it the shard key (the 'region selector')
-            byte shardKey = rowkey[0];
-            rowkey = Bytes.tail(rowkey, rowkey.length - 1);
-
-            // Find out where the subscription name ends
-            int endOfPrefixPos = -1;
-            for (int i = 0; i < rowkey.length; i++) {
-                if (rowkey[i] == (byte)0) {
-                    endOfPrefixPos = i;
-                    break;
-                }
-            }
-
-            String subscriptionName = new String(Bytes.head(rowkey, endOfPrefixPos));
-
             // Copied from RowLogShardImpl.decodeMessage
-            byte[] messageId = Bytes.tail(rowkey, rowkey.length - (endOfPrefixPos + 1));
+            byte[] messageId = Bytes.tail(rowkey, rowkey.length - rowPrefix.length);
             long timestamp = Bytes.toLong(messageId);
             long seqNr = Bytes.toLong(messageId, Bytes.SIZEOF_LONG);
             byte[] recordRowkey = Bytes.tail(messageId, messageId.length - (2 * Bytes.SIZEOF_LONG));
@@ -143,9 +123,7 @@ public class RowLogVisualizer extends BaseZkCliTool {
             // Print info
             RecordId recordId = idGenerator.fromBytes(recordRowkey);
             System.out.println("-------------------------------------------------------------------------");
-            System.out.println("   Subscription: " + subscriptionName);
             System.out.println("         Record: " + recordId);
-            System.out.println("   Rowlog shard: " + (int)shardKey);
             System.out.println("      Timestamp: " + new LocalDateTime(timestamp) + " - " + timestamp);
             System.out.println("HBase timestamp: " + new LocalDateTime(hbaseTimestamp) + " - " + hbaseTimestamp);
             System.out.println("          Seqnr: " + seqNr);
@@ -166,10 +144,6 @@ public class RowLogVisualizer extends BaseZkCliTool {
             }
             System.out.println();
         }
-
-        System.out.println();
-        System.out.println("Total number of entries: " + counter);
-
         scanner.close();
 
         return 0;

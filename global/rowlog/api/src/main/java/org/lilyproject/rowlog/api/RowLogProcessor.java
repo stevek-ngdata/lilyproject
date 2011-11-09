@@ -15,7 +15,6 @@
  */
 package org.lilyproject.rowlog.api;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -26,13 +25,11 @@ import java.util.List;
  * So, one RowLogProcessor should be started for each registered {@link RowLogShard}.
  */
 public interface RowLogProcessor {
-    public static final int DEFAULT_MSG_TIMESTAMP_MARGIN = 120000;
-
     /**
      * Starts the RowLogProcessor. The execution should start in a separate thread, and the start call should return immediately. 
      * @throws InterruptedException 
      */
-    void start() throws InterruptedException, IOException;
+    void start() throws InterruptedException;
     
     /**
      * Indicate that the RowLogProcessor should stop executing as soon as possible.

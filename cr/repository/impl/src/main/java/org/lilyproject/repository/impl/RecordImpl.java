@@ -16,7 +16,6 @@
 package org.lilyproject.repository.impl;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ObjectUtils;
@@ -30,8 +29,7 @@ public class RecordImpl implements Record {
     private Long version;
     private ResponseStatus responseStatus;
     
-    private String defaultNamespace = null;
-    
+
     /**
      * This constructor should not be called directly.
      * @use {@link Repository#newRecord} instead
@@ -47,47 +45,38 @@ public class RecordImpl implements Record {
         this.id = id;
     }
 
-    @Override
     public void setId(RecordId id) {
         this.id = id;
     }
     
-    @Override
     public RecordId getId() {
         return id;
     }
     
-    @Override
     public void setVersion(Long version) {
         this.version = version;
     }
     
-    @Override
     public Long getVersion() {
         return version;
     }
 
-    @Override
     public void setRecordType(QName name, Long version) {
         setRecordType(Scope.NON_VERSIONED, name, version);
     }
     
-    @Override
     public void setRecordType(QName name) {
         setRecordType(name, null);
     }
     
-    @Override
     public QName getRecordTypeName() {
         return getRecordTypeName(Scope.NON_VERSIONED);
     }
 
-    @Override
     public Long getRecordTypeVersion() {
         return getRecordTypeVersion(Scope.NON_VERSIONED);
     }
     
-    @Override
     public void setRecordType(Scope scope, QName name, Long version) {
         if (name == null && version == null) {
             recordTypes.remove(scope);
@@ -96,44 +85,37 @@ public class RecordImpl implements Record {
         }
     }
     
-    @Override
     public QName getRecordTypeName(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.name : null;
     }
     
-    @Override
     public Long getRecordTypeVersion(Scope scope) {
         RecordTypeRef ref = recordTypes.get(scope);
         return ref != null ? ref.version : null;
     }
     
-    @Override
     public void setField(QName name, Object value) {
         fields.put(name, value);
         fieldsToDelete.remove(name);
     }
     
-    @Override
-    public <T> T getField(QName name) throws FieldNotFoundException {
+    public Object getField(QName name) throws FieldNotFoundException {
         Object field = fields.get(name);
         if (field == null) {
             throw new FieldNotFoundException(name);
         }
-        return (T)field;
+        return field;
     }
 
-    @Override
     public boolean hasField(QName fieldName) {
         return fields.containsKey(fieldName);
     }
 
-    @Override
     public Map<QName, Object> getFields() {
         return fields;
     }
 
-    @Override
     public void delete(QName fieldName, boolean addToFieldsToDelete) {
         fields.remove(fieldName);
 
@@ -142,132 +124,39 @@ public class RecordImpl implements Record {
         }
     }
 
-    @Override
     public List<QName> getFieldsToDelete() {
         return fieldsToDelete;
     }
 
-    @Override
     public void addFieldsToDelete(List<QName> names) {
         if (!names.isEmpty()) {
             fieldsToDelete.addAll(names);
         }
     }
 
-    @Override
     public void removeFieldsToDelete(List<QName> names) {
         fieldsToDelete.removeAll(names);
     }
 
-    @Override
     public ResponseStatus getResponseStatus() {
         return responseStatus;
     }
 
-    @Override
     public void setResponseStatus(ResponseStatus status) {
         this.responseStatus = status;
     }
 
-    @Override
-    public Record clone() throws RuntimeException {
-        try {
-            return cloneRecord(new IdentityHashMap<Record, Object>());
-        } catch (RecordException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
-    @Override
-    public Record cloneRecord() throws RecordException {
-        return cloneRecord(new IdentityHashMap<Record, Object>());
-    }
-
-    @Override
-    public Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
-        if (parentRecords.containsKey(this))
-            throw new RecordException("A record may not be nested in itself: " + id);
-
+    public Record clone() {
         RecordImpl record = new RecordImpl();
         record.id = id;
         record.version = version;
         record.recordTypes.putAll(recordTypes);
-        parentRecords.put(this, null);
-        for (Entry<QName, Object> entry : fields.entrySet()) {
-            record.fields.put(entry.getKey(), cloneValue(entry.getValue(), record, parentRecords));
-        }
-        parentRecords.remove(this);
+        record.fields.putAll(fields);
         if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
             record.fieldsToDelete.addAll(fieldsToDelete);
         }
         // the ResponseStatus is not cloned, on purpose
         return record;
-    }
-    
-    private boolean detectRecordRecursion(List<Record> parentRecords) {
-        for (Entry<QName, Object> entry : fields.entrySet()) {
-            if (detectRecordRecursion(entry.getValue(), parentRecords))
-                return true;
-        }
-        return false;
-    }
-
-    private boolean detectRecordRecursion(Object value, List<Record> parentRecords) {
-        if (value instanceof HierarchyPath) {
-            Object[] elements = ((HierarchyPath) value).getElements();
-            for (Object object : elements) {
-                if (detectRecordRecursion(object, parentRecords))
-                    return true;
-            }
-        }
-        if (value instanceof List) {
-            List<Object> values = (List<Object>) value;
-            for (Object object : values) {
-                if (detectRecordRecursion(object, parentRecords))
-                    return true;
-            }
-        }
-        if (value instanceof Record) {
-            if (parentRecords.contains(value))
-                return true;
-            Record record = (Record) value;
-            parentRecords.add(record);
-            Map<QName, Object> fields = record.getFields();
-            for (Entry<QName, Object> entry : fields.entrySet()) {
-                if (detectRecordRecursion(entry.getValue(), parentRecords))
-                    return true;
-            }
-            parentRecords.remove(record);
-        }
-        return false; // Skip all other values
-    }
-
-    private Object cloneValue(Object value, Record clone, IdentityHashMap<Record, Object> parentRecords)
-            throws RecordException {
-        if (value instanceof HierarchyPath) {
-            Object[] elements = ((HierarchyPath)value).getElements();
-            Object[] newElements = new Object[elements.length];
-            for (int i = 0; i < newElements.length; i++) {
-                newElements[i] = cloneValue(elements[i], clone, parentRecords);
-            }
-            return new HierarchyPath(newElements);
-        }
-        if (value instanceof List) {
-            List<Object> newList = new ArrayList<Object>();
-            List<Object> values = (List<Object>)value;
-            for (Object object : values) {
-                newList.add(cloneValue(object, clone, parentRecords));
-            }
-            return newList;
-        }
-        if (value instanceof Blob) {
-            return ((Blob)value).clone();
-        }
-        if (value instanceof Record) {
-            Record record = (Record) value;
-            return (record).cloneRecord(parentRecords);
-        }
-        return value; // All other values are immutable
     }
 
     @Override
@@ -286,13 +175,6 @@ public class RecordImpl implements Record {
     public boolean equals(Object obj) {
         if (!softEquals(obj))
             return false;
-
-        if (obj instanceof RecordRvtImpl) {
-            return equals(((RecordRvtImpl)obj).getRecord());
-        }
-        if (obj instanceof IdRecordImpl) {
-            return softEquals(((IdRecordImpl)obj).getRecord());
-        }
 
         RecordImpl other = (RecordImpl) obj;
 
@@ -313,18 +195,11 @@ public class RecordImpl implements Record {
         return true;
     }
 
-    @Override
     public boolean softEquals(Object obj) {
         if (this == obj)
             return true;
         if (obj == null)
             return false;
-        if (obj instanceof RecordRvtImpl) {
-            return softEquals(((RecordRvtImpl)obj).getRecord());
-        }
-        if (obj instanceof IdRecordImpl) {
-            return softEquals(((IdRecordImpl)obj).getRecord());
-        }
         if (getClass() != obj.getClass())
             return false;
         RecordImpl other = (RecordImpl) obj;
@@ -402,58 +277,5 @@ public class RecordImpl implements Record {
             RecordTypeRef other = (RecordTypeRef) obj;
             return ObjectUtils.safeEquals(name, other.name) && ObjectUtils.safeEquals(version, other.version);
         }
-    }
-    
-    @Override
-    public void setDefaultNamespace(String namespace) {
-        this.defaultNamespace = namespace;
-    }
-
-    private QName resolveNamespace(String name) throws RecordException {
-        if (defaultNamespace != null)
-            return new QName(defaultNamespace, name);
-
-        QName recordTypeName = getRecordTypeName();
-        if (recordTypeName != null)
-            return new QName(recordTypeName.getNamespace(), name);
-
-        throw new RecordException("Namespace could not be resolved for name '" + name +
-            "' since no default namespace was given and no record type is set.");
-    }
-    
-    @Override
-    public void setRecordType(String recordTypeName) throws RecordException {
-        setRecordType(resolveNamespace(recordTypeName));
-    }
-    
-    @Override
-    public void setRecordType(String recordTypeName, Long version) throws RecordException {
-        setRecordType(resolveNamespace(recordTypeName), version);
-    }
-    
-    @Override
-    public void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException {
-        setRecordType(scope, resolveNamespace(recordTypeName), version);
-    }
-    
-    @Override
-    public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
-        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
-        return (T)getField(resolveNamespace(fieldName));
-    }
-    
-    @Override
-    public void setField(String fieldName, Object value) throws RecordException {
-        setField(resolveNamespace(fieldName), value);
-    }
-    
-    @Override
-    public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
-        delete(resolveNamespace(fieldName), addFieldsToDelete);
-    }
-    
-    @Override
-    public boolean hasField(String fieldName) throws RecordException {
-        return hasField(resolveNamespace(fieldName));
     }
 }

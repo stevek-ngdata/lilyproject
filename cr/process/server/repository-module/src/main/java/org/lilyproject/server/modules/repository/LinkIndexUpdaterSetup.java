@@ -24,7 +24,6 @@ import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.rowlog.api.*;
-import org.lilyproject.util.hbase.HBaseTableFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -36,12 +35,10 @@ import java.io.IOException;
 public class LinkIndexUpdaterSetup {
     private final Repository repository;
     private final Configuration hbaseConf;
-    private final HBaseTableFactory tableFactory;
 
-    public LinkIndexUpdaterSetup(Repository repository, Configuration hbaseConf, HBaseTableFactory tableFactory) {
+    public LinkIndexUpdaterSetup(Repository repository, Configuration hbaseConf) {
         this.repository = repository;
         this.hbaseConf = hbaseConf;
-        this.tableFactory = tableFactory;
     }
 
     @PostConstruct
@@ -52,7 +49,7 @@ public class LinkIndexUpdaterSetup {
 
         // The creation of the linkindex indexes happens in the general module.
 
-        IndexManager indexManager = new IndexManager(hbaseConf, tableFactory);
+        IndexManager indexManager = new IndexManager(hbaseConf);
 
         LinkIndex linkIndex = new LinkIndex(indexManager, repository);
 

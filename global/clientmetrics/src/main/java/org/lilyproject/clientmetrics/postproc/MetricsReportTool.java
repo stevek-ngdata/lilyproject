@@ -201,7 +201,7 @@ public class MetricsReportTool extends BaseCliTool {
         System.out.println("Writing data file " + file);
         PrintStream ps = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
 
-        StringBuilder titleLine = new StringBuilder();
+        StringBuffer titleLine = new StringBuffer();
         titleLine.append(STRING_QUOTE).append("time").append(STRING_QUOTE);
         titleLine.append(SEP);
         titleLine.append(STRING_QUOTE).append("seq").append(STRING_QUOTE);
@@ -326,7 +326,7 @@ public class MetricsReportTool extends BaseCliTool {
 
         int numberOfValues = lastPlotValue - firstPlotValue + 1;
 
-        StringBuilder plot = new StringBuilder();
+        StringBuffer plot = new StringBuffer();
         plot.append("plot ");
         for (int i = 0; i < metricNames.size(); i++) {
             int colorStart = i * numberOfValues;
@@ -463,7 +463,6 @@ public class MetricsReportTool extends BaseCliTool {
             }
         }
 
-        @Override
         public int compareTo(GroupName o) {
             return collator.compare(title, o.title);
         }

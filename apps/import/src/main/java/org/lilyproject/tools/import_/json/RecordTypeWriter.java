@@ -25,9 +25,8 @@ import java.util.Map;
 public class RecordTypeWriter implements EntityWriter<RecordType> {
     public static EntityWriter<RecordType> INSTANCE = new RecordTypeWriter();
 
-    @Override
     public ObjectNode toJson(RecordType recordType, WriteOptions options, Repository repository) {
-        Namespaces namespaces = new NamespacesImpl();
+        Namespaces namespaces = new Namespaces();
 
         ObjectNode rtNode = toJson(recordType, options, namespaces, repository);
 
@@ -36,7 +35,6 @@ public class RecordTypeWriter implements EntityWriter<RecordType> {
         return rtNode;
     }
 
-    @Override
     public ObjectNode toJson(RecordType recordType, WriteOptions options, Namespaces namespaces, Repository repository) {
         return toJson(recordType, options, namespaces, true);
     }

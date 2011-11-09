@@ -15,7 +15,6 @@
  */
 package org.lilyproject.indexer.engine;
 
-import com.google.common.primitives.Ints;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tika.metadata.Metadata;
@@ -26,14 +25,12 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
 import org.lilyproject.indexer.model.indexerconf.*;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.Follow;
-import org.lilyproject.indexer.model.indexerconf.DerefValue.LinkFieldFollow;
-import org.lilyproject.indexer.model.indexerconf.DerefValue.RecordFieldFollow;
+import org.lilyproject.indexer.model.indexerconf.DerefValue.FieldFollow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.VariantFollow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.MasterFollow;
 import org.lilyproject.indexer.model.indexerconf.Formatter;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
 
 import java.io.InputStream;
@@ -72,9 +69,11 @@ public class ValueEvaluator {
             return extractContent(indexValues, repository);
         }
 
-        Formatter formatter = conf.getFormatters().getFormatter(valueDef.getFormatter());
+        ValueType valueType = valueDef.getValueType();
+        Formatter formatter = valueDef.getFormatter() != null ?
+                conf.getFormatters().getFormatter(valueDef.getFormatter()) : conf.getFormatters().getFormatter(valueType);
 
-        return formatter.format(indexValues, repository);
+        return formatter.format(indexValues, valueType);
     }
 
     /**
@@ -82,12 +81,12 @@ public class ValueEvaluator {
      * called if the field is present in the record.
      */
     public List<String> format(IdRecord record, FieldType fieldType, boolean extractContent, String formatterName,
-            Repository repository) throws InterruptedException {
+            Repository repository) {
         Object value = record.getField(fieldType.getId());
 
         List<IndexValue> indexValues;
 
-        if (fieldType.getValueType().getBaseName().equals("LIST")) {
+        if (fieldType.getValueType().isMultiValue()) {
             List<Object> values = (List<Object>)value;
             indexValues = new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
@@ -97,13 +96,15 @@ public class ValueEvaluator {
             indexValues = Collections.singletonList(new IndexValue(record, fieldType, value));
         }
 
-        if (fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB") && extractContent) {
+        if (fieldType.getValueType().getPrimitive().getName().equals("BLOB") && extractContent) {
             return extractContent(indexValues, repository);
         }
 
-        Formatter formatter = conf.getFormatters().getFormatter(formatterName);
+        ValueType valueType = fieldType.getValueType();
+        Formatter formatter = formatterName != null ?
+                conf.getFormatters().getFormatter(formatterName) : conf.getFormatters().getFormatter(valueType);
 
-        return formatter.format(indexValues, repository);
+        return formatter.format(indexValues, valueType);
     }
 
     private List<String> extractContent(List<IndexValue> indexValues, Repository repository) {
@@ -112,38 +113,24 @@ public class ValueEvaluator {
 
         List<String> result = new ArrayList<String>(indexValues.size());
 
-        Deque<Integer> indexes = new ArrayDeque<Integer>();
-
         for (IndexValue indexValue : indexValues) {
-            indexes.clear();
-
-            if (indexValue.listIndex != null)
-                indexes.addLast(indexValue.listIndex);
-
-            extractContent(indexValue.value, indexes, indexValue.record, indexValue.fieldType, result, repository);
+            if (indexValue.fieldType.getValueType().isHierarchical()) {
+                Object[] hierValue = ((HierarchyPath)indexValue.value).getElements();
+                for (int i = 0; i < hierValue.length; i++) {
+                    extractContent(hierValue[i], indexValue.record, indexValue.fieldType, indexValue.multiValueIndex,
+                            i, result, repository);
+                }
+            } else {
+                extractContent(indexValue.value, indexValue.record, indexValue.fieldType, indexValue.multiValueIndex,
+                        null, result, repository);
+            }
         }
 
         return result.isEmpty() ? null : result;
     }
 
-    private void extractContent(Object value, Deque<Integer> indexes, Record record, FieldType fieldType,
-            List<String> result, Repository repository) {
-
-        if (value instanceof List) { // this covers both LIST and PATH types
-            List values = (List)value;
-            for (int i = 0; i < values.size(); i++) {
-                indexes.addLast(i);
-                extractContent(values.get(i), indexes, record, fieldType, result, repository);
-                indexes.removeLast();
-            }
-        } else {
-            extractContent(value, record, fieldType, Ints.toArray(indexes), result, repository);
-        }
-    }
-
-    private void extractContent(Object value, Record record, FieldType fieldType, int[] indexes, List<String> result,
-            Repository repository) {
-
+    private void extractContent(Object value, Record record, FieldType fieldType, Integer multiValueIndex,
+            Integer hierIndex, List<String> result, Repository repository) {
         Blob blob = (Blob)value;
         InputStream is = null;
 
@@ -152,7 +139,7 @@ public class ValueEvaluator {
         BodyContentHandler ch = new BodyContentHandler(woh);
 
         try {
-            is = repository.getInputStream(record, fieldType.getName(), indexes);
+            is = repository.getInputStream(record, fieldType.getName(), multiValueIndex, hierIndex);
 
             Metadata metadata = new Metadata();
             metadata.add(Metadata.CONTENT_TYPE, blob.getMediaType());
@@ -224,7 +211,7 @@ public class ValueEvaluator {
             return null;
         }
 
-        if (fieldType.getValueType().getBaseName().equals("LIST")) {
+        if (fieldType.getValueType().isMultiValue()) {
             List<Object> values = (List<Object>)value;
             result = indexValues != null ? indexValues : new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
@@ -247,14 +234,14 @@ public class ValueEvaluator {
             throws RepositoryException, InterruptedException {
         FieldType fieldType = deref.getTargetFieldType();
 
-        List<FollowRecord> records = new ArrayList<FollowRecord>();
-        records.add(new FollowRecord(record, record));
+        List<IdRecord> records = new ArrayList<IdRecord>();
+        records.add(record);
 
         for (Follow follow : deref.getFollows()) {
-            List<FollowRecord> linkedRecords = new ArrayList<FollowRecord>();
+            List<IdRecord> linkedRecords = new ArrayList<IdRecord>();
 
-            for (FollowRecord item : records) {
-                List<FollowRecord> evalResult = evalFollow(deref, follow, item, repository, vtag);
+            for (IdRecord item : records) {
+                List<IdRecord> evalResult = evalFollow(deref, follow, item, repository, vtag);
                 if (evalResult != null) {
                     linkedRecords.addAll(evalResult);
                 }
@@ -267,8 +254,8 @@ public class ValueEvaluator {
             return null;
 
         List<IndexValue> result = new ArrayList<IndexValue>();
-        for (FollowRecord item : records) {
-            getValue(item.record, fieldType, result, repository.getTypeManager());
+        for (IdRecord item : records) {
+            getValue(item, fieldType, result, repository.getTypeManager());
         }
 
         if (result.isEmpty())
@@ -277,59 +264,22 @@ public class ValueEvaluator {
         return result;
     }
 
-    /**
-     * Evaluates a follow and returns the records that it points to. This method returns null in case there
-     * are no results (link doesn't exist, points to non-existing doc, etc.).
-     */
-    private List<FollowRecord> evalFollow(DerefValue deref, Follow follow, FollowRecord record, Repository repository,
+    private List<IdRecord> evalFollow(DerefValue deref, Follow follow, IdRecord record, Repository repository,
             SchemaId vtag) throws RepositoryException, InterruptedException {
-        if (follow instanceof LinkFieldFollow) {
-            List<IdRecord> records = evalLinkFieldFollow(deref, (LinkFieldFollow)follow, record, repository, vtag);
-            return addContext(records);
-        } else if (follow instanceof RecordFieldFollow) {
-            List<IdRecord> records = evalRecordFieldFollow(deref, (RecordFieldFollow)follow, record, repository, vtag);
-            return addContext(records, record.record);
+        if (follow instanceof FieldFollow) {
+            return evalFieldFollow(deref, (FieldFollow)follow, record, repository, vtag);
         } else if (follow instanceof VariantFollow) {
-            List<IdRecord> records = evalVariantFollow((VariantFollow)follow, record, repository, vtag);
-            return addContext(records);
+            return evalVariantFollow((VariantFollow)follow, record, repository, vtag);
         } else if (follow instanceof MasterFollow) {
-            List<IdRecord> records = evalMasterFollow((MasterFollow)follow, record, repository, vtag);
-            return addContext(records);
+            return evalMasterFollow((MasterFollow)follow, record, repository, vtag);
         } else {
             throw new RuntimeException("Unexpected type of follow: " + follow.getClass().getName());
         }
     }
 
-    private List<FollowRecord> addContext(List<IdRecord> records, IdRecord contextRecord) {
-        if (records == null)
-            return null;
+    private List<IdRecord> evalFieldFollow(DerefValue deref, FieldFollow follow, IdRecord record, Repository repository,
+            SchemaId vtag) throws RepositoryException, InterruptedException {
 
-        List<FollowRecord> result = new ArrayList<FollowRecord>();
-
-        for (IdRecord record : records) {
-            result.add(new FollowRecord(record, contextRecord));
-        }
-
-        return result;
-    }
-
-    private List<FollowRecord> addContext(List<IdRecord> records) {
-        if (records == null)
-            return null;
-
-        List<FollowRecord> result = new ArrayList<FollowRecord>();
-
-        for (IdRecord record : records) {
-            result.add(new FollowRecord(record, record));
-        }
-
-        return result;
-    }
-
-    private List<IdRecord> evalLinkFieldFollow(DerefValue deref, LinkFieldFollow follow, FollowRecord frecord,
-            Repository repository, SchemaId vtag) throws RepositoryException, InterruptedException {
-
-        IdRecord record = frecord.record;
         FieldType fieldType = follow.getFieldType();
 
         if (!record.hasField(fieldType.getId())) {
@@ -338,46 +288,22 @@ public class ValueEvaluator {
 
         Object value = record.getField(fieldType.getId());
         if (value instanceof Link) {
-            RecordId recordId = ((Link)value).resolve(frecord.contextRecord, repository.getIdGenerator());
+            RecordId recordId = ((Link)value).resolve(record, repository.getIdGenerator());
             IdRecord linkedRecord = resolveRecordId(recordId, vtag, repository);
             return linkedRecord == null ? null : Collections.singletonList(linkedRecord);
         } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Link) {
             List list = (List)value;
             List<IdRecord> result = new ArrayList<IdRecord>(list.size());
             for (Object link : list) {
-                RecordId recordId = ((Link)link).resolve(frecord.contextRecord, repository.getIdGenerator());
+                RecordId recordId = ((Link)link).resolve(record, repository.getIdGenerator());
                 IdRecord linkedRecord = resolveRecordId(recordId, vtag, repository);
                 if (linkedRecord != null) {
                     result.add(linkedRecord);
                 }
             }
             return list.isEmpty() ? null : result;
-        } else {
-            throw new RuntimeException("A link dereference is used but type is not LINK or LIST<LINK>, value: " +
-                    value);
         }
-    }
-
-    private List<IdRecord> evalRecordFieldFollow(DerefValue deref, RecordFieldFollow follow, FollowRecord frecord,
-            Repository repository, SchemaId vtag) throws RepositoryException, InterruptedException {
-
-        IdRecord record = frecord.record;
-        FieldType fieldType = follow.getFieldType();
-
-        if (!record.hasField(fieldType.getId())) {
-            return null;
-        }
-
-        Object value = record.getField(fieldType.getId());
-        if (value instanceof Record) {
-            return Collections.singletonList((IdRecord)value);
-        } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Record) {
-            List<IdRecord> records = (List<IdRecord>)value;
-            return records.isEmpty() ? null : records;
-        } else {
-            throw new RuntimeException("A record dereference is used but type is not RECORD or LIST<RECORD>, value: " +
-                    value);
-        }
+        return null;
     }
 
     private IdRecord resolveRecordId(RecordId recordId, SchemaId vtag, Repository repository)
@@ -395,10 +321,10 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IdRecord> evalVariantFollow(VariantFollow follow, FollowRecord frecord, Repository repository,
+    private List<IdRecord> evalVariantFollow(VariantFollow follow, IdRecord record, Repository repository,
             SchemaId vtag) throws RepositoryException, InterruptedException {
 
-        RecordId recordId = frecord.record.getId();
+        RecordId recordId = record.getId();
 
         Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
 
@@ -423,13 +349,13 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IdRecord> evalMasterFollow(MasterFollow follow, FollowRecord frecord, Repository repository, SchemaId vtag)
+    private List<IdRecord> evalMasterFollow(MasterFollow follow, IdRecord record, Repository repository, SchemaId vtag)
             throws RepositoryException, InterruptedException {
 
-        if (frecord.record.getId().isMaster())
+        if (record.getId().isMaster())
             return null;
 
-        RecordId masterId = frecord.record.getId().getMaster();
+        RecordId masterId = record.getId().getMaster();
 
         try {
             IdRecord master = VersionTag.getIdRecord(masterId, vtag, repository);
@@ -440,23 +366,6 @@ public class ValueEvaluator {
         } catch (VersionNotFoundException e) {
             // It's ok that the master does not exist
             return null;
-        }
-    }
-
-    /**
-     * Combines a record object together with the record that needs to be used for evaluating links.
-     *
-     * <p>For real (non-nested) records, the two record objects are the same. In case of nested records,
-     * the contextRecord is the real record to which it belongs. Nested records don't have ID's, thus
-     * can't be used for resolving links.
-     */
-    private static final class FollowRecord {
-        IdRecord record;
-        IdRecord contextRecord;
-
-        public FollowRecord(IdRecord record, IdRecord contextRecord) {
-            this.record = record;
-            this.contextRecord = contextRecord;
         }
     }
 }

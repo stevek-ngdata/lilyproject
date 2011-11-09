@@ -34,12 +34,12 @@ import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfig;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
-import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
-import org.lilyproject.rowlog.impl.RowLogShardSetup;
 import org.lilyproject.rowlog.impl.WalRowLog;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.rowlog.impl.RowLogShardImpl;
+import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -56,7 +56,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  * to be updated too.
  */
 public class TutorialTest {
-    private static HBaseProxy HBASE_PROXY;
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
 
     private static final String NS = "org.lilyproject.tutorial";
 
@@ -73,7 +73,6 @@ public class TutorialTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
 
         IdGenerator idGenerator = new IdGeneratorImpl();
@@ -85,7 +84,7 @@ public class TutorialTest {
 
         
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(HBASE_PROXY.getBlobFS(), new Path("/lily/blobs"));
-        List<BlobStoreAccess> blobStoreAccesses = Collections.<BlobStoreAccess>singletonList(dfsBlobStoreAccess);
+        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess});
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         BlobManager blobManager = new BlobManagerImpl(hbaseTableFactory, blobStoreAccessFactory, false);
@@ -101,8 +100,9 @@ public class TutorialTest {
         HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
         rowLogConfMgr.addRowLog("WAL", new RowLogConfig(true, false, 0L, 5000L, 5000L, 120000L));
         wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.ROWLOG.bytes,
-                RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker, new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
+                RecordColumn.WAL_PREFIX, rowLogConfMgr, rowLocker);
+        RowLogShard walShard = new RowLogShardImpl("WS1", configuration, wal, 100);
+        wal.registerShard(walShard);
     }
 
     @AfterClass
@@ -117,7 +117,7 @@ public class TutorialTest {
     @Test
     public void createRecordType() throws Exception {
         // (1)
-        ValueType stringValueType = typeManager.getValueType("STRING");
+        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
 
         // (2)
         FieldType title = typeManager.newFieldType(stringValueType, new QName(NS, "title"), Scope.VERSIONED);
@@ -138,13 +138,33 @@ public class TutorialTest {
 
     @Test
     public void updateRecordType() throws Exception {
-        FieldType description = typeManager.createFieldType("BLOB", new QName(NS, "description"), Scope.VERSIONED);
-        FieldType authors = typeManager.createFieldType("LIST<STRING>", new QName(NS, "authors"), Scope.VERSIONED);
-        FieldType released = typeManager.createFieldType("DATE", new QName(NS, "released"), Scope.VERSIONED);
-        FieldType pages = typeManager.createFieldType("LONG", new QName(NS, "pages"), Scope.VERSIONED);
-        FieldType sequelTo = typeManager.createFieldType("LINK", new QName(NS, "sequel_to"), Scope.VERSIONED);
-        FieldType manager = typeManager.createFieldType("STRING", new QName(NS, "manager"), Scope.NON_VERSIONED);
-        FieldType reviewStatus = typeManager.createFieldType("STRING", new QName(NS, "review_status"), Scope.VERSIONED_MUTABLE);
+        ValueType stringValueType = typeManager.getValueType("STRING", false, false);
+        ValueType stringMvValueType = typeManager.getValueType("STRING", true, false);
+        ValueType longValueType = typeManager.getValueType("LONG", false, false);
+        ValueType dateValueType = typeManager.getValueType("DATE", false, false);
+        ValueType blobValueType = typeManager.getValueType("BLOB", false, false);
+        ValueType linkValueType = typeManager.getValueType("LINK", false, false);
+
+        FieldType description = typeManager.newFieldType(blobValueType, new QName(NS, "description"), Scope.VERSIONED);
+        description = typeManager.createFieldType(description);
+
+        FieldType authors = typeManager.newFieldType(stringMvValueType, new QName(NS, "authors"), Scope.VERSIONED);
+        authors = typeManager.createFieldType(authors);
+
+        FieldType released = typeManager.newFieldType(dateValueType, new QName(NS, "released"), Scope.VERSIONED);
+        released = typeManager.createFieldType(released);
+
+        FieldType pages = typeManager.newFieldType(longValueType, new QName(NS, "pages"), Scope.VERSIONED);
+        pages = typeManager.createFieldType(pages);
+
+        FieldType sequelTo = typeManager.newFieldType(linkValueType, new QName(NS, "sequel_to"), Scope.VERSIONED);
+        sequelTo = typeManager.createFieldType(sequelTo);
+
+        FieldType manager = typeManager.newFieldType(stringValueType, new QName(NS, "manager"), Scope.NON_VERSIONED);
+        manager = typeManager.createFieldType(manager);
+
+        FieldType reviewStatus = typeManager.newFieldType(stringValueType, new QName(NS, "review_status"), Scope.VERSIONED_MUTABLE);
+        reviewStatus = typeManager.createFieldType(reviewStatus);
 
         RecordType book = typeManager.getRecordTypeByName(new QName(NS, "Book"), null);
 
@@ -185,9 +205,8 @@ public class TutorialTest {
     public void createRecordUserSpecifiedId() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
-        record.setDefaultNamespace(NS);
-        record.setRecordType("Book");
-        record.setField("title", "Lily, the definitive guide, 3rd edition");
+        record.setRecordType(new QName(NS, "Book"));
+        record.setField(new QName(NS, "title"), "Lily, the definitive guide, 3rd edition");
         record = repository.create(record);
 
         PrintUtil.print(record, repository);
@@ -197,10 +216,9 @@ public class TutorialTest {
     public void updateRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
-        record.setDefaultNamespace(NS);
-        record.setField("title", "Lily, the definitive guide, third edition");
-        record.setField("pages", Long.valueOf(912));
-        record.setField("manager", "Manager M");
+        record.setField(new QName(NS, "title"), "Lily, the definitive guide, third edition");
+        record.setField(new QName(NS, "pages"), Long.valueOf(912));
+        record.setField(new QName(NS, "manager"), "Manager M");
         record = repository.update(record);
 
         PrintUtil.print(record, repository);
@@ -210,26 +228,12 @@ public class TutorialTest {
     public void updateRecordViaRead() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.read(id);
-        record.setDefaultNamespace(NS);
-        record.setField("released", new LocalDate());
-        record.setField("authors", Arrays.asList("Author A", "Author B"));
-        record.setField("review_status", "reviewed");
+        record.setField(new QName(NS, "released"), new LocalDate());
+        record.setField(new QName(NS, "authors"), Arrays.asList("Author A", "Author B"));
+        record.setField(new QName(NS, "review_status"), "reviewed");
         record = repository.update(record);
 
         PrintUtil.print(record, repository);
-    }
-
-    @Test
-    public void updateRecordConditionally() throws Exception {
-        List<MutationCondition> conditions = new ArrayList<MutationCondition>();
-        conditions.add(new MutationCondition(new QName(NS, "manager"), "Manager Z"));
-
-        RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
-        Record record = repository.read(id);
-        record.setField(new QName(NS, "manager"), "Manager P");
-        record = repository.update(record, conditions);
-
-        System.out.println(record.getResponseStatus());
     }
 
     @Test

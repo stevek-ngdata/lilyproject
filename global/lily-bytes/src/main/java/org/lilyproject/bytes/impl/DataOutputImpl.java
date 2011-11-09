@@ -55,7 +55,6 @@ public class DataOutputImpl implements DataOutput {
         buffer = new byte[sizeEstimate];
     }
     
-    @Override
     public byte[] toByteArray() {
         return Arrays.copyOfRange(buffer, 0, pos);
     }
@@ -71,7 +70,6 @@ public class DataOutputImpl implements DataOutput {
         }
     }
     
-    @Override
     public void writeByte(byte b) {
         assureSize(1);
         buffer[pos++] = b;
@@ -85,7 +83,6 @@ public class DataOutputImpl implements DataOutput {
         buffer[pos++] = b;
     }
     
-    @Override
     public void writeBytes(byte[] bytes) {
         int length = bytes.length;
         assureSize(length);
@@ -96,7 +93,6 @@ public class DataOutputImpl implements DataOutput {
     /** 
      * Encodes a string to (unmodified) UTF-8 bytes and puts it in the buffer.
      */
-    @Override
     public void writeUTF(String string) {
         if (string == null) {
             writeInt(-1);
@@ -184,7 +180,6 @@ public class DataOutputImpl implements DataOutput {
         }
     }
     
-    @Override
     public void writeInt(int integer) {
         assureSize(4); // Make sure the buffer has enough space
         writeIntUnsafe(integer);
@@ -204,32 +199,27 @@ public class DataOutputImpl implements DataOutput {
     private static byte ZERO = 0;
     private static byte ONE = 1;
     
-    @Override
     public void writeBoolean(boolean b) {
         assureSize(1);
         writeByteUnsafe(b ? ONE : ZERO);
     }
 
-    @Override
     public void writeDouble(double value) {
         writeLong(Double.doubleToLongBits(value));
     }
 
-    @Override
     public void writeLong(long value) {
         assureSize(8);
         writeIntUnsafe((int) (value >> 32));
         writeIntUnsafe((int) value);
     }
 
-    @Override
     public void writeShort(int value) {
         assureSize(2);
         writeByteUnsafe((byte) (value >> 8));
         writeByteUnsafe((byte) value);
     }
     
-    @Override
     public void writeFloat(float v) {
         writeInt(Float.floatToIntBits(v));
     }
@@ -239,7 +229,6 @@ public class DataOutputImpl implements DataOutput {
     * five bytes. Smaller values take fewer bytes. Negative numbers are not
     * supported.
     */
-    @Override
     public void writeVInt(int i) {
         assureSize(5);
         writeVIntUnsafe(i);
@@ -261,7 +250,6 @@ public class DataOutputImpl implements DataOutput {
     * bytes. Smaller values take fewer bytes. Negative numbers are not
     * supported.
     */
-    @Override
     public void writeVLong(long i) {
         assureSize(5);
         writeVLongUnsafe(i);
@@ -278,7 +266,6 @@ public class DataOutputImpl implements DataOutput {
         writeByteUnsafe((byte) i);
     }
     
-    @Override
     public int getSize() {
         return pos;
     }

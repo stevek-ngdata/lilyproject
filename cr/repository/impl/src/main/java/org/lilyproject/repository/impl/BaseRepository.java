@@ -5,107 +5,78 @@ import org.lilyproject.util.ArgumentValidator;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
     protected final TypeManager typeManager;
-    protected final IdGenerator idGenerator;
 
-    protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator) {
+    protected BaseRepository(TypeManager typeManager, BlobManager blobManager) {
         this.typeManager = typeManager;
         this.blobManager = blobManager;
-        this.idGenerator = idGenerator;
     }
-    
-    @Override
+
     public TypeManager getTypeManager() {
         return typeManager;
     }
 
-    @Override
     public Record newRecord() {
         return new RecordImpl();
     }
 
-    @Override
     public Record newRecord(RecordId recordId) {
         ArgumentValidator.notNull(recordId, "recordId");
         return new RecordImpl(recordId);
     }
 
-    @Override
     public void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess) {
         blobManager.register(blobStoreAccess);
     }
 
-    @Override
     public OutputStream getOutputStream(Blob blob) throws BlobException {
         return blobManager.getOutputStream(blob);
     }
 
-    @Override
-    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, int... indexes)
-            throws RepositoryException, InterruptedException {
-        Record record = read(recordId, version, fieldName);
-        return getInputStream(record, fieldName, indexes);
+    public InputStream getInputStream(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
+    RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
+    VersionNotFoundException, TypeException, RepositoryException, InterruptedException {
+        return getInputStream(recordId, null, fieldName, null, null);
+    }
+
+    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer multivalueIndex,
+            Integer hierarchyIndex) throws BlobNotFoundException, BlobException, RecordNotFoundException,
+            RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException, VersionNotFoundException,
+            TypeException, RepositoryException, InterruptedException {
+        Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
+        return getInputStream(record, fieldName, multivalueIndex, hierarchyIndex);
     }
     
-    @Override
-    public InputStream getInputStream(RecordId recordId, QName fieldName)
-            throws RepositoryException, InterruptedException {
-        return getInputStream(recordId, null, fieldName);
+    public InputStream getInputStream(Record record, QName fieldName) throws FieldTypeNotFoundException, TypeException, BlobException, BlobNotFoundException, RepositoryException, InterruptedException {
+        return getInputStream(record, fieldName, null, null);
     }
     
-    @Override
-    public InputStream getInputStream(Record record, QName fieldName, int... indexes)
-            throws RepositoryException, InterruptedException {
+    public InputStream getInputStream(Record record, QName fieldName, Integer multivalueIndex, Integer hierarchyIndex) throws FieldTypeNotFoundException, TypeException, InterruptedException, BlobException, BlobNotFoundException, RepositoryException {
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
-        return blobManager.getBlobAccess(record, fieldName, fieldType, indexes).getInputStream();
+        return blobManager.getBlobAccess(record, fieldName, multivalueIndex, hierarchyIndex, fieldType).getInputStream();
     }
-    
-    @Override
-    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
-            throws RepositoryException, InterruptedException {
-        Record record = read(recordId, version, fieldName);
+
+    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer multiValueIndex,
+            Integer hierarchyIndex) throws BlobNotFoundException, BlobException, InterruptedException,
+            RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException, RecordException,
+            VersionNotFoundException, TypeException, RepositoryException {
+
+        Record record = read(recordId, version, Arrays.asList(new QName[]{fieldName}));
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
-        return blobManager.getBlobAccess(record, fieldName, fieldType, indexes);
+        return blobManager.getBlobAccess(record, fieldName, multiValueIndex, hierarchyIndex, fieldType);
+
     }
 
-    @Override
-    public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
-            throws RepositoryException, InterruptedException {
-        return getBlob(recordId, version, fieldName, convertToIndexes(mvIndex, hIndex));
-    }
 
-    @Override
-    public BlobAccess getBlob(RecordId recordId, QName fieldName) throws RepositoryException, InterruptedException {
-        return getBlob(recordId, null, fieldName);
-    }
+    public BlobAccess getBlob(RecordId recordId, QName fieldName) throws BlobNotFoundException, BlobException,
+            InterruptedException, RecordNotFoundException, RecordTypeNotFoundException, FieldTypeNotFoundException,
+            RecordException, VersionNotFoundException, TypeException, RepositoryException {
 
-    @Override
-    public InputStream getInputStream(RecordId recordId, Long version, QName fieldName, Integer mvIndex, Integer hIndex)
-            throws RepositoryException, InterruptedException {
-        return getInputStream(recordId, version, fieldName, convertToIndexes(mvIndex, hIndex));
-    }
+        return getBlob(recordId, null, fieldName, null, null);
 
-    @Override
-    public InputStream getInputStream(Record record, QName fieldName, Integer mvIndex, Integer hIndex)
-            throws RepositoryException, InterruptedException {
-        return getInputStream(record, fieldName, convertToIndexes(mvIndex, hIndex));
-    }
-
-    private int[] convertToIndexes(Integer mvIndex, Integer hIndex) {
-        int[] indexes;
-        if (mvIndex == null && hIndex == null) {
-            indexes = new int[0];
-        } else if (mvIndex == null) {
-            indexes = new int[] { hIndex };
-        } else if (hIndex == null) {
-            indexes = new int[] { mvIndex };
-        } else {
-            indexes = new int[] { mvIndex, hIndex };
-        }
-
-        return indexes;
     }
 }

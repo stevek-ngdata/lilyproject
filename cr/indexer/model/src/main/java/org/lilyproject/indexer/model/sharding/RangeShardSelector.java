@@ -31,7 +31,6 @@ public class RangeShardSelector extends BaseShardSelector {
         mappings.add(new ShardMappingEntry(shardName, maxValue));
     }
 
-    @Override
     public String getShard(Comparable key) throws ShardSelectorException {
         for (ShardMappingEntry mapping : mappings) {
             if (mapping.maxValue == null) {
@@ -54,7 +53,6 @@ public class RangeShardSelector extends BaseShardSelector {
         }
     }
 
-    @Override
     public Set<String> getShards() {
         Set<String> shards = new HashSet<String>();
         for (ShardMappingEntry entry : mappings) {

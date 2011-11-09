@@ -25,52 +25,35 @@ import org.lilyproject.rowlock.RowLock;
  * The RowLog helps managing the execution of synchronous and asynchronous actions in response to
  * updates happening to the rows of an HBase table.
  * 
- * <p>It has been introduced as a basis to build a distributed persistent Write Ahead Log (WAL) and Message Queue (MQ)
+ * <p> It has been introduced as a basis to build a distributed persistent Write Ahead Log (WAL) and Message Queue (MQ) 
  * on top of HBase for the Lily Content Repository. More information about the design and rationale behind it can be found
  * on <a href="http://lilyproject.org/">http://lilyproject.org/</a>
  *
- * <p>The RowLog accepts and stores {@link RowLogMessage}s. The context of these messages is always related to a
- * specific row in a HBase table, hence the name 'RowLog'. {@link RowLogMessageListener}s are responsible for
- * processing the messages and should be registered with the RowLog.
- *
- * <p>The messages for each row are stored on the row they are about, typically in a specific column family. This
- * is also called the "row-local queue". In order to know what rows have outstanding messages, an "index" is maintained
- * that points to those rows. This index is also known as the "global queue" or as "rowlog shard". Since the global
- * queue is time-ordered, it is sensitive to region server hotspotting (the phenomenon where you are always touching
- * the same region server because you are appending to the end of the table). For this reason, the global queue is
- * sharded (partitioned). Currently the partitioning happens over multiple splits of a pre-splitted HBase table
- * (in the implementation, see the class RowLogShardSetup).
- * This was preferred over using multiple tables, since HBase will prefer to distribute the splits of one table
- * as much as possible over different region servers.</p>
- *
- * <p>The primary reason for storing the messages about a row on the row itself is because this allows us
- * to benefit from HBase's atomic row update ability to guarantee that both a row update and the corresponding
- * message are added as one atomic operation. See also the design document.</p>
- *
- * <p>A {@link RowLogProcessor} is responsible for querying the rowlog shards for new messages, and feeding them
- * to the {@link RowLogMessageListener} for processing (and this for each subscription). Right now, there is one
- * RowLogProcessor instance responsible for all rowlog shards, thus the RowLogProcessor execution itself is not
- * sharded over multiple nodes. We felt this was an acceptable starting approach since the task of the
- * RowLogProcessor is rather lightweight, the heavy work is up to HBase and the listeners. This might be reviewed
- * in the future.
- *
- * <p>Each RowLogMessage has a payload, that is the application-specific content of the message, thus that what
- * allows an application to know what the message is about.
- *
- * <p>The payload of the messages, and their 'execution state' (bookkeeping around whether a message has been processed
- * for some subscription) is stored in the "row-local queue" mentioned above, thus in the row to which the message
- * relates. Once a message is processed by all its subscriptions, it is removed from the row-local queue.
- *
- * <p>The rowlog guarantees that it will not deliver messages of the same row concurrently to listeners of
- * the same subscription (there can be any number of listeners, spreaded on different nodes in a cluster,
- * consuming messages for a single subscription). This avoids that listeners might need to do locking if they don't
- * want to work concurrently for the same row.</p>
- *
- * <p>The rowlog will in general deliver messages in order (of timestamp across all the rows, and sequence
- * number within a row), but this is not an absolute guarantee. If a listener wants to be sure there are no
- * earlier messages about a row that it still needs to process, it can read out the row-local queue. It could
- * even decide to process in one go all the outstanding messages. This is an important advantage of having
- * a "row-local queue".</p>
+ * <p> The RowLog accepts and stores {@link RowLogMessage}s. The context of these messages is always related to a specific 
+ * row in a HBase table, hence the name 'RowLog'. {@link RowLogMessageListener}s are responsible for processing the messages and
+ * should be registered with the RowLog. 
+ * 
+ * <p> The messages are stored on, and distributed randomly over several {@link RowLogShard}s. 
+ * Each shard uses one HBase table to store its messages on. And each shard is considered to be equal. It does not matter
+ * if a message is stored on one or another shard.
+ * (Note: the use of more than one shard is still to be implemented.) 
+ * 
+ * <P> For each shard, a {@link RowLogProcessor} can be started. This processor will, for each subscription, pick the next
+ * message to be processed and feed it to the {@link RowLogMessageListener} for processing. Since messages are distributed
+ * over several shards and each shard has its own processor, it can happen that the order in which the messages have been
+ * put on the RowLog is not respected when they are sent to the listeners for processing. See below, on how to deal with
+ * this.
+ *  
+ * <p> On top of this, a 'payload' and 'execution state' is stored for each message in the same row to which the message relates,
+ * next to the row's 'main data'.
+ * The payload contains all data that is needed by the listeners of a subscription to be able to process a message.
+ * The execution state indicates for which subscriptions the message has been processed and which subscriptions still need to process it.
+ * 
+ * <p> All messages related to a certain row are given a sequence number in the order in which they are put on the RowLog.
+ * This sequence number is used when storing the payload and execution state on the HBase row. 
+ * This enables a {@link RowLogMessageListener} to check if the message it is requested to process is the oldest
+ * message to be processed for the row or if there are other messages to be processed for the row. It can then choose
+ * to, for instance, process an older message first or even bundle the processing of multiple messages together.
  */
 public interface RowLog {
     
@@ -78,7 +61,19 @@ public interface RowLog {
      * The id of a RowLog uniquely identifies the rowlog amongst all rowlog instances.
      */
     String getId();
-
+    
+    /**
+     * Registers a shard on the RowLog. (Note: the current implementation only allows for one shard to be registered.)
+     * @param shard a {@link RowLogShard} 
+     */
+    void registerShard(RowLogShard shard);
+    
+    /**
+     * Unregisters a shard from the RowLog.
+     * @param shard a {@link RowLogShard} 
+     */
+    void unRegisterShard(RowLogShard shard);
+    
     /**
      * Retrieves the payload of a {@link RowLogMessage} from the RowLog.
      * The preferred way to get the payload for a message is to request this through the message itself 
@@ -179,8 +174,6 @@ public interface RowLog {
      * @return the list of registered shards on the rowlog
      */
     List<RowLogShard> getShards();
-
-    RowLogShardList getShardList();
 
     /**
      * Checks if a message is available for processing for a certain subscription.

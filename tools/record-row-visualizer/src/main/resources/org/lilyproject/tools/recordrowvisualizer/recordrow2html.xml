@@ -4,7 +4,7 @@
 
     <h1>${row.recordId}</h1>
 
-    <h2>Family "data" columns</h2>
+    <h2>Columns</h2>
 
     <table border="1">
       <thead>
@@ -43,8 +43,6 @@
               ${fieldType.id}
               <br/>
               ${fieldType.name}
-              <br/>
-              ${fieldType.valueType.name}
               <br/>
               ${fieldType.scope}
             </td>

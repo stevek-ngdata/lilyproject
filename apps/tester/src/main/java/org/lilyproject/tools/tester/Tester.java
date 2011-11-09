@@ -1,22 +1,36 @@
 package org.lilyproject.tools.tester;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.zookeeper.KeeperException;
-import org.codehaus.jackson.*;
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.joda.time.DateTime;
 import org.lilyproject.client.NoServersException;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
 import org.lilyproject.testclientfw.Util;
-import org.lilyproject.tools.import_.cli.*;
+import org.lilyproject.tools.import_.cli.DefaultImportListener;
+import org.lilyproject.tools.import_.cli.ImportConflictException;
+import org.lilyproject.tools.import_.cli.ImportException;
+import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.QNameConverter;
 import org.lilyproject.util.io.Closer;
@@ -33,16 +47,15 @@ public class Tester extends BaseRepositoryTestTool {
     private String failuresFileName;
     private PrintStream errorStream;
     private long startTime;
-    private RecordSpaces records;
+    private RecordSpaces records ;
     private int failureCount = 0;
     private Option iterationsOption;
     private int nrOfIterations;
     private TestActionFactory testActionFactory = new TestActionFactory();
-    private List<TestAction> workersTestActions[] = null;
+    private List<List<TestAction>> workersTestActions = new ArrayList<List<TestAction>>();
 
     private Map<String, TestRecordType> recordTypes = new HashMap<String, TestRecordType>();
     private Map<String, TestFieldType> fieldTypes = new HashMap<String, TestFieldType>();
-    private JsonImport jsonImport;
 
     public static void main(String[] args) throws Exception {
         new Tester().start(args);
@@ -102,17 +115,19 @@ public class Tester extends BaseRepositoryTestTool {
         setupMetrics();
 
         String configFileName = cmd.getOptionValue(configFileOption.getOpt());
-        
-        records = new RecordSpaces();
-        
-        workersTestActions = new ArrayList[workers];
-        for (int i = 0; i < workers ; i++) {
-            workersTestActions[i] = new ArrayList<TestAction>();
-        }
-        
         InputStream is = new FileInputStream(configFileName);
-        loadConfig(is);
+        JsonNode configNode = JsonFormat.deserializeNonStd(is);
         is.close();
+
+        openStreams(configNode); // Only failures stream
+
+        createSchema(configNode);
+
+        setupRecordSpaces(configNode);
+
+        prepareActions(configNode);
+        
+        readStopConditions(configNode);
         
         try {            
             System.out.println("Running tests...");
@@ -128,106 +143,7 @@ public class Tester extends BaseRepositoryTestTool {
         System.out.println("Test done.");
         return 0;
     }
-    
-    private void loadConfig(InputStream is) throws JsonParseException, IOException, JsonFormatException, RepositoryException, ImportConflictException, ImportException, InterruptedException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-        
-        jsonImport = new JsonImport(repository, new DefaultImportListener());
-        JsonParser jp = JsonFormat.JSON_FACTORY_NON_STD.createJsonParser(is);
 
-        JsonToken current;
-        current = jp.nextToken();
-
-        if (current != JsonToken.START_OBJECT) {
-            System.out.println("Error: expected object node as root of the input. Giving up.");
-            return;
-        }
-
-        while (jp.nextToken() != JsonToken.END_OBJECT) {
-            String fieldName = jp.getCurrentName();
-            current = jp.nextToken(); // move from field name to field value
-            if (fieldName.equals("namespaces")) {
-                if (current == JsonToken.START_OBJECT) {
-                    jsonImport.readNamespaces((ObjectNode)jp.readValueAsTree());
-                } else {
-                    System.out.println("Error: namespaces property should be an object. Skipping.");
-                    jp.skipChildren();
-                }
-            } else if (fieldName.equals("failuresFile")) {
-                if (current == JsonToken.VALUE_STRING) {
-                    openStreams(jp.getText());
-                }
-            } else if (fieldName.equals("fieldTypes")) {
-                if (current == JsonToken.START_ARRAY) {
-                    while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        importFieldType(jp.readValueAsTree());
-                    }
-                } else {
-                    System.out.println("Error: fieldTypes property should be an array. Skipping.");
-                    jp.skipChildren();
-                }
-            } else if (fieldName.equals("recordTypes")) {
-                if (current == JsonToken.START_ARRAY) {
-                    while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        importRecordType(jp.readValueAsTree());
-                    }
-                } else {
-                    System.out.println("Error: recordTypes property should be an array. Skipping.");
-                    jp.skipChildren();
-                }
-            } else if (fieldName.equals("recordSpaces")) {
-                if (current == JsonToken.START_ARRAY) {
-                    records = new RecordSpaces();
-                    while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        records.addRecordSpace(jp.readValueAsTree());
-                    }
-                } else {
-                    System.out.println("Error: recordSpaces property should be an array. Skipping.");
-                    jp.skipChildren();
-                }
-            } else if (fieldName.equals("scenario")) {
-                if (current == JsonToken.START_ARRAY) {
-                    while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        JsonNode actionNode = jp.readValueAsTree();
-                        prepareAction(actionNode);
-                    }
-                } else {
-                    System.out.println("Error: recordSpaces property should be an array. Skipping.");
-                    jp.skipChildren();                    
-                }
-            } else if (fieldName.equals("stopConditions")) {
-                if (current == JsonToken.START_OBJECT) {
-                    readStopConditions((ObjectNode)jp.readValueAsTree());
-                } else {
-                    System.out.println("Error: stopConditions property should be an object. Skipping.");
-                    jp.skipChildren();
-                }
-            }
-        }
-    }
-    
-    private void importFieldType(JsonNode fieldTypeNode) throws RepositoryException, ImportConflictException, ImportException, JsonFormatException, InterruptedException {
-        FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
-        JsonNode propertiesNode = fieldTypeNode.get("properties");
-        
-        fieldTypes.put(JsonUtil.getString(fieldTypeNode, "name"), new TestFieldType(importFieldType, repository, propertiesNode));
-    }
-    
-    private void importRecordType(JsonNode recordTypeNode) throws JsonFormatException, RepositoryException, ImportException, InterruptedException {
-        String recordTypeName = JsonUtil.getString(recordTypeNode, "name");
-        QName recordTypeQName = QNameConverter.fromJson(recordTypeName, jsonImport.getNamespaces());
-        recordType = repository.getTypeManager().newRecordType(recordTypeQName);
-        TestRecordType testRecordType = new TestRecordType(recordType);
-        // Fields
-        for (JsonNode fieldNode : recordTypeNode.get("fields")) {
-            String fieldName = JsonUtil.getString(fieldNode, "name");
-            TestFieldType fieldType = fieldTypes.get(fieldName);
-            recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
-            testRecordType.addFieldType(fieldType);
-        }
-        recordType = jsonImport.importRecordType(recordType);
-        recordTypes.put(recordTypeName, testRecordType);
-    }
-    
     private int dumpSampleConfig() throws IOException {
         InputStream is = getClass().getClassLoader().getResourceAsStream("org/lilyproject/tools/tester/config.json");
         try {
@@ -238,15 +154,20 @@ public class Tester extends BaseRepositoryTestTool {
         return 0;
     }
     
-    private void prepareAction(JsonNode actionNode) throws IOException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+    private void prepareActions(JsonNode configNode) throws IOException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         for (int i = 0; i < workers; i++) {
+            List<TestAction> testActions = new ArrayList<TestAction>();
+            JsonNode scenarioNode = JsonUtil.getNode(configNode, "scenario");
             TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes, records, repository, metrics, errorStream);
-            TestAction testAction = testActionFactory.getTestAction(actionNode, testActionContext);
-            workersTestActions[i].add(testAction);
+            for (JsonNode actionNode : scenarioNode) {
+                testActions.add(testActionFactory.getTestAction(actionNode, testActionContext));
+            }
+            workersTestActions.add(testActions);
         }
     }
     
-    private void readStopConditions(JsonNode stopConditions) {
+    private void readStopConditions(JsonNode configNode) {
+        JsonNode stopConditions = JsonUtil.getNode(configNode, "stopConditions");
         maximumRunTime = JsonUtil.getInt(stopConditions, "maximumRunTime");
         maximumFailures = JsonUtil.getInt(stopConditions, "maximumFailures");
     }
@@ -294,7 +215,13 @@ public class Tester extends BaseRepositoryTestTool {
         }
     }
     
-    private void openStreams(String failuresFileName) throws IOException, FileNotFoundException {
+    private void setupRecordSpaces(JsonNode configNode) {
+        JsonNode recordSpacesNode = configNode.get("recordSpaces");
+        records = new RecordSpaces(recordSpacesNode);
+    }
+    
+    private void openStreams(JsonNode configNode) throws IOException, FileNotFoundException {
+        failuresFileName = JsonUtil.getString(configNode, "failuresFile");
         errorStream = new PrintStream(Util.getOutputFileRollOldOne(failuresFileName));
         errorStream.print(new DateTime() + " Opening file");
     }
@@ -308,7 +235,7 @@ public class Tester extends BaseRepositoryTestTool {
         startTime = System.currentTimeMillis();
         HashSet<Thread> threads = new HashSet<Thread>(workers);
         for (int i = 0; i < workers; i++) {
-            threads.add(new WorkerThread(workersTestActions[i]));
+            threads.add(new WorkerThread(workersTestActions.get(i)));
         }
         
         for (Thread thread : threads) {
@@ -326,7 +253,6 @@ public class Tester extends BaseRepositoryTestTool {
             this.testActions = testActions;
         }
         
-        @Override
         public void run() {
             for (int j = 0; j < nrOfIterations; j++) {
                 for (TestAction testAction : testActions) {

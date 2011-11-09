@@ -26,7 +26,6 @@ public class WalListener implements RowLogMessageListener {
         this.rowLocker = rowLocker;
     }
     
-    @Override
     public boolean processMessage(RowLogMessage message) throws InterruptedException {
         RowLock rowLock = null;
         try {

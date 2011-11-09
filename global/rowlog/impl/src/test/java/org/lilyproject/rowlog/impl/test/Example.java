@@ -25,8 +25,10 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
-import org.lilyproject.rowlog.impl.*;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.rowlog.impl.RowLogImpl;
+import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
+import org.lilyproject.rowlog.impl.RowLogShardImpl;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -57,9 +59,11 @@ public class Example {
 
         // Create a RowLog instance
         configurationManager.addRowLog("Example", new RowLogConfig(false, true, 100L, 0L, 5000L, 120000L));
-        RowLog rowLog = new RowLogImpl("Example", rowTable, ROWLOG_COLUMN_FAMILY, (byte)1, configurationManager, null,
-                new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, rowLog, new HBaseTableFactoryImpl(configuration));
+        RowLog rowLog = new RowLogImpl("Example", rowTable, ROWLOG_COLUMN_FAMILY, (byte)1, configurationManager, null);
+        
+        // Create a shard and register it with the rowlog
+        RowLogShard shard = new RowLogShardImpl("AShard", configuration, rowLog, 100);
+        rowLog.registerShard(shard);
         
         // Register a listener class on the RowLogMessageListenerMapping
         RowLogMessageListenerMapping.INSTANCE.put("FooBar", new FooBarListener());
@@ -83,7 +87,7 @@ public class Example {
         // The MQ use case
         
         // Create a processor and start it
-        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, configurationManager, configuration);
+        RowLogProcessor processor = new RowLogProcessorImpl(rowLog, configurationManager);
         processor.start();
         
         message  = rowLog.putMessage(row1, Bytes.toBytes("SomeMoreInfo"), Bytes.toBytes("Re-evaluate:AUserField"), null);
@@ -97,7 +101,6 @@ public class Example {
     }
     
     private static class FooBarListener implements RowLogMessageListener {
-        @Override
         public boolean processMessage(RowLogMessage message) {
                 System.out.println("= Received a message =");
                 System.out.println(Bytes.toString(message.getRowKey()));

@@ -15,9 +15,12 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.util.*;
-
 import org.lilyproject.repository.api.*;
+
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IdRecordImpl implements IdRecord {
     private Record record;
@@ -30,17 +33,14 @@ public class IdRecordImpl implements IdRecord {
         this.recordTypeIds = recordTypeIds;
     }
 
-    @Override
-    public <T> T getField(SchemaId fieldId) throws FieldNotFoundException {
+    public Object getField(SchemaId fieldId) throws FieldNotFoundException {
         QName qname = mapping.get(fieldId);
         if (qname == null) {
             throw new FieldNotFoundException(fieldId);
         }
-        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
-        return (T)record.getField(qname);
+        return record.getField(qname);
     }
 
-    @Override
     public boolean hasField(SchemaId fieldId) {
         QName qname = mapping.get(fieldId);
         if (qname == null) {
@@ -51,7 +51,6 @@ public class IdRecordImpl implements IdRecord {
         return record.hasField(qname);
     }
 
-    @Override
     public Map<SchemaId, Object> getFieldsById() {
         Map<QName, Object> fields = record.getFields();
         Map<SchemaId, Object> fieldsById = new HashMap<SchemaId, Object>(fields.size());
@@ -66,132 +65,106 @@ public class IdRecordImpl implements IdRecord {
         return fieldsById;
     }
     
-    @Override
     public Map<SchemaId, QName> getFieldIdToNameMapping() {
         return mapping;
     }
 
-    @Override
     public SchemaId getRecordTypeId() {
         return recordTypeIds.get(Scope.NON_VERSIONED);
     }
 
-    @Override
     public SchemaId getRecordTypeId(Scope scope) {
         return recordTypeIds.get(scope);
     }
 
-    @Override
     public Record getRecord() {
         return record;
     }
 
-    @Override
     public void setId(RecordId recordId) {
         record.setId(recordId);
     }
 
-    @Override
     public RecordId getId() {
         return record.getId();
     }
 
-    @Override
     public void setVersion(Long version) {
         record.setVersion(version);
     }
 
-    @Override
     public Long getVersion() {
         return record.getVersion();
     }
     
-    @Override
     public void setRecordType(QName name, Long version) {
         record.setRecordType(name, version);
     }
 
-    @Override
     public void setRecordType(QName name) {
         record.setRecordType(name);
     }
 
-    @Override
     public QName getRecordTypeName() {
         return record.getRecordTypeName();
     }
 
-    @Override
     public Long getRecordTypeVersion() {
         return record.getRecordTypeVersion();
     }
 
-    @Override
     public void setRecordType(Scope scope, QName name, Long version) {
         record.setRecordType(scope, name, version);
     }
 
-    @Override
     public QName getRecordTypeName(Scope scope) {
         return record.getRecordTypeName(scope);
     }
 
-    @Override
     public Long getRecordTypeVersion(Scope scope) {
         return record.getRecordTypeVersion(scope);
     }
 
-    @Override
     public void setField(QName fieldName, Object value) {
         record.setField(fieldName, value);
     }
 
-    @Override
-    public <T> T getField(QName fieldName) throws FieldNotFoundException {
-        return (T)record.getField(fieldName);
+    public Object getField(QName fieldName) throws FieldNotFoundException {
+        return record.getField(fieldName);
     }
 
-    @Override
     public boolean hasField(QName fieldName) {
         return record.hasField(fieldName);
     }
 
-    @Override
     public Map<QName, Object> getFields() {
         return record.getFields();
     }
 
-    @Override
     public void addFieldsToDelete(List<QName> fieldNames) {
         record.addFieldsToDelete(fieldNames);
     }
 
-    @Override
     public void removeFieldsToDelete(List<QName> fieldNames) {
         record.removeFieldsToDelete(fieldNames);
     }
 
-    @Override
     public List<QName> getFieldsToDelete() {
         return record.getFieldsToDelete();
     }
 
-    @Override
     public void delete(QName fieldName, boolean addToFieldsToDelete) {
         record.delete(fieldName, addToFieldsToDelete);
     }
 
-    @Override
     public ResponseStatus getResponseStatus() {
         return record.getResponseStatus();
     }
 
-    @Override
     public void setResponseStatus(ResponseStatus status) {
         record.setResponseStatus(status);
     }
 
-    @Override
     public IdRecord clone() {
         Record recordClone = this.record.clone();
         IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
@@ -200,66 +173,13 @@ public class IdRecordImpl implements IdRecord {
     }
 
     @Override
-    public IdRecord cloneRecord() throws RecordException {
-        return cloneRecord(new IdentityHashMap<Record, Object>());
-    }
-
-    @Override
-    public IdRecord cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
-        Record recordClone = this.record.cloneRecord(parentRecords);
-        IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
-                new EnumMap<Scope, SchemaId>(recordTypeIds));
-        return clone;
-    }
-    
-    @Override
     public boolean equals(Object obj) {
-        return record.equals(obj);
+        throw new UnsupportedOperationException("IdRecordImpl does not support equals.");
     }
 
-    @Override
     public boolean softEquals(Object obj) {
-        return record.equals(obj);
+        throw new UnsupportedOperationException("IdRecordImpl does not support softEquals.");
     }
 
-    @Override
-    public void setDefaultNamespace(String namespace) {
-        record.setDefaultNamespace(namespace);
-    }
     
-    @Override
-    public void setRecordType(String recordTypeName) throws RecordException {
-        record.setRecordType(recordTypeName);
-    }
-
-    @Override
-    public void setRecordType(String recordTypeName, Long version) throws RecordException {
-        record.setRecordType(recordTypeName, version);
-    }
-
-    @Override
-    public void setRecordType(Scope scope, String recordTypeName, Long version) throws RecordException {
-        record.setRecordType(scope, recordTypeName, version);
-    }
-
-    @Override
-    public void setField(String fieldName, Object value) throws RecordException {
-        record.setField(fieldName, value);
-    }
-
-    @Override
-    public <T> T getField(String fieldName) throws FieldNotFoundException, RecordException {
-        // The cast to (T) is only needed for a bug in JDK's < 1.6u24
-        return (T)record.getField(fieldName);
-    }
-    
-    @Override
-    public void delete(String fieldName, boolean addFieldsToDelete) throws RecordException {
-        record.delete(fieldName, addFieldsToDelete);
-    }
-    
-    @Override
-    public boolean hasField(String fieldName) throws RecordException {
-        return record.hasField(fieldName);
-    }
 }

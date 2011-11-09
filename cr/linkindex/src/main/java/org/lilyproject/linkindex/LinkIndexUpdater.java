@@ -52,7 +52,6 @@ public class LinkIndexUpdater implements RowLogMessageListener {
         metrics = new LinkIndexUpdaterMetrics("linkIndexUpdater");
     }
 
-    @Override
     public boolean processMessage(RowLogMessage msg) {
         try {
             RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
@@ -200,7 +199,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
     private static final VTaggedRecord.FieldFilter LINK_FIELD_FILTER = new VTaggedRecord.FieldFilter() {
         @Override
         public boolean accept(FieldType fieldtype) {
-            return fieldtype.getValueType().getDeepestValueType().getBaseName().equals("LINK");
+            return fieldtype.getValueType().getPrimitive().getName().equals("LINK");
         }
     };
 

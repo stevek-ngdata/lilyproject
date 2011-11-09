@@ -31,7 +31,6 @@ public class WalProcessingException extends RepositoryException {
         this.recordId = recordId != null ? recordId.toString() : null;
     }
 
-    @Override
     public String getMessage() {
         return "Wal failed to process messages for record '" + recordId + "', " + info;
     }

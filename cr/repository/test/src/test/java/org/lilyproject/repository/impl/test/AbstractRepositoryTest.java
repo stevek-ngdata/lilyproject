@@ -16,9 +16,18 @@
 package org.lilyproject.repository.impl.test;
 
 import static org.easymock.EasyMock.createControl;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.easymock.IMocksControl;
 import org.junit.After;
@@ -47,10 +56,7 @@ public abstract class AbstractRepositoryTest {
     private static RecordType recordType1B;
     private static RecordType recordType2;
     private static RecordType recordType3;
-    private static String namespace = "/test/repository";
 
-
-    
     @Before
     public void setUp() throws Exception {
     }
@@ -65,21 +71,21 @@ public abstract class AbstractRepositoryTest {
     }
 
     private static void setupFieldTypes() throws Exception {
-        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(namespace, "field1"), Scope.NON_VERSIONED));
-        fieldType1B = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(namespace, "field1B"), Scope.NON_VERSIONED));
-        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName(namespace, "field2"), Scope.VERSIONED));
-        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"), new QName(namespace, "field3"),
+        String namespace = "/test/repository";
+        fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field1"), Scope.NON_VERSIONED));
+        fieldType1B = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field1B"), Scope.NON_VERSIONED));
+        fieldType2 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(namespace, "field2"), Scope.VERSIONED));
+        fieldType3 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName(namespace, "field3"),
                 Scope.VERSIONED_MUTABLE));
 
-        fieldType4 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER"), new QName(namespace, "field4"), Scope.NON_VERSIONED));
-        fieldType5 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN"), new QName(namespace, "field5"), Scope.VERSIONED));
+        fieldType4 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("INTEGER", false, false), new QName(namespace, "field4"), Scope.NON_VERSIONED));
+        fieldType5 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("BOOLEAN", false, false), new QName(namespace, "field5"), Scope.VERSIONED));
         fieldType6 = typeManager.createFieldType(typeManager
-                .newFieldType(typeManager.getValueType("STRING"), new QName(namespace, "field6"), Scope.VERSIONED_MUTABLE));
-        
+                .newFieldType(typeManager.getValueType("STRING", false, false), new QName(namespace, "field6"), Scope.VERSIONED_MUTABLE));
     }
-    
+
     private static void setupRecordTypes() throws Exception {
-        recordType1 = typeManager.newRecordType(new QName(namespace, "RT1"));
+        recordType1 = typeManager.newRecordType(new QName("test", "RT1"));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
@@ -89,14 +95,14 @@ public abstract class AbstractRepositoryTest {
         recordType1B.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1B.getId(), false));
         recordType1B = typeManager.updateRecordType(recordType1B);
 
-        recordType2 = typeManager.newRecordType(new QName(namespace, "RT2"));
+        recordType2 = typeManager.newRecordType(new QName("test", "RT2"));
 
         recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType4.getId(), false));
         recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType5.getId(), false));
         recordType2.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
         recordType2 = typeManager.createRecordType(recordType2);
         
-        recordType3 = typeManager.newRecordType(new QName(namespace, "RT3"));
+        recordType3 = typeManager.newRecordType(new QName("test", "RT3"));
         recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType3.getId(), false));
@@ -107,11 +113,9 @@ public abstract class AbstractRepositoryTest {
         recordType3 = typeManager.updateRecordType(recordType3);
         recordType3.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
         recordType3 = typeManager.updateRecordType(recordType3);
-        
-        
     }
 
-    
+
     @Test
     public void testRecordCreateWithoutRecordType() throws Exception {
         IMocksControl control = createControl();
@@ -192,28 +196,6 @@ public abstract class AbstractRepositoryTest {
         record = repository.create(record);
         assertEquals(null, record.getVersion());
     }
-    
-    @Test 
-    public void testCreateOnlyVersionAndCheckRecordType() throws Exception {
-        Record record = repository.newRecord();
-        record.setRecordType(recordType1.getName(), recordType1.getVersion());
-        record.setField(fieldType2.getName(), 123);
-        
-        record = repository.create(record);
-        
-        Record readRecord = repository.read(record.getId());
-        // Check that the 'global' record type of the read record is also filled in
-        assertEquals(recordType1.getName(), readRecord.getRecordTypeName());
-        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion());
-
-        // The record type for the versioned scope (only field present) should be returned
-        assertEquals(recordType1.getName(), readRecord.getRecordTypeName(Scope.VERSIONED));
-        assertEquals(recordType1.getVersion(), readRecord.getRecordTypeVersion(Scope.VERSIONED));
-
-        // The record type for the version-mutable scope should not be returned since no such field is present
-        assertEquals(null, readRecord.getRecordTypeName(Scope.VERSIONED_MUTABLE));
-        assertEquals(null, readRecord.getRecordTypeVersion(Scope.VERSIONED_MUTABLE));
-    }
 
     protected Record createDefaultRecord() throws Exception {
         Record record = repository.newRecord();
@@ -286,7 +268,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testUpdate() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -391,7 +373,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testIdempotentUpdate() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
 
         Record updatedRecord = repository.update(updateRecord);
 
@@ -406,7 +388,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testUpdateIgnoresVersion() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setVersion(Long.valueOf(99));
         updateRecord.setField(fieldType1.getName(), "value2");
 
@@ -433,7 +415,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadOlderVersions() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -458,14 +440,14 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadAllVersions() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
 
         repository.update(updateRecord);
         
-        List<Record> list = repository.readVersions(record.getId(), 1L, 2L, (QName[])null);
+        List<Record> list = repository.readVersions(record.getId(), 1L, 2L, null);
         assertEquals(2, list.size());
         assertTrue(list.contains(repository.read(record.getId(), 1L)));
         assertTrue(list.contains(repository.read(record.getId(), 2L)));
@@ -474,14 +456,14 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadVersionsWideBoundaries() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
 
         repository.update(updateRecord);
         
-        List<Record> list = repository.readVersions(record.getId(), 0L, 5L, (QName[])null);
+        List<Record> list = repository.readVersions(record.getId(), 0L, 5L, null);
         assertEquals(2, list.size());
         assertTrue(list.contains(repository.read(record.getId(), 1L)));
         assertTrue(list.contains(repository.read(record.getId(), 2L)));
@@ -491,21 +473,21 @@ public abstract class AbstractRepositoryTest {
     public void testReadVersionsNarrowBoundaries() throws Exception {
         Record record = createDefaultRecord();
 
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
         repository.update(updateRecord);
 
-        updateRecord = record.cloneRecord();
+        updateRecord = record.clone();
         updateRecord.setField(fieldType2.getName(), 790);
         repository.update(updateRecord);
         
-        updateRecord = record.cloneRecord();
+        updateRecord = record.clone();
         updateRecord.setField(fieldType2.getName(), 791);
         repository.update(updateRecord);
 
-        List<Record> list = repository.readVersions(record.getId(), 2L, 3L);
+        List<Record> list = repository.readVersions(record.getId(), 2L, 3L, null);
         assertEquals(2, list.size());
         assertTrue(list.contains(repository.read(record.getId(), 2L)));
         assertTrue(list.contains(repository.read(record.getId(), 3L)));
@@ -514,7 +496,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadSpecificVersions() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         // Don't update this field, as a test that the internal version inheritance code works correctly
@@ -530,16 +512,16 @@ public abstract class AbstractRepositoryTest {
         Record record2 = repository.read(record.getId(), 2L);
         Record record3 = repository.read(record.getId(), 3L);
 
-        List<Record> records = repository.readVersions(record.getId(), Arrays.asList(1L, 2L, 3L), (QName[])null);
+        List<Record> records = repository.readVersions(record.getId(), Arrays.asList(1L, 2L, 3L), null);
         assertEquals(3, records.size());
         assertTrue(records.contains(record1));
         assertTrue(records.contains(record2));
         assertTrue(records.contains(record3));
 
-        records = repository.readVersions(record.getId(), new ArrayList<Long>(), (QName[])null);
+        records = repository.readVersions(record.getId(), new ArrayList<Long>(), null);
         assertEquals(0, records.size());
 
-        records = repository.readVersions(record.getId(), Arrays.asList(1L, 5L), (QName[])null);
+        records = repository.readVersions(record.getId(), Arrays.asList(1L, 5L), null);
         assertEquals(1, records.size());
         assertTrue(records.contains(record1));
     }
@@ -570,7 +552,8 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testReadSpecificFields() throws Exception {
         Record record = createDefaultRecord();
-        Record readRecord = repository.read(record.getId(), fieldType1.getName(), fieldType2.getName(), fieldType3.getName());
+        Record readRecord = repository.read(record.getId(), Arrays.asList(fieldType1.getName(), fieldType2.getName(),
+                fieldType3.getName()));
         assertEquals(repository.read(record.getId()), readRecord);
     }
 
@@ -713,7 +696,7 @@ public abstract class AbstractRepositoryTest {
 
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(recordType1.getName(), recordType1.getVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName()));
+        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName() }));
         repository.update(deleteRecord);
 
         Record readRecord = repository.read(record.getId());
@@ -729,7 +712,7 @@ public abstract class AbstractRepositoryTest {
         assertEquals("value2", readRecord.getField(fieldType6.getName()));
         assertEquals(2222, readRecord.getField(fieldType4.getName()));
 
-        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType2.getName(), fieldType3.getName()));
+        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType2.getName(), fieldType3.getName() }));
         repository.update(deleteRecord);
 
         readRecord = repository.read(record.getId());
@@ -753,7 +736,7 @@ public abstract class AbstractRepositoryTest {
 
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(recordType1.getName(), recordType1.getVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName()));
+        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName() }));
         repository.update(deleteRecord);
         repository.update(deleteRecord);
     }
@@ -763,7 +746,7 @@ public abstract class AbstractRepositoryTest {
         Record record = createDefaultRecord();
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType2.getName()));
+        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType2.getName() }));
         repository.update(deleteRecord);
 
         Record updateRecord = repository.newRecord(record.getId());
@@ -797,7 +780,7 @@ public abstract class AbstractRepositoryTest {
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
         updateRecord.setField(fieldType2.getName(), 999);
-        updateRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName()));
+        updateRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName() }));
         repository.update(updateRecord);
 
         Record readRecord = repository.read(record.getId());
@@ -827,7 +810,7 @@ public abstract class AbstractRepositoryTest {
         Record updateRecord = repository.newRecord(record.getId());
         updateRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
         updateRecord.setField(fieldType2.getName(), 789);
-        updateRecord.addFieldsToDelete(Arrays.asList(fieldType2.getName()));
+        updateRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType2.getName() }));
         repository.update(updateRecord);
 
         try {
@@ -940,9 +923,9 @@ public abstract class AbstractRepositoryTest {
         record = repository.createOrUpdate(record);
 
         assertEquals(null, record.getVersion());
-
-        assertEquals(rt.getName(), record.getRecordTypeName());
         
+        assertEquals(rt.getName(), record.getRecordTypeName());
+
         // Now add a version again, reusing last value from previously deleted record
         record.setField(vfield, "value 2");
         record = repository.createOrUpdate(record);
@@ -952,7 +935,7 @@ public abstract class AbstractRepositoryTest {
     
     @Test
     public void testRecordRecreateOnlyVersionedFields() throws Exception {
-        QName versionedOnlyQN = new QName(namespace, "VersionedOnly");
+        QName versionedOnlyQN = new QName("test", "VersionedOnly");
         RecordType versionedOnlyRT = typeManager.newRecordType(versionedOnlyQN);
         versionedOnlyRT.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType2.getId(), false));
         versionedOnlyRT = typeManager.createRecordType(versionedOnlyRT);
@@ -975,11 +958,12 @@ public abstract class AbstractRepositoryTest {
         assertEquals(versionedOnlyQN, record.getRecordTypeName());
         assertEquals(versionedOnlyQN, record.getRecordTypeName(Scope.VERSIONED));
     }
+
     
     @Test
     public void testRecordRecreateNonVersionedOnly() throws Exception {
         QName nvfield = new QName("recreate", "OnlyNonVersioned");
-
+ 
         FieldType nvfieldtype = typeManager.newFieldType(typeManager.getValueType("STRING"), nvfield, Scope.NON_VERSIONED);
         nvfieldtype = typeManager.createFieldType(nvfieldtype);
 
@@ -1019,6 +1003,7 @@ public abstract class AbstractRepositoryTest {
         assertEquals(rtName, record.getRecordTypeName());
     }
 
+
     @Test
     public void testUpdateMutableField() throws Exception {
         Record record = repository.newRecord();
@@ -1028,7 +1013,7 @@ public abstract class AbstractRepositoryTest {
         record.setField(fieldType6.getName(), "value1");
         record = repository.create(record);
         
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType4.getName(), 456);
         updateRecord.setField(fieldType5.getName(), false);
         updateRecord.setField(fieldType6.getName(), "value2");
@@ -1071,7 +1056,7 @@ public abstract class AbstractRepositoryTest {
         Record record = createDefaultRecord();
         
         // Update the record, creates a second version
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -1148,7 +1133,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testUpdateMutableFieldCopiesValueToNext() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord = repository.update(updateRecord); // Leave mutable field
@@ -1178,7 +1163,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testDeleteMutableField() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord.setField(fieldType3.getName(), false);
@@ -1187,7 +1172,7 @@ public abstract class AbstractRepositoryTest {
         Record deleteRecord = repository.newRecord(record.getId());
         deleteRecord.setVersion(Long.valueOf(1));
         deleteRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
-        deleteRecord.addFieldsToDelete(Arrays.asList(fieldType1.getName(), fieldType2.getName(), fieldType3.getName()));
+        deleteRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType1.getName(), fieldType2.getName(), fieldType3.getName() }));
 
         repository.update(deleteRecord, true, false);
 
@@ -1211,7 +1196,7 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testDeleteMutableFieldCopiesValueToNext() throws Exception {
         Record record = createDefaultRecord();
-        Record updateRecord = record.cloneRecord();
+        Record updateRecord = record.clone();
         updateRecord.setField(fieldType1.getName(), "value2");
         updateRecord.setField(fieldType2.getName(), 789);
         updateRecord = repository.update(updateRecord); // Leave mutable field
@@ -1226,7 +1211,7 @@ public abstract class AbstractRepositoryTest {
         Record deleteMutableFieldRecord = repository.newRecord(record.getId());
         deleteMutableFieldRecord.setVersion(Long.valueOf(1));
         deleteMutableFieldRecord.setRecordType(record.getRecordTypeName(), record.getRecordTypeVersion());
-        deleteMutableFieldRecord.addFieldsToDelete(Arrays.asList(fieldType3.getName()));
+        deleteMutableFieldRecord.addFieldsToDelete(Arrays.asList(new QName[] { fieldType3.getName() }));
 
         repository.update(deleteMutableFieldRecord, true, false);
 
@@ -1248,7 +1233,7 @@ public abstract class AbstractRepositoryTest {
 
     @Test
     public void testMixinLatestVersion() throws Exception {
-        RecordType recordType4 = typeManager.newRecordType(new QName(namespace, "RT4"));
+        RecordType recordType4 = typeManager.newRecordType(new QName("test", "RT4"));
         recordType4.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType6.getId(), false));
         recordType4.addMixin(recordType1.getId()); // In fact recordType1B should be taken as Mixin
         recordType4 = typeManager.createRecordType(recordType4);
@@ -1513,274 +1498,26 @@ public abstract class AbstractRepositoryTest {
         Record record2 = createDefaultRecord();
         Record record3 = createDefaultRecord();
         
-        List<Record> readRecords = repository.read(Arrays.asList(record3.getId(), record1.getId()));
+        List<Record> readRecords = repository.read(Arrays.asList(new RecordId[]{record3.getId(), record1.getId()}));
         
         assertEquals(2, readRecords.size());
         assertTrue(readRecords.contains(record1));
         assertTrue(readRecords.contains(record3));
         
         repository.delete(record2.getId());
-        readRecords = repository.read(Arrays.asList(record2.getId(), record1.getId()));
+        readRecords = repository.read(Arrays.asList(new RecordId[]{record2.getId(), record1.getId()}));
         assertEquals(1, readRecords.size());
         assertTrue(readRecords.contains(record1));
         
-        readRecords = repository.read(Collections.<RecordId>emptyList());
+        readRecords = repository.read(Arrays.asList(new RecordId[]{}));
         assertTrue(readRecords.isEmpty());
-    }
-
-    @Test
-    public void testConditionalUpdate() throws Exception {
-        Record record = createDefaultRecord();
-
-        //
-        // Single condition
-        //
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
-
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-
-        // Check repository state was really not modified
-        record = repository.read(record.getId());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-
-        //
-        // Multiple conditions
-        //
-        List<MutationCondition> conditions = new ArrayList<MutationCondition>();
-        conditions.add(new MutationCondition(fieldType1.getName(), "value1")); // evals to true
-        conditions.add(new MutationCondition(fieldType2.getName(), 123)); // evals to true
-        conditions.add(new MutationCondition(fieldType3.getName(), false)); // evals to false
-
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record, conditions);
-
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-
-        // Check repository state was really not modified
-        record = repository.read(record.getId());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-
-        //
-        // Record state already matches supplied state, conditions should not be checked, so we expect response
-        // UP_TO_DATE rather than CONFLICT.
-        //
-        record.setField(fieldType1.getName(), "value1");
-        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
-
-        assertEquals(ResponseStatus.UP_TO_DATE, record.getResponseStatus());
-
-        // Do the same update twice (as can happen when auto-retrying in case of IO exceptions)
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
-        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
-
-        record = repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
-        assertEquals(ResponseStatus.UP_TO_DATE, record.getResponseStatus());
-
-        // reset record state
-        record = createDefaultRecord();
-
-        //
-        // Not-equals condition
-        //
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(fieldType1.getName(), CompareOp.NOT_EQUAL, "value1")));
-
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-
-        //
-        // Other than equals conditions
-        //
-        for (CompareOp op : CompareOp.values()) {
-            List<Integer> testValues = new ArrayList<Integer>();
-            switch (op) {
-                case LESS:
-                    testValues.add(123);
-                    testValues.add(122);
-                    break;
-                case LESS_OR_EQUAL:
-                    testValues.add(122);
-                    break;
-                case EQUAL:
-                    testValues.add(122);
-                    testValues.add(124);
-                    break;
-                case NOT_EQUAL:
-                    testValues.add(123);
-                    break;
-                case GREATER_OR_EQUAL:
-                    testValues.add(124);
-                    break;
-                case GREATER:
-                    testValues.add(123);
-                    testValues.add(124);
-            }
-
-            for (Integer testValue : testValues) {
-                record.setField(fieldType2.getName(), 999);
-                record = repository.update(record,
-                        Collections.singletonList(new MutationCondition(fieldType2.getName(), op, testValue)));
-
-                assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-                assertEquals(123, record.getField(fieldType2.getName()));
-            }
-        }
-
-        //
-        // Allow missing fields
-        //
-
-        record.setField(fieldType1.getName(), "value2");
-        // note that we're testing on field 1B!
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(fieldType1B.getName(), CompareOp.EQUAL, "whatever", true)));
-
-        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
-        assertEquals("value2", record.getField(fieldType1.getName()));
-
-        // reset record state
-        record.setField(fieldType1.getName(), "value1");
-        record = repository.update(record);
-
-        //
-        // Test for missing/present field
-        //
-
-        // Field MUST be missing
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(fieldType1.getName(), CompareOp.EQUAL, null)));
-
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-
-        // Field MUST NOT be missing (but can have whatever value) -- note that we test on field 1B!
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(fieldType1B.getName(), CompareOp.NOT_EQUAL, null)));
-
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-
-        // Same, successful case
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(fieldType1.getName(), CompareOp.NOT_EQUAL, null)));
-
-        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
-        assertEquals("value2", record.getField(fieldType1.getName()));
-
-        // reset record state
-        record.setField(fieldType1.getName(), "value1");
-        record = repository.update(record);
-
-        //
-        // Supplied values differ from field type (classcastexception)
-        //
-
-        // TODO
-//        record.setField(fieldType1.getName(), "value2");
-//        try {
-//            repository.update(record, Collections.singletonList(new MutationCondition(fieldType1.getName(), new Long(55))));
-//            fail("Expected an exception");
-//        } catch (ClassCastException e) {
-//            // expected
-//        }
-
-        //
-        // Test on system fields
-        //
-
-        final QName versionField = new QName("org.lilyproject.system", "version");
-
-        // Create new record to be sure numbering starts from 1
-        record = createDefaultRecord();
-
-        record.setField(fieldType2.getName(), new Integer(55));
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, new Long(2))));
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-
-        record.setField(fieldType2.getName(), new Integer(55));
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, new Long(1))));
-        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
-        assertEquals(new Long(2), record.getVersion());
-        assertEquals(new Integer(55), record.getField(fieldType2.getName()));
-
-        // Test behavior in case of null version
-        record = repository.newRecord();
-        record.setRecordType(recordType1.getName(), recordType1.getVersion());
-        record.setField(fieldType1.getName(), "value1");
-        record = repository.create(record);
-
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, new Long(1))));
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-
-        record.setField(fieldType1.getName(), "value2");
-        record = repository.update(record,
-                Collections.singletonList(new MutationCondition(versionField, CompareOp.EQUAL, null)));
-        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
-
-        //
-        // Test conditional update on update of version-mutable fields
-        //
-        record = createDefaultRecord();
-
-        record.setField(fieldType3.getName(), false);
-        record = repository.update(record, true, true,
-                Collections.singletonList(new MutationCondition(fieldType3.getName(), CompareOp.EQUAL, Boolean.FALSE)));
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-
-        record.setField(fieldType3.getName(), false);
-        record = repository.update(record, true, true,
-                Collections.singletonList(new MutationCondition(fieldType3.getName(), CompareOp.EQUAL, Boolean.TRUE)));
-        assertEquals(ResponseStatus.UPDATED, record.getResponseStatus());
-
-        // In case of versioned-mutable update, we can also add conditions on versioned and non-versioned fields
-        conditions = new ArrayList<MutationCondition>();
-        conditions.add(new MutationCondition(fieldType1.getName(), "value1")); // evals to true
-        conditions.add(new MutationCondition(fieldType2.getName(), 124)); // evals to true
-
-        record.setField(fieldType3.getName(), true);
-        record = repository.update(record, true, true, conditions);
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-    }
-
-    @Test
-    public void testConditionalDelete() throws Exception {
-        Record record = createDefaultRecord();
-
-        // perform delete with not-satisfied conditions
-        record = repository.delete(record.getId(),
-                Collections.singletonList(new MutationCondition(fieldType1.getName(), "xyz")));
-
-        assertNotNull(record);
-        assertEquals(ResponseStatus.CONFLICT, record.getResponseStatus());
-        assertEquals("value1", record.getField(fieldType1.getName()));
-        assertEquals(1, record.getFields().size());
-
-        // check record was surely not deleted
-        record = repository.read(record.getId());
-
-        // perform delete with satisfied conditions
-        record = repository.delete(record.getId(),
-                Collections.singletonList(new MutationCondition(fieldType1.getName(), "value1")));
-        assertNull(record);
     }
     
     @Test
     public void testRecordWithLinkFields() throws Exception {
-        FieldType linkFieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LINK"), new QName("testRecordWithLinkFields", "linkFieldType"), Scope.NON_VERSIONED));
+        FieldType linkFieldType = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("LINK", false, false), new QName("testRecordWithLinkFields", "linkFieldType"), Scope.NON_VERSIONED));
 
-        RecordType recordTypeWithLink = typeManager.newRecordType(new QName(namespace, "recordTypeWithLink"));
+        RecordType recordTypeWithLink = typeManager.newRecordType(new QName("test", "recordTypeWithLink"));
         recordTypeWithLink.addFieldTypeEntry(typeManager.newFieldTypeEntry(linkFieldType.getId(), false));
         recordTypeWithLink = typeManager.createRecordType(recordTypeWithLink);
         
@@ -1818,243 +1555,5 @@ public abstract class AbstractRepositoryTest {
         recordWithLinks = repository.read(recordWithLinks.getId());
         link = (Link)recordWithLinks.getField(linkFieldType.getName());
         assertEquals(record2.getId(), link.getMasterRecordId());
-    }
-    
-    @Test
-    public void testRecordBuilder() throws Exception {
-        RecordBuilder builder = repository.recordBuilder();
-        Record record = builder.recordType(recordType1.getName())
-            .field(fieldType1.getName(), "abc")
-            .field(fieldType2.getName(), 123)
-            .field(fieldType3.getName(), true)
-            .create();
-        assertEquals(record, repository.read(record.getId()));
-        
-        builder.reset();
-        Record record2 = builder.recordType(recordType2.getName())
-            .field(fieldType4.getName(), 999)
-            .field(fieldType5.getName(), true)
-            .field(fieldType6.getName(), "xyz")
-            .create();
-        
-        Record readRecord = repository.read(record2.getId());
-        assertEquals(999, readRecord.getField(fieldType4.getName()));
-        try {
-            readRecord.getField(fieldType1.getName());
-            fail("FieldType1 not expected. Builder should have been reset");
-        } catch (FieldNotFoundException expected) {
-        }
-    }
-    
-    @Test
-    public void testDefaultNamespace() throws Exception {
-        RecordBuilder builder = repository.recordBuilder();
-        Record record = builder.defaultNamespace(namespace)
-            .recordType("RT1")
-            .field("field1", "abc")
-            .field("field2", 123)
-            .field("field3", true)
-            .create();
-        Record readRecord = repository.read(record.getId());
-        assertEquals(record, readRecord);
-        
-        assertEquals("abc", readRecord.getField("field1"));
-        readRecord.setDefaultNamespace("anotherNamespace");
-        try {
-            readRecord.getField("field1");
-        } catch (FieldNotFoundException expected) {
-        }
-    }
-    
-    @Test
-    public void testRecordBuilderCreateOrUpdate() throws Exception {
-        try {
-            repository
-                    .recordBuilder()
-                    .defaultNamespace(namespace)
-                    .recordType("RT1")
-                    .field("field1", "abc")
-                    .createOrUpdate();
-            fail("expected exception");
-        } catch (RecordException e) {
-            // expected
-        }
-
-        Record record = repository
-                .recordBuilder()
-                .assignNewUuid()
-                .defaultNamespace(namespace)
-                .recordType("RT1")
-                .field("field1", "abc")
-                .createOrUpdate();
-
-        repository
-                .recordBuilder()
-                .id(record.getId())
-                .defaultNamespace(namespace)
-                .field("field1", "def")
-                .createOrUpdate();
-    }
-
-    @Test
-    public void testRecordBuilderNestedRecords() throws Exception {
-        String NS = "testRecordBuilderNestedRecords";
-
-        typeManager
-                .recordTypeBuilder()
-                .defaultNamespace(NS)
-                .name("recordType")
-                .fieldEntry().defineField().name("field1").create().add()
-                .fieldEntry().defineField().name("field2").type("RECORD").create().add()
-                .fieldEntry().defineField().name("field3").type("LIST<RECORD>").create().add()
-                .create();
-
-
-        Record record = repository
-                .recordBuilder()
-                .defaultNamespace(NS)
-                .recordType("recordType")
-                .recordField("field2")
-                    .recordType("recordType")
-                    .field("field1", "value 1")
-                    .set()
-                .recordListField("field3")
-                    .recordType("recordType")
-                    .field("field1", "value 2")
-                    .add()
-                    .field("field1", "value 3")
-                    .add()
-                    .field("field1", "value 4")
-                    .endList()
-                .create();
-
-        record = repository.read(record.getId());
-        assertEquals("value 1", ((Record)record.getField("field2")).getField("field1"));
-        assertEquals("value 2", ((List<Record>)record.getField("field3")).get(0).getField("field1"));
-        assertEquals("value 3", ((List<Record>)record.getField("field3")).get(1).getField("field1"));
-        assertEquals("value 4", ((List<Record>)record.getField("field3")).get(2).getField("field1"));
-
-        // Calling create on a nested record should not work
-        try {
-            repository
-                    .recordBuilder()
-                    .defaultNamespace(NS)
-                    .recordType("recordType")
-                    .recordField("field2")
-                        .recordType("recordType")
-                        .field("field1", "value 1")
-                        .create();
-            fail("expected exception");
-        } catch (IllegalStateException e) {
-            // expected
-        }
-    }
-
-    @Test
-    public void testRecordValueType() throws Exception {
-        String namespace = "testRecordValueType";
-        QName rvtRTName = new QName(namespace, "rvtRT");
-        QName rtName = new QName(namespace, "rt");
-        QName ft1Name = new QName(namespace, "ft1");
-        QName ft2Name = new QName(namespace, "ft2");
-        QName ft3Name = new QName(namespace, "ft3");
-        typeManager.recordTypeBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
-        ValueType rvt = typeManager.getValueType("RECORD<"+rvtRTName.toString()+">");
-        FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
-        FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
-        FieldType ft3 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft3Name, Scope.VERSIONED_MUTABLE));
-        typeManager.recordTypeBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).field(ft3.getId(), false).create();
-        
-        Record ft1Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft1abc").build();
-        Record ft1Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft1def").build();
-        Record ft2Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft2abc").build();
-        Record ft2Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft2def").build();
-        Record ft3Value1 = repository.recordBuilder().field(fieldType1.getName(), "ft3abc").build();
-        Record ft3Value2 = repository.recordBuilder().field(fieldType1.getName(), "ft3def").build();
-        Record ft3Value3 = repository.recordBuilder().field(fieldType1.getName(), "ft3xyz").build();
-        
-        // Create record
-        Record createdRecord = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).field(ft2Name, ft2Value1).field(ft3Name, ft3Value1).create();
-        Record readRecord = repository.read(createdRecord.getId());
-        assertEquals("ft1abc", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
-        assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
-        assertEquals("ft3abc", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
-        
-        // Update record
-        repository.recordBuilder().id(createdRecord.getId()).field(ft1Name, ft1Value2).field(ft2Name, ft2Value2).field(ft3Name, ft3Value2).update();
-        readRecord = repository.read(createdRecord.getId());
-        assertEquals(new Long(2), readRecord.getVersion());
-        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
-        assertEquals("ft2def", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
-        assertEquals("ft3def", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
-
-        readRecord = repository.read(createdRecord.getId(), 1L);
-        assertEquals(new Long(1), readRecord.getVersion());
-        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
-        assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
-        assertEquals("ft3abc", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
-
-        // Update mutable field record
-        repository.recordBuilder().id(createdRecord.getId()).version(1L).field(ft3Name, ft3Value3).updateVersion(true).update();
-        readRecord = repository.read(createdRecord.getId());
-        assertEquals(new Long(2), readRecord.getVersion());
-        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
-        assertEquals("ft2def", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
-        assertEquals("ft3def", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
-
-        readRecord = repository.read(createdRecord.getId(), 1L);
-        assertEquals(new Long(1), readRecord.getVersion());
-        assertEquals("ft1def", ((Record)readRecord.getField(ft1Name)).getField(fieldType1.getName()));
-        assertEquals("ft2abc", ((Record)readRecord.getField(ft2Name)).getField(fieldType1.getName()));
-        assertEquals("ft3xyz", ((Record)readRecord.getField(ft3Name)).getField(fieldType1.getName()));
-    }
-    
-    @Test
-    public void testRecordNestedInItself() throws Exception {
-        String namespace = "testRecordNestedInItself";
-        QName rvtRTName = new QName(namespace, "rvtRT");
-        QName rtName = new QName(namespace, "rt");
-        QName ft1Name = new QName(namespace, "ft1");
-        QName ft2Name = new QName(namespace, "ft2");
-
-        typeManager.recordTypeBuilder().name(rvtRTName).field(fieldType1.getId(), false).create();
-        ValueType rvt = typeManager.getValueType("RECORD");
-        FieldType ft1 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft1Name, Scope.NON_VERSIONED));
-        FieldType ft2 = typeManager.createFieldType(typeManager.newFieldType(rvt, ft2Name, Scope.VERSIONED));
-        typeManager.recordTypeBuilder().name(rtName).field(ft1.getId(), false).field(ft2.getId(), false).create();
-
-        Record ft1Value1 = repository.recordBuilder().recordType(rvtRTName).field(fieldType1.getName(), "ft1abc")
-                .build();
-
-        // Create nested record
-
-        Record record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).build();
-        record.setField(ft2Name, record);
-        try {
-            repository.create(record);
-            fail("Expecting a Record Exception since a record may not be nested in itself");
-        } catch (RecordException expected) {
-        }
-
-        // Create with deep nesting
-
-        Record ft2Value2 = repository.recordBuilder().recordType(rvtRTName).field(ft1Name, record).build();
-        record.setField(ft2Name, ft2Value2);
-        try {
-            repository.create(record);
-            fail("Expecting a Record Exception since a record may not be nested in itself");
-        } catch (RecordException expected) {
-        }
-        
-        // Update with nested record
-
-        record = repository.recordBuilder().recordType(rtName).field(ft1Name, ft1Value1).build();
-        record = repository.create(record);
-        record.setField(ft2Name, record); // Nest record in itself
-        try {
-            repository.update(record);
-            fail("Expecting a Record Exception since a record may not be nested in itself");
-        } catch (RecordException expected) {
-        }
     }
 }

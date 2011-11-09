@@ -63,10 +63,6 @@
       id="networkItfInfo"
       service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
-  <kauri:import-service
-      id="pluginRegistry"
-      service="org.lilyproject.plugin.PluginRegistry"/>
-
   <kauri:export-service
       ref="repository"
       service="org.lilyproject.repository.api.Repository"/>
@@ -107,38 +103,18 @@
     <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
   </bean>
 
-  <bean id="recordUpdateHookActivator" class="org.lilyproject.server.modules.repository.RecordUpdateHookActivator">
-    <constructor-arg ref="pluginRegistry"/>
-    <constructor-arg><kauri:conf path="repository"/></constructor-arg>
+  <bean id="repository" class="org.lilyproject.repository.impl.HBaseRepository">
+    <constructor-arg ref="typeManager"/>
+    <constructor-arg ref="idGenerator"/>
+    <constructor-arg ref="writeAheadLog"/>
+    <constructor-arg ref="hbaseTableFactory"/>
+    <constructor-arg ref="blobManager"/>
+    <constructor-arg ref="rowLocker"/>
   </bean>
-
-  <bean id="undecoratedRepository"
-        factory-bean="recordUpdateHookActivator"
-        factory-method="activeUpdateHooks">
-    <constructor-arg>
-      <bean class="org.lilyproject.repository.impl.HBaseRepository">
-        <constructor-arg ref="typeManager"/>
-        <constructor-arg ref="idGenerator"/>
-        <constructor-arg ref="writeAheadLog"/>
-        <constructor-arg ref="hbaseTableFactory"/>
-        <constructor-arg ref="blobManager"/>
-        <constructor-arg ref="rowLocker"/>
-      </bean>
-    </constructor-arg>
-  </bean>
-
-  <bean id="repositoryDecoratorActivator" class="org.lilyproject.server.modules.repository.RepositoryDecoratorActivator">
-    <constructor-arg ref="pluginRegistry"/>
-    <constructor-arg ref="undecoratedRepository"/>
-    <constructor-arg><kauri:conf path="repository"/></constructor-arg>
-  </bean>
-
-  <bean id="repository" factory-bean="repositoryDecoratorActivator" factory-method="getDecoratedRepository"/>
 
   <bean class="org.lilyproject.server.modules.repository.LinkIndexUpdaterSetup">
     <constructor-arg ref="repository"/>
     <constructor-arg ref="hbaseConf"/>
-    <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
   <bean id="avroServer" class="org.lilyproject.server.modules.repository.AvroServer">

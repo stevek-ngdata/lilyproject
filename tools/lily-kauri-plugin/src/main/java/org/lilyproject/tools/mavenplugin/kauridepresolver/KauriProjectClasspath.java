@@ -21,8 +21,6 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -37,54 +35,58 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class KauriProjectClasspath {
     protected XPathFactory xpathFactory = XPathFactory.newInstance();
+    private String confDirectory;
     private String kauriVersion;
     private ArtifactFilter filter;
     private ArtifactFactory artifactFactory;
     protected ArtifactResolver resolver;
+    protected List remoteRepositories;
     protected ArtifactRepository localRepository;
     private Log log;
 
-    public KauriProjectClasspath(Log log, ArtifactFilter filter, ArtifactFactory artifactFactory,
-            ArtifactResolver resolver, ArtifactRepository localRepository) {
+    public KauriProjectClasspath(String confDirectory, String kauriVersion, Log log, ArtifactFilter filter,
+            ArtifactFactory artifactFactory, ArtifactResolver resolver, List remoteRepositories,
+            ArtifactRepository localRepository) {
+        this.confDirectory = confDirectory;
+        this.kauriVersion = kauriVersion;
         this.filter = filter;
         this.artifactFactory = artifactFactory;
         this.resolver = resolver;
+        this.remoteRepositories = remoteRepositories;
         this.localRepository = localRepository;
         this.log = log;
-        this.kauriVersion = KauriMavenUtil.getKauriVersion();
     }
 
-    public Set<Artifact> getAllArtifacts(Set<Artifact> moduleArtifacts, List remoteRepositories)
-            throws MojoExecutionException {
+    public Set<Artifact> getAllArtifacts() throws MojoExecutionException {
+        Set<Artifact> moduleArtifacts = getModuleArtifactsFromKauriConfig();
+
         Set<Artifact> result = new HashSet<Artifact>();
         result.addAll(moduleArtifacts);
 
         for (Artifact moduleArtifact : moduleArtifacts) {
-            result.addAll(getClassPathArtifacts(moduleArtifact, remoteRepositories));
+            result.addAll(getClassPathArtifacts(moduleArtifact));
         }
 
         return result;
     }
 
-    public ModuleArtifacts getModuleArtifactsFromKauriConfig(File confDirectory, List remoteRepos)
-            throws MojoExecutionException {
+    public Set<Artifact> getModuleArtifactsFromKauriConfig() throws MojoExecutionException {
         File configFile = new File(confDirectory, "kauri/wiring.xml");
+        Document configDoc;
         try {
             FileInputStream fis = null;
             try {
                 fis = new FileInputStream(configFile);
-
-                ModuleArtifacts result = new ModuleArtifacts();
-                result.artifacts = getModuleArtifactsFromKauriConfig(fis, configFile.getAbsolutePath(),
-                        remoteRepos);
-
-                return result;
+                configDoc = parse(fis);
             } finally {
                 if (fis != null)
                     fis.close();
@@ -92,70 +94,15 @@ public class KauriProjectClasspath {
         } catch (Exception e) {
             throw new MojoExecutionException("Error reading kauri XML configuration from " + configFile, e);
         }
+
+        return getArtifacts(configDoc, "/*/modules/artifact", "wiring.xml");
     }
 
-    public ModuleArtifacts getModuleArtifactsFromKauriConfig(Set<Artifact> dependencies, String wiringPath,
-            MavenProjectBuilder mavenProjectBuilder, List remoteRepos)
-            throws MojoExecutionException {
-
-        try {
-            // Search in the jars of all the direct dependencies of the project for the wiring file
-            // (not sure if this won't be too slow? it's just to avoid the user having to specify the artifact)
-            log.info("Searching " + dependencies.size() + " dependencies for " + wiringPath);
-            for (Artifact artifact : dependencies) {
-                if ("jar".equals(artifact.getType())) {
-                    resolver.resolve(artifact, remoteRepos, localRepository);
-
-                    ZipFile zipFile;
-                    zipFile = new ZipFile(artifact.getFile());
-                    try {
-                        ZipEntry zipEntry = zipFile.getEntry(wiringPath);
-                        if (zipEntry != null) {
-                            log.info("Reading " + wiringPath + " from " + artifact.getFile());
-                            Set<Artifact> moduleArtifacts = getModuleArtifactsFromKauriConfig(
-                                    zipFile.getInputStream(zipEntry), wiringPath, remoteRepos);
-
-                            MavenProject wiringSourceProject = mavenProjectBuilder.buildFromRepository(artifact,
-                                    remoteRepos, localRepository);
-                            List repositories = wiringSourceProject.getRemoteArtifactRepositories();
-
-                            ModuleArtifacts result = new ModuleArtifacts();
-                            result.artifacts = moduleArtifacts;
-                            result.remoteRepositories = repositories;
-
-                            return result;
-                        }
-                    } finally {
-                        zipFile.close();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new MojoExecutionException("Error searching/reading wiring.xml file from dependency jars.", e);
-        }
-
-        throw new MojoExecutionException("The wiring.xml was not found in the dependency jars at path " + wiringPath);
+    public Set<Artifact> getClassPathArtifacts(Artifact moduleArtifact) throws MojoExecutionException {
+        return getClassPathArtifacts(moduleArtifact, "KAURI-INF/classloader.xml");
     }
 
-    public Set<Artifact> getModuleArtifactsFromKauriConfig(InputStream wiringStream, String path, List remoteRepos)
-            throws MojoExecutionException {
-        Document configDoc;
-        try {
-            configDoc = parse(wiringStream);
-        } catch (Exception e) {
-            throw new MojoExecutionException("Error reading kauri wiring from " + path, e);
-        }
-
-        return getArtifacts(configDoc, "/*/modules/artifact", path, remoteRepos);
-    }
-
-    public Set<Artifact> getClassPathArtifacts(Artifact moduleArtifact, List remoteRepositories)
-            throws MojoExecutionException {
-        return getClassPathArtifacts(moduleArtifact, "KAURI-INF/classloader.xml", remoteRepositories);
-    }
-
-    public Set<Artifact> getClassPathArtifacts(Artifact moduleArtifact, String entryPath, List remoteRepos)
-            throws MojoExecutionException {
+    public Set<Artifact> getClassPathArtifacts(Artifact moduleArtifact, String entryPath) throws MojoExecutionException {
         ZipFile zipFile = null;
         InputStream is = null;
         Document classLoaderDocument;
@@ -178,12 +125,10 @@ public class KauriProjectClasspath {
                 try { zipFile.close(); } catch (Exception e) { /* ignore */ }
         }
 
-        return getArtifacts(classLoaderDocument,
-                "/classloader/classpath/artifact", "classloader.xml from module " + moduleArtifact, remoteRepos);
+        return getArtifacts(classLoaderDocument, "/classloader/classpath/artifact", "classloader.xml from module " + moduleArtifact);
     }
 
-    protected Set<Artifact> getArtifacts(Document configDoc, String artifactXPath, String sourceDescr,
-            List remoteRepos) throws MojoExecutionException {
+    protected Set<Artifact> getArtifacts(Document configDoc, String artifactXPath, String sourceDescr) throws MojoExecutionException {
         Set<Artifact> artifacts = new HashSet<Artifact>();
         NodeList nodeList;
         try {
@@ -208,7 +153,7 @@ public class KauriProjectClasspath {
                 if (!artifacts.contains(artifact)) {
                     if (resolver != null) {
                         try {
-                            resolver.resolve(artifact, remoteRepos, localRepository);
+                            resolver.resolve(artifact, remoteRepositories, localRepository);
                         } catch (Exception e) {
                             throw new MojoExecutionException("Error resolving artifact listed in " + sourceDescr + ": " + artifact, e);
                         }

@@ -35,7 +35,6 @@ import java.io.StringWriter;
 @Provider
 public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
 
-    @Override
     public Response toResponse(Throwable throwable) {
         int status = 500;
         Throwable mainThrowable = throwable;
@@ -71,7 +70,6 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
         msgNode.put("stackTrace", formatStackTrace(mainThrowable));
 
         StreamingOutput entity = new StreamingOutput() {
-            @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {
                 JsonFormat.serialize(msgNode, output);
             }

@@ -17,12 +17,6 @@ public interface HBaseTableFactory {
     HTableInterface getTable(HTableDescriptor tableDescriptor) throws IOException;
 
     /**
-     *
-     * @param splitKeys allows the application, rather than the user, to define initial table splits.
-     */
-    HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException;
-
-    /**
      * @param create if false, table will not be automatically created, TableNotFoundException will be thrown
      *               instead.
      */

@@ -28,18 +28,17 @@ public class WalRowLog extends RowLogImpl {
     public static final String WAL_SUBSCRIPTIONID = "WAL";
 
     public WalRowLog(String id, HTableInterface rowTable, byte[] rowLogColumnFamily, byte rowLogId,
-            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker, RowLogShardRouter shardRouter)
-            throws InterruptedException, IOException {
-        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker, shardRouter);
+            RowLogConfigurationManager rowLogConfigurationManager, RowLocker rowLocker) throws InterruptedException {
+        super(id, rowTable, rowLogColumnFamily, rowLogId, rowLogConfigurationManager, rowLocker);
     }
-
+    
     /**
      * When the RowLogMessage needs to be put on the rowlog shard, we only put it there once with the 'meta' subscription id "WAL".
      */
     @Override
     protected void putMessageOnShard(RowLogMessage message, List<RowLogSubscription> subscriptions) throws RowLogException {
         // Ignore subscriptions and put a message for the 'meta' wal subscription
-        getShard(message).putMessage(message, Arrays.asList(WAL_SUBSCRIPTIONID));
+        getShard().putMessage(message, Arrays.asList(new String[]{WAL_SUBSCRIPTIONID}));
     }
     
     /**
@@ -58,7 +57,7 @@ public class WalRowLog extends RowLogImpl {
     @Override
     protected boolean handleAllDone(RowLogMessage message, byte[] rowKey, byte[] executionStateQualifier, byte[] previousValue, RowLock lock) throws IOException, RowLogException {
         // Remove the 'meta' message
-        getShard(message).removeMessage(message, WAL_SUBSCRIPTIONID);
+        getShard().removeMessage(message, WAL_SUBSCRIPTIONID);
         // Also make sure the execution state and payload are removed from the row-local queue
         return super.handleAllDone(message, rowKey, executionStateQualifier, previousValue, lock);
     }

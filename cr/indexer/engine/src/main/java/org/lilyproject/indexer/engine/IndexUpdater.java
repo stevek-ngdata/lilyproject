@@ -103,7 +103,6 @@ public class IndexUpdater implements RowLogMessageListener {
         this.metrics = metrics;
     }
 
-    @Override
     public boolean processMessage(RowLogMessage msg) throws InterruptedException {
         long before = System.currentTimeMillis();
 
@@ -375,7 +374,7 @@ public class IndexUpdater implements RowLogMessageListener {
         nextIndexField:
         for (IndexField indexField : indexFields) {
             DerefValue derefValue = (DerefValue)indexField.getValue();
-            FieldType fieldType = derefValue.getLastRealField();
+            FieldType fieldType = derefValue.getTargetField();
 
             //
             // Determine the vtags of the referrer that we should consider
@@ -437,7 +436,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
             // Run over the version tags
             for (SchemaId referrerVtag : referrerVTags) {
-                List<DerefValue.Follow> follows = derefValue.getCrossRecordFollows();
+                List<DerefValue.Follow> follows = derefValue.getFollows();
 
                 Set<RecordId> referrers = new HashSet<RecordId>();
                 referrers.add(recordId);
@@ -448,8 +447,8 @@ public class IndexUpdater implements RowLogMessageListener {
 
                     Set<RecordId> newReferrers = new HashSet<RecordId>();
 
-                    if (follow instanceof DerefValue.LinkFieldFollow) {
-                        SchemaId fieldId = ((DerefValue.LinkFieldFollow)follow).getOwnerFieldType().getId();
+                    if (follow instanceof DerefValue.FieldFollow) {
+                        SchemaId fieldId = ((DerefValue.FieldFollow)follow).getFieldId();
                         for (RecordId referrer : referrers) {
                             Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);
                             newReferrers.addAll(linkReferrers);
@@ -524,9 +523,8 @@ public class IndexUpdater implements RowLogMessageListener {
 
         if (log.isDebugEnabled()) {
             log.debug(String.format("Record %1$s: found %2$s records (times vtags) to be updated because they " +
-                    "might contain outdated denormalized data. Checked %3$s follow instances." +
-                    " The records are: %4$s", recordId,
-                    referrersAndVTags.size(), searchedFollowCount, referrersAndVTags.keySet()));
+                    "might contain outdated denormalized data. Checked %3$s follow instances.", recordId,
+                    referrersAndVTags.size(), searchedFollowCount));
         }
 
         //

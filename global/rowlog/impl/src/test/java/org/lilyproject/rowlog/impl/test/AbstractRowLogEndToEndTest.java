@@ -23,20 +23,17 @@ import org.junit.*;
 import org.junit.rules.TestName;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-
-public abstract class AbstractRowLogEndToEndTest {
-    protected static HBaseProxy HBASE_PROXY;
+public abstract class
+        AbstractRowLogEndToEndTest {
+    protected final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     protected static RowLog rowLog;
+    protected static RowLogShard shard;
     protected static RowLogProcessor processor;
     protected static RowLogConfigurationManagerImpl rowLogConfigurationManager;
     protected String subscriptionId = "Subscription1";
@@ -50,27 +47,25 @@ public abstract class AbstractRowLogEndToEndTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         configuration = HBASE_PROXY.getConf();
         rowTable = RowLogTableUtil.getRowTable(configuration);
         // Using a large ZooKeeper timeout, seems to help the build to succeed on Hudson (not sure if this is
-        // the problem or the symptom, but HBase's Sleeper thread also reports it slept to long, so it appears
+        // the problem or the sympton, but HBase's Sleeper thread also reports it slept to long, so it appears
         // to be JVM-level).
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 120000);
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         // The orphanedMessageDelay is smaller than usual on purpose, since some tests wait on this cleanup
         rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(true, true, 100L, 0L, 5000L, 5000L));
         rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.ROWLOG_COLUMN_FAMILY,
-                (byte)1, rowLogConfigurationManager, null, new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, rowLog, new HBaseTableFactoryImpl(configuration));
-        processor = new RowLogProcessorImpl(rowLog, rowLogConfigurationManager, configuration);
+                (byte)1, rowLogConfigurationManager, null);
+        shard = new RowLogShardImpl("EndToEndShard", configuration, rowLog, 100);
+        rowLog.registerShard(shard);
+        processor = new RowLogProcessorImpl(rowLog, rowLogConfigurationManager);
     }    
     
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        Closer.close(processor);
-        Closer.close(rowLog);
         Closer.close(rowLogConfigurationManager);
         Closer.close(zooKeeper);
         HBASE_PROXY.stop();
@@ -86,7 +81,7 @@ public abstract class AbstractRowLogEndToEndTest {
         processor.stop();
         validationListener.validate();
     }
-
+    
     @Test(timeout=150000)
     public void testRemovalFromShardFailed() throws Exception {
         RowLogMessage message = rowLog.putMessage(Bytes.toBytes("row1"), null, null, null);
@@ -96,18 +91,13 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.waitUntilMessagesConsumed(120000);
         processor.stop();
         validationListener.validate();
-
-        List<RowLogShard> shards = rowLog.getShardList().getShards();
-        assertEquals(1, shards.size());
-        RowLogShard shard = shards.get(0);
-
+        
         shard.putMessage(message);
-        Assert.assertFalse(shard.next(subscriptionId, 20).isEmpty());
+        Assert.assertFalse(shard.next(subscriptionId).isEmpty());
         processor.start();
         Thread.sleep(10000); // Give processor some time to cleanup the message
         processor.stop();
-        Assert.assertTrue("The message should have been cleaned up since it was already processed",
-                shard.next(subscriptionId, 20).isEmpty());
+        Assert.assertTrue("The message should have been cleaned up since it was already processed",shard.next(subscriptionId).isEmpty());
     }
 
     @Test(timeout=150000)

@@ -29,13 +29,11 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.bytes.impl.DataOutputImpl;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.hbaseext.ContainsValueComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RepositoryMetrics.Action;
-import org.lilyproject.repository.impl.valuetype.BlobValueType;
-import org.lilyproject.repository.spi.RecordUpdateHook;
+import org.lilyproject.repository.impl.primitivevaluetype.BlobValueType;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;
@@ -58,19 +56,20 @@ import org.lilyproject.util.repo.RecordEvent.Type;
 public class HBaseRepository extends BaseRepository {
  
     private HTableInterface recordTable;
+    private final IdGenerator idGenerator;
     private Map<Scope, byte[]> recordTypeIdColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
     private Map<Scope, byte[]> recordTypeVersionColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
     private RowLog wal;
     private RowLocker rowLocker;
-    private List<RecordUpdateHook> updateHooks = Collections.emptyList();
     
     private Log log = LogFactory.getLog(getClass());
     private RepositoryMetrics metrics;
 
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, RowLog wal,
             HBaseTableFactory hbaseTableFactory, BlobManager blobManager, RowLocker rowLocker) throws IOException {
-        super(typeManager, blobManager, idGenerator);
+        super(typeManager, blobManager);
 
+        this.idGenerator = idGenerator;
         this.wal = wal;
 
         recordTable = LilyHBaseSchema.getRecordTable(hbaseTableFactory);
@@ -86,29 +85,17 @@ public class HBaseRepository extends BaseRepository {
         metrics = new RepositoryMetrics("hbaserepository");
     }
 
-    @Override
     public void close() throws IOException {
     }
 
-    /**
-     * Sets the record update hooks.
-     */
-    public void setRecordUpdateHooks(List<RecordUpdateHook> recordUpdateHooks) {
-        this.updateHooks = recordUpdateHooks == null ?
-                Collections.<RecordUpdateHook>emptyList() : recordUpdateHooks;
-    }
-
-    @Override
     public IdGenerator getIdGenerator() {
         return idGenerator;
     }
 
-    @Override
     public Record createOrUpdate(Record record) throws RepositoryException {
         return createOrUpdate(record, true);
     }
 
-    @Override
     public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException {
 
         if (record.getId() == null) {
@@ -156,14 +143,13 @@ public class HBaseRepository extends BaseRepository {
                 " attempts, toggling between create and update mode.");
     }
 
-    @Override
     public Record create(Record record) throws RepositoryException {
 
         long before = System.currentTimeMillis();
         try {
             checkCreatePreconditions(record);
             
-            Record newRecord = record.cloneRecord();
+            Record newRecord = record.clone();
     
             RecordId recordId = newRecord.getId();
             if (recordId == null) {
@@ -265,24 +251,11 @@ public class HBaseRepository extends BaseRepository {
         }
     }
 
-    @Override
     public Record update(Record record) throws RepositoryException {
         return update(record, false, true);
     }
 
-    @Override
-    public Record update(Record record, List<MutationCondition> conditions) throws RepositoryException {
-        return update(record, false, true, conditions);
-    }
-
-    @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException {
-        return update(record, updateVersion, useLatestRecordType, null);
-    }
-
-    @Override
-    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
-            List<MutationCondition> conditions) throws RepositoryException {
 
         long before = System.currentTimeMillis();
         RecordId recordId = record.getId();
@@ -302,13 +275,13 @@ public class HBaseRepository extends BaseRepository {
             // Check if the update is an update of mutable fields
             if (updateVersion) {
                 try {
-                    return updateMutableFields(record, useLatestRecordType, conditions, rowLock, fieldTypes);
+                    return updateMutableFields(record, useLatestRecordType, rowLock, fieldTypes);
                 } catch (BlobException e) {
                     throw new RecordException("Exception occurred while updating record '" + record.getId() + "'",
                             e);
                 }
             } else {
-                return updateRecord(record, useLatestRecordType, conditions, rowLock, fieldTypes);
+                return updateRecord(record, useLatestRecordType, rowLock, fieldTypes);
             }
         } catch (IOException e) {
             throw new RecordException("Exception occurred while updating record '" + recordId + ">' on HBase table",
@@ -320,19 +293,14 @@ public class HBaseRepository extends BaseRepository {
     }
     
     
-    private Record updateRecord(Record record, boolean useLatestRecordType, List<MutationCondition> conditions,
-            RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
+    private Record updateRecord(Record record, boolean useLatestRecordType, RowLock rowLock, FieldTypes fieldTypes)
+            throws RepositoryException {
+
+        Record newRecord = record.clone();
 
         RecordId recordId = record.getId();
-
         try {
-            Record originalRecord = new UnmodifiableRecord(read(record.getId(), null, null, null, fieldTypes));
-
-            for (RecordUpdateHook hook : updateHooks) {
-                hook.beforeUpdate(record, originalRecord, this, fieldTypes);
-            }
-
-            Record newRecord = record.cloneRecord();
+            Record originalRecord = read(newRecord.getId(), null, null, null, fieldTypes);
 
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
@@ -343,15 +311,6 @@ public class HBaseRepository extends BaseRepository {
                 
             if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
                     unReferencedBlobs, useLatestRecordType, fieldTypes)) {
-
-                // Check the conditions after establishing that the record really needs updating, this makes the
-                // conditional update operation idempotent.
-                Record conditionsResponse = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
-                        record);
-                if (conditionsResponse != null) {
-                    return conditionsResponse;
-                }
-
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
                 putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
@@ -361,10 +320,6 @@ public class HBaseRepository extends BaseRepository {
             } else {
                 newRecord.setResponseStatus(ResponseStatus.UP_TO_DATE);
             }
-
-            newRecord.getFieldsToDelete().clear();
-            return newRecord;
-
         } catch (RowLogException e) {
             throw new RecordException("Exception occurred while putting updated record '" + recordId
                     + "' on HBase table", e);
@@ -380,6 +335,9 @@ public class HBaseRepository extends BaseRepository {
             throw new RecordException("Exception occurred while putting updated record '" + recordId
                     + "' on HBase table", e);
         }
+
+        newRecord.getFieldsToDelete().clear();
+        return newRecord;
     }
 
     // This method takes a put object containing the row's data to be updated
@@ -497,7 +455,7 @@ public class HBaseRepository extends BaseRepository {
         List<QName> fieldsToDelete = record.getFieldsToDelete();
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
             if (fieldTypeEntry.isMandatory()) {
-                FieldType fieldType = fieldTypes.getFieldType(fieldTypeEntry.getFieldTypeId());
+                FieldType fieldType = fieldTypes.getFieldTypeById(fieldTypeEntry.getFieldTypeId());
                 QName fieldName = fieldType.getName();
                 if (fieldsToDelete.contains(fieldName)) {
                     throw new InvalidRecordException("Field: '" + fieldName + "' is mandatory.", record.getId());
@@ -520,7 +478,7 @@ public class HBaseRepository extends BaseRepository {
         
         Map<QName, Object> fields = getFieldsToUpdate(record);
         
-        changedScopes.addAll(calculateUpdateFields(record, fields, originalFields, null, version, put, recordEvent,
+        changedScopes.addAll(calculateUpdateFields(fields, originalFields, null, version, put, recordEvent,
                 referencedBlobs, unReferencedBlobs, false, fieldTypes));
         for (BlobReference referencedBlob : referencedBlobs) {
             referencedBlob.setRecordId(record.getId());
@@ -571,11 +529,10 @@ public class HBaseRepository extends BaseRepository {
     }
 
     // Checks for each field if it is different from its previous value and indeed needs to be updated.
-    private Set<Scope> calculateUpdateFields(Record parentRecord, Map<QName, Object> fields,
-            Map<QName, Object> originalFields,
+    private Set<Scope> calculateUpdateFields(Map<QName, Object> fields, Map<QName, Object> originalFields,
             Map<QName, Object> originalNextFields, Long version, Put put, RecordEvent recordEvent,
             Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean mutableUpdate,
-            FieldTypes fieldTypes) throws InterruptedException, TypeException, BlobException, RecordException, RepositoryException {
+            FieldTypes fieldTypes) throws InterruptedException, TypeException, BlobException, RecordException {
         Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
@@ -586,14 +543,14 @@ public class HBaseRepository extends BaseRepository {
                     ((newValue == null) && (originalValue == null))         // Don't update if both are null
                     || (isDeleteMarker(newValue) && fieldIsNewOrDeleted)    // Don't delete if it doesn't exist
                     || (newValue.equals(originalValue)))) {                 // Don't update if they didn't change
-                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldName);
+                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldName);
                 Scope scope = fieldType.getScope();
                 
                 // Check if the newValue contains blobs 
                 Set<BlobReference> newReferencedBlobs = getReferencedBlobs(fieldType, newValue);
                 referencedBlobs.addAll(newReferencedBlobs);
 
-                byte[] encodedFieldValue = encodeFieldValue(parentRecord, fieldType, newValue);
+                byte[] encodedFieldValue = encodeFieldValue(fieldType, newValue);
 
                 // Check if the previousValue contained blobs which should be deleted since they are no longer used
                 // In case of a mutable update, it is checked later if no other versions use the blob before deciding to delete it
@@ -613,8 +570,7 @@ public class HBaseRepository extends BaseRepository {
                     // If it is a mutable update and the next version of the field was the same as the one that is being updated,
                     // the original value needs to be copied to that next version (due to sparseness of the table). 
                     if (originalNextFields != null && !fieldIsNewOrDeleted && originalNextFields.containsKey(fieldName)) {
-                        copyValueToNextVersionIfNeeded(parentRecord, version, put, originalNextFields, fieldName,
-                                originalValue, fieldTypes);
+                        copyValueToNextVersionIfNeeded(version, put, originalNextFields, fieldName, originalValue, fieldTypes);
                     }
                 }
                 
@@ -626,29 +582,25 @@ public class HBaseRepository extends BaseRepository {
         return changedScopes;
     }
     
-    private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue)
-            throws FieldTypeNotFoundException,
-            RecordTypeNotFoundException, RecordException, RepositoryException, InterruptedException {
+    private byte[] encodeFieldValue(FieldType fieldType, Object fieldValue) throws FieldTypeNotFoundException,
+            RecordTypeNotFoundException, RecordException {
         if (isDeleteMarker(fieldValue))
             return DELETE_MARKER;
         ValueType valueType = fieldType.getValueType();
 
-        DataOutput dataOutput = new DataOutputImpl();
-        dataOutput.writeByte(EXISTS_FLAG);
-        IdentityHashMap<Record, Object> parentRecords = new IdentityHashMap<Record, Object>();
-        parentRecords.put(parentRecord, null);
-        valueType.write(fieldValue, dataOutput, parentRecords);
-        return dataOutput.toByteArray();
+        byte[] encodedFieldValue = valueType.toBytes(fieldValue);
+        encodedFieldValue = EncodingUtil.prefixValue(encodedFieldValue, EXISTS_FLAG);
+        return encodedFieldValue;
     }
 
     private boolean isDeleteMarker(Object fieldValue) {
         return (fieldValue instanceof byte[]) && Arrays.equals(DELETE_MARKER, (byte[])fieldValue);
     }
 
-    private Record updateMutableFields(Record record, boolean latestRecordType, List<MutationCondition> conditions,
-            RowLock rowLock, FieldTypes fieldTypes) throws RepositoryException {
+    private Record updateMutableFields(Record record, boolean latestRecordType, RowLock rowLock, FieldTypes fieldTypes)
+            throws RepositoryException {
 
-        Record newRecord = record.cloneRecord();
+        Record newRecord = record.clone();
 
         RecordId recordId = record.getId();
         
@@ -662,8 +614,7 @@ public class HBaseRepository extends BaseRepository {
             Map<QName, Object> fields = getFieldsToUpdate(record);
             fields = filterMutableFields(fields, fieldTypes);
 
-            Record originalRecord = new UnmodifiableRecord(read(recordId, version, null, null, fieldTypes));
-
+            Record originalRecord = read(recordId, version, null, null, fieldTypes);
             Map<QName, Object> originalFields = filterMutableFields(originalRecord.getFields(), fieldTypes);
 
             Record originalNextRecord = null;
@@ -684,8 +635,7 @@ public class HBaseRepository extends BaseRepository {
             recordEvent.setVersionUpdated(version);
 
             
-            Set<Scope> changedScopes = calculateUpdateFields(record, fields, originalFields, originalNextFields,
-                    version, put,
+            Set<Scope> changedScopes = calculateUpdateFields(fields, originalFields, originalNextFields, version, put,
                     recordEvent, referencedBlobs, unReferencedBlobs, true, fieldTypes);
             for (BlobReference referencedBlob : referencedBlobs) {
                 referencedBlob.setRecordId(recordId);
@@ -695,14 +645,6 @@ public class HBaseRepository extends BaseRepository {
             }
             
             if (!changedScopes.isEmpty()) {
-                // Check the conditions after establishing that the record really needs updating, this makes the
-                // conditional update operation idempotent.
-                Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
-                        record);
-                if (conditionsRecord != null) {
-                    return conditionsRecord;
-                }
-
                 // Update the record types
                 
                 // If no record type is specified explicitly, use the current one of the non-versioned scope
@@ -788,7 +730,7 @@ public class HBaseRepository extends BaseRepository {
             throws RecordException, TypeException, InterruptedException {
         Map<QName, Object> mutableFields = new HashMap<QName, Object>();
         for (Entry<QName, Object> field : fields.entrySet()) {
-            FieldType fieldType = fieldTypes.getFieldType(field.getKey());
+            FieldType fieldType = fieldTypes.getFieldTypeByName(field.getKey());
             if (Scope.VERSIONED_MUTABLE.equals(fieldType.getScope())) {
                 mutableFields.put(field.getKey(), field.getValue());
             }
@@ -802,64 +744,57 @@ public class HBaseRepository extends BaseRepository {
      * and the record relies on what is in the previous cell's version.
      * The original value needs to be copied into it. Otherwise we loose that value.
      */
-    private void copyValueToNextVersionIfNeeded(Record parentRecord, Long version, Put put,
-            Map<QName, Object> originalNextFields,
+    private void copyValueToNextVersionIfNeeded(Long version, Put put, Map<QName, Object> originalNextFields,
             QName fieldName, Object originalValue, FieldTypes fieldTypes)
-            throws RecordException, TypeException, RepositoryException, InterruptedException {
+            throws RecordException, TypeException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
-            FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldName);
-            byte[] encodedValue = encodeFieldValue(parentRecord, fieldType, originalValue);
+            FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldName);
+            byte[] encodedValue = encodeFieldValue(fieldType, originalValue);
             put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), version + 1, encodedValue);
         }
     }
 
-    @Override
-    public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
-        return read(recordId, null, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
+    public Record read(RecordId recordId) throws RepositoryException,
+            InterruptedException {
+        return read(recordId, null, null);
     }
-    
-    @Override
-    public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
+
+    public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames);
     }
     
-    @Override
+    public List<Record> read(List<RecordId> recordIds) throws RepositoryException, InterruptedException {
+        return read(recordIds, null);
+    }
+
     public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
-        return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public List<Record> read(List<RecordId> recordIds, QName...fieldNames)
-            throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
-        
+        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
+
         return read(recordIds, fields, fieldTypes);
     }
 
-    @Override
+    public Record read(RecordId recordId, Long version) throws RepositoryException, InterruptedException {
+        return read(recordId, version, null);
+    }
+
     public Record read(RecordId recordId, Long version, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
-        return read(recordId, version , fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
-        
+        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
+
         return read(recordId, version, fields, null, fieldTypes);
     }
 
-    private List<FieldType> getFieldTypesFromNames(FieldTypes fieldTypes, QName... fieldNames)
-        throws TypeException, InterruptedException {
+    private List<FieldType> getFieldTypesFromNames(List<QName> fieldNames, FieldTypes fieldTypes)
+            throws TypeException, InterruptedException {
         List<FieldType> fields = null;
         if (fieldNames != null) {
             fields = new ArrayList<FieldType>();
             for (QName fieldName : fieldNames) {
-                fields.add(fieldTypes.getFieldType(fieldName));
+                fields.add(fieldTypes.getFieldTypeByName(fieldName));
             }
         }
         return fields;
@@ -871,20 +806,13 @@ public class HBaseRepository extends BaseRepository {
         if (fieldIds != null) {
             fields = new ArrayList<FieldType>(fieldIds.size());
             for (SchemaId fieldId : fieldIds) {
-                fields.add(fieldTypes.getFieldType(fieldId));
+                fields.add(fieldTypes.getFieldTypeById(fieldId));
             }
         }
         return fields;
     }
     
-    @Override
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
-        throws RepositoryException, InterruptedException {
-        return readVersions(recordId, fromVersion, toVersion, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(fromVersion, "fromVersion");
@@ -895,7 +823,7 @@ public class HBaseRepository extends BaseRepository {
         }
 
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
+        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
 
         int numberOfVersionsToRetrieve = (int)(toVersion - fromVersion + 1);
         Result result = getRow(recordId, toVersion, numberOfVersionsToRetrieve, fields);
@@ -911,14 +839,7 @@ public class HBaseRepository extends BaseRepository {
         return getRecordsFromRowResult(recordId, versionsToRead, result, fieldTypes);
     }
     
-    @Override
     public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
-    throws RepositoryException, InterruptedException {
-        return readVersions(recordId, versions, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
             throws RepositoryException, InterruptedException {
         ArgumentValidator.notNull(recordId, "recordId");
         ArgumentValidator.notNull(versions, "versions");
@@ -929,7 +850,7 @@ public class HBaseRepository extends BaseRepository {
         Collections.sort(versions);
         
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
+        List<FieldType> fields = getFieldTypesFromNames(fieldNames, fieldTypes);
         
         Long lowestRequestedVersion = versions.get(0);
         Long highestRequestedVersion = versions.get(versions.size()-1);
@@ -947,7 +868,6 @@ public class HBaseRepository extends BaseRepository {
         return getRecordsFromRowResult(recordId, validVersions, result, fieldTypes);
     }
     
-    @Override
     public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
         ReadContext readContext = new ReadContext();
@@ -1090,6 +1010,19 @@ public class HBaseRepository extends BaseRepository {
         return results;
     }
     
+    private boolean recordExists(byte[] rowId) throws IOException {
+        Get get = new Get(rowId);
+        
+        get.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
+        Result result = recordTable.get(get);
+        if (result == null || result.isEmpty()) {
+            return false;
+        } else {
+            byte[] deleted = result.getValue(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
+            return !((deleted == null) || (Bytes.toBoolean(deleted)));
+        }
+    }
+
     /**
      * Extracts the latest record type for a specific scope from the Result.
      */
@@ -1280,16 +1213,15 @@ public class HBaseRepository extends BaseRepository {
     }
     
     private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
-            FieldTypes fieldTypes) throws RecordException, TypeException, RepositoryException, InterruptedException {
-        byte prefix = prefixedValue[0];
-        if (LilyHBaseSchema.DELETE_FLAG == prefix) {
+            FieldTypes fieldTypes) throws RecordException, TypeException, InterruptedException {
+        if (EncodingUtil.isDeletedField(prefixedValue)) {
             return null;
         }
-        FieldType fieldType = fieldTypes.getFieldType(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
+        FieldType fieldType = fieldTypes.getFieldTypeById(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
         if (context != null) 
             context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();
-        Object value = valueType.read(EncodingUtil.stripPrefix(prefixedValue));
+        Object value = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(prefixedValue)));
         return new Pair<FieldType, Object>(fieldType, value);
     }
 
@@ -1316,14 +1248,7 @@ public class HBaseRepository extends BaseRepository {
         get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
     }
 
-    @Override
     public void delete(RecordId recordId) throws RepositoryException {
-        delete(recordId, null);
-    }
-
-    @Override
-    public Record delete(RecordId recordId, List<MutationCondition> conditions)
-            throws RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
         RowLock rowLock = null;
@@ -1334,17 +1259,9 @@ public class HBaseRepository extends BaseRepository {
 
             // We need to read the original record in order to put the delete marker in the non-versioned fields.
             // Throw RecordNotFoundException if there is no record to be deleted
-            FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();            
-            Record originalRecord = read(recordId, null, null, null, fieldTypes); 
-
-            if (conditions != null) {
-                Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
-                        null);
-                if (conditionsRecord != null) {
-                    return conditionsRecord;
-                }
-            }
-
+            FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
+            Record originalRecord = read(recordId, null, null, null, fieldTypes);            
+            
             Put put = new Put(rowId);
             // Mark the record as deleted
             put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(true));
@@ -1354,20 +1271,20 @@ public class HBaseRepository extends BaseRepository {
             // See trac ticket http://dev.outerthought.org/trac/outerthought_lilyproject/ticket/297
             Map<QName, Object> fields = originalRecord.getFields();
             for (Entry<QName, Object> fieldEntry : fields.entrySet()) {
-                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldEntry.getKey());
+                FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldTypeByName(fieldEntry.getKey());
                 if (Scope.NON_VERSIONED == fieldType.getScope()) {
                     put.add(RecordCf.DATA.bytes, fieldType.getQualifier(), 1L, DELETE_MARKER);
                 }
-                
+
             }
-            
+
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.DELETE);
             RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
             if (!rowLocker.put(put, rowLock)) {
                 throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");
             }
-
+            
             // Clear the old data and delete any referenced blobs
             clearData(recordId, originalRecord);
 
@@ -1394,10 +1311,8 @@ public class HBaseRepository extends BaseRepository {
             long after = System.currentTimeMillis();
             metrics.report(Action.DELETE, (after-before));
         }
-
-        return null;
     }
-
+    
     // Clear all data of the recordId until the latest record version (included)
     // And delete any referred blobs
     private void clearData(RecordId recordId, Record originalRecord) throws IOException, RepositoryException, InterruptedException {
@@ -1427,7 +1342,7 @@ public class HBaseRepository extends BaseRepository {
                             Set<Entry<Long, byte[]>> cellsSet = cells.entrySet();
                             for (Entry<Long, byte[]> cell : cellsSet) {
                                 // Get blobs to delete
-                                if (valueType.getDeepestValueType() instanceof BlobValueType) {
+                                if (valueType.getPrimitive() instanceof BlobValueType) {
                                     Object blobValue = null;
                                     if (fieldType.getScope() == Scope.NON_VERSIONED) {
                                         // Read the blob value from the original record, 
@@ -1437,7 +1352,7 @@ public class HBaseRepository extends BaseRepository {
                                     } else {
                                         byte[] value = cell.getValue();
                                         if (!isDeleteMarker(value)) {
-                                            blobValue = valueType.read(EncodingUtil.stripPrefix(value));
+                                            blobValue = valueType.read(new DataInputImpl(EncodingUtil.stripPrefix(value)));
                                         }
                                     }
                                     try {
@@ -1475,7 +1390,7 @@ public class HBaseRepository extends BaseRepository {
             
             // Delete data
             if (dataToDelete) { // Avoid a delete action when no data was found to delete
-                // Do not delete the NON-VERSIONED record type column.
+             // Do not delete the NON-VERSIONED record type column.
                 // If the thombstone was not processed yet (major compaction)
                 // a re-creation of the record would then loose its record type since the NON-VERSIONED 
                 // field is always stored at timestamp 1L
@@ -1511,7 +1426,8 @@ public class HBaseRepository extends BaseRepository {
     private Set<BlobReference> getReferencedBlobs(FieldTypeImpl fieldType, Object value) throws BlobException {
         HashSet<BlobReference> referencedBlobs = new HashSet<BlobReference>();
         ValueType valueType = fieldType.getValueType();
-        if ((valueType.getDeepestValueType() instanceof BlobValueType) && ! isDeleteMarker(value)) {
+        PrimitiveValueType primitiveValueType = valueType.getPrimitive();
+        if ((primitiveValueType instanceof BlobValueType) && ! isDeleteMarker(value)) {
             Set<Object> values = valueType.getValues(value);
             for (Object object : values) {
                 referencedBlobs.add(new BlobReference((Blob)object, null, fieldType));
@@ -1547,8 +1463,14 @@ public class HBaseRepository extends BaseRepository {
 
             Get get = new Get(recordIdBytes);
             get.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
-            byte[] valueToCompare = Bytes.toBytes(valueType.getNestingLevel());
-            
+            byte[] valueToCompare;
+            if (valueType.isMultiValue() && valueType.isHierarchical()) {
+                valueToCompare = Bytes.toBytes(2);
+            } else if (valueType.isMultiValue() || valueType.isHierarchical()) {
+                valueToCompare = Bytes.toBytes(1);
+            } else {
+                valueToCompare = Bytes.toBytes(0);
+            }
             // Note, if a encoding of the BlobValueType is added, this might have to change.
             valueToCompare = Bytes.add(valueToCompare, blobReference.getBlob().getValue());
             WritableByteArrayComparable valueComparator = new ContainsValueComparator(valueToCompare);
@@ -1578,7 +1500,6 @@ public class HBaseRepository extends BaseRepository {
         return unReferencedBlobs;
     }
 
-    @Override
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException {
         byte[] masterRecordIdBytes = recordId.getMaster().toBytes();
         FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
@@ -1653,10 +1574,5 @@ public class HBaseRepository extends BaseRepository {
         public Set<Scope> getScopes() {
             return scopes;
         }
-    }
-    
-    @Override
-    public RecordBuilder recordBuilder() throws RecordException {
-        return new RecordBuilderImpl(this);
     }
 }

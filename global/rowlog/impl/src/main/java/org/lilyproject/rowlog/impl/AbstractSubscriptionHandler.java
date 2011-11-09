@@ -78,7 +78,6 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
             delegate.close();
         }
 
-        @Override
         public void run() {
             while(!stop && !Thread.interrupted()) {
                 RowLogMessage message;

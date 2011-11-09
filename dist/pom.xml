@@ -20,12 +20,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-dist</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.0.4</version>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0.4</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -64,43 +64,18 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-server-test-fw</artifactId>
+      <artifactId>lily-testfw</artifactId>
+      <scope>runtime</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-server-test-fw-loader</artifactId>
+      <artifactId>lily-solr-test-fw</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-print-host</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-upgrade</artifactId>
-    </dependency>
-
-    <!--
-       The following dependencies are not strictly required to launch Lily, but they are useful
-       in case you don't have access to an external Lily repository (or if the particular
-       version is not deployed in the repository). One can then change the definition of the
-       Lily repository to point to file:///$LILY_HOME/lib.
-    -->
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-archetype-basic</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-archetype-lily-server-plugin</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-kauri-plugin</artifactId>
     </dependency>
 
     <dependency>
@@ -111,6 +86,11 @@
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-record-row-visualizer</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-linkindex-cli</artifactId>
     </dependency>
   </dependencies>
 
@@ -144,9 +124,10 @@
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.0.4</version>
         <configuration>
           <confDirectory>${basedir}/../cr/process/server/conf</confDirectory>
+          <kauriVersion>${version.kauri}</kauriVersion>
         </configuration>
       </plugin>
     </plugins>

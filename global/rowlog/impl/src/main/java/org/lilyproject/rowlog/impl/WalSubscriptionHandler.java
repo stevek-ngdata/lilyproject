@@ -16,12 +16,10 @@ public class WalSubscriptionHandler extends LocalListenersSubscriptionHandler {
         super(subscriptionId, messagesWorkQueue, rowLog, rowLogConfigurationManager);
     } 
     
-    @Override
     public void start() {
         listenerRegistered(WalListener.ID);
     }
 
-    @Override
     public void shutdown() {
         stop = true;
         listenerUnregistered(WalListener.ID);

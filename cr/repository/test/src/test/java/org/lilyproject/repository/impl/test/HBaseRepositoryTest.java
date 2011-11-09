@@ -26,7 +26,7 @@ import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 
 public class HBaseRepositoryTest extends AbstractRepositoryTest {

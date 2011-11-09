@@ -16,23 +16,16 @@
 package org.lilyproject.server.modules.general;
 
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 
 import javax.annotation.PreDestroy;
 
 public class HBaseConnectionDisposer {
-    private Configuration conf;
-
-    public HBaseConnectionDisposer(Configuration conf) {
-        this.conf = conf;
-    }
-
     @PreDestroy
     public void stop() {
         try {
-            HConnectionManager.deleteConnection(conf, true);
+            HConnectionManager.deleteAllConnections(true);
         } catch (Throwable t) {
             LogFactory.getLog(getClass()).error("Problem cleaning up HBase connections", t);
         }

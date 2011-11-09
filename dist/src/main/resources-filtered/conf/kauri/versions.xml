@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<versions>
-  <!-- force a specific version for org.lilyproject:* dependencies -->
-  <version groupId="org.lilyproject" version="${project.version}"/>
-  <version groupId="org.apache.hadoop" version="${version.hadoop}"/>
-  <version groupId="org.apache.hbase" version="${version.hbase}"/>
-</versions>

@@ -1,5 +1,6 @@
 This tool is for experts.
-It prints the rows from the MQ or WAL global rowlog table in a readable form.
+It prints the rows from the MQ global rowlog table in a readable form.
 Also shows the corresponding state and payload from the row-local queue.
-It is not a generic rowlog tool, it is hardcoded for the Lily's MQ & WAL.
+It is not a generic rowlog tool, it is hardcoded for the Lily's MQ.
 This tool does not modify anything so should be safe to run.
+For indexes, the subscription name is of the form "IndexUpdater_{indexname}"

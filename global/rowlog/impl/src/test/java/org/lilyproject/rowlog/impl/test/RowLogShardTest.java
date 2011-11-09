@@ -22,12 +22,8 @@ import static org.easymock.classextension.EasyMock.createControl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.util.List;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.easymock.classextension.IMocksControl;
 import org.junit.After;
@@ -41,13 +37,12 @@ import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.api.RowLogSubscription.Type;
 import org.lilyproject.rowlog.impl.RowLogMessageImpl;
 import org.lilyproject.rowlog.impl.RowLogShardImpl;
-import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.testfw.HBaseProxy;
+import org.lilyproject.testfw.TestHelper;
 
 public class RowLogShardTest {
 
-    private static HBaseProxy HBASE_PROXY;
+    private final static HBaseProxy HBASE_PROXY = new HBaseProxy();
     private static RowLogShardImpl shard;
     private static IMocksControl control;
     private static RowLog rowLog;
@@ -56,7 +51,6 @@ public class RowLogShardTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         TestHelper.setupLogging();
-        HBASE_PROXY = new HBaseProxy();
         HBASE_PROXY.start();
         control = createControl();
     }
@@ -79,14 +73,6 @@ public class RowLogShardTest {
     public void tearDown() throws Exception {
         control.reset();
     }
-
-    private HTableInterface createRowLogTable() throws IOException {
-        String tableName = "rowlog";
-        HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-        tableDescriptor.addFamily(new HColumnDescriptor(RowLogShardImpl.MESSAGES_CF));
-        HTableInterface table = new HBaseTableFactoryImpl(HBASE_PROXY.getConf()).getTable(tableDescriptor);
-        return table;
-    }
     
     @Test
     public void testSingleMessage() throws Exception {
@@ -94,16 +80,16 @@ public class RowLogShardTest {
         rowLog.getSubscriptions();
         expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 1))).anyTimes();
         control.replay();
-        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
         RowLogMessageImpl message1 = new RowLogMessageImpl(System.currentTimeMillis(), Bytes.toBytes("row1"), 0L, null, rowLog);
         shard.putMessage(message1); 
         
-        List<RowLogMessage> messages = shard.next(subscriptionId, batchSize);
+        List<RowLogMessage> messages = shard.next(subscriptionId);
         assertEquals(1, messages.size());
         assertEquals(message1, messages.get(0));
         
         shard.removeMessage(message1, subscriptionId);
-        assertTrue(shard.next(subscriptionId, batchSize).isEmpty());
+        assertTrue(shard.next(subscriptionId).isEmpty());
         control.verify();
     }
     
@@ -114,7 +100,7 @@ public class RowLogShardTest {
         expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId, Type.VM, 1))).anyTimes();
         
         control.replay();
-        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
         long timestamp1 = System.currentTimeMillis();
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 0L, null, rowLog);
         long timestamp2 = System.currentTimeMillis()+1;
@@ -123,7 +109,7 @@ public class RowLogShardTest {
         shard.putMessage(message1);
         shard.putMessage(message2);
 
-        List<RowLogMessage> messages = shard.next(subscriptionId, batchSize);
+        List<RowLogMessage> messages = shard.next(subscriptionId);
         assertEquals(2, messages.size());
         assertEquals(message1, messages.get(0));
 
@@ -131,7 +117,7 @@ public class RowLogShardTest {
         assertEquals(message2, messages.get(1));
         
         shard.removeMessage(message2, subscriptionId);
-        assertTrue(shard.next(subscriptionId, batchSize).isEmpty());
+        assertTrue(shard.next(subscriptionId).isEmpty());
         control.verify();
     }
     
@@ -143,7 +129,7 @@ public class RowLogShardTest {
         
         RowLogMessage[] expectedMessages = new RowLogMessage[7];
         control.replay();
-        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
         long now = System.currentTimeMillis();
         for (int i = 0; i < 7; i++) {
             RowLogMessageImpl message = new RowLogMessageImpl(now + i, Bytes.toBytes("row1"), 0L, null, rowLog);
@@ -151,7 +137,7 @@ public class RowLogShardTest {
             shard.putMessage(message);
         }
 
-        List<RowLogMessage> messages = shard.next(subscriptionId, batchSize);
+        List<RowLogMessage> messages = shard.next(subscriptionId);
         assertEquals(batchSize , messages.size());
 
         int i = 0;
@@ -159,14 +145,14 @@ public class RowLogShardTest {
             assertEquals(expectedMessages[i++], message);
             shard.removeMessage(message, subscriptionId);
         }
-        messages = shard.next(subscriptionId, batchSize);
+        messages = shard.next(subscriptionId);
         assertEquals(2, messages.size());
         for (RowLogMessage message : messages) {
             assertEquals(expectedMessages[i++], message);
             shard.removeMessage(message, subscriptionId);
         }
         
-        assertTrue(shard.next(subscriptionId, batchSize).isEmpty());
+        assertTrue(shard.next(subscriptionId).isEmpty());
         control.verify();
     }
     
@@ -181,7 +167,7 @@ public class RowLogShardTest {
                 new RowLogSubscription("id", subscriptionId2, Type.VM, 2))).anyTimes();
         
         control.replay();
-        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
         long timestamp1 = System.currentTimeMillis();
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 1L, null, rowLog);
         long timestamp2 = timestamp1 + 1;
@@ -189,22 +175,22 @@ public class RowLogShardTest {
         
         shard.putMessage(message1);
         shard.putMessage(message2);
-        List<RowLogMessage> messages = shard.next(subscriptionId1, batchSize);
+        List<RowLogMessage> messages = shard.next(subscriptionId1);
         assertEquals(2, messages.size());
         assertEquals(message1, messages.get(0));
         shard.removeMessage(message1, subscriptionId1);
         assertEquals(message2, messages.get(1));
         shard.removeMessage(message2, subscriptionId1);
         
-        messages = shard.next(subscriptionId2, batchSize);
+        messages = shard.next(subscriptionId2);
         assertEquals(2, messages.size());
         assertEquals(message1, messages.get(0));
         shard.removeMessage(message1, subscriptionId2);
         assertEquals(message2, messages.get(1));
         shard.removeMessage(message2, subscriptionId2);
         
-        assertTrue(shard.next(subscriptionId1, batchSize).isEmpty());
-        assertTrue(shard.next(subscriptionId2, batchSize).isEmpty());
+        assertTrue(shard.next(subscriptionId1).isEmpty());
+        assertTrue(shard.next(subscriptionId2).isEmpty());
         control.verify();
     }
     
@@ -216,19 +202,19 @@ public class RowLogShardTest {
         expectLastCall().andReturn(asList(new RowLogSubscription("id", subscriptionId1, Type.VM, 1))).anyTimes();
         
         control.replay();
-        shard = new RowLogShardImpl("TestShard", new byte[0], createRowLogTable(), rowLog, batchSize);
+        shard = new RowLogShardImpl("TestShard", HBASE_PROXY.getConf(), rowLog, batchSize);
         long timestamp1 = System.currentTimeMillis();
         RowLogMessageImpl message1 = new RowLogMessageImpl(timestamp1, Bytes.toBytes("row1"), 1L, null, rowLog);
 
         shard.putMessage(message1);
-        assertTrue(shard.next(subscriptionId2, batchSize).isEmpty());
+        assertTrue(shard.next(subscriptionId2).isEmpty());
 
         shard.removeMessage(message1, subscriptionId2);
-        List<RowLogMessage> messages = shard.next(subscriptionId1, batchSize);
+        List<RowLogMessage> messages = shard.next(subscriptionId1);
         assertEquals(message1, messages.get(0));
         // Cleanup
         shard.removeMessage(message1, subscriptionId1);
-        assertTrue(shard.next(subscriptionId1, batchSize).isEmpty());
+        assertTrue(shard.next(subscriptionId1).isEmpty());
         control.verify();
     }
 }

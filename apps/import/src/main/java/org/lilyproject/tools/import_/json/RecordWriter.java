@@ -28,10 +28,9 @@ import java.util.Map;
 public class RecordWriter implements EntityWriter<Record> {
     public static RecordWriter INSTANCE = new RecordWriter();
 
-    @Override
     public ObjectNode toJson(Record record, WriteOptions options, Repository repository) throws RepositoryException,
             InterruptedException {
-        Namespaces namespaces = new NamespacesImpl();
+        Namespaces namespaces = new Namespaces();
 
         ObjectNode recordNode = toJson(record, options, namespaces, repository);
 
@@ -40,15 +39,12 @@ public class RecordWriter implements EntityWriter<Record> {
         return recordNode;
     }
 
-    @Override
     public ObjectNode toJson(Record record, WriteOptions options, Namespaces namespaces, Repository repository)
             throws RepositoryException, InterruptedException {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode recordNode = factory.objectNode();
 
-        if (record.getId() != null) {
-            recordNode.put("id", record.getId().toString());
-        }
+        recordNode.put("id", record.getId().toString());
 
         if (record.getVersion() != null) {
             recordNode.put("version", record.getVersion());
@@ -84,7 +80,7 @@ public class RecordWriter implements EntityWriter<Record> {
                 String fieldName = QNameConverter.toJson(fieldType.getName(), namespaces);
 
                 // fields entry
-                fieldsNode.put(fieldName, valueToJson(field.getValue(), fieldType.getValueType(), options, namespaces, repository));
+                fieldsNode.put(fieldName, valueToJson(field.getValue(), fieldType));
 
                 // schema entry
                 if (schemaNode != null) {
@@ -96,68 +92,69 @@ public class RecordWriter implements EntityWriter<Record> {
         return recordNode;
     }
 
-    private JsonNode listToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
-        List list = (List)value;
-        ArrayNode array = JsonNodeFactory.instance.arrayNode();
-        for (Object item : list) {
-            array.add(valueToJson(item, valueType, options, namespaces, repository));
+    private static JsonNode valueToJson(Object value, FieldType fieldType) {
+        if (fieldType.getValueType().isMultiValue()) {
+            List list = (List)value;
+            ArrayNode array = JsonNodeFactory.instance.arrayNode();
+            for (Object item : list) {
+                array.add(hierarchicalValueToJson(item, fieldType));
+            }
+            return array;
+        } else {
+            return hierarchicalValueToJson(value, fieldType);
         }
-        return array;
     }
 
-    private JsonNode pathToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
-        HierarchyPath path = (HierarchyPath)value;
-        ArrayNode array = JsonNodeFactory.instance.arrayNode();
-        for (Object element : path.getElements()) {
-            array.add(valueToJson(element, valueType, options, namespaces, repository));
+    private static JsonNode hierarchicalValueToJson(Object value, FieldType fieldType) {
+        if (fieldType.getValueType().isHierarchical()) {
+            HierarchyPath path = (HierarchyPath)value;
+            ArrayNode array = JsonNodeFactory.instance.arrayNode();
+            for (Object element : path.getElements()) {
+                array.add(primitiveValueToJson(element, fieldType));
+            }
+            return array;
+        } else {
+            return primitiveValueToJson(value, fieldType);
         }
-        return array;
     }
 
-    private JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
-        String name = valueType.getBaseName();
+    private static JsonNode primitiveValueToJson(Object value, FieldType fieldType) {
+        String type = fieldType.getValueType().getPrimitive().getName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;
 
         JsonNode result;
 
-        if (name.equals("LIST")) {
-            result = listToJson(value, valueType.getNestedValueType(), options, namespaces, repository);
-        } else if (name.equals("PATH")) {
-            result = pathToJson(value, valueType.getNestedValueType(), options, namespaces, repository);
-        } else if (name.equals("STRING")) {
+        if (type.equals("STRING")) {
             result = factory.textNode((String)value);
-        } else if (name.equals("LONG")) {
+        } else if (type.equals("LONG")) {
             result = factory.numberNode((Long)value);
-        } else if (name.equals("DOUBLE")) {
+        } else if (type.equals("DOUBLE")) {
             result = factory.numberNode((Double)value);
-        } else if (name.equals("BOOLEAN")) {
+        } else if (type.equals("BOOLEAN")) {
             result = factory.booleanNode((Boolean)value);
-        } else if (name.equals("INTEGER")) {
+        } else if (type.equals("INTEGER")) {
             result = factory.numberNode((Integer)value);
-        } else if (name.equals("URI") || name.equals("DATETIME") || name.equals("DATE") || name.equals("LINK")) {
+        } else if (type.equals("URI") || type.equals("DATETIME") || type.equals("DATE") || type.equals("LINK")) {
             result = factory.textNode(value.toString());
-        } else if (name.equals("DECIMAL")) {
+        } else if (type.equals("DECIMAL")) {
             result = factory.numberNode((BigDecimal)value);
-        } else if (name.equals("BLOB")) {
+        } else if (type.equals("BLOB")) {
             Blob blob = (Blob)value;
             result = BlobConverter.toJson(blob);
-        } else if (name.equals("RECORD")){
-            result = toJson((Record)value, options, namespaces, repository);
         } else {
-            throw new RuntimeException("Unsupported value type: " + name);
+            throw new RuntimeException("Unsupported primitive value type: " + type);
         }
 
         return result;
     }
 
-    private static JsonNode typeToJson(QName name, Long version, Namespaces namespaces) {
+    private static JsonNode typeToJson(QName name, long version, Namespaces namespaces) {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode jsonType = factory.objectNode();
 
         jsonType.put("name", QNameConverter.toJson(name, namespaces));
-        if (version != null)
-            jsonType.put("version", version);
+        jsonType.put("version", version);
 
         return jsonType;
     }

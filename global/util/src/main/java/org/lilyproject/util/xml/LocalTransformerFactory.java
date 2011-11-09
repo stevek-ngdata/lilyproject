@@ -20,7 +20,6 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 
 public class LocalTransformerFactory {
     private static ThreadLocal<TransformerFactory> LOCAL = new ThreadLocal<TransformerFactory>() {
-        @Override
         protected TransformerFactory initialValue() {
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             return transformerFactory;

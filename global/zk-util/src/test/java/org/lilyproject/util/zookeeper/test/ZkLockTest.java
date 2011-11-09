@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.testfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.net.NetUtils;
 import org.lilyproject.util.zookeeper.ZkLock;
@@ -91,7 +91,6 @@ public class ZkLockTest {
 
         // The following will block
         Thread t = new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     log.debug("Request second lock.");

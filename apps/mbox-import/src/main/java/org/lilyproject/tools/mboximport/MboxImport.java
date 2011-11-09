@@ -159,12 +159,10 @@ public class MboxImport extends BaseRepositoryTestTool {
             this.file = file;
         }
 
-        @Override
         public void run() {
             try {
                 importFile(file);
-            } catch (Throwable t) {
-                t.printStackTrace();
+            } catch (Exception e) {
                 metrics.increment("Exceptions", 1);
             }
         }

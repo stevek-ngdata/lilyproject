@@ -1,25 +1,21 @@
 package org.lilyproject.repotestfw;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.zookeeper.KeeperException;
 import org.junit.Assert;
-import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.*;
+import org.lilyproject.repository.avro.AvroConverter;
+import org.lilyproject.repository.avro.AvroLily;
+import org.lilyproject.repository.avro.AvroLilyImpl;
+import org.lilyproject.repository.avro.LilySpecificResponder;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
 import org.lilyproject.rowlog.impl.*;
+import org.lilyproject.testfw.HBaseProxy;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -29,11 +25,15 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Helper class to instantiate and wire all the repository related services.
  */
 public class RepositorySetup {
-    private HBaseProxy hbaseProxy;
+    private HBaseProxy hbaseProxy = new HBaseProxy();
     private Configuration hadoopConf;
     private ZooKeeperItf zk;
 
@@ -67,12 +67,10 @@ public class RepositorySetup {
 
     private long hbaseBlobLimit = -1;
     private long inlineBlobLimit = -1;
-    private RemoteTestSchemaCache remoteSchemaCache;
 
     public void setupCore() throws Exception {
         if (coreSetup)
             return;
-        hbaseProxy = new HBaseProxy();
         hbaseProxy.start();
         hadoopConf = hbaseProxy.getConf();
         zk = ZkUtil.connect(hbaseProxy.getZkConnectString(), 10000);
@@ -109,15 +107,16 @@ public class RepositorySetup {
             HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
             rowLogConfManager.addRowLog("WAL", new RowLogConfig(true, false, 100L, 5000L, 5000L, 120000L));
             wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                    LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker, new RowLogHashShardRouter());
-            RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
+                    LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker);
+            RowLogShard walShard = new RowLogShardImpl("WS1", hadoopConf, wal, 100);
+            wal.registerShard(walShard);
         }
 
         repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
 
         repositorySetup = true;
     }
-    
+
     private BlobStoreAccessFactory createBlobAccess() throws Exception {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(hbaseProxy.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(hadoopConf);
@@ -133,7 +132,7 @@ public class RepositorySetup {
             blobStoreAccessConfig.setLimit(inlineBlobStoreAccess.getId(), inlineBlobLimit);
         }
 
-        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess);
+        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(new BlobStoreAccess[]{dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess});
         SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         return blobStoreAccessFactory;
     }
@@ -161,10 +160,8 @@ public class RepositorySetup {
 
         AvroConverter remoteConverter = new AvroConverter();
 
-        remoteSchemaCache = new RemoteTestSchemaCache(zk);
-        remoteTypeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                idGenerator, zk, remoteSchemaCache);
-        remoteSchemaCache.setTypeManager(remoteTypeManager);
+        remoteTypeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()),
+                remoteConverter, idGenerator, zk);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
@@ -174,7 +171,6 @@ public class RepositorySetup {
 
         remoteConverter.setRepository(repository);
         remoteTypeManager.start();
-        remoteSchemaCache.start();
 
     }
 
@@ -194,11 +190,11 @@ public class RepositorySetup {
         rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 1);
 
         mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
-                LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null, new RowLogHashShardRouter());
-        RowLogShardSetup.setupShards(1, mq, hbaseTableFactory);
+                LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null);
         if (withManualProcessing) {
             mq = new ManualProcessRowLog(mq);
         }
+        mq.registerShard(new RowLogShardImpl("MQS1", hadoopConf, mq, 100));
 
         RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;
         listenerClassMapping.put("MQFeeder", new MessageQueueFeeder(mq));
@@ -206,7 +202,7 @@ public class RepositorySetup {
         waitForSubscription(wal, "MQFeeder");
 
         if (withProcessor) {
-            mqProcessor = new RowLogProcessorImpl(mq, rowLogConfManager, getHadoopConf());
+            mqProcessor = new RowLogProcessorImpl(mq, rowLogConfManager);
             mqProcessor.start();
         }
     }
@@ -223,7 +219,6 @@ public class RepositorySetup {
         if (mqProcessor != null)
             mqProcessor.stop();
 
-        Closer.close(remoteSchemaCache);
         Closer.close(remoteTypeManager);
         Closer.close(remoteRepository);
 
@@ -277,21 +272,8 @@ public class RepositorySetup {
         return remoteRepository;
     }
 
-    /**
-     * Returns a default typemanager.
-     */
     public TypeManager getTypeManager() {
         return typeManager;
-    }
-
-    /**
-     * Returns a new instance of a HBaseTypeManager, different than the default
-     * typemanager.
-     */
-    public TypeManager getNewTypeManager() throws IOException, InterruptedException, KeeperException,
-            RepositoryException {
-        return new HBaseTypeManager(new IdGeneratorImpl(), hadoopConf, zk, hbaseTableFactory);
-
     }
 
     public IdGenerator getIdGenerator() {
@@ -336,25 +318,5 @@ public class RepositorySetup {
 
     public RowLocker getRowLocker() {
         return rowLocker;
-    }
-    
-    private class RemoteTestSchemaCache extends AbstractSchemaCache implements SchemaCache {
-
-        private TypeManager typeManager;
-
-        public RemoteTestSchemaCache(ZooKeeperItf zooKeeper) {
-            super(zooKeeper);
-            log = LogFactory.getLog(getClass());
-        }
-
-        public void setTypeManager(TypeManager typeManager) {
-            this.typeManager = typeManager;
-        }
-
-        @Override
-        protected TypeManager getTypeManager() {
-            return typeManager;
-        }
-        
     }
 }

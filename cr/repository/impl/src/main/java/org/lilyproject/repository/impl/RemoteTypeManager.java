@@ -20,8 +20,6 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-import javax.annotation.PreDestroy;
-
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -29,7 +27,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
-import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -43,11 +40,9 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     private AvroConverter converter;
     private Transceiver client;
 
-    public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator,
-            ZooKeeperItf zooKeeper, SchemaCache schemaCache)
+    public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator, ZooKeeperItf zooKeeper)
             throws IOException {
         super(zooKeeper);
-        super.schemaCache = schemaCache;
         log = LogFactory.getLog(getClass());
         this.converter = converter;
         //TODO idGenerator should not be available or used in the remote implementation
@@ -60,26 +55,20 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     }
 
     /**
-     * Start should be called for the RemoteTypeManager after the typemanager
-     * has been assigned to the repository, after the repository has been
-     * assigned to the AvroConverter and before using the typemanager and
-     * repository.
-     * 
+     * Start should be called for the RemoteTypeManager after the typemanager has been assigned to the repository,
+     * after the repository has been assigned to the AvroConverter and before using the typemanager and repository.
      * @throws InterruptedException
      * @throws KeeperException
-     * @throws RepositoryException
      */
-    public void start() throws InterruptedException, KeeperException, RepositoryException {
-        // schemaCache.start();
+    public void start() throws InterruptedException, KeeperException {
+        setupCaches();
     }
 
-    @Override
-    @PreDestroy
     public void close() throws IOException {
+        super.close();
         Closer.close(client);
     }
 
-    @Override
     public RecordType createRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
 
         try {
@@ -97,24 +86,6 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
-    @Override
-    public RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
-        try {
-            RecordType newRecordType = converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType)));
-            updateRecordTypeCache(newRecordType.clone());
-            return newRecordType;
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
     protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException {
         try {
             long avroVersion;
@@ -135,7 +106,6 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
-    @Override
     public RecordType updateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
         try {
             RecordType newRecordType = converter.convert(lilyProxy.updateRecordType(converter.convert(recordType)));
@@ -158,13 +128,6 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         return createFieldType(newFieldType(valueType, name, scope));
     }
 
-    @Override
-    public FieldType createFieldType(String valueType, QName name, Scope scope) throws RepositoryException,
-            InterruptedException {
-        return createFieldType(newFieldType(getValueType(valueType), name, scope));
-    }
-
-    @Override
     public FieldType createFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
         try {
             AvroFieldType avroFieldType = converter.convert(fieldType);
@@ -183,24 +146,6 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
-    @Override
-    public FieldType createOrUpdateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
-        try {
-            FieldType newFieldType = converter.convert(lilyProxy.createOrUpdateFieldType(converter.convert(fieldType)));
-            updateFieldTypeCache(newFieldType);
-            return newFieldType;
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
     public FieldType updateFieldType(FieldType fieldType) throws RepositoryException, InterruptedException {
 
         try {
@@ -218,7 +163,6 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
-    @Override
     public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroFieldTypes(lilyProxy.getFieldTypesWithoutCache());
@@ -231,92 +175,9 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         }
     }
 
-    @Override
     public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroRecordTypes(lilyProxy.getRecordTypesWithoutCache());
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
-    public Pair<List<FieldType>, List<RecordType>> getTypesWithoutCache() throws RepositoryException,
-            InterruptedException {
-        try {
-            return converter.convertAvroFieldAndRecordTypes(lilyProxy.getTypesWithoutCache());
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
-    public TypeBucket getTypeBucketWithoutCache(String bucketId) throws RepositoryException,
-            InterruptedException {
-        try {
-
-            AvroTypeBucket avroTypeBucket = lilyProxy.getTypeBucketWithoutCache(bucketId);
-            return converter.convertAvroTypeBucket(avroTypeBucket);
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
-    public void disableSchemaCacheRefresh() throws RepositoryException, InterruptedException {
-        try {
-            lilyProxy.disableSchemaCacheRefresh();
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
-    public void enableSchemaCacheRefresh() throws RepositoryException, InterruptedException {
-        try {
-            lilyProxy.enableSchemaCacheRefresh();
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
-    public boolean isSchemaCacheRefreshEnabled() throws RepositoryException, InterruptedException {
-        try {
-            return lilyProxy.isSchemaCacheRefreshEnabled();
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw converter.convert(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredTypeThrowable(e);
-        }
-    }
-
-    @Override
-    public void triggerSchemaCacheRefresh() throws RepositoryException, InterruptedException {
-        try {
-            lilyProxy.triggerSchemaCacheRefresh();
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
@@ -333,5 +194,4 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
             throw e;
         }
     }
-
 }

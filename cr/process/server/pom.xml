@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0.4</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -98,22 +98,12 @@
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository=$LAUNCHER_M2_REPO -Dlily.logdir=$LILY_HOME/logs -Dlily.plugin.dir=$LILY_HOME/plugins</value>
+              <value>-Dkauri.launcher.repository=$M2_REPO -Dlily.logdir=$LILY_HOME/logs</value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>-Dkauri.launcher.repository="%LAUNCHER_M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs" -Dlily.plugin.dir="%LILY_HOME%\plugins"</value>
-            </parameter>
-            <parameter>
-              <platform>unix</platform>
-              <mode>dev</mode>
-              <value>-Dlily.plugin.dir=plugins</value>
-            </parameter>
-            <parameter>
-              <platform>windows</platform>
-              <mode>dev</mode>
-              <value>-Dlily.plugin.dir=plugins</value>
+              <value>-Dkauri.launcher.repository="%M2_REPO%" -Dlily.logdir="%LILY_HOME%\logs"</value>
             </parameter>
           </defaultJvmArgs>
           <beforeJavaHook>
@@ -123,7 +113,7 @@
               <value>
 # Enable JMX access
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10202"
-LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+LILY_JAVA_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
               </value>
             </parameter>
           </beforeJavaHook>
@@ -141,8 +131,11 @@ LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.0.4</version>
         <inherited>false</inherited>
+        <configuration>
+          <kauriVersion>${version.kauri}</kauriVersion>
+        </configuration>
         <executions>
           <execution>
             <phase>compile</phase>

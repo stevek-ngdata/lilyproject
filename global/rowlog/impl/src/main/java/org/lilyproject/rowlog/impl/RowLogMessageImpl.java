@@ -44,29 +44,24 @@ public class RowLogMessageImpl implements RowLogMessage {
         this.rowLog = rowLog;
     }
 
-    @Override
     public byte[] getData() {
         return data;
     }
 
-    @Override
     public byte[] getPayload() throws RowLogException {
         if (payload == null)
             this.payload = rowLog.getPayload(this);
         return payload;
     }
 
-    @Override
     public byte[] getRowKey() {
         return rowKey;
     }
 
-    @Override
     public long getSeqNr() {
         return seqnr;
     }
     
-    @Override
     public long getTimestamp() {
         return timestamp;
     }

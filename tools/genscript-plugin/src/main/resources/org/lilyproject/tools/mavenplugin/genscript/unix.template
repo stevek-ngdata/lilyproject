@@ -8,10 +8,6 @@
 # LILY_JAVA_OPTIONS
 #    additional options to be passed to the java executable
 #
-# LILY_MAVEN_REPO
-#    additional directory path(s) (comma-separated) to Maven-style
-#    repositories where jar artifacts should be searched
-#
 
 # This technique for detecting LILY_HOME has been adapted from ant's startup script
 if [ -z "$LILY_HOME" -o ! -d "$LILY_HOME" ] ; then
@@ -39,26 +35,18 @@ fi
 # This will set/check JAVA_HOME
 . $LILY_HOME/bin/lily-env.sh
 
-# The repository suitable for bootstrapping Kauri
-LAUNCHER_M2_REPO=$LILY_HOME/lib
-
-# The repository(ies) to be used by Kauri for loading the application
-M2_REPO=$LAUNCHER_M2_REPO
-if [ ! -z "$LILY_MAVEN_REPO" ] ; then
-  M2_REPO=$M2_REPO,$LILY_MAVEN_REPO
-fi
+M2_REPO=$LILY_HOME/lib
 
 CLASSPATH="$$$CLASSPATH_PREFIX$$$$$$CLASSPATH$$$"
 
 # Only add LILY_CLI_CLASSPATH when it is not empty, to avoid adding the working dir to
 # the classpath by accident.
-if [ ! -z "$LILY_CLI_CLASSPATH" ] ; then
-  CLASSPATH=$CLASSPATH:$LILY_CLI_CLASSPATH
+if [ ! -z "LILY_CLI_CLASSPATH" ] ; then
+  CLASSPATH=$CLASSPATH:LILY_CLI_CLASSPATH
 fi
 
 export CLASSPATH
 
-LILY_OPTIONS=$LILY_JAVA_OPTIONS
 $$$BEFORE_JAVA_HOOK$$$
 
-"$JAVA_HOME/bin/java" $LILY_OPTIONS $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ $@
+"$JAVA_HOME/bin/java" $LILY_JAVA_OPTIONS $$$DEFAULT_JVM_ARGS$$$ $$$MAINCLASS$$$ $$$DEFAULT_CLI_ARGS$$$ $@

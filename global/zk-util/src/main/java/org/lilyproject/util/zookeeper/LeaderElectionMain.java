@@ -29,7 +29,6 @@ public class LeaderElectionMain implements Runnable {
         }
     }
 
-    @Override
     public void run() {
         try {
             ZooKeeperItf zk = ZkUtil.connect("localhost:2181,localhost:21812", 5000);
@@ -40,12 +39,10 @@ public class LeaderElectionMain implements Runnable {
     }
 
     private class Callback implements LeaderElectionCallback {
-        @Override
         public void activateAsLeader() {
             System.out.println("I am the leader.");
         }
 
-        @Override
         public void deactivateAsLeader() {
             System.out.println("I am no longer the leader.");
         }

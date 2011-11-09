@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<indexer>
+<indexer xmlns:dyn1="org.lilyproject.indexer.test.dyn1" xmlns:dyn2="org.lilyproject.indexer.test.dyn2">
 
   <records>
     <!-- A record tag without any match condition will match all records. -->
@@ -11,7 +11,7 @@
        A dynamic field without any match condition will match anything.
        It is allowed to specify extractContent always, it will only do anything in case of blob fields.
     -->
-    <dynamicField name="fulldyn_${name}_${baseType}${list?_mv}" extractContent="true"/>
+    <dynamicField name="fulldyn_${name}_${primitiveTypeLC}${multiValue?_mv}" extractContent="true"/>
   </dynamicFields>
 
 </indexer>

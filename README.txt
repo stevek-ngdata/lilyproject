@@ -13,10 +13,12 @@ http://docs.outerthought.org/lily-docs-1_0/414-lily.html
 Prerequisites
 =============
 
-Install Maven 3.0.x
+Install Maven 2.2.x
 -------------------
 
 From http://maven.apache.org
+
+Maven 3 is not yet supported!
 
 Building Lily
 =============
@@ -60,10 +62,11 @@ this is also easier for debugging.
 
 To easily launch a mini HBase without having to install it, execute:
 
-cd global/hadoop-test-fw
+cd testfw
 ./target/launch-hadoop
 
-This will print some non-log informational messages once everything is up.
+This prints a line "Minicluster is up" when it is started, though it is
+quickly followed by more logging.
 
 And then run the tests with
 

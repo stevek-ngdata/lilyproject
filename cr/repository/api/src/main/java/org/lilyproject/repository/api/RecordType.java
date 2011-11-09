@@ -81,10 +81,6 @@ public interface RecordType {
      */
     FieldTypeEntry addFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory);
 
-    /**
-     *
-     * @return null if there is not field type entry for this field type
-     */
     FieldTypeEntry getFieldTypeEntry(SchemaId fieldTypeId);
     
     void removeFieldTypeEntry(SchemaId fieldTypeId);

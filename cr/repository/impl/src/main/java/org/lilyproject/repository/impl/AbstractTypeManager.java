@@ -15,65 +15,220 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.io.IOException;
 import java.util.*;
 
 import org.apache.commons.logging.Log;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.valuetype.*;
+import org.lilyproject.repository.impl.primitivevaluetype.*;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.Logs;
+import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public abstract class AbstractTypeManager implements TypeManager {
     protected Log log;
 
-    protected Map<String, ValueTypeFactory> valueTypeFactories = new HashMap<String, ValueTypeFactory>();
+    protected CacheRefresher cacheRefresher = new CacheRefresher();
+    
+    protected Map<String, PrimitiveValueType> primitiveValueTypes = new HashMap<String, PrimitiveValueType>();
     protected IdGenerator idGenerator;
     
+    //
+    // Caching
+    //
     protected ZooKeeperItf zooKeeper;
-
-    protected SchemaCache schemaCache;
+    private FieldTypesImpl fieldTypes;
+    private FieldTypesImpl updatingFieldTypes = new FieldTypesImpl();
+    private boolean updatedFieldTypes = false;
+    private Map<QName, RecordType> recordTypeNameCache = new HashMap<QName, RecordType>();
+    private Map<SchemaId, RecordType> recordTypeIdCache = new HashMap<SchemaId, RecordType>();
+    private final CacheWatcher cacheWatcher = new CacheWatcher();
+    protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache";
     
     public AbstractTypeManager(ZooKeeperItf zooKeeper) {
         this.zooKeeper = zooKeeper;
+        cacheRefresher.start();
     }
     
-    @Override
-    public FieldTypes getFieldTypesSnapshot() {
-        return schemaCache.getFieldTypesSnapshot();
+    public void close() throws IOException {
+        try {
+            cacheRefresher.stop();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("Interrupted", e);
+        }
     }
     
-    @Override
+    private class CacheWatcher implements Watcher {
+        public void process(WatchedEvent event) {
+            cacheRefresher.needsRefresh();
+        }
+    }
+
+    protected class ConnectionWatcher implements Watcher {
+        public void process(WatchedEvent event) {
+            if (EventType.None.equals(event.getType()) && KeeperState.SyncConnected.equals(event.getState())) {
+                try {
+                    cacheInvalidationReconnected();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                cacheRefresher.needsRefresh();
+            }
+        }
+    }
+
+    private class CacheRefresher implements Runnable {
+        private volatile boolean needsRefresh;
+        private volatile boolean stop;
+        private final Object needsRefreshLock = new Object();
+        private Thread thread;
+
+        public void start() {
+            thread = new Thread(this, "TypeManager cache refresher");
+            thread.setDaemon(true); // Since this might be used in clients 
+            thread.start();
+        }
+
+        public void stop() throws InterruptedException {
+            stop = true;
+            if (thread != null) {
+                thread.interrupt();
+                Logs.logThreadJoin(thread);
+                thread.join();
+                thread = null;
+            }
+        }
+
+        public void needsRefresh() {
+            synchronized (needsRefreshLock) {
+                needsRefresh = true;
+                needsRefreshLock.notifyAll();
+            }
+        }
+
+        public void run() {
+            while (!stop && !Thread.interrupted()) {
+                try {
+                    if (needsRefresh) {
+                        synchronized (needsRefreshLock) {
+                            needsRefresh = false;
+                        }
+                        refreshCaches();
+                    }
+
+                    synchronized (needsRefreshLock) {
+                        if (!needsRefresh && !stop) {
+                            needsRefreshLock.wait();
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    return;
+                } catch (Throwable t) {
+                    log.error("Error refreshing type manager cache.", t);
+                }
+            }
+        }
+    }
+
+    protected void cacheInvalidationReconnected() throws InterruptedException {
+    }
+
+    protected void setupCaches() throws InterruptedException, KeeperException {
+        ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
+        zooKeeper.addDefaultWatcher(new ConnectionWatcher());
+        refreshCaches();
+    }
+
+    private synchronized void refreshCaches() throws InterruptedException {
+        try {
+            zooKeeper.getData(CACHE_INVALIDATION_PATH, cacheWatcher, null);
+        } catch (KeeperException e) {
+            // Failed to put our watcher.
+            // Relying on the ConnectionWatcher to put it again and initialize
+            // the caches.
+        }
+        try {
+            updatingFieldTypes.refresh(getFieldTypesWithoutCache());
+            updatedFieldTypes = true;
+        } catch (Exception e) {
+            // We keep on working with the old cache
+            log.warn("Exception while refreshing RecordType cache. Cache is possibly out of date.", e);
+        } 
+        refreshRecordTypeCache();
+    }
+
+    private synchronized void refreshRecordTypeCache() {
+        Map<QName, RecordType> newRecordTypeNameCache = new HashMap<QName, RecordType>();
+        Map<SchemaId, RecordType> newRecordTypeIdCache = new HashMap<SchemaId, RecordType>();
+        try {
+            List<RecordType> recordTypes = getRecordTypesWithoutCache();
+            for (RecordType recordType : recordTypes) {
+                newRecordTypeNameCache.put(recordType.getName(), recordType);
+                newRecordTypeIdCache.put(recordType.getId(), recordType);
+            }
+            recordTypeNameCache = newRecordTypeNameCache;
+            recordTypeIdCache = newRecordTypeIdCache;
+        } catch (Exception e) {
+            // We keep on working with the old cache
+            log.warn("Exception while refreshing RecordType cache. Cache is possibly out of date.", e);
+        } 
+    }
+
+    public synchronized FieldTypesImpl getFieldTypesSnapshot() {
+        if (updatedFieldTypes) {
+            fieldTypes = updatingFieldTypes.clone();
+            updatedFieldTypes = false;
+        }
+        return fieldTypes;
+    }
+    
     abstract public List<FieldType> getFieldTypesWithoutCache() throws RepositoryException, InterruptedException;
-    @Override
     abstract public List<RecordType> getRecordTypesWithoutCache() throws RepositoryException, InterruptedException;
     
-    protected void updateFieldTypeCache(FieldType fieldType) throws TypeException, InterruptedException {
-        schemaCache.updateFieldType(fieldType);
+    protected synchronized void updateFieldTypeCache(FieldType fieldType) {
+        updatingFieldTypes.update(fieldType);
+        updatedFieldTypes = true;
     }
     
-    protected void updateRecordTypeCache(RecordType recordType) throws TypeException, InterruptedException {
-        schemaCache.updateRecordType(recordType);
+    protected synchronized void updateRecordTypeCache(RecordType recordType) {
+        RecordType oldType = getRecordTypeFromCache(recordType.getId());
+        if (oldType != null) {
+            recordTypeNameCache.remove(oldType.getName());
+            recordTypeIdCache.remove(oldType.getId());
+        }
+        recordTypeNameCache.put(recordType.getName(), recordType);
+        recordTypeIdCache.put(recordType.getId(), recordType);
     }
     
-    @Override
-    public Collection<RecordType> getRecordTypes() {
-        return schemaCache.getRecordTypes();
+    public synchronized Collection<RecordType> getRecordTypes() {
+        List<RecordType> recordTypes = new ArrayList<RecordType>();
+        for (RecordType recordType : recordTypeNameCache.values()) {
+            recordTypes.add(recordType.clone());
+        }
+        return recordTypes;
     }
     
-    @Override
-    public List<FieldType> getFieldTypes() throws TypeException, InterruptedException {
-        return schemaCache.getFieldTypes();
+    public synchronized List<FieldType> getFieldTypes() {
+        return getFieldTypesSnapshot().getFieldTypes();
     }
 
-    protected RecordType getRecordTypeFromCache(QName name) {
-        return schemaCache.getRecordType(name);
+    
+    
+    protected synchronized RecordType getRecordTypeFromCache(QName name) {
+        return recordTypeNameCache.get(name);
     }
 
-    protected RecordType getRecordTypeFromCache(SchemaId id) {
-        return schemaCache.getRecordType(id);
+    protected synchronized RecordType getRecordTypeFromCache(SchemaId id) {
+        return recordTypeIdCache.get(id);
     }
     
-    @Override
     public RecordType getRecordTypeById(SchemaId id, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(id, "id");
         RecordType recordType = getRecordTypeFromCache(id);
@@ -90,7 +245,6 @@ public abstract class AbstractTypeManager implements TypeManager {
         return recordType.clone();
     }
     
-    @Override
     public RecordType getRecordTypeByName(QName name, Long version) throws RecordTypeNotFoundException, TypeException, RepositoryException, InterruptedException {
         ArgumentValidator.notNull(name, "name");
         RecordType recordType = getRecordTypeFromCache(name);
@@ -109,41 +263,30 @@ public abstract class AbstractTypeManager implements TypeManager {
     
     abstract protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException;
     
-    @Override
-    public FieldType getFieldTypeById(SchemaId id) throws TypeException, InterruptedException {
-        return schemaCache.getFieldType(id);
+    public FieldType getFieldTypeById(SchemaId id) throws FieldTypeNotFoundException {
+        return getFieldTypesSnapshot().getFieldTypeById(id);
     }
     
-    @Override
-    public FieldType getFieldTypeByName(QName name) throws InterruptedException, TypeException {
-        return schemaCache.getFieldType(name);
+    public FieldType getFieldTypeByName(QName name) throws FieldTypeNotFoundException {
+        return getFieldTypesSnapshot().getFieldTypeByName(name);
     }
     
     //
     // Object creation methods
     //
-    @Override
     public RecordType newRecordType(QName name) {
         return new RecordTypeImpl(null, name);
     }
     
-    @Override
     public RecordType newRecordType(SchemaId recordTypeId, QName name) {
+        ArgumentValidator.notNull(name, "name");
         return new RecordTypeImpl(recordTypeId, name);
     }
 
-    @Override
     public FieldType newFieldType(ValueType valueType, QName name, Scope scope) {
         return newFieldType(null, valueType, name, scope);
     }
 
-    @Override
-    public FieldType newFieldType(String valueType, QName name, Scope scope) throws RepositoryException,
-            InterruptedException {
-        return newFieldType(null, getValueType(valueType), name, scope);
-    }
-
-    @Override
     public FieldTypeEntry newFieldTypeEntry(SchemaId fieldTypeId, boolean mandatory) {
         ArgumentValidator.notNull(fieldTypeId, "fieldTypeId");
         ArgumentValidator.notNull(mandatory, "mandatory");
@@ -151,55 +294,34 @@ public abstract class AbstractTypeManager implements TypeManager {
     }
 
 
-    @Override
-    public FieldType newFieldType(SchemaId id, ValueType valueType, QName name, Scope scope) {
-        return new FieldTypeImpl(id, valueType, name, scope);
-    }
-
-    @Override
-    public RecordTypeBuilder recordTypeBuilder() throws TypeException {
-        return new RecordTypeBuilderImpl(this);
-    }
-
-    @Override
-    public FieldTypeBuilder fieldTypeBuilder() throws TypeException {
-        return new FieldTypeBuilderImpl(this);
-    }
-
-    //
-    // Value types
-    //
-    @Override
-    public void registerValueType(String valueTypeName, ValueTypeFactory valueTypeFactory) {
-        valueTypeFactories.put(valueTypeName, valueTypeFactory);
-    }
-
-    @Override
-    public ValueType getValueType(String valueTypeSpec) throws RepositoryException, InterruptedException {
-        ValueType valueType;
-
-        int indexOfParams = valueTypeSpec.indexOf("<");
-        if (indexOfParams == -1) {
-            valueType = valueTypeFactories.get(valueTypeSpec).getValueType(null);
-        } else {
-            if (!valueTypeSpec.endsWith(">")) {
-                throw new IllegalArgumentException("Invalid value type string, no closing angle bracket: '" +
-                        valueTypeSpec + "'");
+    public FieldType newFieldType(SchemaId id, ValueType valueType, QName name,
+            Scope scope) {
+                ArgumentValidator.notNull(valueType, "valueType");
+                ArgumentValidator.notNull(name, "name");
+                ArgumentValidator.notNull(scope, "scope");
+                return new FieldTypeImpl(id, valueType, name, scope);
             }
 
-            String arg = valueTypeSpec.substring(indexOfParams + 1, valueTypeSpec.length() - 1);
+    //
+    // Primitive value types
+    //
+    public void registerPrimitiveValueType(PrimitiveValueType primitiveValueType) {
+        primitiveValueTypes.put(primitiveValueType.getName(), primitiveValueType);
+    }
 
-            if (arg.length() == 0) {
-                throw new IllegalArgumentException("Invalid value type string, type arg is zero length: '" +
-                        valueTypeSpec + "'");
-            }
-
-            valueType = valueTypeFactories.get(valueTypeSpec.substring(0, indexOfParams)).getValueType(arg);
+    public ValueType getValueType(String primitiveValueTypeName, boolean multivalue, boolean hierarchy) {
+        PrimitiveValueType type = primitiveValueTypes.get(primitiveValueTypeName);
+        if (type == null) {
+            throw new IllegalArgumentException("Primitive value type does not exist: " + primitiveValueTypeName);
         }
-
-        return valueType;
+        return new ValueTypeImpl(type, multivalue, hierarchy);
     }
-    
+
+    @Override
+    public ValueType getValueType(String primitiveValueTypeName) throws RepositoryException, InterruptedException {
+        return getValueType(primitiveValueTypeName, false, false);
+    }
+
     // TODO get this from some configuration file
     protected void registerDefaultValueTypes() {
         //
@@ -209,20 +331,16 @@ public abstract class AbstractTypeManager implements TypeManager {
         // types in the javadoc of the method TypeManager.getValueType.
         //
 
-        // TODO or rather use factories?
-        registerValueType(StringValueType.NAME, StringValueType.factory());
-        registerValueType(IntegerValueType.NAME, IntegerValueType.factory());
-        registerValueType(LongValueType.NAME, LongValueType.factory());
-        registerValueType(DoubleValueType.NAME, DoubleValueType.factory());
-        registerValueType(DecimalValueType.NAME, DecimalValueType.factory());
-        registerValueType(BooleanValueType.NAME, BooleanValueType.factory());
-        registerValueType(DateValueType.NAME, DateValueType.factory());
-        registerValueType(DateTimeValueType.NAME, DateTimeValueType.factory());
-        registerValueType(LinkValueType.NAME, LinkValueType.factory(idGenerator, this));
-        registerValueType(BlobValueType.NAME, BlobValueType.factory());
-        registerValueType(UriValueType.NAME, UriValueType.factory());
-        registerValueType(ListValueType.NAME, ListValueType.factory(this));
-        registerValueType(PathValueType.NAME, PathValueType.factory(this));
-        registerValueType(RecordValueType.NAME, RecordValueType.factory(this));
+        registerPrimitiveValueType(new StringValueType());
+        registerPrimitiveValueType(new IntegerValueType());
+        registerPrimitiveValueType(new LongValueType());
+        registerPrimitiveValueType(new DoubleValueType());
+        registerPrimitiveValueType(new DecimalValueType());
+        registerPrimitiveValueType(new BooleanValueType());
+        registerPrimitiveValueType(new DateValueType());
+        registerPrimitiveValueType(new DateTimeValueType());
+        registerPrimitiveValueType(new LinkValueType(idGenerator));
+        registerPrimitiveValueType(new BlobValueType());
+        registerPrimitiveValueType(new UriValueType());
     }
 }

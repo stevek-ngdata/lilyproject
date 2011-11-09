@@ -110,14 +110,12 @@ public class ShardingKey {
     }
 
     private static class RecordIdShardingKeyValue implements ShardingKeyValue {
-        @Override
         public String getValue(RecordId recordId) {
             return recordId.toString();
         }
     }
 
     private static class MasterRecordIdShardingKeyValue implements ShardingKeyValue {
-        @Override
         public String getValue(RecordId recordId) {
             return recordId.getMaster().toString();
         }
@@ -130,7 +128,6 @@ public class ShardingKey {
             this.propertyName = propertyName;
         }
 
-        @Override
         public String getValue(RecordId recordId) throws ShardSelectorException {
             String propertyValue = recordId.getVariantProperties().get(propertyName);
             if (propertyValue == null) {

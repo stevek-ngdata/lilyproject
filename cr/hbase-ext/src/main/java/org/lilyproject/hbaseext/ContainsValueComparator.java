@@ -8,7 +8,7 @@ import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class ContainsValueComparator extends WritableByteArrayComparable {
-    private byte[] nestingLevelAndValue;
+    private byte[] valueTypeAndValue;
     private int offset;
 
     /**
@@ -22,23 +22,22 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
      * Constructor.
      * 
      */
-    public ContainsValueComparator(byte[] nestingLevelAndValue) {
-        this.nestingLevelAndValue = nestingLevelAndValue;
+    public ContainsValueComparator(byte[] valueTypeAndValue) {
+        this.valueTypeAndValue = valueTypeAndValue;
     }
 
-    @Override
     public byte[] getValue() {
-        return nestingLevelAndValue;
+        return valueTypeAndValue;
     }
 
     @Override
     public void readFields(DataInput in) throws IOException {
-        nestingLevelAndValue = Bytes.readByteArray(in);
+        valueTypeAndValue = Bytes.readByteArray(in);
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-        Bytes.writeByteArray(out, nestingLevelAndValue);
+        Bytes.writeByteArray(out, valueTypeAndValue);
     }
 
     @Override
@@ -50,7 +49,8 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
      *               Any changes there have an impact on this implementation. 
      */
     public int compareTo(byte[] theirValue) {
-        byte[] ourStoreKey = Bytes.tail(nestingLevelAndValue, nestingLevelAndValue.length-Bytes.SIZEOF_INT);
+        int valueTypeCode = Bytes.toInt(valueTypeAndValue);
+        byte[] ourStoreKey = Bytes.tail(valueTypeAndValue, valueTypeAndValue.length-Bytes.SIZEOF_INT);
         if (theirValue == null && ourStoreKey == null)
             return 0;
         if (theirValue.length == 0 && ourStoreKey.length == 0)
@@ -60,29 +60,34 @@ public class ContainsValueComparator extends WritableByteArrayComparable {
         if (theirValue[0] == (byte)(1)) { // First byte indicates if it was deleted or not
             return -1;
         }
-
-        int nestingLevel = Bytes.toInt(nestingLevelAndValue);
         offset = 1;
-        
-        return compareBlob(nestingLevel, ourStoreKey, theirValue);
-    }
-    
-    private int compareBlob(int nestingLevel, byte[] ourStoreKey, byte[] theirValue) {
-        int compareTo = -1;
-        if (0 == nestingLevel) {
-            compareTo = compareBlob(ourStoreKey, theirValue);
-            if (0 == compareTo)
-                return 0;
-            skipRestOfBlob(theirValue);
-        } else {
-            int count = readInt(theirValue); // Number of elements in the list or path
+        if (2 == valueTypeCode) {
+            int compareTo = -1;
+            int multivalueCount = readInt(theirValue); // Number of elements in the multivalue
+            for (int i = 0; i < multivalueCount; i++) {
+                int hierarchicalCount = readInt(theirValue); // Number of elements in the hierarchy
+                for (int j = 0; j < hierarchicalCount; j++) {
+                    compareTo = compareBlob(ourStoreKey, theirValue);
+                    if (0 == compareTo)
+                        return 0;
+                    skipRestOfBlob(theirValue);
+                }
+            }
+            return compareTo;
+        }
+        // Mutlivalue or hierarchical
+        if (1 == valueTypeCode || 1 == valueTypeCode) {
+            int compareTo = -1;
+            int count = readInt(theirValue); // Number of elements in the multivalue or hierarchy
             for (int i = 0; i < count; i++) {
-                compareTo = compareBlob(nestingLevel-1, ourStoreKey, theirValue);
+                compareTo = compareBlob(ourStoreKey, theirValue);
                 if (0 == compareTo)
                     return 0;
+                skipRestOfBlob(theirValue);
             }
+            return compareTo;
         }
-        return compareTo;
+        return compareBlob(ourStoreKey, theirValue);
     }
     
     /**

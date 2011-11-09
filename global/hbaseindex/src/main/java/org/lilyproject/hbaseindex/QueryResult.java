@@ -44,6 +44,5 @@ public interface QueryResult extends Closeable {
      * Closes this query result and releases resources associated with it (e.g.
      * underlying HBase scanner).
      */
-    @Override
     void close();
 }

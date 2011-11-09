@@ -9,24 +9,27 @@ import java.util.Set;
 public class DynamicIndexField {
     private WildcardPattern namespace;
     private WildcardPattern name;
-    private TypePattern typePattern;
+    private Set<String> primitiveTypes;
+    private Boolean multiValue;
+    private Boolean hierarchical;
     private Set<Scope> scopes;
-    private boolean continue_;
 
     private NameTemplate nameTemplate;
 
     private boolean extractContext;
     private String formatter;
 
-    public DynamicIndexField(WildcardPattern namespace, WildcardPattern name, TypePattern typePattern,
-            Set<Scope> scopes, NameTemplate nameTemplate, boolean extractContext, boolean continue_, String formatter) {
+    public DynamicIndexField(WildcardPattern namespace, WildcardPattern name, Set<String> primitiveTypes,
+            Boolean multiValue, Boolean hierarchical, Set<Scope> scopes, NameTemplate nameTemplate,
+            boolean extractContext, String formatter) {
         this.namespace = namespace;
         this.name = name;
-        this.typePattern = typePattern;
+        this.primitiveTypes = primitiveTypes;
+        this.multiValue = multiValue;
+        this.hierarchical = hierarchical;
         this.scopes = scopes;
         this.nameTemplate = nameTemplate;
         this.extractContext = extractContext;
-        this.continue_ = continue_;
         this.formatter = formatter;
     }
 
@@ -53,8 +56,22 @@ public class DynamicIndexField {
             }
         }
 
-        if (typePattern != null) {
-            if (!typePattern.matches(fieldType.getValueType().getName())) {
+        if (primitiveTypes != null) {
+            if (!primitiveTypes.contains(fieldType.getValueType().getPrimitive().getName())) {
+                match.match = false;
+                return match;
+            }
+        }
+
+        if (multiValue != null) {
+            if (fieldType.getValueType().isMultiValue() != multiValue) {
+                match.match = false;
+                return match;
+            }
+        }
+
+        if (hierarchical != null) {
+            if (fieldType.getValueType().isHierarchical() != hierarchical) {
                 match.match = false;
                 return match;
             }
@@ -83,10 +100,6 @@ public class DynamicIndexField {
 
     public String getFormatter() {
         return formatter;
-    }
-
-    public boolean getContinue() {
-        return continue_;
     }
 
     public static class DynamicIndexFieldMatch {

@@ -61,7 +61,6 @@ public class RepositoryMetrics implements Updater {
         mbean.shutdown();
     }
 
-    @Override
     public synchronized void doUpdates(MetricsContext unused) {
         synchronized (this) {
           for (MetricsBase m : registry.getMetricsList()) {

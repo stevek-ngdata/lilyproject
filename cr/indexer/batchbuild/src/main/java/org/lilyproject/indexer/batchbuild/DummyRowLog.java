@@ -28,42 +28,42 @@ public class DummyRowLog implements RowLog {
         this.failMessage = failMessage;
     }
 
-    @Override
     public String getId() {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
+    public void registerShard(RowLogShard shard) {
+        throw new RuntimeException(failMessage);
+    }
+
+    public void unRegisterShard(RowLogShard shard) {
+        throw new RuntimeException(failMessage);
+    }
+
     public byte[] getPayload(RowLogMessage message) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
     public boolean processMessage(RowLogMessage message, RowLock rowLock) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
     public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
     public boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
     public List<RowLogMessage> getMessages(byte[] rowKey, String... subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
     public List<RowLogSubscription> getSubscriptions() {
         throw new RuntimeException(failMessage);
     }
@@ -73,17 +73,10 @@ public class DummyRowLog implements RowLog {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
     public List<RowLogShard> getShards() {
         throw new RuntimeException(failMessage);
     }
 
-    @Override
-    public RowLogShardList getShardList() {
-        throw new RuntimeException(failMessage);
-    }
-
-    @Override
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }

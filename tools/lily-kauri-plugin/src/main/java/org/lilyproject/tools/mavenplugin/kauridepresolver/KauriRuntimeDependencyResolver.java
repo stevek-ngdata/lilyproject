@@ -22,9 +22,6 @@ import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectBuilder;
-import org.apache.maven.project.ProjectBuildingException;
 
 import java.util.List;
 import java.util.Set;
@@ -36,6 +33,13 @@ import java.util.Set;
  * @description Resolve (download) all the dependencies to run the Kauri Runtime.
  */
 public class KauriRuntimeDependencyResolver extends AbstractMojo {
+    /**
+     * Kauri version.
+     *
+     * @parameter
+     * @required
+     */
+    protected String kauriVersion;
 
     /**
      * Maven Artifact Factory component.
@@ -69,22 +73,11 @@ public class KauriRuntimeDependencyResolver extends AbstractMojo {
      */
     protected ArtifactResolver resolver;
 
-    /**
-     * @component role="org.apache.maven.project.MavenProjectBuilder"
-     * @required
-     * @readonly
-     */
-    protected MavenProjectBuilder mavenProjectBuilder;
-
-    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        KauriProjectClasspath cp = new KauriProjectClasspath(getLog(), null,
-                artifactFactory, resolver, localRepository);
+        KauriProjectClasspath cp = new KauriProjectClasspath(null, kauriVersion, getLog(), null,
+                artifactFactory, resolver, remoteRepositories, localRepository);
 
-        String kauriVersion = KauriMavenUtil.getKauriVersion();
-
-        Artifact runtimeLauncherArtifact = artifactFactory.createArtifact("org.kauriproject", "kauri-runtime-launcher",
-                kauriVersion, "runtime", "jar");
+        Artifact runtimeLauncherArtifact = artifactFactory.createArtifact("org.kauriproject", "kauri-runtime-launcher", kauriVersion, "runtime", "jar");
 
         try {
             resolver.resolve(runtimeLauncherArtifact, remoteRepositories, localRepository);
@@ -92,9 +85,7 @@ public class KauriRuntimeDependencyResolver extends AbstractMojo {
             throw new MojoExecutionException("Error resolving artifact: " + runtimeLauncherArtifact, e);
         }
 
-        Set<Artifact> artifacts = cp.getClassPathArtifacts(runtimeLauncherArtifact,
-                "org/kauriproject/launcher/classloader.xml", remoteRepositories);
-
+        Set<Artifact> artifacts = cp.getClassPathArtifacts(runtimeLauncherArtifact, "org/kauriproject/launcher/classloader.xml");
         artifacts.add(runtimeLauncherArtifact);
     }
 }

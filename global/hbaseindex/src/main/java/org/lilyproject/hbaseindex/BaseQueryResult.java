@@ -22,7 +22,6 @@ abstract class BaseQueryResult implements QueryResult {
     protected Result currentResult;
     protected QueryResult currentQResult;
 
-    @Override
     public byte[] getData(byte[] qualifier) {
         if (currentResult != null) {
             return currentResult.getValue(Index.DATA_FAMILY, qualifier);
@@ -33,12 +32,10 @@ abstract class BaseQueryResult implements QueryResult {
         }
     }
 
-    @Override
     public byte[] getData(String qualifier) {
         return getData(Bytes.toBytes(qualifier));
     }
 
-    @Override
     public String getDataAsString(String qualifier) {
         return Bytes.toString(getData(Bytes.toBytes(qualifier)));
     }

@@ -56,7 +56,6 @@ public class ValidationMessageListener implements RowLogMessageListener {
         numberOfMessagesToBeExpected = i;
     }
 
-    @Override
     public synchronized boolean processMessage(RowLogMessage message) {
         count++;
         Integer times = processedMessages.get(message);
@@ -73,7 +72,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
     public void waitUntilMessagesConsumed(long timeout) throws Exception {
         long waitUntil = System.currentTimeMillis() + timeout;
         RowLogShard shard = rowLog.getShards().get(0);
-        List<RowLogMessage> messages = shard.next(subscriptionId, 20);
+        List<RowLogMessage> messages = shard.next(subscriptionId);
         while(true) {
             if (System.currentTimeMillis() >= waitUntil) {
                 System.out.println("ValidationMessageListener#waitUntilMessagesConsumed: Timeout expired, nr of messages=" + messages.size() + ", count=" + count);
@@ -84,7 +83,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
                 break;
             }
             Thread.sleep(1000);
-            messages = shard.next(subscriptionId, 20);
+            messages = shard.next(subscriptionId);
         }
     }
 
@@ -97,7 +96,7 @@ public class ValidationMessageListener implements RowLogMessageListener {
             validationMessage.append("\n"+name+ " did not process the same amount of messages <"+count+"> as expected <"+numberOfMessagesToBeExpected+">");
         }
         RowLogShard shard = rowLog.getShards().get(0);
-        List<RowLogMessage> messages = shard.next(subscriptionId, 20);
+        List<RowLogMessage> messages = shard.next(subscriptionId);
         if (!messages.isEmpty()) {
             success = false;
             validationMessage.append("\n"+name+ " has messages to be processed: <" + messages.size()+">");

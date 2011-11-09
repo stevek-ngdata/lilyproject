@@ -30,7 +30,6 @@ public class MessageQueueFeeder implements RowLogMessageListener {
         this.messageQueue = messageQueueRowLog;
     }
     
-    @Override
     public boolean processMessage(RowLogMessage message) throws InterruptedException {
         Exception lastException = null;
         // When an exception occurs, we retry to put the message.
