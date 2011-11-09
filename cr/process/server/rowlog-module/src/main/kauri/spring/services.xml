@@ -72,4 +72,9 @@
 
   <bean id="writeAheadLog" factory-bean="rowLogSetup" factory-method="getWriteAheadLog"/>
 
+  <bean id="messageDeleteBufferFlusher" class="org.lilyproject.rowlog.impl.MessageDeleteBufferFlusher">
+    <constructor-arg ref="writeAheadLog"/>
+    <constructor-arg value="5"/>
+  </bean>
+
 </beans>

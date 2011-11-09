@@ -534,8 +534,9 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         private void performNotifyProcessor(ProcessorKey processorKey) throws InterruptedException, KeeperException {
         	ProcessorNotifyObserver processorNotifyObserver = processorNotifyObservers.get(processorKey);
         	if (processorNotifyObserver != null) {
-        		processorNotifyObserver.notifyProcessor();
-        		// Only put a watcher when an observer has been registerd
+        		// Only put a watcher when an observer has been registered
+                // Note that we install the new watcher before notifying the processor, so that no events get lost
+                // from the moment after the notification.
         		String processorNotifyPath = processorNotifyPath(processorKey.getRowLogId(), processorKey.getShardId());
         		try {
         			zooKeeper.getData(processorNotifyPath, new ProcessorNotifyWatcher(processorKey, ObserverSupport.this), null);
@@ -543,6 +544,8 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
         			ZkUtil.createPath(zooKeeper, processorNotifyPath);
         			zooKeeper.getData(processorNotifyPath, new ProcessorNotifyWatcher(processorKey, ObserverSupport.this), null);
         		}
+
+                processorNotifyObserver.notifyProcessor();
         	}
         }
 
