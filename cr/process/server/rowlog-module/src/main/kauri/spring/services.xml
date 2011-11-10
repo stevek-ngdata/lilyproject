@@ -74,7 +74,6 @@
 
   <bean id="messageDeleteBufferFlusher" class="org.lilyproject.rowlog.impl.MessageDeleteBufferFlusher">
     <constructor-arg ref="writeAheadLog"/>
-    <!-- The 5 is selected to be smaller than 10, the minimal process delay for the WAL. -->
     <constructor-arg value="5"/>
   </bean>
 
