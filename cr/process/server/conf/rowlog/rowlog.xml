@@ -52,5 +52,5 @@
        this parameter should not be changed afterwards and be the same on all Lily nodes.
        A good choice is to make this twice the number of HBase region servers.
   -->
-  <shardCount>6</shardCount>
+  <shardCount>1</shardCount>
 </rowlog>
