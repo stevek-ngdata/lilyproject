@@ -15,6 +15,8 @@
  */
 package org.lilyproject.util.hbase;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
@@ -55,6 +57,7 @@ import java.util.List;
 public class LocalHTable extends ThreadLocal<HTable> implements HTableInterface {
     private Configuration conf;
     private byte[] tableName;
+    private Log log = LogFactory.getLog(getClass());
 
     public LocalHTable(Configuration conf, byte[] tableName) {
         this.conf = conf;
@@ -83,6 +86,11 @@ public class LocalHTable extends ThreadLocal<HTable> implements HTableInterface 
         if (table == null) {
             table = new HTable(conf, tableName);
             set(table);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Created a new htable instance for " + Bytes.toString(tableName) + " on thread " +
+                        Thread.currentThread().getName());
+            }
         }
         return table;
     }
