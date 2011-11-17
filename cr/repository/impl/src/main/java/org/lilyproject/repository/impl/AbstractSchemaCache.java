@@ -56,6 +56,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache/invalidate";
     protected static final String CACHE_REFRESHENABLED_PATH = "/lily/typemanager/cache/enabled";
+    private static final String LILY_NODES_PATH = "/lily/repositoryNodes";
 
     public AbstractSchemaCache(ZooKeeperItf zooKeeper) {
         this.zooKeeper = zooKeeper;
@@ -68,6 +69,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
             'e', 'f' };
     private ConnectionWatcher connectionWatcher;
+    private LilyNodesWatcher lilyNodesWatcher;
 
     /**
      * Simplified version of {@link Hex#encodeHex(byte[])}
@@ -360,10 +362,12 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     private class CacheRefresher implements Runnable {
         private volatile boolean needsRefresh;
         private volatile boolean needsRefreshAll;
+        private volatile boolean lilyNodesChanged;
         private volatile boolean stop;
         private final Object needsRefreshLock = new Object();
         private Set<CacheWatcher> needsRefreshWatchers = new HashSet<CacheWatcher>();
         private Thread thread;
+        private List<String> knownLilyNodes = new ArrayList<String>();
 
         public void start() {
             thread = new Thread(this, "TypeManager cache refresher");
@@ -383,7 +387,6 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
         public void needsRefreshAll() {
             synchronized (needsRefreshLock) {
-                needsRefresh = true;
                 needsRefreshAll = true;
                 needsRefreshLock.notifyAll();
             }
@@ -397,11 +400,74 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             }
         }
 
+        public void lilyNodesChanged() {
+            synchronized (needsRefreshLock) {
+                lilyNodesChanged = true;
+                needsRefreshLock.notifyAll();
+            }
+        }
+
+        private List<String> getLilyNodes() throws KeeperException, InterruptedException {
+            LilyNodesWatcher watcher = lilyNodesWatcher;
+            if (watcher == null) {
+                watcher = new LilyNodesWatcher();
+            }
+            List<String> lilyNodes = null;
+            try {
+                lilyNodes = zooKeeper.getChildren(LILY_NODES_PATH, watcher);
+                lilyNodesWatcher = watcher;
+            } catch (KeeperException.NoNodeException e) {
+                // The path does not exist yet.
+                // Set the lilyNodesWatcher to null so that we retry
+                // setting the watcher in the next iteration.
+                lilyNodesWatcher = null;
+            }
+            return lilyNodes;
+        }
+
         @Override
         public void run() {
             while (!stop && !Thread.interrupted()) {
                 try {
-                    if (needsRefresh) {
+                    // Check if the lily nodes changed
+                    // or if the LilyNodesWatcher has not been set yet
+                    if (lilyNodesChanged || lilyNodesWatcher == null) {
+                        synchronized (needsRefreshLock) {
+                            List<String> lilyNodes = getLilyNodes();
+                            if (lilyNodes != null) {
+                                if (knownLilyNodes.isEmpty()) {
+                                    knownLilyNodes.addAll(lilyNodes);
+                                } else {
+                                    if (!lilyNodes.containsAll(knownLilyNodes)) {
+                                        // One or more of the nodes disappeared.
+                                        // There is a chance that a refresh
+                                        // trigger was not sent out by that
+                                        // node.
+                                        needsRefreshAll = true;
+                                        // Set parentVersion to null to
+                                        // explicitly refresh all buckets.
+                                        // Otherwise only buckets that got an
+                                        // update trigger will be refreshed.
+                                        // But because such a trigger could have
+                                        // been missed is why we are here.
+                                        parentVersion = null;
+                                        if (log.isDebugEnabled())
+                                            log.debug("One or more LilyNodes stopped. "
+                                                    + "Refreshing cache to cover possibly missed refresh triggers");
+                                    }
+                                    knownLilyNodes.clear();
+                                    knownLilyNodes.addAll(lilyNodes);
+                                }
+                            } else if (!knownLilyNodes.isEmpty()) {
+                                needsRefreshAll = true;
+                                knownLilyNodes.clear();
+                            }
+                            lilyNodesChanged = false;
+                        }
+                    }
+
+                    // Check if something needs to be refreshed
+                    if (needsRefresh || needsRefreshAll) {
                         Set<CacheWatcher> watchers = null;
                         boolean refreshAll = false;
                         synchronized (needsRefreshLock) {
@@ -414,6 +480,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                             needsRefresh = false;
                             needsRefreshAll = false;
                         }
+                        // Do the actual refresh outside the synchronized block
                         if (refreshAll) {
                             refreshAll();
                         } else {
@@ -486,6 +553,13 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 readRefreshingEnabledState();
                 cacheRefresher.needsRefreshAll();
             }
+        }
+    }
+
+    protected class LilyNodesWatcher implements Watcher {
+        @Override
+        public void process(WatchedEvent event) {
+            cacheRefresher.lilyNodesChanged();
         }
     }
 }
