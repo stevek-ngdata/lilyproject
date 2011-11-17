@@ -834,16 +834,25 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             throw new TypeException("Exception occurred while retrieving field types and record types without cache ",
                     e);
         }
-        for (Result result : scanner) {
-            if (result.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
-                fieldTypes.add(extractFieldType(new SchemaIdImpl(result.getRow()), result));
-            } else {
-                recordTypes.add(extractRecordType(new SchemaIdImpl(result.getRow()), null, result));
-            }
+
+        // Collect the results first and close the scanner as fast as possible
+        List<Result> results = new ArrayList<Result>();
+        for (Result scanResult : scanner) {
+            // Skip empty results from the scanner
+            if (scanResult != null && !scanResult.isEmpty())
+                results.add(scanResult);
         }
         Closer.close(scanner);
-        return new Pair<List<FieldType>, List<RecordType>>(fieldTypes, recordTypes);
 
+        // Now extract the record and field types from the results
+        for (Result scanResult : results) {
+            if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
+                fieldTypes.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
+            } else if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes) != null) {
+                recordTypes.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
+            }
+        }
+        return new Pair<List<FieldType>, List<RecordType>>(fieldTypes, recordTypes);
     }
 
     @Override
@@ -853,6 +862,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         // Putting the cache size to 50 or 100 seems to slow things down
         // significantly.
         scan.setCaching(10);
+
         // Field type columns
         scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes);
         scan.addColumn(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_VALUETYPE.bytes);
@@ -876,14 +886,24 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             throw new TypeException("Exception occurred while retrieving field types and record types without cache ",
                     e);
         }
+
+        // Collect the results first and close the scanner as fast as possible
+        List<Result> results = new ArrayList<Result>();
         for (Result scanResult : scanner) {
+            // Skip empty results from the scanner
+            if (scanResult != null && !scanResult.isEmpty())
+                results.add(scanResult);
+        }
+        Closer.close(scanner);
+
+        // Now extract the record and field types from the results
+        for (Result scanResult : results) {
             if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.FIELDTYPE_NAME.bytes) != null) {
                 typeBucket.add(extractFieldType(new SchemaIdImpl(scanResult.getRow()), scanResult));
-            } else {
+            } else if (scanResult.getValue(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes) != null) {
                 typeBucket.add(extractRecordType(new SchemaIdImpl(scanResult.getRow()), null, scanResult));
             }
         }
-        Closer.close(scanner);
         return typeBucket;
     }
 

@@ -157,7 +157,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     protected abstract TypeManager getTypeManager();
 
     @Override
-    public FieldTypes getFieldTypesSnapshot() {
+    public FieldTypes getFieldTypesSnapshot() throws InterruptedException {
         if (!updatedFieldTypes)
             return fieldTypesSnapshot;
         synchronized (this) {
@@ -169,20 +169,20 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         }
     }
     
-    public synchronized void updateFieldType(FieldType fieldType) throws TypeException, InterruptedException {
+    public void updateFieldType(FieldType fieldType) throws TypeException, InterruptedException {
         fieldTypesCache.update(fieldType);
         updatedFieldTypes = true;
     }
 
-    public synchronized void updateRecordType(RecordType recordType) throws TypeException, InterruptedException {
+    public void updateRecordType(RecordType recordType) throws TypeException, InterruptedException {
         recordTypes.update(recordType);
     }
 
-    public Collection<RecordType> getRecordTypes() {
+    public Collection<RecordType> getRecordTypes() throws InterruptedException {
         return recordTypes.getRecordTypes();
     }
 
-    public RecordType getRecordType(QName name) {
+    public RecordType getRecordType(QName name) throws InterruptedException {
         return recordTypes.getRecordType(name);
     }
 
@@ -202,7 +202,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         return fieldTypesCache.getFieldTypes();
     }
 
-    public boolean fieldTypeExists(QName name) {
+    public boolean fieldTypeExists(QName name) throws InterruptedException {
         return fieldTypesCache.fieldTypeExists(name);
     }
 
@@ -219,7 +219,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      * Refresh the caches and put the cacheWatcher again on the cache
      * invalidation zookeeper-node.
      */
-    private synchronized void refreshAll() throws InterruptedException, RepositoryException {
+    private void refreshAll() throws InterruptedException, RepositoryException {
 
         // Set a watch on the parent path, in case everything needs to be
         // refreshed
@@ -304,12 +304,20 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      * Refresh the caches for the buckets identified by the watchers and put the
      * cacheWatcher again on the cache invalidation zookeeper-node.
      */
-    private synchronized void refresh(Set<CacheWatcher> watchers) throws InterruptedException, RepositoryException {
+    private void refresh(Set<CacheWatcher> watchers) throws InterruptedException, RepositoryException {
         // Only update one bucket at a time
         // Meanwhile updates on the other buckets could happen.
         // Since the watchers for those other buckets are not set back again
         // this will not trigger extra refreshes.
+        boolean first = true;
         for (CacheWatcher watcher : watchers) {
+            // Throttle the refreshing. When a burst of updates occur, delaying
+            // the refreshing a bit allows for the updates to be performed
+            // faster
+            if (first) {
+                first = false;
+                Thread.sleep(50);
+            }
             String bucketId = watcher.getBucket();
             String bucketPath = bucketPath(watcher.getBucket());
             Stat stat = new Stat();

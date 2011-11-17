@@ -15,18 +15,24 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.*;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.AbstractSchemaCache;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 
-/**
- *
- */
 public class SchemaCacheTest {
+
     private static final RepositorySetup repoSetup = new RepositorySetup();
 
     private List<TypeManager> typeManagersToClose = new ArrayList<TypeManager>();
@@ -168,9 +174,15 @@ public class SchemaCacheTest {
 
     // This test is introduced to do some profiling
     @Test
-    public void testManyTypesSameCache() throws Exception {
+    public void testManyTypes() throws Exception {
         String namespace = "testManyTypesSameCache";
         TypeManager typeManager = repoSetup.getTypeManager();
+
+        // Add some extra type managers to simulate multiple caches that need to
+        // be refreshed
+        for (int i = 0; i < 10; i++) {
+            typeManagersToClose.add(repoSetup.getNewTypeManager());
+        }
 
         long total = 0;
         int iterations = 10;
@@ -186,6 +198,8 @@ public class SchemaCacheTest {
             total += duration;
             System.out.println(i + " :Creating " + nrOfTypes + " record types and " + nrOfTypes + " field types took: "
                     + duration);
+            // if (i == 5)
+            // newTypeManager.close();
         }
         System.out.println("Creating " + (iterations * nrOfTypes) + " record types and " + (iterations * nrOfTypes)
                 + " field types took: " + total);
@@ -203,6 +217,10 @@ public class SchemaCacheTest {
         }
         System.out.println("Creating 5 extra record types and 5 extra field types took: "
                 + (System.currentTimeMillis() - before));
+        
+        for (TypeManager tm : typeManagersToClose) {
+            waitForRecordType(10000, new QName(namespace, "recordType" + ((iterations * nrOfTypes) - 1)), tm);
+        }
     }
 
     private RecordType waitForRecordType(long timeout, QName name, TypeManager typeManager2)
@@ -231,4 +249,111 @@ public class SchemaCacheTest {
         throw new FieldTypeNotFoundException(name);
     }
 
+    // @Test
+    public void testScannerConcurrency() throws IOException, InterruptedException {
+        repoSetup.getHadoopConf();
+        HBaseTableFactory hbaseTableFactory = repoSetup.getHbaseTableFactory();
+        HTableDescriptor testTableDescriptor = new HTableDescriptor(Bytes.toBytes("testScannerConcurrency"));
+        testTableDescriptor.addFamily(new HColumnDescriptor(CF, HConstants.ALL_VERSIONS, "none",
+                false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
+        final HTableInterface testTable = hbaseTableFactory.getTable(testTableDescriptor);
+
+        Thread writeThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 20000; i++) {
+                    try {
+                        putRandomRecord(testTable);
+                    } catch (IOException e) {
+                        throw new RuntimeException();
+                    }
+                }
+            }
+        });
+
+        ScanThread scanThread = new ScanThread("single", 20000, testTable);
+        writeThread.start();
+        scanThread.start();
+        scanThread.join();
+        writeThread.join();
+
+        writeThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 20000; i++) {
+                    try {
+                        putRandomRecord(testTable);
+                    } catch (IOException e) {
+                        throw new RuntimeException();
+                    }
+                }
+            }
+        });
+        ScanThread scanThread1 = new ScanThread("thread1", 20000, testTable);
+        ScanThread scanThread2 = new ScanThread("thread2", 20000, testTable);
+        writeThread.start();
+        scanThread1.start();
+        scanThread2.start();
+        scanThread1.join();
+        scanThread2.join();
+        writeThread.join();
+
+    }
+
+    private static Random random = new Random();
+    private static final byte[] CF = Bytes.toBytes("cf");
+    private static final byte[] C1 = Bytes.toBytes("c1");
+    private static final byte[] C2 = Bytes.toBytes("c2");
+    private static final byte[] C3 = Bytes.toBytes("c3");
+
+    private byte[] putRandomRecord(HTableInterface table) throws IOException {
+        SchemaId id = new SchemaIdImpl(UUID.randomUUID());
+        byte[] rowId = id.getBytes();
+        Put put = new Put(rowId);
+        put.add(CF, C1, Bytes.toBytes(random.nextInt()));
+        put.add(CF, C2, Bytes.toBytes(random.nextInt()));
+        put.add(CF, C3, Bytes.toBytes(random.nextInt()));
+        table.put(put);
+        return rowId;
+    }
+
+    private void scanBucket(HTableInterface table) throws IOException {
+        byte[] rowPrefix = new byte[1];
+        byte[] decodeHexAndNextHex = AbstractSchemaCache.decodeHexAndNextHex(AbstractSchemaCache.encodeHex(rowPrefix));
+        random.nextBytes(rowPrefix);
+        Scan scan = new Scan(rowPrefix);
+        scan.setStopRow(new byte[] { decodeHexAndNextHex[1] });
+        scan.addColumn(CF, C1);
+        scan.addColumn(CF, C2);
+        scan.addColumn(CF, C3);
+        ResultScanner scanner = table.getScanner(scan);
+        for (Result result : scanner) {
+            result.getRow();
+        }
+    }
+
+    private class ScanThread extends Thread {
+        private final int count;
+        private final HTableInterface table;
+        private final String name;
+
+        public ScanThread(String name, int count, HTableInterface table) {
+            this.name = name;
+            this.count = count;
+            this.table = table;
+        }
+
+        @Override
+        public void run() {
+            long before = System.currentTimeMillis();
+            for (int i = 0; i < count; i++) {
+                try {
+                    scanBucket(table);
+                } catch (IOException e) {
+                    throw new RuntimeException();
+                }
+            }
+            System.out.println("Scanner " + name + ", count="+count+": " + (System.currentTimeMillis() - before));
+        }
+    }
 }

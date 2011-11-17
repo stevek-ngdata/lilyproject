@@ -306,8 +306,9 @@ public interface TypeManager extends Closeable {
      * operation.
      * 
      * @return a snapshot of the FieldTypes cache
+     * @throws InterruptedException
      */
-    FieldTypes getFieldTypesSnapshot();
+    FieldTypes getFieldTypesSnapshot() throws InterruptedException;
 
     /**
      * Returns the list of field types known by the repository.

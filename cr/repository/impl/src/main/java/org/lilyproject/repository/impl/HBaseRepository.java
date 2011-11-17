@@ -104,12 +104,13 @@ public class HBaseRepository extends BaseRepository {
     }
 
     @Override
-    public Record createOrUpdate(Record record) throws RepositoryException {
+    public Record createOrUpdate(Record record) throws RepositoryException, InterruptedException {
         return createOrUpdate(record, true);
     }
 
     @Override
-    public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException {
+    public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException,
+            InterruptedException {
 
         if (record.getId() == null) {
             // While we could generate an ID ourselves in this case, this would defeat partly the purpose of
@@ -266,23 +267,25 @@ public class HBaseRepository extends BaseRepository {
     }
 
     @Override
-    public Record update(Record record) throws RepositoryException {
+    public Record update(Record record) throws RepositoryException, InterruptedException {
         return update(record, false, true);
     }
 
     @Override
-    public Record update(Record record, List<MutationCondition> conditions) throws RepositoryException {
+    public Record update(Record record, List<MutationCondition> conditions) throws RepositoryException,
+            InterruptedException {
         return update(record, false, true, conditions);
     }
 
     @Override
-    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException {
+    public Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException,
+            InterruptedException {
         return update(record, updateVersion, useLatestRecordType, null);
     }
 
     @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
-            List<MutationCondition> conditions) throws RepositoryException {
+            List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
 
         long before = System.currentTimeMillis();
         RecordId recordId = record.getId();
