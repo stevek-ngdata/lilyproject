@@ -18,9 +18,6 @@ package org.lilyproject.repository.impl.test;
 import java.io.IOException;
 import java.util.*;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.*;
@@ -29,7 +26,6 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.util.hbase.HBaseTableFactory;
 
 public class SchemaCacheTest {
 
@@ -186,7 +182,7 @@ public class SchemaCacheTest {
 
         long total = 0;
         int iterations = 10;
-        int nrOfTypes = 100; // Set to a low number to reduce automated test
+        int nrOfTypes = 1000; // Set to a low number to reduce automated test
                              // time
         for (int i = 0; i < iterations; i++) {
             long before = System.currentTimeMillis();
@@ -247,57 +243,6 @@ public class SchemaCacheTest {
             }
         }
         throw new FieldTypeNotFoundException(name);
-    }
-
-    // @Test
-    public void testScannerConcurrency() throws IOException, InterruptedException {
-        repoSetup.getHadoopConf();
-        HBaseTableFactory hbaseTableFactory = repoSetup.getHbaseTableFactory();
-        HTableDescriptor testTableDescriptor = new HTableDescriptor(Bytes.toBytes("testScannerConcurrency"));
-        testTableDescriptor.addFamily(new HColumnDescriptor(CF, HConstants.ALL_VERSIONS, "none",
-                false, true, HConstants.FOREVER, HColumnDescriptor.DEFAULT_BLOOMFILTER));
-        final HTableInterface testTable = hbaseTableFactory.getTable(testTableDescriptor);
-
-        Thread writeThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < 20000; i++) {
-                    try {
-                        putRandomRecord(testTable);
-                    } catch (IOException e) {
-                        throw new RuntimeException();
-                    }
-                }
-            }
-        });
-
-        ScanThread scanThread = new ScanThread("single", 20000, testTable);
-        writeThread.start();
-        scanThread.start();
-        scanThread.join();
-        writeThread.join();
-
-        writeThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < 20000; i++) {
-                    try {
-                        putRandomRecord(testTable);
-                    } catch (IOException e) {
-                        throw new RuntimeException();
-                    }
-                }
-            }
-        });
-        ScanThread scanThread1 = new ScanThread("thread1", 20000, testTable);
-        ScanThread scanThread2 = new ScanThread("thread2", 20000, testTable);
-        writeThread.start();
-        scanThread1.start();
-        scanThread2.start();
-        scanThread1.join();
-        scanThread2.join();
-        writeThread.join();
-
     }
 
     private static Random random = new Random();

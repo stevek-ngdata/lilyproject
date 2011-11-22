@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,14 +63,16 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 while (count > 0) {
                     monitor.wait();
                 }
+                if (nameCacheOutOfDate) {
                 // Re-initialize the nameCache
-                Map<QName, FieldType> newNameCache = new HashMap<QName, FieldType>();
-                for (Map<SchemaId, FieldType> bucket : buckets.values()) {
-                    for (FieldType fieldType : bucket.values())
-                        newNameCache.put(fieldType.getName(), fieldType);
+                    nameCacheOutOfDate = false;
+                    Map<QName, FieldType> newNameCache = new HashMap<QName, FieldType>();
+                    for (Map<SchemaId, FieldType> bucket : buckets.values()) {
+                        for (FieldType fieldType : bucket.values())
+                            newNameCache.put(fieldType.getName(), fieldType);
+                    }
+                    nameCache = newNameCache;
                 }
-                nameCache = newNameCache;
-                nameCacheOutOfDate = false;
             }
         }
         return nameCache;
@@ -81,7 +84,6 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     private void incCount() {
         synchronized (monitor) {
             count++;
-
             monitor.notify();
         }
     }
@@ -136,11 +138,13 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 monitor.wait();
             }
             FieldTypesImpl newFieldTypes = new FieldTypesImpl();
-            newFieldTypes.nameCache.putAll(getNameCache());
             for (Entry<String, Map<SchemaId, FieldType>> bucketEntry : buckets.entrySet()) {
                 Map<SchemaId, FieldType> fieldTypeIdBucket = new HashMap<SchemaId, FieldType>();
                 fieldTypeIdBucket.putAll(bucketEntry.getValue());
                 newFieldTypes.buckets.put(bucketEntry.getKey(), fieldTypeIdBucket);
+                for (FieldType fieldType: bucketEntry.getValue().values()) {
+                    newFieldTypes.nameCache.put(fieldType.getName(), fieldType);
+                }
             }
             return newFieldTypes;
         }
@@ -161,19 +165,20 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             }
             // The nameCache can be made up to date as well since everything is
             // being updated
+            nameCacheOutOfDate = false;
             nameCache = new HashMap<QName, FieldType>(fieldTypes.size());
-            buckets = new HashMap<String, Map<SchemaId, FieldType>>();
             for (FieldType fieldType : fieldTypes) {
                 nameCache.put(fieldType.getName(), fieldType);
                 String bucketId = AbstractSchemaCache.encodeHex(fieldType.getId().getBytes());
                 Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
                 if (bucket == null) {
-                    bucket = new HashMap<SchemaId, FieldType>();
+                    bucket = new ConcurrentHashMap<SchemaId, FieldType>();
                     buckets.put(bucketId, bucket);
+                } else {
+                    bucket.clear();
                 }
                 bucket.put(fieldType.getId(), fieldType);
             }
-            nameCacheOutOfDate = false;
         }
     }
 
@@ -185,21 +190,25 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     public void refreshFieldTypeBucket(TypeBucket typeBucket) {
         String bucketId = typeBucket.getBucketId();
 
+        // First increment the number of buckets that are being updated
+        incCount();
         // Get a lock on the bucket to be updated
         synchronized (getBucketMonitor(bucketId)) {
-            // First increment the number of buckets that are being updated and
-            // mark the nameCache out of date.
-            incCount();
             List<FieldType> fieldTypes = typeBucket.getFieldTypes();
-            Map<SchemaId, FieldType> newBucket = new HashMap<SchemaId, FieldType>(fieldTypes.size());
+            Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
+            if (bucket == null) {
+                bucket = new ConcurrentHashMap<SchemaId, FieldType>(fieldTypes.size());
+                buckets.put(bucketId, bucket);
+            } else {
+                bucket.clear();
+            }
             // Fill a the bucket with the new field types
             for (FieldType fieldType : fieldTypes) {
-                newBucket.put(fieldType.getId(), fieldType);
+                bucket.put(fieldType.getId(), fieldType);
             }
-            buckets.put(bucketId, newBucket);
-            // Decrement the number of buckets that are being updated again.
-            decCount();
         }
+        // Decrement the number of buckets that are being updated again.
+        decCount();
     }
 
     /**
@@ -210,20 +219,19 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     public void update(FieldType fieldType) {
         SchemaId id = fieldType.getId();
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
+        // First increment the number of buckets that are being updated
+        incCount();
         // Get a lock on the bucket to be updated
         synchronized (getBucketMonitor(bucketId)) {
-            // First increment the number of buckets that are being updated and
-            // mark the nameCache out of date.
-            incCount();
             Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
             // If the bucket does not exist yet, create it
             if (bucket == null) {
-                bucket = new HashMap<SchemaId, FieldType>();
+                bucket = new ConcurrentHashMap<SchemaId, FieldType>();
                 buckets.put(bucketId, bucket);
             }
             bucket.put(id, fieldType);
-            // Decrement the number of buckets that are being updated again.
-            decCount();
         }
+        // Decrement the number of buckets that are being updated again.
+        decCount();
     }
 }

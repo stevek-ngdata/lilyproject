@@ -1,6 +1,7 @@
 package org.lilyproject.repository.impl;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,7 +18,7 @@ public class FieldTypesImpl implements FieldTypes {
 
     public FieldTypesImpl() {
         nameCache = new HashMap<QName, FieldType>();
-        buckets = new HashMap<String, Map<SchemaId, FieldType>>();
+        buckets = new ConcurrentHashMap<String, Map<SchemaId, FieldType>>();
     }
 
     protected Map<QName, FieldType> getNameCache() throws InterruptedException {

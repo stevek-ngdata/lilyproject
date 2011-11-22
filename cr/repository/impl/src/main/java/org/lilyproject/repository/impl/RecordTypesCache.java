@@ -16,6 +16,7 @@
 package org.lilyproject.repository.impl;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,7 +46,7 @@ public class RecordTypesCache {
 
     public RecordTypesCache() {
         nameCache = new HashMap<QName, RecordType>();
-        buckets = new HashMap<String, Map<SchemaId, RecordType>>();
+        buckets = new ConcurrentHashMap<String, Map<SchemaId, RecordType>>();
     }
 
     private Map<QName, RecordType> getNameCache() throws InterruptedException {
@@ -56,14 +57,16 @@ public class RecordTypesCache {
                 while (count > 0) {
                     monitor.wait();
                 }
-                // Re-initialize the nameCache
-                Map<QName, RecordType> newNameCache = new HashMap<QName, RecordType>();
-                for (Map<SchemaId, RecordType> bucket : buckets.values()) {
-                    for (RecordType recordType : bucket.values())
-                        newNameCache.put(recordType.getName(), recordType);
+                if (nameCacheOutOfDate) {
+                    // Re-initialize the nameCache
+                    Map<QName, RecordType> newNameCache = new HashMap<QName, RecordType>();
+                    for (Map<SchemaId, RecordType> bucket : buckets.values()) {
+                        for (RecordType recordType : bucket.values())
+                            newNameCache.put(recordType.getName(), recordType);
+                    }
+                    nameCache = newNameCache;
+                    nameCacheOutOfDate = false;
                 }
-                nameCache = newNameCache;
-                nameCacheOutOfDate = false;
             }
         }
         return nameCache;
@@ -75,7 +78,6 @@ public class RecordTypesCache {
     private void incCount() {
         synchronized (monitor) {
             count++;
-            nameCacheOutOfDate = true;
             monitor.notify();
         }
     }
@@ -172,19 +174,20 @@ public class RecordTypesCache {
             }
             // The nameCache can be made up to date as well since everything is
             // being updated
+            nameCacheOutOfDate = false;
             nameCache = new HashMap<QName, RecordType>(recordTypes.size());
-            buckets = new HashMap<String, Map<SchemaId, RecordType>>();
             for (RecordType recordType : recordTypes) {
                 nameCache.put(recordType.getName(), recordType);
                 String bucketId = AbstractSchemaCache.encodeHex(recordType.getId().getBytes());
                 Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
                 if (bucket == null) {
-                    bucket = new HashMap<SchemaId, RecordType>();
+                    bucket = new ConcurrentHashMap<SchemaId, RecordType>();
                     buckets.put(bucketId, bucket);
+                } else {
+                    bucket.clear();
                 }
                 bucket.put(recordType.getId(), recordType);
             }
-            nameCacheOutOfDate = false;
         }
     }
 
@@ -196,21 +199,25 @@ public class RecordTypesCache {
     public void refreshRecordTypeBucket(TypeBucket typeBucket) {
         String bucketId = typeBucket.getBucketId();
 
+        // First increment the number of buckets that are being updated
+        incCount();
         // Get a lock on the bucket to be updated
         synchronized (getBucketMonitor(bucketId)) {
-            // First increment the number of buckets that are being updated and
-            // mark the nameCache out of date.
-            incCount();
             List<RecordType> recordTypes = typeBucket.getRecordTypes();
-            Map<SchemaId, RecordType> newBucket = new HashMap<SchemaId, RecordType>(recordTypes.size());
+            Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
+            if (bucket == null) {
+                bucket = new ConcurrentHashMap<SchemaId, RecordType>(recordTypes.size());
+                buckets.put(bucketId, bucket);
+            } else {
+                bucket.clear();
+            }
             // Fill a the bucket with the new record types
             for (RecordType recordType : recordTypes) {
-                newBucket.put(recordType.getId(), recordType);
+                bucket.put(recordType.getId(), recordType);
             }
-            buckets.put(bucketId, newBucket);
-            // Decrement the number of buckets that are being updated again.
-            decCount();
         }
+        // Decrement the number of buckets that are being updated again.
+        decCount();
     }
 
     /**
@@ -221,21 +228,20 @@ public class RecordTypesCache {
     public void update(RecordType recordType) {
         SchemaId id = recordType.getId();
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
+        // First increment the number of buckets that are being updated
+        incCount();
         // Get a lock on the bucket to be updated
         synchronized (getBucketMonitor(bucketId)) {
-            // First increment the number of buckets that are being updated and
-            // mark the nameCache out of date.
-            incCount();
             Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
             // If the bucket does not exist yet, create it
             if (bucket == null) {
-                bucket = new HashMap<SchemaId, RecordType>();
+                bucket = new ConcurrentHashMap<SchemaId, RecordType>();
                 buckets.put(bucketId, bucket);
             }
-            // Decrement the number of buckets that are being updated again.
             bucket.put(id, recordType);
-            decCount();
         }
+        // Decrement the number of buckets that are being updated again.
+        decCount();
     }
 
 }
