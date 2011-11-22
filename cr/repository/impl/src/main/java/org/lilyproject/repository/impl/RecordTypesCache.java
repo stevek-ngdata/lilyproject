@@ -160,9 +160,9 @@ public class RecordTypesCache {
     }
 
     /**
-     * Refreshes the whole cache to contain the given list of field types.
+     * Refreshes the whole cache to contain the given list of record types.
      * 
-     * @param fieldTypes
+     * @param recordTypes
      * @throws InterruptedException
      */
     public void refreshRecordTypes(List<RecordType> recordTypes) throws InterruptedException {
@@ -176,6 +176,9 @@ public class RecordTypesCache {
             // being updated
             nameCacheOutOfDate = false;
             nameCache = new HashMap<QName, RecordType>(recordTypes.size());
+            // One would expect that existing buckets need to be cleared first.
+            // But since record types cannot be deleted we will just overwrite
+            // them.
             for (RecordType recordType : recordTypes) {
                 nameCache.put(recordType.getName(), recordType);
                 String bucketId = AbstractSchemaCache.encodeHex(recordType.getId().getBytes());
@@ -183,8 +186,6 @@ public class RecordTypesCache {
                 if (bucket == null) {
                     bucket = new ConcurrentHashMap<SchemaId, RecordType>();
                     buckets.put(bucketId, bucket);
-                } else {
-                    bucket.clear();
                 }
                 bucket.put(recordType.getId(), recordType);
             }
@@ -192,7 +193,7 @@ public class RecordTypesCache {
     }
 
     /**
-     * Refresh one bucket with the field types contained in the TypeBucket
+     * Refresh one bucket with the record types contained in the TypeBucket
      * 
      * @param typeBucket
      */
@@ -205,11 +206,13 @@ public class RecordTypesCache {
         synchronized (getBucketMonitor(bucketId)) {
             List<RecordType> recordTypes = typeBucket.getRecordTypes();
             Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
+            // One would expect that an existing bucket need to be cleared
+            // first.
+            // But since record types cannot be deleted we will just overwrite
+            // them.
             if (bucket == null) {
                 bucket = new ConcurrentHashMap<SchemaId, RecordType>(recordTypes.size());
                 buckets.put(bucketId, bucket);
-            } else {
-                bucket.clear();
             }
             // Fill a the bucket with the new record types
             for (RecordType recordType : recordTypes) {
@@ -221,9 +224,9 @@ public class RecordTypesCache {
     }
 
     /**
-     * Update the cache to contain the new fieldType
+     * Update the cache to contain the new recordType
      * 
-     * @param fieldType
+     * @param recordType
      */
     public void update(RecordType recordType) {
         SchemaId id = recordType.getId();

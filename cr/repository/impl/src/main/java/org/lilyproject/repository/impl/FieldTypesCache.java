@@ -167,6 +167,9 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             // being updated
             nameCacheOutOfDate = false;
             nameCache = new HashMap<QName, FieldType>(fieldTypes.size());
+            // One would expect that existing buckets need to be cleared first.
+            // But since field types cannot be deleted we will just overwrite
+            // them.
             for (FieldType fieldType : fieldTypes) {
                 nameCache.put(fieldType.getName(), fieldType);
                 String bucketId = AbstractSchemaCache.encodeHex(fieldType.getId().getBytes());
@@ -174,8 +177,6 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 if (bucket == null) {
                     bucket = new ConcurrentHashMap<SchemaId, FieldType>();
                     buckets.put(bucketId, bucket);
-                } else {
-                    bucket.clear();
                 }
                 bucket.put(fieldType.getId(), fieldType);
             }
@@ -196,11 +197,13 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
         synchronized (getBucketMonitor(bucketId)) {
             List<FieldType> fieldTypes = typeBucket.getFieldTypes();
             Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
+            // One would expect that an existing bucket need to be cleared
+            // first.
+            // But since field types cannot be deleted we will just overwrite
+            // them.
             if (bucket == null) {
                 bucket = new ConcurrentHashMap<SchemaId, FieldType>(fieldTypes.size());
                 buckets.put(bucketId, bucket);
-            } else {
-                bucket.clear();
             }
             // Fill a the bucket with the new field types
             for (FieldType fieldType : fieldTypes) {
