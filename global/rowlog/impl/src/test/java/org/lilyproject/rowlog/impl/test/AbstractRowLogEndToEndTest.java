@@ -83,6 +83,8 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.expectMessages(1);
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
+        // Sleep to allow processor to finish message processing (messageDone marking)
+        Thread.sleep(2000);
         processor.stop();
         validationListener.validate();
     }
@@ -94,6 +96,8 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.expectMessages(1);
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
+        // Sleep to allow processor to finish message processing (messageDone marking)
+        Thread.sleep(2000);
         processor.stop();
         validationListener.validate();
 
@@ -121,10 +125,12 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.expectMessages(1);
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
+        // Sleep to allow processor to finish message processing (messageDone marking)
+        Thread.sleep(2000);
         processor.stop();
         validationListener.validate();
     }
-    
+
     @Test(timeout=150000)
     public void testAtomicMessageFailingPut() throws Exception {
         byte[] rowKey = Bytes.toBytes("row1");
@@ -140,6 +146,8 @@ public abstract class AbstractRowLogEndToEndTest {
         validationListener.expectMessages(1);
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
+        // Sleep to allow processor to finish message processing (messageDone marking)
+        Thread.sleep(2000);
         processor.stop();
         validationListener.validate();
     }
@@ -154,6 +162,8 @@ public abstract class AbstractRowLogEndToEndTest {
         System.out.println(">>RowLogEndToEndTest#"+name.getMethodName()+": waiting for message to be processed");
         validationListener.waitUntilMessagesConsumed(120000);
         System.out.println(">>RowLogEndToEndTest#"+name.getMethodName()+": message processed");
+        // Sleep to allow processor to finish message processing (messageDone marking)
+        Thread.sleep(2000);
         processor.stop();
         System.out.println(">>RowLogEndToEndTest#"+name.getMethodName()+": processor stopped");
         validationListener.validate();
@@ -170,10 +180,12 @@ public abstract class AbstractRowLogEndToEndTest {
         }
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
+        // Sleep to allow processor to finish message processing (messageDone marking)
+        Thread.sleep(2000);
         processor.stop();
         validationListener.validate();
     }
-    
+
     @Test(timeout=150000)
     public void testMultipleMessagesMultipleRows() throws Exception {
         RowLogMessage message;
@@ -188,6 +200,8 @@ public abstract class AbstractRowLogEndToEndTest {
         }
         processor.start();
         validationListener.waitUntilMessagesConsumed(120000);
+        // Sleep to allow processor to finish message processing (messageDone marking)
+        Thread.sleep(2000);
         processor.stop();
         validationListener.validate();
     }
