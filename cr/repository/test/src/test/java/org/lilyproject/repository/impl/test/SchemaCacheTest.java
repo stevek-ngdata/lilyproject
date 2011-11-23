@@ -169,7 +169,7 @@ public class SchemaCacheTest {
     }
 
     // This test is introduced to do some profiling
-    @Test
+    // @Test
     public void testManyTypes() throws Exception {
         String namespace = "testManyTypesSameCache";
         TypeManager typeManager = repoSetup.getTypeManager();
@@ -182,7 +182,7 @@ public class SchemaCacheTest {
 
         long total = 0;
         int iterations = 10;
-        int nrOfTypes = 1000; // Set to a low number to reduce automated test
+        int nrOfTypes = 100; // Set to a low number to reduce automated test
                              // time
         for (int i = 0; i < iterations; i++) {
             long before = System.currentTimeMillis();
