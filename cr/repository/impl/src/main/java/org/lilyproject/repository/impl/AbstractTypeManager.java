@@ -180,7 +180,10 @@ public abstract class AbstractTypeManager implements TypeManager {
 
         int indexOfParams = valueTypeSpec.indexOf("<");
         if (indexOfParams == -1) {
-            valueType = valueTypeFactories.get(valueTypeSpec).getValueType(null);
+            ValueTypeFactory valueTypeFactory = valueTypeFactories.get(valueTypeSpec);
+            if (valueTypeFactory == null)
+                throw new TypeException("Unkown value type: " + valueTypeSpec);
+            valueType = valueTypeFactory.getValueType(null);
         } else {
             if (!valueTypeSpec.endsWith(">")) {
                 throw new IllegalArgumentException("Invalid value type string, no closing angle bracket: '" +
@@ -194,7 +197,10 @@ public abstract class AbstractTypeManager implements TypeManager {
                         valueTypeSpec + "'");
             }
 
-            valueType = valueTypeFactories.get(valueTypeSpec.substring(0, indexOfParams)).getValueType(arg);
+            ValueTypeFactory valueTypeFactory = valueTypeFactories.get(valueTypeSpec.substring(0, indexOfParams));
+            if (valueTypeFactory == null)
+                throw new TypeException("Unkown value type: " + valueTypeSpec);
+            valueType = valueTypeFactory.getValueType(arg);
         }
 
         return valueType;

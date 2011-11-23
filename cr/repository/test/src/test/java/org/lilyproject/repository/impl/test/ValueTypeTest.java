@@ -67,6 +67,15 @@ public class ValueTypeTest {
     }
     
     @Test
+    public void testFooType() throws Exception {
+        try {
+            runValueTypeTests("fooRecordTypeId", "FOO", "foo", "bar", "pub");
+            fail("Excpeting TypeException");
+        } catch (TypeException expected) {
+        }
+    }
+
+    @Test
     public void testStringType() throws Exception {
         runValueTypeTests("stringRecordTypeId", "STRING", "foo", "bar", "pub");
     }
