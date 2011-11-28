@@ -27,7 +27,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1-RC1</version>
     <relativePath>../..</relativePath>
   </parent>
 
@@ -67,9 +67,8 @@
             </goals>
             <configuration>
               <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/"/>
-                <echo file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/kauri.properties"
-                      encoding="utf8">kauri.version=${version.kauri}</echo>
+                <mkdir dir="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/" />
+                <echo file="${basedir}/target/classes/org/lilyproject/tools/mavenplugin/kauridepresolver/kauri.properties" encoding="utf8">kauri.version=${version.kauri}</echo>
               </tasks>
             </configuration>
           </execution>
