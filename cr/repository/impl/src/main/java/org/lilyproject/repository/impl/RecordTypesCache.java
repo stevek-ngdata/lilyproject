@@ -229,7 +229,9 @@ public class RecordTypesCache {
      * @param recordType
      */
     public void update(RecordType recordType) {
-        SchemaId id = recordType.getId();
+        // Clone the RecordType to avoid changes to it while it is in the cache
+        RecordType rtToCache = recordType.clone();
+        SchemaId id = rtToCache.getId();
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
         // First increment the number of buckets that are being updated
         incCount();
@@ -241,7 +243,7 @@ public class RecordTypesCache {
                 bucket = new ConcurrentHashMap<SchemaId, RecordType>();
                 buckets.put(bucketId, bucket);
             }
-            bucket.put(id, recordType);
+            bucket.put(id, rtToCache);
         }
         // Decrement the number of buckets that are being updated again.
         decCount();

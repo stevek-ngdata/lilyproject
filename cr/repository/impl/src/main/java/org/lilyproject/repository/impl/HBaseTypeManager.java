@@ -126,7 +126,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             getTypeTable().put(put);
             
             // Refresh the caches
-            updateRecordTypeCache(newRecordType.clone());
+            updateRecordTypeCache(newRecordType);
             
             // Clear the concurrency timestamp
             clearConcurrency(nameBytes, now);

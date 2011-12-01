@@ -169,7 +169,7 @@ public class SchemaCacheTest {
     }
 
     // This test is introduced to do some profiling
-    // @Test
+//     @Test
     public void testManyTypes() throws Exception {
         String namespace = "testManyTypesSameCache";
         TypeManager typeManager = repoSetup.getTypeManager();
@@ -218,7 +218,32 @@ public class SchemaCacheTest {
             waitForRecordType(10000, new QName(namespace, "recordType" + ((iterations * nrOfTypes) - 1)), tm);
         }
     }
-
+    
+    @Test
+    public void testRenameFieldType() throws Exception {
+        TypeManager typeManager = repoSetup.getTypeManager();
+        QName ftName = new QName("testRenameFieldType", "f");
+        FieldType fieldType = typeManager.fieldTypeBuilder().name(ftName).create();
+        for (int i = 0; i< 10; i++) {
+            QName newFtName = new QName("testRenameFieldType", "f"+i);
+            fieldType.setName(newFtName);
+            fieldType = typeManager.updateFieldType(fieldType);
+            typeManager.getFieldTypeByName(newFtName);
+            ftName = newFtName;
+        }
+    }
+    
+    @Test
+    public void testRecordTypeInCacheDoesNotChange() throws Exception {
+        TypeManager typeManager = repoSetup.getTypeManager();
+        FieldType fieldType = typeManager.fieldTypeBuilder().name("testRecordTypeInCacheDoesNotChange", "f").create();
+        QName rtName = new QName("testRecordTypeInCacheDoesNotChange", "r");
+        RecordType recordType = typeManager.recordTypeBuilder().name(rtName).create();
+        Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));
+        recordType.addFieldTypeEntry(fieldType.getId(), true);
+        Assert.assertNull(typeManager.getRecordTypeByName(rtName, null).getFieldTypeEntry(fieldType.getId()));        
+    }
+   
     private RecordType waitForRecordType(long timeout, QName name, TypeManager typeManager2)
             throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();

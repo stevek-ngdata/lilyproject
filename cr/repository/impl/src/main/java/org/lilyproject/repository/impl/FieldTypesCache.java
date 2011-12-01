@@ -220,7 +220,9 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
      * @param fieldType
      */
     public void update(FieldType fieldType) {
-        SchemaId id = fieldType.getId();
+        // Clone the FieldType to avoid changes to it while it is in the cache
+        FieldType ftToCache = fieldType.clone();
+        SchemaId id = ftToCache.getId();
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
         // First increment the number of buckets that are being updated
         incCount();
@@ -232,7 +234,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 bucket = new ConcurrentHashMap<SchemaId, FieldType>();
                 buckets.put(bucketId, bucket);
             }
-            bucket.put(id, fieldType);
+            bucket.put(id, ftToCache);
         }
         // Decrement the number of buckets that are being updated again.
         decCount();
