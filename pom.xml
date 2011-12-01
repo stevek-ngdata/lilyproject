@@ -546,12 +546,19 @@
         <artifactId>jetty-util</artifactId>
         <version>${version.jetty}</version>
       </dependency>
-      <!-- Both Avro and Solr depend on different versions of velocity, align them both on same version,
-           otherwise binary dist is missing one of them. -->
+      <!-- Both Avro and Solr depend on different versions of velocity.
+           Align them both on the same version, otherwise binary dist is missing one of them. -->
       <dependency>
         <groupId>org.apache.velocity</groupId>
         <artifactId>velocity</artifactId>
         <version>1.7</version>
+      </dependency>
+      <!-- Both Hadoop and Solr depend on different versions of javax.servlet.servlet-api.
+           Allign them both on the same version, otherwise binary dist is missing one of them -->
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>2.5</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
