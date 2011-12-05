@@ -20,9 +20,11 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.json.JsonUtil;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -194,6 +196,15 @@ public class RecordReader implements EntityReader<Record> {
             return BlobConverter.fromJson(blobNode);
         } else if (name.equals("RECORD")) {
             return fromJson((ObjectNode)node, namespaces, repository);
+
+        } else if (name.equals("BYTEARRAY")) {
+            if (!node.isTextual())
+                throw new JsonFormatException("Expected base64 encoded value for " + prop);
+            try {
+                return new ByteArray(node.getBinaryValue());
+            } catch (IOException e) {
+                throw new JsonFormatException("Could not read base64 value for " + prop, e);
+            }
         } else {
             throw new JsonFormatException("Value type not supported: " + name);
         }

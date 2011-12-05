@@ -249,6 +249,7 @@ public interface TypeManager extends Closeable {
      * <tr><td>LIST</td>     <td>java.util.List</td></tr>
      * <tr><td>PATH</td>     <td>org.lilyproject.repository.api.HierarchyPath</td></tr>
      * <tr><td>RECORD</td>   <td>org.lilyproject.repository.api.Record</td></tr>
+     * <tr><td>BYTEARRAY</td><td>org.lilyproject.bytes.api.ByteArray</td></tr>
      * </tbody>
      * </table>
      * 

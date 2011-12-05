@@ -73,6 +73,8 @@
                        If no record type is given a random recordId will be generated.
           recordSource : The space from which to select a random recordId. 
                          If no recordSource is given a new record will be created of the given record type.
+        * BYTEARRAY :
+          length : the length of the ByteArray to generate
                          
       * For BLOB field types, generating a random value results in a random blob with a maximum size of 200MB to be uploaded.
   */
@@ -141,6 +143,12 @@
       valueType: "LINK<tester$RT1>",
       scope: "versioned",
       properties: {recordType: "tester$RTSub", recordSource: "subRecords"}
+    },
+    {
+      name: "tester$field13",
+      valueType: "BYTEARRAY",
+      scope: "versioned",
+      properties: {length: 50}
     }
   ],
 
@@ -194,6 +202,9 @@
       fields: [
         {
           name: "tester$field12"
+        },
+        {
+          name: "tester$field13"
         }
       ]
     }

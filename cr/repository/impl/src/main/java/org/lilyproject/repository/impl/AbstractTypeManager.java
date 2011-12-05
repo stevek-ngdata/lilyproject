@@ -230,5 +230,6 @@ public abstract class AbstractTypeManager implements TypeManager {
         registerValueType(ListValueType.NAME, ListValueType.factory(this));
         registerValueType(PathValueType.NAME, PathValueType.factory(this));
         registerValueType(RecordValueType.NAME, RecordValueType.factory(this));
+        registerValueType(ByteArrayValueType.NAME, ByteArrayValueType.factory());
     }
 }

@@ -10,6 +10,7 @@ import javax.naming.OperationNotSupportedException;
 import org.codehaus.jackson.JsonNode;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.testclientfw.Words;
 import org.lilyproject.util.json.JsonUtil;
@@ -98,6 +99,8 @@ public class TestFieldType {
             return new ActionResult(true, generateDateTime(), 0);
         } else if (name.equals("BLOB")) {
             return new ActionResult(true, generateBlob(), 0);
+        } else if (name.equals("BYTEARRAY")) {
+            return new ActionResult(true, generateByteArray(), 0);
         } else if (name.equals("LINK")) {
             try {
                 return testAction.linkFieldAction(this, null);
@@ -134,6 +137,22 @@ public class TestFieldType {
         return value;
     }
     
+    private ByteArray generateByteArray() {
+        ByteArray value = null;
+        // Default
+        if (properties == null) {
+            byte[] bytes = new byte[random.nextInt(100)];
+            random.nextBytes(bytes);
+            value = new ByteArray(bytes);
+        } else {
+            int length = JsonUtil.getInt(properties, "length", 100);
+            byte[] bytes = new byte[length];
+            random.nextBytes(bytes);
+            value = new ByteArray(bytes);
+        }
+        return value;
+    }
+
     private int generateInt() {
         // Default
         int value = 0;

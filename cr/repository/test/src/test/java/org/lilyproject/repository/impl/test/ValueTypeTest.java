@@ -25,6 +25,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.*;
+import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.hadooptestfw.TestHelper;
@@ -120,6 +121,12 @@ public class ValueTypeTest {
         runValueTypeTests("uriRecordTypeId", "URI", URI.create("http://foo.com/bar"), URI.create("file://foo/com/bar.txt"), URI.create("https://site/index.html"));
     }
     
+    @Test
+    public void testByteArrayType() throws Exception {
+        runValueTypeTests("byteArrayRecordTypeId", "BYTEARRAY", new ByteArray(Bytes.toBytes("bytes1")), new ByteArray(
+                Bytes.toBytes("bytes2")), new ByteArray(Bytes.toBytes("bbb")));
+    }
+
     @Test
     public void testBlobType() throws Exception {
         Blob blob1 = new Blob(Bytes.toBytes("aKey"), "text/html", Long.MAX_VALUE, null);

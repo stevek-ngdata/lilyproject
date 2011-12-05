@@ -19,6 +19,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.*;
 
 import java.math.BigDecimal;
@@ -144,6 +145,8 @@ public class RecordWriter implements EntityWriter<Record> {
             result = BlobConverter.toJson(blob);
         } else if (name.equals("RECORD")){
             result = toJson((Record)value, options, namespaces, repository);
+        } else if (name.equals("BYTEARRAY")) {
+            result = factory.binaryNode(((ByteArray) value).getBytes());
         } else {
             throw new RuntimeException("Unsupported value type: " + name);
         }

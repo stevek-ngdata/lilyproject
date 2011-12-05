@@ -75,6 +75,8 @@ public class JsonImportTool extends BaseZkCliTool {
             }
         }
 
+        System.out.println("Import done");
+
         client.close();
 
         return 0;

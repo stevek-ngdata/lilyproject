@@ -24,8 +24,10 @@ import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public abstract class AbstractRepositoryTest {
 
@@ -2056,5 +2058,19 @@ public abstract class AbstractRepositoryTest {
             fail("Expecting a Record Exception since a record may not be nested in itself");
         } catch (RecordException expected) {
         }
+    }
+
+    @Test
+    public void testByteArrayValueType() throws Exception {
+        FieldType byteArrayValueType = typeManager.createFieldType("BYTEARRAY", new QName("testByteArrayValueType",
+                "field1"), Scope.NON_VERSIONED);
+        RecordType recordType = typeManager.recordTypeBuilder().defaultNamespace("testByteArrayValueType")
+                .name("recordType1")
+                .field(byteArrayValueType.getId(), false).create();
+        Record record = repository.recordBuilder().defaultNamespace("testByteArrayValueType").recordType("recordType1")
+                .field("field1", new ByteArray(Bytes.toBytes("some bytes"))).create();
+        Record readRecord = repository.read(record.getId());
+        ByteArray readValue = readRecord.getField(new QName("testByteArrayValueType", "field1"));
+        assertEquals("some bytes", Bytes.toString(readValue.getBytesUnsafe()));
     }
 }
