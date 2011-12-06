@@ -102,7 +102,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
         options.add(namespaceOption);
 
         namespaceValueOption = OptionBuilder.withArgName("namespacevalue").hasArg().withDescription(
-                "The value to use to replace 'null' namespaces with.")
+"The value to use to replace 'null' namespaces with (default = emtpy string).")
                 .withLongOpt("namespacevalue")
                 .create("nsv");
         options.add(namespaceValueOption);
