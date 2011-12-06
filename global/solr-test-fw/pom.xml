@@ -26,7 +26,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>1.1</version>
+    <version>1.1-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
@@ -96,8 +96,9 @@
             </goals>
             <configuration>
               <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/solrtestfw/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/solrtestfw/solr.properties" encoding="utf8">solr.version=${version.solr}</echo>
+                <mkdir dir="${basedir}/target/classes/org/lilyproject/solrtestfw/"/>
+                <echo file="${basedir}/target/classes/org/lilyproject/solrtestfw/solr.properties"
+                      encoding="utf8">solr.version=${version.solr}</echo>
               </tasks>
             </configuration>
           </execution>
