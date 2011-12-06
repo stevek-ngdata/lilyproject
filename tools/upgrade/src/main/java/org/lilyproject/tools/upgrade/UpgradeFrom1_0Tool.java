@@ -81,7 +81,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
 
     @Override
     protected String getCmdName() {
-        return "lily-convert-fieldtypes";
+        return "lily-upgrade-from-1.0";
     }
 
     @Override
