@@ -115,6 +115,7 @@
   <bean class="org.lilyproject.server.modules.repository.LinkIndexUpdaterSetup">
     <constructor-arg ref="repository"/>
     <constructor-arg ref="hbaseConf"/>
+    <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
   <bean id="avroServer" class="org.lilyproject.server.modules.repository.AvroServer">
