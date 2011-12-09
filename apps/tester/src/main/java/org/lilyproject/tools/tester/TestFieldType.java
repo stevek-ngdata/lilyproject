@@ -269,39 +269,33 @@ public class TestFieldType {
             return generateValue(null); // The value will not be a link field, so we can give null here
         } else {
             Object value = record.getField(fieldType.getName());
-            return updateMultiValue(testAction, value);
+            return updateLinkValue(testAction, value, fieldType.getValueType());
         }
     }
     
-    private ActionResult updateMultiValue(TestAction testAction, Object value) {
-        if (fieldType.getValueType().isMultiValue()) {
-            List<Object> values = (List<Object>)value;
+    private ActionResult updateLinkValue(TestAction testAction, Object value, ValueType valueType) {
+        if (valueType.getBaseName().equals("LIST")) {
+            List<Object> values = (List<Object>) value;
             int index = (int) (Math.random() * values.size());
-            ActionResult result = updateHierarchical(testAction, values.get(index));
+            ActionResult result = updateLinkValue(testAction, values.get(index), valueType.getNestedValueType());
             if (result.success && result.object != null) {
                 values.add(index, result.object);
                 return new ActionResult(true, values, result.duration);
             }
-            return updateHierarchical(testAction, values.get(index));
-        } else {
-            return updateHierarchical(testAction, value);
-        }
-    }
-    
-    private ActionResult updateHierarchical(TestAction testAction, Object value) {
-        if (fieldType.getValueType().isHierarchical()) {
-            HierarchyPath path = (HierarchyPath)value;
+            return result;
+        } else if (valueType.getBaseName().equals("PATH")) {
+            HierarchyPath path = (HierarchyPath) value;
             Object[] values = path.getElements();
             int index = (int) (Math.random() * values.length);
             // LinkedRecordTypeName should only be given in case of link fields
-            ActionResult result = updateLink(testAction, (Link)values[index]);
+            ActionResult result = updateLinkValue(testAction, values[index], valueType.getNestedValueType());
             if (result.success && result.object != null) {
                 values[index] = result.object;
                 return new ActionResult(true, values, result.duration);
             }
             return result;
         } else {
-            return updateLink(testAction, (Link)value);
+            return updateLink(testAction, (Link) value);
         }
     }
     

@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import javax.naming.OperationNotSupportedException;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.valuetype.BlobValueType;
@@ -67,38 +68,32 @@ public class ReadAction extends AbstractTestAction implements TestAction {
             FieldType fieldType = fieldTypes.get(fieldName);
             ValueType valueType = fieldType.getValueType();
             if (valueType.getDeepestValueType() instanceof BlobValueType) {
-                if (valueType.isMultiValue()) {
-                    List<Object> multivalues = (List<Object>)(entry.getValue());
-                    int multivalueIndex = randomIndex(multivalues.size());
-                    if (valueType.isHierarchical()) {
-                        Object[] hierarchyValues = ((HierarchyPath)(multivalues.get(multivalueIndex))).getElements();
-                        int hierarchyIndex = randomIndex(hierarchyValues.length);
-                        Blob blob = (Blob)hierarchyValues[hierarchyIndex];
-                        InputStream inputStream = testActionContext.repository.getInputStream(readRecord, fieldName, multivalueIndex, hierarchyIndex);
-                        readBlobBytes(blob, inputStream);
-                    } else {
-                        Blob blob = (Blob)(multivalues.get(multivalueIndex));
-                        InputStream inputStream = testActionContext.repository.getInputStream(readRecord.getId(), readRecord.getVersion(), fieldName, multivalueIndex, null);
-                        readBlobBytes(blob, inputStream);
-                    }
-                } else if (valueType.isHierarchical()) {
-                    Object[] hierarchyValues = ((HierarchyPath)(entry.getValue())).getElements();
-                    int hierarchyIndex = randomIndex(hierarchyValues.length);
-                    Blob blob = (Blob)hierarchyValues[hierarchyIndex];
-                    BlobAccess blobAccess = testActionContext.repository.getBlob(readRecord.getId(), readRecord.getVersion(), fieldName, null, hierarchyIndex);
-                    InputStream inputStream = blobAccess.getInputStream();
-                    readBlobBytes(blob, inputStream);
-                } else {
-                    Set<Object> values = valueType.getValues(entry.getValue());
-                    Blob blob = (Blob)values.toArray()[0];
-                    InputStream inputStream = testActionContext.repository.getInputStream(readRecord, fieldName);
-                    readBlobBytes(blob, inputStream);
-                }
+                readBlobs(readRecord, fieldName, entry.getValue(), valueType);
             }
-            
         }
     }
     
+    private void readBlobs(Record readRecord, QName fieldName, Object value, ValueType valueType, int... indexes)
+            throws RepositoryException, InterruptedException, IOException {
+        if (valueType.getBaseName().equals("LIST")) {
+            List<Object> multivalues = (List<Object>) (value);
+            int multivalueIndex = randomIndex(multivalues.size());
+            Object subValue = (multivalues.get(multivalueIndex));
+            indexes = ArrayUtils.add(indexes, multivalueIndex);
+            readBlobs(readRecord, fieldName, subValue, valueType.getNestedValueType(), indexes);
+        } else if (valueType.getBaseName().equals("PATH")) {
+            Object[] hierarchyValues = ((HierarchyPath) (value)).getElements();
+            int hierarchyIndex = randomIndex(hierarchyValues.length);
+            Object subValue = hierarchyValues[hierarchyIndex];
+            indexes = ArrayUtils.add(indexes, hierarchyIndex);
+            readBlobs(readRecord, fieldName, subValue, valueType.getNestedValueType(), indexes);
+        } else {
+            Blob blob = (Blob) value;
+            InputStream inputStream = testActionContext.repository.getInputStream(readRecord, fieldName, indexes);
+            readBlobBytes(blob, inputStream);
+        }
+    }
+
     private int randomIndex(int arrayLength) {
         return (int)(Math.random() * arrayLength);
     }
