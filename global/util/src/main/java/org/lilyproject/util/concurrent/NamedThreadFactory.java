@@ -12,12 +12,16 @@ public class NamedThreadFactory implements ThreadFactory {
     private final String namePrefix;
 
     public NamedThreadFactory(String name) {
-        this.name = name;
-        this.group = Thread.currentThread().getThreadGroup();
-        this.namePrefix = name + "-thread-";
+        this(name, Thread.currentThread().getThreadGroup());
     }
 
-    @Override
+    public NamedThreadFactory(String name, ThreadGroup group) {
+        this.name = name;
+        this.group = group;
+        this.namePrefix = name + "-thread-";
+    }
+    
+    @Override    
     public Thread newThread(Runnable r) {
         Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
         if (t.isDaemon())

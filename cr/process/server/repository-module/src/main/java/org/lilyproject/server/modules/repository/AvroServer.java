@@ -18,25 +18,33 @@ package org.lilyproject.server.modules.repository;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.execution.ExecutionHandler;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.avro.*;
+import org.lilyproject.util.concurrent.NamedThreadFactory;
+import org.lilyproject.util.concurrent.WaitPolicy;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.*;
 
 public class AvroServer {
     private String bindAddress;
     private Repository repository;
     private int port;
+    private int maxServerThreads;
+    private ExecutionHandler executionHandler;
 
     private Server server;
 
-    public AvroServer(String bindAddress, Repository repository, int port) {
+    public AvroServer(String bindAddress, Repository repository, int port, int maxServerThreads) {
         this.bindAddress = bindAddress;
         this.repository = repository;
         this.port = port;
+        this.maxServerThreads = maxServerThreads;
     }
 
     @PostConstruct
@@ -46,8 +54,18 @@ public class AvroServer {
 
         AvroLilyImpl avroLily = new AvroLilyImpl(repository, avroConverter);
         Responder responder = new LilySpecificResponder(AvroLily.class, avroLily, avroConverter);
+
+        ThreadFactory threadFactory = new NamedThreadFactory("avro-exechandler", new ThreadGroup("AvroExecHandler"));
+        if (maxServerThreads == -1) {
+            executionHandler = new ExecutionHandler(Executors.newCachedThreadPool(threadFactory));
+        } else {
+            executionHandler = new ExecutionHandler(new ThreadPoolExecutor(maxServerThreads / 3, maxServerThreads,
+                    60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), threadFactory, new WaitPolicy()));
+        }
+
         //server = new HttpServer(responder, port);
-        server = new NettyServer(responder, new InetSocketAddress(port));
+        server = new NettyServer(responder, new InetSocketAddress(port), new NioServerSocketChannelFactory
+                (Executors.newCachedThreadPool(), Executors.newCachedThreadPool()), executionHandler);
         server.start();
     }
     
@@ -58,6 +76,9 @@ public class AvroServer {
         //    It would be nice to wait for client threads to end, but since these client threads pass into
         //    HBase client code which is notoriously difficult to interrupt, we skip this step
         server.close();
+        if (executionHandler != null) {
+            executionHandler.releaseExternalResources();
+        }
         try {
             server.join();
         } catch (InterruptedException e) {

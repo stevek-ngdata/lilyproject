@@ -1,4 +1,4 @@
-package org.lilyproject.testclientfw;
+package org.lilyproject.util.concurrent;
 
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;

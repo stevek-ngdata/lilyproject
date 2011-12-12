@@ -28,7 +28,7 @@
     <version.maven>2.0.9</version.maven>
     <version.solr>3.5.0</version.solr>
 
-    <version.avro>1.6.0-951v2-813</version.avro>
+    <version.avro>1.6.1-813-976</version.avro>
 
     <!-- The following properties are all Kauri-related, and should be brought in sync with
          Kauri when moving to a new Kauri version. -->
@@ -509,7 +509,7 @@
       <dependency>
         <groupId>org.jboss.netty</groupId>
         <artifactId>netty</artifactId>
-        <version>3.2.4.Final</version>
+        <version>3.2.7.Final</version>
      </dependency>
      <dependency>
        <groupId>commons-io</groupId>

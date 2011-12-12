@@ -147,6 +147,7 @@
     </constructor-arg>
     <constructor-arg ref="repository"/>
     <constructor-arg value="${repository:port}"/>
+    <constructor-arg value="${repository:maxServerThreads}"/>
   </bean>
 
   <bean id="zkPublisher" class="org.lilyproject.server.modules.repository.ZKPublisher">
