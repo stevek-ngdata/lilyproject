@@ -57,7 +57,7 @@ public class LinkIndexUpdaterMetrics implements Updater {
     }
 
     @Override
-    public synchronized void doUpdates(MetricsContext unused) {
+    public void doUpdates(MetricsContext unused) {
         synchronized (this) {
           for (MetricsBase m : registry.getMetricsList()) {
             m.pushMetric(metricsRecord);
@@ -66,7 +66,7 @@ public class LinkIndexUpdaterMetrics implements Updater {
         metricsRecord.update();
     }
 
-    synchronized void report(Action action, long duration) {
+    void report(Action action, long duration) {
         rates.get(action).inc(duration);
     }
 

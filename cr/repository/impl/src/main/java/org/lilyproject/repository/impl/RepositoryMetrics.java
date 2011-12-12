@@ -62,7 +62,7 @@ public class RepositoryMetrics implements Updater {
     }
 
     @Override
-    public synchronized void doUpdates(MetricsContext unused) {
+    public void doUpdates(MetricsContext unused) {
         synchronized (this) {
           for (MetricsBase m : registry.getMetricsList()) {
             m.pushMetric(metricsRecord);
@@ -71,11 +71,11 @@ public class RepositoryMetrics implements Updater {
         metricsRecord.update();
     }
 
-    synchronized void report(Action action, long duration) {
+    void report(Action action, long duration) {
         rates.get(action).inc(duration);
     }
 
-    synchronized void reportHBase(HBaseAction action, long duration) {
+    void reportHBase(HBaseAction action, long duration) {
         hbaseRates.get(action).inc(duration);
     }
 
