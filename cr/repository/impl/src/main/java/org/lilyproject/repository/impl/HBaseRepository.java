@@ -133,7 +133,7 @@ public class HBaseRepository extends BaseRepository {
                 throw new RecordException("Error reading record row for record id " + record.getId());
             }
 
-            byte[] deleted = result.getValue(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
+            byte[] deleted = getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
             if ((deleted == null) || (Bytes.toBoolean(deleted))) {
                 // do the create
                 try {
@@ -1019,7 +1019,7 @@ public class HBaseRepository extends BaseRepository {
     }
 
     private Long getLatestVersion(Result result) {
-        byte[] latestVersionBytes = result.getValue(RecordCf.DATA.bytes, RecordColumn.VERSION.bytes);
+        byte[] latestVersionBytes = getLatest(result, RecordCf.DATA.bytes, RecordColumn.VERSION.bytes);
         Long latestVersion = latestVersionBytes != null ? Bytes.toLong(latestVersionBytes) : null;
         return latestVersion;
     }
@@ -1045,7 +1045,7 @@ public class HBaseRepository extends BaseRepository {
                 throw new RecordNotFoundException(recordId);
             
             // Check if the record was deleted
-            byte[] deleted = result.getValue(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
+            byte[] deleted = getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
             if ((deleted == null) || (Bytes.toBoolean(deleted))) {
                 throw new RecordNotFoundException(recordId);
             }
@@ -1055,6 +1055,29 @@ public class HBaseRepository extends BaseRepository {
         }
         return result;
     }
+
+    /**
+     * Gets the latest value for a family/qualifier from a Result object, using its
+     * getMap(). Most of the time this will be more efficient than using
+     * Result.getValue() since the map will need to built anyway when reading the
+     * record.
+     */
+    private byte[] getLatest(Result result, byte[] family, byte[] qualifier) {
+        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = result.getMap();
+        if (map == null)
+            return null;
+        
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> qualifiers = map.get(family);
+        if (qualifiers == null)
+            return null;
+        
+        NavigableMap<Long, byte[]> timestamps = qualifiers.get(qualifier);
+        if (timestamps == null)
+            return null;
+        
+        Map.Entry<Long, byte[]> entry = timestamps.lastEntry();        
+        return entry == null ? null : entry.getValue();
+    }    
     
  // Retrieves the row from the table and check if it exists and has not been flagged as deleted
     private Map<RecordId, Result> getRows(List<RecordId> recordIds, List<FieldType> fields)
@@ -1079,7 +1102,7 @@ public class HBaseRepository extends BaseRepository {
                     continue;
                 }
                 // Check if the record was deleted
-                byte[] deleted = result.getValue(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
+                byte[] deleted = getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
                 if ((deleted == null) || (Bytes.toBoolean(deleted))) {
                     i++; // Skip this recordId (instead of throwing a RecordNotFoundException
                     continue;
@@ -1097,8 +1120,8 @@ public class HBaseRepository extends BaseRepository {
      * Extracts the latest record type for a specific scope from the Result.
      */
     private Pair<SchemaId, Long> extractLatestRecordType(Scope scope, Result result) {
-        byte[] idBytes = result.getValue(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope));
-        byte[] versionBytes = result.getValue(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope));
+        byte[] idBytes = getLatest(result, RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope));
+        byte[] versionBytes = getLatest(result, RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope));
         if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
             return null; // No record type was found
         return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
