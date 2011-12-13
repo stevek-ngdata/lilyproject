@@ -175,7 +175,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 String bucketId = AbstractSchemaCache.encodeHex(fieldType.getId().getBytes());
                 Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
                 if (bucket == null) {
-                    bucket = new ConcurrentHashMap<SchemaId, FieldType>();
+                    bucket = new ConcurrentHashMap<SchemaId, FieldType>(8, .75f, 1);
                     buckets.put(bucketId, bucket);
                 }
                 bucket.put(fieldType.getId(), fieldType);
@@ -202,7 +202,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             // But since field types cannot be deleted we will just overwrite
             // them.
             if (bucket == null) {
-                bucket = new ConcurrentHashMap<SchemaId, FieldType>(fieldTypes.size());
+                bucket = new ConcurrentHashMap<SchemaId, FieldType>(Math.min(fieldTypes.size(), 8), .75f, 1);
                 buckets.put(bucketId, bucket);
             }
             // Fill a the bucket with the new field types
@@ -231,7 +231,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
             // If the bucket does not exist yet, create it
             if (bucket == null) {
-                bucket = new ConcurrentHashMap<SchemaId, FieldType>();
+                bucket = new ConcurrentHashMap<SchemaId, FieldType>(8, .75f, 1);
                 buckets.put(bucketId, bucket);
             }
             bucket.put(id, ftToCache);

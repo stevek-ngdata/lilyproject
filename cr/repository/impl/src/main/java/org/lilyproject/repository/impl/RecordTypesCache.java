@@ -211,7 +211,7 @@ public class RecordTypesCache {
             // But since record types cannot be deleted we will just overwrite
             // them.
             if (bucket == null) {
-                bucket = new ConcurrentHashMap<SchemaId, RecordType>(recordTypes.size());
+                bucket = new ConcurrentHashMap<SchemaId, RecordType>(Math.min(recordTypes.size(), 8), .75f, 1);
                 buckets.put(bucketId, bucket);
             }
             // Fill a the bucket with the new record types
@@ -240,7 +240,7 @@ public class RecordTypesCache {
             Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
             // If the bucket does not exist yet, create it
             if (bucket == null) {
-                bucket = new ConcurrentHashMap<SchemaId, RecordType>();
+                bucket = new ConcurrentHashMap<SchemaId, RecordType>(8, .75f, 1);
                 buckets.put(bucketId, bucket);
             }
             bucket.put(id, rtToCache);
