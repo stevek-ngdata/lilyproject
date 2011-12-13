@@ -49,6 +49,7 @@ import java.util.Map;
  */
 public class LocalHTable implements HTableInterface {
     private Configuration conf;
+    private String tableNameString;
     private byte[] tableName;
     private Log log = LogFactory.getLog(getClass());
     private static Map<Configuration, HTablePool> HTABLE_POOLS = new HashMap<Configuration, HTablePool>();
@@ -57,6 +58,7 @@ public class LocalHTable implements HTableInterface {
     public LocalHTable(Configuration conf, byte[] tableName) throws IOException {
         this.conf = conf;
         this.tableName = tableName;
+        this.tableNameString = Bytes.toString(tableName);
         this.pool = getHTablePool(conf);
 
         // Test the table is accessible
@@ -361,7 +363,8 @@ public class LocalHTable implements HTableInterface {
     }
     
     private <T> T run(TableRunnable<T> runnable) throws IOException, InterruptedException {
-        HTableInterface table = pool.getTable(tableName);
+        // passing tableNameString, since otherwise pool.getTable converts it to string anyway
+        HTableInterface table = pool.getTable(tableNameString);
         try {
             return runnable.run(table);
         } finally {
@@ -370,7 +373,7 @@ public class LocalHTable implements HTableInterface {
     }
 
     private <T> T runNoIE(TableRunnable<T> runnable) throws IOException {
-        HTableInterface table = pool.getTable(tableName);
+        HTableInterface table = pool.getTable(tableNameString);
         try {
             return runnable.run(table);
         } catch (InterruptedException e) {
@@ -381,7 +384,7 @@ public class LocalHTable implements HTableInterface {
     }
 
     private <T> T runNoExc(TableRunnable<T> runnable) {
-        HTableInterface table = pool.getTable(tableName);
+        HTableInterface table = pool.getTable(tableNameString);
         try {
             return runnable.run(table);
         } catch (InterruptedException e) {
