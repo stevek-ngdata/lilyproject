@@ -15,16 +15,18 @@
  */
 package org.lilyproject.util.repo;
 
-import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.*;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.codehaus.jackson.util.ByteArrayBuilder;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -69,48 +71,56 @@ public class RecordEvent {
      * Creates a record event from the json data supplied as bytes.
      */
     public RecordEvent(byte[] data, IdGenerator idGenerator) throws IOException {
-        JsonNode msgData = JsonFormat.deserialize(data);
+        // Using streaming JSON parsing for performance. We expect the JSON to be correct, validation
+        // is absent/minimal.
 
-        String messageType = msgData.get("type").getTextValue();
-        if (messageType.equals(Type.CREATE.getName())) {
-            type = Type.CREATE;
-        } else if (messageType.equals(Type.DELETE.getName())) {
-            type = Type.DELETE;
-        } else if (messageType.equals(Type.UPDATE.getName())) {
-            type = Type.UPDATE;
-        } else if (messageType.equals(Type.INDEX.getName())) {
-            type = Type.INDEX;
-        } else {
-            throw new RuntimeException("Unexpected kind of message type: " + messageType);
+        JsonParser jp = JsonFormat.JSON_FACTORY.createJsonParser(data);
+
+        JsonToken current;
+        current = jp.nextToken();
+
+        if (current != JsonToken.START_OBJECT) {
+            throw new RuntimeException("Not a JSON object.");
         }
 
-        if (msgData.get("versionCreated") != null) {
-            versionCreated = msgData.get("versionCreated").getLongValue();
-        }
-
-        if (msgData.get("versionUpdated") != null) {
-            versionUpdated = msgData.get("versionUpdated").getLongValue();
-        }
-
-        if (msgData.get("recordTypeChanged") != null) {
-            recordTypeChanged = msgData.get("recordTypeChanged").getBooleanValue();
-        }
-
-        JsonNode updatedFieldsNode = msgData.get("updatedFields");
-        if (updatedFieldsNode != null && updatedFieldsNode.size() > 0) {
-            for (int i = 0; i < updatedFieldsNode.size(); i++) {
-                addUpdatedField(idGenerator.getSchemaId(updatedFieldsNode.get(i).getBinaryValue()));
-            }
-        }
-
-        if (msgData.get("index") != null) {
-            indexName = msgData.get("index").getValueAsText();
-        }
-
-        JsonNode vtagsToIndexNode = msgData.get("vtagsToIndex");
-        if (vtagsToIndexNode != null && vtagsToIndexNode.size() > 0) {
-            for (int i = 0; i < vtagsToIndexNode.size(); i++) {
-                addVTagToIndex(idGenerator.getSchemaId(vtagsToIndexNode.get(i).getBinaryValue()));
+        while (jp.nextToken() != JsonToken.END_OBJECT) {
+            String fieldName = jp.getCurrentName();
+            current = jp.nextToken(); // move from field name to field value
+            if (fieldName.equals("type")) {
+                String messageType = jp.getText();
+                if (messageType.equals(Type.CREATE.getName())) {
+                    type = Type.CREATE;
+                } else if (messageType.equals(Type.DELETE.getName())) {
+                    type = Type.DELETE;
+                } else if (messageType.equals(Type.UPDATE.getName())) {
+                    type = Type.UPDATE;
+                } else if (messageType.equals(Type.INDEX.getName())) {
+                    type = Type.INDEX;
+                } else {
+                    throw new RuntimeException("Unexpected kind of message type: " + messageType);
+                }
+            } else if (fieldName.equals("versionCreated")) {
+                versionCreated = jp.getLongValue();
+            } else if (fieldName.equals("versionUpdated")) {
+                versionUpdated = jp.getLongValue();
+            } else if (fieldName.equals("recordTypeChanged")) {
+                recordTypeChanged = jp.getBooleanValue();
+            } else if (fieldName.equals("index")) {
+                indexName = jp.getText();
+            } else if (fieldName.equals("updatedFields")) {
+                if (current != JsonToken.START_ARRAY) {
+                    throw new RuntimeException("updatedFields is not a JSON array");
+                }
+                while (jp.nextToken() != JsonToken.END_ARRAY) {
+                    addUpdatedField(idGenerator.getSchemaId(jp.getBinaryValue()));
+                }
+            } else if (fieldName.equals("vtagsToIndex")) {
+                if (current != JsonToken.START_ARRAY) {
+                    throw new RuntimeException("vtagsToIndex is not a JSON array");
+                }
+                while (jp.nextToken() != JsonToken.END_ARRAY) {
+                    addVTagToIndex(idGenerator.getSchemaId(jp.getBinaryValue()));
+                }
             }
         }
     }
@@ -186,51 +196,70 @@ public class RecordEvent {
         vtagsToIndex.add(vtag);
     }
 
-    public ObjectNode toJson() {
-        JsonNodeFactory factory = JsonNodeFactory.instance;
-        ObjectNode object = factory.objectNode();
+    public void toJson(JsonGenerator gen) throws IOException {
+        gen.writeStartObject();
 
-        if (type != null)
-            object.put("type", type.getName());
-
-        if (updatedFields != null && updatedFields.size() > 0) {
-            ArrayNode updatedFieldsNode = object.putArray("updatedFields");
-            for (SchemaId updatedField : updatedFields) {
-                updatedFieldsNode.add(updatedField.getBytes());
-            }
+        if (type != null) {
+            gen.writeStringField("type", type.getName());
         }
 
         if (versionUpdated != -1) {
-            object.put("versionUpdated", versionUpdated);
+            gen.writeNumberField("versionUpdated", versionUpdated);
         }
 
         if (versionCreated != -1) {
-            object.put("versionCreated", versionCreated);
+            gen.writeNumberField("versionCreated", versionCreated);
         }
 
         if (recordTypeChanged) {
-            object.put("recordTypeChanged", true);
+            gen.writeBooleanField("recordTypeChanged", true);
         }
 
         if (indexName != null) {
-            object.put("index", indexName);
+            gen.writeStringField("index", indexName);
+        }
+
+        if (updatedFields != null && updatedFields.size() > 0) {
+            gen.writeArrayFieldStart("updatedFields");
+            for (SchemaId updatedField : updatedFields) {
+                gen.writeBinary(updatedField.getBytes());
+            }
+            gen.writeEndArray();
         }
 
         if (vtagsToIndex != null && vtagsToIndex.size() > 0) {
-            ArrayNode vtagsToIndexNode = object.putArray("vtagsToIndex");
+            gen.writeArrayFieldStart("vtagsToIndex");
             for (SchemaId vtag : vtagsToIndex) {
-                vtagsToIndexNode.add(vtag.getBytes());
+                gen.writeBinary(vtag.getBytes());
             }
+            gen.writeEndArray();
         }
 
-        return object;
+        gen.writeEndObject();
+        gen.flush();
+    }
+
+    public String toJson() {
+        try {
+            StringWriter writer = new StringWriter();
+            JsonGenerator gen = JsonFormat.JSON_FACTORY.createJsonGenerator(writer);
+            toJson(gen);
+            return writer.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public byte[] toJsonBytes() {
         try {
-            return JsonFormat.serializeAsBytes(toJson());
+            ByteArrayBuilder bb = new ByteArrayBuilder(JsonFormat.JSON_FACTORY._getBufferRecycler());
+            JsonGenerator gen = JsonFormat.JSON_FACTORY.createJsonGenerator(bb, JsonEncoding.UTF8);
+            toJson(gen);
+            byte[] result = bb.toByteArray();
+            bb.release();
+            return result;
         } catch (IOException e) {
-            throw new RuntimeException("Error serializing record event to JSON", e);
+            throw new RuntimeException(e);
         }
     }
 

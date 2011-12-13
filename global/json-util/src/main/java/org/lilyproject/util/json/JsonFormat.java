@@ -27,7 +27,7 @@ import java.io.*;
  */
 public class JsonFormat {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    public static final MappingJsonFactory JSON_FACTORY = new MappingJsonFactory();
+    public static final JsonFactory JSON_FACTORY = OBJECT_MAPPER.getJsonFactory();
 
     public static final MappingJsonFactory JSON_FACTORY_NON_STD;
     static {
