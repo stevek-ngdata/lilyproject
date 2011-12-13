@@ -69,11 +69,6 @@ public class DummyRowLog implements RowLog {
     }
 
     @Override
-    public RowLogSubscription[] getSubscriptionsAsArray() {
-        throw new RuntimeException(failMessage);
-    }
-
-    @Override
     public List<RowLogShard> getShards() {
         throw new RuntimeException(failMessage);
     }

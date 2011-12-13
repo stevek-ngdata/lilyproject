@@ -48,7 +48,9 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private RowLogShardRouter shardRouter;
     private RowLogShardList shardList = new RowLogShardList();
 
-    private final Map<String, RowLogSubscription> subscriptions = Collections.synchronizedMap(new HashMap<String, RowLogSubscription>());
+    private List<RowLogSubscription> subscriptionsList;
+    private List<String> subscriptionIds;
+
     protected final String id;
     private RowLogProcessorNotifier processorNotifier = null;
     private Log log = LogFactory.getLog(RowLogImpl.class);
@@ -231,20 +233,14 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
 
     protected void putMessageOnShard(RowLogMessage message, List<RowLogSubscription> subscriptions)
             throws RowLogException {
-        List<String> subscriptionIds = new ArrayList<String>(subscriptions.size());
-        for (RowLogSubscription subscription : subscriptions) {
-            subscriptionIds.add(subscription.getId());
-        }
+        List<String> subscriptionIds = getSubscriptionIds();
         getShard(message).putMessage(message, subscriptionIds);
     }
 
     
     private void initializeSubscriptions(RowLogMessage message, Put put, List<RowLogSubscription> subscriptions)
             throws IOException {
-        String[] subscriptionIds = new String[subscriptions.size()];
-        for (int i = 0; i < subscriptions.size(); i++) {
-            subscriptionIds[i] = subscriptions.get(i).getId();
-        }
+        String[] subscriptionIds = getSubscriptionIds().toArray(new String[0]);
         SubscriptionExecutionState executionState = new SubscriptionExecutionState(message.getTimestamp(),
                 subscriptionIds);
         byte[] qualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
@@ -303,13 +299,12 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
 
     private boolean processMessage(RowLogMessage message, SubscriptionExecutionState executionState) throws RowLogException, InterruptedException {
         boolean allDone = true;
-        RowLogSubscription[] subscriptions = getSubscriptionsAsArray();
-        if (rowLogConfig.isRespectOrder()) {
-            Arrays.sort(subscriptions);
-        }
+        
+        // Take a stable reference to the subscriptions list
+        List<RowLogSubscription> subscriptions = getSubscriptions();
 
         if (log.isDebugEnabled()) {
-            log.debug("Processing msg '" + formatId(message) + "' nr of subscriptions: " + subscriptions.length);
+            log.debug("Processing msg '" + formatId(message) + "' nr of subscriptions: " + subscriptions.size());
         }
 
         for (RowLogSubscription subscription : subscriptions) {
@@ -355,25 +350,14 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     
     @Override
     public List<RowLogSubscription> getSubscriptions() {
-        synchronized (subscriptions) {
-            return new ArrayList<RowLogSubscription>(subscriptions.values());
-        }
+        return subscriptionsList;
     }
     
     @Override
     public List<String> getSubscriptionIds() {
-        synchronized(subscriptions) {
-            return new ArrayList<String>(subscriptions.keySet());
-        }
+        return subscriptionIds;
     }
     
-    @Override
-    public RowLogSubscription[] getSubscriptionsAsArray() {
-        synchronized (subscriptions) {
-            return subscriptions.values().toArray(new RowLogSubscription[subscriptions.size()]);
-        }
-    }
-
     @Override
     public boolean messageDone(RowLogMessage message, String subscriptionId) throws RowLogException, InterruptedException {
         if (rowLocker != null) { // If the rowLocker exists the lock should be a RowLock
@@ -507,12 +491,10 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             return false;
         }
         if (rowLogConfig.isRespectOrder()) {
-            RowLogSubscription[] subscriptions = getSubscriptionsAsArray();
-            Arrays.sort(subscriptions);
-            for (RowLogSubscription subscriptionContext : subscriptions) {
-                if (subscriptionId.equals(subscriptionContext.getId()))
+            for (String orderedSubId : getSubscriptionIds()) {
+                if (subscriptionId.equals(orderedSubId))
                     break;
-                if (!executionState.getState(subscriptionContext.getId())) {
+                if (!executionState.getState(orderedSubId)) {
                     return false; // There is a previous subscription to be processed first
                 }
             }
@@ -624,17 +606,17 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     
     @Override
     public void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
-        synchronized (subscriptions) {
-            for (RowLogSubscription subscription : newSubscriptions) {
-                subscriptions.put(subscription.getId(), subscription);
-            }
-            Iterator<RowLogSubscription> iterator = subscriptions.values().iterator();
-            while (iterator.hasNext()) {
-                RowLogSubscription subscription = iterator.next();
-                if (!newSubscriptions.contains(subscription))
-                    iterator.remove();
-            }
+        List<RowLogSubscription> subscriptionsList = new ArrayList<RowLogSubscription>(newSubscriptions);
+        Collections.sort(subscriptionsList);
+        this.subscriptionsList = Collections.unmodifiableList(subscriptionsList);
+                    
+        // Make a list of subscription IDs from the sorted subscriptionsList
+        List<String> subscriptionIds = new ArrayList<String>(subscriptionsList.size());
+        for (RowLogSubscription subscription : subscriptionsList) {
+            subscriptionIds.add(subscription.getId());
         }
+        this.subscriptionIds = Collections.unmodifiableList(subscriptionIds);
+
         if (!initialSubscriptionsLoaded.get()) {
             synchronized (initialSubscriptionsLoaded) {
                 initialSubscriptionsLoaded.set(true);

@@ -72,12 +72,6 @@ public class ManualProcessRowLog implements RowLog {
     }
 
     @Override
-    public RowLogSubscription[] getSubscriptionsAsArray() {
-        return delegate.getSubscriptionsAsArray();
-    }
-
-
-    @Override
     public List<RowLogShard> getShards() {
         return delegate.getShards();
     }
