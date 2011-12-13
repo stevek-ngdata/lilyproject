@@ -23,7 +23,9 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is a threadsafe solution for the non-threadsafe HTable.
@@ -37,198 +39,361 @@ import java.util.List;
  * consists of connections to a variety of region servers) it handled at other
  * places. We only need to avoid the cost of creating new copies of HTable all the time.
  *
- * <p>Therefore, an ideal solution is to cache HTable instances in threadlocal variables.
- *
- * <p>This solution is fine for the following situations:
- *
- * <ul>
- *   <li>Multiple threads access the same instance of LocalHTable, e.g. because it
- *       is used in a singleton service class or declared as a static variable.
- *   <li>The threads which make use of the HTable are long-running or pooled threads.
- * </ul>
+ * <p>The first implementation was based on caching HTable instances in threadlocal
+ * variables, now it is based on HTablePool. The reason for changing this was that
+ * HTable now contains an ExecutorService instance, which is better exploited if we
+ * reduce the number of HTable instances.
  *
  * <p>Be careful/considerate when using autoflush.
  *
- * <p>The current implementation will still cause multiple HTable's to be instantiated
- * for the same {conf, table} pair on the same thread if you use multiple LocalHTable's.
- *
- * <p>An alternative solution is the HTablePool provided by HBase.
  */
-public class LocalHTable extends ThreadLocal<HTable> implements HTableInterface {
+public class LocalHTable implements HTableInterface {
     private Configuration conf;
     private byte[] tableName;
     private Log log = LogFactory.getLog(getClass());
+    private static Map<Configuration, HTablePool> HTABLE_POOLS = new HashMap<Configuration, HTablePool>();
+    private HTablePool pool;
 
-    public LocalHTable(Configuration conf, byte[] tableName) {
+    public LocalHTable(Configuration conf, byte[] tableName) throws IOException {
         this.conf = conf;
         this.tableName = tableName;
+        this.pool = getHTablePool(conf);
+
+        // Test the table is accessible
+        runNoIE(new TableRunnable<Object>() {
+            @Override
+            public Object run(HTableInterface table) throws IOException {
+                return null;
+            }
+        });
     }
 
     public LocalHTable(Configuration conf, String tableName) throws IOException {
-        this.conf = conf;
-        this.tableName = Bytes.toBytes(tableName);
-        // Create an instance for the current thread now, so that this would fail immediately if
-        // e.g. the table does not exist or the connection cannot be made.
-        set(new HTable(conf, tableName));
+        this(conf, Bytes.toBytes(tableName));
     }
 
-    private HTable getTableSilent() {
-        try {
-            return getTable();
-        } catch (IOException e) {
-            throw new RuntimeException("Error getting HTable.", e);
-        }
-    }
-
-    private HTable getTable() throws IOException {
-        // Note that since this is about thread locals, we don't any synchronization
-        HTable table = get();
-        if (table == null) {
-            table = new HTable(conf, tableName);
-            set(table);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Created a new htable instance for " + Bytes.toString(tableName) + " on thread " +
-                        Thread.currentThread().getName());
+    public static HTablePool getHTablePool(Configuration conf) {
+        HTablePool pool;
+        synchronized (HTABLE_POOLS) {
+            pool = HTABLE_POOLS.get(conf);
+            if (pool == null) {
+                pool = new HTablePool(conf, 20);
+                HTABLE_POOLS.put(conf, pool);
+                Log log = LogFactory.getLog(LocalHTable.class);
+                if (log.isDebugEnabled()) {
+                    log.debug("Created a new HTablePool instance for configuration " + conf);
+                }
             }
         }
-        return table;
+        return pool;
     }
 
     @Override
     public byte[] getTableName() {
-        return getTableSilent().getTableName();
+        return runNoExc(new TableRunnable<byte[]>() {
+            @Override
+            public byte[] run(HTableInterface table) throws IOException, InterruptedException {
+                return table.getTableName();
+            }
+        });
     }
 
     @Override
     public Configuration getConfiguration() {
-        return getTableSilent().getConfiguration();
+        return runNoExc(new TableRunnable<Configuration>() {
+            @Override
+            public Configuration run(HTableInterface table) throws IOException, InterruptedException {
+                return table.getConfiguration();
+            }
+        });
     }
 
     @Override
     public HTableDescriptor getTableDescriptor() throws IOException {
-        return getTable().getTableDescriptor();
+        return runNoExc(new TableRunnable<HTableDescriptor>() {
+            @Override
+            public HTableDescriptor run(HTableInterface table) throws IOException, InterruptedException {
+                return table.getTableDescriptor();
+            }
+        });
     }
 
     @Override
-    public boolean exists(Get get) throws IOException {
-        return getTable().exists(get);
+    public boolean exists(final Get get) throws IOException {
+        return runNoIE(new TableRunnable<Boolean>() {
+            @Override
+            public Boolean run(HTableInterface table) throws IOException, InterruptedException {
+                return table.exists(get);
+            }
+        });
     }
 
     @Override
-    public Result get(Get get) throws IOException {
-        return getTable().get(get);
+    public Result get(final Get get) throws IOException {
+        return runNoIE(new TableRunnable<Result>() {
+            @Override
+            public Result run(HTableInterface table) throws IOException, InterruptedException {
+                return table.get(get);
+            }
+        });
     }
 
     @Override
-    public Result getRowOrBefore(byte[] row, byte[] family) throws IOException {
-        return getTable().getRowOrBefore(row, family);
+    public Result getRowOrBefore(final byte[] row, final byte[] family) throws IOException {
+        return runNoIE(new TableRunnable<Result>() {
+            @Override
+            public Result run(HTableInterface table) throws IOException, InterruptedException {
+                return table.getRowOrBefore(row, family);
+            }
+        });
     }
 
     @Override
-    public ResultScanner getScanner(Scan scan) throws IOException {
-        return getTable().getScanner(scan);
+    public ResultScanner getScanner(final Scan scan) throws IOException {
+        return runNoIE(new TableRunnable<ResultScanner>() {
+            @Override
+            public ResultScanner run(HTableInterface table) throws IOException, InterruptedException {
+                return table.getScanner(scan);
+            }
+        });
     }
 
     @Override
-    public ResultScanner getScanner(byte[] family) throws IOException {
-        return getTable().getScanner(family);
+    public ResultScanner getScanner(final byte[] family) throws IOException {
+        return runNoIE(new TableRunnable<ResultScanner>() {
+            @Override
+            public ResultScanner run(HTableInterface table) throws IOException, InterruptedException {
+                return table.getScanner(family);
+            }
+        });
     }
 
     @Override
-    public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
-        return getTable().getScanner(family, qualifier);
+    public ResultScanner getScanner(final byte[] family, final byte[] qualifier) throws IOException {
+        return runNoIE(new TableRunnable<ResultScanner>() {
+            @Override
+            public ResultScanner run(HTableInterface table) throws IOException, InterruptedException {
+                return table.getScanner(family, qualifier);
+            }
+        });
     }
 
     @Override
-    public void put(Put put) throws IOException {
-        HTable table = getTable();
-        try {
-            table.put(put);
-        } finally {
-            // if an exception occurs, we do not expect our put to be left
-            // behind in the write buffer
-            table.getWriteBuffer().clear();
-        }
+    public void put(final Put put) throws IOException {
+        runNoIE(new TableRunnable<Void>() {
+            @Override
+            public Void run(HTableInterface table) throws IOException, InterruptedException {
+                table.put(put);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void put(List<Put> puts) throws IOException {
-        getTable().put(puts);
+    public void put(final List<Put> puts) throws IOException {
+        runNoIE(new TableRunnable<Void>() {
+            @Override
+            public Void run(HTableInterface table) throws IOException, InterruptedException {
+                table.put(puts);
+                return null;
+            }
+        });
     }
 
     @Override
-    public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) throws IOException {
-        return getTable().checkAndPut(row, family, qualifier, value, put);
+    public boolean checkAndPut(final byte[] row, final byte[] family, final byte[] qualifier, final byte[] value,
+            final Put put) throws IOException {
+        return runNoIE(new TableRunnable<Boolean>() {
+            @Override
+            public Boolean run(HTableInterface table) throws IOException, InterruptedException {
+                return table.checkAndPut(row, family, qualifier, value, put);
+            }
+        });
     }
 
     @Override
-    public void delete(Delete delete) throws IOException {
-        getTable().delete(delete);
+    public void delete(final Delete delete) throws IOException {
+        runNoIE(new TableRunnable<Void>() {
+            @Override
+            public Void run(HTableInterface table) throws IOException, InterruptedException {
+                table.delete(delete);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void delete(List<Delete> deletes) throws IOException {
-        getTable().delete(deletes);
+    public void delete(final List<Delete> deletes) throws IOException {
+        runNoIE(new TableRunnable<Void>() {
+            @Override
+            public Void run(HTableInterface table) throws IOException, InterruptedException {
+                table.delete(deletes);
+                return null;
+            }
+        });
     }
 
     @Override
-    public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
-        return getTable().checkAndDelete(row, family, qualifier, value, delete);
+    public boolean checkAndDelete(final byte[] row, final byte[] family, final byte[] qualifier, final byte[] value,
+            final Delete delete) throws IOException {
+        return runNoIE(new TableRunnable<Boolean>() {
+            @Override
+            public Boolean run(HTableInterface table) throws IOException, InterruptedException {
+                return table.checkAndDelete(row, family, qualifier, value, delete);
+            }
+        });
     }
 
     @Override
-    public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) throws IOException {
-        return getTable().incrementColumnValue(row, family, qualifier, amount);
+    public long incrementColumnValue(final byte[] row, final byte[] family, final byte[] qualifier, final long amount)
+            throws IOException {
+        return runNoIE(new TableRunnable<Long>() {
+            @Override
+            public Long run(HTableInterface table) throws IOException, InterruptedException {
+                return table.incrementColumnValue(row, family, qualifier, amount);
+            }
+        });
     }
 
     @Override
-    public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL) throws IOException {
-        return getTable().incrementColumnValue(row, family, qualifier, amount, writeToWAL);
+    public long incrementColumnValue(final byte[] row, final byte[] family, final byte[] qualifier, final long amount,
+            final boolean writeToWAL) throws IOException {
+        return runNoIE(new TableRunnable<Long>() {
+            @Override
+            public Long run(HTableInterface table) throws IOException, InterruptedException {
+                return table.incrementColumnValue(row, family, qualifier, amount, writeToWAL);
+            }
+        });
     }
 
     @Override
     public boolean isAutoFlush() {
-        return getTableSilent().isAutoFlush();
+        return runNoExc(new TableRunnable<Boolean>() {
+            @Override
+            public Boolean run(HTableInterface table) throws IOException, InterruptedException {
+                return table.isAutoFlush();
+            }
+        });
     }
 
     @Override
     public void flushCommits() throws IOException {
-        getTable().flushCommits();
+        runNoIE(new TableRunnable<Object>() {
+            @Override
+            public Object run(HTableInterface table) throws IOException, InterruptedException {
+                table.flushCommits();
+                return null;
+            }
+        });
     }
 
     @Override
     public void close() throws IOException {
-        getTable().close();
+        runNoIE(new TableRunnable<Void>() {
+            @Override
+            public Void run(HTableInterface table) throws IOException, InterruptedException {
+                table.close();
+                return null;
+            }
+        });
     }
 
     @Override
-    public RowLock lockRow(byte[] row) throws IOException {
-        return getTable().lockRow(row);
+    public RowLock lockRow(final byte[] row) throws IOException {
+        return runNoIE(new TableRunnable<RowLock>() {
+            @Override
+            public RowLock run(HTableInterface table) throws IOException, InterruptedException {
+                return table.lockRow(row);
+            }
+        });
     }
 
     @Override
-    public void unlockRow(RowLock rl) throws IOException {
-        getTable().unlockRow(rl);
+    public void unlockRow(final RowLock rl) throws IOException {
+        runNoIE(new TableRunnable<Void>() {
+            @Override
+            public Void run(HTableInterface table) throws IOException, InterruptedException {
+                table.unlockRow(rl);
+                return null;
+            }
+        });
     }
 
     @Override
-    public void batch(List<Row> actions, Object[] results) throws IOException, InterruptedException {
-        getTable().batch(actions, results);
+    public void batch(final List<Row> actions, final Object[] results) throws IOException, InterruptedException {
+        run(new TableRunnable<Void>() {
+            @Override
+            public Void run(HTableInterface table) throws IOException, InterruptedException {
+                table.batch(actions, results);
+                return null;
+            }
+        });
     }
 
     @Override
-    public Object[] batch(List<Row> actions) throws IOException, InterruptedException {
-        return getTable().batch(actions);
+    public Object[] batch(final List<Row> actions) throws IOException, InterruptedException {
+        return run(new TableRunnable<Object[]>() {
+            @Override
+            public Object[] run(HTableInterface table) throws IOException, InterruptedException {
+                return table.batch(actions);
+            }
+        });
     }
 
     @Override
-    public Result[] get(List<Get> gets) throws IOException {
-        return getTable().get(gets);
+    public Result[] get(final List<Get> gets) throws IOException {
+        return runNoIE(new TableRunnable<Result[]>() {
+            @Override
+            public Result[] run(HTableInterface table) throws IOException, InterruptedException {
+                return table.get(gets);
+            }
+        });
     }
 
     @Override
-    public Result increment(Increment increment) throws IOException {
-        return getTable().increment(increment);
+    public Result increment(final Increment increment) throws IOException {
+        return runNoIE(new TableRunnable<Result>() {
+            @Override
+            public Result run(HTableInterface table) throws IOException {
+                return table.increment(increment);
+            }
+        });
+    }
+    
+    private <T> T run(TableRunnable<T> runnable) throws IOException, InterruptedException {
+        HTableInterface table = pool.getTable(tableName);
+        try {
+            return runnable.run(table);
+        } finally {
+            pool.putTable(table);
+        }
+    }
+
+    private <T> T runNoIE(TableRunnable<T> runnable) throws IOException {
+        HTableInterface table = pool.getTable(tableName);
+        try {
+            return runnable.run(table);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            pool.putTable(table);
+        }
+    }
+
+    private <T> T runNoExc(TableRunnable<T> runnable) {
+        HTableInterface table = pool.getTable(tableName);
+        try {
+            return runnable.run(table);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            pool.putTable(table);
+        }
+    }
+
+    private static interface TableRunnable<T> {
+        public T run(HTableInterface table) throws IOException, InterruptedException;
     }
 }

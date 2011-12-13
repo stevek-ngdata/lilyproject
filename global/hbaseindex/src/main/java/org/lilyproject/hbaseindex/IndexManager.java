@@ -115,6 +115,12 @@ public class IndexManager {
         HTableInterface table;
         try {
             table = new LocalHTable(hbaseConf, name);
+        } catch (RuntimeException e) {
+            if (e.getCause() != null && e.getCause() instanceof TableNotFoundException) {
+                throw new IndexNotFoundException(name);                
+            } else {
+                throw e;
+            }
         } catch (TableNotFoundException e) {
             throw new IndexNotFoundException(name);
         }
@@ -126,6 +132,12 @@ public class IndexManager {
         byte[] jsonData;
         try {
             jsonData = table.getTableDescriptor().getValue(INDEX_META_KEY);
+        } catch (RuntimeException e) {
+            if (e.getCause() != null && e.getCause() instanceof TableNotFoundException) {
+                throw new IndexNotFoundException(name);
+            } else {
+                throw e;
+            }
         } catch (TableNotFoundException e) {
             throw new IndexNotFoundException(name);
         }
@@ -152,6 +164,12 @@ public class IndexManager {
 
         try {
             tableDescr = hbaseAdmin.getTableDescriptor(Bytes.toBytes(name));
+        } catch (RuntimeException e) {
+            if (e.getCause() != null && e.getCause() instanceof TableNotFoundException) {
+                throw new IndexNotFoundException(name);
+            } else {
+                throw e;
+            }
         } catch (TableNotFoundException e) {
             throw new IndexNotFoundException(name);
         }
