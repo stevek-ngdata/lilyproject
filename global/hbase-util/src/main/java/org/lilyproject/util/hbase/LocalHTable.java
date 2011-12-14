@@ -21,11 +21,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.Pair;
+import org.lilyproject.util.concurrent.NamedThreadFactory;
+import org.lilyproject.util.concurrent.WaitPolicy;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * This is a threadsafe solution for the non-threadsafe HTable.
@@ -42,7 +45,9 @@ import java.util.Map;
  * <p>The first implementation was based on caching HTable instances in threadlocal
  * variables, now it is based on HTablePool. The reason for changing this was that
  * HTable now contains an ExecutorService instance, which is better exploited if we
- * reduce the number of HTable instances.
+ * reduce the number of HTable instances (and now this implementation even changes
+ * it by a shared ExecutorService instance, since otherwise threads still very
+ * many very short-lived threads were created).
  *
  * <p>Be careful/considerate when using autoflush.
  *
@@ -53,6 +58,9 @@ public class LocalHTable implements HTableInterface {
     private byte[] tableName;
     private Log log = LogFactory.getLog(getClass());
     private static Map<Configuration, HTablePool> HTABLE_POOLS = new HashMap<Configuration, HTablePool>();
+    private static ExecutorService EXECUTOR_SERVICE;
+    private static ExecutorService EXECUTOR_SERVICE_SHUTDOWN_PROTECTED;
+    private static Field POOL_FIELD;
     private HTablePool pool;
 
     public LocalHTable(Configuration conf, byte[] tableName) throws IOException {
@@ -60,6 +68,34 @@ public class LocalHTable implements HTableInterface {
         this.tableName = tableName;
         this.tableNameString = Bytes.toString(tableName);
         this.pool = getHTablePool(conf);
+
+        // HTable internally has an ExecutorService. I have noticed that many of the HBase operations that Lily
+        // performs don't make use of this ES, since they are not plain put or batch operations. Thus, for the
+        // operations that do make use of it (still enough, e.g. all the puts on the rowlog shards), they use
+        // the ExecutorServices of many different HTable instances, leading to very little thread re-use
+        // and many very short-lived threads. Therefore, we switch the ExecutorService instance in HBase by
+        // a shared one, which requires modifying a private variable. (seems like this is improved in HBase trunk)
+
+        synchronized (this) {
+            if (EXECUTOR_SERVICE == null) {
+                int maxThreads = Integer.MAX_VALUE;
+                log.debug("Creating ExecutorService for HTable with max threads = " + maxThreads);
+
+                EXECUTOR_SERVICE = new ThreadPoolExecutor(1, maxThreads,
+                        60, TimeUnit.SECONDS,
+                        new SynchronousQueue<Runnable>(),
+                        new NamedThreadFactory("hbase-batch", null, true),
+                        new WaitPolicy());
+                EXECUTOR_SERVICE_SHUTDOWN_PROTECTED = new ShutdownProtectedExecutor(EXECUTOR_SERVICE);
+
+                try {
+                    POOL_FIELD = HTable.class.getDeclaredField("pool");
+                    POOL_FIELD.setAccessible(true);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
 
         // Test the table is accessible
         runNoIE(new TableRunnable<Object>() {
@@ -74,20 +110,48 @@ public class LocalHTable implements HTableInterface {
         this(conf, Bytes.toBytes(tableName));
     }
 
-    public static HTablePool getHTablePool(Configuration conf) {
+    public HTablePool getHTablePool(Configuration conf) {
         HTablePool pool;
         synchronized (HTABLE_POOLS) {
             pool = HTABLE_POOLS.get(conf);
             if (pool == null) {
-                pool = new HTablePool(conf, 20);
+                pool = new HTablePool(conf, 20, new HTableFactory());
                 HTABLE_POOLS.put(conf, pool);
                 Log log = LogFactory.getLog(LocalHTable.class);
                 if (log.isDebugEnabled()) {
-                    log.debug("Created a new HTablePool instance for configuration " + conf);
+                    log.debug("Created a new HTablePool instance for conf " + System.identityHashCode(conf));
                 }
             }
         }
         return pool;
+    }
+    
+    public class HTableFactory implements HTableInterfaceFactory {
+        @Override
+        public HTableInterface createHTableInterface(Configuration config, byte[] tableName) {
+            try {
+                HTable table = new HTable(config, tableName);
+                // Override HTable's private ExecutorService with our shared one, so that
+                // there is better reuse of threads.
+                try {
+                    POOL_FIELD.set(table, EXECUTOR_SERVICE_SHUTDOWN_PROTECTED);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                return table;
+            } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
+            }
+        }
+
+        @Override
+        public void releaseHTableInterface(HTableInterface table) {
+            try {
+                table.close();
+            } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
+            }
+        }
     }
 
     @Override
@@ -291,13 +355,7 @@ public class LocalHTable implements HTableInterface {
 
     @Override
     public void close() throws IOException {
-        runNoIE(new TableRunnable<Void>() {
-            @Override
-            public Void run(HTableInterface table) throws IOException, InterruptedException {
-                table.close();
-                return null;
-            }
-        });
+        // Not allowed, since pooled.
     }
 
     @Override
@@ -398,5 +456,78 @@ public class LocalHTable implements HTableInterface {
 
     private static interface TableRunnable<T> {
         public T run(HTableInterface table) throws IOException, InterruptedException;
+    }
+
+    public static class ShutdownProtectedExecutor implements ExecutorService {
+        private ExecutorService executorService;
+
+        public ShutdownProtectedExecutor(ExecutorService executorService) {
+            this.executorService = executorService;
+        }
+
+        @Override
+        public void shutdown() {
+            // do nothing
+        }
+
+        @Override
+        public List<Runnable> shutdownNow() {
+            throw new RuntimeException("Don't call this");
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return executorService.isShutdown();
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return executorService.isTerminated();
+        }
+
+        @Override
+        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+            return executorService.awaitTermination(timeout, unit);
+        }
+
+        @Override
+        public <T> Future<T> submit(Callable<T> task) {
+            return executorService.submit(task);
+        }
+
+        @Override
+        public <T> Future<T> submit(Runnable task, T result) {
+            return executorService.submit(task, result);
+        }
+
+        @Override
+        public Future<?> submit(Runnable task) {
+            return executorService.submit(task);
+        }
+
+        @Override
+        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+            return executorService.invokeAll(tasks);
+        }
+
+        @Override
+        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+            return executorService.invokeAll(tasks, timeout, unit);
+        }
+
+        @Override
+        public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+            return executorService.invokeAny(tasks);
+        }
+
+        @Override
+        public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            return executorService.invokeAny(tasks, timeout, unit);
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            executorService.execute(command);
+        }
     }
 }

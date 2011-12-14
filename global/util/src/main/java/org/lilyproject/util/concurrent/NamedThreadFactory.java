@@ -10,24 +10,34 @@ public class NamedThreadFactory implements ThreadFactory {
     private final ThreadGroup group;
     private final AtomicInteger threadNumber = new AtomicInteger(1);
     private final String namePrefix;
+    private boolean daemon;
 
     public NamedThreadFactory(String name) {
         this(name, Thread.currentThread().getThreadGroup());
     }
 
     public NamedThreadFactory(String name, ThreadGroup group) {
+        this(name, group, false);
+    }
+    
+    public NamedThreadFactory(String name, ThreadGroup group, boolean daemon) {
         this.name = name;
-        this.group = group;
+        this.group = group == null ? Thread.currentThread().getThreadGroup() : null;
         this.namePrefix = name + "-thread-";
     }
     
     @Override    
     public Thread newThread(Runnable r) {
         Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
-        if (t.isDaemon())
+
+        if (daemon)
+            t.setDaemon(true);
+        else if (t.isDaemon())
             t.setDaemon(false);
+
         if (t.getPriority() != Thread.NORM_PRIORITY)
             t.setPriority(Thread.NORM_PRIORITY);
+
         return t;
     }
 }
