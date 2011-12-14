@@ -158,8 +158,12 @@ public class RemoteListenersSubscriptionHandler extends AbstractListenersSubscri
         if (bootstrap == null) {
             if (channelFactory == null) {
                 channelFactory = new NioClientSocketChannelFactory(
-                        Executors.newCachedThreadPool(new NamedThreadFactory("rowlog-client-" + rowLog.getId() + "-boss")),
-                        Executors.newCachedThreadPool(new NamedThreadFactory("rowlog-client-" + rowLog.getId() + "-worker")));
+                        Executors.newCachedThreadPool(
+                                new NamedThreadFactory("rowlog-client-" + rowLog.getId() + "-boss",
+                                        new ThreadGroup("RowLogSendToListenerBoss_" + subscriptionId))),
+                        Executors.newCachedThreadPool(
+                                new NamedThreadFactory("rowlog-client-" + rowLog.getId() + "-worker",
+                                        new ThreadGroup("RowLogSendToListener_" + subscriptionId))));
             }
             bootstrap = new ClientBootstrap(channelFactory);
             bootstrap.setPipelineFactory(new ChannelPipelineFactoryImplementation());

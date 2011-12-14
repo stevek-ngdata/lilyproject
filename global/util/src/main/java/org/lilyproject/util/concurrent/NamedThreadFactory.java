@@ -22,7 +22,7 @@ public class NamedThreadFactory implements ThreadFactory {
     
     public NamedThreadFactory(String name, ThreadGroup group, boolean daemon) {
         this.name = name;
-        this.group = group == null ? Thread.currentThread().getThreadGroup() : null;
+        this.group = group == null ? Thread.currentThread().getThreadGroup() : group;
         this.namePrefix = name + "-thread-";
     }
     

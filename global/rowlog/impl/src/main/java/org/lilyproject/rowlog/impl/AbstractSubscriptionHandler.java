@@ -66,7 +66,8 @@ public abstract class AbstractSubscriptionHandler implements SubscriptionHandler
         }
 
         public void start() {
-            thread = new Thread(this, "Handler: subscription " + subscriptionId + ", listener " + listener);
+            thread = new Thread(new ThreadGroup("RowLogHandlers"), this,
+                    "Handler: subscription " + subscriptionId + ", listener " + listener);
             thread.start();
         }
 

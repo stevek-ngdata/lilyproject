@@ -165,7 +165,7 @@ public class Index {
      * or not. If a field is null, its value will be encoded as all-zero bits.
      */
     private byte[] buildRowKey(IndexEntry entry) {
-        List<byte[]> keyComponents = new ArrayList<byte[]>();
+        List<byte[]> keyComponents = new ArrayList<byte[]>(definition.getFields().size());
 
         for (IndexFieldDefinition fieldDef : definition.getFields()) {
             Object value = entry.getValue(fieldDef.getName());

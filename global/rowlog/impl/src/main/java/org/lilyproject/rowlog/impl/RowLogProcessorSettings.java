@@ -7,7 +7,9 @@ public class RowLogProcessorSettings {
 
     private int msgTimestampMargin = RowLogProcessor.DEFAULT_MSG_TIMESTAMP_MARGIN;
 
-    private int scanBatchSize = 30;
+    private int scanBatchSize = 500;
+    
+    private int messagesWorkQueueSize = 500;
 
     public int getScanThreadCount() {
         return scanThreadCount;
@@ -43,9 +45,23 @@ public class RowLogProcessorSettings {
     }
 
     /**
-     * The amount of messages to fetch in one scan operation on a {@link org.lilyproject.rowlog.api.RowLogShard}.
+     * The number of rows to retrieve in one scan on all the splits of the rowlog
+     * global queue table. Thus, this number if divided by the number of rowlog shards,
+     * the result is the batch size of a scan operation on one of the shards (= table splits).
      */
     public void setScanBatchSize(int scanBatchSize) {
         this.scanBatchSize = scanBatchSize;
+    }
+
+    public int getMessagesWorkQueueSize() {
+        return messagesWorkQueueSize;
+    }
+
+    /**
+     * The 'messages work queue' is an internal buffer of messages to be dispatched to rowlog subscription
+     * listeners (such as the indexer processes). This parameter defines the size of the buffer.
+     */
+    public void setMessagesWorkQueueSize(int messagesWorkQueueSize) {
+        this.messagesWorkQueueSize = messagesWorkQueueSize;
     }
 }

@@ -76,11 +76,9 @@ public class IndexerWorker {
 
     private RowLog rowLog;
 
-    private final int listenersPerIndex;
-
     private final SolrClientConfig solrClientConfig;
 
-    private final boolean enableLocking;
+    private final IndexerWorkerSettings settings;
 
     private final String hostName;
 
@@ -101,8 +99,8 @@ public class IndexerWorker {
     private final Log log = LogFactory.getLog(getClass());
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
-            Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, int listenersPerIndex,
-            SolrClientConfig solrClientConfig, boolean enableLocking, String hostName)
+            Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
+            SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -110,17 +108,16 @@ public class IndexerWorker {
         this.linkIndex = new LinkIndex(new IndexManager(hbaseConf), repository);
         this.zk = zk;
         this.rowLogConfMgr = rowLogConfMgr;
-        this.listenersPerIndex = listenersPerIndex;
+        this.settings = settings;
         this.solrClientConfig = solrClientConfig;
-        this.enableLocking = enableLocking;
         this.hostName = hostName;
     }
 
     @PostConstruct
     public void init() {
         connectionManager = new MultiThreadedHttpConnectionManager();
-        connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);
-        connectionManager.getParams().setMaxTotalConnections(50);
+        connectionManager.getParams().setDefaultMaxConnectionsPerHost(settings.getSolrMaxConnectionsPerHost());
+        connectionManager.getParams().setMaxTotalConnections(settings.getSolrMaxTotalConnections());
       	httpClient = new HttpClient(connectionManager);
 
         eventWorkerThread = new Thread(new EventWorker(), "IndexerWorkerEventWorker");
@@ -175,7 +172,7 @@ public class IndexerWorker {
 
             SolrShardManager solrShardMgr = new SolrShardManager(index.getName(), index.getSolrShards(), shardSelector,
                     httpClient, solrClientConfig, true);
-            IndexLocker indexLocker = new IndexLocker(zk, enableLocking);
+            IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
             Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
                     indexerMetrics);
@@ -186,7 +183,7 @@ public class IndexerWorker {
 
             List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
 
-            for (int i = 0; i < listenersPerIndex; i++) {
+            for (int i = 0; i < settings.getListenersPerIndex(); i++) {
                 RemoteListenerHandler handler = new RemoteListenerHandler(rowLog, index.getQueueSubscriptionId(),
                         indexUpdater, rowLogConfMgr, hostName);
                 listenerHandlers.add(handler);

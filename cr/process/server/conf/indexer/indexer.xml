@@ -9,7 +9,7 @@
     go faster when running multiple index updaters in parallel on each Lily
     node.
   -->
-  <listenersPerIndex>3</listenersPerIndex>
+  <listenersPerIndex>10</listenersPerIndex>
 
   <!--
     Should a lock be taken so that the same record cannot be indexed concurrently by different
@@ -35,6 +35,10 @@
     <!--
     <responseParser>org.apache.solr.client.solrj.impl.XMLResponseParser</responseParser>
     -->
+
+    <maxTotalConnections>200</maxTotalConnections>
+
+    <maxConnectionsPerHost>50</maxConnectionsPerHost>
   </solr>
 
   <!--

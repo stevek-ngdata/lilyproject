@@ -37,6 +37,7 @@ import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.api.SubscriptionsObserver;
 import org.lilyproject.util.Logs;
+import org.lilyproject.util.concurrent.NamedThreadFactory;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
@@ -81,7 +82,8 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             int regionServerCnt = HBaseAdminFactory.get(hbaseConf).getClusterStatus().getServers();
             int threadCnt = getScanThreadCount(regionServerCnt);
             this.globalQScanExecutor = new ThreadPoolExecutor(threadCnt, threadCnt,
-                    30, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
+                    30, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+                    new NamedThreadFactory("rowlog-scan", new ThreadGroup("RowLogScan")));
 
             // Start the service that will monitor the number of region servers and adjust number
             // of scan threads accordingly
@@ -287,30 +289,45 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         private long lastWakeup;
         private ProcessorMetrics metrics;
         private volatile boolean stopRequested = false; // do not rely only on Thread.interrupt since some libraries eat interruptions
-        private MessagesWorkQueue messagesWorkQueue = new MessagesWorkQueue();
+        private final MessagesWorkQueue messagesWorkQueue;
         private SubscriptionHandler subscriptionHandler;
         private final RowLogSubscription subscription;
         private boolean firstRun = true;
+        private final int scanBatchPerShard;
 
         public SubscriptionThread(RowLogSubscription subscription) {
-            super("Row log SubscriptionThread for " + subscription.getId());
+            super(new ThreadGroup("RowLogProcessor"), "Row log SubscriptionThread for " + subscription.getId());
             this.subscription = subscription;
             this.metrics = new ProcessorMetrics(rowLog.getId()+"_"+subscription.getId());
-            switch (subscription.getType()) {
-            case VM:
-                subscriptionHandler = new LocalListenersSubscriptionHandler(subscription.getId(), messagesWorkQueue, rowLog, rowLogConfigurationManager);
-                break;
-                
-            case Netty:
-                subscriptionHandler = new RemoteListenersSubscriptionHandler(subscription.getId(),  messagesWorkQueue, rowLog, rowLogConfigurationManager);
-                break;
 
-            case WAL:
-                subscriptionHandler = new WalSubscriptionHandler(subscription.getId(), messagesWorkQueue, rowLog, rowLogConfigurationManager);
-                break;
-                
-            default:
-                break;
+            int scanBatchPerShard = settings.getScanBatchSize() / rowLog.getShards().size();
+            if (scanBatchPerShard < 1) {
+                scanBatchPerShard = 1;
+            }
+            this.scanBatchPerShard = scanBatchPerShard;
+            log.info("RowLog scan batch size (on each shard/split): " + scanBatchPerShard);
+
+            messagesWorkQueue = new MessagesWorkQueue(settings.getMessagesWorkQueueSize());
+            log.info("RowLog messages work queue size: " + settings.getMessagesWorkQueueSize());
+
+            switch (subscription.getType()) {
+                case VM:
+                    subscriptionHandler =new LocalListenersSubscriptionHandler(subscription.getId(), messagesWorkQueue,
+                            rowLog, rowLogConfigurationManager);
+                    break;
+
+                case Netty:
+                    subscriptionHandler = new RemoteListenersSubscriptionHandler(subscription.getId(),
+                            messagesWorkQueue, rowLog, rowLogConfigurationManager);
+                    break;
+
+                case WAL:
+                    subscriptionHandler = new WalSubscriptionHandler(subscription.getId(), messagesWorkQueue, rowLog,
+                            rowLogConfigurationManager);
+                    break;
+
+                default:
+                    break;
             }
         }
         
@@ -358,7 +375,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         // Ideally, we would figure out on what servers what regions are deployed and then do the
                         // requests such that we touch the maximum number of different servers. For now, we keep
                         // it simple and assume the requests will be distributed enough by chance.
-                        final int batchSize = scanFirstMessageOnly ? 1 : settings.getScanBatchSize();
+                        final int batchSize = scanFirstMessageOnly ? 1 : scanBatchPerShard;
                         List<RowLogMessage> messages = new ArrayList<RowLogMessage>();
                         int maxMessagesFromOneShard = 0;
                         List<Future<List<RowLogMessage>>> scanFutures = new ArrayList<Future<List<RowLogMessage>>>();
@@ -450,7 +467,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         // scanning for messages.
                         // Also: the minimalProcessDelay setting is not taken into account: as it currently is,
                         // this is only relevant for the WAL, which does not make use of the wake-up signal.
-                        if (maxMessagesFromOneShard < settings.getScanBatchSize() && lastWakeup < tsBeforeGetMessages) {
+                        if (maxMessagesFromOneShard < scanBatchPerShard && lastWakeup < tsBeforeGetMessages) {
                             synchronized (this) {
                                 // The timeout covers two cases:
                                 //   (1) a safety fallback, in case a wake-up got lost or so

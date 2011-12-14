@@ -24,14 +24,14 @@ import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.util.ByteArrayKey;
 
 public class MessagesWorkQueue {
-    private static final int MAX_MESSAGES = 100;
-
-    private final List<RowLogMessage> messageList = new ArrayList<RowLogMessage>(MAX_MESSAGES);
+    private final int maxMessages;
+    
+    private final List<RowLogMessage> messageList;
     
     private final Set<RowLogMessage> messagesWorkingOn = new HashSet<RowLogMessage>();
 
     private final Set<ByteArrayKey> rowsWorkingOn = new HashSet<ByteArrayKey>();
-
+    
     /**
      * This lock must be obtained by anyone modifying the above lists, or of course when waiting/signalling
      * the conditions associated with this lock.
@@ -49,10 +49,15 @@ public class MessagesWorkQueue {
 
     private final Object refillTrigger = new Object();
 
+    public MessagesWorkQueue(int size) {
+        this.maxMessages = size;
+        this.messageList = new ArrayList<RowLogMessage>(size);
+    }
+
     public void offer(RowLogMessage message) throws InterruptedException {
         lock.lock();
         try {
-            while (messageList.size() >= MAX_MESSAGES) {
+            while (messageList.size() >= maxMessages) {
                 notFull.await();
             }
             messageList.add(message);

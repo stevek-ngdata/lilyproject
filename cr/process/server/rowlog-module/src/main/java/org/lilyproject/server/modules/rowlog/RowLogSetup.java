@@ -160,10 +160,21 @@ public class RowLogSetup {
     private RowLogProcessorSettings createProcessorSettings(Conf conf) {
         RowLogProcessorSettings settings = new RowLogProcessorSettings();
 
-        settings.setMsgTimestampMargin(conf.getChild("messageTimestampMargin").
-                getValueAsInteger(RowLogProcessor.DEFAULT_MSG_TIMESTAMP_MARGIN));
+        settings.setMsgTimestampMargin(
+                conf.getChild("messageTimestampMargin")
+                        .getValueAsInteger(RowLogProcessor.DEFAULT_MSG_TIMESTAMP_MARGIN));
 
-        settings.setScanThreadCount(conf.getChild("scanThreadCount").getValueAsInteger(-1));
+        settings.setScanThreadCount(
+                conf.getChild("scanThreadCount")
+                        .getValueAsInteger(settings.getScanThreadCount()));
+
+        settings.setScanBatchSize(
+                conf.getChild("scanBatchSize")
+                        .getValueAsInteger(settings.getScanBatchSize()));
+
+        settings.setMessagesWorkQueueSize(
+                conf.getChild("messagesWorkQueueSize")
+                        .getValueAsInteger(settings.getMessagesWorkQueueSize()));
 
         return settings;
     }

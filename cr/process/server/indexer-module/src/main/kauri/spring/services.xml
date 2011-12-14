@@ -108,10 +108,16 @@
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="rowLogConfigurationMgr"/>
-    <constructor-arg value="${indexer:listenersPerIndex}"/>
     <constructor-arg ref="solrClientConfig"/>
-    <constructor-arg value="${indexer:enableLocking}"/>
     <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
+    <constructor-arg>
+      <bean class="org.lilyproject.indexer.worker.IndexerWorkerSettings">
+        <property name="listenersPerIndex" value="${indexer:listenersPerIndex}"/>
+        <property name="enableLocking" value="${indexer:enableLocking}"/>
+        <property name="solrMaxTotalConnections" value="${indexer:solr/maxTotalConnections}"/>
+        <property name="solrMaxConnectionsPerHost" value="${indexer:solr/maxConnectionsPerHost}"/>
+      </bean>
+    </constructor-arg>
   </bean>
 
 </beans>

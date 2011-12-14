@@ -36,6 +36,24 @@
     <!--
     <messageTimestampMargin>120000</messageTimestampMargin>
     -->
+
+    <!--
+      The number of rows to retrieve in one scan on all the splits of the rowlog
+      global queue table. Thus, this number if divided by the number of rowlog shards,
+      the result is the batch size of a scan operation on one of the shards (= table splits).
+    -->
+    <!--
+    <scanBatchSize>500</scanBatchSize>
+    -->
+
+    <!--
+      The 'messages work queue' is an internal buffer of messages to be dispatched to rowlog subscription
+      listeners (such as the indexer processes). This parameter defines the size of the buffer.
+      Usually corresponds to scanBatchSize.
+    -->
+    <!--
+    <messagesWorkQueueSize>500</messagesWorkQueueSize>
+    -->
   </mqProcessor>
 
   <!-- linkIndexUpdater: if enabled, the wal-rowlog subscription will be made if necessary, if false,

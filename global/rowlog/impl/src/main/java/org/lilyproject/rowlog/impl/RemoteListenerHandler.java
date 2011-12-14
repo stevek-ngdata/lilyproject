@@ -56,8 +56,12 @@ public class RemoteListenerHandler {
         this.hostName = hostName;
         bootstrap = new ServerBootstrap(
                 new NioServerSocketChannelFactory(
-                        Executors.newCachedThreadPool(new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-boss")),
-                        Executors.newCachedThreadPool(new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-worker"))));
+                        Executors.newCachedThreadPool(
+                                new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-boss",
+                                        new ThreadGroup("RowLogListenerBoss_" + subscriptionId))),
+                        Executors.newCachedThreadPool(
+                                new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-worker",
+                                        new ThreadGroup("RowLogListener_" + subscriptionId)))));
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             @Override
             public ChannelPipeline getPipeline() throws Exception {
