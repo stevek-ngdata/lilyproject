@@ -79,17 +79,12 @@ public class MessagesWorkQueue {
                     ByteArrayKey row = new ByteArrayKey(message.getRowKey());
                     if (messagesWorkingOn.contains(message)) {
                         messages.remove();
-                        notFull.signal();
+                        afterMessageRemoval();
                     } else if (!rowsWorkingOn.contains(row)) {
                         messages.remove();
-                        notFull.signal();
+                        afterMessageRemoval();
                         messagesWorkingOn.add(message);
                         rowsWorkingOn.add(row);
-                        if (messageList.size() <= refillThreshold) {
-                            synchronized (refillTrigger) {
-                                refillTrigger.notifyAll();
-                            }
-                        }
                         return message;
                     }
                 }
@@ -99,6 +94,15 @@ public class MessagesWorkQueue {
             }
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void afterMessageRemoval() {
+        notFull.signal();
+        if (messageList.size() <= refillThreshold) {
+            synchronized (refillTrigger) {
+                refillTrigger.notifyAll();
+            }
         }
     }
     
