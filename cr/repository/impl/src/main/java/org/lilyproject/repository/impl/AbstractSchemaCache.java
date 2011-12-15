@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 
 import javax.annotation.PreDestroy;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.zookeeper.KeeperException;
@@ -57,6 +58,14 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache/invalidate";
     protected static final String CACHE_REFRESHENABLED_PATH = "/lily/typemanager/cache/enabled";
     private static final String LILY_NODES_PATH = "/lily/repositoryNodes";
+    
+    /**
+     * Paths we need to watch for existence, since we need to re-initialize after they are recreated.
+     * Normally this doesn't happen, but it can happen with the resetLilyState() call of Lily's test
+     * framework.
+     */
+    private static final Set<String> EXISTENCE_PATHS =
+            Sets.newHashSet(CACHE_INVALIDATION_PATH, CACHE_REFRESHENABLED_PATH, LILY_NODES_PATH);
 
     public AbstractSchemaCache(ZooKeeperItf zooKeeper) {
         this.zooKeeper = zooKeeper;
@@ -223,6 +232,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
      */
     private void refreshAll() throws InterruptedException, RepositoryException {
 
+        watchPathsForExistence();
+
         // Set a watch on the parent path, in case everything needs to be
         // refreshed
         try {
@@ -239,7 +250,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             // Relying on the ConnectionWatcher to put it again and
             // initialize the caches.
         }
-
+        
         if (bucketVersions.isEmpty()) {
             // All buckets need to be refreshed
 
@@ -345,11 +356,21 @@ public abstract class AbstractSchemaCache implements SchemaCache {
         updatedFieldTypes = true;
     }
 
+    private void watchPathsForExistence() throws InterruptedException {
+        for (String path : EXISTENCE_PATHS) {
+            try {
+                zooKeeper.exists(path, true);
+            } catch (KeeperException e) {
+                log.warn("Failed to put existence watcher on " + path);
+            }
+        }
+    }
+
     /**
      * Cache refresher refreshes the cache when flagged.
      * <p>
      * The {@link CacheWatcher} monitors the cache invalidation flag on
-     * Zookeeper. When this flag changes it will call {@link #needsRefresh()} on
+     * Zookeeper. When this flag changes it will call {@link #needsRefresh} on
      * the CacheRefresher, setting the needsRefresh flag. This is the only thing
      * the CacheWatcher does. Thereby it can return quickly when it received an
      * event.<br/>
@@ -489,7 +510,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                     }
 
                     synchronized (needsRefreshLock) {
-                        if (!needsRefresh && !stop) {
+                        if (!needsRefresh && !needsRefreshAll && !stop) {
                             needsRefreshLock.wait();
                         }
                     }
@@ -552,6 +573,26 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             if (EventType.None.equals(event.getType()) && KeeperState.SyncConnected.equals(event.getState())) {
                 readRefreshingEnabledState();
                 cacheRefresher.needsRefreshAll();
+            } else if (EXISTENCE_PATHS.contains(event.getPath())) {
+                if (EventType.NodeCreated.equals(event.getType())) {
+                    if (event.getPath().equals(CACHE_REFRESHENABLED_PATH)) {
+                        readRefreshingEnabledState();
+                    }
+                    if (event.getPath().equals(CACHE_INVALIDATION_PATH)) {
+                        cacheRefresher.needsRefreshAll();
+                    }
+                    if (event.getPath().equals(LILY_NODES_PATH)) {
+                        lilyNodesWatcher = null;
+                        cacheRefresher.needsRefreshAll();
+                    }
+                } else if (EventType.NodeDeleted.equals(event.getType())) {
+                    try {
+                        watchPathsForExistence();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(e);
+                    }
+                }
             }
         }
     }
