@@ -16,7 +16,6 @@
 package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
@@ -69,7 +68,7 @@ public class BlobValueType extends AbstractValueType implements ValueType {
      * <p> IMPORTANT: Any changes on this format has an impact on the {@link ContainsValueComparator}
      */
     @Override
-    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
+    public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         Blob blob = (Blob)value;
         byte[] key = blob.getValue();

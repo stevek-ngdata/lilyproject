@@ -128,7 +128,7 @@ public class UnmodifiableRecord implements Record {
     }
 
     @Override
-    public Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
+    public Record cloneRecord(IdentityRecordStack parentRecords) throws RecordException {
         return delegate.cloneRecord(parentRecords);
     }
 

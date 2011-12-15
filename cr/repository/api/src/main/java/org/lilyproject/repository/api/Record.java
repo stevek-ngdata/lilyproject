@@ -15,7 +15,6 @@
  */
 package org.lilyproject.repository.api;
 
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -200,7 +199,7 @@ public interface Record {
      * Creates a clone of the record object
      * <p>
      * A new record object is created with the same id, version, recordTypes,
-     * fields and deleteFields. </br> The response status is not copied into the
+     * fields and deleteFields. The response status is not copied into the
      * new Record object.
      * <p>
      * Of the fields that are not of an immutable type, a deep copy is
@@ -210,19 +209,17 @@ public interface Record {
      * the record is contained in the map of parentRecords
      * 
      * @param parentRecords
-     *            a map parent records of the record used to check if the record
-     *            is nested in itself or one of its parents. Note: this does an
-     *            identity (==) check on the record. The value of this map is of
-     *            no meaning and may be null.
+     *            a stack of parent records of the record used to check if the record
+     *            is nested in itself or one of its parents.
      * @throws RecordException
      *             when the record is contained in the parentRecords map or if
      *             it is nested in itself.
      */
-    Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException;
+    Record cloneRecord(IdentityRecordStack parentRecords) throws RecordException;
     
     /**
-     * Shortcut method for {@link #cloneRecord(IdentityHashMap)} with
-     * parentRecords set to an empty map
+     * Shortcut method for {@link #cloneRecord(IdentityRecordStack)} with
+     * parentRecords set to an empty stack
      */
     Record cloneRecord() throws RecordException;
 

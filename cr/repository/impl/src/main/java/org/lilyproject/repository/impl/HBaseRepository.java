@@ -638,9 +638,7 @@ public class HBaseRepository extends BaseRepository {
 
         DataOutput dataOutput = new DataOutputImpl();
         dataOutput.writeByte(EXISTS_FLAG);
-        IdentityHashMap<Record, Object> parentRecords = new IdentityHashMap<Record, Object>();
-        parentRecords.put(parentRecord, null);
-        valueType.write(fieldValue, dataOutput, parentRecords);
+        valueType.write(fieldValue, dataOutput, new IdentityRecordStack(parentRecord));
         return dataOutput.toByteArray();
     }
 

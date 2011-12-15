@@ -16,7 +16,6 @@
 package org.lilyproject.repository.impl.valuetype;
 
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataOutput;
@@ -32,7 +31,7 @@ public abstract class AbstractValueType implements ValueType {
     }
     
     @Override
-    public abstract void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+    public abstract void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException;
 
     @Override
@@ -47,7 +46,7 @@ public abstract class AbstractValueType implements ValueType {
     }
     
     @Override
-    public byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
+    public byte[] toBytes(Object value, IdentityRecordStack parentRecords) throws RepositoryException,
             InterruptedException {
         DataOutput dataOutput = new DataOutputImpl();
         write(value, dataOutput, parentRecords);

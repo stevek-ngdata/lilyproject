@@ -77,7 +77,7 @@ public class PathValueType extends AbstractValueType implements ValueType {
     }
 
     @Override
-    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+    public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
         Object[] elements = ((HierarchyPath) value).getElements();
         dataOutput.writeInt(elements.length);

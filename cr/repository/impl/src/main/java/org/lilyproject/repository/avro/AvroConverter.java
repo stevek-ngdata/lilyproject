@@ -192,8 +192,7 @@ public class AvroConverter {
 
         // Fields
         avroRecord.setFields(new ArrayList<AvroField>(record.getFields().size()));
-        IdentityHashMap<Record, Object> parentRecords = new IdentityHashMap<Record, Object>();
-        parentRecords.put(record, null);
+        IdentityRecordStack parentRecords = new IdentityRecordStack(record);
         for (Entry<QName, Object> field : record.getFields().entrySet()) {
             AvroField avroField = new AvroField();
             avroField.setName(convert(field.getKey()));
@@ -269,8 +268,7 @@ public class AvroConverter {
 
         SystemFields systemFields = SystemFields.getInstance(typeManager, repository.getIdGenerator());
 
-        IdentityHashMap<Record, Object> parentRecords = new IdentityHashMap<Record, Object>();
-        parentRecords.put(parentRecord, null);
+        IdentityRecordStack parentRecords = new IdentityRecordStack(parentRecord);
 
         for (MutationCondition condition : conditions) {
             FieldType fieldType;

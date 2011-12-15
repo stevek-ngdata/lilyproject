@@ -97,7 +97,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     }
     
     @Override
-    public byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
+    public byte[] toBytes(Object value, IdentityRecordStack parentRecords) throws RepositoryException,
             InterruptedException {
         if (value instanceof RecordRvtImpl) {
             byte[] bytes = ((RecordRvtImpl)value).getBytes();
@@ -111,7 +111,7 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     }
 
     @Override
-    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+    public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
         if (value instanceof RecordRvtImpl) {
             byte[] bytes = ((RecordRvtImpl)value).getBytes();
@@ -123,10 +123,10 @@ public class RecordValueType extends AbstractValueType implements ValueType {
         encodeData(value, dataOutput, parentRecords);
     }
     
-    private void encodeData(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+    private void encodeData(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
         Record record = (Record)value;
-        if (parentRecords.containsKey(record))
+        if (parentRecords.contains(record))
             throw new RecordException("A record may not be nested in itself: " + record.getId());
 
 
@@ -177,9 +177,9 @@ public class RecordValueType extends AbstractValueType implements ValueType {
                 dataOutput.writeByte(UNDEFINED);
             else {
                 dataOutput.writeByte(DEFINED);
-                parentRecords.put(record, null);
+                parentRecords.push(record);
                 fieldType.getValueType().write(fieldValue, dataOutput, parentRecords);
-                parentRecords.remove(record);
+                parentRecords.pop();
             }
         }
 

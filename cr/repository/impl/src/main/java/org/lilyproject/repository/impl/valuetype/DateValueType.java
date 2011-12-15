@@ -16,13 +16,12 @@
 package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.IdentityRecordStack;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
 
@@ -56,7 +55,7 @@ public class DateValueType extends AbstractValueType implements ValueType {
     }
 
     @Override
-    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
+    public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
         dataOutput.writeByte((byte)1); // Encoding version 1
         // Currently we only store the millis, not the chronology.
         dataOutput.writeLong(((LocalDate)value).toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis());

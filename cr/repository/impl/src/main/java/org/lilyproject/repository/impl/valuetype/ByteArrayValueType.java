@@ -16,11 +16,11 @@
 package org.lilyproject.repository.impl.valuetype;
 
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.repository.api.IdentityRecordStack;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.ValueTypeFactory;
@@ -64,7 +64,7 @@ public class ByteArrayValueType extends AbstractValueType implements ValueType {
     }
 
     @Override
-    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
+    public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
         ByteArray byteArray = (ByteArray) value;
         dataOutput.writeInt(byteArray.length());
         // We can use getBytesUnsafe here since we know that in this use case

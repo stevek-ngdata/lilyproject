@@ -16,7 +16,6 @@
 package org.lilyproject.repository.api;
 
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 import java.util.Set;
 
 import org.lilyproject.bytes.api.DataInput;
@@ -50,7 +49,7 @@ import org.lilyproject.bytes.api.DataOutput;
  * <p>
  * It is the responsibility of a ValueType to convert the values to/from byte
  * representation, as used for storage in the repository. See the methods
- * {@link #write(Object, org.lilyproject.bytes.api.DataOutput, java.util.IdentityHashMap)}
+ * {@link #write(Object, org.lilyproject.bytes.api.DataOutput, IdentityRecordStack)}
  * and {@link #read(org.lilyproject.bytes.api.DataInput)}.
  * 
  * <p>
@@ -86,11 +85,10 @@ public interface ValueType {
      * @param dataOutput
      *            the DataOutput on which to write the data
      * @param parentRecords
-     *            an IdentityHashMap of parentRecords to check for self-nested
-     *            records. Only the key-part of this map is used, as if it were
-     *            a set, the value is ignored.
+     *            a stack of parentRecords to check for self-nested
+     *            records.
      */
-    void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+    void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException;
 
     /**
@@ -99,7 +97,7 @@ public interface ValueType {
      * <p>Should only be used internally for Avro data transport.
      * 
      */
-    byte[] toBytes(Object value, IdentityHashMap<Record, Object> parentRecords) throws RepositoryException,
+    byte[] toBytes(Object value, IdentityRecordStack parentRecords) throws RepositoryException,
             InterruptedException;
 
     /**

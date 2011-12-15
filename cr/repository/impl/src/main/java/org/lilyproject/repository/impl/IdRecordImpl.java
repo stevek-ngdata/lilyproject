@@ -201,11 +201,11 @@ public class IdRecordImpl implements IdRecord {
 
     @Override
     public IdRecord cloneRecord() throws RecordException {
-        return cloneRecord(new IdentityHashMap<Record, Object>());
+        return cloneRecord(new IdentityRecordStack());
     }
 
     @Override
-    public IdRecord cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
+    public IdRecord cloneRecord(IdentityRecordStack parentRecords) throws RecordException {
         Record recordClone = this.record.cloneRecord(parentRecords);
         IdRecordImpl clone = new IdRecordImpl(recordClone, new HashMap<SchemaId, QName>(mapping),
                 new EnumMap<Scope, SchemaId>(recordTypeIds));

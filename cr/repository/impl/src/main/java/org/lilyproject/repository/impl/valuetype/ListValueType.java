@@ -77,7 +77,7 @@ public class ListValueType extends AbstractValueType implements ValueType {
     }
 
     @Override
-    public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords)
+    public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords)
             throws RepositoryException, InterruptedException {
         List<Object> values = ((List<Object>) value);
         dataOutput.writeInt(values.size());

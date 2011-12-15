@@ -304,7 +304,7 @@ public class ValueTypeTest {
         }
 
         @Override
-        public void write(Object value, DataOutput dataOutput, IdentityHashMap<Record, Object> parentRecords) {
+        public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
             if (random.nextBoolean()) {
                 dataOutput.writeByte((byte)1); // encoding version 1 
                 dataOutput.writeInt(((XYCoordinates) value).getX());

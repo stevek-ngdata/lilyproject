@@ -172,7 +172,7 @@ public class RecordImpl implements Record {
     @Override
     public Record clone() throws RuntimeException {
         try {
-            return cloneRecord(new IdentityHashMap<Record, Object>());
+            return cloneRecord(new IdentityRecordStack());
         } catch (RecordException e) {
             throw new RuntimeException(e);
         }
@@ -180,23 +180,23 @@ public class RecordImpl implements Record {
     
     @Override
     public Record cloneRecord() throws RecordException {
-        return cloneRecord(new IdentityHashMap<Record, Object>());
+        return cloneRecord(new IdentityRecordStack());
     }
 
     @Override
-    public Record cloneRecord(IdentityHashMap<Record, Object> parentRecords) throws RecordException {
-        if (parentRecords.containsKey(this))
+    public Record cloneRecord(IdentityRecordStack parentRecords) throws RecordException {
+        if (parentRecords.contains(this))
             throw new RecordException("A record may not be nested in itself: " + id);
 
         RecordImpl record = new RecordImpl();
         record.id = id;
         record.version = version;
         record.recordTypes.putAll(recordTypes);
-        parentRecords.put(this, null);
+        parentRecords.push(this);
         for (Entry<QName, Object> entry : fields.entrySet()) {
             record.fields.put(entry.getKey(), cloneValue(entry.getValue(), record, parentRecords));
         }
-        parentRecords.remove(this);
+        parentRecords.pop();
         if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
             record.fieldsToDelete.addAll(fieldsToDelete);
         }
@@ -242,7 +242,7 @@ public class RecordImpl implements Record {
         return false; // Skip all other values
     }
 
-    private Object cloneValue(Object value, Record clone, IdentityHashMap<Record, Object> parentRecords)
+    private Object cloneValue(Object value, Record clone, IdentityRecordStack parentRecords)
             throws RecordException {
         if (value instanceof HierarchyPath) {
             Object[] elements = ((HierarchyPath)value).getElements();
