@@ -36,6 +36,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
@@ -155,7 +156,8 @@ public class LilyClient implements Closeable {
         IdGeneratorImpl idGenerator = new IdGeneratorImpl();
         RemoteTypeManager typeManager = new RemoteTypeManager(parseAddressAndPort(server.lilyAddressAndPort),
                 remoteConverter, idGenerator, zk, schemaCache);
-        
+
+        // TODO BlobManager can probably be shared across all repositories
         BlobManager blobManager = getBlobManager(zk);
         
         Repository repository = new RemoteRepository(parseAddressAndPort(server.lilyAddressAndPort),
@@ -168,8 +170,10 @@ public class LilyClient implements Closeable {
     
     public static BlobManager getBlobManager(ZooKeeperItf zk) throws IOException {
         Configuration configuration = getBlobHBaseConfiguration(zk);
+        // Avoid HBase(Admin)/ZooKeeper connection leaks when using new Configuration objects each time.
+        configuration = HBaseAdminFactory.getExisting(configuration);
         HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
-        
+
         URI dfsUri = getDfsUri(zk);
         FileSystem fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));
