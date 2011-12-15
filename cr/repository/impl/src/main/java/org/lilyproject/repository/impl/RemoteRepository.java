@@ -72,7 +72,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -89,7 +89,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -104,7 +104,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -148,7 +148,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -175,7 +175,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -202,7 +202,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -231,7 +231,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -265,7 +265,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -285,7 +285,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -300,7 +300,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -322,7 +322,7 @@ public class RemoteRepository extends BaseRepository {
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredRecordThrowable(e);
         }
@@ -335,7 +335,17 @@ public class RemoteRepository extends BaseRepository {
             throw e;
         }
     }
-    
+
+    private RuntimeException handleAvroRemoteException(AvroRemoteException e) throws RecordException {
+        // AvroRemoteException's are exceptions which are not declared in the avro protocol and
+        // which are not RuntimeException's.
+        if (e.getCause() instanceof IOException) {
+            throw new IORecordException(e.getCause());
+        } else {
+            throw converter.convert(e);
+        }
+    }
+
     @Override
     public RecordBuilder recordBuilder() throws RecordException {
         return new RecordBuilderImpl(this);

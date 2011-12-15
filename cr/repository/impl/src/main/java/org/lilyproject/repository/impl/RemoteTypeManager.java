@@ -91,7 +91,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -108,7 +108,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -129,7 +129,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -146,7 +146,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -177,7 +177,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -194,7 +194,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -212,7 +212,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroGenericException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -225,7 +225,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -238,7 +238,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -252,7 +252,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -268,7 +268,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -281,7 +281,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -294,7 +294,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -307,7 +307,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
         }
@@ -320,9 +320,19 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroRemoteException e) {
-            throw converter.convert(e);
+            throw handleAvroRemoteException(e);
         } catch (UndeclaredThrowableException e) {
             throw handleUndeclaredTypeThrowable(e);
+        }
+    }
+
+    private RuntimeException handleAvroRemoteException(AvroRemoteException e) throws TypeException {
+        // AvroRemoteException's are exceptions which are not declared in the avro protocol and
+        // which are not RuntimeException's.
+        if (e.getCause() instanceof IOException) {
+            throw new IOTypeException(e.getCause());
+        } else {
+            throw converter.convert(e);
         }
     }
 
