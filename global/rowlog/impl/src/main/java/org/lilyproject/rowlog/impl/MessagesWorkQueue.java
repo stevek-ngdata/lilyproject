@@ -51,7 +51,7 @@ public class MessagesWorkQueue {
 
     public MessagesWorkQueue(int size) {
         this.maxMessages = size;
-        this.messageList = new ArrayList<RowLogMessage>(size);
+        this.messageList = new LinkedList<RowLogMessage>();
     }
 
     public void offer(RowLogMessage message) throws InterruptedException {
