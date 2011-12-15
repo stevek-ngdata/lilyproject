@@ -24,6 +24,7 @@ public class CustomThreadFactory implements ThreadFactory {
         this.name = name;
         this.group = group == null ? Thread.currentThread().getThreadGroup() : group;
         this.namePrefix = name + "-thread-";
+        this.daemon = daemon;
     }
     
     @Override    
