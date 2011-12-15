@@ -21,8 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.util.Pair;
-import org.lilyproject.util.concurrent.NamedThreadFactory;
+import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
 
 import java.io.IOException;
@@ -84,7 +83,7 @@ public class LocalHTable implements HTableInterface {
                 EXECUTOR_SERVICE = new ThreadPoolExecutor(1, maxThreads,
                         60, TimeUnit.SECONDS,
                         new SynchronousQueue<Runnable>(),
-                        new NamedThreadFactory("hbase-batch", null, true),
+                        new CustomThreadFactory("hbase-batch", null, true),
                         new WaitPolicy());
                 EXECUTOR_SERVICE_SHUTDOWN_PROTECTED = new ShutdownProtectedExecutor(EXECUTOR_SERVICE);
 

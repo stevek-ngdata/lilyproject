@@ -37,7 +37,7 @@ import org.lilyproject.rowlog.api.RowLogShard;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.api.SubscriptionsObserver;
 import org.lilyproject.util.Logs;
-import org.lilyproject.util.concurrent.NamedThreadFactory;
+import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
@@ -83,7 +83,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             int threadCnt = getScanThreadCount(regionServerCnt);
             this.globalQScanExecutor = new ThreadPoolExecutor(threadCnt, threadCnt,
                     30, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
-                    new NamedThreadFactory("rowlog-scan", new ThreadGroup("RowLogScan")));
+                    new CustomThreadFactory("rowlog-scan", new ThreadGroup("RowLogScan")));
 
             // Start the service that will monitor the number of region servers and adjust number
             // of scan threads accordingly

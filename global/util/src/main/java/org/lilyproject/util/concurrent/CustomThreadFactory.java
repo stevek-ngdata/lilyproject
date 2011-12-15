@@ -5,22 +5,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 // Disclaimer: I looked at DefaultThreadFactory while implementing this
 
-public class NamedThreadFactory implements ThreadFactory {
+public class CustomThreadFactory implements ThreadFactory {
     private final String name;
     private final ThreadGroup group;
     private final AtomicInteger threadNumber = new AtomicInteger(1);
     private final String namePrefix;
     private boolean daemon;
 
-    public NamedThreadFactory(String name) {
+    public CustomThreadFactory(String name) {
         this(name, Thread.currentThread().getThreadGroup());
     }
 
-    public NamedThreadFactory(String name, ThreadGroup group) {
+    public CustomThreadFactory(String name, ThreadGroup group) {
         this(name, group, false);
     }
     
-    public NamedThreadFactory(String name, ThreadGroup group, boolean daemon) {
+    public CustomThreadFactory(String name, ThreadGroup group, boolean daemon) {
         this.name = name;
         this.group = group == null ? Thread.currentThread().getThreadGroup() : group;
         this.namePrefix = name + "-thread-";

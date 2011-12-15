@@ -33,7 +33,7 @@ import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.lilyproject.rowlog.api.*;
-import org.lilyproject.util.concurrent.NamedThreadFactory;
+import org.lilyproject.util.concurrent.CustomThreadFactory;
 
 public class RemoteListenerHandler {
     private final Log log = LogFactory.getLog(getClass());
@@ -57,10 +57,10 @@ public class RemoteListenerHandler {
         bootstrap = new ServerBootstrap(
                 new NioServerSocketChannelFactory(
                         Executors.newCachedThreadPool(
-                                new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-boss",
+                                new CustomThreadFactory("rowlog-server-" + rowLog.getId() + "-boss",
                                         new ThreadGroup("RowLogListenerBoss_" + subscriptionId))),
                         Executors.newCachedThreadPool(
-                                new NamedThreadFactory("rowlog-server-" + rowLog.getId() + "-worker",
+                                new CustomThreadFactory("rowlog-server-" + rowLog.getId() + "-worker",
                                         new ThreadGroup("RowLogListener_" + subscriptionId)))));
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             @Override

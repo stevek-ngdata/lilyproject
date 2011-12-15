@@ -2,7 +2,7 @@ package org.lilyproject.repository.impl;
 
 import org.apache.avro.ipc.NettyTransceiver;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.lilyproject.util.concurrent.NamedThreadFactory;
+import org.lilyproject.util.concurrent.CustomThreadFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -13,8 +13,8 @@ public class NettyTransceiverFactory {
 
     public static NettyTransceiver create(InetSocketAddress address) throws IOException {
         return new NettyTransceiver(address, new NioClientSocketChannelFactory(
-                Executors.newCachedThreadPool(new DaemonThreadFactory(new NamedThreadFactory("avro-client-boss"))),
-                Executors.newCachedThreadPool(new DaemonThreadFactory(new NamedThreadFactory("avro-client-worker")))));
+                Executors.newCachedThreadPool(new DaemonThreadFactory(new CustomThreadFactory("avro-client-boss"))),
+                Executors.newCachedThreadPool(new DaemonThreadFactory(new CustomThreadFactory("avro-client-worker")))));
     }
 
     private static class DaemonThreadFactory implements ThreadFactory {

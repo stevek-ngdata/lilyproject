@@ -22,7 +22,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.execution.ExecutionHandler;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.avro.*;
-import org.lilyproject.util.concurrent.NamedThreadFactory;
+import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
 
 import javax.annotation.PostConstruct;
@@ -55,7 +55,7 @@ public class AvroServer {
         AvroLilyImpl avroLily = new AvroLilyImpl(repository, avroConverter);
         Responder responder = new LilySpecificResponder(AvroLily.class, avroLily, avroConverter);
 
-        ThreadFactory threadFactory = new NamedThreadFactory("avro-exechandler", new ThreadGroup("AvroExecHandler"));
+        ThreadFactory threadFactory = new CustomThreadFactory("avro-exechandler", new ThreadGroup("AvroExecHandler"));
         if (maxServerThreads == -1) {
             executionHandler = new ExecutionHandler(Executors.newCachedThreadPool(threadFactory));
         } else {
