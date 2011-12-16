@@ -125,28 +125,12 @@
               <goal>schema</goal>
               <goal>protocol</goal>
             </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.thoughtworks.paranamer</groupId>
-        <artifactId>paranamer-maven-plugin</artifactId>
-        <version>2.3</version>
-        <executions>
-          <execution>
-            <id>run</id>  <!-- id is optional -->
             <configuration>
-              <sourceDirectory>${project.build.directory}/generated-sources/avro</sourceDirectory>
-              <outputDirectory>${project.build.directory}/classes</outputDirectory>
-            </configuration>        
-            <goals>
-              <goal>generate</goal>
-            </goals>
+              <stringType>String</stringType>
+            </configuration>
           </execution>
         </executions>
       </plugin>
-
     </plugins>
   </build>
 

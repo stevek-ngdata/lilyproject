@@ -34,6 +34,7 @@ public class AvroLilyImpl implements AvroLily {
         this.converter = converter;
     }
 
+    @Override
     public AvroRecord create(AvroRecord record) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(repository.create(converter.convert(record)));
@@ -44,6 +45,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroRecord createOrUpdate(AvroRecord record, boolean useLatestRecordType)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
@@ -68,6 +70,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroRecord read(ByteBuffer avroRecordId, long avroVersion, List<AvroQName> avroFieldNames)
             throws AvroRepositoryException, AvroInterruptedException {
         Long version = converter.convertAvroVersion(avroVersion);
@@ -85,7 +88,8 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
-    
+
+    @Override
     public List<AvroRecord> readRecords(List<ByteBuffer> avroRecordIds, List<AvroQName> avroFieldNames)
             throws AvroRepositoryException, AvroInterruptedException {
         List<RecordId> recordIds = null;
@@ -104,6 +108,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public List<AvroRecord> readVersions(ByteBuffer recordId, long avroFromVersion, long avroToVersion,
             List<AvroQName> avroFieldNames) throws AvroRepositoryException, AvroInterruptedException {
         try {
@@ -115,7 +120,8 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
-    
+
+    @Override
     public List<AvroRecord> readSpecificVersions(ByteBuffer recordId, List<Long> avroVersions,
             List<AvroQName> avroFieldNames) throws AvroRepositoryException, AvroInterruptedException {
         // The avroVersions are a GenericData$Array which for instance cannot be sorted, so we convert it to an ArrayList
@@ -144,6 +150,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroFieldType createFieldType(AvroFieldType avroFieldType) throws AvroRepositoryException, AvroInterruptedException {
 
         try {
@@ -155,6 +162,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroRecordType createRecordType(AvroRecordType avroRecordType) throws AvroRepositoryException, AvroInterruptedException {
 
         try {
@@ -179,6 +187,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroRecordType getRecordTypeById(AvroSchemaId id, long avroVersion) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(typeManager.getRecordTypeById(converter.convert(id), converter.convertAvroVersion(avroVersion)));
@@ -189,6 +198,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroRecordType getRecordTypeByName(AvroQName name, long avroVersion) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(typeManager.getRecordTypeByName(converter.convert(name), converter.convertAvroVersion(avroVersion)));
@@ -199,6 +209,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroRecordType updateRecordType(AvroRecordType recordType) throws AvroRepositoryException, AvroInterruptedException {
 
         try {
@@ -210,6 +221,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroFieldType updateFieldType(AvroFieldType fieldType) throws AvroRepositoryException, AvroInterruptedException {
 
         try {
@@ -234,6 +246,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroFieldType getFieldTypeById(AvroSchemaId id) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(typeManager.getFieldTypeById(converter.convert(id)));
@@ -244,6 +257,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroFieldType getFieldTypeByName(AvroQName name) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(typeManager.getFieldTypeByName(converter.convert(name)));
@@ -254,6 +268,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public List<AvroFieldType> getFieldTypes() throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convertFieldTypes(typeManager.getFieldTypes());
@@ -264,6 +279,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public List<AvroRecordType> getRecordTypes() throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convertRecordTypes(typeManager.getRecordTypes());
@@ -273,7 +289,8 @@ public class AvroLilyImpl implements AvroLily {
             throw converter.convert(e);
         }
     }
-    
+
+    @Override
     public List<AvroFieldType> getFieldTypesWithoutCache() throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convertFieldTypes(typeManager.getFieldTypesWithoutCache());
@@ -284,6 +301,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public List<AvroRecordType> getRecordTypesWithoutCache() throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convertRecordTypes(typeManager.getRecordTypesWithoutCache());
@@ -294,6 +312,7 @@ public class AvroLilyImpl implements AvroLily {
         } 
     }
 
+    @Override
     public AvroFieldAndRecordTypes getTypesWithoutCache()
             throws AvroRepositoryException,
             AvroInterruptedException {
@@ -306,10 +325,11 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
-    public AvroTypeBucket getTypeBucketWithoutCache(CharSequence bucketId)
+    @Override
+    public AvroTypeBucket getTypeBucketWithoutCache(String bucketId)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
-            TypeBucket typeBucket = typeManager.getTypeBucketWithoutCache(converter.convert(bucketId));
+            TypeBucket typeBucket = typeManager.getTypeBucketWithoutCache(bucketId);
             return converter.convertTypeBucket(typeBucket);
         } catch (RepositoryException e) {
             throw converter.convert(e);
@@ -318,7 +338,8 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
-    public List<CharSequence> getVariants(ByteBuffer recordId) throws AvroRepositoryException, AvroInterruptedException {
+    @Override
+    public List<String> getVariants(ByteBuffer recordId) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convert(repository.getVariants(converter.convertAvroRecordId(recordId)));
         } catch (RepositoryException e) {
@@ -328,6 +349,7 @@ public class AvroLilyImpl implements AvroLily {
         }
     }
 
+    @Override
     public AvroIdRecord readWithIds(ByteBuffer recordId, long avroVersion, List<AvroSchemaId> avroFieldIds)
             throws AvroRepositoryException, AvroInterruptedException {
         try {

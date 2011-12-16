@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.avro.AvroRemoteException;
-import org.apache.avro.util.Utf8;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.*;
@@ -60,10 +59,10 @@ public class AvroConverter {
         }
         record.setRecordType(recordTypeName, avroRecord.getRecordTypeVersion());
          
-        Map<CharSequence, AvroQName> scopeRecordTypeNames = avroRecord.getScopeRecordTypeNames();
+        Map<String, AvroQName> scopeRecordTypeNames = avroRecord.getScopeRecordTypeNames();
         if (scopeRecordTypeNames != null) {
             for (Scope scope : Scope.values()) {
-                Utf8 key = new Utf8(scope.name());
+                String key = scope.name();
                 AvroQName scopeRecordTypeName = scopeRecordTypeNames.get(key);
                 if (scopeRecordTypeName != null) {
                     record.setRecordType(scope, convert(scopeRecordTypeName), avroRecord.getScopeRecordTypeVersions().get(key));
@@ -75,7 +74,7 @@ public class AvroConverter {
         if (avroRecord.getFields() != null) {
             for (AvroField field : avroRecord.getFields()) {
                 QName name = convert(field.getName());
-                ValueType valueType = typeManager.getValueType(convert(field.getValueType()));
+                ValueType valueType = typeManager.getValueType(field.getValueType());
                 Object value = valueType.read(field.getValue().array());
                 record.setField(name, value);
             }
@@ -116,9 +115,9 @@ public class AvroConverter {
         Map<Scope, SchemaId> recordTypeIds = null;
         if (avroIdRecord.getScopeRecordTypeIds() == null) {
             recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
-            Map<CharSequence, AvroSchemaId> avroRecordTypeIds = avroIdRecord.getScopeRecordTypeIds();
+            Map<String, AvroSchemaId> avroRecordTypeIds = avroIdRecord.getScopeRecordTypeIds();
             for (Scope scope : Scope.values()) {
-                recordTypeIds.put(scope, convert(avroRecordTypeIds.get(new Utf8(scope.name()))));
+                recordTypeIds.put(scope, convert(avroRecordTypeIds.get(scope.name())));
             }
         }
         return new IdRecordImpl(convert(avroIdRecord.getRecord()), idToQNameMapping, recordTypeIds);
@@ -139,7 +138,7 @@ public class AvroConverter {
             // value is optional
             Object value = null;
             if (avroCond.getValue() != null) {
-                ValueType valueType = typeManager.getValueType(convert(avroCond.getValueType()));
+                ValueType valueType = typeManager.getValueType(avroCond.getValueType());
                 value = valueType.read(avroCond.getValue().array());
             }
 
@@ -177,15 +176,15 @@ public class AvroConverter {
         if (record.getRecordTypeVersion() != null) {
             avroRecord.setRecordTypeVersion(record.getRecordTypeVersion());
         }
-        avroRecord.setScopeRecordTypeNames(new HashMap<CharSequence, AvroQName>());
-        avroRecord.setScopeRecordTypeVersions(new HashMap<CharSequence, Long>());
+        avroRecord.setScopeRecordTypeNames(new HashMap<String, AvroQName>());
+        avroRecord.setScopeRecordTypeVersions(new HashMap<String, Long>());
         for (Scope scope : Scope.values()) {
             QName recordTypeName = record.getRecordTypeName(scope);
             if (recordTypeName != null) {
-                avroRecord.getScopeRecordTypeNames().put(new Utf8(scope.name()), convert(recordTypeName));
+                avroRecord.getScopeRecordTypeNames().put(scope.name(), convert(recordTypeName));
                 Long version = record.getRecordTypeVersion(scope);
                 if (version != null) {
-                    avroRecord.getScopeRecordTypeVersions().put(new Utf8(scope.name()), version);
+                    avroRecord.getScopeRecordTypeVersions().put(scope.name(), version);
                 }
             }
         }
@@ -247,11 +246,11 @@ public class AvroConverter {
         }
 
         // Record types
-        avroIdRecord.setScopeRecordTypeIds(new HashMap<CharSequence, AvroSchemaId>());
+        avroIdRecord.setScopeRecordTypeIds(new HashMap<String, AvroSchemaId>());
         for (Scope scope : Scope.values()) {
             SchemaId recordTypeId = idRecord.getRecordTypeId(scope);
             if (recordTypeId != null) {
-                avroIdRecord.getScopeRecordTypeIds().put(new Utf8(scope.name()), convert(recordTypeId));
+                avroIdRecord.getScopeRecordTypeIds().put(scope.name(), convert(recordTypeId));
             }
         }
         return avroIdRecord;
@@ -286,7 +285,7 @@ public class AvroConverter {
     
                 if (condition.getValue() != null) {
                     ValueType valueType = fieldType.getValueType();
-                    avroCond.setValueType(convert(valueType.getName()));
+                    avroCond.setValueType(valueType.getName());
 
                     byte[] value = valueType.toBytes(condition.getValue(), parentRecords);
                     avroCond.setValue(ByteBuffer.wrap(value));
@@ -426,7 +425,7 @@ public class AvroConverter {
 
     public TypeBucket convertAvroTypeBucket(AvroTypeBucket avroTypeBucket) throws RepositoryException,
             InterruptedException {
-        TypeBucket typeBucket = new TypeBucket(convert(avroTypeBucket.getBucketId()));
+        TypeBucket typeBucket = new TypeBucket(avroTypeBucket.getBucketId());
         for (AvroFieldType avroFieldType : avroTypeBucket.getFieldTypes()) {
             typeBucket.add(convert(avroFieldType));
         }
@@ -437,7 +436,7 @@ public class AvroConverter {
     }
 
     public ValueType convert(AvroValueType valueType) throws RepositoryException, InterruptedException {
-        return valueType == null ? null : typeManager.getValueType(convert(valueType.getValueType()));
+        return valueType == null ? null : typeManager.getValueType(valueType.getValueType());
     }
 
     public AvroValueType convert(ValueType valueType) {
@@ -445,14 +444,14 @@ public class AvroConverter {
             return null;
 
         AvroValueType avroValueType = new AvroValueType();
-        avroValueType.setValueType(convert(valueType.getName()));
+        avroValueType.setValueType(valueType.getName());
         return avroValueType;
     }
 
     public QName convert(AvroQName name) {
         if (name == null)
             return null;
-        return new QName(convert(name.getNamespace()), convert(name.getName()));
+        return new QName(name.getNamespace(), name.getName());
     }
 
     public AvroQName convert(QName name) {
@@ -507,40 +506,24 @@ public class AvroConverter {
         avroRepositoryException.setMessage$(exception.getMessage());
         avroRepositoryException.setRemoteCauses(buildCauses(exception));
         avroRepositoryException.setExceptionClass(exception.getClass().getName());
-        Map<String, String> params = exception.getState();
-        if (params != null) {
-            avroRepositoryException.setParams(new HashMap<CharSequence, CharSequence>());
-            avroRepositoryException.getParams().putAll(params);
-        }
+        avroRepositoryException.setParams(exception.getState());
         return avroRepositoryException;
     }
     
     public RepositoryException convert(AvroRepositoryException avroException) {
         try {
-            Class exceptionClass = Class.forName(convert(avroException.getExceptionClass()));
+            Class exceptionClass = Class.forName(avroException.getExceptionClass());
             Constructor constructor = exceptionClass.getConstructor(String.class, Map.class);
             RepositoryException repositoryException = (RepositoryException)constructor.newInstance(
-                    convert(avroException.getMessage$()), avroMapToStringMap(avroException.getParams()));
+                    avroException.getMessage$(), avroException.getParams());
             restoreCauses(avroException.getRemoteCauses(), repositoryException);
             return repositoryException;
         } catch (Exception e) {
             log.error("Failure while converting remote exception", e);
         }
-        RepositoryException repositoryException = new RepositoryException(convert(avroException.getMessage$()));
+        RepositoryException repositoryException = new RepositoryException(avroException.getMessage$());
         restoreCauses(avroException.getRemoteCauses(), repositoryException);
         return repositoryException;
-    }
-
-    private Map<String, String> avroMapToStringMap(Map<CharSequence, CharSequence> map) {
-        if (map == null) {
-            return null;
-        }
-
-        Map<String, String> result = new HashMap<String, String>();
-        for (Map.Entry<CharSequence, CharSequence> entry : map.entrySet()) {
-            result.put(convert(entry.getKey()), convert(entry.getValue()));
-        }
-        return result;
     }
 
     public AvroInterruptedException convert(InterruptedException exception) {
@@ -559,11 +542,6 @@ public class AvroConverter {
     public ByteBuffer convert(RecordId recordId) {
         if (recordId == null) return null;
         return ByteBuffer.wrap(recordId.toBytes());
-    }
-
-    public String convert(CharSequence charSeq) {
-        if (charSeq == null) return null;
-        return charSeq.toString();
     }
 
     public Long convertAvroVersion(long avroVersion) {
@@ -593,8 +571,8 @@ public class AvroConverter {
 
     private AvroExceptionCause convertCause(Throwable throwable) {
         AvroExceptionCause cause = new AvroExceptionCause();
-        cause.setClassName(convert(throwable.getClass().getName()));
-        cause.setMessage(convert(throwable.getMessage()));
+        cause.setClassName(throwable.getClass().getName());
+        cause.setMessage(throwable.getMessage());
 
         StackTraceElement[] stackTrace = throwable.getStackTrace();
 
@@ -609,9 +587,9 @@ public class AvroConverter {
 
     private AvroStackTraceElement convert(StackTraceElement el) {
         AvroStackTraceElement result = new AvroStackTraceElement();
-        result.setClassName(convert(el.getClassName()));
-        result.setMethodName(convert(el.getMethodName()));
-        result.setFileName(convert(el.getFileName()));
+        result.setClassName(el.getClassName());
+        result.setMethodName(el.getMethodName());
+        result.setFileName(el.getFileName());
         result.setLineNumber(el.getLineNumber());
         return result;
     }
@@ -630,12 +608,12 @@ public class AvroConverter {
             List<StackTraceElement> stackTrace = new ArrayList<StackTraceElement>(remoteCause.getStackTrace().size());
 
             for (AvroStackTraceElement el : remoteCause.getStackTrace()) {
-                stackTrace.add(new StackTraceElement(convert(el.getClassName()), convert(el.getMethodName()),
-                        convert(el.getFileName()), el.getLineNumber()));
+                stackTrace.add(new StackTraceElement(el.getClassName(), el.getMethodName(),
+                        el.getFileName(), el.getLineNumber()));
             }
 
-            RestoredException cause = new RestoredException(convert(remoteCause.getMessage()),
-                    convert(remoteCause.getClassName()), stackTrace);
+            RestoredException cause = new RestoredException(remoteCause.getMessage(),
+                    remoteCause.getClassName(), stackTrace);
 
             if (result == null) {
                 result = cause;
@@ -696,17 +674,17 @@ public class AvroConverter {
         return avroRecords;
     }
     
-    public Set<RecordId> convertAvroRecordIds(List<CharSequence> avroRecordIds) {
+    public Set<RecordId> convertAvroRecordIds(List<String> avroRecordIds) {
         Set<RecordId> recordIds = new HashSet<RecordId>();
         IdGenerator idGenerator = repository.getIdGenerator();
-        for (CharSequence avroRecordId : avroRecordIds) {
-            recordIds.add(idGenerator.fromString(convert(avroRecordId)));
+        for (String avroRecordId : avroRecordIds) {
+            recordIds.add(idGenerator.fromString(avroRecordId));
         }
         return recordIds;
     }
     
-    public List<CharSequence> convert(Set<RecordId> recordIds) {
-        List<CharSequence> avroRecordIds = new ArrayList<CharSequence>(recordIds.size());
+    public List<String> convert(Set<RecordId> recordIds) {
+        List<String> avroRecordIds = new ArrayList<String>(recordIds.size());
         for (RecordId recordId: recordIds) {
             avroRecordIds.add(recordId.toString());
         }
@@ -741,25 +719,5 @@ public class AvroConverter {
             }
         }
         return names;
-    }
-
-    public List<String> convert(List<CharSequence> charSequences) {
-        if (charSequences == null)
-            return null;
-        List<String> result = new ArrayList<String>(charSequences.size());
-        for (CharSequence charSequence : charSequences) {
-            result.add(convert(charSequence));
-        }
-        return result;
-    }
-
-    public List<CharSequence> convertStrings(List<String> strings) {
-        if (strings == null)
-            return null;
-        List<CharSequence> result = new ArrayList<CharSequence>(strings.size());
-        for (String string : strings) {
-            result.add(string);
-        }
-        return result;
     }
 }
