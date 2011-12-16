@@ -43,7 +43,7 @@
       the result is the batch size of a scan operation on one of the shards (= table splits).
     -->
     <!--
-    <scanBatchSize>500</scanBatchSize>
+    <scanBatchSize>1000</scanBatchSize>
     -->
 
     <!--
@@ -52,7 +52,7 @@
       Usually corresponds to scanBatchSize.
     -->
     <!--
-    <messagesWorkQueueSize>500</messagesWorkQueueSize>
+    <messagesWorkQueueSize>1000</messagesWorkQueueSize>
     -->
   </mqProcessor>
 
