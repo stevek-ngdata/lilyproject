@@ -113,7 +113,7 @@ public class AvroConverter {
             }
         }
         Map<Scope, SchemaId> recordTypeIds = null;
-        if (avroIdRecord.getScopeRecordTypeIds() == null) {
+        if (avroIdRecord.getScopeRecordTypeIds() != null) {
             recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
             Map<String, AvroSchemaId> avroRecordTypeIds = avroIdRecord.getScopeRecordTypeIds();
             for (Scope scope : Scope.values()) {
