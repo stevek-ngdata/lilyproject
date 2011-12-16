@@ -260,8 +260,10 @@ public class LinkIndex {
         long before = System.currentTimeMillis();
         try {
             Query query = new Query();
-            query.addEqualsCondition("vtag", vtag.getBytes());
             query.addEqualsCondition("target", record.toBytes());
+            if (vtag != null) {
+                query.addEqualsCondition("vtag", vtag.getBytes());
+            }
             if (sourceField != null) {
                 query.addEqualsCondition("sourcefield", sourceField.getBytes());
             }
@@ -289,7 +291,9 @@ public class LinkIndex {
         try {
             Query query = new Query();
             query.addEqualsCondition("target", record.toBytes());
-            query.addEqualsCondition("vtag", vtag.getBytes());
+            if (vtag != null) {
+                query.addEqualsCondition("vtag", vtag.getBytes());
+            }
     
             Set<FieldedLink> result = new HashSet<FieldedLink>();
     
@@ -345,7 +349,9 @@ public class LinkIndex {
         try {
             Query query = new Query();
             query.addEqualsCondition("source", record.toBytes());
-            query.addEqualsCondition("vtag", vtag.getBytes());
+            if (vtag != null) {
+                query.addEqualsCondition("vtag", vtag.getBytes());
+            }
             if (sourceField != null) {
                 query.addEqualsCondition("sourcefield", sourceField.getBytes());
             }
@@ -362,7 +368,7 @@ public class LinkIndex {
             return result;
         } catch (IOException e) {
             throw new LinkIndexException("Error getting forward links for record '" + record + "', vtag '" +
-                    vtag + "'", e);
+                    vtag + "', field '" + sourceField + "'", e);
         } finally {
             metrics.report(Action.GET_FW_LINKS, System.currentTimeMillis() - before);
         }
@@ -374,7 +380,9 @@ public class LinkIndex {
         try {
             Query query = new Query();
             query.addEqualsCondition("source", record.toBytes());
-            query.addEqualsCondition("vtag", vtag.getBytes());
+            if (vtag != null) {
+                query.addEqualsCondition("vtag", vtag.getBytes());
+            }
 
             Set<FieldedLink> result = new HashSet<FieldedLink>();
 
@@ -394,4 +402,5 @@ public class LinkIndex {
             metrics.report(Action.GET_FW_LINKS, System.currentTimeMillis() - before);
         }
     }
+
 }

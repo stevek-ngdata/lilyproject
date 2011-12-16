@@ -118,6 +118,7 @@
     <module>apps/import</module>
     <module>apps/tester</module>
     <module>apps/mbox-import</module>
+    <module>apps/linkindex-cli</module>
 
     <module>dist</module>
   </modules>
@@ -377,6 +378,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-record-row-visualizer</artifactId>
+        <version>1.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-linkindex-cli</artifactId>
         <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>

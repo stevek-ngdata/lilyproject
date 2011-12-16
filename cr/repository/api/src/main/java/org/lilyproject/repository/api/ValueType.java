@@ -154,7 +154,8 @@ public interface ValueType {
      * ListValueType and PathValueType can again contain other value types.
      * 
      * <p>
-     * This method returns the deepest level (non List or Path) value type.
+     * This method returns the deepest level (non List or Path) value type,
+     * or the current value type if it is not a list or path.
      */
     ValueType getDeepestValueType();
 
