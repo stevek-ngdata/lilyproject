@@ -81,6 +81,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             // Init the executor service for the scan jobs
             int regionServerCnt = HBaseAdminFactory.get(hbaseConf).getClusterStatus().getServers();
             int threadCnt = getScanThreadCount(regionServerCnt);
+            log.info("Maximum global queue scan threads set to " + threadCnt);
             this.globalQScanExecutor = new ThreadPoolExecutor(threadCnt, threadCnt,
                     30, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
                     new CustomThreadFactory("rowlog-scan", new ThreadGroup("RowLogScan")));
@@ -96,7 +97,8 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                             int regionServerCnt = HBaseAdminFactory.get(hbaseConf).getClusterStatus().getServers();
                             int threadCnt = getScanThreadCount(regionServerCnt);
                             if (globalQScanExecutor.getMaximumPoolSize() != threadCnt) {
-                                log.warn("Changing number of global queue scan threads to " + threadCnt);
+                                log.warn("Changing number of global queue scan threads to " + threadCnt
+                                        + " (" + rowLog.getId() + ")");
                                 globalQScanExecutor.setMaximumPoolSize(threadCnt);
                                 globalQScanExecutor.setCorePoolSize(threadCnt);
                             }
