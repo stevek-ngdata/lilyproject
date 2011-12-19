@@ -16,9 +16,11 @@
 package org.lilyproject.repository.impl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
@@ -41,6 +43,8 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
     // count is higher than 0, the nameCache can not be updated since this could
     // lead to an inconsistent state (two types could get the same name).
     private volatile int count = 0;
+    
+    private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets = new ConcurrentHashMap<String, Set<SchemaId>>();
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -163,22 +167,24 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             while (count > 0) {
                 monitor.wait();
             }
-            // The nameCache can be made up to date as well since everything is
-            // being updated
-            nameCacheOutOfDate = false;
-            nameCache = new HashMap<QName, FieldType>(fieldTypes.size());
+            nameCacheOutOfDate = true;
             // One would expect that existing buckets need to be cleared first.
             // But since field types cannot be deleted we will just overwrite
             // them.
             for (FieldType fieldType : fieldTypes) {
-                nameCache.put(fieldType.getName(), fieldType);
                 String bucketId = AbstractSchemaCache.encodeHex(fieldType.getId().getBytes());
-                Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
-                if (bucket == null) {
-                    bucket = new ConcurrentHashMap<SchemaId, FieldType>(8, .75f, 1);
-                    buckets.put(bucketId, bucket);
+                // Only update if it was not updated locally
+                // If it was updated locally either this is the refresh of that
+                // update,
+                // or the refresh for this update will follow.
+                if (!removeFromLocalUpdateBucket(fieldType.getId(), bucketId)) {
+                    Map<SchemaId, FieldType> bucket = buckets.get(bucketId);
+                    if (bucket == null) {
+                        bucket = new ConcurrentHashMap<SchemaId, FieldType>(8, .75f, 1);
+                        buckets.put(bucketId, bucket);
+                    }
+                    bucket.put(fieldType.getId(), fieldType);
                 }
-                bucket.put(fieldType.getId(), fieldType);
             }
         }
     }
@@ -207,7 +213,9 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             }
             // Fill a the bucket with the new field types
             for (FieldType fieldType : fieldTypes) {
-                bucket.put(fieldType.getId(), fieldType);
+                if (!removeFromLocalUpdateBucket(fieldType.getId(), bucketId)) {
+                    bucket.put(fieldType.getId(), fieldType);
+                }
             }
         }
         // Decrement the number of buckets that are being updated again.
@@ -235,8 +243,37 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 buckets.put(bucketId, bucket);
             }
             bucket.put(id, ftToCache);
+            // Mark that this fieldType is updated locally
+            // and that the next refresh can be ignored
+            // since this refresh can contain an old fieldType
+            addToLocalUpdateBucket(id, bucketId);
         }
         // Decrement the number of buckets that are being updated again.
         decCount();
+    }
+
+    // Add the id of a field type that has been updated locally
+    // in a bucket. This field type will be skipped in a next
+    // cache refresh sequence.
+    // This avoids that a locally updated field type will be
+    // overwritten by old data by a cache refresh.
+    private void addToLocalUpdateBucket(SchemaId id, String bucketId) {
+        Set<SchemaId> localUpdateBucket = localUpdateBuckets.get(bucketId);
+        if (localUpdateBucket == null) {
+            localUpdateBucket = new HashSet<SchemaId>();
+            localUpdateBuckets.put(bucketId, localUpdateBucket);
+        }
+        localUpdateBucket.add(id);
+    }
+
+    // Check if the field type is present in the local update bucket.
+    // If so, return true and remove it, in which case the refresh
+    // should skip it to avoid replacing the field type with old data.
+    private boolean removeFromLocalUpdateBucket(SchemaId id, String bucketId) {
+        Set<SchemaId> localUpdateBucket = localUpdateBuckets.get(bucketId);
+        if (localUpdateBucket == null) {
+            return false;
+        }
+        return localUpdateBucket.remove(id);
     }
 }

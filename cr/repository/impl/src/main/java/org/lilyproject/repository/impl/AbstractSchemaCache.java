@@ -46,7 +46,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     private FieldTypes fieldTypesSnapshot;
     private FieldTypesCache fieldTypesCache = new FieldTypesCache();
-    private boolean updatedFieldTypes = false;
+    private volatile boolean updatedFieldTypes = false;
 
     private RecordTypesCache recordTypes = new RecordTypesCache();
 
@@ -437,7 +437,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             try {
                 lilyNodes = zooKeeper.getChildren(LILY_NODES_PATH, watcher);
                 lilyNodesWatcher = watcher;
-            } catch (KeeperException.NoNodeException e) {
+            } catch (KeeperException e) {
+                if (log.isDebugEnabled())
+                    log.debug("Failed getting lilyNodes from Zookeeper", e);
                 // The path does not exist yet.
                 // Set the lilyNodesWatcher to null so that we retry
                 // setting the watcher in the next iteration.

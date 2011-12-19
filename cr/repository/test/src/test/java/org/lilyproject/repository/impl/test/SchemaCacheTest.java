@@ -224,7 +224,7 @@ public class SchemaCacheTest {
         TypeManager typeManager = repoSetup.getTypeManager();
         QName ftName = new QName("testRenameFieldType", "f");
         FieldType fieldType = typeManager.fieldTypeBuilder().name(ftName).create();
-        for (int i = 0; i< 10; i++) {
+        for (int i = 0; i < 100; i++) {
             QName newFtName = new QName("testRenameFieldType", "f"+i);
             fieldType.setName(newFtName);
             fieldType = typeManager.updateFieldType(fieldType);
