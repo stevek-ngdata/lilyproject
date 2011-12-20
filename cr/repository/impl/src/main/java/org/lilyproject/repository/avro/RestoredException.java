@@ -53,7 +53,8 @@ public class RestoredException extends Exception implements RemoteThrowableInfo 
         builder.append((originalMessage != null) ? (originalClass + ": " + originalMessage) : originalClass);
 
         if (stackTrace != null) {
-            builder.append("\n\tREMOTE EXCEPTION STACKTRACE:");
+            builder.append("\n\tWARNING: This is reproduced information of a remote exception.");
+            builder.append("\n\t         This exception did not occur in this JVM!");
             for (StackTraceElement aTrace : stackTrace)
                 builder.append("\n\tat ").append(aTrace);
             builder.append("\n");

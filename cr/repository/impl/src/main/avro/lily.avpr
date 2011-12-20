@@ -111,6 +111,8 @@
       "name": "AvroGenericException",
       "type": "error",
       "fields": [
+        {"name": "message", "type": ["null", "string"]},
+        {"name": "exceptionClass", "type": ["null", "string"]},
         {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]}
       ]
     },

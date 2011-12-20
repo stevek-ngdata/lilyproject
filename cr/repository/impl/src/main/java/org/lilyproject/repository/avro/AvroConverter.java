@@ -485,16 +485,35 @@ public class AvroConverter {
         return avroFieldTypeEntry;
     }
 
-    public RuntimeException convert(AvroGenericException avroException) {
-        RuntimeException exception = new RuntimeException();
-        restoreCauses(avroException.getRemoteCauses(), exception);
-        return exception;
-    }
-
     public AvroGenericException convertOtherException(Throwable throwable) {
         AvroGenericException avroException = new AvroGenericException();
+        avroException.setMessage$(throwable.getMessage());
+        avroException.setExceptionClass(throwable.getClass().getName());
         avroException.setRemoteCauses(buildCauses(throwable));
         return avroException;
+    }
+
+    public RuntimeException convert(AvroGenericException avroException) {
+        try {
+            // Attempt to restore the original exception: only for RuntimeExceptions which
+            // have a constructor that takes a string argument.
+            Class exceptionClass = Class.forName(avroException.getExceptionClass());
+            if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
+                Constructor constructor = exceptionClass.getConstructor(String.class);
+                constructor.setAccessible(true);
+                RuntimeException runtimeException = (RuntimeException)constructor.newInstance(
+                        avroException.getMessage$());
+                restoreCauses(avroException.getRemoteCauses(), runtimeException);
+                return runtimeException;
+            }
+        } catch (Exception e) {
+            // cannot restore the original exception, will create a generic exception
+        }
+
+        RuntimeException exception = new RuntimeException(avroException.getExceptionClass() + ": "
+                + avroException.getMessage());
+        restoreCauses(avroException.getRemoteCauses(), exception);
+        return exception;
     }
 
     public RemoteException convert(AvroRemoteException exception) {
@@ -531,7 +550,6 @@ public class AvroConverter {
         avroException.setMessage$(exception.getMessage());
         return avroException;
     }
-
 
     public RecordId convertAvroRecordId(ByteBuffer recordId) {
         byte[] bytes = new byte[recordId.remaining()];
