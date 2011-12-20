@@ -44,7 +44,7 @@
                     Copy the classloader XML file, for which we rely on the lily-server-test-fw project
                     to generate it for us.
                 -->
-                <property name="classLoaderXmlLocation" value="${basedir}/../lily-server-test-fw/target/classloader-for-use-by-launcher.xml" />
+                <property name="classLoaderXmlLocation" value="${basedir}/../server-test-fw/target/classloader-for-use-by-launcher.xml" />
                 <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}" />
                 <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}" />
 
