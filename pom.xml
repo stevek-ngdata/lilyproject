@@ -84,7 +84,7 @@
     <module>cr/process</module>
     <module>cr/repository-api-tutorial</module>
     <module>cr/lily-server-test-fw</module>
-    <module>cr/lily-server-test-fw-loader</module>
+    <module>cr/standalone-launcher</module>
 
     <module>global/hbaseindex</module>
     <module>global/hbaseindex-perftest</module>
@@ -210,7 +210,7 @@
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
-        <artifactId>lily-server-test-fw-loader</artifactId>
+        <artifactId>lily-standalone-launcher</artifactId>
         <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>

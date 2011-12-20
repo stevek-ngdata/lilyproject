@@ -20,8 +20,8 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-server-test-fw-loader</artifactId>
-  <name>Lily-server: test framework</name>
+  <artifactId>lily-standalone-launcher</artifactId>
+  <name>Lily: standalone lily launcher (for testing)</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>

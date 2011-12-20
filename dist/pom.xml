@@ -69,7 +69,7 @@
     
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-server-test-fw-loader</artifactId>
+      <artifactId>lily-standalone-launcher</artifactId>
     </dependency>
 
     <dependency>
