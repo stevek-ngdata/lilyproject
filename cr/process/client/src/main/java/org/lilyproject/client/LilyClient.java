@@ -102,6 +102,8 @@ public class LilyClient implements Closeable {
     public void close() throws IOException {
         zk.removeDefaultWatcher(watcher);
 
+        schemaCache.close();
+
         for (ServerNode node : servers) {
             Closer.close(node.repository);
         }
@@ -109,7 +111,6 @@ public class LilyClient implements Closeable {
         if (managedZk && zk != null) {
             zk.close();
         }
-        schemaCache.close();
     }
 
     /**
