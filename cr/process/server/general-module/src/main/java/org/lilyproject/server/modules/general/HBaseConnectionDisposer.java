@@ -19,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.util.hbase.LocalHTable;
 
 import javax.annotation.PreDestroy;
 
@@ -31,6 +32,10 @@ public class HBaseConnectionDisposer {
 
     @PreDestroy
     public void stop() {
+        // LocalHTable keeps HTablePools in static vars: make sure that is cleaned out
+        // (to avoid leaks when using resetLilyState)
+        LocalHTable.closeAllPools();
+
         try {
             HConnectionManager.deleteConnection(conf, true);
         } catch (Throwable t) {
