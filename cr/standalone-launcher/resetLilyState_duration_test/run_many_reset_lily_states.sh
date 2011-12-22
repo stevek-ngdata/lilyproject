@@ -41,6 +41,9 @@ do
   echo Iteration $i
   echo --------------
 
+  rm Tester-metrics*
+  rm failures.log*
+
   # Do an import
   $LILY_SOURCE/apps/tester/target/lily-tester -z localhost -w 1 -i 50 -c tester.json
 
