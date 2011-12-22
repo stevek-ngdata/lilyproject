@@ -99,7 +99,7 @@ cd $CWD
 # Enable JMX access on the same port as used by HBase's region server
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
               </value>
             </parameter>
             <parameter>
@@ -117,7 +117,7 @@ cd $CWD
 # Enable JMX access on the same port as used by HBase's region server
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
               </value>
             </parameter>
             <parameter>
@@ -135,7 +135,7 @@ chdir /d %CWD%
 rem Enable JMX access on the same port as used by HBase's region server
 rem This is handy because some of our test tools can read out HBase metrics this way
 set LILY_JMX_OPTIONS=-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102
-set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS%
+set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloaders=true
               </value>
             </parameter>
             <parameter>
@@ -153,7 +153,7 @@ chdir /d %CWD%
 rem Enable JMX access on the same port as used by HBase's region server
 rem This is handy because some of our test tools can read out HBase metrics this way
 set LILY_JMX_OPTIONS=-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102
-set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS%
+set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloaders=true
               </value>
             </parameter>
           </beforeJavaHook>
