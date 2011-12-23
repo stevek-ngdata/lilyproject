@@ -206,10 +206,22 @@ public class Tester extends BaseRepositoryTestTool {
     }
     
     private void importFieldType(JsonNode fieldTypeNode) throws RepositoryException, ImportConflictException, ImportException, JsonFormatException, InterruptedException {
-        FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
+        int times = 0;
+        JsonNode timesNode = fieldTypeNode.get("times");
+        if (timesNode != null) {
+            times = timesNode.getIntValue();
+        }
         JsonNode propertiesNode = fieldTypeNode.get("properties");
-        
-        fieldTypes.put(JsonUtil.getString(fieldTypeNode, "name"), new TestFieldType(importFieldType, repository, propertiesNode));
+        String name = JsonUtil.getString(fieldTypeNode, "name");
+        if (times == 0) {
+            FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
+            fieldTypes.put(name, new TestFieldType(importFieldType, repository, propertiesNode));
+        } else {
+            List<FieldType> importFieldTypes = jsonImport.importFieldTypes(fieldTypeNode, times);
+            for (int i = 0; i < times; i++) {
+                fieldTypes.put(name + i, new TestFieldType(importFieldTypes.get(i), repository, propertiesNode));
+            }
+        }
     }
     
     private void importRecordType(JsonNode recordTypeNode) throws JsonFormatException, RepositoryException, ImportException, InterruptedException {
@@ -220,9 +232,22 @@ public class Tester extends BaseRepositoryTestTool {
         // Fields
         for (JsonNode fieldNode : recordTypeNode.get("fields")) {
             String fieldName = JsonUtil.getString(fieldNode, "name");
-            TestFieldType fieldType = fieldTypes.get(fieldName);
-            recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
-            testRecordType.addFieldType(fieldType);
+            int times = 0;
+            JsonNode timesNode = fieldNode.get("times");
+            if (timesNode != null) {
+                times = timesNode.getIntValue();
+            }
+            if (times == 0) {
+                TestFieldType fieldType = fieldTypes.get(fieldName);
+                recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
+                testRecordType.addFieldType(fieldType);
+            } else {
+                for (int i = 0; i < times; i++) {
+                    TestFieldType fieldType = fieldTypes.get(fieldName + i);
+                    recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
+                    testRecordType.addFieldType(fieldType);
+                }
+            }
         }
         recordType = jsonImport.importRecordType(recordType);
         recordTypes.put(recordTypeName, testRecordType);
