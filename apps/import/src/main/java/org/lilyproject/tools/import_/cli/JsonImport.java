@@ -176,7 +176,7 @@ public class JsonImport {
             FieldType ftToCreate = fieldType.clone();
             ftToCreate.setName(new QName(fieldType.getName().getNamespace(), fieldType.getName().getName() + i));
             ImportResult<FieldType> result = FieldTypeImport.importFieldType(ftToCreate, ImportMode.CREATE_OR_UPDATE,
-                    IdentificationMode.NAME, fieldType.getName(), typeManager);
+                    IdentificationMode.NAME, ftToCreate.getName(), typeManager);
             FieldType newFieldType = result.getEntity();
 
             switch (result.getResultType()) {
@@ -188,7 +188,7 @@ public class JsonImport {
                 importListener.existsAndEqual(EntityType.FIELD_TYPE, newFieldType.getName().toString(), null);
                 break;
             case CONFLICT:
-                importListener.conflict(EntityType.FIELD_TYPE, fieldType.getName().toString(),
+                importListener.conflict(EntityType.FIELD_TYPE, ftToCreate.getName().toString(),
                         result.getConflictingProperty(), result.getConflictingOldValue(),
                         result.getConflictingNewValue());
                 break;
