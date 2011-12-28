@@ -60,4 +60,11 @@ public interface RowLogMessage {
      * @throws RowLogException 
      */
     byte[] getPayload() throws RowLogException;
+    
+    /**
+     * Set the execution state
+     */
+    void setExecutionState(ExecutionState executionState);
+
+    ExecutionState getExecutionState();
 }
