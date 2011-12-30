@@ -62,9 +62,21 @@ public interface RowLogMessage {
     byte[] getPayload() throws RowLogException;
     
     /**
-     * Set the execution state
+     * Allows to set the execution state right after creation of the message.
+     * <p>
+     * This execution state can be used (and should only be used) in those flows
+     * where the message will be processed right after its creation, and where
+     * no other processing of the message could already have happened.
+     * <p>
+     * The execution state is no integral part of the message and will not be
+     * encoded nor stored when the message is stored. It only serves as a means
+     * to transport the execution that exists right after creation of the
+     * message.
      */
     void setExecutionState(ExecutionState executionState);
 
+    /**
+     * Returns the execution state that is present on the message.
+     */
     ExecutionState getExecutionState();
 }

@@ -16,20 +16,41 @@
 package org.lilyproject.rowlog.api;
 
 /**
- *
+ * The execution state of a rowlog message.
+ * <p>
+ * It keeps track for each subscription if the message has been handled or not.
  */
 public interface ExecutionState {
 
-    public abstract long getTimestamp();
+    /**
+     * Returns the timestamp of when the execution state was created
+     */
+    public long getTimestamp();
 
-    public abstract String[] getSubscriptionIds();
+    /**
+     * Returns the subscription Ids for which the execution state has been
+     * initialized
+     */
+    public String[] getSubscriptionIds();
 
-    public abstract void setState(String subscriptionId, boolean state);
+    /**
+     * Converts the execution state to a byte representation to store it in
+     * HBase
+     */
+    public byte[] toBytes();
 
-    public abstract boolean getState(String subscriptionId);
+    /**
+     * Returns true when the message has been handled for each subscription
+     */
+    public boolean allDone();
 
-    public abstract byte[] toBytes();
+    /**
+     * Updates the state of a subscription
+     */
+    public void setState(String subscriptionId, boolean state);
 
-    public abstract boolean allDone();
-
+    /**
+     * Returns the state of the message for a subscription
+     */
+    public boolean getState(String subscriptionId);
 }
