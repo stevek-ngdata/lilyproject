@@ -32,6 +32,7 @@ public class RowLogMessageImpl implements RowLogMessage {
     private final long timestamp;
     private byte[] payload = null;
     private ExecutionState executionState;
+    private Object context;
 
     public RowLogMessageImpl(long timestamp, byte[] rowKey, long seqnr, byte[] data, RowLog rowLog) {
         this(timestamp, rowKey, seqnr, data, null, rowLog);
@@ -118,4 +119,11 @@ public class RowLogMessageImpl implements RowLogMessage {
         return executionState;
     }
     
+    public void setContext(Object context) {
+        this.context = context;
+    }
+
+    public Object getContext() {
+        return context;
+    }
 }

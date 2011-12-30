@@ -20,6 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.repo.RecordEvent;
+import org.lilyproject.util.repo.RowLogContext;
 import org.lilyproject.util.repo.VTaggedRecord;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
@@ -56,7 +57,14 @@ public class LinkIndexUpdater implements RowLogMessageListener {
     public boolean processMessage(RowLogMessage msg) {
         try {
             RecordId recordId = repository.getIdGenerator().fromBytes(msg.getRowKey());
-            RecordEvent recordEvent = new RecordEvent(msg.getPayload(), repository.getIdGenerator());
+            Object context = msg.getContext();
+            RecordEvent recordEvent = null;
+            if (context != null) {
+                RowLogContext rowLogContext = (RowLogContext) msg.getContext();
+                recordEvent = rowLogContext.getRecordEvent();
+            }
+            if (recordEvent == null)
+                recordEvent = new RecordEvent(msg.getPayload(), repository.getIdGenerator());
             update(recordId, recordEvent);
         } catch (Exception e) {
             log.error("Error processing event in LinkIndexUpdater", e);

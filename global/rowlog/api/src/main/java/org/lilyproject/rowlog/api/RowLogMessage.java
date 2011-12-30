@@ -62,6 +62,17 @@ public interface RowLogMessage {
     byte[] getPayload() throws RowLogException;
     
     /**
+     * Allows to add a context object to the message object when it is passed
+     * along to get processed.
+     */
+    void setContext(Object context);
+
+    /**
+     * Returns the context object or null if none is present.
+     */
+    Object getContext();
+
+    /**
      * Allows to set the execution state right after creation of the message.
      * <p>
      * This execution state can be used (and should only be used) in those flows
