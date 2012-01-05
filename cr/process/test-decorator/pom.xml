@@ -4,13 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-test-decorator</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2-SNAPSHOT</version>
   <name>Lily: test repository decorator</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
