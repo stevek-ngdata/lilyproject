@@ -248,5 +248,13 @@ public class RecordTypesCache {
         // Decrement the number of buckets that are being updated again.
         decCount();
     }
+    
+    public void clear() {
+        nameCache.clear();
+        
+        for (Map bucket : buckets.values()) {
+            bucket.clear();
+        }
+    }
 
 }
