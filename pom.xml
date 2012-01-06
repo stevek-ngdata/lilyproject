@@ -121,6 +121,8 @@
     <module>apps/linkindex-cli</module>
 
     <module>dist</module>
+
+    <module>integration-tests</module>
   </modules>
 
   <dependencyManagement>
@@ -720,10 +722,14 @@
           <artifactId>maven-site-plugin</artifactId>
           <version>3.0</version>
         </plugin>
-          <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <version>2.2.1</version>
-          </plugin>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>2.2.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>1.7</version>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -736,6 +742,9 @@
               <lily.lilyproxy.mode>${lily.lilyproxy.mode}</lily.lilyproxy.mode>
               <lily.test.log>${lily.test.log}</lily.test.log>
             </systemPropertyVariables>
+            <excludes>
+              <exclude>**/integration/*.java</exclude>
+            </excludes>
           </configuration>
         </plugin>
         <plugin>
@@ -788,6 +797,60 @@
       <properties>
         <lily.test.log>true</lily.test.log>
       </properties>
+    </profile>
+    <profile>
+      <!-- Profile to activate the integration tests -->
+      <id>integration</id>
+      <properties>
+        <!-- This property is used to enable/disable antrun based actions in the pre/post
+             integration test phase -->
+        <lily.integration.tests>true</lily.integration.tests>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>2.11</version>
+            <configuration>
+              <includes>
+                <include>**/integration/*.java</include>
+              </includes>
+            </configuration>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>verify</id>
+                <goals>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <!--
+          This could be used to disable the execution of the normal tests when
+          running integration tests. The idea was that integration tests can
+          conflict with the use of connect-mode on the normal tests, but in such
+          cases one can either not use connect mode, or go to the integration test
+          subdir to only run the integration tests.
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-test</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+          -->
+        </plugins>
+      </build>
     </profile>
   </profiles>
 
