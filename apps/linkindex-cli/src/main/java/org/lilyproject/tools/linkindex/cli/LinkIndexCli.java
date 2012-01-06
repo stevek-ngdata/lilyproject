@@ -34,6 +34,11 @@ public class LinkIndexCli extends BaseZkCliTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-linkindex-cli");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
@@ -50,7 +55,6 @@ public class LinkIndexCli extends BaseZkCliTool {
                 .hasArg()
                 .withDescription("Record ID: UUID.something or USER.something")
                 .withLongOpt("record")
-                .isRequired()
                 .create("r");
         options.add(recordIdOption);
 
@@ -111,6 +115,10 @@ public class LinkIndexCli extends BaseZkCliTool {
         // Determine the record id
         //
         String recordIdParam = cmd.getOptionValue(recordIdOption.getOpt());
+        if (recordIdParam == null) {
+            System.out.println("Specify record id with -" + recordIdOption.getOpt());
+            return 1;
+        }
         RecordId recordId = repository.getIdGenerator().fromString(recordIdParam);
 
         //

@@ -32,6 +32,11 @@ public class JsonImportTool extends BaseZkCliTool {
         return "lily-import";
     }
 
+    @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-import");
+    }
+
     public static void main(String[] args) throws Exception {
         new JsonImportTool().start(args);
     }

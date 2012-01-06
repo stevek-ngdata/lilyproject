@@ -40,6 +40,11 @@ public class HbaseIndexPerfTest extends BaseTestTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-hbaseindex-perftest");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

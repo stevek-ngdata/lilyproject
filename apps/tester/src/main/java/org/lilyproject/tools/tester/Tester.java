@@ -54,6 +54,11 @@ public class Tester extends BaseRepositoryTestTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-tester");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
         

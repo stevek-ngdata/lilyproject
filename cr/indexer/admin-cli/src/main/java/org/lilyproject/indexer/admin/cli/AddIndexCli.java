@@ -34,10 +34,6 @@ public class AddIndexCli extends BaseIndexerAdminCli {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
-        nameOption.setRequired(true);
-        solrShardsOption.setRequired(true);
-        configurationOption.setRequired(true);
-
         options.add(nameOption);
         options.add(solrShardsOption);
         options.add(shardingConfigurationOption);
@@ -55,6 +51,19 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         int result = super.run(cmd);
         if (result != 0)
             return result;
+        
+        if (indexName == null) {
+            System.out.println("Specify index name with -" + nameOption.getOpt());
+            return 1;
+        }
+        
+        if (solrShardsOption == null) {
+            System.out.println("Specify Solr URL(s) with -" + solrShardsOption.getOpt());
+        }
+
+        if (configurationOption == null) {
+            System.out.println("Specify indexer configuration with -" + configurationOption.getOpt());
+        }
 
         IndexDefinition index = model.newIndex(indexName);
 

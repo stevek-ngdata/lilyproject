@@ -63,6 +63,11 @@ public class MetricsReportTool extends BaseCliTool {
         return "lily-metrics-report";
     }
 
+    @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-clientmetrics");
+    }
+
     public static void main(String[] args) {
         new MetricsReportTool().start(args);
     }
@@ -72,7 +77,6 @@ public class MetricsReportTool extends BaseCliTool {
         List<Option> options = super.getOptions();
 
         metricsFileOption = OptionBuilder
-                .isRequired()
                 .withArgName("filename")
                 .hasArg()
                 .withDescription("Name of the input metrics file")
@@ -81,7 +85,6 @@ public class MetricsReportTool extends BaseCliTool {
         options.add(metricsFileOption);
 
         outputDirOption = OptionBuilder
-                .isRequired()
                 .withArgName("dirname")
                 .hasArg()
                 .withDescription("Name of the output dir")
@@ -98,13 +101,25 @@ public class MetricsReportTool extends BaseCliTool {
         if (result != 0)
             return result;
 
-        File metricFile = new File(cmd.getOptionValue(metricsFileOption.getOpt()));
+        String metricFileName = cmd.getOptionValue(metricsFileOption.getOpt());
+        if (metricFileName == null) {
+            System.out.println("Specify metrics file name with -" + metricsFileOption.getOpt());
+            return 1;
+        }
+        
+        File metricFile = new File(metricFileName);
         if (!metricFile.exists()) {
             System.err.println("Specified metrics file does not exist: " + metricFile.getAbsolutePath());
             return 1;
         }
 
-        File outputDir = new File(cmd.getOptionValue(outputDirOption.getOpt()));
+        String outputDirName = cmd.getOptionValue(outputDirOption.getOpt());
+        if (outputDirName == null) {
+            System.out.println("Specify output directory with -" + outputDirOption.getOpt());
+            return 1;
+        }
+
+        File outputDir = new File(outputDirName);
         if (outputDir.exists()) {
             System.err.println("Specified output directory already exists: " + outputDir.getAbsolutePath());
             boolean proceed = ConsoleUtil.promptYesNo("Continue anyway? [y/N]", false);

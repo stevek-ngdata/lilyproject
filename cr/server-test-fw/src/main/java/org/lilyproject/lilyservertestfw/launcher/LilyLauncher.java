@@ -57,6 +57,11 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-server-test-fw");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

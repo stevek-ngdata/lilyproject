@@ -161,6 +161,11 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-indexer-admin-cli");
+    }
+
+    @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);
         if (result != 0)
