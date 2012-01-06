@@ -254,11 +254,15 @@ public class GenScriptMojo extends AbstractMojo {
             if (result.length() > 0)
                 result.append(platform.pathSeparator);
 
-            if (isDevelopment) {
-                result.append(project.getBuild().getOutputDirectory());
-            } else {
+            // Disabled the isDevelopment treatment: otherwise in development, META-INF does not exist which
+            // is used by Lily's CLI tools to read their version. Not sure if there is a good reason for this
+            // behavior: it was probably inherited from Kauri where it made sense to allow resources changes
+            // to be picked up immediately.
+            //if (isDevelopment) {
+            //    result.append(project.getBuild().getOutputDirectory());
+            //} else {
                 result.append(basePath).append(platform.fileSeparator).append(artifactPath(project.getArtifact(), platform));
-            }
+            //}
         }
 
         return result.toString();

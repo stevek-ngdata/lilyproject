@@ -52,6 +52,11 @@ public class LinkLister extends BaseCliTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-doc-tools");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

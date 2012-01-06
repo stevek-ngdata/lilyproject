@@ -109,7 +109,12 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
 
         return options;
     }
-    
+
+    @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-rowlog-admin-cli");
+    }
+
     @Override
     protected int processOptions(CommandLine cmd) throws Exception {
         int result = super.processOptions(cmd);

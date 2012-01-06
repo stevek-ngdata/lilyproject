@@ -50,12 +50,16 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-record-row-visualizer");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
         recordIdOption = OptionBuilder
                 .withArgName("record-id")
-                .isRequired()
                 .hasArg()
                 .withDescription("A Lily record ID: UUID.something or USER.something")
                 .withLongOpt("record-id")
@@ -77,6 +81,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             return result;
 
         String recordIdString = cmd.getOptionValue(recordIdOption.getOpt());
+        if (recordIdString == null) {
+            System.out.println("Specify record id with -" + recordIdOption.getOpt());
+            return 1;
+        }
 
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId recordId = idGenerator.fromString(recordIdString);

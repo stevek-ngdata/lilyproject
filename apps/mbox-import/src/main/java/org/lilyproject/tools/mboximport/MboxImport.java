@@ -55,6 +55,11 @@ public class MboxImport extends BaseRepositoryTestTool {
         return "lily-mbox-import";
     }
 
+    @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-mbox-import");
+    }
+
     public static void main(String[] args) throws Exception {
         new MboxImport().start(args);
     }

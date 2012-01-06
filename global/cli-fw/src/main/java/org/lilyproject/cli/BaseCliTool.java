@@ -19,6 +19,7 @@ import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.*;
 import org.lilyproject.util.exception.StackTracePrinter;
+import org.lilyproject.util.io.Closer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +41,7 @@ import java.util.regex.Pattern;
  */
 public abstract class BaseCliTool {
     protected Option helpOption;
+    protected Option versionOption;
     private Options cliOptions;
 
     protected void start(String[] args) {
@@ -71,6 +73,9 @@ public abstract class BaseCliTool {
         helpOption = new Option("h", "help", false, "Shows help");
         options.add(helpOption);
 
+        versionOption = new Option("v", "version", false, "Shows the version");
+        options.add(versionOption);
+
         return options;
     }
 
@@ -87,6 +92,10 @@ public abstract class BaseCliTool {
     protected int processOptions(CommandLine cmd) throws Exception {
         if (cmd.hasOption(helpOption.getOpt())) {
             printHelp();
+            return 1;
+        }
+        if (cmd.hasOption(versionOption.getOpt())) {
+            System.out.println(getVersion());
             return 1;
         }
         return 0;
@@ -187,5 +196,26 @@ public abstract class BaseCliTool {
             System.out.println();
         }
     }
+    
+    protected abstract String getVersion();
 
+    protected String readVersion(String groupId, String artifactId) {
+        String propPath = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
+        InputStream is = getClass().getResourceAsStream(propPath);
+        if (is != null) {
+            Properties properties = new Properties();
+            try {
+                properties.load(is);
+                String version = properties.getProperty("version");
+                if (version != null) {
+                    return version;
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+            Closer.close(is);
+        }
+        
+        return "undetermined (please report this as bug)";
+    }
 }
