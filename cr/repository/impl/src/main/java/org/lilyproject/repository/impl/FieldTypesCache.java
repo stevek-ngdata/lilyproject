@@ -277,4 +277,16 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
         }
         return localUpdateBucket.remove(id);
     }
+    
+    public void clear() {
+        nameCache.clear();
+
+        for (Map bucket : buckets.values()) {
+            bucket.clear();
+        }
+
+        for (Set<SchemaId> bucket : localUpdateBuckets.values()) {
+            bucket.clear();
+        }
+    }
 }

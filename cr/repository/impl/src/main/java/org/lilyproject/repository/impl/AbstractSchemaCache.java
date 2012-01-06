@@ -609,6 +609,15 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                         readRefreshingEnabledState();
                     }
                     if (event.getPath().equals(CACHE_INVALIDATION_PATH)) {
+                        // Handle things to survive resetLilyState:
+                        //  - ZK bucket version numbers won't be relevant anymore
+                        bucketVersions.clear();
+
+                        //  - Since the cache invalidation path is new, the schema situation is new,
+                        //    forget what is currently in the caches
+                        fieldTypesCache.clear();
+                        recordTypes.clear();
+
                         cacheRefresher.needsRefreshAll();
                     }
                     if (event.getPath().equals(LILY_NODES_PATH)) {
