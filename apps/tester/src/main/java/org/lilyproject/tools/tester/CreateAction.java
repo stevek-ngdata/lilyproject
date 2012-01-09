@@ -67,7 +67,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
             reportError("Error creating record.", t);
             success = false;
         }
-        report(success, createDuration, success ? "C" : null, "repoCreate." + recordTypeToCreate.getRecordType().getName().getName());
+        report(success, createDuration, "C", "repoCreate." + recordTypeToCreate.getRecordType().getName().getName());
         duration += createDuration;
         return new ActionResult(success, record, duration);
     }
