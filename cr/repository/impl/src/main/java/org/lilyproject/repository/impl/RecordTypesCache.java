@@ -43,6 +43,7 @@ public class RecordTypesCache {
 
     private Map<QName, RecordType> nameCache;
     private Map<String, Map<SchemaId, RecordType>> buckets;
+    private ConcurrentHashMap<String, Set<SchemaId>> localUpdateBuckets = new ConcurrentHashMap<String, Set<SchemaId>>();
 
     public RecordTypesCache() {
         nameCache = new HashMap<QName, RecordType>();
@@ -172,22 +173,24 @@ public class RecordTypesCache {
             while (count > 0) {
                 monitor.wait();
             }
-            // The nameCache can be made up to date as well since everything is
-            // being updated
-            nameCacheOutOfDate = false;
-            nameCache = new HashMap<QName, RecordType>(recordTypes.size());
+            nameCacheOutOfDate = true;
             // One would expect that existing buckets need to be cleared first.
             // But since record types cannot be deleted we will just overwrite
             // them.
             for (RecordType recordType : recordTypes) {
-                nameCache.put(recordType.getName(), recordType);
                 String bucketId = AbstractSchemaCache.encodeHex(recordType.getId().getBytes());
-                Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
-                if (bucket == null) {
-                    bucket = new ConcurrentHashMap<SchemaId, RecordType>();
-                    buckets.put(bucketId, bucket);
+                // Only update if it was not updated locally
+                // If it was updated locally either this is the refresh of that
+                // update,
+                // or the refresh for this update will follow.
+                if (!removeFromLocalUpdateBucket(recordType.getId(), bucketId)) {
+                    Map<SchemaId, RecordType> bucket = buckets.get(bucketId);
+                    if (bucket == null) {
+                        bucket = new ConcurrentHashMap<SchemaId, RecordType>();
+                        buckets.put(bucketId, bucket);
+                    }
+                    bucket.put(recordType.getId(), recordType);
                 }
-                bucket.put(recordType.getId(), recordType);
             }
         }
     }
@@ -214,9 +217,11 @@ public class RecordTypesCache {
                 bucket = new ConcurrentHashMap<SchemaId, RecordType>(Math.min(recordTypes.size(), 8), .75f, 1);
                 buckets.put(bucketId, bucket);
             }
-            // Fill a the bucket with the new record types
+            // Fill the bucket with the new record types
             for (RecordType recordType : recordTypes) {
-                bucket.put(recordType.getId(), recordType);
+                if (!removeFromLocalUpdateBucket(recordType.getId(), bucketId)) {
+                    bucket.put(recordType.getId(), recordType);
+                }
             }
         }
         // Decrement the number of buckets that are being updated again.
@@ -244,15 +249,48 @@ public class RecordTypesCache {
                 buckets.put(bucketId, bucket);
             }
             bucket.put(id, rtToCache);
+            // Mark that this recordType is updated locally
+            // and that the next refresh can be ignored
+            // since this refresh can contain an old recordType
+            addToLocalUpdateBucket(id, bucketId);
         }
         // Decrement the number of buckets that are being updated again.
         decCount();
     }
     
+    // Add the id of a record type that has been updated locally
+    // in a bucket. This record type will be skipped in a next
+    // cache refresh sequence.
+    // This avoids that a locally updated record type will be
+    // overwritten by old data by a cache refresh.
+    private void addToLocalUpdateBucket(SchemaId id, String bucketId) {
+        Set<SchemaId> localUpdateBucket = localUpdateBuckets.get(bucketId);
+        if (localUpdateBucket == null) {
+            localUpdateBucket = new HashSet<SchemaId>();
+            localUpdateBuckets.put(bucketId, localUpdateBucket);
+        }
+        localUpdateBucket.add(id);
+    }
+
+    // Check if the record type is present in the local update bucket.
+    // If so, return true and remove it, in which case the refresh
+    // should skip it to avoid replacing the record type with old data.
+    private boolean removeFromLocalUpdateBucket(SchemaId id, String bucketId) {
+        Set<SchemaId> localUpdateBucket = localUpdateBuckets.get(bucketId);
+        if (localUpdateBucket == null) {
+            return false;
+        }
+        return localUpdateBucket.remove(id);
+    }
+
     public void clear() {
         nameCache.clear();
         
         for (Map bucket : buckets.values()) {
+            bucket.clear();
+        }
+
+        for (Set<SchemaId> bucket : localUpdateBuckets.values()) {
             bucket.clear();
         }
     }
