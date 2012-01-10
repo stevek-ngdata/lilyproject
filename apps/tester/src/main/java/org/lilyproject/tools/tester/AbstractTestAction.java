@@ -19,7 +19,7 @@ public abstract class AbstractTestAction implements TestAction {
     private String name;
     protected JsonNode actionNode;
     protected TestActionContext testActionContext;
-    
+
     public AbstractTestAction(JsonNode actionNode, TestActionContext testActionContext) {
         this.actionNode = actionNode;
         name = JsonUtil.getString(actionNode, "name");
@@ -56,10 +56,16 @@ public abstract class AbstractTestAction implements TestAction {
     }
 
     protected void reportError(String message, Throwable throwable) {
-        failureCount++;
-        testActionContext.errorStream.println("[" + new DateTime() + "] " + message);
-        StackTracePrinter.printStackTrace(throwable, testActionContext.errorStream);
-        testActionContext.errorStream.println("---------------------------------------------------------------------------");        
+        // Synchronize to avoid stacktraces from different threads running through each other
+        synchronized (testActionContext.errorStream) {
+            failureCount++;
+            testActionContext.errorStream.println("[" + new DateTime() + "][" + Thread.currentThread().getName() + "] "
+                    + message);
+            StackTracePrinter.printStackTrace(throwable, testActionContext.errorStream);
+            testActionContext.errorStream.println("---------------------------------------------------------------------------");
+        }
+        
+        System.err.println("ATTENTION: an error occurred, check failure output file for details.");
     }
     
     protected TestRecord getNonDeletedRecord(Set<TestRecord> records) {

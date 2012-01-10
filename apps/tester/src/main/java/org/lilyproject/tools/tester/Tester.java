@@ -301,11 +301,11 @@ public class Tester extends BaseRepositoryTestTool {
     
     private void openStreams(String failuresFileName) throws IOException, FileNotFoundException {
         errorStream = new PrintStream(Util.getOutputFileRollOldOne(failuresFileName));
-        errorStream.print(new DateTime() + " Opening file");
+        errorStream.println(new DateTime() + " Opening file");
     }
 
     private void closeStreams() {
-        errorStream.print(new DateTime() + " Closing file");
+        errorStream.println(new DateTime() + " Closing file");
         Closer.close(errorStream);
     }
 
