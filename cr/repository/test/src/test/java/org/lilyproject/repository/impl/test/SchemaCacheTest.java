@@ -232,6 +232,19 @@ public class SchemaCacheTest {
             ftName = newFtName;
         }
     }
+
+    @Test
+    public void testRenameRecordType() throws Exception {
+        TypeManager typeManager = repoSetup.getTypeManager();
+        QName rtName = new QName("testRenameRecordType", "r");
+        RecordType recordType = typeManager.recordTypeBuilder().name(rtName).create();
+        for (int i = 0; i < 100; i++) {
+            QName newRtName = new QName("testRenameRecordType", "r" + i);
+            recordType.setName(newRtName);
+            recordType = typeManager.updateRecordType(recordType);
+            typeManager.getRecordTypeByName(newRtName, null);
+        }
+    }
     
     @Test
     public void testRecordTypeInCacheDoesNotChange() throws Exception {

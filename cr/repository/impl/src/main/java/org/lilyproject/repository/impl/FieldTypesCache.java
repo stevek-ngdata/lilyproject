@@ -211,7 +211,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                 bucket = new ConcurrentHashMap<SchemaId, FieldType>(Math.min(fieldTypes.size(), 8), .75f, 1);
                 buckets.put(bucketId, bucket);
             }
-            // Fill a the bucket with the new field types
+            // Fill the bucket with the new field types
             for (FieldType fieldType : fieldTypes) {
                 if (!removeFromLocalUpdateBucket(fieldType.getId(), bucketId)) {
                     bucket.put(fieldType.getId(), fieldType);
