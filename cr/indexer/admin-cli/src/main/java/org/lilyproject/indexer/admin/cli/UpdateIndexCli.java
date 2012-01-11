@@ -38,8 +38,6 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
-        nameOption.setRequired(true);
-
         options.add(nameOption);
         options.add(solrShardsOption);
         options.add(shardingConfigurationOption);
@@ -57,6 +55,11 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
         int result = super.run(cmd);
         if (result != 0)
             return result;
+
+        if (indexName == null) {
+            System.out.println("Specify index name with -" + nameOption.getOpt());
+            return 1;
+        }
 
         if (!model.hasIndex(indexName)) {
             System.out.println("Index does not exist: " + indexName);

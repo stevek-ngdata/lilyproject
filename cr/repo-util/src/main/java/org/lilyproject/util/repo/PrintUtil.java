@@ -55,74 +55,74 @@ public class PrintUtil {
             }
         }
 
-        // Compile a list of all the used namespaces, in the order in which they will be used in the printout.
-        List<String> namespaces = new ArrayList<String>();
-        for (Scope scope : Scope.values()) {
-            for (QName name : fieldsByScope.get(scope).keySet()) {
-                if (!namespaces.contains(name.getNamespace())) {
-                    namespaces.add(name.getNamespace());
-                }
-            }
-        }
-        for (QName name : undeterminedFields.keySet()) {
-            if (!namespaces.contains(name.getNamespace())) {
-                namespaces.add(name.getNamespace());
-            }
-        }
-
         // Produce the printout
         out.println("ID = " + record.getId());
         out.println("Version = " + record.getVersion());
-        out.println("Namespaces:");
-        for (int i = 0; i < namespaces.size(); i++) {
-            out.println("  n" + (i + 1) + " = " + namespaces.get(i));
-        }
 
         // We always print out the non-versioned scope, to show its record type
         out.println("Non-versioned scope:");
         printRecordType(record, Scope.NON_VERSIONED, out);
-        printFields(fieldsByScope.get(Scope.NON_VERSIONED), namespaces, out);
+        printFields(fieldsByScope.get(Scope.NON_VERSIONED), out);
 
         if (fieldsByScope.get(Scope.VERSIONED).size() > 0) {
             out.println("Versioned scope:");
             printRecordType(record, Scope.VERSIONED, out);
-            printFields(fieldsByScope.get(Scope.VERSIONED), namespaces, out);
+            printFields(fieldsByScope.get(Scope.VERSIONED), out);
         }
 
         if (fieldsByScope.get(Scope.VERSIONED_MUTABLE).size() > 0) {
             out.println("Versioned-mutable scope:");
             printRecordType(record, Scope.VERSIONED_MUTABLE, out);
-            printFields(fieldsByScope.get(Scope.VERSIONED_MUTABLE), namespaces, out);
+            printFields(fieldsByScope.get(Scope.VERSIONED_MUTABLE), out);
         }
 
         if (undeterminedFields.size() > 0) {
             out.println("Fields of which the field type was not found:");
-            printFields(undeterminedFields, namespaces, out);
+            printFields(undeterminedFields, out);
         }
 
     }
 
-    private static void printFields(Map<QName, Object> fields, List<String> namespaces, PrintStream out) {
+    private static void printFields(Map<QName, Object> fields, PrintStream out) {
         for (Map.Entry<QName, Object> field : fields.entrySet()) {
-            int nsNr = namespaces.indexOf(field.getKey().getNamespace()) + 1;
-            if (field.getValue() instanceof List) {
-                out.println("  n" + nsNr + ":" + field.getKey().getName() + " = ");
-                printListValue((List)field.getValue(), 4, out);
-            } else {
-                out.println("  n" + nsNr + ":" + field.getKey().getName() + " = " + field.getValue());
-            }
+            printField(out, 2, field.getKey(), field.getValue());
+        }
+    }
+    
+    private static void printField(PrintStream out, int indent, QName fieldName, Object fieldValue) {
+        print(out, indent, fieldName + " = ");
+        printFieldValue(out, indent, fieldValue);
+    }
+
+    private static void printFieldValue(PrintStream out, int indent, Object fieldValue) {
+        if (fieldValue instanceof List) {
+            out.println();
+            printListValue(out, indent + 2, (List)fieldValue);
+        } else if (fieldValue instanceof Record) {
+            out.println();
+            printRecordValue(out, indent + 2, (Record)fieldValue);
+        } else {
+            out.println(fieldValue);
         }
     }
 
-    private static void printListValue(List values, int indent, PrintStream out) {
+    private static void printListValue(PrintStream out, int indent, List values) {
         for (int i = 0; i < values.size(); i++) {
             Object value = values.get(i);
+            print(out, indent, "[" + i + "] ");
             if (value instanceof List) {
-                println(out, indent, "[" + i + "]");
-                printListValue((List)value, indent + 2, out);
+                out.println();
+                printListValue(out, indent + 2, (List)value);
             } else {
-                println(out, indent, "[" + i + "] " + value);
+                printFieldValue(out, indent, value);
             }
+        }
+    }
+
+    private static void printRecordValue(PrintStream out, int indent, Record record) {
+        println(out, indent, "Record of type " + record.getRecordTypeName() + ", version " + record.getRecordTypeVersion());
+        for (Map.Entry<QName, Object> field : record.getFields().entrySet()) {        
+            printField(out, indent, field.getKey(), field.getValue());
         }
     }
 
@@ -233,6 +233,15 @@ public class PrintUtil {
         }
 
         out.println(buffer + text);
+    }
+
+    private static void print(PrintStream out, int indent, String text) {
+        StringBuilder buffer = new StringBuilder(indent);
+        for (int i = 0; i < indent; i++) {
+            buffer.append(" ");
+        }
+
+        out.print(buffer + text);
     }
 
     private static QNameComparator QNAME_COMP = new QNameComparator();

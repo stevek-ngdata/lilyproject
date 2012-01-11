@@ -21,6 +21,7 @@ import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
@@ -49,12 +50,16 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-record-row-visualizer");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
         recordIdOption = OptionBuilder
                 .withArgName("record-id")
-                .isRequired()
                 .hasArg()
                 .withDescription("A Lily record ID: UUID.something or USER.something")
                 .withLongOpt("record-id")
@@ -76,6 +81,10 @@ public class RecordRowVisualizer extends BaseZkCliTool {
             return result;
 
         String recordIdString = cmd.getOptionValue(recordIdOption.getOpt());
+        if (recordIdString == null) {
+            System.out.println("Specify record id with -" + recordIdOption.getOpt());
+            return 1;
+        }
 
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId recordId = idGenerator.fromString(recordIdString);
@@ -245,7 +254,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 stateByKey.put(key, states);
             }
 
-            SubscriptionExecutionState state = SubscriptionExecutionState.fromBytes(columnEntry.getValue());
+            ExecutionState state = SubscriptionExecutionState.fromBytes(columnEntry.getValue());
             for (CharSequence subscriptionIdCharSeq : state.getSubscriptionIds()) {
                 String subscriptionId = subscriptionIdCharSeq.toString();
 

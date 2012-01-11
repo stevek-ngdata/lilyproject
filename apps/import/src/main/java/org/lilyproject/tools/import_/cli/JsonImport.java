@@ -25,6 +25,8 @@ import org.lilyproject.tools.import_.json.*;
 import org.lilyproject.util.json.JsonFormat;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JsonImport {
     private Namespaces namespaces = new NamespacesImpl();
@@ -154,6 +156,49 @@ public class JsonImport {
         }
 
         return newFieldType;
+    }
+
+    public List<FieldType> importFieldTypes(JsonNode node, int times) throws RepositoryException,
+            ImportConflictException, ImportException, JsonFormatException, InterruptedException {
+        List<FieldType> newFieldTypes = new ArrayList<FieldType>(times);
+
+        if (!node.isObject()) {
+            throw new ImportException("Field type should be specified as object node.");
+        }
+
+        FieldType fieldType = FieldTypeReader.INSTANCE.fromJson((ObjectNode) node, namespaces, repository);
+
+        if (fieldType.getName() == null) {
+            throw new ImportException("Missing name property on field type.");
+        }
+
+        for (int i = 0; i < times; i++) {
+            FieldType ftToCreate = fieldType.clone();
+            ftToCreate.setName(new QName(fieldType.getName().getNamespace(), fieldType.getName().getName() + i));
+            ImportResult<FieldType> result = FieldTypeImport.importFieldType(ftToCreate, ImportMode.CREATE_OR_UPDATE,
+                    IdentificationMode.NAME, ftToCreate.getName(), typeManager);
+            FieldType newFieldType = result.getEntity();
+
+            switch (result.getResultType()) {
+            case CREATED:
+                importListener.created(EntityType.FIELD_TYPE, newFieldType.getName().toString(), newFieldType.getId()
+                        .toString());
+                break;
+            case UP_TO_DATE:
+                importListener.existsAndEqual(EntityType.FIELD_TYPE, newFieldType.getName().toString(), null);
+                break;
+            case CONFLICT:
+                importListener.conflict(EntityType.FIELD_TYPE, ftToCreate.getName().toString(),
+                        result.getConflictingProperty(), result.getConflictingOldValue(),
+                        result.getConflictingNewValue());
+                break;
+            default:
+                throw new ImportException("Unexpected import result type for field type: " + result.getResultType());
+            }
+            newFieldTypes.add(newFieldType);
+        }
+
+        return newFieldTypes;
     }
 
     public RecordType importRecordType(JsonNode node) throws RepositoryException, ImportException, JsonFormatException,

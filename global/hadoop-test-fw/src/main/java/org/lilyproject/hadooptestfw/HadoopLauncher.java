@@ -22,6 +22,11 @@ public class HadoopLauncher extends BaseCliTool {
         return "launch-hadoop";
     }
 
+    @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-hadoop-test-fw");
+    }
+
     public static void main(String[] args) throws Exception {
         new HadoopLauncher().start(args);
     }

@@ -8,15 +8,19 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.tools.import_.json.QNameConverter;
+import org.lilyproject.util.json.JsonFormatException;
 import org.lilyproject.util.json.JsonUtil;
 
 public class CreateAction extends AbstractTestAction implements TestAction {
 
     private TestRecordType recordTypeToCreate;
 
-    public CreateAction(JsonNode actionNode, TestActionContext testActionContext) {
+    public CreateAction(JsonNode actionNode, TestActionContext testActionContext) throws JsonFormatException,
+            org.lilyproject.tools.import_.json.JsonFormatException {
         super(actionNode, testActionContext);
-        recordTypeToCreate = testActionContext.recordTypes.get(JsonUtil.getString(actionNode, "recordType"));
+        recordTypeToCreate = testActionContext.recordTypes.get(QNameConverter.fromJson(
+                JsonUtil.getString(actionNode, "recordType"), testActionContext.nameSpaces));
     }
     
     @Override
@@ -67,7 +71,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
             reportError("Error creating record.", t);
             success = false;
         }
-        report(success, createDuration, success ? "C" : null, "repoCreate." + recordTypeToCreate.getRecordType().getName().getName());
+        report(success, createDuration, "C", "repoCreate." + recordTypeToCreate.getRecordType().getName().getName());
         duration += createDuration;
         return new ActionResult(success, record, duration);
     }
@@ -85,7 +89,13 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         // Create a record of the specified RecordType
         String linkedRecordTypeName = testFieldType.getLinkedRecordTypeName();
         if (linkedRecordTypeName != null) {
-                TestRecordType linkedRecordType = testActionContext.recordTypes.get(linkedRecordTypeName);
+            TestRecordType linkedRecordType;
+            try {
+                linkedRecordType = testActionContext.recordTypes.get(QNameConverter.fromJson(linkedRecordTypeName,
+                        testActionContext.nameSpaces));
+            } catch (org.lilyproject.tools.import_.json.JsonFormatException e) {
+                throw new RuntimeException("Error creating link field", e);
+            }
                 ActionResult result = createRecord(linkedRecordType);
                 report(result.success, result.duration, "linkCreate."+linkedRecordType.getRecordType().getName().getName());
                 if (!result.success)

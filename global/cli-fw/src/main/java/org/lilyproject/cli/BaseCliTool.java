@@ -18,8 +18,11 @@ package org.lilyproject.cli;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.*;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.lilyproject.util.exception.StackTracePrinter;
+import org.lilyproject.util.io.Closer;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -40,10 +43,12 @@ import java.util.regex.Pattern;
  */
 public abstract class BaseCliTool {
     protected Option helpOption;
+    protected Option versionOption;
+    protected Option logConfOption;
+    protected Option dumpLogConfOption;
     private Options cliOptions;
 
     protected void start(String[] args) {
-        setupLogging();
         int result = 1;
         try {
             System.out.println();
@@ -71,6 +76,21 @@ public abstract class BaseCliTool {
         helpOption = new Option("h", "help", false, "Shows help");
         options.add(helpOption);
 
+        versionOption = new Option("v", "version", false, "Shows the version");
+        options.add(versionOption);
+
+        logConfOption = OptionBuilder
+                .withArgName("config")
+                .hasArg()
+                .withDescription("log4j config file (.properties or .xml)")
+                .create("log");
+        cliOptions.addOption(logConfOption);
+
+        dumpLogConfOption = OptionBuilder
+                .withDescription("Dump default log4j configuration")
+                .create("dumplog");
+        cliOptions.addOption(dumpLogConfOption);
+
         return options;
     }
 
@@ -89,6 +109,27 @@ public abstract class BaseCliTool {
             printHelp();
             return 1;
         }
+        
+        if (cmd.hasOption(versionOption.getOpt())) {
+            System.out.println(getVersion());
+            return 1;
+        }
+        
+        if (cmd.hasOption(dumpLogConfOption.getOpt())) {
+            IOUtils.copy(BaseCliTool.class.getResourceAsStream("log4j.properties"), System.out);
+            return 1;
+        }
+
+        File logConfFile = null;
+        if (cmd.hasOption(logConfOption.getOpt())) {
+            logConfFile = new File(cmd.getOptionValue(logConfOption.getOpt()));
+            if (!logConfFile.exists()) {
+                System.err.println("Specified log4j configuration file does not exist:");
+                System.err.println(logConfFile);
+            }
+        }
+        setupLogging(logConfFile);
+
         return 0;
     }
 
@@ -99,24 +140,28 @@ public abstract class BaseCliTool {
     public int run(CommandLine cmd) throws Exception {
         return 0;
     }
-
-    private void setupLogging() {
-        // Since various log4j.properties are on the classpath in 3d party jars, do a reset first.
+    
+    private void setupLogging(File logConfFile) {
+        // Reset any configuration log4j might already have loaded (from classpath, cwd, ...).
         LogManager.resetConfiguration();
 
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.WARN);
+        // If the user did not specify a configuration file, default to log4j.properties in the working dir
+        if (logConfFile == null) {
+            File defaultConf = new File("log4j.properties");
+            if (defaultConf.exists()) {
+                logConfFile = defaultConf;
+                System.out.println("Using log4j.properties from working directory: " + logConfFile.getAbsolutePath());
+            }
+        }
 
-        Logger log = Logger.getLogger("org.lilyproject.client");
-        log.setLevel(Level.INFO);
-
-        final String CONSOLE_LAYOUT = "[%-5p][%d{ABSOLUTE}][%-10.10t] %c - %m%n";
-
-        ConsoleAppender consoleAppender = new ConsoleAppender();
-        consoleAppender.setLayout(new PatternLayout(CONSOLE_LAYOUT));
-
-        consoleAppender.activateOptions();
-        rootLogger.addAppender(consoleAppender);
+        if (logConfFile == null) {
+            // Use the built-in config
+            PropertyConfigurator.configure(BaseCliTool.class.getResource("log4j.properties"));
+        } else if (logConfFile.getName().endsWith(".xml")) {
+            DOMConfigurator.configure(logConfFile.getAbsolutePath());
+        } else {
+            PropertyConfigurator.configure(logConfFile.getAbsolutePath());
+        }
     }
 
     private int runBase(String[] args) throws Exception {
@@ -187,5 +232,26 @@ public abstract class BaseCliTool {
             System.out.println();
         }
     }
+    
+    protected abstract String getVersion();
 
+    protected String readVersion(String groupId, String artifactId) {
+        String propPath = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
+        InputStream is = getClass().getResourceAsStream(propPath);
+        if (is != null) {
+            Properties properties = new Properties();
+            try {
+                properties.load(is);
+                String version = properties.getProperty("version");
+                if (version != null) {
+                    return version;
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+            Closer.close(is);
+        }
+        
+        return "undetermined (please report this as bug)";
+    }
 }

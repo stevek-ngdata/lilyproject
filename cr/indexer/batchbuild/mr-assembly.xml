@@ -17,6 +17,15 @@
       <scope>runtime</scope>
       <excludes>
         <exclude>org.apache.hadoop:hadoop-core</exclude>
+        <!--
+          Hadoop also ships with slf4j, so it is also in classpath of task child vm.
+          At the time of this writing Hadoop used an older version, and failed
+          with a NoSuchMethodError (on task vm startup) when our version was
+          also on the classpath.
+        -->
+        <exclude>org.slf4j:slf4j-api</exclude>
+        <exclude>org.slf4j:jcl-over-slf4j</exclude>
+        <exclude>org.slf4j:slf4j-log4j12</exclude>
       </excludes>
     </dependencySet>
   </dependencySets>

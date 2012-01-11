@@ -37,8 +37,6 @@ public class GetIndexerConfCli extends BaseIndexerAdminCli {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
-        nameOption.setRequired(true);
-
         options.add(nameOption);
         options.add(outputFileOption);
         options.add(forceOption);
@@ -51,6 +49,11 @@ public class GetIndexerConfCli extends BaseIndexerAdminCli {
         int result = super.run(cmd);
         if (result != 0)
             return result;
+
+        if (indexName == null) {
+            System.out.println("Specify index name with -" + nameOption.getOpt());
+            return 1;
+        }
 
         IndexDefinition index = model.getIndex(indexName);
 

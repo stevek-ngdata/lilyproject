@@ -43,6 +43,13 @@ public class HBaseTestingUtilityFactory {
         // Allow more clients to connect concurrently (HBase default is 10)
         conf.set("hbase.regionserver.handler.count", "30");
 
+        // Allow more clients to connect concurrently to hdfs (default is 3)
+        conf.set("dfs.datanode.handler.count", "6");
+
+        // Generic performance related settings
+        conf.set("io.file.buffer.size", "65536");
+        conf.set("hbase.hregion.memstore.flush.size", "268435456");
+
         // Disable the automatic closing of Hadoop FileSystem objects by its shutdown hook.
         // Otherwise, when stopping 'launch-test-lily' (LilyLauncher), the shutdown hook closes the filesystem
         // before HBase had the opportunity to flush its data. This then leads to (possibly long) recoveries

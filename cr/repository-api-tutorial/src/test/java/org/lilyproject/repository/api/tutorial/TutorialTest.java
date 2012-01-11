@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.*;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.joda.time.LocalDate;
@@ -58,7 +59,8 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 public class TutorialTest {
     private static HBaseProxy HBASE_PROXY;
 
-    private static final String NS = "org.lilyproject.tutorial";
+    private static final String BNS = "book";
+    private static final String ANS = "article";
 
     private static TypeManager typeManager;
     private static HBaseRepository repository;
@@ -120,13 +122,13 @@ public class TutorialTest {
         ValueType stringValueType = typeManager.getValueType("STRING");
 
         // (2)
-        FieldType title = typeManager.newFieldType(stringValueType, new QName(NS, "title"), Scope.VERSIONED);
+        FieldType title = typeManager.newFieldType(stringValueType, new QName(BNS, "title"), Scope.VERSIONED);
 
         // (3)
         title = typeManager.createFieldType(title);
 
         // (4)
-        RecordType book = typeManager.newRecordType(new QName(NS, "Book"));
+        RecordType book = typeManager.newRecordType(new QName(BNS, "Book"));
         book.addFieldTypeEntry(title.getId(), true);
 
         // (5)
@@ -138,15 +140,15 @@ public class TutorialTest {
 
     @Test
     public void updateRecordType() throws Exception {
-        FieldType description = typeManager.createFieldType("BLOB", new QName(NS, "description"), Scope.VERSIONED);
-        FieldType authors = typeManager.createFieldType("LIST<STRING>", new QName(NS, "authors"), Scope.VERSIONED);
-        FieldType released = typeManager.createFieldType("DATE", new QName(NS, "released"), Scope.VERSIONED);
-        FieldType pages = typeManager.createFieldType("LONG", new QName(NS, "pages"), Scope.VERSIONED);
-        FieldType sequelTo = typeManager.createFieldType("LINK", new QName(NS, "sequel_to"), Scope.VERSIONED);
-        FieldType manager = typeManager.createFieldType("STRING", new QName(NS, "manager"), Scope.NON_VERSIONED);
-        FieldType reviewStatus = typeManager.createFieldType("STRING", new QName(NS, "review_status"), Scope.VERSIONED_MUTABLE);
+        FieldType description = typeManager.createFieldType("BLOB", new QName(BNS, "description"), Scope.VERSIONED);
+        FieldType authors = typeManager.createFieldType("LIST<STRING>", new QName(BNS, "authors"), Scope.VERSIONED);
+        FieldType released = typeManager.createFieldType("DATE", new QName(BNS, "released"), Scope.VERSIONED);
+        FieldType pages = typeManager.createFieldType("LONG", new QName(BNS, "pages"), Scope.VERSIONED);
+        FieldType sequelTo = typeManager.createFieldType("LINK", new QName(BNS, "sequel_to"), Scope.VERSIONED);
+        FieldType manager = typeManager.createFieldType("STRING", new QName(BNS, "manager"), Scope.NON_VERSIONED);
+        FieldType reviewStatus = typeManager.createFieldType("STRING", new QName(BNS, "review_status"), Scope.VERSIONED_MUTABLE);
 
-        RecordType book = typeManager.getRecordTypeByName(new QName(NS, "Book"), null);
+        RecordType book = typeManager.getRecordTypeByName(new QName(BNS, "Book"), null);
 
         // The order in which fields are added does not matter
         book.addFieldTypeEntry(description.getId(), false);
@@ -169,10 +171,10 @@ public class TutorialTest {
         Record record = repository.newRecord();
 
         // (2)
-        record.setRecordType(new QName(NS, "Book"));
+        record.setRecordType(new QName(BNS, "Book"));
 
         // (3)
-        record.setField(new QName(NS, "title"), "Lily, the definitive guide, 3rd edition");
+        record.setField(new QName(BNS, "title"), "Lily, the definitive guide, 3rd edition");
 
         // (4)
         record = repository.create(record);
@@ -185,7 +187,7 @@ public class TutorialTest {
     public void createRecordUserSpecifiedId() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
-        record.setDefaultNamespace(NS);
+        record.setDefaultNamespace(BNS);
         record.setRecordType("Book");
         record.setField("title", "Lily, the definitive guide, 3rd edition");
         record = repository.create(record);
@@ -197,7 +199,7 @@ public class TutorialTest {
     public void updateRecord() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
-        record.setDefaultNamespace(NS);
+        record.setDefaultNamespace(BNS);
         record.setField("title", "Lily, the definitive guide, third edition");
         record.setField("pages", Long.valueOf(912));
         record.setField("manager", "Manager M");
@@ -210,7 +212,7 @@ public class TutorialTest {
     public void updateRecordViaRead() throws Exception {
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.read(id);
-        record.setDefaultNamespace(NS);
+        record.setDefaultNamespace(BNS);
         record.setField("released", new LocalDate());
         record.setField("authors", Arrays.asList("Author A", "Author B"));
         record.setField("review_status", "reviewed");
@@ -222,11 +224,11 @@ public class TutorialTest {
     @Test
     public void updateRecordConditionally() throws Exception {
         List<MutationCondition> conditions = new ArrayList<MutationCondition>();
-        conditions.add(new MutationCondition(new QName(NS, "manager"), "Manager Z"));
+        conditions.add(new MutationCondition(new QName(BNS, "manager"), "Manager Z"));
 
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.read(id);
-        record.setField(new QName(NS, "manager"), "Manager P");
+        record.setField(new QName(BNS, "manager"), "Manager P");
         record = repository.update(record, conditions);
 
         System.out.println(record.getResponseStatus());
@@ -239,16 +241,16 @@ public class TutorialTest {
 
         // (1)
         Record record = repository.read(id);
-        String title = (String)record.getField(new QName(NS, "title")); 
+        String title = (String)record.getField(new QName(BNS, "title"));
         System.out.println(title);
 
         // (2)
         record = repository.read(id, 1L);
-        System.out.println(record.getField(new QName(NS, "title")));
+        System.out.println(record.getField(new QName(BNS, "title")));
 
         // (3)
-        record = repository.read(id, 1L, Arrays.asList(new QName(NS, "title")));
-        System.out.println(record.getField(new QName(NS, "title")));
+        record = repository.read(id, 1L, Arrays.asList(new QName(BNS, "title")));
+        System.out.println(record.getField(new QName(BNS, "title")));
     }
 
     @Test
@@ -272,7 +274,7 @@ public class TutorialTest {
         // (2)
         RecordId id = repository.getIdGenerator().newRecordId("lily-definitive-guide-3rd-edition");
         Record record = repository.newRecord(id);
-        record.setField(new QName(NS, "description"), blob);
+        record.setField(new QName(BNS, "description"), blob);
         record = repository.update(record);
 
         //
@@ -280,7 +282,7 @@ public class TutorialTest {
         //
         InputStream is = null;
         try {
-            is = repository.getInputStream(record, new QName(NS, "description"));
+            is = repository.getInputStream(record, new QName(BNS, "description"));
             System.out.println("Data read from blob is:");
             Reader reader = new InputStreamReader(is, "UTF-8");
             char[] buffer = new char[20];
@@ -309,15 +311,15 @@ public class TutorialTest {
 
         // (4)
         Record enRecord = repository.newRecord(enId);
-        enRecord.setRecordType(new QName(NS, "Book"));
-        enRecord.setField(new QName(NS, "title"), "Car maintenance");
+        enRecord.setRecordType(new QName(BNS, "Book"));
+        enRecord.setField(new QName(BNS, "title"), "Car maintenance");
         enRecord = repository.create(enRecord);
 
         // (5)
         RecordId nlId = idGenerator.newRecordId(enRecord.getId().getMaster(), Collections.singletonMap("language", "nl"));
         Record nlRecord = repository.newRecord(nlId);
-        nlRecord.setRecordType(new QName(NS, "Book"));
-        nlRecord.setField(new QName(NS, "title"), "Wagen onderhoud");
+        nlRecord.setRecordType(new QName(BNS, "Book"));
+        nlRecord.setField(new QName(BNS, "title"), "Wagen onderhoud");
         nlRecord = repository.create(nlRecord);
 
         // (6)
@@ -331,22 +333,67 @@ public class TutorialTest {
     public void linkField() throws Exception {
         // (1)
         Record record1 = repository.newRecord();
-        record1.setRecordType(new QName(NS, "Book"));
-        record1.setField(new QName(NS, "title"), "Fishing 1");
+        record1.setRecordType(new QName(BNS, "Book"));
+        record1.setField(new QName(BNS, "title"), "Fishing 1");
         record1 = repository.create(record1);
 
         // (2)
         Record record2 = repository.newRecord();
-        record2.setRecordType(new QName(NS, "Book"));
-        record2.setField(new QName(NS, "title"), "Fishing 2");
-        record2.setField(new QName(NS, "sequel_to"), new Link(record1.getId()));
+        record2.setRecordType(new QName(BNS, "Book"));
+        record2.setField(new QName(BNS, "title"), "Fishing 2");
+        record2.setField(new QName(BNS, "sequel_to"), new Link(record1.getId()));
         record2 = repository.create(record2);
 
         // (3)
-        Link sequelToLink = (Link)record2.getField(new QName(NS, "sequel_to"));
+        Link sequelToLink = (Link)record2.getField(new QName(BNS, "sequel_to"));
         RecordId sequelTo = sequelToLink.resolve(record2.getId(), repository.getIdGenerator());
         Record linkedRecord = repository.read(sequelTo);
-        System.out.println(linkedRecord.getField(new QName(NS, "title")));
+        System.out.println(linkedRecord.getField(new QName(BNS, "title")));
+    }
+
+    @Test
+    public void complexFields() throws Exception {
+        // (1)
+        FieldType name = typeManager.createFieldType("STRING", new QName(ANS, "name"), Scope.NON_VERSIONED);
+        FieldType email = typeManager.createFieldType("STRING", new QName(ANS, "email"), Scope.NON_VERSIONED);
+        
+        RecordType authorType = typeManager.newRecordType(new QName(ANS, "author"));
+        authorType.addFieldTypeEntry(name.getId(), true);
+        authorType.addFieldTypeEntry(email.getId(), true);
+        authorType = typeManager.createRecordType(authorType);
+        
+        // (2)
+        FieldType title = typeManager.createFieldType("STRING", new QName(ANS, "title"), Scope.NON_VERSIONED);
+        FieldType authors = typeManager.createFieldType("LIST<RECORD<{article}author>>",
+                new QName(ANS, "authors"), Scope.NON_VERSIONED);
+        FieldType body = typeManager.createFieldType("STRING", new QName(ANS, "body"), Scope.NON_VERSIONED);
+
+        RecordType articleType = typeManager.newRecordType(new QName(ANS, "article"));
+        authorType.addFieldTypeEntry(title.getId(), true);
+        authorType.addFieldTypeEntry(authors.getId(), true);
+        authorType.addFieldTypeEntry(body.getId(), true);
+        articleType = typeManager.createRecordType(articleType);
+        
+        // (3)
+        Record author1 = repository.newRecord();
+        author1.setRecordType(authorType.getName());
+        author1.setField(name.getName(), "Author X");
+        author1.setField(name.getName(), "author_x@authors.com");
+
+        Record author2 = repository.newRecord();
+        author2.setRecordType(new QName(ANS, "author"));
+        author2.setField(name.getName(), "Author Y");
+        author2.setField(name.getName(), "author_y@authors.com");
+        
+        // (4)
+        Record article = repository.newRecord();
+        article.setRecordType(articleType.getName());
+        article.setField(new QName(ANS, "title"), "Title of the article");
+        article.setField(new QName(ANS, "authors"), Lists.newArrayList(author1, author2));
+        article.setField(new QName(ANS, "body"), "Body text of the article");
+        article = repository.create(article);
+        
+        PrintUtil.print(article, repository);
     }
 
 }

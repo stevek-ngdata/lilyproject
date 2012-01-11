@@ -85,6 +85,11 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
     }
 
     @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-upgrade");
+    }
+
+    @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 

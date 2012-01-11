@@ -1,0 +1,20 @@
+{
+  namespaces: {
+    "com.mycompany": "p"
+  },
+  fieldTypes: [
+    {
+      name: "p$field1",
+      valueType: "STRING",
+      scope: "non_versioned"
+    }
+  ],
+  recordTypes: [
+    {
+      name: "p$Type1",
+      fields: [
+        {name: "p$field1", mandatory: true }
+      ]
+    }
+  ]
+}

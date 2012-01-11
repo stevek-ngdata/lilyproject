@@ -33,8 +33,6 @@ public class UpdateRowLogCli extends BaseRowLogAdminCli {
     @Override
     public List<Option> getOptions() {
         List<Option> options =  super.getOptions();
-        
-        rowLogIdOption.setRequired(true);
 
         options.add(rowLogIdOption);
         options.add(respectOrderOption);
@@ -48,10 +46,16 @@ public class UpdateRowLogCli extends BaseRowLogAdminCli {
     
     @Override
     public int run(CommandLine cmd) throws Exception  {
+        int result = super.run(cmd);
+        if (result != 0)
+            return result;
+
+        if (rowLogId == null) {
+            System.out.println("Specify rowlog ID with -" + rowLogIdOption.getOpt());
+            return 1;
+        }
+
         try {
-            int result = super.run(cmd);
-            if (result != 0)
-                return result;
             RowLogConfig rowLogConfig = rowLogConfigurationManager.getRowLogs().get(rowLogId);
             if (rowLogConfig == null) {
                 System.out.println("Rowlog does not exist: " + rowLogId);

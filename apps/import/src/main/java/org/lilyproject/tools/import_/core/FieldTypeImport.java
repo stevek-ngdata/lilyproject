@@ -72,6 +72,8 @@ public class FieldTypeImport {
                     QName newName = newFieldType.getName();
                     if (!oldName.equals(newName)) {
                         updated = true;
+                        // Make the oldFieldType mutable
+                        oldFieldType = oldFieldType.clone();
                         oldFieldType.setName(newName);
                     }
 

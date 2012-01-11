@@ -128,29 +128,29 @@ public class RestTest {
         assertStatus(Status.SUCCESS_OK, response);
 
         // Update a field type - by ID : change field3 to field4
-        body = json("{name: 'n$field4', valueType: 'STRING', " +
-                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
+        body = json("{name: 'n$field4', valueType: 'STRING', "
+                + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
         assertStatus(Status.SUCCESS_OK, response);
 
         // Test updating immutable properties
-        body = json("{name: 'n$field4', valueType: 'INTEGER', " +
-                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
+        body = json("{name: 'n$field4', valueType: 'INTEGER', "
+                + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
         assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
 
-        body = json("{name: 'n$field4', valueType: 'STRING', " +
-                "scope: 'non_versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
+        body = json("{name: 'n$field4', valueType: 'STRING', "
+                + "scope: 'non_versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
         assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
 
-        body = json("{name: 'n$field4', valueType: 'LIST<STRING>', " +
-                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
+        body = json("{name: 'n$field4', valueType: 'LIST<STRING>', "
+                + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldTypeById/" + fieldType2Id, body);
         assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
 
-        body = json("{name: 'n$field4', valueType: 'PATH<STRING>', " +
-                "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
+        body = json("{name: 'n$field4', valueType: 'PATH<STRING>', "
+                + "scope: 'versioned', namespaces: { 'org.lilyproject.resttest': 'n' } }");
         response = put(BASE_URI + "/schema/fieldType/n$field4?ns.n=org.lilyproject.resttest", body);
         assertStatus(Status.CLIENT_ERROR_CONFLICT, response);
 

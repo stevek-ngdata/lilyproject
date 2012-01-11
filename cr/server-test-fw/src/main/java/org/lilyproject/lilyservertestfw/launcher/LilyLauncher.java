@@ -28,6 +28,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableSolrOption;
     private Option enableLilyOption;
     private Option dataDirOption;
+    private Option prepareOption;
 
     private File testHome;
     private boolean clearData = true;
@@ -54,6 +55,11 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     @Override
     protected String getCmdName() {
         return "launch-test-lily";
+    }
+
+    @Override
+    protected String getVersion() {
+        return readVersion("org.lilyproject", "lily-server-test-fw");
     }
 
     @Override
@@ -87,6 +93,13 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 .create("d");
         options.add(dataDirOption);
 
+        prepareOption = OptionBuilder
+                .withDescription("Create a template data directory, this will allow faster startup "
+                        + "in the future (when not using -d)")
+                .withLongOpt("prepare")
+                .create("p");
+        options.add(prepareOption);
+
         for (LauncherService service : allServices) {
             service.addOptions(options);
         }
@@ -104,12 +117,24 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         if (result != 0)
             return result;
 
+        boolean prepareMode = cmd.hasOption(prepareOption.getOpt());
+        
+        if (prepareMode) {
+            System.out.println("----------------------------------------------------------");
+            System.out.println("Running in prepare mode.");
+            System.out.println("Will start up, stop, and then snapshot the data directory.");
+            System.out.println("Please be patient.");
+            System.out.println("----------------------------------------------------------");
+        }
+
         //
-        // Figure out what to start
+        // Figure out what to start (in prepare mode: always everything)
         //
-        enableHadoop = cmd.hasOption(enableHadoopOption.getOpt());
-        enableSolr = cmd.hasOption(enableSolrOption.getOpt());
-        enableLily = cmd.hasOption(enableLilyOption.getOpt());
+        if (!prepareMode) {
+            enableHadoop = cmd.hasOption(enableHadoopOption.getOpt());
+            enableSolr = cmd.hasOption(enableSolrOption.getOpt());
+            enableLily = cmd.hasOption(enableLilyOption.getOpt());
+        }
 
         // If none of the services are explicitly enabled, we default to starting them all. Otherwise
         // we only start those that are enabled.
@@ -129,7 +154,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         //
         // Determine directory below which all services will store their data
         //
-        if (cmd.hasOption(dataDirOption.getOpt())) {
+        if (!prepareMode && cmd.hasOption(dataDirOption.getOpt())) {
             String dataDir = cmd.getOptionValue(dataDirOption.getOpt());
             testHome = new File(dataDir);
             if (testHome.exists() && !testHome.isDirectory()) {
@@ -145,6 +170,9 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             clearData = false;
         } else {
             testHome = TestHomeUtil.createTestHome("lily-launcher-");
+            if (!prepareMode) {
+                restoreTemplateDir();
+            }
         }
 
         //
@@ -170,6 +198,23 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 return result;
         }
 
+        if (prepareMode) {
+            System.out.println("----------------------------------------------------------");
+            System.out.println("Prepare mode: stopping all services");
+            System.out.println("----------------------------------------------------------");
+            lilyService.stop();
+            solrService.stop();
+            hadoopService.stop();
+
+            System.out.println("----------------------------------------------------------");
+            System.out.println("Prepare mode: creating template data directory");
+            makeTemplateDir();
+            System.out.println("----------------------------------------------------------");
+            System.out.println("Done");
+
+            System.exit(0);
+        }
+
         // Register MBean
         ManagementFactory.getPlatformMBeanServer().registerMBean(this, new ObjectName("LilyLauncher:name=Launcher"));
 
@@ -190,6 +235,10 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         @Override
         public void run() {
             try {
+                System.out.println("----------------------------------------------------------");
+                System.out.println("Shutting down");
+                System.out.println("----------------------------------------------------------");
+
                 //
                 // Attempt to shutdown everything
                 //
@@ -286,6 +335,42 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         int response = conn.getResponseCode();
         conn.disconnect();
         return response;
+    }
+    
+    private void makeTemplateDir() throws IOException {
+        File destination = getTemplateDir();
+        
+        if (destination.exists()) {
+            System.out.println("Removing existing directory " + destination.getAbsolutePath());
+            FileUtils.deleteDirectory(destination);
+        }
+        
+        System.out.println("Copying data directory state to " + destination.getAbsolutePath());
+        FileUtils.copyDirectory(testHome, destination);
+        
+        System.out.println("Deleting data directory " + testHome.getAbsolutePath());
+        TestHomeUtil.cleanupTestHome(testHome);        
+    }
+    
+    private void restoreTemplateDir() throws IOException {
+        File templateDir = getTemplateDir();
+        if (templateDir.exists()) {
+            System.out.println("----------------------------------------------------------");
+            System.out.println("Restoring template data directory");
+            System.out.println(templateDir.getAbsolutePath());
+            System.out.println("----------------------------------------------------------");
+            FileUtils.copyDirectory(templateDir, testHome);
+        } else {
+            System.out.println("----------------------------------------------------------");
+            System.out.println("Tip: for faster startup in the future, run once:");
+            System.out.println(getCmdName() + " --" + prepareOption.getLongOpt());
+            System.out.println("----------------------------------------------------------");
+        }
+    }
+    
+    private File getTemplateDir() {
+        //String f = File.separator;
+        return new File(System.getProperty("user.home") + "/.lily/launcher/template/" + getVersion());
     }
 }
 

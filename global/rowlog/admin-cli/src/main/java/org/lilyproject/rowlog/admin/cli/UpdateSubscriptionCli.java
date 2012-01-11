@@ -32,9 +32,6 @@ public class UpdateSubscriptionCli extends BaseRowLogAdminCli {
     public List<Option> getOptions() {
         List<Option> options =  super.getOptions();
         
-        rowLogIdOption.setRequired(true);
-        subscriptionIdOption.setRequired(true);
-        
         options.add(rowLogIdOption);
         options.add(subscriptionIdOption);
         options.add(subscriptionTypeOption);
@@ -45,10 +42,21 @@ public class UpdateSubscriptionCli extends BaseRowLogAdminCli {
     
     @Override
     public int run(CommandLine cmd) throws Exception  {
+        int result = super.run(cmd);
+        if (result != 0)
+            return result;
+
+        if (rowLogId == null) {
+            System.out.println("Specify rowlog ID with -" + rowLogIdOption.getOpt());
+            return 1;
+        }
+
+        if (subscriptionId == null) {
+            System.out.println("Specify rowlog ID with -" + subscriptionIdOption.getOpt());
+            return 1;
+        }
+
         try {
-            int result = super.run(cmd);
-            if (result != 0)
-                return result;
             RowLogConfig rowLogConfig = rowLogConfigurationManager.getRowLogs().get(rowLogId);
             if (rowLogConfig == null) {
                 System.out.println("Rowlog '" + rowLogId + "'does not exist: ");
