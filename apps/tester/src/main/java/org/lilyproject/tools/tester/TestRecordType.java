@@ -7,10 +7,13 @@ import org.lilyproject.repository.api.RecordType;
 
 public class TestRecordType {
 
-    private final RecordType recordType;
+    private RecordType recordType;
     private List<TestFieldType> fieldTypes = new ArrayList<TestFieldType>();
     
-    TestRecordType(RecordType recordType) {
+    public TestRecordType() {
+    }
+
+    public void setRecordType(RecordType recordType) {
         this.recordType = recordType;
     }
     

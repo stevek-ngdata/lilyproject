@@ -9,6 +9,8 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.tools.import_.json.JsonFormatException;
+import org.lilyproject.tools.import_.json.QNameConverter;
 import org.lilyproject.util.json.JsonUtil;
 
 public class UpdateAction extends AbstractTestAction implements TestAction {
@@ -56,7 +58,11 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
             String[] fieldNames = patternDetail.split(",");
             List<QName> fieldQNames = new ArrayList<QName>(fieldNames.length);
             for (String fieldName: fieldNames) {
-                fieldQNames.add(testActionContext.fieldTypes.get(fieldName).getFieldType().getName());
+                try {
+                    fieldQNames.add(QNameConverter.fromJson(fieldName, testActionContext.nameSpaces));
+                } catch (JsonFormatException e) {
+                    throw new RuntimeException("Error updating record", e);
+                }
             }
             for (TestFieldType testFieldType : recordTypeToUpdate.getFieldTypes()) {
                 if (fieldQNames.contains(testFieldType.getFieldType().getName())) {
@@ -137,7 +143,13 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
         // Update the record where the link points to
         String linkedRecordTypeName = testFieldType.getLinkedRecordTypeName();
         if (linkedRecordTypeName != null) {
-            TestRecordType linkedRecordType = testActionContext.recordTypes.get(linkedRecordTypeName);
+            TestRecordType linkedRecordType;
+            try {
+                linkedRecordType = testActionContext.recordTypes.get(QNameConverter.fromJson(linkedRecordTypeName,
+                        testActionContext.nameSpaces));
+            } catch (JsonFormatException e) {
+                throw new RuntimeException("Error updating link field", e);
+            }
             ActionResult result = updateRecord(linkedRecordType, recordId);
             report(result.success, result.duration, "linkUpdate."+linkedRecordType.getRecordType().getName().getName());
             duration += result.duration;

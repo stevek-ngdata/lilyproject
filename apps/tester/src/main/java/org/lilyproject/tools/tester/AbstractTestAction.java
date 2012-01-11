@@ -2,8 +2,6 @@ package org.lilyproject.tools.tester;
 
 import java.util.Set;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.codehaus.jackson.JsonNode;
 import org.joda.time.DateTime;
 import org.lilyproject.repository.api.RecordId;
@@ -87,7 +85,7 @@ public abstract class AbstractTestAction implements TestAction {
 
         return testRecord;
     }
-    
+
     @Override
-    public abstract ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) throws OperationNotSupportedException;
+    public abstract ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId);
 }
