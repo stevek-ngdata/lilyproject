@@ -26,7 +26,7 @@
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.1.2</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -37,6 +37,16 @@
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-server-test-fw</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-test-decorator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-test-updatehook</artifactId>
     </dependency>
 
   </dependencies>

@@ -191,7 +191,7 @@ public class RecordTypesCache {
                     }
                     bucket.put(recordType.getId(), recordType);
                 }
-            }
+            }            
         }
     }
 
@@ -257,7 +257,7 @@ public class RecordTypesCache {
         // Decrement the number of buckets that are being updated again.
         decCount();
     }
-    
+
     // Add the id of a record type that has been updated locally
     // in a bucket. This record type will be skipped in a next
     // cache refresh sequence.
@@ -282,7 +282,7 @@ public class RecordTypesCache {
         }
         return localUpdateBucket.remove(id);
     }
-
+    
     public void clear() {
         nameCache.clear();
         

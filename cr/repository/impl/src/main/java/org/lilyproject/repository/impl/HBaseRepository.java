@@ -50,7 +50,6 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
-import org.lilyproject.util.repo.RowLogContext;
 
 /**
  * Repository implementation.
@@ -400,9 +399,6 @@ public class HBaseRepository extends BaseRepository {
 
         if (walMessage != null) {
             try {
-                RowLogContext rowLogContext = new RowLogContext();
-                rowLogContext.setRecordEvent(recordEvent);
-                walMessage.setContext(rowLogContext);
                 wal.processMessage(walMessage, rowLock);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

@@ -15,8 +15,6 @@
  */
 package org.lilyproject.repository.impl;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
@@ -101,11 +99,6 @@ public class FieldTypeImpl implements FieldType {
     }
 
     @Override
-    public FieldType immutable() {
-        return new ImmutableFieldType(id, valueType, name, scope);
-    }
-
-    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -120,6 +113,8 @@ public class FieldTypeImpl implements FieldType {
         if (this == obj)
             return true;
         if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
             return false;
         FieldTypeImpl other = (FieldTypeImpl) obj;
         if (name == null) {

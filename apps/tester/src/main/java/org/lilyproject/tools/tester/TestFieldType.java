@@ -3,7 +3,6 @@ package org.lilyproject.tools.tester;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Random;
 
 import javax.naming.OperationNotSupportedException;
@@ -14,7 +13,6 @@ import org.joda.time.LocalDate;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.testclientfw.Words;
-import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.util.json.JsonUtil;
 
 public class TestFieldType {
@@ -104,12 +102,10 @@ public class TestFieldType {
         } else if (name.equals("BYTEARRAY")) {
             return new ActionResult(true, generateByteArray(), 0);
         } else if (name.equals("LINK")) {
-                return testAction.linkFieldAction(this, null);
-        } else if (name.equals("RECORD")) {
             try {
-                return new ActionResult(true, generateRecord(testAction, valueType), 0);
-            } catch (RecordException e) {
-                throw new RuntimeException("Error generating record value (CFT)", e);
+                return testAction.linkFieldAction(this, null);
+            } catch (OperationNotSupportedException e) {
+                throw new RuntimeException(e);
             }
         } else {
             throw new RuntimeException("Unsupported value type: " + name);
@@ -197,22 +193,6 @@ public class TestFieldType {
         return value;
     }
     
-    private Record generateRecord(TestAction testAction, ValueType valueType) throws RecordException {
-        String valueTypeName = valueType.getName();
-        String recordTypeName = valueTypeName.substring(valueTypeName.indexOf("<") + 1, valueTypeName.length()-1);
-        TestActionContext context = testAction.getContext();
-        TestRecordType testRecordType = context.recordTypes.get(QName.fromString(recordTypeName));
-        Record record = context.repository.newRecord();
-        record.setRecordType(testRecordType.getRecordType().getName());
-        List<TestFieldType> testFieldTypes = testRecordType.getFieldTypes();
-        for (TestFieldType testFieldType : testFieldTypes) {
-            ActionResult actionResult = testFieldType.generateValue(testAction);
-            record.setField(testFieldType.getFieldType().getName(), actionResult.object);
-            
-        }
-        return record;
-    }
-
     private boolean generateBoolean() {
         return random.nextBoolean();
     }
@@ -320,6 +300,10 @@ public class TestFieldType {
     }
     
     private ActionResult updateLink(TestAction testAction, Link link) {
-        return testAction.linkFieldAction(this, link.getMasterRecordId());
+        try {
+            return testAction.linkFieldAction(this, link.getMasterRecordId());
+        } catch (OperationNotSupportedException e) {
+            return new ActionResult(false, null, 0);
+        }
     }
 }

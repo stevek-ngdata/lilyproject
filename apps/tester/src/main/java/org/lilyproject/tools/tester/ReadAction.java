@@ -14,11 +14,20 @@ import org.lilyproject.repository.impl.valuetype.BlobValueType;
 import org.lilyproject.util.json.JsonUtil;
 
 public class ReadAction extends AbstractTestAction implements TestAction {
+    private Map<QName, FieldType> fieldTypes;
 
     private boolean readBlobs = false;
     public ReadAction(JsonNode jsonNode, TestActionContext testActionContext) {
         super(jsonNode, testActionContext);
+        
         readBlobs = JsonUtil.getBoolean(actionNode, "readBlobs", false);
+        
+        fieldTypes = new HashMap<QName, FieldType>();
+        Collection<TestFieldType> values = testActionContext.fieldTypes.values();
+        for (TestFieldType testFieldType : values) {
+            FieldType fieldType = testFieldType.getFieldType();
+            fieldTypes.put(fieldType.getName(), fieldType);
+        }
     }
 
     @Override
@@ -56,7 +65,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
         Map<QName, Object> readFields = readRecord.getFields();
         for (Entry<QName, Object> entry : readFields.entrySet()) {
             QName fieldName = entry.getKey();
-            FieldType fieldType = testActionContext.fieldTypes.get(fieldName).getFieldType();
+            FieldType fieldType = fieldTypes.get(fieldName);
             ValueType valueType = fieldType.getValueType();
             if (valueType.getDeepestValueType() instanceof BlobValueType) {
                 readBlobs(readRecord, fieldName, entry.getValue(), valueType);
@@ -106,7 +115,7 @@ public class ReadAction extends AbstractTestAction implements TestAction {
     }
     
     @Override
-    public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
-        throw new UnsupportedOperationException();
+    public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) throws OperationNotSupportedException {
+        throw new OperationNotSupportedException();
     }
 }

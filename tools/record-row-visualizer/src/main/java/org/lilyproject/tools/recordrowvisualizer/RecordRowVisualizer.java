@@ -21,7 +21,6 @@ import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
-import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
@@ -254,7 +253,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 stateByKey.put(key, states);
             }
 
-            ExecutionState state = SubscriptionExecutionState.fromBytes(columnEntry.getValue());
+            SubscriptionExecutionState state = SubscriptionExecutionState.fromBytes(columnEntry.getValue());
             for (CharSequence subscriptionIdCharSeq : state.getSubscriptionIds()) {
                 String subscriptionId = subscriptionIdCharSeq.toString();
 

@@ -241,37 +241,29 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private void initializeSubscriptions(RowLogMessage message, Put put, List<RowLogSubscription> subscriptions)
             throws IOException {
         String[] subscriptionIds = getSubscriptionIds().toArray(new String[0]);
-        ExecutionState executionState = new SubscriptionExecutionState(message.getTimestamp(),
+        SubscriptionExecutionState executionState = new SubscriptionExecutionState(message.getTimestamp(),
                 subscriptionIds);
         byte[] qualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         put.add(rowLogColumnFamily, qualifier, executionState.toBytes());
-        message.setExecutionState(executionState);
     }
 
     @Override
     public boolean processMessage(RowLogMessage message, RowLock lock) throws RowLogException, InterruptedException {
         if (message == null)
             return true;
+        byte[] rowKey = message.getRowKey();
+        byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
+        Get get = new Get(rowKey);
+        get.addColumn(rowLogColumnFamily, executionStateQualifier);
         try {
-            byte[] rowKey = message.getRowKey();
-            byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
-            ExecutionState executionState = message.getExecutionState();
-            byte[] previousValue;
-            if (executionState == null) {
-                Get get = new Get(rowKey);
-                get.addColumn(rowLogColumnFamily, executionStateQualifier);
-                Result result = rowTable.get(get);
-                if (result.isEmpty()) {
-                    // No execution state was found indicating an orphan message
-                    // on the global queue table
-                    // Treat this message as if it was processed
-                    return true;
-                }
-                previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
-                executionState = SubscriptionExecutionState.fromBytes(previousValue);
-            } else {
-                previousValue = executionState.toBytes();
+            Result result = rowTable.get(get);
+            if (result.isEmpty()) {
+                // No execution state was found indicating an orphan message on the global queue table
+                // Treat this message as if it was processed
+                return true;
             }
+            byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
+            SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
 
             boolean allDone = processMessage(message, executionState);
             
@@ -305,7 +297,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         }
     }
 
-    private boolean processMessage(RowLogMessage message, ExecutionState executionState) throws RowLogException, InterruptedException {
+    private boolean processMessage(RowLogMessage message, SubscriptionExecutionState executionState) throws RowLogException, InterruptedException {
         boolean allDone = true;
         
         // Take a stable reference to the subscriptions list
@@ -399,7 +391,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             Result result = rowTable.get(get);
             if (!result.isEmpty()) {
                 byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
-                ExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
+                SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
                 executionState.setState(subscriptionId, true);
                 if (executionState.allDone()) {
                     handleAllDone(message, rowKey, executionStateQualifier, previousValue, rowLock);
@@ -436,7 +428,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             Result result = rowTable.get(get);
             if (!result.isEmpty()) {
                 byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
-                ExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
+                SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(previousValue);
                 executionState.setState(subscriptionId, true);
                 if (executionState.allDone()) {
                     handleAllDone(message, rowKey, executionStateQualifier, previousValue, null);
@@ -466,7 +458,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     
     @Override
     public boolean isMessageDone(RowLogMessage message, String subscriptionId) throws RowLogException {
-        ExecutionState executionState = getExecutionState(message);
+        SubscriptionExecutionState executionState = getExecutionState(message);
         if (executionState == null) {
             checkOrphanMessage(message, subscriptionId);
             return true;
@@ -474,12 +466,12 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return executionState.getState(subscriptionId);
     }
 
-    private ExecutionState getExecutionState(RowLogMessage message) throws RowLogException {
+    private SubscriptionExecutionState getExecutionState(RowLogMessage message) throws RowLogException {
         byte[] rowKey = message.getRowKey();
         byte[] executionStateQualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
         Get get = new Get(rowKey);
         get.addColumn(rowLogColumnFamily, executionStateQualifier);
-        ExecutionState executionState = null;
+        SubscriptionExecutionState executionState = null;
         try {
             Result result = rowTable.get(get);
             byte[] previousValue = result.getValue(rowLogColumnFamily, executionStateQualifier);
@@ -493,7 +485,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
 
     @Override
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
-        ExecutionState executionState = getExecutionState(message);
+        SubscriptionExecutionState executionState = getExecutionState(message);
         if (executionState == null) {
             checkOrphanMessage(message, subscriptionId);
             return false;
@@ -510,13 +502,13 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         return !executionState.getState(subscriptionId);
     }
     
-    private boolean updateExecutionState(byte[] rowKey, byte[] executionStateQualifier, ExecutionState executionState, byte[] previousValue) throws IOException {
+    private boolean updateExecutionState(byte[] rowKey, byte[] executionStateQualifier, SubscriptionExecutionState executionState, byte[] previousValue) throws IOException {
         Put put = new Put(rowKey);
         put.add(rowLogColumnFamily, executionStateQualifier, executionState.toBytes());
         return rowTable.checkAndPut(rowKey, rowLogColumnFamily, executionStateQualifier, previousValue, put);
     }
     
-    private boolean updateExecutionState(byte[] rowKey, byte[] executionStateQualifier, ExecutionState executionState, byte[] previousValue, RowLock rowLock) throws IOException {
+    private boolean updateExecutionState(byte[] rowKey, byte[] executionStateQualifier, SubscriptionExecutionState executionState, byte[] previousValue, RowLock rowLock) throws IOException {
         Put put = new Put(rowKey);
         put.add(rowLogColumnFamily, executionStateQualifier, executionState.toBytes());
         return rowLocker.put(put, rowLock);
@@ -553,7 +545,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             if (!result.isEmpty()) {
                 NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(rowLogColumnFamily);
                 for (Entry<byte[], byte[]> entry : familyMap.entrySet()) {
-                    ExecutionState executionState = SubscriptionExecutionState.fromBytes(entry.getValue());
+                    SubscriptionExecutionState executionState = SubscriptionExecutionState.fromBytes(entry.getValue());
                     boolean add = false;
                     if (subscriptionIds.length == 0)
                         add = true;

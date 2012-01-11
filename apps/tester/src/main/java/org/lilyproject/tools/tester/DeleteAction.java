@@ -35,7 +35,7 @@ public class DeleteAction extends AbstractTestAction implements TestAction {
     }
 
     @Override
-    public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
-        throw new UnsupportedOperationException();
+    public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) throws OperationNotSupportedException {
+        throw new OperationNotSupportedException();
     }
 }

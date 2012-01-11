@@ -12,7 +12,6 @@ import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
-import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
@@ -133,7 +132,7 @@ public class RowLogVisualizer extends BaseZkCliTool {
             Get get = new Get(recordRowkey);
             get.addColumn(rowLogColumnFamily, executionStateQualifier);
             Result esResult = recordsTable.get(get);
-            ExecutionState execState = null;
+            SubscriptionExecutionState execState = null;
             if (!esResult.isEmpty()) {
                 byte[] esData = esResult.getValue(rowLogColumnFamily, executionStateQualifier);
                 execState = SubscriptionExecutionState.fromBytes(esData);

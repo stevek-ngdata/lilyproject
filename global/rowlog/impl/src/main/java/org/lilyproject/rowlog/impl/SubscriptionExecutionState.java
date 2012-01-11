@@ -21,9 +21,8 @@ import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.rowlog.api.ExecutionState;
 
-public class SubscriptionExecutionState implements ExecutionState {
+public class SubscriptionExecutionState {
 
     private final long timestamp;
     private final String[] subscriptionIds;

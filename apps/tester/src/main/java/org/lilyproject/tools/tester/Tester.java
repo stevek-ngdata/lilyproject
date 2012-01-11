@@ -40,8 +40,8 @@ public class Tester extends BaseRepositoryTestTool {
     private TestActionFactory testActionFactory = new TestActionFactory();
     private List<TestAction> workersTestActions[] = null;
 
-    private Map<QName, TestRecordType> recordTypes = new HashMap<QName, TestRecordType>();
-    private Map<QName, TestFieldType> fieldTypes = new HashMap<QName, TestFieldType>();
+    private Map<String, TestRecordType> recordTypes = new HashMap<String, TestRecordType>();
+    private Map<String, TestFieldType> fieldTypes = new HashMap<String, TestFieldType>();
     private JsonImport jsonImport;
 
     public static void main(String[] args) throws Exception {
@@ -211,53 +211,26 @@ public class Tester extends BaseRepositoryTestTool {
     }
     
     private void importFieldType(JsonNode fieldTypeNode) throws RepositoryException, ImportConflictException, ImportException, JsonFormatException, InterruptedException {
-        int times = 0;
-        JsonNode timesNode = fieldTypeNode.get("times");
-        if (timesNode != null) {
-            times = timesNode.getIntValue();
-        }
+        FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
         JsonNode propertiesNode = fieldTypeNode.get("properties");
-        if (times == 0) {
-            FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
-            fieldTypes.put(importFieldType.getName(), new TestFieldType(importFieldType, repository, propertiesNode));
-        } else {
-            List<FieldType> importFieldTypes = jsonImport.importFieldTypes(fieldTypeNode, times);
-            for (FieldType importFieldType : importFieldTypes) {
-                fieldTypes.put(importFieldType.getName(),
-                        new TestFieldType(importFieldType, repository, propertiesNode));
-            }
-        }
+        
+        fieldTypes.put(JsonUtil.getString(fieldTypeNode, "name"), new TestFieldType(importFieldType, repository, propertiesNode));
     }
     
     private void importRecordType(JsonNode recordTypeNode) throws JsonFormatException, RepositoryException, ImportException, InterruptedException {
         String recordTypeName = JsonUtil.getString(recordTypeNode, "name");
         QName recordTypeQName = QNameConverter.fromJson(recordTypeName, jsonImport.getNamespaces());
         recordType = repository.getTypeManager().newRecordType(recordTypeQName);
-        TestRecordType testRecordType = new TestRecordType();
+        TestRecordType testRecordType = new TestRecordType(recordType);
         // Fields
         for (JsonNode fieldNode : recordTypeNode.get("fields")) {
             String fieldName = JsonUtil.getString(fieldNode, "name");
-            int times = 0;
-            JsonNode timesNode = fieldNode.get("times");
-            if (timesNode != null) {
-                times = timesNode.getIntValue();
-            }
-            if (times == 0) {
-                TestFieldType fieldType = fieldTypes
-                        .get(QNameConverter.fromJson(fieldName, jsonImport.getNamespaces()));
-                recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
-                testRecordType.addFieldType(fieldType);
-            } else {
-                for (int i = 0; i < times; i++) {
-                    TestFieldType fieldType = fieldTypes.get(QNameConverter.fromJson(fieldName + i,
-                            jsonImport.getNamespaces()));
-                    recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
-                    testRecordType.addFieldType(fieldType);
-                }
-            }
+            TestFieldType fieldType = fieldTypes.get(fieldName);
+            recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
+            testRecordType.addFieldType(fieldType);
         }
-        testRecordType.setRecordType(jsonImport.importRecordType(recordType));
-        recordTypes.put(recordType.getName(), testRecordType);
+        recordType = jsonImport.importRecordType(recordType);
+        recordTypes.put(recordTypeName, testRecordType);
     }
     
     private int dumpSampleConfig() throws IOException {
@@ -272,8 +245,7 @@ public class Tester extends BaseRepositoryTestTool {
     
     private void prepareAction(JsonNode actionNode) throws IOException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         for (int i = 0; i < workers; i++) {
-            TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes,
-                    jsonImport.getNamespaces(), records, repository, metrics, errorStream);
+            TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes, records, repository, metrics, errorStream);
             TestAction testAction = testActionFactory.getTestAction(actionNode, testActionContext);
             workersTestActions[i].add(testAction);
         }
@@ -302,8 +274,7 @@ public class Tester extends BaseRepositoryTestTool {
                 FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
                 JsonNode propertiesNode = fieldTypeNode.get("properties");
                 
-                fieldTypes.put(importFieldType.getName(),
-                        new TestFieldType(importFieldType, repository, propertiesNode));
+                fieldTypes.put(JsonUtil.getString(fieldTypeNode, "name"), new TestFieldType(importFieldType, repository, propertiesNode));
             }
         }
         
@@ -314,7 +285,7 @@ public class Tester extends BaseRepositoryTestTool {
                 String recordTypeName = JsonUtil.getString(recordTypeNode, "name");
                 QName recordTypeQName = QNameConverter.fromJson(recordTypeName, jsonImport.getNamespaces());
                 recordType = repository.getTypeManager().newRecordType(recordTypeQName);
-                TestRecordType testRecordType = new TestRecordType();
+                TestRecordType testRecordType = new TestRecordType(recordType);
                 // Fields
                 for (JsonNode fieldNode : recordTypeNode.get("fields")) {
                     String fieldName = JsonUtil.getString(fieldNode, "name");
@@ -322,8 +293,8 @@ public class Tester extends BaseRepositoryTestTool {
                     recordType.addFieldTypeEntry(fieldType.getFieldType().getId(), false);
                     testRecordType.addFieldType(fieldType);
                 }
-                testRecordType.setRecordType(jsonImport.importRecordType(recordType));
-                recordTypes.put(recordType.getName(), testRecordType);
+                recordType = jsonImport.importRecordType(recordType);
+                recordTypes.put(recordTypeName, testRecordType);
             }
         }
     }

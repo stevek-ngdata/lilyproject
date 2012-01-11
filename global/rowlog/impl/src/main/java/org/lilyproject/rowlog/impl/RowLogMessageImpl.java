@@ -18,7 +18,6 @@ package org.lilyproject.rowlog.impl;
 import java.util.Arrays;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -31,8 +30,6 @@ public class RowLogMessageImpl implements RowLogMessage {
     private final RowLog rowLog;
     private final long timestamp;
     private byte[] payload = null;
-    private ExecutionState executionState;
-    private Object context;
 
     public RowLogMessageImpl(long timestamp, byte[] rowKey, long seqnr, byte[] data, RowLog rowLog) {
         this(timestamp, rowKey, seqnr, data, null, rowLog);
@@ -108,22 +105,5 @@ public class RowLogMessageImpl implements RowLogMessage {
                 + Bytes.toStringBinary(rowKey) + ", seqnr=" + seqnr + "]";
     }    
     
-    /**
-     * Set the execution state
-     */
-    public void setExecutionState(ExecutionState executionState) {
-        this.executionState = executionState;
-    }
-
-    public ExecutionState getExecutionState() {
-        return executionState;
-    }
     
-    public void setContext(Object context) {
-        this.context = context;
-    }
-
-    public Object getContext() {
-        return context;
-    }
 }

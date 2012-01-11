@@ -183,7 +183,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
                         bucket = new ConcurrentHashMap<SchemaId, FieldType>(8, .75f, 1);
                         buckets.put(bucketId, bucket);
                     }
-                    bucket.put(fieldType.getId(), fieldType.immutable());
+                    bucket.put(fieldType.getId(), fieldType);
                 }
             }
         }
@@ -214,7 +214,7 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
             // Fill the bucket with the new field types
             for (FieldType fieldType : fieldTypes) {
                 if (!removeFromLocalUpdateBucket(fieldType.getId(), bucketId)) {
-                    bucket.put(fieldType.getId(), fieldType.immutable());
+                    bucket.put(fieldType.getId(), fieldType);
                 }
             }
         }
@@ -228,9 +228,8 @@ public class FieldTypesCache extends FieldTypesImpl implements FieldTypes {
      * @param fieldType
      */
     public void update(FieldType fieldType) {
-        // Take an immutable version of the FieldType to avoid changes to it
-        // while it is in the cache
-        FieldType ftToCache = fieldType.immutable();
+        // Clone the FieldType to avoid changes to it while it is in the cache
+        FieldType ftToCache = fieldType.clone();
         SchemaId id = ftToCache.getId();
         String bucketId = AbstractSchemaCache.encodeHex(id.getBytes());
         // First increment the number of buckets that are being updated

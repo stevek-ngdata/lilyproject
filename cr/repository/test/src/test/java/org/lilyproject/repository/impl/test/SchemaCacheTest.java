@@ -232,7 +232,7 @@ public class SchemaCacheTest {
             ftName = newFtName;
         }
     }
-    
+
     @Test
     public void testRenameRecordType() throws Exception {
         TypeManager typeManager = repoSetup.getTypeManager();
@@ -245,7 +245,7 @@ public class SchemaCacheTest {
             typeManager.getRecordTypeByName(newRtName, null);
         }
     }
-
+    
     @Test
     public void testRecordTypeInCacheDoesNotChange() throws Exception {
         TypeManager typeManager = repoSetup.getTypeManager();
