@@ -37,8 +37,7 @@ public class HadoopLauncher extends BaseCliTool {
         if (result != 0)
             return result;
 
-        TestHelper.setupConsoleLogging("INFO");
-        TestHelper.setupOtherDefaults();
+        System.out.println("Starting...");
 
         conf = HBaseConfiguration.create();
 

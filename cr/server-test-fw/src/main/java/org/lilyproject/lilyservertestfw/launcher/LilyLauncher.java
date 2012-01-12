@@ -176,12 +176,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         }
 
         //
-        // Setup logging
-        //
-        TestHelper.setupConsoleLogging("WARN");
-        TestHelper.setupOtherDefaults();
-
-        //
         // Start the services
         //
 
