@@ -350,17 +350,17 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-pluginregistry-impl</artifactId>
-        <version>1.1.2-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-test-decorator</artifactId>
-        <version>1.1.2-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-test-updatehook</artifactId>
-        <version>1.1.2-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
