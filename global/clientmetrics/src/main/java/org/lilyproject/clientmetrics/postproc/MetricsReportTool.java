@@ -25,6 +25,8 @@ public class MetricsReportTool extends BaseCliTool {
 
     private Option outputDirOption;
 
+    private Option forceOption;
+
     private static final char SEP = ' ';
 
     private static final String STRING_QUOTE = "\"";
@@ -92,6 +94,10 @@ public class MetricsReportTool extends BaseCliTool {
                 .create("o");
         options.add(outputDirOption);
 
+        forceOption = OptionBuilder.withDescription("Force using the output directory even if it already exists")
+                .withLongOpt("force").create("f");
+        options.add(forceOption);
+
         return options;
     }
 
@@ -121,10 +127,12 @@ public class MetricsReportTool extends BaseCliTool {
 
         File outputDir = new File(outputDirName);
         if (outputDir.exists()) {
-            System.err.println("Specified output directory already exists: " + outputDir.getAbsolutePath());
-            boolean proceed = ConsoleUtil.promptYesNo("Continue anyway? [y/N]", false);
-            if (!proceed)
-                return 1;
+            if (!cmd.hasOption(forceOption.getOpt())) {
+                System.err.println("Specified output directory already exists: " + outputDir.getAbsolutePath());
+                boolean proceed = ConsoleUtil.promptYesNo("Continue anyway? [y/N]", false);
+                if (!proceed)
+                    return 1;
+            }
         }
 
         MetricsParser parser = new MetricsParser();
