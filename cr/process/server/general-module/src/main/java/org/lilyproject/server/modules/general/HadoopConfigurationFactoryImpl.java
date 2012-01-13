@@ -106,6 +106,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     @Override
     public Configuration getMapReduceConf() {
         Configuration hadoopConf = new Configuration();
+        hadoopConf.clear();
 
         for (Conf conf : mrConf.getChild("properties").getChildren("property")) {
             String name = conf.getRequiredChild("name").getValue();
@@ -119,6 +120,7 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
     @Override
     public Configuration getMapReduceConf(Conf subConf) {
         Configuration hadoopConf = new Configuration();
+        hadoopConf.clear();
 
         for (Conf conf : mrConf.getChild("properties").getChildren("property")) {
             String name = conf.getRequiredChild("name").getValue();
