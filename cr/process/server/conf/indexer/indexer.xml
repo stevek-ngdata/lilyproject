@@ -55,6 +55,15 @@
       <name>org.lilyproject.indexer.batchbuild.threads</name>
       <value>5</value>
     </property>
+    <!-- Speculative execution makes little sense for Lily's batch indexing. -->
+    <property>
+      <name>mapred.map.tasks.speculative.execution</name>
+      <value>false</value>
+    </property>
+    <property>
+      <name>mapred.reduce.tasks.speculative.execution</name>
+      <value>false</value>
+    </property>
   </batchJobProperties>
 
 </indexer>
