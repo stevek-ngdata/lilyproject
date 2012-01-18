@@ -345,10 +345,14 @@ public class AvroConverterTest {
     
     @Test
     public void testEmptyRecord() throws Exception {
+        FieldTypes fieldTypesSnapshot = control.createMock(FieldTypes.class);
         repository.newRecord();
         expectLastCall().andReturn(new RecordImpl()).anyTimes();
+        typeManager.getFieldTypesSnapshot();
+        expectLastCall().andReturn(fieldTypesSnapshot).anyTimes();
         control.replay();
-                converter = new AvroConverter();        converter.setRepository(repository);
+        converter = new AvroConverter();
+        converter.setRepository(repository);
         Record record = new RecordImpl();
         record.setRecordType(new QName("ns","recordTypeName"), null);
         AvroRecord avroRecord = new AvroRecord();
@@ -366,6 +370,7 @@ public class AvroConverterTest {
     @Test
     public void testRecord() throws Exception {
         FieldType fieldType = control.createMock(FieldType.class);
+        FieldTypes fieldTypesSnapshot = control.createMock(FieldTypes.class);
         ValueType valueType = new StringValueType();
         IdGenerator idGenerator = new IdGeneratorImpl();
         
@@ -373,7 +378,9 @@ public class AvroConverterTest {
         expectLastCall().andReturn(new RecordImpl()).anyTimes();
         repository.getIdGenerator();
         expectLastCall().andReturn(idGenerator).anyTimes();
-        typeManager.getFieldTypeByName(isA(QName.class));
+        typeManager.getFieldTypesSnapshot();
+        expectLastCall().andReturn(fieldTypesSnapshot).anyTimes();
+        fieldTypesSnapshot.getFieldType(isA(QName.class));
         expectLastCall().andReturn(fieldType).anyTimes();
         fieldType.getValueType();
         expectLastCall().andReturn(valueType).anyTimes();

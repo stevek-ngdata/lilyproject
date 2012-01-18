@@ -192,24 +192,24 @@ public class AvroConverter {
         // Fields
         avroRecord.setFields(new ArrayList<AvroField>(record.getFields().size()));
         IdentityRecordStack parentRecords = new IdentityRecordStack(record);
-        for (Entry<QName, Object> field : record.getFields().entrySet()) {
-            AvroField avroField = new AvroField();
-            avroField.setName(convert(field.getKey()));
+        try {
+            FieldTypes fieldTypesSnapshot = typeManager.getFieldTypesSnapshot();
+            for (Entry<QName, Object> field : record.getFields().entrySet()) {
+                AvroField avroField = new AvroField();
+                avroField.setName(convert(field.getKey()));
 
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeByName(field.getKey());
+                FieldType fieldType = fieldTypesSnapshot.getFieldType(field.getKey());
                 ValueType valueType = fieldType.getValueType();
                 avroField.setValueType(valueType.getName());
                 byte[] value = valueType.toBytes(field.getValue(), parentRecords);
                 avroField.setValue(ByteBuffer.wrap(value));
-            } catch (RepositoryException e) {
-                throw convert(e);
-            } catch (InterruptedException e) {
-                throw convert(e);
-            }
 
-            avroRecord.getFields().add(avroField);
+                avroRecord.getFields().add(avroField);
+            }
+        } catch (RepositoryException e) {
+            throw convert(e);
+        } catch (InterruptedException e) {
+            throw convert(e);
         }
 
         // FieldsToDelete
