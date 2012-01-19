@@ -16,6 +16,9 @@
 package org.lilyproject.server.modules.rowlog;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -52,9 +55,11 @@ public class RowLogSetup {
     private final LilyInfo lilyInfo;
     private final RowLocker rowLocker;
     private final Log log = LogFactory.getLog(getClass());
+    private final String hostName;
 
     public RowLogSetup(RowLogConfigurationManager confMgr, ZooKeeperItf zk, Configuration hbaseConf,
-            HBaseTableFactory hbaseTableFactory, Conf rowLogConf, RowLocker rowLocker, LilyInfo lilyInfo) {
+            HBaseTableFactory hbaseTableFactory, Conf rowLogConf, RowLocker rowLocker, LilyInfo lilyInfo,
+            String hostName) {
         this.confMgr = confMgr;
         this.zk = zk;
         this.hbaseConf = hbaseConf;
@@ -62,6 +67,7 @@ public class RowLogSetup {
         this.rowLogConf = rowLogConf;
         this.rowLocker = rowLocker;
         this.lilyInfo = lilyInfo;
+        this.hostName = hostName;
     }
 
     @PostConstruct
@@ -126,10 +132,20 @@ public class RowLogSetup {
         Conf mqProcessorConf = rowLogConf.getChild("mqProcessor");
         boolean mqProcEnabled = mqProcessorConf.getAttributeAsBoolean("enabled", true);
         if (mqProcEnabled) {
+            List<String> mqProcessorNodes = Collections.EMPTY_LIST;
+            Conf nodesConf = mqProcessorConf.getChild("nodes");
+            if (nodesConf != null) {
+                String nodes = nodesConf.getValue("");
+                if (!nodes.isEmpty()) {
+                    mqProcessorNodes = Arrays.asList(nodes.split(","));
+                }
+            }
             RowLogProcessorSettings settings = createProcessorSettings(mqProcessorConf);
             RowLogProcessor processor = new RowLogProcessorImpl(messageQueue, confMgr, hbaseConf, settings);
             messageQueueProcessorLeader = new RowLogProcessorElection(zk, processor, lilyInfo);
-            messageQueueProcessorLeader.start();
+            if (mqProcessorNodes.isEmpty() || mqProcessorNodes.contains(hostName)) {
+                messageQueueProcessorLeader.start();
+            }
         } else {
             log.info("Not participating in MQ processor election.");
         }
@@ -146,15 +162,25 @@ public class RowLogSetup {
         Conf walProcessorConf = rowLogConf.getChild("walProcessor");
         boolean walProcEnabled = walProcessorConf.getAttributeAsBoolean("enabled", true);
         if (walProcEnabled) {
+            List<String> walProcessorNodes = Collections.EMPTY_LIST;
+            Conf nodesConf = walProcessorConf.getChild("nodes");
+            if (nodesConf != null) {
+                String nodes = nodesConf.getValue("");
+                if (!nodes.isEmpty()) {
+                    walProcessorNodes = Arrays.asList(nodes.split(","));
+                }
+            }
             RowLogProcessorSettings settings = createProcessorSettings(walProcessorConf);
             RowLogProcessor processor = new WalProcessor(writeAheadLog, confMgr, hbaseConf, settings);
             writeAheadLogProcessorLeader = new RowLogProcessorElection(zk, processor, lilyInfo);
             // The WAL processor should only be started once the LinkIndexUpdater listener is available
             walProcessorStartupThread = new Thread(new DelayedWALProcessorStartup());
-            walProcessorStartupThread.start();
+            if (walProcessorNodes.isEmpty() || walProcessorNodes.contains(hostName)) {
+                walProcessorStartupThread.start();
+            }
         } else {
             log.info("Not participating in WAL processor election.");
-        }
+        } 
     }
 
     private RowLogProcessorSettings createProcessorSettings(Conf conf) {

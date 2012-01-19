@@ -37,6 +37,10 @@
   <kauri:import-service
       id="rowLocker"
       service="org.lilyproject.rowlock.RowLocker"/>
+      
+  <kauri:import-service
+      id="networkItfInfo"
+      service="org.lilyproject.server.modules.general.NetworkInterfaceInfo"/>
 
   <kauri:export-service
       ref="rowLogConfigurationMgr"
@@ -66,6 +70,7 @@
     <constructor-arg><kauri:conf path="rowlog"/></constructor-arg>
     <constructor-arg ref="rowLocker"/>
     <constructor-arg ref="lilyInfo"/>
+    <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
   </bean>
 
   <bean id="messageQueue" factory-bean="rowLogSetup" factory-method="getMessageQueue"/>

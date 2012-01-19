@@ -36,7 +36,10 @@ import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,10 +87,12 @@ public class IndexerMaster {
 
     private final Log log = LogFactory.getLog(getClass());
 
+    private final String nodes;
+
     public IndexerMaster(ZooKeeperItf zk , WriteableIndexerModel indexerModel, Configuration mapReduceConf,
             Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString, int zkSessionTimeout,
             RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
-            boolean enableLocking, String hostName) {
+            boolean enableLocking, String hostName, String nodes) {
         this.zk = zk;
         this.indexerModel = indexerModel;
         this.mapReduceConf = mapReduceConf;
@@ -100,18 +105,26 @@ public class IndexerMaster {
         this.solrClientConfig = solrClientConfig;
         this.enableLocking = enableLocking;
         this.hostName = hostName;
+        this.nodes = nodes;
     }
 
     @PostConstruct
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
-        leaderElection = new LeaderElection(zk, "Indexer Master", "/lily/indexer/masters",
-                new MyLeaderElectionCallback());
+        List<String> masterNodes = Collections.EMPTY_LIST;
+        if (!nodes.isEmpty()) {
+            masterNodes = Arrays.asList(nodes.split(","));
+        }
+        if (masterNodes.isEmpty() || masterNodes.contains(hostName)) {
+            leaderElection = new LeaderElection(zk, "Indexer Master", "/lily/indexer/masters",
+                    new MyLeaderElectionCallback());
+        }
     }
 
     @PreDestroy
     public void stop() {
         try {
-            leaderElection.stop();
+            if (leaderElection != null)
+                leaderElection.stop();
         } catch (InterruptedException e) {
             log.info("Interrupted while shutting down leader election.");
         }

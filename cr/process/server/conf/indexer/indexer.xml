@@ -66,4 +66,11 @@
     </property>
   </batchJobProperties>
 
+  <!-- MasterNodes: Comma-separated list of hostnames of the nodes on which 
+       the IndexerMaster is allowed to run.
+       One of those nodes will be selected by the leader election algorithm 
+       to run the IndexerMaster on.
+       If no nodes are given (default), all lily nodes are taken into account.
+  -->
+  <masterNodes></masterNodes>
 </indexer>

@@ -99,6 +99,7 @@
     <constructor-arg ref="solrClientConfig"/>
     <constructor-arg value="${indexer:enableLocking}"/>
     <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
+    <constructor-arg value="${indexer:masterNodes}"/>
   </bean>
   
   <bean id="indexerWorker" class="org.lilyproject.indexer.worker.IndexerWorker">
