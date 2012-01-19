@@ -217,6 +217,9 @@
    * action : The action code which must correspond to a TestAction class.
    * for read actions: readBlobs indicates if the the actual blob content needs to be read from the blobstore
    * count : The number of times to perform the action before going to the next action.
+   * time : The time during which to repeat the action. If a non-negative number is given it takes precedence over count.
+            Note that the maximumRuntime of the whole test is only checked once per iteration.
+            If is therefore possible that a test will run longer than the given maximumRuntime.
    * recordType : The record type the action of performed upon.
    * source : The record space to use as source for the action.
    * destination : The record space to use as destination for the action.
@@ -236,6 +239,7 @@
       action: "create",
       recordType: "tester$RTSub",
       count: 5,
+      time: -1,
       destination: "subRecords"
     },
     {
@@ -243,6 +247,7 @@
       action: "create",
       recordType: "tester$RT1",
       count: 5,
+      time: -1,
       destination: "recordsRT1"
     },
     {
@@ -250,6 +255,7 @@
       action: "create",
       recordType: "tester$RT2",
       count: 2,
+      time: -1,
       destination: "recordsRT2"
     },
     {
@@ -257,18 +263,21 @@
       action: "create",
       recordType: "tester$RT3",
       count: 2,
+      time: -1,
       destination: "recordsRT3"
     },
     {
       name: "read1",
       action: "read",
       count: 1,
+      time: -1,
       source: "recordsRT1"
     },
     {
       name: "read2",
       action: "read",
       count: 1,
+      time: -1,
       readBlobs: false,
       source: "recordsRT2"
     },
@@ -278,6 +287,7 @@
       pattern: "random", 
       patternDetail: "2",
       count: 1,
+      time: -1,
       source: "recordsRT1",
       destination: "recordsRT1"
     },
@@ -286,6 +296,7 @@
       action: "update",
       pattern: "all",
       count: 1,
+      time: -1,
       source: "recordsRT2",
       destination: "recordsRT2"
     },
@@ -293,6 +304,7 @@
       name: "delete1",
       action: "delete",
       count: 1,
+      time: -1,
       source: "recordsRT1",
       destination: "deletedRecords"
     }
@@ -300,8 +312,10 @@
 
 
   /*
-     Stop conditions control when the test ends. It ends from the moment one of the
-     maximums is reached.
+     Stop conditions control when the test ends. 
+     It ends from the moment one of the maximums is reached.
+     The stop condition is checked only once per iteration.
+     It is therefore possible a test exceeds the stop condition.
   */
   stopConditions: {
     /* The time is in minutes */

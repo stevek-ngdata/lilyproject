@@ -5,8 +5,6 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.Map.Entry;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.repository.api.*;
@@ -22,34 +20,30 @@ public class ReadAction extends AbstractTestAction implements TestAction {
     }
 
     @Override
-    public int run() {
-        failureCount = 0;
-        for (int i = 0; i < count; i++) {
-            TestRecord testRecord = testActionContext.records.getRecord(source);
+    protected void runAction() {
+        TestRecord testRecord = testActionContext.records.getRecord(source);
 
-            if (testRecord == null)
-                continue;
+        if (testRecord == null)
+            return;
 
-            long before = System.nanoTime();
-            try {
-                Record readRecord = testActionContext.repository.read(testRecord.getRecordId());
-                long after = System.nanoTime();
-                report(true, (int) (after - before), "R", null);
-                
-                // Read blobs
-                if (readBlobs)
-                    readBlobs(readRecord);
-                
-                // if (!readRecord.equals(testRecord.record)) {
-                // System.out.println("Read record does not match written record!");
-                // }
-            } catch (Throwable t) {
-                long after = System.nanoTime();
-                report(false, (int) (after - before));
-                reportError("Error reading record.", t);
-            }
+        long before = System.nanoTime();
+        try {
+            Record readRecord = testActionContext.repository.read(testRecord.getRecordId());
+            long after = System.nanoTime();
+            report(true, (int) (after - before), "R", null);
+
+            // Read blobs
+            if (readBlobs)
+                readBlobs(readRecord);
+
+            // if (!readRecord.equals(testRecord.record)) {
+            // System.out.println("Read record does not match written record!");
+            // }
+        } catch (Throwable t) {
+            long after = System.nanoTime();
+            report(false, (int) (after - before));
+            reportError("Error reading record.", t);
         }
-        return failureCount;
     }
 
     private void readBlobs(Record readRecord) throws IOException, RepositoryException, InterruptedException {

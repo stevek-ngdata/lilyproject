@@ -24,22 +24,19 @@ public class UpdateAction extends AbstractTestAction implements TestAction {
     }
 
     @Override
-    public int run() {
-        failureCount = 0;
-        for (int i = 0; i < count; i++) {
-            TestRecord testRecord = testActionContext.records.getRecord(source);
+    protected void runAction() {
+        TestRecord testRecord = testActionContext.records.getRecord(source);
 
-            if (testRecord == null)
-                continue;
+        if (testRecord == null)
+            return;
 
-            TestRecordType recordTypeToUpdate = testRecord.getRecordType();
-            RecordId recordId = testRecord.getRecordId();
-            ActionResult result = updateRecord(recordTypeToUpdate, recordId);
-            report(result.success, result.duration, "U", null);
-            if (result.success)
-                testActionContext.records.addRecord(destination, new TestRecord(((Record)result.object).getId(), recordTypeToUpdate));
-        }
-        return failureCount;
+        TestRecordType recordTypeToUpdate = testRecord.getRecordType();
+        RecordId recordId = testRecord.getRecordId();
+        ActionResult result = updateRecord(recordTypeToUpdate, recordId);
+        report(result.success, result.duration, "U", null);
+        if (result.success)
+            testActionContext.records.addRecord(destination, new TestRecord(((Record) result.object).getId(),
+                    recordTypeToUpdate));
     }
     
     private ActionResult updateRecord(TestRecordType recordTypeToUpdate, RecordId recordId) {

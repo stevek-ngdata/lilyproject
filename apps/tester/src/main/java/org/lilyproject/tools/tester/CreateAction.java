@@ -24,17 +24,14 @@ public class CreateAction extends AbstractTestAction implements TestAction {
     }
     
     @Override
-    public int run() {
-        failureCount = 0;
-        for (int i = 0; i < count; i++) {
-            ActionResult result = createRecord(recordTypeToCreate);
-            report(result.success, result.duration);
-            if (result.success)
-                testActionContext.records.addRecord(destination, new TestRecord(((Record)result.object).getId(), recordTypeToCreate));
-        }
-        return failureCount;
+    protected void runAction() {
+        ActionResult result = createRecord(recordTypeToCreate);
+        report(result.success, result.duration);
+        if (result.success)
+            testActionContext.records.addRecord(destination, new TestRecord(((Record) result.object).getId(),
+                    recordTypeToCreate));
     }
-    
+
     private ActionResult createRecord(TestRecordType recordTypeToCreate) {
         double duration = 0;
         Record record;

@@ -1,7 +1,5 @@
 package org.lilyproject.tools.tester;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.repository.api.RecordId;
 
@@ -11,27 +9,24 @@ public class DeleteAction extends AbstractTestAction implements TestAction {
     }
 
     @Override
-    public int run() {
-        failureCount = 0;
-        for (int i = 0; i < count; i++) {
-            TestRecord testRecord = testActionContext.records.getRecord(source);
+    protected void runAction() {
+        TestRecord testRecord = testActionContext.records.getRecord(source);
 
-            if (testRecord == null)
-                continue;
+        if (testRecord == null)
+            return;
 
-            long before = System.nanoTime();
-            try {
-                testActionContext.repository.delete(testRecord.getRecordId());
-                report(true, System.nanoTime() - before, "D", null);
-                testActionContext.records.removeRecord(source, testRecord);
-                testRecord.setDeleted(true);
-                testActionContext.records.addRecord(destination, new TestRecord(testRecord.getRecordId(), testRecord.getRecordType()));
-            } catch (Throwable t) {
-                report(false, System.nanoTime() - before);
-                reportError("Error deleting record.", t);
-            }
+        long before = System.nanoTime();
+        try {
+            testActionContext.repository.delete(testRecord.getRecordId());
+            report(true, System.nanoTime() - before, "D", null);
+            testActionContext.records.removeRecord(source, testRecord);
+            testRecord.setDeleted(true);
+            testActionContext.records.addRecord(destination,
+                    new TestRecord(testRecord.getRecordId(), testRecord.getRecordType()));
+        } catch (Throwable t) {
+            report(false, System.nanoTime() - before);
+            reportError("Error deleting record.", t);
         }
-        return failureCount;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.lilyproject.tools.tester;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections.set.ListOrderedSet;
@@ -11,6 +12,12 @@ public class RecordSpaces {
 
     Map<String, RecordSpace> recordSpaces = new HashMap<String, RecordSpace>(); 
     
+    public RecordSpaces(List<JsonNode> recordSpacesConfig) {
+        for (JsonNode recordSpaceNode : recordSpacesConfig) {
+            addRecordSpace(recordSpaceNode);
+        }
+    }
+
     public void addRecordSpace(JsonNode recordSpaceNode) {
         String name = JsonUtil.getString(recordSpaceNode, "name");
         Integer limit = JsonUtil.getInt(recordSpaceNode, "limit");

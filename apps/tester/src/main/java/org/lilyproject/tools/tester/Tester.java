@@ -33,12 +33,13 @@ public class Tester extends BaseRepositoryTestTool {
     private String failuresFileName;
     private PrintStream errorStream;
     private long startTime;
-    private RecordSpaces records;
     private int failureCount = 0;
     private Option iterationsOption;
     private int nrOfIterations;
     private TestActionFactory testActionFactory = new TestActionFactory();
     private List<TestAction> workersTestActions[] = null;
+    private List<JsonNode> recordSpacesConfig = new ArrayList<JsonNode>();
+    private List<RecordSpaces> workersRecordSpaces = null;
 
     private Map<QName, TestRecordType> recordTypes = new HashMap<QName, TestRecordType>();
     private Map<QName, TestFieldType> fieldTypes = new HashMap<QName, TestFieldType>();
@@ -107,9 +108,8 @@ public class Tester extends BaseRepositoryTestTool {
         setupMetrics();
 
         String configFileName = cmd.getOptionValue(configFileOption.getOpt());
-        
-        records = new RecordSpaces();
-        
+
+        workersRecordSpaces = new ArrayList<RecordSpaces>(workers);
         workersTestActions = new ArrayList[workers];
         for (int i = 0; i < workers ; i++) {
             workersTestActions[i] = new ArrayList<TestAction>();
@@ -181,9 +181,11 @@ public class Tester extends BaseRepositoryTestTool {
                 }
             } else if (fieldName.equals("recordSpaces")) {
                 if (current == JsonToken.START_ARRAY) {
-                    records = new RecordSpaces();
                     while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        records.addRecordSpace(jp.readValueAsTree());
+                        recordSpacesConfig.add(jp.readValueAsTree());
+                    }
+                    for (int i = 0; i < workers; i++) {
+                        workersRecordSpaces.add(new RecordSpaces(recordSpacesConfig));
                     }
                 } else {
                     System.out.println("Error: recordSpaces property should be an array. Skipping.");
@@ -272,8 +274,9 @@ public class Tester extends BaseRepositoryTestTool {
     
     private void prepareAction(JsonNode actionNode) throws IOException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         for (int i = 0; i < workers; i++) {
+            new RecordSpaces(recordSpacesConfig);
             TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes,
-                    jsonImport.getNamespaces(), records, repository, metrics, errorStream);
+                    jsonImport.getNamespaces(), workersRecordSpaces.get(i), repository, metrics, errorStream);
             TestAction testAction = testActionFactory.getTestAction(actionNode, testActionContext);
             workersTestActions[i].add(testAction);
         }

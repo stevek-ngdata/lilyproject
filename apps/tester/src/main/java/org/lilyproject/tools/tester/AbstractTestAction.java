@@ -11,6 +11,7 @@ import org.lilyproject.util.json.JsonUtil;
 public abstract class AbstractTestAction implements TestAction {
 
     protected int count;
+    protected int time;
     protected String source;
     protected String destination;
     protected int failureCount = 0;
@@ -22,6 +23,8 @@ public abstract class AbstractTestAction implements TestAction {
         this.actionNode = actionNode;
         name = JsonUtil.getString(actionNode, "name");
         count = actionNode.get("count").getIntValue();
+        JsonNode timeNode = actionNode.get("time");
+        time = timeNode == null ? -1 : timeNode.getIntValue();
         source = JsonUtil.getString(actionNode, "source", null);
         destination = JsonUtil.getString(actionNode, "destination", null);
         this.testActionContext = testActionContext;
@@ -33,7 +36,23 @@ public abstract class AbstractTestAction implements TestAction {
     }
     
     @Override
-    abstract public int run();
+    public int run() {
+        failureCount = 0;
+        // If no time is given, run count number of times
+        if (time < 0) {
+            for (int i = 0; i < count; i++) {
+                runAction();
+            }
+        } else {
+            long runUntil = System.currentTimeMillis() + (time * 60 * 1000);
+            while (System.currentTimeMillis() < runUntil) {
+                runAction();
+            }
+        }
+        return failureCount;
+    }
+
+    abstract protected void runAction();
     
     protected void report(boolean success, double duration) {
         report(success, duration, null);
