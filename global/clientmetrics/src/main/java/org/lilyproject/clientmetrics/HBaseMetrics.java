@@ -121,7 +121,7 @@ public class HBaseMetrics {
             scan.setFilter(new FirstKeyOnlyFilter());
             ResultScanner scanner = table.getScanner(scan);
             int rowCount = 0;
-            while (scanner.next() != null && rowCount <= 1000) {
+            while (scanner.next() != null && rowCount <= 5000) {
                 rowCount++;
             }
 
