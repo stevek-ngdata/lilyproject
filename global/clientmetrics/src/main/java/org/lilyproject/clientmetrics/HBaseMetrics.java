@@ -172,7 +172,7 @@ public class HBaseMetrics {
         table.columnSepLine();
 
         for (TableInfo tableInfo : tableInfos) {
-            String rowCount = tableInfo.rows < 1000 ? String.valueOf(tableInfo.rows) : "> 1000";
+            String rowCount = tableInfo.rows < 5000 ? String.valueOf(tableInfo.rows) : "> 5000";
 
             table.columns(tableInfo.name, tableInfo.stores, tableInfo.regions, tableInfo.storefiles,
                     tableInfo.storefilesMB, tableInfo.memStoreMB, rowCount);
