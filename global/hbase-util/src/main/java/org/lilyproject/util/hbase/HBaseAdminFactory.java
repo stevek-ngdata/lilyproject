@@ -45,34 +45,11 @@ public class HBaseAdminFactory {
         admins.clear();
     }
 
-    /**
-     * If there is an existing configuration which has all the same properties as this configuration, return it.
-     * Otherwise, returns the passed conf. This is an expensive method.
-     */
-    public static Configuration getExisting(Configuration conf) {
-        Configuration[] confs;
-        synchronized (HBaseAdminFactory.class) {
-            confs = admins.keySet().toArray(new Configuration[0]);
+    public static synchronized void close(Configuration conf) {
+        HBaseAdmin admin = admins.remove(conf);
+        if (admin != null) {
+            Configuration adminConf = admin.getConnection().getConfiguration();
+            HConnectionManager.deleteConnection(adminConf, true);
         }
-        
-        Map<String, String> confAsMap = toMap(conf);
-        
-        for (Configuration current : confs) {
-            if (toMap(current).equals(confAsMap)) {
-                return current;
-            }
-        }
-        
-        return conf;
-    }
-    
-    private static Map<String, String> toMap(Configuration conf) {
-        Map<String, String> result = new HashMap<String, String>();
-        Iterator<Map.Entry<String, String>> it = conf.iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, String> entry = it.next();
-            result.put(entry.getKey(), entry.getValue());
-        }
-        return result;
     }
 }

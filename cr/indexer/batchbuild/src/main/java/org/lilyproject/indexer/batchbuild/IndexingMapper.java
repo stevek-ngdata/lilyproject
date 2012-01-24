@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.lilyproject.client.HBaseConnections;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.engine.*;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
@@ -86,7 +87,7 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
 
             RowLog wal = new DummyRowLog("The write ahead log should not be called from within MapReduce jobs.");
             
-            BlobManager blobManager = LilyClient.getBlobManager(zk);
+            BlobManager blobManager = LilyClient.getBlobManager(zk, new HBaseConnections());
             RowLocker rowLocker = new HBaseRowLocker(getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
                     RecordColumn.LOCK.bytes, 10000);
             repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);

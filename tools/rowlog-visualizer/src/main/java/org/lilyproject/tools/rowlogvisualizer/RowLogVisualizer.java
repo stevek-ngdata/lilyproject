@@ -14,6 +14,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 import java.nio.ByteBuffer;
@@ -179,6 +180,13 @@ public class RowLogVisualizer extends BaseZkCliTool {
         scanner.close();
 
         return 0;
+    }
+
+    @Override
+    protected void cleanup() {
+        HConnectionManager.deleteAllConnections(true);
+        HBaseAdminFactory.closeAll();
+        super.cleanup();
     }
 
     // Copied from RowLogImpl

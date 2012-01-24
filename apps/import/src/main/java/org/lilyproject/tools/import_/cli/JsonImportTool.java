@@ -18,6 +18,7 @@ package org.lilyproject.tools.import_.cli;
 import org.apache.commons.cli.*;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.io.Closer;
 
 import java.io.FileInputStream;
@@ -26,6 +27,7 @@ import java.util.*;
 
 public class JsonImportTool extends BaseZkCliTool {
     private Option schemaOnlyOption;
+    private LilyClient lilyClient;
 
     @Override
     protected String getCmdName() {
@@ -67,14 +69,14 @@ public class JsonImportTool extends BaseZkCliTool {
 
         boolean schemaOnly = cmd.hasOption(schemaOnlyOption.getOpt());
 
-        LilyClient client = new LilyClient(zkConnectionString, zkSessionTimeout);
+        lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
 
         for (String arg : (List<String>)cmd.getArgList()) {
             System.out.println("----------------------------------------------------------------------");
             System.out.println("Importing " + arg);
             InputStream is = new FileInputStream(arg);
             try {
-                JsonImport.load(client.getRepository(), is, schemaOnly);
+                JsonImport.load(lilyClient.getRepository(), is, schemaOnly);
             } finally {
                 Closer.close(is);
             }
@@ -82,8 +84,12 @@ public class JsonImportTool extends BaseZkCliTool {
 
         System.out.println("Import done");
 
-        client.close();
-
         return 0;
+    }
+
+    @Override
+    protected void cleanup() {
+        Closer.close(lilyClient);
+        super.cleanup();
     }
 }

@@ -6,11 +6,13 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.joda.time.DateTime;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.clientmetrics.*;
 import org.lilyproject.util.concurrent.WaitPolicy;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -114,6 +116,16 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         return 0;
     }
 
+    @Override
+    protected void cleanup() {
+        Closer.close(zk);
+
+        // Close any HBase connections used for the metrics
+        HConnectionManager.deleteAllConnections(true);
+        HBaseAdminFactory.closeAll();
+
+        super.cleanup();
+    }
 
     public void setupMetrics() throws Exception {
         String metricsFileName = getClass().getSimpleName() + "-metrics";

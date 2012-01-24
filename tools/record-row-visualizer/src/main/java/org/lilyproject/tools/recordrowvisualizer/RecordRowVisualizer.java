@@ -5,10 +5,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.kauriproject.template.*;
 import org.kauriproject.template.source.ClasspathSourceResolver;
@@ -23,7 +20,9 @@ import org.lilyproject.repository.impl.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.xml.sax.SAXException;
@@ -43,6 +42,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
     protected Option recordIdOption;
     protected RecordRow recordRow;
     protected TypeManager typeMgr;
+    protected ZooKeeperItf zk;
 
     @Override
     protected String getCmdName() {
@@ -99,7 +99,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
         HTableInterface table = new HTable(conf, Table.RECORD.bytes);
 
         // Type manager
-        final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
+        zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
         typeMgr = new HBaseTypeManager(idGenerator, conf, zk, new HBaseTableFactoryImpl(conf));
 
         Get get = new Get(recordId.toBytes());
@@ -128,6 +128,15 @@ public class RecordRowVisualizer extends BaseZkCliTool {
                 Collections.<String, Object>singletonMap("row", recordRow), System.out);
 
         return 0;
+    }
+
+    @Override
+    protected void cleanup() {
+        Closer.close(typeMgr);
+        Closer.close(zk);
+        HConnectionManager.deleteAllConnections(true);
+        HBaseAdminFactory.closeAll();
+        super.cleanup();
     }
 
     private boolean isInArray(byte[] key, byte[][] data) {

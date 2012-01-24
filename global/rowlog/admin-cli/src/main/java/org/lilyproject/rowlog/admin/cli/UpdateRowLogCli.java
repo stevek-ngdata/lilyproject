@@ -55,32 +55,27 @@ public class UpdateRowLogCli extends BaseRowLogAdminCli {
             return 1;
         }
 
-        try {
-            RowLogConfig rowLogConfig = rowLogConfigurationManager.getRowLogs().get(rowLogId);
-            if (rowLogConfig == null) {
-                System.out.println("Rowlog does not exist: " + rowLogId);
-                return 1;
-            }
-            if (respectOrder != null) {
-                rowLogConfig.setRespectOrder(respectOrder);
-            }
-            if (notifyEnabled != null) {
-                rowLogConfig.setEnableNotify(notifyEnabled);
-            }
-            if (notifyDelay != null) {
-                rowLogConfig.setNotifyDelay(notifyDelay);
-            }
-            if (minimalProcessDelay != null) {
-                rowLogConfig.setMinimalProcessDelay(minimalProcessDelay);
-            }
-            if (wakeupTimeout != null) {
-                rowLogConfig.setWakeupTimeout(wakeupTimeout);
-            }
-            rowLogConfigurationManager.updateRowLog(rowLogId, rowLogConfig);
-            return 0;
-        } finally {
-            if (rowLogConfigurationManager != null)
-                rowLogConfigurationManager.shutdown();
+        RowLogConfig rowLogConfig = rowLogConfigurationManager.getRowLogs().get(rowLogId);
+        if (rowLogConfig == null) {
+            System.out.println("Rowlog does not exist: " + rowLogId);
+            return 1;
         }
+        if (respectOrder != null) {
+            rowLogConfig.setRespectOrder(respectOrder);
+        }
+        if (notifyEnabled != null) {
+            rowLogConfig.setEnableNotify(notifyEnabled);
+        }
+        if (notifyDelay != null) {
+            rowLogConfig.setNotifyDelay(notifyDelay);
+        }
+        if (minimalProcessDelay != null) {
+            rowLogConfig.setMinimalProcessDelay(minimalProcessDelay);
+        }
+        if (wakeupTimeout != null) {
+            rowLogConfig.setWakeupTimeout(wakeupTimeout);
+        }
+        rowLogConfigurationManager.updateRowLog(rowLogId, rowLogConfig);
+        return 0;
     }
 }

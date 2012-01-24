@@ -72,6 +72,7 @@ public class LilyClient implements Closeable {
 
     private Repository balancingAndRetryingRepository = BalancingAndRetryingRepository.getInstance(this);
     private RemoteSchemaCache schemaCache;
+    private HBaseConnections hbaseConnections = new HBaseConnections();
 
     public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException, ZkConnectException,
             NoServersException, RepositoryException {
@@ -111,6 +112,12 @@ public class LilyClient implements Closeable {
         if (managedZk && zk != null) {
             zk.close();
         }
+
+        // Close HBase connections created by [only] this LilyClient instance.
+        // This will almost always contain only one connection, if not we would need a more
+        // advanced connection mgmt so that these connections don't stay open for the lifetime
+        // of LilyClient.
+        Closer.close(hbaseConnections);
     }
 
     /**
@@ -159,7 +166,7 @@ public class LilyClient implements Closeable {
                 remoteConverter, idGenerator, zk, schemaCache);
 
         // TODO BlobManager can probably be shared across all repositories
-        BlobManager blobManager = getBlobManager(zk);
+        BlobManager blobManager = getBlobManager(zk, hbaseConnections);
         
         Repository repository = new RemoteRepository(parseAddressAndPort(server.lilyAddressAndPort),
                 remoteConverter, typeManager, idGenerator, blobManager);
@@ -169,10 +176,10 @@ public class LilyClient implements Closeable {
         server.repository = repository;
     }
     
-    public static BlobManager getBlobManager(ZooKeeperItf zk) throws IOException {
+    public static BlobManager getBlobManager(ZooKeeperItf zk, HBaseConnections hbaseConns) throws IOException {
         Configuration configuration = getBlobHBaseConfiguration(zk);
         // Avoid HBase(Admin)/ZooKeeper connection leaks when using new Configuration objects each time.
-        configuration = HBaseAdminFactory.getExisting(configuration);
+        configuration = hbaseConns.getExisting(configuration);
         HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
 
         URI dfsUri = getDfsUri(zk);

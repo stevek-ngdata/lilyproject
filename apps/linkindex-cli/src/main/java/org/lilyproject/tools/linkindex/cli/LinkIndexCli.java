@@ -12,6 +12,7 @@ import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.io.Closer;
 
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,7 @@ public class LinkIndexCli extends BaseZkCliTool {
     private Option vtagOption;
     private Option fieldOption;
 
+    private LilyClient lilyClient;
     private TypeManager typeManager;
 
     @Override
@@ -84,7 +86,7 @@ public class LinkIndexCli extends BaseZkCliTool {
             return result;
         }
 
-        LilyClient lilyClient = new LilyClient(zkConnectionString, 60000);
+        lilyClient = new LilyClient(zkConnectionString, 60000);
         Repository repository = lilyClient.getRepository();
         typeManager = repository.getTypeManager();
 
@@ -181,9 +183,13 @@ public class LinkIndexCli extends BaseZkCliTool {
             }
         }
 
-        lilyClient.close();
-
         return 0;
+    }
+
+    @Override
+    protected void cleanup() {
+        Closer.close(lilyClient);
+        super.cleanup();
     }
 
     private String getFieldTypeNameSuffix(SchemaId id) throws RepositoryException, InterruptedException {

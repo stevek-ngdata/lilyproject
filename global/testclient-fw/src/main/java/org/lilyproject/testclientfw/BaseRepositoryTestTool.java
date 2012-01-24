@@ -9,12 +9,15 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 
 public abstract class BaseRepositoryTestTool extends BaseTestTool {
@@ -65,6 +68,12 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
         }
 
         return 0;
+    }
+
+    @Override
+    protected void cleanup() {
+        Closer.close(lilyClient);
+        super.cleanup();
     }
 
     public void setupLily() throws IOException, ZkConnectException, NoServersException, InterruptedException,

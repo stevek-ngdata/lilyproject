@@ -56,40 +56,35 @@ public class UpdateSubscriptionCli extends BaseRowLogAdminCli {
             return 1;
         }
 
-        try {
-            RowLogConfig rowLogConfig = rowLogConfigurationManager.getRowLogs().get(rowLogId);
-            if (rowLogConfig == null) {
-                System.out.println("Rowlog '" + rowLogId + "'does not exist: ");
-                return 1;
-            }
-            RowLogSubscription subscription = null;
-            List<RowLogSubscription> subscriptions = rowLogConfigurationManager.getSubscriptions(rowLogId);
-            for (RowLogSubscription rowLogSubscription : subscriptions) {
-                if (rowLogSubscription.getId().equals(subscriptionId)) {
-                    subscription = rowLogSubscription;
-                    break;
-                }
-            }
-            if (subscription == null) {
-                System.out.println("Subscription '" + subscriptionId + "' does not exist for rowlog '" + rowLogId + "'");
-                return 1;
-            }
-            if (type == null) {
-                type = subscription.getType(); 
-            }
-            if (orderNr == null) {
-                orderNr = subscription.getOrderNr();
-            }
-            try {
-                rowLogConfigurationManager.updateSubscription(rowLogId, subscriptionId, type, orderNr);
-            } catch (RowLogException e) {
-                System.out.println("Subscription '" + subscriptionId + "' does not exist for rowlog '" + rowLogId + "'");
-                return 1;
-            }
-            return 0;
-        } finally {
-            if (rowLogConfigurationManager != null)
-                rowLogConfigurationManager.shutdown();
+        RowLogConfig rowLogConfig = rowLogConfigurationManager.getRowLogs().get(rowLogId);
+        if (rowLogConfig == null) {
+            System.out.println("Rowlog '" + rowLogId + "'does not exist: ");
+            return 1;
         }
+        RowLogSubscription subscription = null;
+        List<RowLogSubscription> subscriptions = rowLogConfigurationManager.getSubscriptions(rowLogId);
+        for (RowLogSubscription rowLogSubscription : subscriptions) {
+            if (rowLogSubscription.getId().equals(subscriptionId)) {
+                subscription = rowLogSubscription;
+                break;
+            }
+        }
+        if (subscription == null) {
+            System.out.println("Subscription '" + subscriptionId + "' does not exist for rowlog '" + rowLogId + "'");
+            return 1;
+        }
+        if (type == null) {
+            type = subscription.getType();
+        }
+        if (orderNr == null) {
+            orderNr = subscription.getOrderNr();
+        }
+        try {
+            rowLogConfigurationManager.updateSubscription(rowLogId, subscriptionId, type, orderNr);
+        } catch (RowLogException e) {
+            System.out.println("Subscription '" + subscriptionId + "' does not exist for rowlog '" + rowLogId + "'");
+            return 1;
+        }
+        return 0;
     }
 }

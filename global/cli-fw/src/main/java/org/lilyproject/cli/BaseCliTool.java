@@ -55,6 +55,13 @@ public abstract class BaseCliTool {
             result = runBase(args);
         } catch (Throwable t) {
             reportThrowable(t);
+        } finally {
+            try {
+                cleanup();
+            } catch (Throwable t) {
+                System.err.println("Error during cleanup:");
+                t.printStackTrace();
+            }
         }
         System.out.println();
 
@@ -98,6 +105,14 @@ public abstract class BaseCliTool {
      * The name of this CLI tool, used in the help message.
      */
     protected abstract String getCmdName();
+
+    /**
+     * Override this to perform cleanup after the tool has run, also in case
+     * an exception occurred (= called from a finally block).
+     */
+    protected void cleanup() {
+        
+    }
 
     /**
      * Process option values, typically this performs basic stuff like reading

@@ -55,6 +55,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected byte[] indexerConfiguration;
     protected byte[] shardingConfiguration;
     protected WriteableIndexerModel model;
+    private ZooKeeperItf zk;
     protected String outputFileName;
 
     public BaseIndexerAdminCli() {
@@ -345,7 +346,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         if (result != 0)
             return result;
 
-        final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
+        zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
 
         boolean lilyNodeExists = zk.retryOperation(new ZooKeeperOperation<Boolean>() {
             @Override
@@ -400,6 +401,13 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         }
 
         return 0;
+    }
+
+    @Override
+    protected void cleanup() {
+        Closer.close(model);
+        Closer.close(zk);
+        super.cleanup();
     }
 
     private String getStates(Enum[] values) {

@@ -8,6 +8,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -34,6 +35,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
     protected Integer orderNr = null;
     
     protected RowLogConfigurationManagerImpl rowLogConfigurationManager;
+    protected ZooKeeperItf zk;
 
     public BaseRowLogAdminCli() {
         // Here we instantiate various options, but it is up to subclasses to decide which ones
@@ -224,11 +226,17 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
         if (result != 0)
             return result;
         
-        final ZooKeeperItf zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
+        zk = new StateWatchingZooKeeper(zkConnectionString, zkSessionTimeout);
         
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zk);
         
         return 0;
     }
-    
+
+    @Override
+    protected void cleanup() {
+        Closer.close(rowLogConfigurationManager);
+        Closer.close(zk);
+        super.cleanup();
+    }
 }
