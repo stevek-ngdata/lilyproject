@@ -57,11 +57,11 @@ public class AddIndexCli extends BaseIndexerAdminCli {
             return 1;
         }
         
-        if (solrShardsOption == null) {
+        if (solrShards == null) {
             System.out.println("Specify Solr URL(s) with -" + solrShardsOption.getOpt());
         }
 
-        if (configurationOption == null) {
+        if (indexerConfiguration == null) {
             System.out.println("Specify indexer configuration with -" + configurationOption.getOpt());
         }
 
