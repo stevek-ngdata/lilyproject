@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -71,7 +72,7 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         try {
             return fileSystem.open(createPath(uuid));
         } catch (IOException e) {
-            throw new BlobException("Failed to open an inputstream for blobkey '" + blobKey + "' on the DFS blobstore", e);
+            throw new BlobException("Failed to open an inputstream for blobkey '" + Hex.encodeHexString(blobKey) + "' on the DFS blobstore", e);
         }
     }
 
@@ -91,7 +92,7 @@ public class DFSBlobStoreAccess implements BlobStoreAccess {
         try {
             fileSystem.delete(createPath(uuid), false);
         } catch (IOException e) {
-            throw new BlobException("Failed to delete blob with key '" + blobKey + "' from the DFS blobstore", e);
+            throw new BlobException("Failed to delete blob with key '" + Hex.encodeHexString(blobKey) +"' from the DFS blobstore", e);
         }
     }
 

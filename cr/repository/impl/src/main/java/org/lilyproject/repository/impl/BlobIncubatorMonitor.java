@@ -212,7 +212,7 @@ public class BlobIncubatorMonitor {
                     blobManager.delete(blobKey);
                     metrics.blobDeleteCount.inc();
                 } catch (BlobException e) {
-                    log.warn("Failed to delete blob " + blobKey, e);
+                    log.warn("Failed to delete blob " + Hex.encodeHexString(blobKey), e);
                     // Deleting the blob failed. We put back the reference to try it again later.
                     // There's a small chance that this fails as well. In that there will be an unreferenced blob in the blobstore.
                     Put put = new Put(blobKey);

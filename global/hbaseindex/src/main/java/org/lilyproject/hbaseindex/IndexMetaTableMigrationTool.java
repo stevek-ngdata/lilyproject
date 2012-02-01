@@ -48,7 +48,7 @@ public class IndexMetaTableMigrationTool {
 
             byte[] json = result.getValue(Bytes.toBytes("meta"), Bytes.toBytes("conf"));
             if (json == null) {
-                System.out.println("Did not find KV containing index definition, skipping row: " + result.getRow());
+                System.out.println("Did not find KV containing index definition, skipping row: " + tableNameString);
                 continue;
             }
 

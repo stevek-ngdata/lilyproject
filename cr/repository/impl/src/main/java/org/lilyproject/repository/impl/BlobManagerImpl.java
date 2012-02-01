@@ -129,7 +129,7 @@ public class BlobManagerImpl implements BlobManager {
         ValueType valueType = fieldType.getValueType();
         if (!valueType.getDeepestValueType().getBaseName().equals("BLOB")) {
             throw new BlobNotFoundException("Blob could not be retrieved from '" + record.getId() + "', '" +
-                    fieldName + "' at index: " + indexes);
+                    fieldName + "' at index: " + Ints.join("/", indexes));
         }
 
         if (indexes == null) {
