@@ -327,5 +327,12 @@ public class ZkLock {
 
             return other.threadId == threadId && other.seqNr == seqNr;
         }
+
+        @Override
+        public int hashCode() {
+            int result = (int) (threadId ^ (threadId >>> 32));
+            result = 31 * result + seqNr;
+            return result;
+        }
     }
 }

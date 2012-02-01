@@ -22,7 +22,7 @@ import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.valuetype.RecordValueType;
 
-public class RecordRvtImpl implements IdRecord {
+public class RecordRvtImpl implements IdRecord, Cloneable {
 
     private IdRecord delegate;
     private byte[] bytes;
@@ -257,7 +257,13 @@ public class RecordRvtImpl implements IdRecord {
         decode(false);
         return delegate.equals(obj);
     }
-    
+
+    @Override
+    public int hashCode() {
+        decode(false);
+        return delegate.hashCode();
+    }
+
     @Override
     public Record getRecord() {
         decode(true);

@@ -22,7 +22,7 @@ import org.lilyproject.util.ArgumentValidator;
 /**
  *
  */
-public class FieldTypeEntryImpl implements FieldTypeEntry {
+public class FieldTypeEntryImpl implements FieldTypeEntry, Cloneable {
 
     private SchemaId fieldTypeId;
     private boolean mandatory;

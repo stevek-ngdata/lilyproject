@@ -75,8 +75,13 @@ public class Blob implements Cloneable {
      * Note that this does NOT create a copy of the actual blob-data (e.g. on HDFS). 
      */
     @Override
-    public Blob clone() {
-        return new Blob(value, mediaType, size, name);
+    public Blob clone() throws CloneNotSupportedException {
+        final Blob clone = (Blob)super.clone();
+        clone.value = value;
+        clone.mediaType = mediaType;
+        clone.size = size;
+        clone.name = name;
+        return clone;
     }
     
     public byte[] getValue() {

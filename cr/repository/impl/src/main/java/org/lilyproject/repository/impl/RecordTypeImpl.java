@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
 
-public class RecordTypeImpl implements RecordType {
+public class RecordTypeImpl implements RecordType, Cloneable {
     
     private SchemaId id;
     private QName name;

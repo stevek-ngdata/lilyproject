@@ -15,13 +15,11 @@
  */
 package org.lilyproject.repository.impl;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
-public class FieldTypeImpl implements FieldType {
+public class FieldTypeImpl implements FieldType, Cloneable {
 
     private SchemaId id;
     private byte[] idQualifier; // Storing throug lazy initialization to avoid to re-create it each time.

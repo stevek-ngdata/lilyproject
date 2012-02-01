@@ -19,7 +19,7 @@ import java.util.*;
 
 import org.lilyproject.repository.api.*;
 
-public class IdRecordImpl implements IdRecord {
+public class IdRecordImpl implements IdRecord, Cloneable {
     private Record record;
     private Map<SchemaId, QName> mapping;
     private Map<Scope, SchemaId> recordTypeIds;
@@ -215,6 +215,11 @@ public class IdRecordImpl implements IdRecord {
     @Override
     public boolean equals(Object obj) {
         return record.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return record != null ? record.hashCode() : 0;
     }
 
     @Override

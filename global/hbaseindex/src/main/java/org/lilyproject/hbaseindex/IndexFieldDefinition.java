@@ -115,4 +115,12 @@ public abstract class IndexFieldDefinition {
 
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (order != null ? order.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        return result;
+    }
 }

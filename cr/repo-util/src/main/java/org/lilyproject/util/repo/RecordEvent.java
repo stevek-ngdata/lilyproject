@@ -296,6 +296,18 @@ public class RecordEvent {
 
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (versionCreated ^ (versionCreated >>> 32));
+        result = 31 * result + (int) (versionUpdated ^ (versionUpdated >>> 32));
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (updatedFields != null ? updatedFields.hashCode() : 0);
+        result = 31 * result + (recordTypeChanged ? 1 : 0);
+        result = 31 * result + (indexName != null ? indexName.hashCode() : 0);
+        result = 31 * result + (vtagsToIndex != null ? vtagsToIndex.hashCode() : 0);
+        return result;
+    }
 }
 
 

@@ -7,7 +7,7 @@ import org.lilyproject.repository.api.*;
 /**
  * Wrapper around Record that disallows updates.
  */
-public class UnmodifiableRecord implements Record {
+public class UnmodifiableRecord implements Record, Cloneable {
     private Record delegate;
 
     private static final String MSG = "Modification of this record object was not expected.";
@@ -140,6 +140,11 @@ public class UnmodifiableRecord implements Record {
     @Override
     public boolean equals(Object obj) {
         return delegate.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return delegate != null ? delegate.hashCode() : 0;
     }
 
     @Override

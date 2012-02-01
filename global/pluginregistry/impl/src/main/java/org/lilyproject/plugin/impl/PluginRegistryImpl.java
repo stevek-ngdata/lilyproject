@@ -246,6 +246,13 @@ public class PluginRegistryImpl implements PluginRegistry {
         }
 
         @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + (plugin != null ? plugin.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public T getPlugin() {
             return plugin;
         }

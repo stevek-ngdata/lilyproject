@@ -23,7 +23,7 @@ import java.util.*;
  * <p>See {@link ValueType}.
  *
  */
-public class HierarchyPath implements List<Object> {
+public class HierarchyPath implements List<Object>, Cloneable {
 
     private List<Object> elements;
 

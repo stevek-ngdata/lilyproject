@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ObjectUtils;
 
-public class RecordImpl implements Record {
+public class RecordImpl implements Record, Cloneable {
     private RecordId id;
     private Map<QName, Object> fields = new HashMap<QName, Object>();
     private List<QName> fieldsToDelete = new ArrayList<QName>(0); // default size zero because this is used relatively
@@ -194,7 +194,7 @@ public class RecordImpl implements Record {
         record.recordTypes.putAll(recordTypes);
         parentRecords.push(this);
         for (Entry<QName, Object> entry : fields.entrySet()) {
-            record.fields.put(entry.getKey(), cloneValue(entry.getValue(), record, parentRecords));
+            record.fields.put(entry.getKey(), tryCloneValue(parentRecords, entry));
         }
         parentRecords.pop();
         if (fieldsToDelete.size() > 0) { // addAll seems expensive even when list is empty
@@ -203,7 +203,15 @@ public class RecordImpl implements Record {
         // the ResponseStatus is not cloned, on purpose
         return record;
     }
-    
+
+    private Object tryCloneValue(final IdentityRecordStack parentRecords, final Entry<QName, Object> entry) throws RecordException {
+        try {
+            return cloneValue(entry.getValue(), parentRecords);
+        } catch (CloneNotSupportedException e) {
+            throw new RecordException("Failed to clone record", e);
+        }
+    }
+
     private boolean detectRecordRecursion(List<Record> parentRecords) {
         for (Entry<QName, Object> entry : fields.entrySet()) {
             if (detectRecordRecursion(entry.getValue(), parentRecords))
@@ -242,13 +250,13 @@ public class RecordImpl implements Record {
         return false; // Skip all other values
     }
 
-    private Object cloneValue(Object value, Record clone, IdentityRecordStack parentRecords)
-            throws RecordException {
+    private Object cloneValue(Object value, IdentityRecordStack parentRecords)
+            throws RecordException, CloneNotSupportedException {
         if (value instanceof HierarchyPath) {
             Object[] elements = ((HierarchyPath)value).getElements();
             Object[] newElements = new Object[elements.length];
             for (int i = 0; i < newElements.length; i++) {
-                newElements[i] = cloneValue(elements[i], clone, parentRecords);
+                newElements[i] = cloneValue(elements[i], parentRecords);
             }
             return new HierarchyPath(newElements);
         }
@@ -256,7 +264,7 @@ public class RecordImpl implements Record {
             List<Object> newList = new ArrayList<Object>();
             List<Object> values = (List<Object>)value;
             for (Object object : values) {
-                newList.add(cloneValue(object, clone, parentRecords));
+                newList.add(cloneValue(object, parentRecords));
             }
             return newList;
         }

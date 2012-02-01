@@ -123,4 +123,15 @@ public class BatchBuildInfo {
 
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        int result = jobId != null ? jobId.hashCode() : 0;
+        result = 31 * result + (int) (submitTime ^ (submitTime >>> 32));
+        result = 31 * result + (success ? 1 : 0);
+        result = 31 * result + (jobState != null ? jobState.hashCode() : 0);
+        result = 31 * result + (trackingUrl != null ? trackingUrl.hashCode() : 0);
+        result = 31 * result + (counters != null ? counters.hashCode() : 0);
+        return result;
+    }
 }
