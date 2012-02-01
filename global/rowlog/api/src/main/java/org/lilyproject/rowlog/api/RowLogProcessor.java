@@ -43,7 +43,7 @@ public interface RowLogProcessor {
      * Check is the RowLogProcessor is executing
      * @return true if the RowLogProcessor is executing
      */
-    boolean isRunning(int subscriptionId);
+    boolean isRunning(String subscriptionId);
 
     void subscriptionsChanged(List<RowLogSubscription> andWatchSubscriptions);
 

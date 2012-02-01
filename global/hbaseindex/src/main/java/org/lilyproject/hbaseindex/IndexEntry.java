@@ -64,7 +64,7 @@ public class IndexEntry {
     }
 
     public byte[] getData(byte[] qualifier) {
-        return data.get(qualifier);
+        return data.get(new ByteArrayKey(qualifier));
     }
 
     protected Map<ByteArrayKey, byte[]> getData() {

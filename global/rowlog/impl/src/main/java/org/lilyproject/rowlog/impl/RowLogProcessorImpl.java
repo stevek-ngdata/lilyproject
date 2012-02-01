@@ -263,7 +263,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     }
 
     @Override
-    public boolean isRunning(int subscriptionId) {
+    public boolean isRunning(String subscriptionId) {
         return subscriptionThreads.get(subscriptionId) != null;
     }
     

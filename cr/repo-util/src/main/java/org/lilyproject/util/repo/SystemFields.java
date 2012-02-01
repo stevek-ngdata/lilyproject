@@ -258,7 +258,7 @@ public class SystemFields {
         if (!fieldsById.containsKey(schemaId)) {
             throw new FieldTypeNotFoundException(schemaId);
         }
-        return fieldsByName.get(schemaId).fieldType;
+        return fieldsById.get(schemaId).fieldType;
     }
 
     public Object eval(Record record, FieldType fieldType, TypeManager typeManager)
