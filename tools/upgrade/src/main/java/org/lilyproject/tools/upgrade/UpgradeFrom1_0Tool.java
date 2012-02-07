@@ -426,16 +426,16 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
             builder.append("{").append(namespace).append("}").append(name);
             if (namespace == null) {
                 builder.append(" -> {").append(namespaceValue).append("}").append(name);
+                if (apply) {
+                    Put put = new Put(id);
+                    byte[] encodedName = HBaseTypeManager.encodeName(new QName(namespaceValue, name));
+                    put.add(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes, encodedName);
+                    typeTable.put(put);
+                }
             } else {
                 builder.append(" -> namespace not 'null': keeping namespace");
             }
             System.out.println(builder.toString());
-            if (apply) {
-                Put put = new Put(id);
-                byte[] encodedName = HBaseTypeManager.encodeName(new QName(namespaceValue, name));
-                put.add(TypeCf.DATA.bytes, TypeColumn.RECORDTYPE_NAME.bytes, encodedName);
-                typeTable.put(put);
-            }
         }
     }
 }
