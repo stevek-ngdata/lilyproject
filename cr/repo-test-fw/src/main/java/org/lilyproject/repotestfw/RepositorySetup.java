@@ -114,7 +114,6 @@ public class RepositorySetup {
         }
 
         repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
-
         repositorySetup = true;
     }
     
@@ -122,7 +121,6 @@ public class RepositorySetup {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(hbaseProxy.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(hadoopConf);
         BlobStoreAccess inlineBlobStoreAccess = new InlineBlobStoreAccess();
-
         BlobStoreAccessConfig blobStoreAccessConfig = new BlobStoreAccessConfig(dfsBlobStoreAccess.getId());
 
         if (hbaseBlobLimit != -1) {

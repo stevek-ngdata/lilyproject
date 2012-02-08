@@ -218,6 +218,27 @@
 	  <groupId>org.jamon</groupId>
 	  <artifactId>jamon-runtime</artifactId>
 	</exclusion>
+<!-- Added for CDH4 -->
+        <exclusion>
+          <groupId>commons-configuration</groupId>
+          <artifactId>commons-configuration</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.github.stephenc.high-scale-lib</groupId>
+          <artifactId>high-scale-lib</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.thrift</groupId>
+          <artifactId>libthrift</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.codehaus.jackson</groupId>
+          <artifactId>jackson-jaxrs</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.codehaus.jackson</groupId>
+          <artifactId>jackson-xc</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>   
   </dependencies>

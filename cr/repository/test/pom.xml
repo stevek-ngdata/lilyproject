@@ -54,6 +54,7 @@
       <groupId>org.easymock</groupId>
       <artifactId>easymockclassextension</artifactId>
     </dependency>
+    
   </dependencies>
 
 </project>

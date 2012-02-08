@@ -51,7 +51,7 @@ public class HBaseMetricsPlugin implements MetricsPlugin {
             ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
 
             int deadServers = clusterStatus.getDeadServers();
-            int liveServers = clusterStatus.getServers();
+            int liveServers = clusterStatus.getServersSize();
             int regionCount = clusterStatus.getRegionsCount();
 
             String line = String.format("HBase cluster status: dead servers: %1$d, live servers: %2$d, regions: %3$d",

@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -101,7 +102,7 @@ implements Configurable {
         scan = new Scan();
 
         if (conf.get(SCAN_COLUMNS) != null) {
-          scan.addColumns(conf.get(SCAN_COLUMNS));
+          addColumns(scan, conf.get(SCAN_COLUMNS));
         }
 
         if (conf.get(SCAN_COLUMN_FAMILY) != null) {
@@ -134,5 +135,41 @@ implements Configurable {
     }
 
     setScan(scan);
+  }
+  
+  /**
+   * Parses a combined family and qualifier and adds either both or just the
+   * family in case there is not qualifier. This assumes the older colon
+   * divided notation, e.g. "data:contents" or "meta:".
+   * <p>
+   * Note: It will through an error when the colon is missing.
+   *
+   * @param familyAndQualifier family and qualifier
+   * @return A reference to this instance.
+   * @throws IllegalArgumentException When the colon is missing.
+   */
+  private static void addColumn(Scan scan, byte[] familyAndQualifier) {
+    byte [][] fq = KeyValue.parseColumn(familyAndQualifier);
+    if (fq.length > 1 && fq[1] != null && fq[1].length > 0) {
+      scan.addColumn(fq[0], fq[1]);
+    } else {
+      scan.addFamily(fq[0]);
+    }
+  }
+  
+  /**
+   * Convenience method to help parse old style (or rather user entry on the
+   * command line) column definitions, e.g. "data:contents mime:". The columns
+   * must be space delimited and always have a colon (":") to denote family
+   * and qualifier.
+   *
+   * @param columns  The columns to parse.
+   * @return A reference to this instance.
+   */
+  private static void addColumns(Scan scan, String columns) {
+    String[] cols = columns.split(" ");
+    for (String col : cols) {
+      addColumn(scan, Bytes.toBytes(col));
+    }
   }
 }

@@ -80,6 +80,13 @@
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
     </dependency>
+    
+    <!-- Added for CDH4 -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>${version.hadoop}</version>
+    </dependency>
   </dependencies>
 
 </project>

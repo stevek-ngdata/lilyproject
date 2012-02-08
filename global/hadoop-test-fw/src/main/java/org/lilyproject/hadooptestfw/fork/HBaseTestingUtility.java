@@ -65,37 +65,43 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
-import org.apache.hadoop.hbase.regionserver.ReadWriteConsistencyControl;
+import org.apache.hadoop.hbase.regionserver.MultiVersionConsistencyControl;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.util.Writables;
+import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
+import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MiniMRCluster;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
 
 /**
  * Facility for testing HBase. Replacement for
- * old HBaseTestCase and HBaseCluserTestCase functionality.
+ * old HBaseTestCase and HBaseClusterTestCase functionality.
  * Create an instance and keep it around testing HBase.  This class is
  * meant to be your one-stop shop for anything you might need testing.  Manages
- * one cluster at a time only.  Depends on log4j being on classpath and
+ * one cluster at a time only.
+ * Depends on log4j being on classpath and
  * hbase-site.xml for logging and test-run configuration.  It does not set
  * logging levels nor make changes to configuration parameters.
  */
 public class HBaseTestingUtility {
-  private final static Log LOG = LogFactory.getLog(HBaseTestingUtility.class);
+  private static final Log LOG = LogFactory.getLog(HBaseTestingUtility.class);
   private Configuration conf;
   private MiniZooKeeperCluster zkCluster = null;
   /**
@@ -107,22 +113,48 @@ public class HBaseTestingUtility {
 
   private MiniHBaseCluster hbaseCluster = null;
   private MiniMRCluster mrCluster = null;
-  // If non-null, then already a cluster running.
-  private File clusterTestBuildDir = null;
 
+  // Directory where we put the data for this instance of HBaseTestingUtility
+  private File dataTestDir = null;
+
+  // Directory (usually a subdirectory of dataTestDir) used by the dfs cluster
+  //  if any
+  private File clusterTestDir = null;
+  
   // Lily change: add the clearData boolean
   private boolean clearData;
 
   /**
    * System property key to get test directory value.
    * Name is as it is because mini dfs has hard-codings to put test data here.
+   * It should NOT be used directly in HBase, as it's a property used in
+   *  mini dfs.
+   *  @deprecated can be used only with mini dfs
    */
-  public static final String TEST_DIRECTORY_KEY = "test.build.data";
+  private static final String TEST_DIRECTORY_KEY = "test.build.data";
 
   /**
-   * Default parent directory for test output.
+   * System property key to get base test directory value
    */
-  public static final String DEFAULT_TEST_DIRECTORY = "target/test-data";
+  public static final String BASE_TEST_DIRECTORY_KEY =
+    "test.build.data.basedirectory";
+
+  /**
+   * Default base directory for test output.
+   */
+  public static final String DEFAULT_BASE_TEST_DIRECTORY = "target/test-data";
+
+  /** Compression algorithms to use in parameterized JUnit 4 tests */
+  public static final List<Object[]> COMPRESSION_ALGORITHMS_PARAMETERIZED =
+    Arrays.asList(new Object[][] {
+      { Compression.Algorithm.NONE },
+      { Compression.Algorithm.GZ }
+    });
+
+  /** Compression algorithms to use in testing */
+  public static final Compression.Algorithm[] COMPRESSION_ALGORITHMS ={
+      Compression.Algorithm.NONE, Compression.Algorithm.GZ
+    };
 
   public HBaseTestingUtility() {
     this(HBaseConfiguration.create());
@@ -131,15 +163,11 @@ public class HBaseTestingUtility {
   public HBaseTestingUtility(Configuration conf) {
     this(conf, true);
   }
-
+  
   // Lily change: added this constructor
   public HBaseTestingUtility(Configuration conf, boolean clearData) {
-    this.conf = conf;
-    this.clearData = clearData;
-  }
-
-  public MiniHBaseCluster getHbaseCluster() {
-    return hbaseCluster;
+	  this.conf = conf;
+	  this.clearData = clearData;
   }
 
   /**
@@ -159,56 +187,107 @@ public class HBaseTestingUtility {
 
   /**
    * @return Where to write test data on local filesystem; usually
-   * {@link #DEFAULT_TEST_DIRECTORY}
-   * @see #setupClusterTestBuildDir()
-   * @see #clusterTestBuildDir()
+   * {@link #DEFAULT_BASE_TEST_DIRECTORY}
+   * Should not be used by the unit tests, hence its's private.
+   * Unit test will use a subdirectory of this directory.
+   * @see #setupDataTestDir()
    * @see #getTestFileSystem()
    */
-  public static Path getTestDir() {
-    return new Path(System.getProperty(TEST_DIRECTORY_KEY,
-      DEFAULT_TEST_DIRECTORY));
+  private Path getBaseTestDir() {
+    String PathName = System.getProperty(
+      BASE_TEST_DIRECTORY_KEY, DEFAULT_BASE_TEST_DIRECTORY);
+
+    return new Path(PathName);
+  }
+
+  /**
+   * @return Where to write test data on local filesystem, specific to
+   *  the test.  Useful for tests that do not use a cluster.
+   * Creates it if it does not exist already.
+   * @see #getTestFileSystem()
+   */
+  public Path getDataTestDir() {
+    if (dataTestDir == null){
+      setupDataTestDir();
+    }
+    return new Path(dataTestDir.getAbsolutePath());
+  }
+
+  /**
+   * @return Where the DFS cluster will write data on the local subsystem.
+   * Creates it if it does not exist already.
+   * @see #getTestFileSystem()
+   */
+  public Path getClusterTestDir() {
+    if (clusterTestDir == null){
+      setupClusterTestDir();
+    }
+    return new Path(clusterTestDir.getAbsolutePath());
   }
 
   /**
    * @param subdirName
    * @return Path to a subdirectory named <code>subdirName</code> under
-   * {@link #getTestDir()}.
-   * @see #setupClusterTestBuildDir()
-   * @see #clusterTestBuildDir(String)
-   * @see #getTestFileSystem()
+   * {@link #getDataTestDir()}.
+   * Does *NOT* create it if it does not exist.
    */
-  public static Path getTestDir(final String subdirName) {
-    return new Path(getTestDir(), subdirName);
+  public Path getDataTestDir(final String subdirName) {
+    return new Path(getDataTestDir(), subdirName);
   }
 
   /**
-   * Home our cluster in a dir under {@link #DEFAULT_TEST_DIRECTORY}.  Give it a
-   * random name
-   * so can have many concurrent clusters running if we need to.  Need to
-   * amend the {@link #TEST_DIRECTORY_KEY} System property.  Its what
-   * minidfscluster bases
+   * Home our data in a dir under {@link #DEFAULT_BASE_TEST_DIRECTORY}.
+   * Give it a random name so can have many concurrent tests running if
+   * we need to.  It needs to amend the {@link #TEST_DIRECTORY_KEY}
+   * System property, as it's what minidfscluster bases
    * it data dir on.  Moding a System property is not the way to do concurrent
    * instances -- another instance could grab the temporary
    * value unintentionally -- but not anything can do about it at moment;
    * single instance only is how the minidfscluster works.
-   * @return The calculated cluster test build directory.
+   * @return The calculated data test build directory.
    */
-  public File setupClusterTestBuildDir() {
+  private void setupDataTestDir() {
+    if (dataTestDir != null) {
+      LOG.warn("Data test dir already setup in " +
+        dataTestDir.getAbsolutePath());
+      return;
+    }
+
     String randomStr = UUID.randomUUID().toString();
-    String dirStr = getTestDir(randomStr).toString();
-    File dir = new File(dirStr).getAbsoluteFile();
+    Path testPath= new Path(
+      getBaseTestDir(),
+      randomStr
+    );
+
+    dataTestDir = new File(testPath.toString()).getAbsoluteFile();
+    dataTestDir.deleteOnExit();
+  }
+
+  /**
+   * Creates a directory for the DFS cluster, under the test data
+   */
+  private void setupClusterTestDir() {
+    if (clusterTestDir != null) {
+      LOG.warn("Cluster test dir already setup in " +
+        clusterTestDir.getAbsolutePath());
+      return;
+    }
+
+    // Using randomUUID ensures that multiple clusters can be launched by
+    //  a same test, if it stops & starts them
+    Path testDir = getDataTestDir("dfscluster_" + UUID.randomUUID().toString());
+    clusterTestDir = new File(testDir.toString()).getAbsoluteFile();
     // Have it cleaned up on exit
-    dir.deleteOnExit();
-    return dir;
+    clusterTestDir.deleteOnExit();
   }
 
   /**
    * @throws IOException If a cluster -- zk, dfs, or hbase -- already running.
    */
-  void isRunningCluster(String passedBuildPath) throws IOException {
-    if (this.clusterTestBuildDir == null || passedBuildPath != null) return;
+  public void isRunningCluster() throws IOException {
+    if (dfsCluster == null) return;
     throw new IOException("Cluster already running at " +
-      this.clusterTestBuildDir);
+      this.clusterTestDir);
   }
 
   /**
@@ -224,42 +303,70 @@ public class HBaseTestingUtility {
 
   /**
    * Start a minidfscluster.
-   * Can only create one.
-   * @param dir Where to home your dfs cluster.
-   * @param servers How many DNs to start.
-   * // Lily change: added parameter
+   * This is useful if you want to run datanode on distinct hosts for things
+   * like HDFS block location verification.
+   * If you start MiniDFSCluster without host names, all instances of the
+   * datanodes will have the same host name.
+   * @param hosts hostnames DNs to run on.
    * @throws Exception
    * @see {@link #shutdownMiniDFSCluster()}
    * @return The mini dfs cluster created.
    */
-  public MiniDFSCluster startMiniDFSCluster(int servers, final File dir)
+  public MiniDFSCluster startMiniDFSCluster(final String hosts[])
+    throws Exception {
+    if ( hosts != null && hosts.length != 0) {
+      return startMiniDFSCluster(hosts.length, hosts);
+    } else {
+      return startMiniDFSCluster(1, null);
+    }
+  }
+
+  /**
+   * Start a minidfscluster.
+   * Can only create one.
+   * @param servers How many DNs to start.
+   * @param hosts hostnames DNs to run on.
+   * @throws Exception
+   * @see {@link #shutdownMiniDFSCluster()}
+   * @return The mini dfs cluster created.
+   */
+  public MiniDFSCluster startMiniDFSCluster(int servers, final String hosts[])
   throws Exception {
-    // This does the following to home the minidfscluster
-    //     base_dir = new File(System.getProperty("test.build.data", "build/test/data"), "dfs/");
+
+    // Check that there is not already a cluster running
+    isRunningCluster();
+
+    // Initialize the local directory used by the MiniDFS
+    if (clusterTestDir == null) {
+      setupClusterTestDir();
+    }
+
+    // We have to set this property as it is used by MiniCluster
+    System.setProperty(TEST_DIRECTORY_KEY, this.clusterTestDir.toString());
+
     // Some tests also do this:
     //  System.getProperty("test.cache.data", "build/test/cache");
-    if (dir == null) {
-      this.clusterTestBuildDir = setupClusterTestBuildDir();
-    } else {
-      this.clusterTestBuildDir = dir;
-    }
-    System.setProperty(TEST_DIRECTORY_KEY, this.clusterTestBuildDir.toString());
-    System.setProperty("test.cache.data", this.clusterTestBuildDir.toString());
-    // Lily change: first argument changed from 0 to 8020
-    // Lily change: let the formatting of NameNode and DataNodes depend on whether the dir is empty
-    boolean format = this.clusterTestBuildDir.list().length == 0;
-    this.dfsCluster = new MiniDFSCluster(8020, this.conf, servers, format, true,
-      true, null, null, null, null);
-    // Set this just-started cluser as our filesystem.
+    // It's also deprecated
+    System.setProperty("test.cache.data", this.clusterTestDir.toString());
+
+    // Ok, now we can start
+    this.dfsCluster = new MiniDFSCluster(0, this.conf, servers, true, true,
+      true, null, null, hosts, null);
+
+    // Set this just-started cluster as our filesystem.
     FileSystem fs = this.dfsCluster.getFileSystem();
     this.conf.set("fs.defaultFS", fs.getUri().toString());
     // Do old style too just to be safe.
     this.conf.set("fs.default.name", fs.getUri().toString());
+
+    // Wait for the cluster to be totally up
+    this.dfsCluster.waitClusterUp();
+
     return this.dfsCluster;
   }
 
   /**
-   * Shuts down instance created by call to {@link #startMiniDFSCluster(int, File)}
+   * Shuts down instance created by call to {@link #startMiniDFSCluster(int)}
    * or does nothing.
    * @throws Exception
    */
@@ -267,7 +374,9 @@ public class HBaseTestingUtility {
     if (this.dfsCluster != null) {
       // The below throws an exception per dn, AsynchronousCloseException.
       this.dfsCluster.shutdown();
+      dfsCluster = null;
     }
+
   }
 
   /**
@@ -278,20 +387,39 @@ public class HBaseTestingUtility {
    * @return zk cluster started.
    */
   public MiniZooKeeperCluster startMiniZKCluster() throws Exception {
-    return startMiniZKCluster(setupClusterTestBuildDir());
-
+    return startMiniZKCluster(1);
   }
-
+  
+  /**
+   * Call this if you only want a zk cluster.
+   * @param zooKeeperServerNum
+   * @see #startMiniZKCluster() if you want zk + dfs + hbase mini cluster.
+   * @throws Exception
+   * @see #shutdownMiniZKCluster()
+   * @return zk cluster started.
+   */
+  public MiniZooKeeperCluster startMiniZKCluster(int zooKeeperServerNum) 
+      throws Exception {
+    File zkClusterFile = new File(getClusterTestDir().toString());
+    return startMiniZKCluster(zkClusterFile, zooKeeperServerNum);
+  }
+  
   private MiniZooKeeperCluster startMiniZKCluster(final File dir)
+    throws Exception {
+    return startMiniZKCluster(dir,1);
+  }
+  
+  private MiniZooKeeperCluster startMiniZKCluster(final File dir, 
+      int zooKeeperServerNum)
   throws Exception {
-    this.passedZkCluster = false;
     if (this.zkCluster != null) {
       throw new IOException("Cluster already running at " + dir);
     }
-    this.zkCluster = new MiniZooKeeperCluster(this.getConfiguration(), clearData);
+    this.passedZkCluster = false;
+    this.zkCluster = new MiniZooKeeperCluster(this.getConfiguration());
     // Lily change: set client port
-    this.zkCluster.setClientPort(2181);
-    int clientPort = this.zkCluster.startup(dir);
+    this.zkCluster.setDefaultClientPort(2181);
+    int clientPort =   this.zkCluster.startup(dir,zooKeeperServerNum);
     this.conf.set("hbase.zookeeper.property.clientPort",
       Integer.toString(clientPort));
     return this.zkCluster;
@@ -338,6 +466,20 @@ public class HBaseTestingUtility {
     return startMiniCluster(1, numSlaves);
   }
 
+  
+  /**
+   * start minicluster
+   * @throws Exception
+   * @see {@link #shutdownMiniCluster()}
+   * @return Mini hbase cluster instance created.
+   */
+  public MiniHBaseCluster startMiniCluster(final int numMasters,
+    final int numSlaves)
+  throws Exception {
+    return startMiniCluster(numMasters, numSlaves, null);
+  }
+  
+  
   /**
    * Start up a minicluster of hbase, optionally dfs, and zookeeper.
    * Modifies Configuration.  Homes the cluster data directory under a random
@@ -347,37 +489,45 @@ public class HBaseTestingUtility {
    * hbase masters.  If numMasters > 1, you can find the active/primary master
    * with {@link MiniHBaseCluster#getMaster()}.
    * @param numSlaves Number of slaves to start up.  We'll start this many
-   * datanodes and regionservers.  If numSlaves is > 1, then make sure
+   * regionservers. If dataNodeHosts == null, this also indicates the number of
+   * datanodes to start. If dataNodeHosts != null, the number of datanodes is
+   * based on dataNodeHosts.length.
+   * If numSlaves is > 1, then make sure
    * hbase.regionserver.info.port is -1 (i.e. no ui per regionserver) otherwise
    * bind errors.
+   * @param dataNodeHosts hostnames DNs to run on.
+   * This is useful if you want to run datanode on distinct hosts for things
+   * like HDFS block location verification.
+   * If you start MiniDFSCluster without host names,
+   * all instances of the datanodes will have the same host name.
    * @throws Exception
    * @see {@link #shutdownMiniCluster()}
    * @return Mini hbase cluster instance created.
    */
-  public MiniHBaseCluster startMiniCluster(final int numMasters, final int numSlaves)
+  public MiniHBaseCluster startMiniCluster(final int numMasters,
+    final int numSlaves, final String[] dataNodeHosts)
   throws Exception {
-    LOG.info("Starting up minicluster with " + numMasters + " master(s) and " +
-        numSlaves + " regionserver(s) and datanode(s)");
-    // If we already put up a cluster, fail.
-    String testBuildPath = conf.get(TEST_DIRECTORY_KEY, null);
-    isRunningCluster(testBuildPath);
-    if (testBuildPath != null) {
-      LOG.info("Using passed path: " + testBuildPath);
+    int numDataNodes = numSlaves;
+    if ( dataNodeHosts != null && dataNodeHosts.length != 0) {
+      numDataNodes = dataNodeHosts.length;
     }
-    // Make a new random dir to home everything in.  Set it as system property.
-    // minidfs reads home from system property.
-    this.clusterTestBuildDir = testBuildPath == null?
-      setupClusterTestBuildDir() : new File(testBuildPath);
-    System.setProperty(TEST_DIRECTORY_KEY, this.clusterTestBuildDir.getPath());
+    
+    LOG.info("Starting up minicluster with " + numMasters + " master(s) and " +
+        numSlaves + " regionserver(s) and " + numDataNodes + " datanode(s)");
+
+    // If we already put up a cluster, fail.
+    isRunningCluster();
+
     // Bring up mini dfs cluster. This spews a bunch of warnings about missing
     // scheme. Complaints are 'Scheme is undefined for build/test/data/dfs/name1'.
-    startMiniDFSCluster(numSlaves, this.clusterTestBuildDir);
-    this.dfsCluster.waitClusterUp();
+    startMiniDFSCluster(numDataNodes, dataNodeHosts);
 
     // Start up a zk cluster.
     if (this.zkCluster == null) {
-      startMiniZKCluster(this.clusterTestBuildDir);
+      startMiniZKCluster(clusterTestDir);
     }
+
+    // Start the MiniHBaseCluster
     return startMiniHBaseCluster(numMasters, numSlaves);
   }
 
@@ -389,7 +539,7 @@ public class HBaseTestingUtility {
    * @param numSlaves
    * @return Reference to the hbase mini hbase cluster.
    * @throws IOException
-   * @throws InterruptedException 
+   * @throws InterruptedException
    * @see {@link #startMiniCluster()}
    */
   public MiniHBaseCluster startMiniHBaseCluster(final int numMasters,
@@ -405,9 +555,10 @@ public class HBaseTestingUtility {
     while (s.next() != null) {
       continue;
     }
-    // Lily change: close scanner -- avoids msg being logged about unclosed scanner
     s.close();
+    t.close();
     LOG.info("Minicluster is up");
+    //getHBaseAdmin();
     return this.hbaseCluster;
   }
 
@@ -423,9 +574,11 @@ public class HBaseTestingUtility {
     HTable t = new HTable(new Configuration(this.conf), HConstants.META_TABLE_NAME);
     ResultScanner s = t.getScanner(new Scan());
     while (s.next() != null) {
-      continue;
+      // do nothing
     }
     LOG.info("HBase has been restarted");
+    s.close();
+    t.close();
   }
 
   /**
@@ -436,31 +589,31 @@ public class HBaseTestingUtility {
   public MiniHBaseCluster getMiniHBaseCluster() {
     return this.hbaseCluster;
   }
-  
-    /**
-     * Stops mini hbase, zk, and hdfs clusters.
-     * @throws IOException
-     * @see {@link #startMiniCluster(int)}
-     */
-  public void shutdownMiniCluster() throws IOException {
+
+  /**
+   * Stops mini hbase, zk, and hdfs clusters.
+   * @throws IOException
+   * @see {@link #startMiniCluster(int)}
+   */
+  public void shutdownMiniCluster() throws Exception {
     LOG.info("Shutting down minicluster");
     shutdownMiniHBaseCluster();
-    if (!this.passedZkCluster) shutdownMiniZKCluster();
-    if (this.dfsCluster != null) {
-      // The below throws an exception per dn, AsynchronousCloseException.
-      this.dfsCluster.shutdown();
+    if (!this.passedZkCluster){
+      shutdownMiniZKCluster();
     }
+    shutdownMiniDFSCluster();
+
     // Clean up our directory.
-    // Lily Change: if clearData is true, delete the clusterTestBuildDir
+    // Lily change : if clearData is true, delete the clusterTestBuildDir
     if (clearData) {
-        if (this.clusterTestBuildDir != null && this.clusterTestBuildDir.exists()) {
-          // Need to use deleteDirectory because File.delete required dir is empty.
-          if (!FSUtils.deleteDirectory(FileSystem.getLocal(this.conf),
-              new Path(this.clusterTestBuildDir.toString()))) {
-            LOG.warn("Failed delete of " + this.clusterTestBuildDir.toString());
-          }
-          this.clusterTestBuildDir = null;
-        }
+	    if (this.clusterTestDir != null && this.clusterTestDir.exists()) {
+	      // Need to use deleteDirectory because File.delete required dir is empty.
+	      if (!FSUtils.deleteDirectory(FileSystem.getLocal(this.conf),
+	          new Path(this.clusterTestDir.toString()))) {
+	        LOG.warn("Failed delete of " + this.clusterTestDir.toString());
+	      }
+	      this.clusterTestDir = null;
+	    }
     }
     LOG.info("Minicluster is down");
   }
@@ -474,8 +627,8 @@ public class HBaseTestingUtility {
       this.hbaseCluster.shutdown();
       // Wait till hbase is down before going on to shutdown zk.
       this.hbaseCluster.join();
+      this.hbaseCluster = null;
     }
-    this.hbaseCluster = null;
   }
 
   /**
@@ -552,7 +705,38 @@ public class HBaseTestingUtility {
     for(byte[] family : families) {
       desc.addFamily(new HColumnDescriptor(family));
     }
-    getHBaseAdmin().createTable(desc);
+    HBaseAdmin admin = getHBaseAdmin();
+    admin.createTable(desc);
+    admin.close();
+    return new HTable(c, tableName);
+  }
+
+  /**
+   * Create a table.
+   * @param tableName
+   * @param families
+   * @param c Configuration to use
+   * @param numVersions
+   * @return An HTable instance for the created table.
+   * @throws IOException
+   */
+  public HTable createTable(byte[] tableName, byte[][] families,
+      final Configuration c, int numVersions)
+  throws IOException {
+    HTableDescriptor desc = new HTableDescriptor(tableName);
+    for(byte[] family : families) {
+      HColumnDescriptor hcd = new HColumnDescriptor(family, numVersions,
+          HColumnDescriptor.DEFAULT_COMPRESSION,
+          HColumnDescriptor.DEFAULT_IN_MEMORY,
+          HColumnDescriptor.DEFAULT_BLOCKCACHE,
+          HColumnDescriptor.DEFAULT_BLOCKSIZE, HColumnDescriptor.DEFAULT_TTL,
+          HColumnDescriptor.DEFAULT_BLOOMFILTER,
+          HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
+      desc.addFamily(hcd);
+    }
+    HBaseAdmin admin = getHBaseAdmin();
+    admin.createTable(desc);
+    admin.close();
     return new HTable(c, tableName);
   }
 
@@ -586,12 +770,41 @@ public class HBaseTestingUtility {
           HColumnDescriptor.DEFAULT_COMPRESSION,
           HColumnDescriptor.DEFAULT_IN_MEMORY,
           HColumnDescriptor.DEFAULT_BLOCKCACHE,
-          Integer.MAX_VALUE, HColumnDescriptor.DEFAULT_TTL,
+          HColumnDescriptor.DEFAULT_BLOCKSIZE, HColumnDescriptor.DEFAULT_TTL,
           HColumnDescriptor.DEFAULT_BLOOMFILTER,
           HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
       desc.addFamily(hcd);
     }
-    getHBaseAdmin().createTable(desc);
+    HBaseAdmin admin = getHBaseAdmin();
+    admin.createTable(desc);
+    admin.close();
+    return new HTable(new Configuration(getConfiguration()), tableName);
+  }
+
+  /**
+   * Create a table.
+   * @param tableName
+   * @param families
+   * @param numVersions
+   * @return An HTable instance for the created table.
+   * @throws IOException
+   */
+  public HTable createTable(byte[] tableName, byte[][] families,
+    int numVersions, int blockSize) throws IOException {
+    HTableDescriptor desc = new HTableDescriptor(tableName);
+    for (byte[] family : families) {
+      HColumnDescriptor hcd = new HColumnDescriptor(family, numVersions,
+          HColumnDescriptor.DEFAULT_COMPRESSION,
+          HColumnDescriptor.DEFAULT_IN_MEMORY,
+          HColumnDescriptor.DEFAULT_BLOCKCACHE,
+          blockSize, HColumnDescriptor.DEFAULT_TTL,
+          HColumnDescriptor.DEFAULT_BLOOMFILTER,
+          HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
+      desc.addFamily(hcd);
+    }
+    HBaseAdmin admin = getHBaseAdmin();
+    admin.createTable(desc);
+    admin.close();
     return new HTable(new Configuration(getConfiguration()), tableName);
   }
 
@@ -613,13 +826,15 @@ public class HBaseTestingUtility {
           HColumnDescriptor.DEFAULT_COMPRESSION,
           HColumnDescriptor.DEFAULT_IN_MEMORY,
           HColumnDescriptor.DEFAULT_BLOCKCACHE,
-          Integer.MAX_VALUE, HColumnDescriptor.DEFAULT_TTL,
+          HColumnDescriptor.DEFAULT_BLOCKSIZE, HColumnDescriptor.DEFAULT_TTL,
           HColumnDescriptor.DEFAULT_BLOOMFILTER,
           HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
       desc.addFamily(hcd);
       i++;
     }
-    getHBaseAdmin().createTable(desc);
+    HBaseAdmin admin = getHBaseAdmin();
+    admin.createTable(desc);
+    admin.close();
     return new HTable(new Configuration(getConfiguration()), tableName);
   }
 
@@ -631,6 +846,7 @@ public class HBaseTestingUtility {
     HBaseAdmin admin = new HBaseAdmin(getConfiguration());
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
+    admin.close();
   }
 
   /**
@@ -648,6 +864,7 @@ public class HBaseTestingUtility {
       table.delete(del);
     }
     resScan = table.getScanner(scan);
+    resScan.close();
     return table;
   }
 
@@ -777,8 +994,8 @@ public class HBaseTestingUtility {
    * Creates the specified number of regions in the specified table.
    * @param c
    * @param table
-   * @param columnFamily
-   * @param startKeys
+   * @param family
+   * @param numRegions
    * @return
    * @throws IOException
    */
@@ -796,7 +1013,7 @@ public class HBaseTestingUtility {
     regionStartKeys[0] = HConstants.EMPTY_BYTE_ARRAY;
     return createMultiRegions(c, table, family, regionStartKeys);
   }
-  
+
   public int createMultiRegions(final Configuration c, final HTable table,
       final byte[] columnFamily, byte [][] startKeys)
   throws IOException {
@@ -817,7 +1034,7 @@ public class HBaseTestingUtility {
     int count = 0;
     for (int i = 0; i < startKeys.length; i++) {
       int j = (i + 1) % startKeys.length;
-      HRegionInfo hri = new HRegionInfo(table.getTableDescriptor(),
+      HRegionInfo hri = new HRegionInfo(table.getTableName(),
         startKeys[i], startKeys[j]);
       Put put = new Put(hri.getRegionName());
       put.add(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER,
@@ -837,11 +1054,16 @@ public class HBaseTestingUtility {
     HConnection conn = table.getConnection();
     conn.clearRegionCache();
     // assign all the new regions IF table is enabled.
-    if (getHBaseAdmin().isTableEnabled(table.getTableName())) {
+    HBaseAdmin admin = getHBaseAdmin();
+    if (admin.isTableEnabled(table.getTableName())) {
       for(HRegionInfo hri : newRegions) {
         hbaseCluster.getMaster().assignRegion(hri);
       }
     }
+
+    admin.close();
+    meta.close();
+
     return count;
   }
 
@@ -862,18 +1084,19 @@ public class HBaseTestingUtility {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
     List<HRegionInfo> newRegions = new ArrayList<HRegionInfo>(startKeys.length);
     // add custom ones
-    int count = 0;
     for (int i = 0; i < startKeys.length; i++) {
       int j = (i + 1) % startKeys.length;
-      HRegionInfo hri = new HRegionInfo(htd, startKeys[i], startKeys[j]);
+      HRegionInfo hri = new HRegionInfo(htd.getName(), startKeys[i],
+          startKeys[j]);
       Put put = new Put(hri.getRegionName());
       put.add(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER,
         Writables.getBytes(hri));
       meta.put(put);
       LOG.info("createMultiRegionsInMeta: inserted " + hri.toString());
       newRegions.add(hri);
-      count++;
     }
+
+    meta.close();
     return newRegions;
   }
 
@@ -893,6 +1116,7 @@ public class HBaseTestingUtility {
       rows.add(result.getRow());
     }
     s.close();
+    t.close();
     return rows;
   }
 
@@ -909,14 +1133,14 @@ public class HBaseTestingUtility {
     for (Result result : s) {
       HRegionInfo info = Writables.getHRegionInfo(
           result.getValue(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER));
-      HTableDescriptor desc = info.getTableDesc();
-      if (Bytes.compareTo(desc.getName(), tableName) == 0) {
+      if (Bytes.compareTo(info.getTableName(), tableName) == 0) {
         LOG.info("getMetaTableRows: row -> " +
             Bytes.toStringBinary(result.getRow()));
         rows.add(result.getRow());
       }
     }
     s.close();
+    t.close();
     return rows;
   }
 
@@ -933,10 +1157,14 @@ public class HBaseTestingUtility {
   public HRegionServer getRSForFirstRegionInTable(byte[] tableName)
       throws IOException {
     List<byte[]> metaRows = getMetaTableRows(tableName);
-    if (metaRows == null || metaRows.size() == 0) {
+    if (metaRows == null || metaRows.isEmpty()) {
       return null;
     }
-    int index = hbaseCluster.getServerWith(metaRows.get(0));
+    LOG.debug("Found " + metaRows.size() + " rows for table " +
+      Bytes.toString(tableName));
+    byte [] firstrow = metaRows.get(0);
+    LOG.debug("FirstRow=" + Bytes.toString(firstrow));
+    int index = hbaseCluster.getServerWith(firstrow);
     return hbaseCluster.getRegionServerThreads().get(index).getRegionServer();
   }
 
@@ -963,10 +1191,12 @@ public class HBaseTestingUtility {
     System.setProperty("hadoop.log.dir", c.get("hadoop.log.dir"));
     c.set("mapred.output.dir", c.get("hadoop.tmp.dir"));
     // Lily change: fix port number + set host name (+ fix # of servers to 1) + use custom jobconf so that
-    // hadoop dir properties get passed on.
+    // hadoop dir properties get passed on
     JobConf jobConf = new JobConf(conf);
     mrCluster = new MiniMRCluster(9001, 0, 1,
-      FileSystem.get(conf).getUri().toString(), 1, null, new String[] {"localhost"}, null, jobConf);
+    	      FileSystem.get(conf).getUri().toString(), 1, null, new String[] {"localhost"}, null, jobConf);
+//    mrCluster = new MiniMRCluster(servers,
+//      FileSystem.get(c).getUri().toString(), 1);
     // End Lily change
     LOG.info("Mini mapreduce cluster started");
     c.set("mapred.job.tracker",
@@ -980,6 +1210,7 @@ public class HBaseTestingUtility {
     LOG.info("Stopping mini mapreduce cluster...");
     if (mrCluster != null) {
       mrCluster.shutdown();
+      mrCluster = null;
     }
     // Restore configuration to point to local jobtracker
     conf.set("mapred.job.tracker", "local");
@@ -1020,11 +1251,16 @@ public class HBaseTestingUtility {
   }
 
   public void expireSession(ZooKeeperWatcher nodeZK, Server server)
-  throws Exception {
+    throws Exception {
+    expireSession(nodeZK, server, false);
+  }
+
+  public void expireSession(ZooKeeperWatcher nodeZK, Server server,
+      boolean checkStatus) throws Exception {
     Configuration c = new Configuration(this.conf);
     String quorumServers = ZKConfig.getZKQuorumServersString(c);
     int sessionTimeout = 5 * 1000; // 5 seconds
-    ZooKeeper zk = nodeZK.getZooKeeper();
+    ZooKeeper zk = nodeZK.getRecoverableZooKeeper().getZooKeeper();
     byte[] password = zk.getSessionPasswd();
     long sessionID = zk.getSessionId();
 
@@ -1037,8 +1273,11 @@ public class HBaseTestingUtility {
 
     Thread.sleep(sleep);
 
-    new HTable(new Configuration(conf), HConstants.META_TABLE_NAME);
+    if (checkStatus) {
+      new HTable(new Configuration(conf), HConstants.META_TABLE_NAME).close();
+    }
   }
+
 
   /**
    * Get the HBase cluster.
@@ -1079,6 +1318,7 @@ public class HBaseTestingUtility {
   public void closeRegion(byte[] regionName) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
     admin.closeRegion(regionName, null);
+    admin.close();
   }
 
   /**
@@ -1126,7 +1366,13 @@ public class HBaseTestingUtility {
    * @throws IOException
    */
   public boolean cleanupTestDir() throws IOException {
-    return deleteDir(getTestDir());
+    if (dataTestDir == null ){
+      return false;
+    } else {
+      boolean ret = deleteDir(getDataTestDir());
+      dataTestDir = null;
+      return ret;
+    }
   }
 
   /**
@@ -1135,7 +1381,10 @@ public class HBaseTestingUtility {
    * @throws IOException
    */
   public boolean cleanupTestDir(final String subdir) throws IOException {
-    return deleteDir(getTestDir(subdir));
+    if (dataTestDir == null){
+      return false;
+    }
+    return deleteDir(getDataTestDir(subdir));
   }
 
   /**
@@ -1146,7 +1395,7 @@ public class HBaseTestingUtility {
   public boolean deleteDir(final Path dir) throws IOException {
     FileSystem fs = getTestFileSystem();
     if (fs.exists(dir)) {
-      return fs.delete(getTestDir(), true);
+      return fs.delete(getDataTestDir(), true);
     }
     return false;
   }
@@ -1158,8 +1407,9 @@ public class HBaseTestingUtility {
     while (!admin.isTableAvailable(table)) {
       assertTrue("Timed out waiting for table " + Bytes.toStringBinary(table),
           System.currentTimeMillis() - startWait < timeoutMillis);
-      Thread.sleep(500);
+      Thread.sleep(200);
     }
+    admin.close();
   }
 
   /**
@@ -1171,14 +1421,18 @@ public class HBaseTestingUtility {
    */
   public boolean ensureSomeRegionServersAvailable(final int num)
       throws IOException {
-    if (this.getHBaseCluster().getLiveRegionServerThreads().size() < num) {
-      // Need at least "num" servers.
-      LOG.info("Started new server=" +
-        this.getHBaseCluster().startRegionServer());
-      return true;
+    boolean startedServer = false;
+
+    for (int i=hbaseCluster.getLiveRegionServerThreads().size(); i<num; ++i){
+      LOG.info("Started new server=" + hbaseCluster.startRegionServer());
+      startedServer = true;
     }
-    return false;
+
+    return startedServer;
   }
+
+
+
 
   /**
    * This method clones the passed <code>c</code> configuration setting a new
@@ -1203,28 +1457,6 @@ public class HBaseTestingUtility {
     User user = User.createUserForTesting(c, username,
         new String[]{"supergroup"});
     return user;
-  }
-
-  /**
-   * Set soft and hard limits in namenode.
-   * You'll get a NPE if you call before you've started a minidfscluster.
-   * @param soft Soft limit
-   * @param hard Hard limit
-   * @throws NoSuchFieldException
-   * @throws SecurityException
-   * @throws IllegalAccessException
-   * @throws IllegalArgumentException
-   */
-  public void setNameNodeNameSystemLeasePeriod(final int soft, final int hard)
-  throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-    // TODO: If 0.20 hadoop do one thing, if 0.21 hadoop do another.
-    // Not available in 0.20 hdfs.  Use reflection to make it happen.
-
-    // private NameNode nameNode;
-    Field field = this.dfsCluster.getClass().getDeclaredField("nameNode");
-    field.setAccessible(true);
-    NameNode nn = (NameNode)field.get(this.dfsCluster);
-    nn.namesystem.leaseManager.setLeasePeriod(100, 50000);
   }
 
   /**
@@ -1266,7 +1498,6 @@ public class HBaseTestingUtility {
    * Wait until <code>countOfRegion</code> in .META. have a non-empty
    * info:server.  This means all regions have been deployed, master has been
    * informed and updated .META. with the regions deployed server.
-   * @param conf Configuration
    * @param countOfRegions How many regions in .META.
    * @throws IOException
    */
@@ -1292,7 +1523,7 @@ public class HBaseTestingUtility {
         break;
       }
       LOG.info("Found=" + rows);
-      Threads.sleep(1000);
+      Threads.sleep(200);
     }
   }
 
@@ -1302,7 +1533,7 @@ public class HBaseTestingUtility {
    */
   public static List<KeyValue> getFromStoreFile(Store store,
                                                 Get get) throws IOException {
-    ReadWriteConsistencyControl.resetThreadReadPoint();
+    MultiVersionConsistencyControl.resetThreadReadPoint();
     Scan scan = new Scan(get);
     InternalScanner scanner = (InternalScanner) store.getScanner(scan,
         scan.getFamilyMap().get(store.getFamily().getName()));
@@ -1316,6 +1547,7 @@ public class HBaseTestingUtility {
         result.clear();
       }
     }
+    scanner.close();
     return result;
   }
 
@@ -1334,8 +1566,58 @@ public class HBaseTestingUtility {
     return getFromStoreFile(store,get);
   }
   
+  /**
+   * Gets a ZooKeeperWatcher.
+   * @param TEST_UTIL
+   */
+  public static ZooKeeperWatcher getZooKeeperWatcher(
+      HBaseTestingUtility TEST_UTIL) throws ZooKeeperConnectionException,
+      IOException {
+    ZooKeeperWatcher zkw = new ZooKeeperWatcher(TEST_UTIL.getConfiguration(),
+        "unittest", new Abortable() {
+          boolean aborted = false;
+
+          @Override
+          public void abort(String why, Throwable e) {
+            aborted = true;
+            throw new RuntimeException("Fatal ZK error, why=" + why, e);
+          }
+
+          @Override
+          public boolean isAborted() {
+            return aborted;
+          }
+        });
+    return zkw;
+  }
+  
+  /**
+   * Creates a znode with OPENED state.
+   * @param TEST_UTIL
+   * @param region
+   * @param serverName
+   * @return
+   * @throws IOException
+   * @throws ZooKeeperConnectionException
+   * @throws KeeperException
+   * @throws NodeExistsException
+   */
+  public static ZooKeeperWatcher createAndForceNodeToOpenedState(
+      HBaseTestingUtility TEST_UTIL, HRegion region,
+      ServerName serverName) throws ZooKeeperConnectionException,
+      IOException, KeeperException, NodeExistsException {
+    ZooKeeperWatcher zkw = getZooKeeperWatcher(TEST_UTIL);
+    ZKAssign.createNodeOffline(zkw, region.getRegionInfo(), serverName);
+    int version = ZKAssign.transitionNodeOpening(zkw, region
+        .getRegionInfo(), serverName);
+    ZKAssign.transitionNodeOpened(zkw, region.getRegionInfo(), serverName,
+        version);
+    return zkw;
+  }
+  
   // Lily change: add getter for MRCluster
   public MiniMRCluster getMRCluster() {
-      return mrCluster;
+	  return mrCluster;
   }
+  
 }

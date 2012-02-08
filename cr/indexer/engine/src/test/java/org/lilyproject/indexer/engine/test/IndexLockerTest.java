@@ -54,7 +54,7 @@ public class IndexLockerTest {
         ZK_CLIENT_PORT = NetUtils.getFreePort();
 
         ZK_CLUSTER = new MiniZooKeeperCluster();
-        ZK_CLUSTER.setClientPort(ZK_CLIENT_PORT);
+        ZK_CLUSTER.setDefaultClientPort(ZK_CLIENT_PORT);
         ZK_CLUSTER.startup(ZK_DIR);
 
         ZK = ZkUtil.connect("localhost:" + ZK_CLIENT_PORT, 3000);

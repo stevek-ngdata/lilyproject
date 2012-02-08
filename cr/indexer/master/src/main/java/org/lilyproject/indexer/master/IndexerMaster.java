@@ -607,10 +607,11 @@ public class IndexerMaster {
                     }
 
                     if (counters != null) {
-                        jobInfo.addCounter(getCounterKey(Task.Counter.MAP_INPUT_RECORDS), counters.getCounter(Task.Counter.MAP_INPUT_RECORDS));
-                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS), counters.getCounter(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS));
-                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.NUM_FAILED_MAPS), counters.getCounter(JobInProgress.Counter.NUM_FAILED_MAPS));
-                        jobInfo.addCounter(getCounterKey(IndexBatchBuildCounters.NUM_FAILED_RECORDS), counters.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS));
+                    	// Put in comment for now
+//                        jobInfo.addCounter(getCounterKey(Task.Counter.MAP_INPUT_RECORDS), counters.getCounter(Task.Counter.MAP_INPUT_RECORDS));
+//                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS), counters.getCounter(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS));
+//                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.NUM_FAILED_MAPS), counters.getCounter(JobInProgress.Counter.NUM_FAILED_MAPS));
+//                        jobInfo.addCounter(getCounterKey(IndexBatchBuildCounters.NUM_FAILED_RECORDS), counters.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS));
                     }
 
                     index.setLastBatchBuildInfo(jobInfo);
@@ -638,21 +639,22 @@ public class IndexerMaster {
         private String jobStateToString(int jobState) {
             String result = "unknown";
             switch (jobState) {
-                case JobStatus.FAILED:
-                    result = "failed";
-                    break;
-                case JobStatus.KILLED:
-                    result = "killed";
-                    break;
-                case JobStatus.PREP:
-                    result = "prep";
-                    break;
-                case JobStatus.RUNNING:
-                    result = "running";
-                    break;
-                case JobStatus.SUCCEEDED:
-                    result = "succeeded";
-                    break;
+            // Put in comment for now
+//                case JobStatus.FAILED:
+//                    result = "failed";
+//                    break;
+//                case JobStatus.KILLED:
+//                    result = "killed";
+//                    break;
+//                case JobStatus.PREP:
+//                    result = "prep";
+//                    break;
+//                case JobStatus.RUNNING:
+//                    result = "running";
+//                    break;
+//                case JobStatus.SUCCEEDED:
+//                    result = "succeeded";
+//                    break;
             }
             return result;
         }

@@ -20,6 +20,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.coprocessor.Batch.Call;
+import org.apache.hadoop.hbase.client.coprocessor.Batch.Callback;
+import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
@@ -546,4 +549,28 @@ public class LocalHTable implements HTableInterface {
             executorService.execute(command);
         }
     }
+
+	@Override
+	public <T extends CoprocessorProtocol> T coprocessorProxy(
+			Class<T> protocol, byte[] row) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T extends CoprocessorProtocol, R> Map<byte[], R> coprocessorExec(
+			Class<T> protocol, byte[] startKey, byte[] endKey,
+			Call<T, R> callable) throws IOException, Throwable {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T extends CoprocessorProtocol, R> void coprocessorExec(
+			Class<T> protocol, byte[] startKey, byte[] endKey,
+			Call<T, R> callable, Callback<R> callback) throws IOException,
+			Throwable {
+		// TODO Auto-generated method stub
+		
+	}
 }

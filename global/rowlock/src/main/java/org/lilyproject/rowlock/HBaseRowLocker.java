@@ -109,7 +109,8 @@ public class HBaseRowLocker implements RowLocker {
     public boolean unlockRow(RowLock lock) throws IOException {
         byte[] rowKey = lock.getRowKey();
         Put put = new Put(rowKey);
-        put.add(family, qualifier, 1L, null);
+        // TODO changing value null to Bytes.toBytes(0L) as workaround for HBASE-5345
+        put.add(family, qualifier, 1L, Bytes.toBytes(0L));
         return table.checkAndPut(rowKey, family, qualifier, lock.getPermit(), put); // If it fails, we already lost the lock
     }
     

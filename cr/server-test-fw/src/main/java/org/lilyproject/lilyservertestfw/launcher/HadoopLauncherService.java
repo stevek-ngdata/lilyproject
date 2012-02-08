@@ -78,8 +78,10 @@ public class HadoopLauncherService implements LauncherService {
             postStartupInfo.add("-------------------------");
             postStartupInfo.add("MapReduce is running");
             postStartupInfo.add("");
-            postStartupInfo.add("JobTracker web ui: http://localhost:" +
-                    hbaseTestUtility.getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
+            // TODO JobTracker no longer visible, should we still refer to it? (cfr MR2)
+            postStartupInfo.add("JobTracker web ui: http://localhost:" + "TODO");
+//            postStartupInfo.add("JobTracker web ui: http://localhost:" +
+//                    hbaseTestUtility.getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
             postStartupInfo.add("");
             postStartupInfo.add("Configuration conf = new Configuration();");
             postStartupInfo.add("conf.set(\"mapred.job.tracker\", \"localhost:" +

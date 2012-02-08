@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTableInterfaceFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,7 +100,12 @@ public class HTablePool {
         synchronized(queue) {
             if(queue.size() >= maxSize) {
                 // release table instance since we're not reusing it
-                this.tableFactory.releaseHTableInterface(table);
+            	try {
+            		this.tableFactory.releaseHTableInterface(table);
+            	} catch (IOException e) {
+            		// TODO Do we need HTablePool ?
+            		throw new RuntimeException("IOException, should be handled.", e);
+            	}
                 return;
             }
             queue.add(table);
@@ -124,7 +130,12 @@ public class HTablePool {
         synchronized (queue) {
             HTableInterface table = queue.poll();
             while (table != null) {
-                this.tableFactory.releaseHTableInterface(table);
+            	try {
+            		this.tableFactory.releaseHTableInterface(table);
+	            } catch (IOException e) {
+	        		// TODO Do we need HTablePool ?
+	        		throw new RuntimeException("IOException, should be handled.", e);
+	        	}
                 table = queue.poll();
             }
         }

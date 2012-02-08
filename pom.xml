@@ -19,12 +19,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <version.hbase>0.90.4-cdh3u2-lily</version.hbase>
+    <version.hbase>0.92.0-cdh4b1-SNAPSHOT</version.hbase>
     <!-- When changing the hbase version, also change the hadoop and zookeeper version below to match
          what is in HBase's pom.xml -->
 
-    <version.hadoop>0.20.2-cdh3u2</version.hadoop>
-    <version.zookeeper>3.3.3</version.zookeeper>
+    <version.hadoop>0.23.0-cdh4b1-SNAPSHOT</version.hadoop>
+    <version.zookeeper>3.4.1-cdh4b1-SNAPSHOT</version.zookeeper>
     <version.maven>2.0.9</version.maven>
     <version.solr>3.5.0</version.solr>
 
@@ -627,14 +627,14 @@
       </snapshots>
     </repository>
 
-    <repository>
+<!--    <repository>
       <id>cdh.repo</id>
       <url>https://repository.cloudera.com/content/groups/cloudera-repos</url>
       <name>Cloudera Repository</name>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </repository>
+    </repository> -->
 
     <repository>
       <!-- This repository is needed for the hadoop-test jar version 0.20.2-with-200-826. -->

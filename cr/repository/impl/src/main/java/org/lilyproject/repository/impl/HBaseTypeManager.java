@@ -27,6 +27,7 @@ import javax.annotation.PreDestroy;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.bytes.api.DataInput;
@@ -698,11 +699,13 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         Get get = new Get(nameBytes);
         get.addColumn(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes);
         Result result = getTypeTable().get(get);
+
         if (result != null && !result.isEmpty()) {
             originalTimestampBytes = result.getValue(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes);
             if (originalTimestampBytes != null && originalTimestampBytes.length != 0)
                 originalTimestamp = Bytes.toLong(originalTimestampBytes);
         }
+
         // Check if the timestamp is older than the concurrent timeout
         // The concurrent timeout should be large enough to allow fieldType caches to be refreshed
         if (originalTimestamp != null) {
@@ -711,6 +714,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
             
         }
+
         // Try to put our own timestamp with a check and put to make sure we're the only one doing this
         Put put = new Put(nameBytes);
         put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now));
@@ -728,10 +732,11 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
      */
     private void clearConcurrency(byte[] nameBytes, long now) {
         Put put = new Put(nameBytes);
-        put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, null);
+        // TODO changed null value to Bytes.toBytes(0L) as workaround for HBASE-5345
+        put.add(TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(0L));
         try {
             // Using check and put to avoid clearing a timestamp that was not ours.
-            getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now), put);
+        	getTypeTable().checkAndPut(nameBytes, TypeCf.DATA.bytes, TypeColumn.CONCURRENT_TIMESTAMP.bytes, Bytes.toBytes(now), put);
         } catch (IOException e) {
             // Ignore, too late to clear the timestamp
         }

@@ -261,9 +261,9 @@ public class CleanupUtil {
     private void flush(HBaseAdmin hbaseAdmin, String tableName) throws IOException, InterruptedException {
         CatalogTracker ct = getCatalogTracker();
         try {
-            List<Pair<HRegionInfo, HServerAddress>> pairs =
+            List<Pair<HRegionInfo, ServerName>> pairs =
                     MetaReader.getTableRegionsAndLocations(ct, tableName);
-            for (Pair<HRegionInfo, HServerAddress> pair: pairs) {
+            for (Pair<HRegionInfo, ServerName> pair: pairs) {
                 if (pair.getSecond() == null) continue;
                 flush(hbaseAdmin, pair.getSecond(), pair.getFirst());
             }
@@ -273,9 +273,9 @@ public class CleanupUtil {
     }
 
     /** Copied from HBase source to support flush fix. */
-    private void flush(HBaseAdmin hbaseAdmin, final HServerAddress hsa, final HRegionInfo hri)
+    private void flush(HBaseAdmin hbaseAdmin, final ServerName serverName, final HRegionInfo hri)
             throws IOException {
-        HRegionInterface rs = hbaseAdmin.getConnection().getHRegionConnection(hsa);
+        HRegionInterface rs = hbaseAdmin.getConnection().getHRegionConnection(serverName.getHostname(), serverName.getPort());
         rs.flushRegion(hri);
     }
 
@@ -284,9 +284,7 @@ public class CleanupUtil {
             throws ZooKeeperConnectionException, IOException {
         CatalogTracker ct = null;
         try {
-            HConnection connection =
-                    HConnectionManager.getConnection(new Configuration(this.conf));
-            ct = new CatalogTracker(connection);
+            ct = new CatalogTracker(this.conf);
             ct.start();
         } catch (InterruptedException e) {
             // Let it out as an IOE for now until we redo all so tolerate IEs
@@ -295,7 +293,7 @@ public class CleanupUtil {
         }
         return ct;
     }
-
+    
     /** Copied from HBase source to support flush fix. */
     private void cleanupCatalogTracker(final CatalogTracker ct) {
         ct.stop();

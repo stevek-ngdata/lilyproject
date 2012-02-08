@@ -20,8 +20,14 @@ public class HBaseTestingUtilityFactory {
     public static HBaseTestingUtility create(Configuration conf, File tmpDir, boolean clearData) throws IOException {
 
         // This location will be used for dfs, zookeeper, ...
-        System.setProperty(HBaseTestingUtility.TEST_DIRECTORY_KEY, createSubDir(tmpDir, "hadoop"));
-        conf.set(HBaseTestingUtility.TEST_DIRECTORY_KEY, createSubDir(tmpDir, "hadoop"));
+    	// Lily change
+    	// HBaseTestingUtility.TEST_DIRECTORY_KEY is private and deprecated in HBaseTestingUtiltiy
+    	// It is 'only used in mini dfs'
+    	// We use the "test.build.data" string directly here, to keep HBaseTestingUtility as close 
+    	// to the original as possible
+        System.setProperty("test.build.data", createSubDir(tmpDir, "hadoop"));
+        conf.set("test.build.data", createSubDir(tmpDir, "hadoop"));
+        // End Lily change
 
         // This property is picked up by our fork of MiniMRCluster (the default implementation was hardcoded
         // to use build/test/mapred/local)

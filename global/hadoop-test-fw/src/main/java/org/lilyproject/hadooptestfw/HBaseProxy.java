@@ -235,6 +235,9 @@ public class HBaseProxy {
                     } catch (IOException e) {
                         System.out.println("Error shutting down mini cluster.");
                         e.printStackTrace();
+                    } catch (Exception e) {
+                        System.out.println("Error shutting down mini cluster.");
+                        e.printStackTrace();                    	
                     }
                 }
             };
