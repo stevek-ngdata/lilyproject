@@ -102,6 +102,25 @@
       <classifier>tests</classifier>
       <version>${version.hadoop}</version>
     </dependency>
+    
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-yarn-server-tests</artifactId>
+      <classifier>tests</classifier>
+      <version>${version.hadoop}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-app</artifactId>
+      <version>${version.hadoop}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-hs</artifactId>
+      <version>${version.hadoop}</version>
+    </dependency>
 
     <!-- Temporary solution to collect all HBase test dependencies -->
     <dependency>

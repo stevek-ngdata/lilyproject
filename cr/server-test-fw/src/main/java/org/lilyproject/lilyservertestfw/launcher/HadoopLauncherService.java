@@ -84,8 +84,9 @@ public class HadoopLauncherService implements LauncherService {
 //                    hbaseTestUtility.getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
             postStartupInfo.add("");
             postStartupInfo.add("Configuration conf = new Configuration();");
-            postStartupInfo.add("conf.set(\"mapred.job.tracker\", \"localhost:" +
-                    hbaseTestUtility.getMRCluster().getJobTrackerPort() + "\");");
+            // TODO Operation not supported, should we still refer to it? (cfr MR2)
+//            postStartupInfo.add("conf.set(\"mapred.job.tracker\", \"localhost:" +
+//                    hbaseTestUtility.getMRCluster().getJobTrackerPort() + "\");");
             postStartupInfo.add("Job job = new Job(conf);");
             postStartupInfo.add("");
         }

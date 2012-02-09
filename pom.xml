@@ -19,12 +19,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <version.hbase>0.92.0-cdh4b1-SNAPSHOT</version.hbase>
+    <version.hbase>0.92.0-cdh4b1</version.hbase>
     <!-- When changing the hbase version, also change the hadoop and zookeeper version below to match
          what is in HBase's pom.xml -->
 
-    <version.hadoop>0.23.0-cdh4b1-SNAPSHOT</version.hadoop>
-    <version.zookeeper>3.4.1-cdh4b1-SNAPSHOT</version.zookeeper>
+    <version.hadoop>0.23.0-cdh4b1</version.hadoop>
+    <version.zookeeper>3.4.1-cdh4b1</version.zookeeper>
     <version.maven>2.0.9</version.maven>
     <version.solr>3.5.0</version.solr>
 
@@ -587,6 +587,37 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>r09</version>
+      </dependency>
+      <!-- Force usage of jersey version 1.8
+           Hadoop uses 1.8, Hbase 1.4
+           Otherwise launching launch-test-lily would start looking for version 1.4 in the lib directory -->
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-core</artifactId>
+        <version>1.8</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-json</artifactId>
+        <version>1.8</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-server</artifactId>
+        <version>1.8</version>
+      </dependency>
+      <!-- Force usage of jackson-jaxrs, jackson-xc version 1.7.1
+           Hadoop uses 1.7.1, Hbase 1.5.5
+           Otherwise launching launch-test-lily would start looking for version 1.5.5 in the lib directory -->
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-jaxrs</artifactId>
+        <version>1.7.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-xc</artifactId>
+        <version>1.7.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
