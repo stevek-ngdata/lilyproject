@@ -51,7 +51,6 @@ public class BlobManagerSetup {
 
     public BlobManagerSetup(URI dfsUri, Configuration configuration, HBaseTableFactory tableFactory, ZooKeeperItf zk,
             Conf blobManagerConf, Configuration hbaseConf) throws IOException, InterruptedException, KeeperException {
-
         fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));
 

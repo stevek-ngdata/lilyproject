@@ -350,7 +350,10 @@ public class HBaseTestingUtility {
     System.setProperty("test.cache.data", this.clusterTestDir.toString());
 
     // Ok, now we can start
-    this.dfsCluster = new MiniDFSCluster(0, this.conf, servers, true, true,
+    // Lily change: first argument changed from 0 to 8020
+    // Lily change: let the formatting of NameNode and DataNodes depend on whether the dir is empty
+    boolean format = this.clusterTestDir.list() == null || this.clusterTestDir.list().length == 0;
+    this.dfsCluster = new MiniDFSCluster(8020, this.conf, servers, format, true,
       true, null, null, hosts, null);
 
     // Set this just-started cluster as our filesystem.

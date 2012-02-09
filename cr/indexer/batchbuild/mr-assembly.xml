@@ -16,7 +16,7 @@
       <unpack>false</unpack>
       <scope>runtime</scope>
       <excludes>
-        <exclude>org.apache.hadoop:hadoop-core</exclude>
+        <exclude>org.apache.hadoop:hadoop-common</exclude>
         <!--
           Hadoop also ships with slf4j, so it is also in classpath of task child vm.
           At the time of this writing Hadoop used an older version, and failed
