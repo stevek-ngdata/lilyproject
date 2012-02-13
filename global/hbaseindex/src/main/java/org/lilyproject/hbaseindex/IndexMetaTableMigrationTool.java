@@ -51,7 +51,7 @@ public class IndexMetaTableMigrationTool {
                 System.out.println("Did not find KV containing index definition, skipping row: " + tableNameString);
                 continue;
             }
-
+            
             tableDescr.setValue(Bytes.toBytes("LILY_INDEX"), json);
 
             System.out.println("Disabling index table " + tableNameString);

@@ -90,7 +90,7 @@ public class HadoopLauncherService implements LauncherService {
             postStartupInfo.add("Job job = new Job(conf);");
             postStartupInfo.add("");
         }
-
+        
         return 0;
     }
 

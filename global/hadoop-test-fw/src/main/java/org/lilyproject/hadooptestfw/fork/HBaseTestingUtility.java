@@ -644,7 +644,12 @@ public class HBaseTestingUtility {
    */
   public Path createRootDir() throws IOException {
     FileSystem fs = FileSystem.get(this.conf);
-    Path hbaseRootdir = fs.makeQualified(fs.getHomeDirectory());
+    // Lily change: create "hbase" subdirectory under home directory
+    // to serve as hbaseRootdir. The home directory can contain other
+    // directories and files, which are not necessary hbase tables.
+    // For instance a 'target' dir created by MiniMRCluster.
+    // Cfr. HBASE-5317 and HBASE-4025
+    Path hbaseRootdir = fs.makeQualified(new Path(fs.getHomeDirectory(), "hbase"));
     this.conf.set(HConstants.HBASE_DIR, hbaseRootdir.toString());
     fs.mkdirs(hbaseRootdir);
     FSUtils.setVersion(fs, hbaseRootdir);

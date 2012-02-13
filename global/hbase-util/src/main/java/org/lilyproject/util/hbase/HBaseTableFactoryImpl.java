@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.ByteArrayKey;
 
 public class HBaseTableFactoryImpl implements HBaseTableFactory {    
@@ -67,11 +68,13 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
     private HTableInterface getTable(HTableDescriptor tableDescriptor, byte[][] splitKeys, boolean create) throws IOException {
         HBaseAdmin admin = HBaseAdminFactory.get(configuration);
 
-        try {
-            admin.getTableDescriptor(tableDescriptor.getName());
-        } catch (TableNotFoundException e) {
+    	boolean tableExists = admin.tableExists(tableDescriptor.getName());
+    	// It's cleaner to call tableExists instead of getting the HTableDescriptor 
+    	// if we only want to find out if the table exists.
+    	// See also HBaseTestingUtility.createRootDir()
+    	if (!admin.tableExists(tableDescriptor.getName())) {
             if (!create) {
-                throw e;
+            	throw new TableNotFoundException(Bytes.toString(tableDescriptor.getName()));
             }
 
             try {
@@ -83,13 +86,11 @@ public class HBaseTableFactoryImpl implements HBaseTableFactory {
                 log.info("Creating '" + tableDescriptor.getNameAsString() + "' table using "
                         + regionCount + " initial region" + (regionCount > 1 ? "s." : "."));
                 admin.createTable(tableDescriptor, splitKeys);
-            } catch (TableExistsException e2) {
+            } catch (TableExistsException e) {
                 // Table is meanwhile created by another process
-                log.info("Table already existed: '" + tableDescriptor.getNameAsString() + "'.");
+                log.info("Table already exists: '" + tableDescriptor.getNameAsString() + "'.");
             }
         }
-
-        // TODO we could check if the existing table matches the given table descriptor
 
         return new LocalHTable(configuration, tableDescriptor.getName());
     }

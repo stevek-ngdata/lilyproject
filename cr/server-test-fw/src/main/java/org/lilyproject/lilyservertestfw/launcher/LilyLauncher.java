@@ -188,7 +188,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         }
 
         for (LauncherService service : enabledServices) {
-            if ((result = service.start(postStartupInfo)) != 0)
+            if ((result = service.start(postStartupInfo)) != 0) 
                 return result;
         }
 
@@ -209,6 +209,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.exit(0);
         }
 
+        
         // Register MBean
         ManagementFactory.getPlatformMBeanServer().registerMBean(this, new ObjectName("LilyLauncher:name=Launcher"));
 

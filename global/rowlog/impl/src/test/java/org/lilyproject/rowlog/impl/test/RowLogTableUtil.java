@@ -35,10 +35,11 @@ public class RowLogTableUtil {
 
     public static HTableInterface getRowTable(Configuration configuration) throws IOException {
         HBaseAdmin admin = HBaseAdminFactory.get(configuration);
-        try {
-            admin.getTableDescriptor(ROW_TABLE);
-        } catch (TableNotFoundException e) {
-            HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
+        // It's cleaner to call tableExists instead of getting the HTableDescriptor 
+    	// if we only want to find out if the table exists.
+    	// See also HBaseTestingUtility.createRootDir()
+        if (!admin.tableExists(ROW_TABLE)) {
+        	HTableDescriptor tableDescriptor = new HTableDescriptor(ROW_TABLE);
             tableDescriptor.addFamily(new HColumnDescriptor(DATA_COLUMN_FAMILY));
             tableDescriptor.addFamily(new HColumnDescriptor(ROWLOG_COLUMN_FAMILY));
             admin.createTable(tableDescriptor);
