@@ -40,7 +40,6 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>${version.hadoop}</version>
     </dependency>
   </dependencies>
 
