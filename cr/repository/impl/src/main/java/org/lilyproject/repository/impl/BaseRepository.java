@@ -1,8 +1,13 @@
 package org.lilyproject.repository.impl;
 
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -10,11 +15,16 @@ public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
     protected final TypeManager typeManager;
     protected final IdGenerator idGenerator;
+    protected final RecordDecoder recdec;
+    protected final HTableInterface recordTable;
 
-    protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator) {
+    protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator,
+            HTableInterface recordTable) {
         this.typeManager = typeManager;
         this.blobManager = blobManager;
         this.idGenerator = idGenerator;
+        this.recordTable = recordTable;
+        this.recdec = new RecordDecoder(typeManager, idGenerator);
     }
     
     @Override
@@ -107,5 +117,34 @@ public abstract class BaseRepository implements Repository {
         }
 
         return indexes;
+    }
+
+    @Override
+    public RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException {
+        Scan hbaseScan = new Scan();
+
+        if (scan.getStartRecordId() != null) {
+            hbaseScan.setStartRow(scan.getStartRecordId().toBytes());
+        }
+
+        if (scan.getStopRecordId() != null) {
+            hbaseScan.setStopRow(scan.getStopRecordId().toBytes());
+        }
+
+        hbaseScan.setMaxVersions(1);
+
+        // TODO allow to specify subset of fields
+        hbaseScan.addFamily(LilyHBaseSchema.RecordCf.DATA.bytes);
+
+        ResultScanner hbaseScanner;
+        try {
+            hbaseScanner = recordTable.getScanner(hbaseScan);
+        } catch (IOException e) {
+            throw new RecordException("Error creating scanner", e);
+        }
+
+        HBaseRecordScanner scanner = new HBaseRecordScanner(hbaseScanner, recdec);
+
+        return scanner;
     }
 }

@@ -216,6 +216,11 @@ public class BaseRepositoryDecorator implements RepositoryDecorator {
     }
 
     @Override
+    public RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException {
+        return delegate.getScanner(scan);
+    }
+
+    @Override
     public void close() throws IOException {
         delegate.close();
     }

@@ -45,6 +45,10 @@ public class LilyHBaseSchema {
         return tableFactory.getTable(recordTableDescriptor);
     }
 
+    public static HTableInterface getRecordTable(HBaseTableFactory tableFactory, boolean clientMode) throws IOException {
+        return tableFactory.getTable(recordTableDescriptor, !clientMode);
+    }
+
     public static HTableInterface getTypeTable(HBaseTableFactory tableFactory) throws IOException {
         return tableFactory.getTable(typeTableDescriptor);
     }

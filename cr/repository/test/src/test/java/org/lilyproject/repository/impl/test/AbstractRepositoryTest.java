@@ -2073,4 +2073,43 @@ public abstract class AbstractRepositoryTest {
         ByteArray readValue = readRecord.getField(new QName("testByteArrayValueType", "field1"));
         assertEquals("some bytes", Bytes.toString(readValue.getBytesUnsafe()));
     }
+
+    @Test
+    public void testScannerBasics() throws Exception {
+        List<String> fieldValues = new ArrayList<String>();
+        for (int i = 'A'; i <= 'Z'; i++) {
+            RecordId id = idGenerator.newRecordId("Z" + (char)i);
+            Record record = repository.newRecord(id);
+            record.setRecordType(recordType1.getName());
+            String value = "field 1 - " + (char)i;
+            fieldValues.add(value);
+            record.setField(fieldType1.getName(), value);
+            repository.create(record);
+        }
+        
+        RecordScan scan = new RecordScan();
+        scan.setStartRecordId(idGenerator.newRecordId("ZA"));
+        scan.setStopRecordId(idGenerator.newRecordId("ZZ")); // stop row is exclusive
+
+        RecordScanner scanner = repository.getScanner(scan);
+
+        int i = 0;
+        Record record;
+        while ((record = scanner.next()) != null) {
+            assertEquals(record.getField(fieldType1.getName()), fieldValues.get(i));
+            i++;
+        }
+        
+        assertEquals("Found 25 records", 25, i);
+        
+        // Scan all records, this should give at least 26 results
+        scan = new RecordScan();
+        scanner = repository.getScanner(scan);
+        i = 0;
+        while (scanner.next() != null) {
+            i++;
+        }
+        
+        assertTrue("Found at least 26 records", i >= 26);
+    }
 }

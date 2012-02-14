@@ -170,7 +170,7 @@ public class RepositorySetup {
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
 
         remoteRepository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                remoteTypeManager, idGenerator, remoteBlobManager);
+                remoteTypeManager, idGenerator, remoteBlobManager, getHadoopConf());
 
         remoteConverter.setRepository(repository);
         remoteTypeManager.start();

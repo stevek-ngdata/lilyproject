@@ -26,9 +26,12 @@ import java.util.Set;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
+import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 
 // ATTENTION: when adding new methods, do not forget to add handling for UndeclaredThrowableException! This is
@@ -41,8 +44,12 @@ public class RemoteRepository extends BaseRepository {
     private Transceiver client;
 
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
-            IdGenerator idGenerator, BlobManager blobManager) throws IOException {
-        super(typeManager, blobManager, idGenerator);
+            IdGenerator idGenerator, BlobManager blobManager, Configuration hbaseConf) throws IOException {
+
+        // true flag to getRecordTable: we don't let the remote side create the record table if it
+        // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
+        super(typeManager, blobManager, idGenerator,
+                LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true));
 
         this.converter = converter;
 

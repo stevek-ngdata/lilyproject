@@ -513,6 +513,8 @@ public interface Repository extends Closeable {
      *         exist.
      */
     Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException;
+    
+    RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException;
 
     /**
      * Returns a record builder object which can be used to compose a record object and create or update it on the

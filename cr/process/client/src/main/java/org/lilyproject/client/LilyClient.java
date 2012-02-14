@@ -33,6 +33,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.impl.*;
@@ -62,6 +63,7 @@ public class LilyClient implements Closeable {
     private Set<String> serverAddresses = new HashSet<String>();
     private RetryConf retryConf = new RetryConf();
     private static final String nodesPath = "/lily/repositoryNodes";
+    private static final String hbaseConfigPath = "/lily/hbaseConfig";
     private static final String blobDfsUriPath = "/lily/blobStoresConfig/dfsUri";
     private static final String blobHBaseConfigPath = "/lily/blobStoresConfig/hbaseConfig";
     private static final String blobStoreAccessConfigPath = "/lily/blobStoresConfig/accessConfig";
@@ -167,9 +169,12 @@ public class LilyClient implements Closeable {
 
         // TODO BlobManager can probably be shared across all repositories
         BlobManager blobManager = getBlobManager(zk, hbaseConnections);
-        
+
+        Configuration hbaseConf = getHBaseConfiguration(zk);
+        hbaseConf = hbaseConnections.getExisting(hbaseConf);
+
         Repository repository = new RemoteRepository(parseAddressAndPort(server.lilyAddressAndPort),
-                remoteConverter, typeManager, idGenerator, blobManager);
+                remoteConverter, typeManager, idGenerator, blobManager, hbaseConf);
         
         remoteConverter.setRepository(repository);
         typeManager.start();
@@ -228,7 +233,23 @@ public class LilyClient implements Closeable {
             throw new RuntimeException("Blob stores config lookup: failed to get HBase configuration from ZooKeeper", e);
         }
     }
-    
+
+    private static Configuration getHBaseConfiguration(ZooKeeperItf zk) {
+        try {
+            Configuration configuration = HBaseConfiguration.create();
+            byte[] data = zk.getData(hbaseConfigPath, false, new Stat());
+            ObjectNode propertiesNode = (ObjectNode)JsonFormat.deserializeSoft(data, "HBase configuration");
+            Iterator<Map.Entry<String, JsonNode>> it = propertiesNode.getFields();
+            while (it.hasNext()) {
+                Map.Entry<String, JsonNode> entry = it.next();
+                configuration.set(entry.getKey(), entry.getValue().getTextValue());
+            }
+            return configuration;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get HBase configuration from ZooKeeper", e);
+        }
+    }
+
     private InetSocketAddress parseAddressAndPort(String addressAndPort) {
         int colonPos = addressAndPort.indexOf(":");
         if (colonPos == -1) {

@@ -16,12 +16,19 @@
 package org.lilyproject.server.modules.repository;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.lilyproject.util.zookeeper.ZooKeeperOperation;
@@ -36,11 +43,14 @@ public class ZKPublisher {
     private int port;
     private String lilyPath = "/lily";
     private String nodesPath = lilyPath + "/repositoryNodes";
+    private String hbaseConfPath = lilyPath + "/hbaseConfig";
+    private Configuration hbaseConf;
 
-    public ZKPublisher(ZooKeeperItf zk, String hostAddress, int port) {
+    public ZKPublisher(ZooKeeperItf zk, String hostAddress, int port, Configuration hbaseConf) {
         this.zk = zk;
         this.hostAddress = hostAddress;
         this.port = port;
+        this.hbaseConf = hbaseConf;
     }
 
     @PostConstruct
@@ -55,5 +65,14 @@ public class ZKPublisher {
                 return null;
             }
         });
+        
+        // Publish HBase configuration for LilyClient use
+        // Translate HBase conf into json 
+        ObjectNode propertiesNode = JsonNodeFactory.instance.objectNode();
+        for (Map.Entry<String, String> propertyEntry : hbaseConf) {
+            propertiesNode.put(propertyEntry.getKey(), propertyEntry.getValue());
+        }
+        // TODO we could compare with current state and log a warn if its different
+        ZkUtil.createPath(zk, hbaseConfPath, JsonFormat.serializeAsBytes(propertiesNode));
     }
 }
