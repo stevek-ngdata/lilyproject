@@ -1162,22 +1162,11 @@ public class HBaseRepository extends BaseRepository {
             for (FieldType field : fields) {
                 get.addColumn(RecordCf.DATA.bytes, ((FieldTypeImpl)field).getQualifier());
             }
-            addSystemColumnsToGet(get);
+            RecordDecoder.addSystemColumnsToGet(get);
         } else {
             // Retrieve everything
             get.addFamily(RecordCf.DATA.bytes);
         }
-    }
-
-    private void addSystemColumnsToGet(Get get) {
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSION.bytes);
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_ID.bytes);
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.NON_VERSIONED_RT_VERSION.bytes);
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_ID.bytes);
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_RT_VERSION.bytes);
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
-        get.addColumn(RecordCf.DATA.bytes, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
     }
 
     @Override

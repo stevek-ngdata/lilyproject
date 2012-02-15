@@ -5,7 +5,8 @@ import org.lilyproject.repository.api.filter.RecordFilter;
 public class RecordScan {
     private RecordId startRecordId;
     private RecordId stopRecordId;
-    private RecordFilter filter;
+    private RecordFilter recordFilter;
+    private ReturnFields returnFields;
 
     public RecordId getStartRecordId() {
         return startRecordId;
@@ -26,11 +27,19 @@ public class RecordScan {
         this.stopRecordId = stopRecordId;
     }
 
-    public RecordFilter getFilter() {
-        return filter;
+    public RecordFilter getRecordFilter() {
+        return recordFilter;
     }
 
-    public void setFilter(RecordFilter filter) {
-        this.filter = filter;
+    public void setRecordFilter(RecordFilter recordFilter) {
+        this.recordFilter = recordFilter;
+    }
+
+    public ReturnFields getReturnFields() {
+        return returnFields;
+    }
+
+    public void setReturnFields(ReturnFields returnFields) {
+        this.returnFields = returnFields;
     }
 }

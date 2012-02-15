@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
-import org.apache.hadoop.hbase.filter.FilterList;
 import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.Before;
@@ -2120,34 +2119,34 @@ public abstract class AbstractRepositoryTest {
     @Test
     public void testRecordTypeFilter() throws Exception {
         RecordType rt1 = typeManager.recordTypeBuilder()
-                .name("recordtypefilter", "rt1")
+                .name("RecordTypeFilter", "rt1")
                 .fieldEntry().use(fieldType1).add()
                 .create();
 
         RecordType rt2 = typeManager.recordTypeBuilder()
-                .name("recordtypefilter", "rt2")
+                .name("RecordTypeFilter", "rt2")
                 .fieldEntry().use(fieldType1).add()
                 .create();
 
         // create second version of the record type
         rt2 = typeManager.recordTypeBuilder()
-                .name("recordtypefilter", "rt2")
+                .name("RecordTypeFilter", "rt2")
                 .update();
 
         // create third version of the record type
         rt2 = typeManager.recordTypeBuilder()
-                .name("recordtypefilter", "rt2")
+                .name("RecordTypeFilter", "rt2")
                 .fieldEntry().use(fieldType1).add()
                 .update();
 
         // create fourth version of the record type
         rt2 = typeManager.recordTypeBuilder()
-                .name("recordtypefilter", "rt2")
+                .name("RecordTypeFilter", "rt2")
                 .update();
 
         // create fifth version of the record type
         rt2 = typeManager.recordTypeBuilder()
-                .name("recordtypefilter", "rt2")
+                .name("RecordTypeFilter", "rt2")
                 .fieldEntry().use(fieldType1).add()
                 .update();
         
@@ -2159,28 +2158,28 @@ public abstract class AbstractRepositoryTest {
         repository.recordBuilder().recordType(rt2.getName()).field(fieldType1.getName(), "value").create();
 
         RecordScan scan = new RecordScan();        
-        scan.setFilter(new RecordTypeFilter(rt1.getName()));
+        scan.setRecordFilter(new RecordTypeFilter(rt1.getName()));
         assertEquals(2, countResults(repository.getScanner(scan)));
 
         scan = new RecordScan();
-        scan.setFilter(new RecordTypeFilter(rt2.getName()));
+        scan.setRecordFilter(new RecordTypeFilter(rt2.getName()));
         assertEquals(2, countResults(repository.getScanner(scan)));
 
         scan = new RecordScan();
-        scan.setFilter(new RecordTypeFilter(rt2.getName(), 5L));
+        scan.setRecordFilter(new RecordTypeFilter(rt2.getName(), 5L));
         assertEquals(2, countResults(repository.getScanner(scan)));
 
         // This test assumes we're the only one who created a record type with 5 versions
         scan = new RecordScan();
-        scan.setFilter(new RecordTypeFilter(null, 5L));
+        scan.setRecordFilter(new RecordTypeFilter(null, 5L));
         assertEquals(2, countResults(repository.getScanner(scan)));
     }
 
     @Test
     public void testFieldValueFilter() throws Exception {
-        FieldType fieldType = typeManager.createFieldType("STRING", new QName("fieldvaluefilter", "field"), Scope.NON_VERSIONED);
+        FieldType fieldType = typeManager.createFieldType("STRING", new QName("FieldValueFilter", "field"), Scope.NON_VERSIONED);
         RecordType rt = typeManager.recordTypeBuilder()
-                .defaultNamespace("fieldvaluefilter")
+                .defaultNamespace("FieldValueFilter")
                 .name("rt1")
                 .fieldEntry()
                     .use(fieldType)
@@ -2194,15 +2193,15 @@ public abstract class AbstractRepositoryTest {
         repository.recordBuilder().recordType(rt.getName()).field(fieldType.getName(), "value2").create();
 
         RecordScan scan = new RecordScan();
-        scan.setFilter(new FieldValueFilter(fieldType.getName(), "value1"));
+        scan.setRecordFilter(new FieldValueFilter(fieldType.getName(), "value1"));
         assertEquals(2, countResults(repository.getScanner(scan)));
 
         scan = new RecordScan();
-        scan.setFilter(new FieldValueFilter(fieldType.getName(), "value2"));
+        scan.setRecordFilter(new FieldValueFilter(fieldType.getName(), "value2"));
         assertEquals(3, countResults(repository.getScanner(scan)));
 
         scan = new RecordScan();
-        scan.setFilter(new FieldValueFilter(fieldType.getName(), CompareOp.NOT_EQUAL, "value1"));
+        scan.setRecordFilter(new FieldValueFilter(fieldType.getName(), CompareOp.NOT_EQUAL, "value1"));
         assertEquals(3, countResults(repository.getScanner(scan)));
 
         // (At the time of this writing, ...) when non-versioned fields are deleted, a delete marker is
@@ -2214,16 +2213,16 @@ public abstract class AbstractRepositoryTest {
         record = repository.update(record);
 
         scan = new RecordScan();
-        scan.setFilter(new FieldValueFilter(fieldType.getName(), CompareOp.NOT_EQUAL, "value1"));
+        scan.setRecordFilter(new FieldValueFilter(fieldType.getName(), CompareOp.NOT_EQUAL, "value1"));
         assertEquals(3, countResults(repository.getScanner(scan)));
     }
     
     @Test
     public void testFilterList() throws Exception {
-        FieldType f1 = typeManager.createFieldType("STRING", new QName("filterlist", "field1"), Scope.NON_VERSIONED);
-        FieldType f2 = typeManager.createFieldType("STRING", new QName("filterlist", "field2"), Scope.NON_VERSIONED);
+        FieldType f1 = typeManager.createFieldType("STRING", new QName("FilterList", "field1"), Scope.NON_VERSIONED);
+        FieldType f2 = typeManager.createFieldType("STRING", new QName("FilterList", "field2"), Scope.NON_VERSIONED);
 
-        RecordType rt = typeManager.recordTypeBuilder().defaultNamespace("filterlist").name("rt")
+        RecordType rt = typeManager.recordTypeBuilder().defaultNamespace("FilterList").name("rt")
                 .fieldEntry().use(f1).add().fieldEntry().use(f2).add().create();
 
         repository.recordBuilder()
@@ -2254,7 +2253,7 @@ public abstract class AbstractRepositoryTest {
         RecordFilterList filterList = new RecordFilterList();
         filterList.addFilter(new FieldValueFilter(f1.getName(), "A"));
         filterList.addFilter(new FieldValueFilter(f2.getName(), "B"));
-        scan.setFilter(filterList);
+        scan.setRecordFilter(filterList);
         assertEquals(1, countResults(repository.getScanner(scan)));
 
         // Test f1=A or f2=B
@@ -2262,7 +2261,7 @@ public abstract class AbstractRepositoryTest {
         filterList = new RecordFilterList(RecordFilterList.Operator.MUST_PASS_ONE);
         filterList.addFilter(new FieldValueFilter(f1.getName(), "A"));
         filterList.addFilter(new FieldValueFilter(f2.getName(), "B"));
-        scan.setFilter(filterList);
+        scan.setRecordFilter(filterList);
         assertEquals(3, countResults(repository.getScanner(scan)));
 
         // Test f1=A and (f2=B or f2=C)
@@ -2273,7 +2272,7 @@ public abstract class AbstractRepositoryTest {
         filterList = new RecordFilterList();
         filterList.addFilter(new FieldValueFilter(f1.getName(), "A"));                
         filterList.addFilter(filterList2);
-        scan.setFilter(filterList);
+        scan.setRecordFilter(filterList);
         assertEquals(2, countResults(repository.getScanner(scan)));
 
         // Test f1=F and f2=Z
@@ -2281,7 +2280,7 @@ public abstract class AbstractRepositoryTest {
         filterList = new RecordFilterList();
         filterList.addFilter(new FieldValueFilter(f1.getName(), "F"));
         filterList.addFilter(new FieldValueFilter(f2.getName(), "Z"));
-        scan.setFilter(filterList);
+        scan.setRecordFilter(filterList);
         assertEquals(0, countResults(repository.getScanner(scan)));
 
         // Test f1=F and (f2=Z with filterIfMissing=false)
@@ -2291,10 +2290,69 @@ public abstract class AbstractRepositoryTest {
         FieldValueFilter fvf = new FieldValueFilter(f2.getName(), "Z");
         fvf.setFilterIfMissing(false);
         filterList.addFilter(fvf);
-        scan.setFilter(filterList);
+        scan.setRecordFilter(filterList);
         assertEquals(1, countResults(repository.getScanner(scan)));
     }
 
+    @Test
+    public void testScanWithReturnFields() throws Exception {
+        FieldType f1 = typeManager.createFieldType("STRING", new QName("ReturnFieldsScan", "f1"), Scope.NON_VERSIONED);
+        FieldType f2 = typeManager.createFieldType("STRING", new QName("ReturnFieldsScan", "f2"), Scope.NON_VERSIONED);
+        FieldType f3 = typeManager.createFieldType("STRING", new QName("ReturnFieldsScan", "f3"), Scope.NON_VERSIONED);
+        FieldType f4 = typeManager.createFieldType("STRING", new QName("ReturnFieldsScan", "f4"), Scope.NON_VERSIONED);
+
+        RecordType rt = typeManager.recordTypeBuilder().defaultNamespace("ReturnFieldsScan").name("rt")
+                .fieldEntry().use(f1).add()
+                .fieldEntry().use(f2).add()
+                .fieldEntry().use(f3).add()
+                .fieldEntry().use(f4).add()
+                .create();
+
+        repository.recordBuilder()
+                .recordType(rt.getName())
+                .field(f1.getName(), "A")
+                .field(f2.getName(), "B")
+                .field(f3.getName(), "C")
+                .create();
+
+
+        // Test ALL filter
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rt.getName()));
+        scan.setReturnFields(new ReturnFields(ReturnFields.Type.ALL));
+        Record record = repository.getScanner(scan).next();
+        assertEquals(3, record.getFields().size());
+
+        // Test NONE filter
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rt.getName()));
+        scan.setReturnFields(new ReturnFields(ReturnFields.Type.NONE));
+        record = repository.getScanner(scan).next();
+        assertEquals(0, record.getFields().size());
+
+        // Test ENUM filter
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rt.getName()));
+        scan.setReturnFields(new ReturnFields(f1.getName(), f2.getName()));
+        record = repository.getScanner(scan).next();
+        assertEquals(2, record.getFields().size());
+        assertTrue(record.hasField(f1.getName()));
+        assertTrue(record.hasField(f2.getName()));
+        assertFalse(record.hasField(f3.getName()));
+        
+        // Test scanning on filtered field, should not work
+        scan = new RecordScan();
+        RecordFilterList filterList = new RecordFilterList();
+        filterList.addFilter(new RecordTypeFilter(rt.getName()));
+        filterList.addFilter(new FieldValueFilter(f1.getName(), "A"));
+        scan.setRecordFilter(filterList);
+        // without ReturnFields, we get a result
+        assertNotNull(repository.getScanner(scan).next());
+        // with ReturnFields, we don't get a result
+        scan.setReturnFields(new ReturnFields(f2.getName()));
+        assertNull(repository.getScanner(scan).next());
+    }
+    
     private int countResults(RecordScanner scanner) throws RepositoryException, InterruptedException {
         int i = 0;
         while (scanner.next() != null) {

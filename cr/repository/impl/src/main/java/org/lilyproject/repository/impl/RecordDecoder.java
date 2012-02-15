@@ -1,12 +1,16 @@
 package org.lilyproject.repository.impl;
 
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 import java.util.*;
+
+import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 /**
  * Methods related to decoding HBase Result objects into Lily Record objects.
@@ -17,6 +21,18 @@ import java.util.*;
 public class RecordDecoder {
     public static Map<Scope, byte[]> recordTypeIdColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
     public static Map<Scope, byte[]> recordTypeVersionColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
+    
+    public static List<byte[]> systemFields = new ArrayList<byte[]>();
+    static {
+        systemFields.add(RecordColumn.DELETED.bytes);
+        systemFields.add(RecordColumn.VERSION.bytes);
+        systemFields.add(RecordColumn.NON_VERSIONED_RT_ID.bytes);
+        systemFields.add(RecordColumn.NON_VERSIONED_RT_VERSION.bytes);
+        systemFields.add(RecordColumn.VERSIONED_RT_ID.bytes);
+        systemFields.add(RecordColumn.VERSIONED_RT_VERSION.bytes);
+        systemFields.add(RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
+        systemFields.add(RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
+    }
 
     private TypeManager typeManager;
     private IdGenerator idGenerator;
@@ -59,7 +75,7 @@ public class RecordDecoder {
         Long versionToRead = (requestedVersion == null) ? 1L : requestedVersion;
 
         // Get a map of all fields with their values for each (cell-)version
-        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(LilyHBaseSchema.RecordCf.DATA.bytes);
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes);
         if (mapWithVersions != null) {
             // Iterate over all columns
             for (Map.Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : mapWithVersions.entrySet()) {
@@ -129,8 +145,8 @@ public class RecordDecoder {
      * Extracts the latest record type for a specific scope from the Result.
      */
     public Pair<SchemaId, Long> extractLatestRecordType(Scope scope, Result result) {
-        byte[] idBytes = getLatest(result, LilyHBaseSchema.RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope));
-        byte[] versionBytes = getLatest(result, LilyHBaseSchema.RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope));
+        byte[] idBytes = getLatest(result, RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope));
+        byte[] versionBytes = getLatest(result, RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope));
         if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
             return null; // No record type was found
         return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
@@ -192,7 +208,7 @@ public class RecordDecoder {
     public Pair<SchemaId, Long> extractVersionRecordType(Scope scope, Result result, Long version) {
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> allVersionsMap = result.getMap();
         NavigableMap<byte[], NavigableMap<Long, byte[]>> allColumnsAllVersionsMap = allVersionsMap
-                .get(LilyHBaseSchema.RecordCf.DATA.bytes);
+                .get(RecordCf.DATA.bytes);
 
         byte[] recordTypeIdColumnName = recordTypeIdColumnNames.get(scope);
         byte[] recordTypeVersionColumnName = recordTypeVersionColumnNames.get(scope);
@@ -222,8 +238,20 @@ public class RecordDecoder {
     }
 
     public Long getLatestVersion(Result result) {
-        byte[] latestVersionBytes = getLatest(result, LilyHBaseSchema.RecordCf.DATA.bytes, LilyHBaseSchema.RecordColumn.VERSION.bytes);
+        byte[] latestVersionBytes = getLatest(result, RecordCf.DATA.bytes, LilyHBaseSchema.RecordColumn.VERSION.bytes);
         Long latestVersion = latestVersionBytes != null ? Bytes.toLong(latestVersionBytes) : null;
         return latestVersion;
+    }
+
+    public static void addSystemColumnsToGet(Get get) {
+        for (byte[] field : systemFields) {
+            get.addColumn(RecordCf.DATA.bytes, field);
+        }
+    }
+
+    public static void addSystemColumnsToScan(Scan scan) {
+        for (byte[] field : systemFields) {
+            scan.addColumn(RecordCf.DATA.bytes, field);
+        }
     }
 }

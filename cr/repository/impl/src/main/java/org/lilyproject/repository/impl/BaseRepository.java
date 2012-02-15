@@ -127,6 +127,8 @@ public abstract class BaseRepository implements Repository {
     public RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException {
         Scan hbaseScan = new Scan();
 
+        hbaseScan.setMaxVersions(1);
+
         if (scan.getStartRecordId() != null) {
             hbaseScan.setStartRow(scan.getStartRecordId().toBytes());
         }
@@ -135,15 +137,30 @@ public abstract class BaseRepository implements Repository {
             hbaseScan.setStopRow(scan.getStopRecordId().toBytes());
         }
         
-        if (scan.getFilter() != null) {
-            Filter filter = filterFactory.createHBaseFilter(scan.getFilter(), this, filterFactory);
+        if (scan.getRecordFilter() != null) {
+            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), this, filterFactory);
             hbaseScan.setFilter(filter);
         }
 
-        hbaseScan.setMaxVersions(1);
-
-        // TODO allow to specify subset of fields
-        hbaseScan.addFamily(LilyHBaseSchema.RecordCf.DATA.bytes);
+        ReturnFields returnFields = scan.getReturnFields();
+        if (returnFields != null && returnFields.getType() != ReturnFields.Type.ALL) {
+            RecordDecoder.addSystemColumnsToScan(hbaseScan);            
+            switch (returnFields.getType()) {
+                case ENUM:
+                    for (QName field : returnFields.getFields()) {
+                        FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeByName(field);
+                        hbaseScan.addColumn(LilyHBaseSchema.RecordCf.DATA.bytes, fieldType.getQualifier());
+                    }
+                    break;
+                case NONE:
+                    // nothing to add
+                    break;
+                default:
+                    throw new RuntimeException("Unrecognized ReturnFields type: " + returnFields.getType());
+            }
+        } else {
+            hbaseScan.addFamily(LilyHBaseSchema.RecordCf.DATA.bytes);
+        }
 
         ResultScanner hbaseScanner;
         try {
