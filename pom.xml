@@ -707,14 +707,14 @@
       </snapshots>
     </repository>
 
-<!--    <repository>
+    <repository>
       <id>cdh.repo</id>
       <url>https://repository.cloudera.com/content/groups/cloudera-repos</url>
       <name>Cloudera Repository</name>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </repository> -->
+    </repository>
 
     <repository>
       <!-- This repository is needed for the hadoop-test jar version 0.20.2-with-200-826. -->
