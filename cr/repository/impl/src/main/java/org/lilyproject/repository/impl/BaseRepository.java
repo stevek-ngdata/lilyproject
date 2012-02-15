@@ -3,13 +3,17 @@ package org.lilyproject.repository.impl;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.filter.RecordFilter;
+import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ServiceLoader;
 
 public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
@@ -130,6 +134,11 @@ public abstract class BaseRepository implements Repository {
         if (scan.getStopRecordId() != null) {
             hbaseScan.setStopRow(scan.getStopRecordId().toBytes());
         }
+        
+        if (scan.getFilter() != null) {
+            Filter filter = filterFactory.createHBaseFilter(scan.getFilter(), this, filterFactory);
+            hbaseScan.setFilter(filter);
+        }
 
         hbaseScan.setMaxVersions(1);
 
@@ -147,4 +156,20 @@ public abstract class BaseRepository implements Repository {
 
         return scanner;
     }
+
+    private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
+        private ServiceLoader<HBaseRecordFilterFactory> filterLoader = ServiceLoader.load(HBaseRecordFilterFactory.class);
+
+        @Override
+        public Filter createHBaseFilter(RecordFilter filter, Repository repository, HBaseRecordFilterFactory factory)
+                throws RepositoryException, InterruptedException {
+            for (HBaseRecordFilterFactory filterFactory : filterLoader) {
+                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
+                if (hbaseFilter != null)
+                    return hbaseFilter;
+            }
+            throw new RepositoryException("No implementation available for filter type " + filter.getClass().getName());
+        }
+    };
+
 }
