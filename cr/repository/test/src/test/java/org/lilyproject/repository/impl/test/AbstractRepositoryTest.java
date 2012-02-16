@@ -31,6 +31,7 @@ import org.lilyproject.repository.api.filter.RecordFilterList;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.repo.PrintUtil;
 
 public abstract class AbstractRepositoryTest {
 
@@ -2358,7 +2359,7 @@ public abstract class AbstractRepositoryTest {
         scan.setRecordFilter(filterList);
         // without ReturnFields, we get a result
         assertNotNull(repository.getScanner(scan).next());
-        // with ReturnFields, we don't get a result
+        // with ReturnFields that doesn't include f1, we don't get a result
         scan.setReturnFields(new ReturnFields(f2.getName()));
         assertNull(repository.getScanner(scan).next());
     }
