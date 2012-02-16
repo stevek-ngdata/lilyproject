@@ -2102,9 +2102,19 @@ public abstract class AbstractRepositoryTest {
             assertEquals(record.getField(fieldType1.getName()), fieldValues.get(i));
             i++;
         }
-        
+        scanner.close();        
         assertEquals("Found 25 records", 25, i);
         
+        // Same using for-each loop
+        scanner = repository.getScanner(scan);
+        i = 0;
+        for (Record result : scanner) {
+            assertEquals(result.getField(fieldType1.getName()), fieldValues.get(i));
+            i++;
+        }
+        scanner.close();
+        assertEquals("Found 25 records", 25, i);
+
         // Scan all records, this should give at least 26 results
         scan = new RecordScan();
         scanner = repository.getScanner(scan);

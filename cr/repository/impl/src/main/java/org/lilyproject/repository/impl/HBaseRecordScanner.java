@@ -57,7 +57,41 @@ public class HBaseRecordScanner implements RecordScanner  {
 
     @Override
     public Iterator<Record> iterator() {
-        // TODO
-        return null;
+        return new Iterator<Record>() {
+            private Record next;
+            
+            @Override
+            public boolean hasNext() {
+                if (next != null) {
+                    return true;
+                } else {
+                    try {
+                        next = HBaseRecordScanner.this.next();
+                    } catch (RepositoryException e) {
+                        throw new RuntimeException(e);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(e);
+                    }
+                    return next != null;
+                }
+            }
+
+            @Override
+            public Record next() {
+                if (!hasNext()) {
+                    return null;
+                }
+                
+                Record result = next;
+                next = null;
+                return result;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }
