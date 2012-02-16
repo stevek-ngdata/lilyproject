@@ -135,6 +135,10 @@ public class LilyProxy {
         lilyServerProxy = new LilyServerProxy(lilyServerMode, this.clearData);
     }
 
+    public Mode getMode() {
+        return mode;
+    }
+
     public void start() throws Exception {
         start(null);
     }
