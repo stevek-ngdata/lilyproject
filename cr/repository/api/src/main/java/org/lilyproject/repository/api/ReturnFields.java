@@ -3,6 +3,7 @@ package org.lilyproject.repository.api;
 import org.lilyproject.util.ArgumentValidator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,9 +43,7 @@ public class ReturnFields {
     }
     
     public ReturnFields(QName... fields) {
-        this.fields = new ArrayList<QName>(fields.length);
-        Collections.addAll(this.fields, fields);
-        this.fields = Collections.unmodifiableList(this.fields);
+        this.fields = Collections.unmodifiableList(Arrays.asList(fields));
         this.type = Type.ENUM;
     }
 
