@@ -234,7 +234,7 @@ public class LilyClient implements Closeable {
         }
     }
 
-    private static Configuration getHBaseConfiguration(ZooKeeperItf zk) {
+    public static Configuration getHBaseConfiguration(ZooKeeperItf zk) {
         try {
             Configuration configuration = HBaseConfiguration.create();
             byte[] data = zk.getData(hbaseConfigPath, false, new Stat());

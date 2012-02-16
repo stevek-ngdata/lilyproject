@@ -129,11 +129,15 @@ public abstract class BaseRepository implements Repository {
 
         hbaseScan.setMaxVersions(1);
 
-        if (scan.getStartRecordId() != null) {
+        if (scan.getRawStartRecordId() != null) {
+            hbaseScan.setStartRow(scan.getRawStartRecordId());
+        } else if (scan.getStartRecordId() != null) {
             hbaseScan.setStartRow(scan.getStartRecordId().toBytes());
         }
 
-        if (scan.getStopRecordId() != null) {
+        if (scan.getRawStopRecordId() != null) {
+            hbaseScan.setStopRow(scan.getRawStopRecordId());
+        } else if (scan.getStopRecordId() != null) {
             hbaseScan.setStopRow(scan.getStopRecordId().toBytes());
         }
         
@@ -168,6 +172,8 @@ public abstract class BaseRepository implements Repository {
         } catch (IOException e) {
             throw new RecordException("Error creating scanner", e);
         }
+
+        // TODO allow to set caching related options (cache rows / cache blocks)
 
         HBaseRecordScanner scanner = new HBaseRecordScanner(hbaseScanner, recdec);
 

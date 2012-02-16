@@ -85,6 +85,7 @@
     <module>cr/repository-api-tutorial</module>
     <module>cr/server-test-fw</module>
     <module>cr/standalone-launcher</module>
+    <module>cr/mapreduce</module>
 
     <module>global/hbaseindex</module>
     <module>global/hbaseindex-perftest</module>
@@ -400,6 +401,16 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-linkindex-cli</artifactId>
+        <version>1.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-mapreduce</artifactId>
+        <version>1.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-mapreduce-test-jobs</artifactId>
         <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>

@@ -5,6 +5,8 @@ import org.lilyproject.repository.api.filter.RecordFilter;
 public class RecordScan {
     private RecordId startRecordId;
     private RecordId stopRecordId;
+    private byte[] rawStartRecordId;
+    private byte[] rawStopRecordId;
     private RecordFilter recordFilter;
     private ReturnFields returnFields;
 
@@ -25,6 +27,34 @@ public class RecordScan {
      */
     public void setStopRecordId(RecordId stopRecordId) {
         this.stopRecordId = stopRecordId;
+    }
+
+    /**
+     * <b>EXPERT ONLY!</b>
+     */
+    public byte[] getRawStartRecordId() {
+        return rawStartRecordId;
+    }
+
+    /**
+     * <b>EXPERT ONLY!</b>
+     */
+    public void setRawStartRecordId(byte[] rawStartRecordId) {
+        this.rawStartRecordId = rawStartRecordId;
+    }
+
+    /**
+     * <b>EXPERT ONLY!</b>
+     */
+    public byte[] getRawStopRecordId() {
+        return rawStopRecordId;
+    }
+
+    /**
+     * <b>EXPERT ONLY!</b>
+     */
+    public void setRawStopRecordId(byte[] rawStopRecordId) {
+        this.rawStopRecordId = rawStopRecordId;
     }
 
     public RecordFilter getRecordFilter() {
