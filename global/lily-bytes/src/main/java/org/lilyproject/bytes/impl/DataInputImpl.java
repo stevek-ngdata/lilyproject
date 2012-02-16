@@ -88,7 +88,11 @@ public class DataInputImpl implements DataInput {
      */
     @Override
     public String readUTF() {
-        int utflen = readInt();
+        return readUTF(readInt());
+    }
+
+    @Override
+    public String readUTF(int utflen) {
         if (utflen == -1)
             return null;
         if (utflen == 0)
@@ -103,7 +107,7 @@ public class DataInputImpl implements DataInput {
         int chararr_count = 0; // Position within the char array
         int b; // byte read
         int ch; // character read
-        
+
         // Start with a loop expecting each character to be encoded by one byte
         // This will be most likely the case for most strings.
         while (count < endPos) {
@@ -136,7 +140,7 @@ public class DataInputImpl implements DataInput {
         // The number of chars produced may be less than utflen
         return new String(chararr, 0, chararr_count);
     }
-    
+
     private int putChar(int chararr_count, int ch) {
         if (ch <= UNI_MAX_BMP) {
             // target is a character <= 0xFFFF

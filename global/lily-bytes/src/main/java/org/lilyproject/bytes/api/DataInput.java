@@ -35,6 +35,11 @@ public interface DataInput {
     String readUTF();
 
     /**
+     * Reads a string from the <code>DataInput</code>
+     */
+    String readUTF(int length);
+
+    /**
      * Reads a boolean from the <code>DataInput</code>
      */
     boolean readBoolean();
