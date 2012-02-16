@@ -66,6 +66,9 @@ public class IdGeneratorImplTest {
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId newRecordId = idGenerator.newRecordId("aUserId");
         String userRecordIDString = "USER.aUserId";
+
+        // Check that the encoded bytes have the expected length
+        assertEquals("aUserId".length() + 1, newRecordId.toBytes().length);
         
         assertEquals(newRecordId, idGenerator.fromString(userRecordIDString));
         

@@ -40,7 +40,7 @@ public class UserRecordId implements RecordId {
     }
 
     protected UserRecordId(DataInput dataInput, IdGeneratorImpl idGenerator) {
-        basicRecordIdString = dataInput.readUTF();
+        basicRecordIdString = dataInput.readUTF(dataInput.getSize());
         IdGeneratorImpl.checkIdString(basicRecordIdString, "record id");
         this.idGenerator = idGenerator;
     }
@@ -74,7 +74,7 @@ public class UserRecordId implements RecordId {
      */
 
     public void writeBasicBytes(DataOutput dataOutput) {
-        dataOutput.writeUTF(basicRecordIdString);
+        dataOutput.writeUTF(basicRecordIdString, false);
     }
     
     protected String getBasicString() {
