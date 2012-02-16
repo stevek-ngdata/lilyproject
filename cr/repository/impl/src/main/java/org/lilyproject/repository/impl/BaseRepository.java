@@ -4,6 +4,7 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
@@ -38,13 +39,13 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public Record newRecord() {
-        return new RecordImpl();
+        return recdec.newRecord();
     }
 
     @Override
     public Record newRecord(RecordId recordId) {
         ArgumentValidator.notNull(recordId, "recordId");
-        return new RecordImpl(recordId);
+        return recdec.newRecord(recordId);
     }
 
     @Override

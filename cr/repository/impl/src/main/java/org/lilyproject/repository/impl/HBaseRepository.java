@@ -42,7 +42,6 @@ import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.util.ArgumentValidator;
-import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
@@ -52,8 +51,8 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
 import org.lilyproject.util.repo.RowLogContext;
 import org.lilyproject.repository.impl.RecordDecoder.ReadContext;
-import static org.lilyproject.repository.impl.RecordDecoder.recordTypeIdColumnNames;
-import static org.lilyproject.repository.impl.RecordDecoder.recordTypeVersionColumnNames;
+import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
+import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
 
 /**
  * Repository implementation.
@@ -535,19 +534,19 @@ public class HBaseRepository extends BaseRepository {
             // Only update the recordTypeNames and versions if they have indeed changed
             QName originalScopeRecordTypeName = originalRecord.getRecordTypeName(scope);
             if (originalScopeRecordTypeName == null) {
-                put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField,
+                put.add(RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(scope), versionOfRTField,
                         recordType.getId().getBytes());
-                put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField,
+                put.add(RecordCf.DATA.bytes, RECORD_TYPE_VERSION_QUALIFIERS.get(scope), versionOfRTField,
                         Bytes.toBytes(recordType.getVersion()));
             } else {
                 RecordType originalScopeRecordType = typeManager.getRecordTypeByName(originalScopeRecordTypeName,
                         originalRecord.getRecordTypeVersion(scope));
                 if (!recordType.getId().equals(originalScopeRecordType.getId())) {
-                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope), versionOfRTField,
+                    put.add(RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(scope), versionOfRTField,
                             recordType.getId().getBytes());
                 }
                 if (!recordType.getVersion().equals(originalScopeRecordType.getVersion())) {
-                    put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope), versionOfRTField,
+                    put.add(RecordCf.DATA.bytes, RECORD_TYPE_VERSION_QUALIFIERS.get(scope), versionOfRTField,
                             Bytes.toBytes(recordType.getVersion()));
                 }
             }
@@ -573,7 +572,7 @@ public class HBaseRepository extends BaseRepository {
             Map<QName, Object> originalFields,
             Map<QName, Object> originalNextFields, Long version, Put put, RecordEvent recordEvent,
             Set<BlobReference> referencedBlobs, Set<BlobReference> unReferencedBlobs, boolean mutableUpdate,
-            FieldTypes fieldTypes) throws InterruptedException, TypeException, BlobException, RecordException, RepositoryException {
+            FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
         Set<Scope> changedScopes = EnumSet.noneOf(Scope.class);
         for (Entry<QName, Object> field : fields.entrySet()) {
             QName fieldName = field.getKey();
@@ -625,8 +624,7 @@ public class HBaseRepository extends BaseRepository {
     }
     
     private byte[] encodeFieldValue(Record parentRecord, FieldType fieldType, Object fieldValue)
-            throws FieldTypeNotFoundException,
-            RecordTypeNotFoundException, RecordException, RepositoryException, InterruptedException {
+            throws RepositoryException, InterruptedException {
         if (isDeleteMarker(fieldValue))
             return DELETE_MARKER;
         ValueType valueType = fieldType.getValueType();
@@ -720,23 +718,23 @@ public class HBaseRepository extends BaseRepository {
                 // If the record type changed, update it on the record table
                 QName originalMutableScopeRecordTypeName = originalRecord.getRecordTypeName(mutableScope);
                 if (originalMutableScopeRecordTypeName == null) { // There was no initial mutable record type yet
-                    put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version, recordType.getId().getBytes());
-                    put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(mutableScope), version, Bytes.toBytes(recordType.getVersion()));
+                    put.add(RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(mutableScope), version, recordType.getId().getBytes());
+                    put.add(RecordCf.DATA.bytes, RECORD_TYPE_VERSION_QUALIFIERS.get(mutableScope), version, Bytes.toBytes(recordType.getVersion()));
                 } else {
                     RecordType originalMutableScopeRecordType = typeManager.getRecordTypeByName(originalMutableScopeRecordTypeName, originalRecord.getRecordTypeVersion(mutableScope));
                     if (!recordType.getId().equals(originalMutableScopeRecordType.getId())) {
                         // If the next record version had the same record type name, copy the original value to that one
                         if (originalNextRecord != null && originalMutableScopeRecordType.getName().equals(originalNextRecord.getRecordTypeName(mutableScope))) {
-                            put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version+1, originalMutableScopeRecordType.getId().getBytes());
+                            put.add(RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(mutableScope), version+1, originalMutableScopeRecordType.getId().getBytes());
                         }
-                        put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version, recordType.getId().getBytes());
+                        put.add(RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(mutableScope), version, recordType.getId().getBytes());
                     }
                     if (!recordType.getVersion().equals(originalMutableScopeRecordType.getVersion())) {
                         // If the next record version had the same record type version, copy the original value to that one
                         if (originalNextRecord != null && originalMutableScopeRecordType.getVersion().equals(originalNextRecord.getRecordTypeVersion(mutableScope))) {
-                            put.add(RecordCf.DATA.bytes, recordTypeIdColumnNames.get(mutableScope), version+1, Bytes.toBytes(originalMutableScopeRecordType.getVersion()));
+                            put.add(RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(mutableScope), version+1, Bytes.toBytes(originalMutableScopeRecordType.getVersion()));
                         }
-                        put.add(RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(mutableScope), version, Bytes.toBytes(recordType.getVersion()));
+                        put.add(RecordCf.DATA.bytes, RECORD_TYPE_VERSION_QUALIFIERS.get(mutableScope), version, Bytes.toBytes(recordType.getVersion()));
                     }
                 }
                 
@@ -801,7 +799,7 @@ public class HBaseRepository extends BaseRepository {
     private void copyValueToNextVersionIfNeeded(Record parentRecord, Long version, Put put,
             Map<QName, Object> originalNextFields,
             QName fieldName, Object originalValue, FieldTypes fieldTypes)
-            throws RecordException, TypeException, RepositoryException, InterruptedException {
+            throws RepositoryException, InterruptedException {
         Object originalNextValue = originalNextFields.get(fieldName);
         if ((originalValue == null && originalNextValue == null) || originalValue.equals(originalNextValue)) {
             FieldTypeImpl fieldType = (FieldTypeImpl)fieldTypes.getFieldType(fieldName);
@@ -904,7 +902,7 @@ public class HBaseRepository extends BaseRepository {
         for (long version = fromVersion; version <= toVersion; version++) {
             versionsToRead.add(version);
         }
-        return getRecordsFromRowResult(recordId, versionsToRead, result, fieldTypes);
+        return recdec.decodeRecords(recordId, versionsToRead, result, fieldTypes);
     }
     
     @Override
@@ -940,7 +938,7 @@ public class HBaseRepository extends BaseRepository {
                 break;
             validVersions.add(version);
         }
-        return getRecordsFromRowResult(recordId, validVersions, result, fieldTypes);
+        return recdec.decodeRecords(recordId, validVersions, result, fieldTypes);
     }
     
     @Override
@@ -984,7 +982,7 @@ public class HBaseRepository extends BaseRepository {
                     throw new VersionNotFoundException(recordId, requestedVersion);
                 }
             }
-            return recdec.getRecordFromRowResult(recordId, requestedVersion, readContext, result, fieldTypes);
+            return recdec.decodeRecord(recordId, requestedVersion, readContext, result, fieldTypes);
         } finally {
             metrics.report(Action.READ, System.currentTimeMillis() - before);
         }
@@ -1003,7 +1001,7 @@ public class HBaseRepository extends BaseRepository {
         
             for (Entry<RecordId, Result> entry : results.entrySet()) {
                 Long version = recdec.getLatestVersion(entry.getValue());
-                records.add(recdec.getRecordFromRowResult(entry.getKey(), version, null, entry.getValue(), fieldTypes));
+                records.add(recdec.decodeRecord(entry.getKey(), version, null, entry.getValue(), fieldTypes));
             }
             return records;
         } finally {
@@ -1043,7 +1041,7 @@ public class HBaseRepository extends BaseRepository {
         return result;
     }
 
- // Retrieves the row from the table and check if it exists and has not been flagged as deleted
+    // Retrieves the row from the table and check if it exists and has not been flagged as deleted
     private Map<RecordId, Result> getRows(List<RecordId> recordIds, List<FieldType> fields)
             throws RecordException {
         Map<RecordId, Result> results = new HashMap<RecordId, Result>();
@@ -1062,13 +1060,13 @@ public class HBaseRepository extends BaseRepository {
             int i = 0;
             for (Result result : recordTable.get(gets)) {
                 if (result == null || result.isEmpty()) {
-                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException
+                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException)
                     continue;
                 }
                 // Check if the record was deleted
                 byte[] deleted = recdec.getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
                 if ((deleted == null) || (Bytes.toBoolean(deleted))) {
-                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException
+                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException)
                     continue;
                 }
                 results.put(recordIds.get(i++), result);
@@ -1078,83 +1076,6 @@ public class HBaseRepository extends BaseRepository {
                     + "' from HBase table", e);
         }
         return results;
-    }
-
-    /**
-     *  Gets the requested version of the record (fields and recordTypes) from the Result object.
-     *  This method is optimized for reading multiple versions.
-     */
-    private List<Record> getRecordsFromRowResult(RecordId recordId, List<Long> requestedVersions, Result result,
-            FieldTypes fieldTypes) throws InterruptedException, RepositoryException{
-        Map<Long, Record> records = new HashMap<Long, Record>(requestedVersions.size());
-        Map<Long, Set<Scope>> scopes = new HashMap<Long, Set<Scope>>(requestedVersions.size());
-        for (Long requestedVersion : requestedVersions) {
-            Record record = newRecord(recordId);
-            record.setVersion(requestedVersion);
-            records.put(requestedVersion, record);
-            scopes.put(requestedVersion, EnumSet.noneOf(Scope.class));
-        }
-
-        // Get a map of all fields with their values for each (cell-)version
-        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes); 
-        if (mapWithVersions != null) {
-            
-            // Iterate over all columns
-            for (Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : mapWithVersions.entrySet()) {
-            
-                // Check if the retrieved column is from a data field, and not a system field
-                byte[] key = columnWithAllVersions.getKey();
-                if (key[0] == RecordColumn.DATA_PREFIX) {
-                    NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
-                
-                    // Keep the last decoded field value, to avoid decoding the same value again and again if unchanged
-                    // between versions (sparse storage). Note that lastDecodedField can be null, in case of a field
-                    // deletion marker
-                    Long lastDecodedFieldVersion = null;
-                    Pair<FieldType, Object> lastDecodedField = null;
-                    for (Long versionToRead : requestedVersions) {
-                        Record record = records.get(versionToRead);
-                        // Get the entry for the version (can be a cell with a lower version number if the field was
-                        // not changed)
-                        Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(versionToRead);
-                        if (ceilingEntry != null) {
-                            if (lastDecodedFieldVersion == null ||
-                                    !lastDecodedFieldVersion.equals(ceilingEntry.getKey())) {
-                                // Not yet decoded, do it now
-                                lastDecodedFieldVersion = ceilingEntry.getKey();
-                                lastDecodedField = recdec.extractField(key, ceilingEntry.getValue(), null, fieldTypes);
-                            }
-                            if (lastDecodedField != null) {
-                                record.setField(lastDecodedField.getV1().getName(), lastDecodedField.getV2());
-                                scopes.get(versionToRead).add(lastDecodedField.getV1().getScope());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Add the record types to the records
-        for (Entry<Long, Record> recordEntry : records.entrySet()) {
-            Set<Scope> scopesForVersion = scopes.get(recordEntry.getKey());
-            
-            // We're only adding the record types if any fields were read.
-            if (!scopesForVersion.isEmpty()) {
-                // Get the record type for each scope 
-
-                // At least the non-versioned record type should be read since that is also the record type of the whole record 
-                scopesForVersion.add(Scope.NON_VERSIONED); 
-                for (Scope scope : scopesForVersion) {
-                    Pair<SchemaId, Long> recordTypePair = recdec.extractVersionRecordType(scope, result, recordEntry.getKey());
-                    if (recordTypePair != null) {
-                        RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
-                        recordEntry.getValue().setRecordType(scope, recordType.getName(), recordType.getVersion());
-                    }
-                }
-            }
-        }
-        
-        return new ArrayList<Record>(records.values());
     }
 
     private void addFieldsToGet(Get get, List<FieldType> fields) {

@@ -15,36 +15,37 @@ import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 /**
  * Methods related to decoding HBase Result objects into Lily Record objects.
  * 
- * <p>The methods in this class assume they get non-deleted records, thus where the
+ * <p>The methods in this class assume they are supplied with non-deleted records, thus where the
  * {@link LilyHBaseSchema.RecordColumn#DELETED} flag is false.</p>
  */
 public class RecordDecoder {
-    public static Map<Scope, byte[]> recordTypeIdColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
-    public static Map<Scope, byte[]> recordTypeVersionColumnNames = new EnumMap<Scope, byte[]>(Scope.class);
-    
-    public static List<byte[]> systemFields = new ArrayList<byte[]>();
+    public static Map<Scope, byte[]> RECORD_TYPE_ID_QUALIFIERS = new EnumMap<Scope, byte[]>(Scope.class);
+    public static Map<Scope, byte[]> RECORD_TYPE_VERSION_QUALIFIERS = new EnumMap<Scope, byte[]>(Scope.class);
+
     static {
-        systemFields.add(RecordColumn.DELETED.bytes);
-        systemFields.add(RecordColumn.VERSION.bytes);
-        systemFields.add(RecordColumn.NON_VERSIONED_RT_ID.bytes);
-        systemFields.add(RecordColumn.NON_VERSIONED_RT_VERSION.bytes);
-        systemFields.add(RecordColumn.VERSIONED_RT_ID.bytes);
-        systemFields.add(RecordColumn.VERSIONED_RT_VERSION.bytes);
-        systemFields.add(RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
-        systemFields.add(RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
+        RECORD_TYPE_ID_QUALIFIERS.put(Scope.NON_VERSIONED, RecordColumn.NON_VERSIONED_RT_ID.bytes);
+        RECORD_TYPE_ID_QUALIFIERS.put(Scope.VERSIONED, RecordColumn.VERSIONED_RT_ID.bytes);
+        RECORD_TYPE_ID_QUALIFIERS.put(Scope.VERSIONED_MUTABLE, RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
+
+        RECORD_TYPE_VERSION_QUALIFIERS.put(Scope.NON_VERSIONED, RecordColumn.NON_VERSIONED_RT_VERSION.bytes);
+        RECORD_TYPE_VERSION_QUALIFIERS.put(Scope.VERSIONED, RecordColumn.VERSIONED_RT_VERSION.bytes);
+        RECORD_TYPE_VERSION_QUALIFIERS.put(Scope.VERSIONED_MUTABLE, RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
+    }
+
+    public static List<byte[]> SYSTEM_FIELDS = new ArrayList<byte[]>();
+    static {
+        SYSTEM_FIELDS.add(RecordColumn.DELETED.bytes);
+        SYSTEM_FIELDS.add(RecordColumn.VERSION.bytes);
+        SYSTEM_FIELDS.add(RecordColumn.NON_VERSIONED_RT_ID.bytes);
+        SYSTEM_FIELDS.add(RecordColumn.NON_VERSIONED_RT_VERSION.bytes);
+        SYSTEM_FIELDS.add(RecordColumn.VERSIONED_RT_ID.bytes);
+        SYSTEM_FIELDS.add(RecordColumn.VERSIONED_RT_VERSION.bytes);
+        SYSTEM_FIELDS.add(RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
+        SYSTEM_FIELDS.add(RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
     }
 
     private TypeManager typeManager;
     private IdGenerator idGenerator;
-
-    static {
-        recordTypeIdColumnNames.put(Scope.NON_VERSIONED, LilyHBaseSchema.RecordColumn.NON_VERSIONED_RT_ID.bytes);
-        recordTypeIdColumnNames.put(Scope.VERSIONED, LilyHBaseSchema.RecordColumn.VERSIONED_RT_ID.bytes);
-        recordTypeIdColumnNames.put(Scope.VERSIONED_MUTABLE, LilyHBaseSchema.RecordColumn.VERSIONED_MUTABLE_RT_ID.bytes);
-        recordTypeVersionColumnNames.put(Scope.NON_VERSIONED, LilyHBaseSchema.RecordColumn.NON_VERSIONED_RT_VERSION.bytes);
-        recordTypeVersionColumnNames.put(Scope.VERSIONED, LilyHBaseSchema.RecordColumn.VERSIONED_RT_VERSION.bytes);
-        recordTypeVersionColumnNames.put(Scope.VERSIONED_MUTABLE, LilyHBaseSchema.RecordColumn.VERSIONED_MUTABLE_RT_VERSION.bytes);
-    }
 
     public RecordDecoder(TypeManager typeManager, IdGenerator idGenerator) {
         this.typeManager = typeManager;
@@ -52,21 +53,21 @@ public class RecordDecoder {
     }
 
     /**
-     * Decode the given record object assuming it contains the state of the latest version of the record
-     * (if the record has any versions, otherwise it only contains non-versioned fields).
+     * Decode the given HBase result into a Lily Record assuming it contains the state of the latest version of
+     * the record (if the record has any versions, otherwise it only contains non-versioned fields).
      */
     public Record decodeRecord(Result result) throws InterruptedException, RepositoryException {
         Long latestVersion = getLatestVersion(result);
         RecordId recordId = idGenerator.fromBytes(result.getRow());
-        return getRecordFromRowResult(recordId, latestVersion, null, result, typeManager.getFieldTypesSnapshot());
+        return decodeRecord(recordId, latestVersion, null, result, typeManager.getFieldTypesSnapshot());
     }
 
     /**
      *  Gets the requested version of the record (fields and recordTypes) from the Result object.
      */
-    public Record getRecordFromRowResult(RecordId recordId, Long requestedVersion, ReadContext readContext,
+    public Record decodeRecord(RecordId recordId, Long requestedVersion, ReadContext readContext,
             Result result, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
-        Record record = new RecordImpl(recordId);
+        Record record = newRecord(recordId);
         record.setVersion(requestedVersion);
         Set<Scope> scopes = EnumSet.noneOf(Scope.class); // Set of scopes for which a field has been read
 
@@ -127,7 +128,92 @@ public class RecordDecoder {
         return record;
     }
 
-    public Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
+    /**
+     *  Gets the requested version of the record (fields and recordTypes) from the Result object.
+     *  This method is optimized for reading multiple versions.
+     */
+    public List<Record> decodeRecords(RecordId recordId, List<Long> requestedVersions, Result result,
+            FieldTypes fieldTypes) throws InterruptedException, RepositoryException{
+        Map<Long, Record> records = new HashMap<Long, Record>(requestedVersions.size());
+        Map<Long, Set<Scope>> scopes = new HashMap<Long, Set<Scope>>(requestedVersions.size());
+        for (Long requestedVersion : requestedVersions) {
+            Record record = newRecord(recordId);
+            record.setVersion(requestedVersion);
+            records.put(requestedVersion, record);
+            scopes.put(requestedVersion, EnumSet.noneOf(Scope.class));
+        }
+
+        // Get a map of all fields with their values for each (cell-)version
+        NavigableMap<byte[], NavigableMap<Long, byte[]>> mapWithVersions = result.getMap().get(RecordCf.DATA.bytes);
+        if (mapWithVersions != null) {
+
+            // Iterate over all columns
+            for (Map.Entry<byte[], NavigableMap<Long, byte[]>> columnWithAllVersions : mapWithVersions.entrySet()) {
+
+                // Check if the retrieved column is from a data field, and not a system field
+                byte[] key = columnWithAllVersions.getKey();
+                if (key[0] == RecordColumn.DATA_PREFIX) {
+                    NavigableMap<Long, byte[]> allValueVersions = columnWithAllVersions.getValue();
+
+                    // Keep the last decoded field value, to avoid decoding the same value again and again if unchanged
+                    // between versions (sparse storage). Note that lastDecodedField can be null, in case of a field
+                    // deletion marker
+                    Long lastDecodedFieldVersion = null;
+                    Pair<FieldType, Object> lastDecodedField = null;
+                    for (Long versionToRead : requestedVersions) {
+                        Record record = records.get(versionToRead);
+                        // Get the entry for the version (can be a cell with a lower version number if the field was
+                        // not changed)
+                        Map.Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(versionToRead);
+                        if (ceilingEntry != null) {
+                            if (lastDecodedFieldVersion == null ||
+                                    !lastDecodedFieldVersion.equals(ceilingEntry.getKey())) {
+                                // Not yet decoded, do it now
+                                lastDecodedFieldVersion = ceilingEntry.getKey();
+                                lastDecodedField = extractField(key, ceilingEntry.getValue(), null, fieldTypes);
+                            }
+                            if (lastDecodedField != null) {
+                                record.setField(lastDecodedField.getV1().getName(), lastDecodedField.getV2());
+                                scopes.get(versionToRead).add(lastDecodedField.getV1().getScope());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Add the record types to the records
+        for (Map.Entry<Long, Record> recordEntry : records.entrySet()) {
+            Set<Scope> scopesForVersion = scopes.get(recordEntry.getKey());
+
+            // We're only adding the record types if any fields were read.
+            if (!scopesForVersion.isEmpty()) {
+                // Get the record type for each scope 
+
+                // At least the non-versioned record type should be read since that is also the record type of the whole record 
+                scopesForVersion.add(Scope.NON_VERSIONED);
+                for (Scope scope : scopesForVersion) {
+                    Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, recordEntry.getKey());
+                    if (recordTypePair != null) {
+                        RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                        recordEntry.getValue().setRecordType(scope, recordType.getName(), recordType.getVersion());
+                    }
+                }
+            }
+        }
+
+        return new ArrayList<Record>(records.values());
+    }
+
+    public Record newRecord() {
+        return new RecordImpl();
+    }
+
+    public Record newRecord(RecordId recordId) {
+        return new RecordImpl(recordId);
+    }
+
+    private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
             FieldTypes fieldTypes) throws RepositoryException, InterruptedException {
         byte prefix = prefixedValue[0];
         if (LilyHBaseSchema.DELETE_FLAG == prefix) {
@@ -144,9 +230,9 @@ public class RecordDecoder {
     /**
      * Extracts the latest record type for a specific scope from the Result.
      */
-    public Pair<SchemaId, Long> extractLatestRecordType(Scope scope, Result result) {
-        byte[] idBytes = getLatest(result, RecordCf.DATA.bytes, recordTypeIdColumnNames.get(scope));
-        byte[] versionBytes = getLatest(result, RecordCf.DATA.bytes, recordTypeVersionColumnNames.get(scope));
+    private Pair<SchemaId, Long> extractLatestRecordType(Scope scope, Result result) {
+        byte[] idBytes = getLatest(result, RecordCf.DATA.bytes, RECORD_TYPE_ID_QUALIFIERS.get(scope));
+        byte[] versionBytes = getLatest(result, RecordCf.DATA.bytes, RECORD_TYPE_VERSION_QUALIFIERS.get(scope));
         if ((idBytes == null || idBytes.length == 0) || (versionBytes == null || versionBytes.length == 0))
             return null; // No record type was found
         return new Pair<SchemaId, Long>(new SchemaIdImpl(idBytes), Bytes.toLong(versionBytes));
@@ -175,14 +261,17 @@ public class RecordDecoder {
         return entry == null ? null : entry.getValue();
     }
 
+    /**
+     * Collects the FieldType and RecordType objects used during reading a record.
+     * Allows to reliably map QName's to types even if these would have been renamed during the reading
+     * operation.
+     */
     public static class ReadContext {
         private Map<SchemaId, FieldType> fieldTypes = new HashMap<SchemaId, FieldType>();
         private Map<Scope, RecordType> recordTypes = new EnumMap<Scope, RecordType>(Scope.class);
-        private Set<Scope> scopes = EnumSet.noneOf(Scope.class);
 
         public void addFieldType(FieldType fieldType) {
             fieldTypes.put(fieldType.getId(), fieldType);
-            scopes.add(fieldType.getScope());
         }
 
         public void setRecordTypeId(Scope scope, RecordType recordType) {
@@ -196,10 +285,6 @@ public class RecordDecoder {
         public Map<SchemaId, FieldType> getFieldTypes() {
             return fieldTypes;
         }
-
-        public Set<Scope> getScopes() {
-            return scopes;
-        }
     }
 
     /**
@@ -210,8 +295,8 @@ public class RecordDecoder {
         NavigableMap<byte[], NavigableMap<Long, byte[]>> allColumnsAllVersionsMap = allVersionsMap
                 .get(RecordCf.DATA.bytes);
 
-        byte[] recordTypeIdColumnName = recordTypeIdColumnNames.get(scope);
-        byte[] recordTypeVersionColumnName = recordTypeVersionColumnNames.get(scope);
+        byte[] recordTypeIdColumnName = RECORD_TYPE_ID_QUALIFIERS.get(scope);
+        byte[] recordTypeVersionColumnName = RECORD_TYPE_VERSION_QUALIFIERS.get(scope);
         // Get recordTypeId
         Map.Entry<Long, byte[]> idCeilingEntry = null;
         NavigableMap<Long, byte[]> recordTypeIdMap = allColumnsAllVersionsMap.get(recordTypeIdColumnName);
@@ -244,13 +329,13 @@ public class RecordDecoder {
     }
 
     public static void addSystemColumnsToGet(Get get) {
-        for (byte[] field : systemFields) {
+        for (byte[] field : SYSTEM_FIELDS) {
             get.addColumn(RecordCf.DATA.bytes, field);
         }
     }
 
     public static void addSystemColumnsToScan(Scan scan) {
-        for (byte[] field : systemFields) {
+        for (byte[] field : SYSTEM_FIELDS) {
             scan.addColumn(RecordCf.DATA.bytes, field);
         }
     }
