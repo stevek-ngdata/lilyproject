@@ -2,6 +2,11 @@ package org.lilyproject.repository.api;
 
 import org.lilyproject.repository.api.filter.RecordFilter;
 
+/**
+ * Defines the parameters of a scan to be performed over the records.
+ * 
+ * <p>See {@link Repository#getScanner(RecordScan)}</p>
+ */
 public class RecordScan {
     private RecordId startRecordId;
     private RecordId stopRecordId;
