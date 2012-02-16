@@ -3,6 +3,8 @@ package org.lilyproject.mapreduce.test;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -21,6 +23,7 @@ import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.mapreduce.LilyInputFormat;
 import org.lilyproject.mapreduce.testjobs.Test1Mapper;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import java.io.File;
@@ -34,9 +37,24 @@ public class MapReduceTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        lilyProxy = new LilyProxy();
+        
         //
         // Make multiple record table splits, so that our MR job will have multiple map tasks
         //
+        
+        if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
+            // The record table will likely already exist and not be recreated, hence we won't be able to change
+            // the number of regions. Therefore, drop the table.
+            Configuration conf = HBaseConfiguration.create();
+            conf.set("hbase.zookeeper.quorum", "localhost");
+            HBaseAdmin hbaseAdmin = new HBaseAdmin(conf);
+            if (hbaseAdmin.tableExists("record")) {
+                hbaseAdmin.disableTable("record");
+                hbaseAdmin.deleteTable("record");
+            }
+            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
+        }
 
         // Temp dir where we will create conf dir
         tmpDir = TestHomeUtil.createTestHome("lily-mapreduce-test-");
@@ -58,20 +76,33 @@ public class MapReduceTest {
         if (lilyProxy != null)
             lilyProxy.stop();
         TestHomeUtil.cleanupTestHome(tmpDir);
+
+        if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
+            // We're in connect mode, drop the record table again so that the remainder of the tests
+            // don't have the overhead of the extra splits
+            Configuration conf = HBaseConfiguration.create();
+            conf.set("hbase.zookeeper.quorum", "localhost");
+            HBaseAdmin hbaseAdmin = new HBaseAdmin(conf);
+            if (hbaseAdmin.tableExists("record")) {
+                hbaseAdmin.disableTable("record");
+                hbaseAdmin.deleteTable("record");
+            }
+            HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
+        }
     }
 
     private static File setupConfDirectory(File tmpDir) throws Exception {
-        File confDir = new File(tmpDir + "/conf");
+        File confDir = new File(tmpDir, "conf");
 
-        File repoConfDir = new File(confDir, "general");
-        FileUtils.forceMkdir(repoConfDir);
+        File generalConfDir = new File(confDir, "general");
+        FileUtils.forceMkdir(generalConfDir);
 
         // Write configuration to activate the decorator
-        String repositoryXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow'>" +
+        String tablesXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow'>" +
                 "<table name='record'><splits><regionCount>5</regionCount></splits></table>" +
                 "</tables>";
 
-        FileUtils.writeStringToFile(new File(repoConfDir, "tables.xml"), repositoryXml, "UTF-8");
+        FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
 
         return confDir;
     }
