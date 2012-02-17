@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
+import com.google.common.collect.ImmutableMap;
 import org.easymock.IMocksControl;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.api.filter.FieldValueFilter;
 import org.lilyproject.repository.api.filter.RecordFilterList;
+import org.lilyproject.repository.api.filter.RecordIdPrefixFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -2369,7 +2371,90 @@ public abstract class AbstractRepositoryTest {
         //      will work always, it sometimes will work? Needs more investigation.
         //assertNull(repository.getScanner(scan).next());
     }
-    
+
+    @Test
+    public void testPrefixScans() throws Exception {
+        repository.recordBuilder()
+                .id("PrefixScanTest")
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id("PrefixScanTest-suffix1")
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id("PrefixScanTest-suffix2")
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id("QPrefixScanTest")
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        RecordScan scan = new RecordScan();
+        scan.setStartRecordId(idGenerator.newRecordId("PrefixScanTest"));
+
+        RecordScanner scanner = repository.getScanner(scan);
+        assertEquals(idGenerator.newRecordId("PrefixScanTest"), scanner.next().getId());
+        assertEquals(idGenerator.newRecordId("PrefixScanTest-suffix1"), scanner.next().getId());
+        assertEquals(idGenerator.newRecordId("PrefixScanTest-suffix2"), scanner.next().getId());
+        // the scanner would run till the end of the table
+        assertNotNull(scanner.next());
+        scanner.close();
+
+        scan.setRecordFilter(new RecordIdPrefixFilter(idGenerator.newRecordId("PrefixScanTest")));
+        scanner = repository.getScanner(scan);
+        assertEquals(idGenerator.newRecordId("PrefixScanTest"), scanner.next().getId());
+        assertEquals(idGenerator.newRecordId("PrefixScanTest-suffix1"), scanner.next().getId());
+        assertEquals(idGenerator.newRecordId("PrefixScanTest-suffix2"), scanner.next().getId());
+        // due to the prefix filter, the scanner stops once there are no records left with the same prefix
+        assertNull(scanner.next());
+        scanner.close();
+        
+        //
+        // When using UUID record ID's, prefix scans make less sense, except for retrieving
+        // variants
+        //
+        RecordId uuid = idGenerator.newRecordId();
+        RecordId varid1 = idGenerator.newRecordId(uuid, ImmutableMap.of("lang", "en", "year", "1999"));
+        RecordId varid2 = idGenerator.newRecordId(uuid, ImmutableMap.of("lang", "fr"));
+
+        repository.recordBuilder()
+                .id(uuid)
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id(varid1)
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id(varid2)
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        scan = new RecordScan();
+        scan.setStartRecordId(uuid);
+        scan.setRecordFilter(new RecordIdPrefixFilter(uuid));
+        scanner = repository.getScanner(scan);
+        assertEquals(uuid, scanner.next().getId());
+        assertEquals(varid1, scanner.next().getId());
+        assertEquals(varid2, scanner.next().getId());
+        assertNull(scanner.next());
+        scanner.close();
+    }
+
     private int countResults(RecordScanner scanner) throws RepositoryException, InterruptedException {
         int i = 0;
         while (scanner.next() != null) {
