@@ -15,9 +15,7 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,13 +23,13 @@ import java.util.UUID;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
 
+import static org.junit.Assert.*;
 
 public class IdGeneratorImplTest {
 
     @Test
-    //Just to be sure.
     public void testRandomUUID()   {  
         UUID newUUid = UUID.randomUUID();
         String uuidString = newUUid.toString();
@@ -48,13 +46,18 @@ public class IdGeneratorImplTest {
     }
 
     @Test
-    public void testIdGeneratorUUID() {
+    public void testUUID() {
         IdGenerator idGenerator = new IdGeneratorImpl();
+        
+        // Test string representation
         String uuidRecordIDString = "UUID.d27cdb6e-ae6d-11cf-96b8-444553540000";
-        
         assertEquals(uuidRecordIDString, idGenerator.fromString(uuidRecordIDString).toString());
-        
-        byte[] uuidRecordIdBytes = new byte[] {-46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0, 1};
+
+        // Check it's not recognized as a variant
+        assertTrue(idGenerator.fromString(uuidRecordIDString).isMaster());
+
+        // Test bytes representation
+        byte[] uuidRecordIdBytes = new byte[] {1, -46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0};
         assertArrayEquals(uuidRecordIdBytes, idGenerator.fromBytes(uuidRecordIdBytes).toBytes());
         
         assertEquals(uuidRecordIDString, idGenerator.fromBytes(uuidRecordIdBytes).toString());
@@ -62,42 +65,69 @@ public class IdGeneratorImplTest {
     }
     
     @Test
-    public void testIdGeneratorUSER() {
+    public void testUSER() {
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId newRecordId = idGenerator.newRecordId("aUserId");
         String userRecordIDString = "USER.aUserId";
 
-        // Check that the encoded bytes have the expected length
-        assertEquals("aUserId".length() + 1, newRecordId.toBytes().length);
-        
-        assertEquals(newRecordId, idGenerator.fromString(userRecordIDString));
-        
+        // Check it's not recognized as a variant
+        assertTrue(newRecordId.isMaster());
+
+        // Test string representation
+        assertEquals(newRecordId, idGenerator.fromString(userRecordIDString));        
         assertEquals(userRecordIDString, idGenerator.fromString(userRecordIDString).toString());
+        
+        // Test bytes representation cycle
         byte[] userRecordIdBytes = newRecordId.toBytes();
         assertArrayEquals(userRecordIdBytes, idGenerator.fromBytes(userRecordIdBytes).toBytes());
-        
+
         assertEquals(userRecordIDString, idGenerator.fromBytes(userRecordIdBytes).toString());
+
+        // Test the bytes representation is really what we expect it to be 
+        byte[] idBytes = new byte[] {0, 65, 66, 67};
+        String idString = "USER.ABC";
+        assertArrayEquals(idBytes, idGenerator.fromString(idString).toBytes());
     }
     
     @Test
-    public void testIdGeneratorVARIANT() {
+    public void testUUIDWithVariantSingleProperty() {
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId masterRecordId = idGenerator.newRecordId();
         Map<String, String> variantProperties = new HashMap<String, String>();
         variantProperties.put("dim1", "dimvalue1");
         RecordId variantRecordId = idGenerator.newRecordId(masterRecordId, variantProperties);
 
+        // Test it is recognized as variant
+        assertFalse(variantRecordId.isMaster());
+
+        // Test string representation is what it is supposed to be
         String variantRecordIdString = masterRecordId.toString() + ".dim1=dimvalue1";
-        
+        assertEquals(variantRecordIdString, variantRecordId.toString());
         assertEquals(variantRecordId, idGenerator.fromString(variantRecordIdString));
-        
-        assertEquals(variantRecordIdString, idGenerator.fromString(variantRecordIdString).toString());
-        
+
+        // Test round-trip string & bytes conversion
+        assertEquals(variantRecordId, idGenerator.fromString(variantRecordId.toString()));
         assertEquals(variantRecordId, idGenerator.fromBytes(variantRecordId.toBytes()));
+        
+        // Test bytes representation is really what we expect it to be
+        byte[] masterIdBytes = new byte[] {
+                /* uuid type marker */ 1,
+                /* uuid bytes */ -46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0};
+
+        byte[] variantIdBytes = new byte[] {
+                /* uuid type marker */ 1,
+                /* uuid bytes */ -46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0
+                /* length of key */, 0, 0, 0, 1
+                /* the key (letter X) */, 88
+                /* length of value */, 0, 0, 0, 3
+                /* the value (ABC)*/, 65, 66, 67};
+        
+        RecordId variantId = idGenerator.newRecordId(idGenerator.fromBytes(masterIdBytes), Collections.singletonMap("X", "ABC"));
+        assertArrayEquals(variantIdBytes, variantId.toBytes());
     }
     
     @Test
-    public void testIdGeneratorVARIANTMultipleProperties() {
+    public void testUUUIDWithMultipleProperties() {
         IdGenerator idGenerator = new IdGeneratorImpl();
         RecordId masterRecordId = idGenerator.newRecordId();
         Map<String, String> variantProperties = new HashMap<String, String>();
@@ -106,11 +136,65 @@ public class IdGeneratorImplTest {
 
         RecordId variantRecordId = idGenerator.newRecordId(masterRecordId, variantProperties);
 
+        // Test string representation is what it is supposed to be
         String variantRecordIdString = masterRecordId.toString() + ".dim1=dimvalue1,dim2=dimvalue2";
+        assertEquals(variantRecordIdString, variantRecordId.toString());
         assertEquals(variantRecordId, idGenerator.fromString(variantRecordIdString));
         
-        assertEquals(variantRecordIdString, idGenerator.fromString(variantRecordIdString).toString());
-        
+        // Test round-trip string & bytes conversion
+        assertEquals(variantRecordId, idGenerator.fromString(variantRecordIdString));
         assertEquals(variantRecordId, idGenerator.fromBytes(variantRecordId.toBytes()));
+    }
+    
+    @Test
+    public void testUserIdWithVariantProperties() {
+        IdGenerator idGenerator = new IdGeneratorImpl();
+        RecordId masterId = idGenerator.newRecordId("marvellous");
+        Map<String, String> variantProperties = new HashMap<String, String>();
+        variantProperties.put("a", "x");
+        variantProperties.put("aa", "xx");
+
+        RecordId variantId = idGenerator.newRecordId(masterId, variantProperties);
+
+        // Test it is recognized as variant
+        assertFalse(variantId.isMaster());
+
+        // Test round-trip string & bytes conversion
+        assertEquals(variantId, idGenerator.fromBytes(variantId.toBytes()));
+        assertEquals(variantId, idGenerator.fromString(variantId.toString()));
+        
+        // Test string representation is what it is supposed to be
+        String expectedString = "USER.marvellous.a=x,aa=xx";
+        assertEquals(expectedString, variantId.toString());
+
+        // Test bytes representation is what it is supposed to be
+        // Note that the keys should always be in sorted order
+        byte[] variantIdBytes = new byte[] {
+                /* user type marker */ 0,
+                /* 'marvellous' as bytes */ 109, 97, 114, 118, 101, 108, 108, 111, 117, 115,
+                /* separator byte between id and the props */ 0,
+                /* -- first property -- */
+                /* length of key */ 0, 0, 0, 1,
+                /* the key (a) */ 97,
+                /* length of value */ 0, 0, 0, 1,
+                /* the value (x)*/ 120,
+                /* -- second property -- */
+                /* length of key */ 0, 0, 0, 2,
+                /* the key (aa) */ 97, 97,
+                /* length of value */ 0, 0, 0, 2,
+                /* the value (xx)*/ 120, 120
+        };
+        assertArrayEquals(variantIdBytes, variantId.toBytes());
+    }
+    
+    @Test
+    public void testNullCharacterNotAllowedInUserId() {
+        IdGenerator idGenerator = new IdGeneratorImpl();
+        try {
+            idGenerator.fromString("USER.hello\u0000world");
+            fail("Expected an exception when using zero byte in string.");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }            
     }
 }

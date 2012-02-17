@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.BlobIncubatorMonitor;
 import org.lilyproject.repository.impl.BlobStoreAccessRegistry;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 

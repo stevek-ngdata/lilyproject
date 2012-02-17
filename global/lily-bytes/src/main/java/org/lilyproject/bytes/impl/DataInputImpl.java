@@ -240,4 +240,14 @@ public class DataInputImpl implements DataInput {
         }
         this.size = size;
     }
+
+    @Override
+    public int indexOf(byte value) {
+        for (int i = pos; i < size; i++) {
+            if (source[i] == value) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

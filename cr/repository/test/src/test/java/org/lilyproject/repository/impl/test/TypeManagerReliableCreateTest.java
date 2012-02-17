@@ -31,7 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.HBaseTypeManager;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;

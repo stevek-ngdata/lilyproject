@@ -26,7 +26,7 @@ import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
 
 import java.util.HashMap;
 import java.util.Map;

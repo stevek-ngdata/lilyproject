@@ -75,7 +75,7 @@
       factory-bean="hadoopConfFactory"
       factory-method="getHBaseConf"/>
 
-  <bean id="idGenerator" class="org.lilyproject.repository.impl.IdGeneratorImpl"/>
+  <bean id="idGenerator" class="org.lilyproject.repository.impl.recordid.IdGeneratorImpl"/>
 
   <bean id="typeManager" class="org.lilyproject.repository.impl.HBaseTypeManager">
     <constructor-arg ref="idGenerator"/>

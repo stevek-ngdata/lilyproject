@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl;
+package org.lilyproject.repository.impl.recordid;
 
 import java.util.*;
 
-import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.RecordId;
 
 public class UUIDRecordId implements RecordId {
@@ -36,9 +36,9 @@ public class UUIDRecordId implements RecordId {
         uuid = UUID.randomUUID();
     }
     
-    protected UUIDRecordId(DataInput dataInput, IdGeneratorImpl idGenerator) {
+    protected UUIDRecordId(UUID uuid, IdGeneratorImpl idGenerator) {
+        this.uuid = uuid;
         this.idGenerator = idGenerator;
-        this.uuid = new UUID(dataInput.readLong(), dataInput.readLong());
     }
 
     public UUIDRecordId(String basicUUIDString, IdGeneratorImpl idgenerator) {
@@ -61,7 +61,9 @@ public class UUIDRecordId implements RecordId {
     @Override
     public byte[] toBytes() {
         if (uuidBytes == null) {
-            uuidBytes = idGenerator.toBytes(this);
+            DataOutput dataOutput = new DataOutputImpl(17);
+            writeBytes(dataOutput);
+            uuidBytes = dataOutput.toByteArray();
         }
         return uuidBytes;
     }
@@ -69,7 +71,9 @@ public class UUIDRecordId implements RecordId {
     @Override
     public void writeBytes(DataOutput dataOutput) {
         if (uuidBytes == null) {
-            idGenerator.writeBytes(this, dataOutput);
+            dataOutput.writeByte(IdGeneratorImpl.IdType.UUID.getIdentifierByte());
+            dataOutput.writeLong(uuid.getMostSignificantBits());
+            dataOutput.writeLong(uuid.getLeastSignificantBits());
         } else {
             dataOutput.writeBytes(uuidBytes);
         }
@@ -80,14 +84,6 @@ public class UUIDRecordId implements RecordId {
         return EMPTY_SORTED_MAP;
     }
 
-    /**
-     * Writes the byte representation of the uuid to the DataOutput, without adding the identifying byte.
-     */
-    public void writeBasicBytes(DataOutput dataOutput) {
-        dataOutput.writeLong(uuid.getMostSignificantBits());
-        dataOutput.writeLong(uuid.getLeastSignificantBits());
-    }
-    
     protected String getBasicString() {
         if (basicUUIDString == null) {
             basicUUIDString = uuid.toString();

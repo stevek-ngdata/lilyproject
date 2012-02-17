@@ -16,6 +16,7 @@ import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;

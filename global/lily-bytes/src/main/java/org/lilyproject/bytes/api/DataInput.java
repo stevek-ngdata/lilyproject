@@ -92,4 +92,12 @@ public interface DataInput {
      * Allows to shrink (not grow) the input to make it appear shorter. Does not actually resize anything.
      */
     void setSize(int size);
+
+    /**
+     * Search for the first occurrence of the given byte, starting from the current position.
+     * Does not modify the position.
+     *
+     * @return -1 if not found, otherwise the (absolute) position where it is found
+     */
+    int indexOf(byte value);
 }

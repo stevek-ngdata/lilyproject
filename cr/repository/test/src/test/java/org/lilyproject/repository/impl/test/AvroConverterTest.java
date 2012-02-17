@@ -30,6 +30,7 @@ import org.junit.*;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
 import org.lilyproject.repository.impl.valuetype.StringValueType;
 
 

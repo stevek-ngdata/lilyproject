@@ -13,44 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl;
+package org.lilyproject.repository.impl.recordid;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import org.lilyproject.bytes.api.DataInput;
-import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
-import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.ArgumentValidator;
 
 
 public class IdGeneratorImpl implements IdGenerator {
     
-    private static enum IdIdentifier{ USER((byte)0), UUID((byte)1), VARIANT((byte)2);
+    protected static enum IdType {
+        USER((byte)0, new UserRecordIdFactory()),
+        UUID((byte)1, new UUIDRecordIdFactory());
     
         private final byte identifierByte;
+        private final RecordIdFactory factory;
 
-        IdIdentifier(byte identifierByte) {
+        IdType(byte identifierByte, RecordIdFactory factory) {
             this.identifierByte = identifierByte;
+            this.factory = factory;
         }
         
         public byte getIdentifierByte() {
             return identifierByte;
         }
+
+        public RecordIdFactory getFactory() {
+            return factory;
+        }
     }
 
-    private static IdIdentifier[] IDENTIFIERS;
-    static {
-        IDENTIFIERS = new IdIdentifier[3];
-        IDENTIFIERS[0] = IdIdentifier.USER;
-        IDENTIFIERS[1] = IdIdentifier.UUID;
-        IDENTIFIERS[2] = IdIdentifier.VARIANT;
-    }
+    private static IdType[] ID_TYPES = IdType.values();
 
     @Override
     public RecordId newRecordId() {
@@ -90,42 +91,6 @@ public class IdGeneratorImpl implements IdGenerator {
         return newRecordId(newRecordId(userProvidedId), variantProperties);
     }
 
-    // Bytes
-    // An identifier byte is put behind the bytes provided by the RecordId itself
-    
-    protected byte[] toBytes(UUIDRecordId uuidRecordId) {
-        DataOutput dataOutput = new DataOutputImpl(17);
-        writeBytes(uuidRecordId, dataOutput);
-        return dataOutput.toByteArray();
-    }
-
-    protected void writeBytes(UUIDRecordId uuidRecordId, DataOutput dataOutput) {
-        uuidRecordId.writeBasicBytes(dataOutput);
-        dataOutput.writeByte(IdIdentifier.UUID.getIdentifierByte());
-    }
-    
-    protected byte[] toBytes(UserRecordId userRecordId) {
-        DataOutput dataOutput = new DataOutputImpl();
-        writeBytes(userRecordId, dataOutput);
-        return dataOutput.toByteArray();
-    }
-    
-    protected void writeBytes(UserRecordId userRecordId, DataOutput dataOutput) {
-        userRecordId.writeBasicBytes(dataOutput);
-        dataOutput.writeByte(IdIdentifier.USER.getIdentifierByte());
-    }
-    
-    protected byte[] toBytes(VariantRecordId variantRecordId) {
-        DataOutput dataOutput = new DataOutputImpl();
-        writeBytes(variantRecordId, dataOutput);
-        return dataOutput.toByteArray();
-    }
-    
-    protected void writeBytes(VariantRecordId variantRecordId, DataOutput dataOutput) {
-        variantRecordId.writeBasicBytes(dataOutput);
-        dataOutput.writeByte(IdIdentifier.VARIANT.getIdentifierByte());
-    }
-    
     @Override
     public RecordId fromBytes(byte[] bytes) {
         return fromBytes(new DataInputImpl(bytes));
@@ -133,36 +98,21 @@ public class IdGeneratorImpl implements IdGenerator {
 
     @Override
     public RecordId fromBytes(DataInput dataInput) {
-        // Read the identifier byte at the end of the input
-        int pos = dataInput.getPosition();
-        int size = dataInput.getSize();
-        dataInput.setPosition(size - 1);
-        byte identifierByte = dataInput.readByte();
-        dataInput.setPosition(pos);
+        byte idType = dataInput.readByte();
+        // Note: will throw arrayindexoutofbounds if id is not known
+        IdType id = ID_TYPES[idType];
 
-        // Virtually remove the identifier byte from the input
-        dataInput.setSize(size - 1);
+        DataInput[] splitted = id.factory.splitInMasterAndVariant(dataInput);
+        DataInput masterIdInput = splitted[0];
+        DataInput variantParamsInput = splitted[1];
 
-        IdIdentifier idIdentifier = IDENTIFIERS[identifierByte];
-        RecordId recordId = null;
-        switch (idIdentifier) {
-        case UUID:
-            recordId = new UUIDRecordId(dataInput, this);
-            break;
+        RecordId masterRecordId = id.factory.fromBytes(masterIdInput, this);
 
-        case USER:
-            recordId = new UserRecordId(dataInput, this);
-            break;
-            
-        case VARIANT:
-            recordId = new VariantRecordId(dataInput, this);
-            break;
-            
-        default:
-            // will already have failed on the IDENTIFIERS array lookup above
-            break;
+        if (variantParamsInput != null) {
+            return new VariantRecordId(masterRecordId, variantParamsInput, this);
+        } else {
+            return masterRecordId;
         }
-        return recordId;
     }
     
     // Strings
@@ -170,7 +120,7 @@ public class IdGeneratorImpl implements IdGenerator {
     
     protected String toString(UUIDRecordId uuidRecordId) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(IdIdentifier.UUID.name());
+        stringBuilder.append(IdType.UUID.name());
         stringBuilder.append(".");
         stringBuilder.append(uuidRecordId.getBasicString());
         return stringBuilder.toString();
@@ -178,7 +128,7 @@ public class IdGeneratorImpl implements IdGenerator {
     
     protected String toString(UserRecordId userRecordId) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(IdIdentifier.USER.name());
+        stringBuilder.append(IdType.USER.name());
         stringBuilder.append(".");
         stringBuilder.append(userRecordId.getBasicString());
         return stringBuilder.toString();
@@ -226,16 +176,20 @@ public class IdGeneratorImpl implements IdGenerator {
             variantString = recordIdString.substring(secondDotPos + 1);
         }
 
-        RecordId masterRecordId;
-
-        if (type.equals(IdIdentifier.UUID.name())) {
-            masterRecordId = new UUIDRecordId(id, this);
-        } else if (type.equals(IdIdentifier.USER.name())) {
-            masterRecordId = new UserRecordId(id, this);
-        } else {
+        RecordIdFactory factory = null;
+        for (IdType idType : ID_TYPES) {
+            if (type.equals(idType.name())) {
+                factory = idType.factory;
+                break;
+            }
+        }
+        
+        if (factory == null) {
             throw new IllegalArgumentException("Invalid record id: unknown type '" + type + "' in record id '" +
                     recordIdString + "'.");
         }
+
+        RecordId masterRecordId = factory.fromString(id, this);
 
         if (variantString == null) {
             return masterRecordId;

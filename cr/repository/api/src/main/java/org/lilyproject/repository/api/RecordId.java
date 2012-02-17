@@ -49,21 +49,44 @@ public interface RecordId {
 
     /**
      * Returns the byte representation of this record id.
-     * 
+     *
+     * <p>The bytes representation of record id's is designed such that they would provide
+     * a meaningful row sort order in HBase, and be usable for scan operations. The encoding
+     * is such that when an ID in un-encoded form is a prefix of another ID, it remains a
+     * prefix when encoded as bytes. This allows for prefix-scanning a range of records.
+     * (Of course, this only applies to user-specified IDs, not to UUID's).
+     *
      * <p>The format for a master record id is as follows:
      * 
-     * <pre>{basic byte representation}{identifier byte}</pre>
-     * 
+     * <pre>{identifier byte}{basic byte representation}</pre>
+     *
      * <p>Where the identifier byte is (byte)0 for a USER record id, and (byte)1 for a UUID record id.
-     * 
-     * <p>The format for a variant record id is as follows:
-     * 
-     * <pre>{master record id}{variant properties}{nr of variant properties}{length of master record id}{variant identifier byte}</pre>
-     * 
-     * <p>Where variant properties are UTF encodings for the dimension and dimension value of the variant properties (concatenated),
-     * and the variant identifier byte is (byte)2 .
-     * 
-     * @return
+     *
+     * <p>The {identifier byte} is put at the start because otherwise UUIDs
+     * and USER-id's would be intermingled, preventing meaningful scan operations
+     * on USER id's.</p>
+     *
+     * <p>In case there are variant properties:</p>
+     *
+     * <ul>
+     *     <li>For USER record id's, a zero byte (NULL character) is appended to mark the end
+     *     of the master record id. By consequence, use of the (non-printable) zero byte is
+     *     forbidden in the master record id. The reason for choosing the zero byte is because
+     *     it sorts before any other byte: this makes that the record id's of variants and
+     *     their master will be sorted together, without any other master record in between.
+     *     Any other master record id would have a byte larger than zero at that position.</li>
+     *     <li>For UUID record id's, there is no separator byte between the master and the
+     *     properties, since the UUID has a fixed length of 16 bytes. This also makes that
+     *     the variant properties do not influence the sort order among the master record id's</li>
+     * </ul>
+     *
+     * <p>The variant properties themselves are written as:
+     *
+     * <pre>({key string utf8 length}{key string in utf8}{value string utf8 length}{value string in utf8})*</pre>
+     *
+     * <p>There is no separator between the key-value pairs, as this is not needed. The key-value pairs are
+     * always sorted by key.</p>
+     *
      */
     byte[] toBytes();
     
@@ -71,7 +94,7 @@ public interface RecordId {
      * Writes the bytes to the DataOutput with the same format as for {@link #toBytes()}
      */
     void writeBytes(DataOutput dataOutput);
-    
+
     /**
      * For variants, return the RecordId of the master record, for master records,
      * returns this.

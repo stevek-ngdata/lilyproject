@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl;
+package org.lilyproject.repository.impl.recordid;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.RecordId;
 
 public class VariantRecordId implements RecordId {
@@ -42,23 +43,12 @@ public class VariantRecordId implements RecordId {
         this.idGenerator = idGenerator;
     }
     
-    /**
-     * The bytes of the masterRecordId are appended with the bytes of the variantProperties
-     * The variantProperties bytes ends with an integer indicating the number of variantProperties
-     */
-    protected VariantRecordId(DataInput dataInput, IdGeneratorImpl idGenerator) {
+    protected VariantRecordId(RecordId masterRecordId, DataInput dataInput, IdGeneratorImpl idGenerator) {
+        this.masterRecordId = masterRecordId;
         this.idGenerator = idGenerator;
-        int position = dataInput.getPosition();
-        int length = dataInput.getSize();
-        dataInput.setPosition(length - 8);
-        int nrOfVariants = dataInput.readInt();
-        int masterRecordIdLength = dataInput.readInt();
-        
-        this.masterRecordId = idGenerator.fromBytes(new DataInputImpl((DataInputImpl)dataInput, position, masterRecordIdLength));
-        dataInput.setPosition(masterRecordIdLength);
-        
+
         SortedMap<String, String> varProps = createVariantPropertiesMap();
-        for (int i = 0; i < nrOfVariants; i++) {
+        while (dataInput.getPosition() < dataInput.getSize()) {
             String dimension = dataInput.readUTF();
             String dimensionValue = dataInput.readUTF();
             
@@ -84,41 +74,35 @@ public class VariantRecordId implements RecordId {
     @Override
     public byte[] toBytes() {
         if (recordIdBytes == null) {
-            recordIdBytes = idGenerator.toBytes(this); 
+            DataOutput dataOutput = new DataOutputImpl();
+            writeBytes(dataOutput);
+            recordIdBytes = dataOutput.toByteArray();
         }
         return recordIdBytes;
     }
     
     @Override
-    public void writeBytes(DataOutput dataOutput) {
+    public final void writeBytes(DataOutput dataOutput) {
         if (recordIdBytes == null) {
-            idGenerator.writeBytes(this, dataOutput);
+            masterRecordId.writeBytes(dataOutput);
+
+            // TODO this needs to be designed some other way
+            if (masterRecordId instanceof UserRecordId) {
+                dataOutput.writeByte((byte)0);
+            }
+
+            Set<Entry<String,String>> entrySet = variantProperties.entrySet();
+            for (Entry<String, String> entry : entrySet) {
+                // entry consists of the dimension and the dimension value
+                dataOutput.writeUTF(entry.getKey());
+                dataOutput.writeUTF(entry.getValue());
+            }
+
         } else {
             dataOutput.writeBytes(recordIdBytes);
         }
     }
 
-    /**
-     * Writes the byte representation of the variant record id to the DataOutput, without adding the identifying byte.
-     * <p> Note: The master record id part will contain its identifying byte though.
-     */
-    public void writeBasicBytes(DataOutput dataOutput) {
-        int start = dataOutput.getSize();
-        masterRecordId.writeBytes(dataOutput); // Write the whole masterRecordId bytes, not just the basic bytes
-        int masterRecordIdLength = dataOutput.getSize() - start;
-        
-        Set<Entry<String,String>> entrySet = variantProperties.entrySet();
-        for (Entry<String, String> entry : entrySet) {
-            // entry consists of the dimension and the dimension value
-            dataOutput.writeUTF(entry.getKey());
-            dataOutput.writeUTF(entry.getValue());
-        }
-        // Write the amount of variantProperties
-        // This should be written at the end so that a scan over rowkeys has all variants in-order
-        dataOutput.writeInt(entrySet.size());
-        dataOutput.writeInt(masterRecordIdLength);
-    }
-    
     @Override
     public RecordId getMaster() {
         return masterRecordId;

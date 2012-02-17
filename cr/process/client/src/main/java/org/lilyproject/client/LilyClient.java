@@ -37,7 +37,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.impl.*;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
