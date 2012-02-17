@@ -36,7 +36,7 @@ import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.*;
-import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.RowLog;

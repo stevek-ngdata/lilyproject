@@ -1,4 +1,4 @@
-package org.lilyproject.repository.impl.recordid;
+package org.lilyproject.repository.impl.id;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.impl.DataInputImpl;

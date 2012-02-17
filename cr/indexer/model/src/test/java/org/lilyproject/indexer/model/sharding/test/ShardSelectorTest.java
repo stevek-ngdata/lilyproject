@@ -23,7 +23,7 @@ import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.impl.recordid.IdGeneratorImpl;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 
 import java.util.Collections;
 import java.util.SortedMap;
