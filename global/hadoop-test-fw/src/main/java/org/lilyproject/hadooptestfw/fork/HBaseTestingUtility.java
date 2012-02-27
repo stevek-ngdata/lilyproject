@@ -1198,11 +1198,10 @@ public class HBaseTestingUtility {
     Configuration c = getConfiguration();
     System.setProperty("hadoop.log.dir", c.get("hadoop.log.dir"));
     c.set("mapred.output.dir", c.get("hadoop.tmp.dir"));
-    // Lily change: fix port number + set host name (+ fix # of servers to 1) + use custom jobconf so that
+    // Lily change: set host name (+ fix # of servers to 1) + use custom jobconf so that
     // hadoop dir properties get passed on
     JobConf jobConf = new JobConf(conf);
-    mrCluster = new MiniMRCluster(9001, 0, 1,
-    	      FileSystem.get(conf).getUri().toString(), 1, null, new String[] {"localhost"}, null, jobConf);
+    mrCluster = new MiniMRCluster(1, FileSystem.get(conf).getUri().toString(), 1, null, new String[] {"localhost"}, jobConf);
 //    mrCluster = new MiniMRCluster(servers,
 //      FileSystem.get(c).getUri().toString(), 1);
     // End Lily change

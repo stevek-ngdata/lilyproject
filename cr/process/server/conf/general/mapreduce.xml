@@ -8,10 +8,6 @@
      -->
   <properties conf:inheritKey="string(name)">
     <property>
-      <name>mapred.job.tracker</name>
-      <value>localhost:9001</value>
-    </property>
-    <property>
       <!-- DFS location: needed for distributed cache (maybe also for other things, not sure) -->
       <name>fs.default.name</name>
       <value>hdfs://localhost:8020</value>
