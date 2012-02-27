@@ -2,6 +2,10 @@
 
 rem You can use the following environment variables to customize the startup
 rem
+rem LILY_CONF_DIR
+rem    If set, additional environment properties will be sourced
+rem    from %LILY_CONF_DIR%/lily-env.bat
+rem
 rem LILY_CLI_CLASSPATH
 rem    additional entries to be added to the classpath
 rem
@@ -12,6 +16,14 @@ rem LILY_MAVEN_REPO
 rem    additional directory path(s) (comma-separated) to Maven-style
 rem    repositories where jar artifacts should be searched
 rem
+
+:: ----- Verify and Set Required Environment Variables -------------------------
+
+if "%LILY_CONF_DIR%"=="" goto noLilyConfDir
+if exist %LILY_CONF_DIR%\lily-env.bat (
+  %LILY_CONF_DIR%\lily-env.bat
+)
+:noLilyConfDir
 
 :: ----- Verify and Set Required Environment Variables -------------------------
 
