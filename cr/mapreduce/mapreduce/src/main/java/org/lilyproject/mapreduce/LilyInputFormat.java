@@ -15,7 +15,9 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
@@ -27,31 +29,72 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritable> implements Configurable {
+    
+    public static final String SCAN = "lily.mapreduce.scan";
+    public static final String ZK_CONNECT_STRING = "lily.mapreduce.zookeeper";
+
     final Log log = LogFactory.getLog(LilyInputFormat.class);
+    
+    private Configuration conf;
+    private String zkConnectString;
 
     @Override
-    public void setConf(Configuration entries) {
-        // TODO
+    public void setConf(Configuration conf) {
+        this.conf = conf;
+        zkConnectString = conf.get(ZK_CONNECT_STRING);
+        if (zkConnectString == null) {
+            log.warn("ZooKeeper connection string not specified, will use 'localhost'.");
+            zkConnectString = "localhost";
+        }
     }
 
     @Override
     public Configuration getConf() {
-        // TODO
-        return null;
+        return conf;
     }
 
     @Override
     public List<InputSplit> getSplits(JobContext jobContext) throws IOException, InterruptedException {
         HTable table = null;
         ZooKeeperItf zk = null;
+        LilyClient lilyClient = null;
         Configuration hbaseConf = null;
         try {
-            // TODO hardcoded localhost: user should supply ZK host via conf
-            zk = ZkUtil.connect("localhost", 30000);
-            hbaseConf = LilyClient.getHBaseConfiguration(zk);
+            zk = ZkUtil.connect(zkConnectString, 30000);
+
+            // Need connection to Lily to parse RecordScan (a bit lame)
+            lilyClient = null;
+            try {
+                lilyClient = new LilyClient(zk);
+            } catch (Exception e) {
+                throw new IOException("Error setting up LilyClient", e);
+            }
+            RecordScan scan = getScan(lilyClient.getRepository());
+
+            // Determine start and stop row
+            byte[] startRow;
+            if (scan.getRawStartRecordId() != null) {
+                startRow = scan.getRawStartRecordId();
+            } else if (scan.getStartRecordId() != null) {
+                startRow = scan.getStartRecordId().toBytes();
+            } else {
+                startRow = new byte[0];
+            }
             
+            byte[] stopRow;
+            if (scan.getRawStopRecordId() != null) {
+                stopRow = scan.getRawStopRecordId();
+            } else if (scan.getStopRecordId() != null) {
+                stopRow = scan.getStopRecordId().toBytes();
+            } else {
+                stopRow = new byte[0];
+            }
+
+            //
+            hbaseConf = LilyClient.getHBaseConfiguration(zk);
             table = new HTable(hbaseConf, LilyHBaseSchema.Table.RECORD.bytes);
-            return getSplits(table, new byte[0], new byte[0]);            
+
+            return getSplits(table, startRow, stopRow);
         } catch (ZkConnectException e) {
             throw new IOException("Error setting up splits", e);
         } finally {
@@ -60,6 +103,7 @@ public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritabl
             if (hbaseConf != null) {
                 HConnectionManager.deleteConnection(hbaseConf, true);
             }
+            Closer.close(lilyClient);
         }
     }
 
@@ -116,16 +160,15 @@ public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritabl
     public RecordReader<RecordIdWritable, RecordWritable> createRecordReader(InputSplit inputSplit,
             TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
 
-        // TODO hardcoded localhost
         LilyClient lilyClient = null;
         try {
-            lilyClient = new LilyClient("localhost", 30000);
+            lilyClient = new LilyClient(zkConnectString, 30000);
         } catch (Exception e) {
             throw new IOException("Error setting up LilyClient", e);
         }
 
-        // TODO here we should deserialize the scan from the conf
-        RecordScan scan = new RecordScan();
+        // Build RecordScan
+        RecordScan scan = getScan(lilyClient.getRepository());
 
         // Change the start/stop record IDs on the scan to the current split
         TableSplit split = (TableSplit)inputSplit;
@@ -142,5 +185,16 @@ public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritabl
         }
 
         return new LilyRecordReader(lilyClient, scanner);
+    }
+    
+    private RecordScan getScan(Repository repository) {
+        RecordScan scan;
+        String scanData = conf.get(SCAN);
+        if (scanData != null) {
+            scan = RecordScanReader.INSTANCE.fromJsonString(scanData, repository);
+        } else {
+            scan = new RecordScan();
+        }
+        return scan;
     }
 }

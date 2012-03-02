@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
 import org.lilyproject.mapreduce.LilyInputFormat;
+import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.testjobs.Test1Mapper;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
@@ -99,7 +100,8 @@ public class MapReduceTest {
 
         // Write configuration to activate the decorator
         String tablesXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow'>" +
-                "<table name='record'><splits><regionCount>5</regionCount></splits></table>" +
+                "<table name='record'><splits><regionCount>5</regionCount>" +
+                "<splitKeys>\\x00020,\\x00040,\\x00060,\\x00080</splitKeys></splits></table>" +
                 "</tables>";
 
         FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
@@ -116,6 +118,7 @@ public class MapReduceTest {
         //
         Repository repository = client.getRepository();
         TypeManager typeManager = repository.getTypeManager();
+        IdGenerator idGenerator = repository.getIdGenerator();
         
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("test", "field1"), Scope.NON_VERSIONED);
         
@@ -127,6 +130,7 @@ public class MapReduceTest {
         
         for (int i = 0; i < 100; i++) {
             repository.recordBuilder()
+                    .id(String.format("%1$03d", i))
                     .recordType(rt1.getName())
                     .field(ft1.getName(), "foo bar bar")
                     .create();
@@ -135,47 +139,84 @@ public class MapReduceTest {
         //
         // Launch MapReduce job
         //
-        Configuration config = HBaseConfiguration.create();
+        {
+            Configuration config = HBaseConfiguration.create();
 
-        config.set("mapred.job.tracker", "localhost:9001");
-        config.set("fs.default.name", "hdfs://localhost:8020");
+            config.set("mapred.job.tracker", "localhost:9001");
+            config.set("fs.default.name", "hdfs://localhost:8020");
 
-        Job job = new Job(config, "Test1");
-        job.setJarByClass(Test1Mapper.class);
+            Job job = new Job(config, "Test1");
+            job.setJarByClass(Test1Mapper.class);
 
-        // TODO normally user would create a scan here, serialize it, and put it in the conf
+            job.setMapperClass(Test1Mapper.class);
+            job.setInputFormatClass(LilyInputFormat.class);
 
-        job.setMapperClass(Test1Mapper.class);
-        job.setInputFormatClass(LilyInputFormat.class);
+            job.setOutputFormatClass(NullOutputFormat.class);
 
-        job.setOutputFormatClass(NullOutputFormat.class);
-
-        job.setNumReduceTasks(0);
+            job.setNumReduceTasks(0);
 
 
-        boolean b = job.waitForCompletion(true);
-        if (!b) {
-            throw new IOException("error with job!");
-        }
-
-        // Verify some counters
-        
-        final String JOB_COUNTER_GROUP = "org.apache.hadoop.mapred.JobInProgress$Counter";
-        final String TASK_COUNTER_GROUP = "org.apache.hadoop.mapred.Task$Counter";
-        
-        assertEquals("Number of launched map tasks", 5L,
-                job.getCounters().findCounter(JOB_COUNTER_GROUP, "TOTAL_LAUNCHED_MAPS").getValue());
-
-        assertEquals("Number of launched map tasks", 100L,
-                job.getCounters().findCounter(TASK_COUNTER_GROUP, "MAP_INPUT_RECORDS").getValue());
-
-        /*
-        for (CounterGroup cgroup: job.getCounters()) {
-            for (Counter counter : cgroup) {
-                System.out.println(cgroup.getName() + " -> " + counter.getName() + " = " + counter.getValue());
+            boolean b = job.waitForCompletion(true);
+            if (!b) {
+                throw new IOException("error with job!");
             }
-        }
-        */
 
+            // Verify some counters
+            assertEquals("Number of launched map tasks", 5L, getTotalLaunchedMaps(job));
+            assertEquals("Number of input records", 100L, getTotalInputRecords(job));
+        }
+        
+        
+        //
+        // Launch a job with a custom scan
+        //
+        {
+            Configuration config = HBaseConfiguration.create();
+
+            config.set("mapred.job.tracker", "localhost:9001");
+            config.set("fs.default.name", "hdfs://localhost:8020");
+
+            Job job = new Job(config, "Test1");
+            job.setJarByClass(Test1Mapper.class);
+
+            job.setMapperClass(Test1Mapper.class);
+            job.setInputFormatClass(LilyInputFormat.class);
+
+            job.setOutputFormatClass(NullOutputFormat.class);
+
+            job.setNumReduceTasks(0);
+
+            RecordScan scan = new RecordScan();
+            scan.setStartRecordId(idGenerator.newRecordId(String.format("%1$03d", 15)));
+            scan.setStopRecordId(idGenerator.newRecordId(String.format("%1$03d", 25)));
+
+            LilyMapReduceUtil.initMapperJob(scan, "localhost", repository, job);
+
+            boolean b = job.waitForCompletion(true);
+            if (!b) {
+                throw new IOException("error with job!");
+            }
+
+            // expect 2 map tasks: our scan crossed the 020 border
+            assertEquals("Number of launched map tasks", 2L, getTotalLaunchedMaps(job));
+            assertEquals("Number of input records", 10L, getTotalInputRecords(job));
+
+            /*
+            for (CounterGroup cgroup: job.getCounters()) {
+                for (Counter counter : cgroup) {
+                    System.out.println(cgroup.getName() + " -> " + counter.getName() + " = " + counter.getValue());
+                }
+            }
+            */
+        }
+
+    }
+    
+    private long getTotalLaunchedMaps(Job job) throws IOException {
+        return job.getCounters().findCounter("org.apache.hadoop.mapred.JobInProgress$Counter", "TOTAL_LAUNCHED_MAPS").getValue();
+    }
+    
+    private long getTotalInputRecords(Job job) throws IOException {
+        return job.getCounters().findCounter("org.apache.hadoop.mapred.Task$Counter", "MAP_INPUT_RECORDS").getValue();
     }
 }
