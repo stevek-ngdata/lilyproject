@@ -19,8 +19,8 @@ public class HBaseRecordFilterList implements HBaseRecordFilterFactory {
 
         RecordFilterList filter = (RecordFilterList)uncastFilter;
 
-        FilterList.Operator hbaseOp = filter.getOperator() == RecordFilterList.Operator.MUST_PASS_ALL ?
-                FilterList.Operator.MUST_PASS_ALL : FilterList.Operator.MUST_PASS_ONE;
+        FilterList.Operator hbaseOp = filter.getOperator() == RecordFilterList.Operator.MUST_PASS_ONE ?
+                FilterList.Operator.MUST_PASS_ONE : FilterList.Operator.MUST_PASS_ALL;
 
         FilterList hbaseFilter = new FilterList(hbaseOp);
 
