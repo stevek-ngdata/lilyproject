@@ -4,6 +4,9 @@ import org.lilyproject.repository.api.RecordId;
 
 public class RecordIdPrefixFilter implements RecordFilter {
     private RecordId recordId;
+
+    public RecordIdPrefixFilter() {
+    }
     
     public RecordIdPrefixFilter(RecordId recordId) {
         this.recordId = recordId;

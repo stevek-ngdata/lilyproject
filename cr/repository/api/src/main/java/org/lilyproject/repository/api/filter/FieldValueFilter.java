@@ -8,6 +8,9 @@ public class FieldValueFilter implements RecordFilter {
     private Object fieldValue;
     private CompareOp compareOp = CompareOp.EQUAL;
     private boolean filterIfMissing = true;
+
+    public FieldValueFilter() {
+    }
     
     public FieldValueFilter(QName field, Object fieldValue) {
         this.field = field;

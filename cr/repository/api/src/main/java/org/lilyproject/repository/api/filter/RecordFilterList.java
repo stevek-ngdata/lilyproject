@@ -31,4 +31,8 @@ public class RecordFilterList implements RecordFilter {
     public Operator getOperator() {
         return operator;
     }
+
+    public void setOperator(Operator operator) {
+        this.operator = operator;
+    }
 }

@@ -5,6 +5,9 @@ import org.lilyproject.repository.api.QName;
 public class RecordTypeFilter implements RecordFilter {
     private QName recordType;
     private Long version;
+
+    public RecordTypeFilter() {
+    }
     
     public RecordTypeFilter(QName recordType) {
         this.recordType = recordType;
