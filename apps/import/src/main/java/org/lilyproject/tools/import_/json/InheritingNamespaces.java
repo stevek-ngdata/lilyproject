@@ -20,6 +20,11 @@ public class InheritingNamespaces implements Namespaces {
     }
 
     @Override
+    public boolean usePrefixes() {
+        return child.usePrefixes();
+    }
+
+    @Override
     public String getOrMakePrefix(String namespace) {
         throw new RuntimeException("This namespace context is not modifiable.");
         /*

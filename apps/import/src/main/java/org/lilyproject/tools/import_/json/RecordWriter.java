@@ -115,7 +115,7 @@ public class RecordWriter implements EntityWriter<Record> {
         return array;
     }
 
-    private JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
+    protected JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
         String name = valueType.getBaseName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;
