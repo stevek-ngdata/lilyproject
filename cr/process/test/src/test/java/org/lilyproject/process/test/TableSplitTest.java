@@ -1,13 +1,12 @@
 package org.lilyproject.process.test;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,7 +16,7 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -28,6 +27,8 @@ import static org.junit.Assert.assertTrue;
 public class TableSplitTest {
     private static LilyProxy lilyProxy;
     private static File tmpDir;
+    
+    private static List<String> TABLE_NAMES = Lists.newArrayList("record", "links-forward", "links-backward");
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -38,14 +39,16 @@ public class TableSplitTest {
         //
 
         if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
-            // The record table will likely already exist and not be recreated, hence we won't be able to change
-            // the number of regions. Therefore, drop the table.
+            // The tables will likely already exist and not be recreated, hence we won't be able to change
+            // the number of regions. Therefore, drop them.
             Configuration conf = HBaseConfiguration.create();
             conf.set("hbase.zookeeper.quorum", "localhost");
             HBaseAdmin hbaseAdmin = new HBaseAdmin(conf);
-            if (hbaseAdmin.tableExists("record")) {
-                hbaseAdmin.disableTable("record");
-                hbaseAdmin.deleteTable("record");
+            for (String tableName : TABLE_NAMES) {
+                if (hbaseAdmin.tableExists(tableName)) {
+                    hbaseAdmin.disableTable(tableName);
+                    hbaseAdmin.deleteTable(tableName);
+                }
             }
             HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
         }
@@ -72,14 +75,16 @@ public class TableSplitTest {
         TestHomeUtil.cleanupTestHome(tmpDir);
 
         if (lilyProxy.getMode() == LilyProxy.Mode.CONNECT || lilyProxy.getMode() == LilyProxy.Mode.HADOOP_CONNECT) {
-            // We're in connect mode, drop the record table again so that the remainder of the tests
+            // We're in connect mode, drop the tables again so that the remainder of the tests
             // don't have the overhead of the extra splits
             Configuration conf = HBaseConfiguration.create();
             conf.set("hbase.zookeeper.quorum", "localhost");
             HBaseAdmin hbaseAdmin = new HBaseAdmin(conf);
-            if (hbaseAdmin.tableExists("record")) {
-                hbaseAdmin.disableTable("record");
-                hbaseAdmin.deleteTable("record");
+            for (String tableName : TABLE_NAMES) {
+                if (hbaseAdmin.tableExists(tableName)) {
+                    hbaseAdmin.disableTable(tableName);
+                    hbaseAdmin.deleteTable(tableName);
+                }
             }
             HConnectionManager.deleteConnection(hbaseAdmin.getConfiguration(), true);
         }
@@ -92,9 +97,17 @@ public class TableSplitTest {
         FileUtils.forceMkdir(generalConfDir);
 
         // Write configuration to activate the decorator
-        String tablesXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow'>" +
-                "<table name='record'><splits><regionCount>3</regionCount><splitKeyPrefix>\\x01</splitKeyPrefix>" +
-                "</splits></table>" +
+        String tablesXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow' " +
+                "conf:inheritKey=\"string(@name)\">" +
+                "<table name='record'>" +
+                "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x01</splitKeyPrefix></splits>" +
+                "</table>" +
+                "<table name='links-forward'>" +
+                "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x00\\x01</splitKeyPrefix></splits>" +
+                "</table>" +
+                "<table name='links-backward'>" +
+                "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x00\\x01</splitKeyPrefix></splits>" +
+                "</table>" +
                 "</tables>";
 
         FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
@@ -114,38 +127,48 @@ public class TableSplitTest {
         IdGenerator idGenerator = repository.getIdGenerator();
 
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("test", "field1"), Scope.NON_VERSIONED);
+        FieldType ft2 = typeManager.createFieldType("LINK", new QName("test", "field2"), Scope.NON_VERSIONED);
 
         RecordType rt1 = typeManager.recordTypeBuilder()
                 .defaultNamespace("test")
                 .name("rt1")
                 .fieldEntry().use(ft1).add()
+                .fieldEntry().use(ft2).add()
                 .create();
 
         for (int i = 0; i < 300; i++) {
             repository.recordBuilder()
                     .recordType(rt1.getName())
                     .field(ft1.getName(), "foo bar bar")
+                    .field(ft2.getName(), new Link(idGenerator.newRecordId()))
                     .create();
         }
 
         //
         // Count number of records in each region
         //
-        HTable table = new HTable(lilyProxy.getHBaseProxy().getConf(), "record");
-        for (HRegionInfo regionInfo : table.getRegionsInfo().keySet()) {
-            Scan scan = new Scan();
-            scan.setStartRow(regionInfo.getStartKey());
-            scan.setStopRow(regionInfo.getEndKey());
-            
-            ResultScanner scanner = table.getScanner(scan);
-            int count = 0;
-            for (Result result : scanner) {
-                count++;
-            }
-            
-            assertTrue("Number of splits in region " + regionInfo.getRegionNameAsString(), count > 85);
-        }
+        for (String tableName : TABLE_NAMES) {
+            HTable table = new HTable(lilyProxy.getHBaseProxy().getConf(), tableName);
+            for (HRegionInfo regionInfo : table.getRegionsInfo().keySet()) {
+                Scan scan = new Scan();
+                scan.setStartRow(regionInfo.getStartKey());
+                scan.setStopRow(regionInfo.getEndKey());
+                
+                //System.out.println("table " + Bytes.toString(table.getTableName()));;
+                //System.out.println("start key: " + Bytes.toStringBinary(regionInfo.getStartKey()));
+                //System.out.println("end key: " + Bytes.toStringBinary(regionInfo.getEndKey()));
+                
+                ResultScanner scanner = table.getScanner(scan);
+                int count = 0;
+                for (Result result : scanner) {
+                    count++;
+                }
 
+                //System.out.println("Number of splits in region " + regionInfo.getRegionNameAsString() + " : " + count);
+
+                assertTrue("Number of splits in region " + regionInfo.getRegionNameAsString(), count > 80 && count < 120);
+            }
+        }
     }
 
 }
