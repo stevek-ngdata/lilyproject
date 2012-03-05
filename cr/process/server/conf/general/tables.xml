@@ -33,10 +33,17 @@
             - splitKeys: specify the region splits as a comma-separated list.
                          Example: <splitKeys>A,KLM,Z</splitKeys>
 
+            - splitKeyPrefix: when the split keys are auto-generated (= when using regionCount instead
+                              of splitKeys), it might be that all entries in the table start with a
+                              common prefix, this prefix can be specified with this setting.
+
            When using custom record IDs, either use 1 initial region, or specify custom split keys.
       -->
       <regionCount>1</regionCount>
       <splitKeys></splitKeys>
+
+      <!-- UUID record id's all start with a 1-byte -->
+      <splitKeyPrefix>\x01</splitKeyPrefix>
 
     </splits>
 
@@ -65,8 +72,9 @@
     <splits>
       <regionCount>1</regionCount>
       <splitKeys></splitKeys>
-      <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null -->
-      <splitKeyPrefix>\x00</splitKeyPrefix>
+      <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null.
+           Also, UUID record id's are prefixed with a 1-byte. -->
+      <splitKeyPrefix>\x0001</splitKeyPrefix>
     </splits>
   </table>
 
@@ -74,8 +82,9 @@
     <splits>
       <regionCount>1</regionCount>
       <splitKeys></splitKeys>
-      <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null -->
-      <splitKeyPrefix>\x00</splitKeyPrefix>
+      <!-- In hbaseindex, each index field is prefixed with a meta-byte, which is 0 when the field is not null.
+           Also, UUID record id's are prefixed with a 1-byte. -->
+      <splitKeyPrefix>\x0001</splitKeyPrefix>
     </splits>
   </table>
   
