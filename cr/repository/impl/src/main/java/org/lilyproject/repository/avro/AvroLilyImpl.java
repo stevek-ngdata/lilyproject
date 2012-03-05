@@ -35,9 +35,9 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroRecord create(AvroRecord record) throws AvroRepositoryException, AvroInterruptedException {
+    public ByteBuffer create(ByteBuffer record) throws AvroRepositoryException, AvroInterruptedException {
         try {
-            return converter.convert(repository.create(converter.convert(record)));
+            return converter.convert(repository.create(converter.convertRecord(record)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
@@ -46,10 +46,10 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroRecord createOrUpdate(AvroRecord record, boolean useLatestRecordType)
+    public ByteBuffer createOrUpdate(ByteBuffer record, boolean useLatestRecordType)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
-            return converter.convert(repository.createOrUpdate(converter.convert(record), useLatestRecordType));
+            return converter.convert(repository.createOrUpdate(converter.convertRecord(record), useLatestRecordType));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
@@ -58,8 +58,8 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroRecord delete(ByteBuffer recordId, List<AvroMutationCondition> conditions)
-            throws AvroRemoteException, AvroRepositoryException, AvroGenericException, AvroInterruptedException {
+    public ByteBuffer delete(ByteBuffer recordId, List<AvroMutationCondition> conditions)
+            throws AvroRepositoryException, AvroInterruptedException {
         try {
             Record record = repository.delete(converter.convertAvroRecordId(recordId), converter.convertFromAvro(conditions));
             return record == null ? null : converter.convert(record);
@@ -71,7 +71,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroRecord read(ByteBuffer avroRecordId, long avroVersion, List<AvroQName> avroFieldNames)
+    public ByteBuffer read(ByteBuffer avroRecordId, long avroVersion, List<AvroQName> avroFieldNames)
             throws AvroRepositoryException, AvroInterruptedException {
         Long version = converter.convertAvroVersion(avroVersion);
         RecordId recordId = converter.convertAvroRecordId(avroRecordId);
@@ -90,7 +90,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public List<AvroRecord> readRecords(List<ByteBuffer> avroRecordIds, List<AvroQName> avroFieldNames)
+    public List<ByteBuffer> readRecords(List<ByteBuffer> avroRecordIds, List<AvroQName> avroFieldNames)
             throws AvroRepositoryException, AvroInterruptedException {
         List<RecordId> recordIds = null;
         if (avroRecordIds != null) {
@@ -109,7 +109,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public List<AvroRecord> readVersions(ByteBuffer recordId, long avroFromVersion, long avroToVersion,
+    public List<ByteBuffer> readVersions(ByteBuffer recordId, long avroFromVersion, long avroToVersion,
             List<AvroQName> avroFieldNames) throws AvroRepositoryException, AvroInterruptedException {
         try {
             return converter.convertRecords(repository.readVersions(converter.convertAvroRecordId(
@@ -122,7 +122,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public List<AvroRecord> readSpecificVersions(ByteBuffer recordId, List<Long> avroVersions,
+    public List<ByteBuffer> readSpecificVersions(ByteBuffer recordId, List<Long> avroVersions,
             List<AvroQName> avroFieldNames) throws AvroRepositoryException, AvroInterruptedException {
         // The avroVersions are a GenericData$Array which for instance cannot be sorted, so we convert it to an ArrayList
         List<Long> versions = new ArrayList<Long>(avroVersions.size());
@@ -138,11 +138,11 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroRecord update(AvroRecord record, boolean updateVersion, boolean useLatestRecordType,
+    public ByteBuffer update(ByteBuffer record, boolean updateVersion, boolean useLatestRecordType,
             List<AvroMutationCondition> conditions) throws AvroRemoteException {
         try {
-            return converter.convert(repository.update(converter.convert(record), updateVersion, useLatestRecordType,
-                    converter.convertFromAvro(conditions)));
+            return converter.convert(repository.update(converter.convertRecord(record), updateVersion,
+                    useLatestRecordType, converter.convertFromAvro(conditions)));
         } catch (RepositoryException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
@@ -350,7 +350,7 @@ public class AvroLilyImpl implements AvroLily {
     }
 
     @Override
-    public AvroIdRecord readWithIds(ByteBuffer recordId, long avroVersion, List<AvroSchemaId> avroFieldIds)
+    public ByteBuffer readWithIds(ByteBuffer recordId, long avroVersion, List<AvroSchemaId> avroFieldIds)
             throws AvroRepositoryException, AvroInterruptedException {
         try {
             List<SchemaId> fieldIds = null;

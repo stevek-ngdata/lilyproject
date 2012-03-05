@@ -356,18 +356,12 @@ public class AvroConverterTest {
         converter.setRepository(repository);
         Record record = new RecordImpl();
         record.setRecordType(new QName("ns","recordTypeName"), null);
-        AvroRecord avroRecord = new AvroRecord();
-        AvroQName avroQName = new AvroQName();
-        avroQName.namespace = "ns";
-        avroQName.name = "recordTypeName";
-        avroRecord.recordTypeName = avroQName;
 
-        assertEquals(record, converter.convert(avroRecord));
-        // A bit of converting back and forth since avro can't compare maps
-        assertEquals(converter.convert(avroRecord), converter.convert(converter.convert(record)));
+        assertEquals(record, converter.convertRecord(converter.convert(record)));
+        assertEquals(converter.convert(record), converter.convert(converter.convertRecord(converter.convert(record))));
         control.verify();
     }
-    
+
     @Test
     public void testRecord() throws Exception {
         FieldType fieldType = control.createMock(FieldType.class);
@@ -404,7 +398,7 @@ public class AvroConverterTest {
         record.setField(fieldName2, "aValue2");
         record.addFieldsToDelete(Arrays.asList(new QName("devnull", "fieldToDelete")));
         
-        assertEquals(record, converter.convert(converter.convert(record)));
+        assertEquals(record, converter.convertRecord(converter.convert(record)));
         control.verify();
     }
 }

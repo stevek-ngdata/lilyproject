@@ -23,8 +23,9 @@ import java.util.Map.Entry;
 import org.apache.avro.AvroRemoteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.IdRecordImpl;
+import org.lilyproject.repository.impl.RecordAsBytesConverter;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.SystemFields;
@@ -42,85 +43,19 @@ public class AvroConverter {
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
     }
-    
-    public Record convert(AvroRecord avroRecord) throws RepositoryException, InterruptedException {
-        Record record = repository.newRecord();
-        // Id
-        if (avroRecord.getId() != null) {
-            record.setId(convertAvroRecordId(avroRecord.getId()));
-        }
-        if (avroRecord.getVersion() != null) {
-            record.setVersion(avroRecord.getVersion());
-        }
-        // Record Types
-        QName recordTypeName = null;
-        if (avroRecord.getRecordTypeName() != null) {
-            recordTypeName = convert(avroRecord.getRecordTypeName());
-        }
-        record.setRecordType(recordTypeName, avroRecord.getRecordTypeVersion());
-         
-        Map<String, AvroQName> scopeRecordTypeNames = avroRecord.getScopeRecordTypeNames();
-        if (scopeRecordTypeNames != null) {
-            for (Scope scope : Scope.values()) {
-                String key = scope.name();
-                AvroQName scopeRecordTypeName = scopeRecordTypeNames.get(key);
-                if (scopeRecordTypeName != null) {
-                    record.setRecordType(scope, convert(scopeRecordTypeName), avroRecord.getScopeRecordTypeVersions().get(key));
-                }
-            }
-        }
 
-        // Fields
-        if (avroRecord.getFields() != null) {
-            for (AvroField field : avroRecord.getFields()) {
-                QName name = convert(field.getName());
-                ValueType valueType = typeManager.getValueType(field.getValueType());
-                Object value = valueType.read(field.getValue().array());
-                record.setField(name, value);
-            }
-        }
-
-        // FieldsToDelete
-        List<AvroQName> avroFieldsToDelete = avroRecord.getFieldsToDelete();
-        if (avroFieldsToDelete != null) {
-            List<QName> fieldsToDelete = new ArrayList<QName>();
-            for (AvroQName fieldToDelete : avroFieldsToDelete) {
-                fieldsToDelete.add(convert(fieldToDelete));
-            }
-            record.addFieldsToDelete(fieldsToDelete);
-        }
-
-        record.setResponseStatus(convert(avroRecord.getResponseStatus()));
-        
-        return record;
+    private byte[] asArray(ByteBuffer buffer) {
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes, 0, bytes.length);
+        return bytes;
     }
 
-    public ResponseStatus convert(AvroResponseStatus status) {
-        return status == null ? null : ResponseStatus.values()[status.ordinal()];
+    public Record convertRecord(ByteBuffer recordData) throws RepositoryException, InterruptedException {
+        return RecordAsBytesConverter.read(new DataInputImpl(asArray(recordData)), repository);
     }
-    
-    public IdRecord convert(AvroIdRecord avroIdRecord) throws RepositoryException, InterruptedException {
-        Map<SchemaId, QName> idToQNameMapping = null;
-        // Using two arrays here since avro does only support strings in the keys of a map
-        List<AvroSchemaId> avroIdToQNameMappingIds = avroIdRecord.getIdToQNameMappingIds();
-        List<AvroQName> avroIdToQNameMappingNames = avroIdRecord.getIdToQNameMappingNames();
-        if (avroIdToQNameMappingIds != null) {
-            idToQNameMapping = new HashMap<SchemaId, QName>();
-            int i = 0;
-            for (AvroSchemaId avroSchemaId : avroIdToQNameMappingIds) {
-                idToQNameMapping.put(convert(avroSchemaId), convert(avroIdToQNameMappingNames.get(i)));
-                i++;
-            }
-        }
-        Map<Scope, SchemaId> recordTypeIds = null;
-        if (avroIdRecord.getScopeRecordTypeIds() != null) {
-            recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
-            Map<String, AvroSchemaId> avroRecordTypeIds = avroIdRecord.getScopeRecordTypeIds();
-            for (Scope scope : Scope.values()) {
-                recordTypeIds.put(scope, convert(avroRecordTypeIds.get(scope.name())));
-            }
-        }
-        return new IdRecordImpl(convert(avroIdRecord.getRecord()), idToQNameMapping, recordTypeIds);
+
+    public IdRecord convertIdRecord(ByteBuffer avroIdRecord) throws RepositoryException, InterruptedException {
+        return RecordAsBytesConverter.readIdRecord(new DataInputImpl(asArray(avroIdRecord)), repository);
     }
     
     public List<MutationCondition> convertFromAvro(List<AvroMutationCondition> avroConditions)
@@ -155,105 +90,14 @@ public class AvroConverter {
         return op == null ? null : CompareOp.values()[op.ordinal()];
     }
 
-    public AvroRecord convert(Record record) throws AvroRepositoryException, AvroInterruptedException {
-        AvroRecord avroRecord = new AvroRecord();
-        // Id
-        RecordId id = record.getId();
-        if (id != null) {
-            avroRecord.setId(convert(id));
-        }
-
-        if (record.getVersion() != null) {
-            avroRecord.setVersion(record.getVersion());
-        } else {
-            avroRecord.setVersion(null);
-        }
-
-        // Record types
-        if (record.getRecordTypeName() != null) {
-            avroRecord.setRecordTypeName(convert(record.getRecordTypeName()));
-        }
-        if (record.getRecordTypeVersion() != null) {
-            avroRecord.setRecordTypeVersion(record.getRecordTypeVersion());
-        }
-        avroRecord.setScopeRecordTypeNames(new HashMap<String, AvroQName>());
-        avroRecord.setScopeRecordTypeVersions(new HashMap<String, Long>());
-        for (Scope scope : Scope.values()) {
-            QName recordTypeName = record.getRecordTypeName(scope);
-            if (recordTypeName != null) {
-                avroRecord.getScopeRecordTypeNames().put(scope.name(), convert(recordTypeName));
-                Long version = record.getRecordTypeVersion(scope);
-                if (version != null) {
-                    avroRecord.getScopeRecordTypeVersions().put(scope.name(), version);
-                }
-            }
-        }
-
-        // Fields
-        avroRecord.setFields(new ArrayList<AvroField>(record.getFields().size()));
-        IdentityRecordStack parentRecords = new IdentityRecordStack(record);
-        try {
-            FieldTypes fieldTypesSnapshot = typeManager.getFieldTypesSnapshot();
-            for (Entry<QName, Object> field : record.getFields().entrySet()) {
-                AvroField avroField = new AvroField();
-                avroField.setName(convert(field.getKey()));
-
-                FieldType fieldType = fieldTypesSnapshot.getFieldType(field.getKey());
-                ValueType valueType = fieldType.getValueType();
-                avroField.setValueType(valueType.getName());
-                byte[] value = valueType.toBytes(field.getValue(), parentRecords);
-                avroField.setValue(ByteBuffer.wrap(value));
-
-                avroRecord.getFields().add(avroField);
-            }
-        } catch (RepositoryException e) {
-            throw convert(e);
-        } catch (InterruptedException e) {
-            throw convert(e);
-        }
-
-        // FieldsToDelete
-        List<QName> fieldsToDelete = record.getFieldsToDelete();
-        avroRecord.setFieldsToDelete(new ArrayList<AvroQName>(fieldsToDelete.size()));
-        for (QName fieldToDelete : fieldsToDelete) {
-            avroRecord.getFieldsToDelete().add(convert(fieldToDelete));
-        }
-
-        // Response status
-        avroRecord.setResponseStatus(convert(record.getResponseStatus()));
-
-        return avroRecord; 
+    public ByteBuffer convert(Record record) throws AvroRepositoryException, AvroInterruptedException,
+            RepositoryException, InterruptedException {
+        return ByteBuffer.wrap(RecordAsBytesConverter.write(record, repository));
     }
 
-    public AvroResponseStatus convert(ResponseStatus status) {
-        return status == null ? null : AvroResponseStatus.values()[status.ordinal()];
-    }
-    
-    public AvroIdRecord convert(IdRecord idRecord) throws AvroRepositoryException, AvroInterruptedException {
-        AvroIdRecord avroIdRecord = new AvroIdRecord();
-        avroIdRecord.setRecord(convert(idRecord.getRecord()));
-
-        // Fields
-        Map<SchemaId, QName> fields = idRecord.getFieldIdToNameMapping();
-        if (fields != null) {
-            // Using two arrays here since avro does only support strings in the keys of a map
-            avroIdRecord.setIdToQNameMappingIds(new ArrayList<AvroSchemaId>(fields.size()));
-            avroIdRecord.setIdToQNameMappingNames(new ArrayList<AvroQName>(fields.size()));
-            for (Entry<SchemaId, QName> fieldEntry : fields.entrySet()) {
-                avroIdRecord.getIdToQNameMappingIds().add(convert(fieldEntry.getKey()));
-                avroIdRecord.getIdToQNameMappingNames().add(convert(fieldEntry.getValue()));
-            }
-        }
-
-        // Record types
-        avroIdRecord.setScopeRecordTypeIds(new HashMap<String, AvroSchemaId>());
-        for (Scope scope : Scope.values()) {
-            SchemaId recordTypeId = idRecord.getRecordTypeId(scope);
-            if (recordTypeId != null) {
-                avroIdRecord.getScopeRecordTypeIds().put(scope.name(), convert(recordTypeId));
-            }
-        }
-        return avroIdRecord;
+    public ByteBuffer convert(IdRecord idRecord) throws AvroRepositoryException, AvroInterruptedException,
+            RepositoryException, InterruptedException {
+        return ByteBuffer.wrap(RecordAsBytesConverter.writeIdRecord(idRecord, repository));
     }
 
     public List<AvroMutationCondition> convert(Record parentRecord, List<MutationCondition> conditions)
@@ -676,16 +520,17 @@ public class AvroConverter {
         return avroRecordTypes;
     }
     
-    public List<Record> convertAvroRecords(List<AvroRecord> avroRecords) throws RepositoryException, InterruptedException {
+    public List<Record> convertAvroRecords(List<ByteBuffer> avroRecords) throws RepositoryException, InterruptedException {
         List<Record> records = new ArrayList<Record>();
-        for(AvroRecord avroRecord : avroRecords) {
-            records.add(convert(avroRecord));
+        for(ByteBuffer avroRecord : avroRecords) {
+            records.add(convertRecord(avroRecord));
         }
         return records;
     }
 
-    public List<AvroRecord> convertRecords(Collection<Record> records) throws AvroRepositoryException, AvroInterruptedException {
-        List<AvroRecord> avroRecords = new ArrayList<AvroRecord>(records.size());
+    public List<ByteBuffer> convertRecords(Collection<Record> records) throws AvroRepositoryException,
+            AvroInterruptedException, RepositoryException, InterruptedException {
+        List<ByteBuffer> avroRecords = new ArrayList<ByteBuffer>(records.size());
         for (Record record: records) {
             avroRecords.add(convert(record));
         }
