@@ -92,6 +92,11 @@ public class DataInputImpl implements DataInput {
     }
 
     @Override
+    public String readVUTF() {
+        return readUTF(readVInt());
+    }
+
+    @Override
     public String readUTF(int utflen) {
         if (utflen == -1)
             return null;

@@ -102,7 +102,16 @@ public class DataOutputImpl implements DataOutput {
     }
 
     @Override
+    public void writeVUTF(String string) {
+        writeUTF(string, true, true);
+    }
+
+    @Override
     public void writeUTF(String string, boolean includeLength) {
+        writeUTF(string, includeLength, false);
+    }
+
+    private void writeUTF(String string, boolean includeLength, boolean useVInt) {
         if (string == null) {
             writeInt(-1);
             return;
@@ -141,7 +150,12 @@ public class DataOutputImpl implements DataOutput {
         assureSize(4 + utflen); // Make sure the buffer has enough space to put the bytes for the length and the string
 
         if (includeLength) {
-            writeIntUnsafe(utflen); // Write the length in the buffer
+            // Write the length in the buffer
+            if (useVInt) {
+                writeVIntUnsafe(utflen);
+            } else {
+                writeIntUnsafe(utflen);
+            }
         }
 
         int ch = 0; // Character from the string

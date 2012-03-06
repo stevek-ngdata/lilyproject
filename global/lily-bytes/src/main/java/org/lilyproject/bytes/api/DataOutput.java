@@ -45,6 +45,12 @@ public interface DataOutput {
     void writeUTF(String value);
 
     /**
+     * Same as {@link #writeUTF(String)} but writes the length as a
+     * variable-length integer.
+     */
+    void writeVUTF(String string);
+
+    /**
      * Writes a string to the <code>DataOutput</code>.
      * 
      * <p>This method is the same as {@link #writeUTF(String)} but allows to disable

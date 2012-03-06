@@ -35,6 +35,13 @@ public interface DataInput {
     String readUTF();
 
     /**
+     * Same as {@link #readUTF()}, but for when the length
+     * of the string was encoded as a variable-length integer,
+     * thus a written by {@link DataOutput#writeVUTF}.
+     */
+    String readVUTF();
+    
+    /**
      * Reads a string from the <code>DataInput</code>
      */
     String readUTF(int length);
