@@ -14,6 +14,8 @@ public class RecordScan {
     private byte[] rawStopRecordId;
     private RecordFilter recordFilter;
     private ReturnFields returnFields;
+    private int caching = -1;
+    private boolean cacheBlocks = true;
 
     public RecordId getStartRecordId() {
         return startRecordId;
@@ -76,5 +78,21 @@ public class RecordScan {
 
     public void setReturnFields(ReturnFields returnFields) {
         this.returnFields = returnFields;
+    }
+
+    public int getCaching() {
+        return caching;
+    }
+
+    public void setCaching(int caching) {
+        this.caching = caching;
+    }
+
+    public boolean getCacheBlocks() {
+        return cacheBlocks;
+    }
+
+    public void setCacheBlocks(boolean cacheBlocks) {
+        this.cacheBlocks = cacheBlocks;
     }
 }

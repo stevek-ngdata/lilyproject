@@ -175,8 +175,6 @@ public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritabl
         scan.setRawStartRecordId(split.getStartRow());
         scan.setRawStopRecordId(split.getEndRow());
 
-        // TODO disable cache blocks
-
         RecordScanner scanner = null;
         try {
             scanner = lilyClient.getRepository().getScanner(scan);

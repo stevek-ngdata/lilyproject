@@ -105,6 +105,19 @@ public class JsonConversionTest {
     }
 
     @Test
+    public void testScanCaching() throws Exception {
+        RecordScan scan = new RecordScan();
+        scan.setCacheBlocks(false);
+        scan.setCaching(500);
+
+        byte[] data = writer.toJsonBytes(scan, repository);
+        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        
+        assertEquals(false, parsedScan.getCacheBlocks());
+        assertEquals(500, parsedScan.getCaching());
+    }
+    
+    @Test
     public void testScanRecordTypeFilter() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
 

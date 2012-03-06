@@ -147,6 +147,10 @@ public abstract class BaseRepository implements Repository {
             hbaseScan.setFilter(filter);
         }
 
+        hbaseScan.setCaching(scan.getCaching());
+
+        hbaseScan.setCacheBlocks(scan.getCacheBlocks());
+
         ReturnFields returnFields = scan.getReturnFields();
         if (returnFields != null && returnFields.getType() != ReturnFields.Type.ALL) {
             RecordDecoder.addSystemColumnsToScan(hbaseScan);            
@@ -173,8 +177,6 @@ public abstract class BaseRepository implements Repository {
         } catch (IOException e) {
             throw new RecordException("Error creating scanner", e);
         }
-
-        // TODO allow to set caching related options (cache rows / cache blocks)
 
         HBaseRecordScanner scanner = new HBaseRecordScanner(hbaseScanner, recdec);
 
