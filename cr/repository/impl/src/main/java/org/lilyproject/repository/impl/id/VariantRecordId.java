@@ -48,8 +48,8 @@ public class VariantRecordId implements RecordId {
 
         SortedMap<String, String> varProps = createVariantPropertiesMap();
         while (dataInput.getPosition() < dataInput.getSize()) {
-            String dimension = dataInput.readUTF();
-            String dimensionValue = dataInput.readUTF();
+            String dimension = dataInput.readVUTF();
+            String dimensionValue = dataInput.readVUTF();
             
             IdGeneratorImpl.checkVariantPropertyNameValue(dimension);
             IdGeneratorImpl.checkVariantPropertyNameValue(dimensionValue);
@@ -93,8 +93,8 @@ public class VariantRecordId implements RecordId {
             Set<Entry<String,String>> entrySet = variantProperties.entrySet();
             for (Entry<String, String> entry : entrySet) {
                 // entry consists of the dimension and the dimension value
-                dataOutput.writeUTF(entry.getKey());
-                dataOutput.writeUTF(entry.getValue());
+                dataOutput.writeVUTF(entry.getKey());
+                dataOutput.writeVUTF(entry.getValue());
             }
 
         } else {

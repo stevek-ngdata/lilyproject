@@ -117,9 +117,9 @@ public class IdGeneratorImplTest {
         byte[] variantIdBytes = new byte[] {
                 /* uuid type marker */ 1,
                 /* uuid bytes */ -46, 124, -37, 110, -82, 109, 17, -49, -106, -72, 68, 69, 83, 84, 0, 0
-                /* length of key */, 0, 0, 0, 1
+                /* length of key (vint) */, 1
                 /* the key (letter X) */, 88
-                /* length of value */, 0, 0, 0, 3
+                /* length of value (vint) */, 3
                 /* the value (ABC)*/, 65, 66, 67};
         
         RecordId variantId = idGenerator.newRecordId(idGenerator.fromBytes(masterIdBytes), Collections.singletonMap("X", "ABC"));
@@ -174,14 +174,14 @@ public class IdGeneratorImplTest {
                 /* 'marvellous' as bytes */ 109, 97, 114, 118, 101, 108, 108, 111, 117, 115,
                 /* separator byte between id and the props */ 0,
                 /* -- first property -- */
-                /* length of key */ 0, 0, 0, 1,
+                /* length of key */ 1,
                 /* the key (a) */ 97,
-                /* length of value */ 0, 0, 0, 1,
+                /* length of value */ 1,
                 /* the value (x)*/ 120,
                 /* -- second property -- */
-                /* length of key */ 0, 0, 0, 2,
+                /* length of key */ 2,
                 /* the key (aa) */ 97, 97,
-                /* length of value */ 0, 0, 0, 2,
+                /* length of value */ 2,
                 /* the value (xx)*/ 120, 120
         };
         assertArrayEquals(variantIdBytes, variantId.toBytes());
