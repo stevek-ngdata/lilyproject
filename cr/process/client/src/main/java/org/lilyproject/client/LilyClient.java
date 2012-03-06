@@ -52,9 +52,6 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  *
  * <p>Connects to zookeeper to find out available repository nodes.
  *
- * <p>Each call to {@link #getRepository()} will return a server at random. If you are in a situation where the
- * number of clients is limited and clients are long-running (e.g. some front-end servers), you should frequently
- * request an new Repository object in order to avoid talking to the same server all the time.
  */
 public class LilyClient implements Closeable {
     private ZooKeeperItf zk;
