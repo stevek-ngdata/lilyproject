@@ -62,7 +62,6 @@ public class LilyClient implements Closeable {
     private static final String nodesPath = "/lily/repositoryNodes";
     private static final String hbaseConfigPath = "/lily/hbaseConfig";
     private static final String blobDfsUriPath = "/lily/blobStoresConfig/dfsUri";
-    private static final String blobHBaseConfigPath = "/lily/blobStoresConfig/hbaseConfig";
     private static final String blobStoreAccessConfigPath = "/lily/blobStoresConfig/accessConfig";
 
     private Log log = LogFactory.getLog(getClass());
@@ -179,7 +178,7 @@ public class LilyClient implements Closeable {
     }
     
     public static BlobManager getBlobManager(ZooKeeperItf zk, HBaseConnections hbaseConns) throws IOException {
-        Configuration configuration = getBlobHBaseConfiguration(zk);
+        Configuration configuration = getHBaseConfiguration(zk);
         // Avoid HBase(Admin)/ZooKeeper connection leaks when using new Configuration objects each time.
         configuration = hbaseConns.getExisting(configuration);
         HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
@@ -211,23 +210,6 @@ public class LilyClient implements Closeable {
             return new URI(new String(zk.getData(blobDfsUriPath, false, new Stat())));
         } catch (Exception e) {
             throw new RuntimeException("Blob stores config lookup: failed to get DFS URI from ZooKeeper", e);
-        }
-    }
-
-    private static Configuration getBlobHBaseConfiguration(ZooKeeperItf zk) {
-        try {
-            Configuration configuration = HBaseConfiguration.create();
-            byte[] data = zk.getData(blobHBaseConfigPath, false, new Stat());
-            ArrayNode propertiesNode = (ArrayNode)JsonFormat.deserializeSoft(data, "Blob HBase configuration");
-            for (JsonNode jsonNode : propertiesNode) {
-                ArrayNode propertyNode = (ArrayNode)jsonNode;
-                String propertyName = propertyNode.get(0).getTextValue();
-                String propertyValue = propertyNode.get(1).getTextValue();
-                configuration.set(propertyName, propertyValue);
-            }
-            return configuration;
-        } catch (Exception e) {
-            throw new RuntimeException("Blob stores config lookup: failed to get HBase configuration from ZooKeeper", e);
         }
     }
 

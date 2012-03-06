@@ -96,7 +96,6 @@
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
-    <constructor-arg ref="hbaseConf"/>
   </bean>
   
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">

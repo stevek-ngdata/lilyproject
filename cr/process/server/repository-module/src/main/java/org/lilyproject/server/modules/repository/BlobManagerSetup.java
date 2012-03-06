@@ -43,14 +43,13 @@ import javax.annotation.PreDestroy;
 public class BlobManagerSetup {
     private final String lilyPath = "/lily";
     private final String blobDfsUriPath = lilyPath + "/blobStoresConfig/dfsUri";
-    private final String blobHBaseConfigPath = lilyPath + "/blobStoresConfig/hbaseConfig";
     private final String blobStoreAccessConfigPath = lilyPath + "/blobStoresConfig/accessConfig";
 
     private FileSystem fs;
     private BlobManager blobManager;
 
     public BlobManagerSetup(URI dfsUri, Configuration configuration, HBaseTableFactory tableFactory, ZooKeeperItf zk,
-            Conf blobManagerConf, Configuration hbaseConf) throws IOException, InterruptedException, KeeperException {
+            Conf blobManagerConf) throws IOException, InterruptedException, KeeperException {
 
         fs = FileSystem.get(DfsUri.getBaseDfsUri(dfsUri), configuration);
         Path blobRootPath = new Path(DfsUri.getDfsPath(dfsUri));
@@ -74,7 +73,7 @@ public class BlobManagerSetup {
                 blobStoreAccessConfig);
         blobManager = new BlobManagerImpl(tableFactory, blobStoreAccessFactory, false);
 
-        publishBlobAccessParams(zk, dfsUri.toString(), hbaseConf);
+        publishBlobAccessParams(zk, dfsUri.toString());
         publishBlobStoreAccessConfig(zk, blobStoreAccessConfig.toBytes());
     }
 
@@ -87,22 +86,22 @@ public class BlobManagerSetup {
         return blobManager;
     }
 
-    private void publishBlobAccessParams(ZooKeeperItf zk, String dfsUri, Configuration hbaseConf) throws IOException, InterruptedException,
-            KeeperException, UnsupportedEncodingException {
+    private void publishBlobAccessParams(ZooKeeperItf zk, String dfsUri)
+            throws IOException, InterruptedException, KeeperException {
         // The below serves as a stop-gap solution for the blob configuration: we store the information in ZK
         // that clients need to know how to access the blob store locations, but the actual setup of the
         // BlobStoreAccessFactory is currently hardcoded
         ZkUtil.createPath(zk, blobDfsUriPath, dfsUri.getBytes("UTF-8"));
-        ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
-        Iterator<Entry<String, String>> iterator = hbaseConf.iterator();
-        while (iterator.hasNext()) {
-            Entry<String, String> propertyEntry = iterator.next();
-            ArrayNode propertyNode = JsonNodeFactory.instance.arrayNode();
-            propertyNode.add(propertyEntry.getKey());
-            propertyNode.add(propertyEntry.getValue());
-            propertiesNode.add(propertyNode);
+
+        // Cleanup old config which existed in Lily up to version 1.1. This code can be removed
+        // starting from Lily 1.3.
+        if (zk.exists("/lily/blobStoresConfig/hbaseConfig", false) != null) {
+            try {
+                zk.delete("/lily/blobStoresConfig/hbaseConfig", -1);
+            } catch (KeeperException.NoNodeException e) {
+                // someone else must have deleted it, ignore
+            }
         }
-        ZkUtil.createPath(zk, blobHBaseConfigPath, JsonFormat.serializeAsBytes(propertiesNode));
     }
 
     public void publishBlobStoreAccessConfig(ZooKeeperItf zk, byte[] blobStoreAccessConfig) throws InterruptedException,
