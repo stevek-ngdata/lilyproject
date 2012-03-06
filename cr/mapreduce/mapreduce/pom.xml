@@ -43,6 +43,11 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-import</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
