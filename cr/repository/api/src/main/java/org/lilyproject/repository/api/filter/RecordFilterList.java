@@ -3,6 +3,13 @@ package org.lilyproject.repository.api.filter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A Filter which is an ordered list of other filters, which are evaluated with the specified
+ * operator: {@link Operator#MUST_PASS_ALL} (= AND) or {@link Operator#MUST_PASS_ONE} (= OR).
+ *
+ * <p>A RecordFilterList can by itself again contain RecordFilterList's, thus enabling
+ * nested boolean expressions.</p>
+ */
 public class RecordFilterList implements RecordFilter {
     public static enum Operator {
         MUST_PASS_ALL,

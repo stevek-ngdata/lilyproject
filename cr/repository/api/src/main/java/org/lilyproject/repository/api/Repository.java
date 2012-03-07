@@ -519,9 +519,15 @@ public interface Repository extends Closeable {
      * Get a scanner to sequentially run over all, or a subset of, the records in the repository.
      * 
      * <p>To run over a subset of the records, use the methods {@link RecordScan#setStartRecordId(RecordId)}
-     * and {@link RecordScan#setStopRecordId(RecordId)}</p>
+     * and {@link RecordScan#setStopRecordId(RecordId)}. Additionally, you can set filters on
+     * the RecordScan to further restrain the returned records.</p>
      *
      * <p>Scanners always return the latest versions of records.</p>
+     *
+     * <p>Note that scans, and the filters defined as part of it, are not based on indexes:
+     * the scan always runs over the defined range of records and checks each record one
+     * by one. Hence, this is intended for batch-use, or for cases where you scan over a
+     * manageable amount of records</p>
      *
      * @param scan the details of the scan to be performed
      */
