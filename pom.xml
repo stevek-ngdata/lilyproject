@@ -120,6 +120,7 @@
     <module>apps/tester</module>
     <module>apps/mbox-import</module>
     <module>apps/linkindex-cli</module>
+    <module>apps/scan-records</module>
 
     <module>dist</module>
 

@@ -90,8 +90,6 @@ public class ScannerCli extends BaseZkCliTool {
         if (result != 0)
             return result;
 
-        System.out.println("This is the lily record scanner.");
-
         if (!cmd.hasOption(printOption.getOpt()) && !cmd.hasOption(countOption.getOpt())) {
             printHelp();
             return 0;
