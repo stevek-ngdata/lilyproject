@@ -104,10 +104,8 @@ public class ScannerCli extends BaseZkCliTool {
   
         
         if (cmd.hasOption(countOption.getOpt())) {
-            
             RecordScanTool.count(lilyClient.getRepository(), startId, stopId, configFile);
-        }
-        if (cmd.hasOption(printOption.getOpt())) {
+        } else if (cmd.hasOption(printOption.getOpt())) {
             RecordScanTool.print(lilyClient.getRepository(), startId, stopId, limit, configFile);
         }
 
