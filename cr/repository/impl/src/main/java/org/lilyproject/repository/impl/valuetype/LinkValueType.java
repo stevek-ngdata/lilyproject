@@ -20,6 +20,7 @@ import java.util.Comparator;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
 
 public class LinkValueType extends AbstractValueType implements ValueType {
     
@@ -28,13 +29,22 @@ public class LinkValueType extends AbstractValueType implements ValueType {
 
     private final IdGenerator idGenerator;
 
+    /**
+     * Original encoding up to (and including) Lily 1.1.x
+     */
+    private static final byte VERSION_ONE = 1;
+    /**
+     * Changes to the recordId encoding (not the link encoding itself).
+     */
+    private static final byte VERSION_TWO = 2;
+
     public LinkValueType(IdGenerator idGenerator, TypeManager typeManager, String recordTypeName) throws IllegalArgumentException, RepositoryException, InterruptedException {
         this.idGenerator = idGenerator;
         if (recordTypeName != null) {
-            this.fullName = NAME+"<"+recordTypeName+">"; 
-        }
-        else 
+            this.fullName = NAME + "<" + recordTypeName + ">";
+        } else {
             fullName = NAME;
+        }
     }
     
     @Override
@@ -53,18 +63,28 @@ public class LinkValueType extends AbstractValueType implements ValueType {
     }
     
     @Override
-    @SuppressWarnings("unchecked")
     public Link read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
-        dataInput.readByte();
-        return Link.read(dataInput, idGenerator);
+        byte version = dataInput.readByte();
+        Link link;
+        switch (version) {
+            case VERSION_ONE:
+                link = Lily11RecordIdDecoder.decodeLink(dataInput, idGenerator);
+                break;
+            case VERSION_TWO:
+                link = Link.read(dataInput, idGenerator);
+                break;
+            default:
+                throw new RuntimeException("Unsupported encoding version for link value type: " + version);
+        }
+        return link;
     }
 
     @Override
     public void write(Object value, DataOutput dataOutput, IdentityRecordStack parentRecords) {
         // We're not storing any recordType information together with the data
         // The recordType information is only available in the schema
-        dataOutput.writeByte((byte)1); // Encoding version 1
+        dataOutput.writeByte((byte)VERSION_TWO);
         ((Link)value).write(dataOutput);
     }
 
