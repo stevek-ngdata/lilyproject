@@ -32,6 +32,8 @@
 
             - splitKeys: specify the region splits as a comma-separated list.
                          Example: <splitKeys>A,KLM,Z</splitKeys>
+                         Use \xFF notation for specifying bytes hexadecimal.
+                         Each split key will also be prefixed with the splitKeyPrefix (if specified).
 
             - splitKeyPrefix: when the split keys are auto-generated (= when using regionCount instead
                               of splitKeys), it might be that all entries in the table start with a
