@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.joda.time.LocalDate;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -17,10 +18,11 @@ import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.tools.import_.cli.JsonImport;
-import org.lilyproject.tools.import_.json.RecordScanReader;
-import org.lilyproject.tools.import_.json.RecordScanWriter;
+import org.lilyproject.tools.import_.json.*;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.json.JsonFormat;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 
 import static org.junit.Assert.*;
@@ -63,6 +65,16 @@ public class JsonConversionTest {
         assertEquals("value1", record1.getField(new QName("import1", "f1")));
         assertEquals(new Integer(55), record1.getField(new QName("import2", "f2")));
     }
+    
+    private byte[] scanToBytes(RecordScan scan) throws RepositoryException, InterruptedException, IOException {
+        return JsonFormat.serializeAsBytes(
+                writer.toJson(scan, new WriteOptions(), new NamespacesImpl(false), repository));        
+    }
+    
+    private RecordScan scanFromBytes(byte[] data) throws IOException, RepositoryException, JsonFormatException,
+            InterruptedException {
+        return reader.fromJson(JsonFormat.deserializeNonStd(data), new NamespacesImpl(false), repository);
+    }
 
     @Test
     public void testScanRecordId() throws Exception {
@@ -72,8 +84,8 @@ public class JsonConversionTest {
         scan.setStartRecordId(idGenerator.newRecordId());
         scan.setStopRecordId(idGenerator.newRecordId("foo"));
 
-        byte[] data = writer.toJsonBytes(scan, repository);
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
 
         assertEquals(scan.getStartRecordId(), parsedScan.getStartRecordId());
         assertEquals(scan.getStopRecordId(), parsedScan.getStopRecordId());
@@ -90,7 +102,7 @@ public class JsonConversionTest {
 
         // verify the json parser accepts comments and unquoted attributes
         String json = "{ /* a comment */ startRecordId: \"USER.foo\"}";
-        RecordScan parsedScan = reader.fromJsonBytes(json.getBytes(), repository);
+        RecordScan parsedScan = scanFromBytes(json.getBytes());
     }
 
     @Test
@@ -101,8 +113,8 @@ public class JsonConversionTest {
         scan.setRawStartRecordId(Bytes.toBytes("bar"));
         scan.setRawStopRecordId(Bytes.toBytes("foo"));
 
-        byte[] data = writer.toJsonBytes(scan, repository);
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
 
         assertArrayEquals(scan.getRawStartRecordId(), parsedScan.getRawStartRecordId());
         assertArrayEquals(scan.getRawStopRecordId(), parsedScan.getRawStopRecordId());
@@ -119,8 +131,8 @@ public class JsonConversionTest {
         scan.setCacheBlocks(false);
         scan.setCaching(500);
 
-        byte[] data = writer.toJsonBytes(scan, repository);
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
         
         assertEquals(false, parsedScan.getCacheBlocks());
         assertEquals(500, parsedScan.getCaching());
@@ -135,8 +147,8 @@ public class JsonConversionTest {
         RecordScan scan = new RecordScan();
         scan.setRecordFilter(new RecordTypeFilter(recordType));
 
-        byte[] data = writer.toJsonBytes(scan, repository);
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordTypeFilter);
@@ -160,8 +172,8 @@ public class JsonConversionTest {
         RecordScan scan = new RecordScan();
         scan.setRecordFilter(new RecordIdPrefixFilter(recordId));
 
-        byte[] data = writer.toJsonBytes(scan, repository);
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordIdPrefixFilter);
@@ -185,8 +197,8 @@ public class JsonConversionTest {
         RecordScan scan = new RecordScan();
         scan.setRecordFilter(new FieldValueFilter(name, value));
 
-        byte[] data = writer.toJsonBytes(scan, repository);
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof FieldValueFilter);
@@ -207,22 +219,22 @@ public class JsonConversionTest {
         // Try different data types as field value
         value = new Long(3);
         scan.setRecordFilter(new FieldValueFilter(name, value));
-        assertEquals(value, ((FieldValueFilter)reader.fromJsonBytes(writer.toJsonBytes(scan, repository), repository)
+        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
         value = new BigDecimal(3);
         scan.setRecordFilter(new FieldValueFilter(name, value));
-        assertEquals(value, ((FieldValueFilter)reader.fromJsonBytes(writer.toJsonBytes(scan, repository), repository)
+        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
         value = new LocalDate();
         scan.setRecordFilter(new FieldValueFilter(name, value));
-        assertEquals(value, ((FieldValueFilter)reader.fromJsonBytes(writer.toJsonBytes(scan, repository), repository)
+        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
         value = Lists.newArrayList("foo", "bar");;
         scan.setRecordFilter(new FieldValueFilter(name, value));
-        assertEquals(value, ((FieldValueFilter)reader.fromJsonBytes(writer.toJsonBytes(scan, repository), repository)
+        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
         // Use a list as field value, but with a mixture of datatypes. This should fail,
@@ -230,7 +242,7 @@ public class JsonConversionTest {
         value = Lists.newArrayList("foo", new Long(123));
         scan.setRecordFilter(new FieldValueFilter(name, value));
         try {
-            data = writer.toJsonBytes(scan, repository);
+            data = scanToBytes(scan);
             fail("Expected exception with list containing different data types");
         } catch (Exception e) {
             // expected
@@ -249,9 +261,9 @@ public class JsonConversionTest {
         filterList.addFilter(new RecordTypeFilter(new QName("ns", "f")));
         scan.setRecordFilter(filterList);
 
-        byte[] data = writer.toJsonBytes(scan, repository);
+        byte[] data = scanToBytes(scan);
         System.out.println(Bytes.toString(data));
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        RecordScan parsedScan = scanFromBytes(data);
 
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordFilterList);
@@ -279,16 +291,16 @@ public class JsonConversionTest {
         RecordScan scan = new RecordScan();
         scan.setReturnFields(ReturnFields.NONE);
 
-        byte[] data = writer.toJsonBytes(scan, repository);
-        RecordScan parsedScan = reader.fromJsonBytes(data, repository);
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
 
         assertEquals(ReturnFields.NONE.getType(), parsedScan.getReturnFields().getType());
 
         // Test with enumeration of fields to return
         scan.setReturnFields(new ReturnFields(new QName("ns", "f1"), new QName("ns", "f2")));
-        data = writer.toJsonBytes(scan, repository);
+        data = scanToBytes(scan);
         System.out.println(Bytes.toString(data));
-        parsedScan = reader.fromJsonBytes(data, repository);
+        parsedScan = scanFromBytes(data);
 
         assertEquals(ReturnFields.Type.ENUM, parsedScan.getReturnFields().getType());
         assertEquals(Lists.newArrayList(new QName("ns", "f1"), new QName("ns", "f2")),

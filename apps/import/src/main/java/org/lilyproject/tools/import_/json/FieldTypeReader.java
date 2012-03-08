@@ -15,6 +15,7 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.SchemaIdImpl;
@@ -26,13 +27,20 @@ public class FieldTypeReader implements EntityReader<FieldType> {
     public static EntityReader<FieldType> INSTANCE = new FieldTypeReader();
 
     @Override
-    public FieldType fromJson(ObjectNode node, Repository repository) throws JsonFormatException, RepositoryException, InterruptedException {
+    public FieldType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException, InterruptedException {
         return fromJson(node, null, repository);
     }
 
     @Override
-    public FieldType fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
+    public FieldType fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
+
+        if (!nodeNode.isObject()) {
+            throw new JsonFormatException("Expected a json object for field type, got: " +
+                    nodeNode.getClass().getName());
+        }
+
+        ObjectNode node = (ObjectNode)nodeNode;
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 

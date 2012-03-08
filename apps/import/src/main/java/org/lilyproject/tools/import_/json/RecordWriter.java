@@ -97,7 +97,8 @@ public class RecordWriter implements EntityWriter<Record> {
         return recordNode;
     }
 
-    private JsonNode listToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
+    private JsonNode listToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
+            Repository repository) throws RepositoryException, InterruptedException {
         List list = (List)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object item : list) {
@@ -106,7 +107,8 @@ public class RecordWriter implements EntityWriter<Record> {
         return array;
     }
 
-    private JsonNode pathToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
+    private JsonNode pathToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
+            Repository repository) throws RepositoryException, InterruptedException {
         HierarchyPath path = (HierarchyPath)value;
         ArrayNode array = JsonNodeFactory.instance.arrayNode();
         for (Object element : path.getElements()) {
@@ -115,7 +117,8 @@ public class RecordWriter implements EntityWriter<Record> {
         return array;
     }
 
-    protected JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces, Repository repository) throws RepositoryException, InterruptedException {
+    public JsonNode valueToJson(Object value, ValueType valueType, WriteOptions options, Namespaces namespaces,
+            Repository repository) throws RepositoryException, InterruptedException {
         String name = valueType.getBaseName();
 
         JsonNodeFactory factory = JsonNodeFactory.instance;

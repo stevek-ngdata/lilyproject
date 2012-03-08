@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
@@ -13,6 +15,8 @@ import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.tools.import_.json.RecordFilterReader;
 import org.lilyproject.tools.import_.json.RecordScanReader;
+import org.lilyproject.util.json.JsonFormat;
+import org.lilyproject.util.json.JsonUtil;
 import org.lilyproject.util.repo.PrintUtil;
 
 public class RecordScanTool {
@@ -101,8 +105,8 @@ public class RecordScanTool {
         RecordScan scan = null;
         
         if (scanConfFile != null) {
-            RecordScanReader scanReader = new RecordScanReader();
-            scan = scanReader.fromJsonBytes(IOUtils.toByteArray(new FileInputStream(scanConfFile)), repository);    
+            JsonNode jsonNode = JsonFormat.deserializeNonStd(new FileInputStream(scanConfFile));
+            scan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository);
         }
 
         scan = scan != null ? scan : new RecordScan();

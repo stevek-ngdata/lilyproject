@@ -51,10 +51,18 @@ public class ReturnFields {
         return type;
     }
 
+    public void setType(Type type) {
+        this.type = type;
+    }
+
     /**
      * This method will only return non-null if {@link #getType()} returns {@link Type#ENUM}.
      */
     public List<QName> getFields() {
         return fields;
+    }
+
+    public void setFields(List<QName> fields) {
+        this.fields = fields;
     }
 }

@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.zookeeper.KeeperException;
+import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.RecordScan;
@@ -18,8 +19,10 @@ import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.tools.import_.json.RecordScanReader;
+import org.lilyproject.util.exception.ExceptionUtil;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -189,7 +192,13 @@ public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritabl
         RecordScan scan;
         String scanData = conf.get(SCAN);
         if (scanData != null) {
-            scan = RecordScanReader.INSTANCE.fromJsonString(scanData, repository);
+            try {
+                JsonNode node = JsonFormat.deserializeNonStd(scanData);
+                scan = RecordScanReader.INSTANCE.fromJson(node, repository);
+            } catch (Exception e) {
+                ExceptionUtil.handleInterrupt(e);
+                throw new RuntimeException(e);
+            }
         } else {
             scan = new RecordScan();
         }
