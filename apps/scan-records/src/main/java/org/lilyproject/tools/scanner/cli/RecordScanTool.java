@@ -52,11 +52,13 @@ public class RecordScanTool {
         this.repository = repository;
     }
 
-    public void count(String startId, String stopId, File filterFile) throws Exception {
+    public void count(String startId, String stopId, File configFile) throws Exception {
         System.out.println("Counting records");
-        RecordScan scan = createRecordScan(startId, stopId, filterFile);
-        // We don't need to return fields for counting
-        scan.setReturnFields(ReturnFields.NONE);
+        RecordScan scan = createRecordScan(startId, stopId, configFile);
+        if (configFile == null) {
+            // We don't need to return fields for counting
+            scan.setReturnFields(ReturnFields.NONE);
+        }
         RecordScanner scanner = repository.getScanner(scan);
         Record record;
         Date start = new Date();
@@ -96,15 +98,17 @@ public class RecordScanTool {
     }
 
     private RecordScan createRecordScan(String startId, String stopId, File scanConfFile) throws Exception {
-        RecordScan scan = new RecordScan();
-        scan.setCaching(RecordScanTool.DEFAULT_CACHE);
-        scan.setCacheBlocks(DEFAULT_CACHE_BLOCKS);
+        RecordScan scan = null;
         
         if (scanConfFile != null) {
             RecordScanReader scanReader = new RecordScanReader();
             scan = scanReader.fromJsonBytes(IOUtils.toByteArray(new FileInputStream(scanConfFile)), repository);    
         }
-        
+
+        scan = scan != null ? scan : new RecordScan();
+        scan.setCaching(RecordScanTool.DEFAULT_CACHE);
+        scan.setCacheBlocks(DEFAULT_CACHE_BLOCKS);
+
         if (startId != null && startId.length() > 0) {
             scan.setStartRecordId(repository.getIdGenerator().fromString(startId));
         }
