@@ -85,6 +85,15 @@ public class JsonConversionTest {
     }
 
     @Test
+    public void testScanCustomJson() throws Exception {
+        IdGenerator idGenerator = new IdGeneratorImpl();
+
+        // verify the json parser accepts comments and unquoted attributes
+        String json = "{ /* a comment */ startRecordId: \"USER.foo\"}";
+        RecordScan parsedScan = reader.fromJsonBytes(json.getBytes(), repository);
+    }
+
+    @Test
     public void testScanRawStartStop() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
 
@@ -138,6 +147,8 @@ public class JsonConversionTest {
         JsonNode node = new ObjectMapper().readTree(data);
         assertEquals("org.lilyproject.repository.api.filter.RecordTypeFilter",
                 node.get("recordFilter").get("@class").getTextValue());
+        assertEquals("{namespace1}name1",
+                node.get("recordFilter").get("recordType").getTextValue());
     }
 
     @Test

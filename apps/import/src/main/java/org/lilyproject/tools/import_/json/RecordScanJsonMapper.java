@@ -87,6 +87,10 @@ public class RecordScanJsonMapper {
         // Thus: if you have a been containing "Object value", and value is a String, then by default
         // jackson will use the String to look up a serializer, rather than Object. 
         mapper.setSerializerProvider(new ScanSerializerProvider());
+
+        // Be flexible towards our users
+        mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     public ObjectMapper getMapper() {
@@ -173,6 +177,8 @@ public class RecordScanJsonMapper {
                 BeanProperty property) {
             if (RecordId.class.isAssignableFrom(type.getRawClass())) {
                 return new RecordIdSerializer();
+            } else if (QName.class.isAssignableFrom(type.getRawClass())) {
+                return new QNameSerializer();
             } else if (Object.class == type.getRawClass()) {
                 return new FieldValueSerializer();
             }
@@ -297,39 +303,20 @@ public class RecordScanJsonMapper {
     public static class QNameDeserializer extends JsonDeserializer<QName> {
         @Override
         public QName deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-            if (jp.getCurrentToken() != JsonToken.START_OBJECT) {
-                throw new RuntimeException("Expected start object token");
-            }
-            
-            String name = null;
-            String namespace = null;
-
-            // nextToken in the while condition moves to the next field name token, or to the end object
-            while (jp.nextToken() != JsonToken.END_OBJECT) {
-                // move to field value
-                if (jp.nextToken() != JsonToken.VALUE_STRING) {
-                    throw new RuntimeException("Unexpected non-string field in json representation of QName: " +
-                            jp.getCurrentName());
-                }
-
-                // read field value
-                if (jp.getCurrentName().equals("name")) {
-                    name = jp.getText();
-                } else if (jp.getCurrentName().equals("namespace")) {
-                    namespace = jp.getText();
-                } else {
-                    throw new RuntimeException("Unexpected field in json representation of QName: " +
-                            jp.getCurrentName());
-                }
-            }
-            
-            return new QName(namespace, name);
+            return QName.fromString(jp.getText());
         }
 
         @Override
         public QName deserialize(JsonParser jp, DeserializationContext ctxt, QName intoValue)
                 throws IOException {
             return super.deserialize(jp, ctxt, intoValue);
+        }
+    }
+    
+    public static class QNameSerializer extends JsonSerializer<QName> {
+        @Override
+        public void serialize(QName value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
+            jgen.writeString(value.toString());
         }
     }
 
