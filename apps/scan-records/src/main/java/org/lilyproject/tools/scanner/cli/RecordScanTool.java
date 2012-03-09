@@ -119,8 +119,7 @@ public class RecordScanTool {
         
         if (stopId != null && stopId.length() > 0) {
             scan.setStopRecordId(repository.getIdGenerator().fromString(stopId));
-        }
-        
+        }        
 
         return scan;
     }

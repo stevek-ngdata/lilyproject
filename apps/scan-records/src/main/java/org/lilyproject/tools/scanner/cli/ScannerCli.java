@@ -94,16 +94,14 @@ public class ScannerCli extends BaseZkCliTool {
             printHelp();
             return 0;
         }
-
-        lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
+        
         String startId = cmd.hasOption(startOption.getLongOpt()) ? cmd.getOptionValue(startOption.getLongOpt()) : null;
         String stopId = cmd.hasOption(stopOption.getLongOpt()) ? cmd.getOptionValue(stopOption.getLongOpt()) : null;
         File configFile = cmd.hasOption(configOption.getLongOpt()) ? new File (cmd.getOptionValue(configOption.getLongOpt())) : null;
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
-        
-  
-        
-        if (cmd.hasOption(countOption.getOpt())) {
+
+        lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
+        if (cmd.hasOption(countOption.getOpt())) {            
             RecordScanTool.count(lilyClient.getRepository(), startId, stopId, configFile);
         } else if (cmd.hasOption(printOption.getOpt())) {
             RecordScanTool.print(lilyClient.getRepository(), startId, stopId, limit, configFile);
