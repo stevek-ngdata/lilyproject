@@ -60,7 +60,11 @@ public class RecordAsBytesConverter {
 
             writeQName(entry.getKey(), output);
             output.writeUTF(valueType.getName());
-            valueType.write(entry.getValue(), output, new IdentityRecordStack());
+            try {
+                valueType.write(entry.getValue(), output, new IdentityRecordStack());
+            } catch (Exception e) {
+                throw new RuntimeException("Error serializing field " + entry.getKey(), e);
+            }
         }
         
         // Write the fields to delete
