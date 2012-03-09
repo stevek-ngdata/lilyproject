@@ -22,15 +22,25 @@ import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.tools.import_.json.*;
+import org.lilyproject.tools.import_.json.EntityReader;
+import org.lilyproject.tools.import_.json.EntityWriter;
+import org.lilyproject.tools.import_.json.FieldTypeReader;
+import org.lilyproject.tools.import_.json.FieldTypeWriter;
+import org.lilyproject.tools.import_.json.RecordReader;
+import org.lilyproject.tools.import_.json.RecordScanReader;
+import org.lilyproject.tools.import_.json.RecordScanWriter;
+import org.lilyproject.tools.import_.json.RecordTypeReader;
+import org.lilyproject.tools.import_.json.RecordTypeWriter;
+import org.lilyproject.tools.import_.json.RecordWriter;
 
 public class EntityRegistry {
     protected static Map<Class, RegistryEntry> SUPPORTED_TYPES;
     static {
         SUPPORTED_TYPES = new HashMap<Class, RegistryEntry>();
-        SUPPORTED_TYPES.put(RecordType.class, new RegistryEntry(RecordTypeReader.INSTANCE, RecordTypeWriter.INSTANCE));
-        SUPPORTED_TYPES.put(FieldType.class, new RegistryEntry(FieldTypeReader.INSTANCE, FieldTypeWriter.INSTANCE));
-        SUPPORTED_TYPES.put(Record.class, new RegistryEntry(RecordReader.INSTANCE, RecordWriter.INSTANCE));
+        SUPPORTED_TYPES.put(RecordType.class, new RegistryEntry(RecordTypeReader.INSTANCE, RecordTypeWriter.INSTANCE, "recordType"));
+        SUPPORTED_TYPES.put(FieldType.class, new RegistryEntry(FieldTypeReader.INSTANCE, FieldTypeWriter.INSTANCE, "fieldType"));
+        SUPPORTED_TYPES.put(Record.class, new RegistryEntry(RecordReader.INSTANCE, RecordWriter.INSTANCE, "record"));
+        SUPPORTED_TYPES.put(RecordScan.class, new RegistryEntry(RecordScanReader.INSTANCE, RecordScanWriter.INSTANCE, "scan"));
     }
 
     public static EntityReader findReader(Class clazz) {
@@ -63,10 +73,12 @@ public class EntityRegistry {
     public static class RegistryEntry {
         EntityReader reader;
         EntityWriter writer;
+        String propertyName;
 
-        public RegistryEntry(EntityReader reader, EntityWriter writer) {
+        public RegistryEntry(EntityReader reader, EntityWriter writer, String propertyName) {
             this.reader = reader;
             this.writer = writer;
+            this.propertyName = propertyName;
         }
 
         public EntityReader getReader() {
@@ -75,6 +87,10 @@ public class EntityRegistry {
 
         public EntityWriter getWriter() {
             return writer;
+        }
+
+        public String getPropertyName() {
+            return propertyName;
         }
     }
 }
