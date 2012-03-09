@@ -149,12 +149,12 @@ public class MapReduceTest {
             job.setJarByClass(Test1Mapper.class);
 
             job.setMapperClass(Test1Mapper.class);
-            job.setInputFormatClass(LilyInputFormat.class);
 
             job.setOutputFormatClass(NullOutputFormat.class);
 
             job.setNumReduceTasks(0);
 
+            LilyMapReduceUtil.initMapperJob(null, "localhost", repository, job);
 
             boolean b = job.waitForCompletion(true);
             if (!b) {
@@ -180,7 +180,6 @@ public class MapReduceTest {
             job.setJarByClass(Test1Mapper.class);
 
             job.setMapperClass(Test1Mapper.class);
-            job.setInputFormatClass(LilyInputFormat.class);
 
             job.setOutputFormatClass(NullOutputFormat.class);
 

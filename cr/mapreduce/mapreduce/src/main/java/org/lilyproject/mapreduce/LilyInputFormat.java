@@ -31,6 +31,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A MapReduce InputFormat for Lily based on Lily scanners.
+ */
 public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritable> implements Configurable {
     
     public static final String SCAN = "lily.mapreduce.scan";
