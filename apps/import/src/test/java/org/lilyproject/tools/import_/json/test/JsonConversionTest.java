@@ -41,6 +41,24 @@ public class JsonConversionTest {
         repoSetup.setupRepository(true);
 
         repository = repoSetup.getRepository();
+        
+        TypeManager typeManager = repository.getTypeManager();
+        typeManager.createFieldType("STRING", new QName("ns", "stringField"), Scope.NON_VERSIONED);
+        typeManager.createFieldType("LIST<STRING>", new QName("ns", "stringListField"), Scope.NON_VERSIONED);
+        typeManager.createFieldType("LONG", new QName("ns", "longField"), Scope.NON_VERSIONED);
+        typeManager.recordTypeBuilder()
+                .defaultNamespace("ns")
+                .name("rt")
+                .fieldEntry()
+                    .name("stringField")
+                    .add()
+                .fieldEntry()
+                    .name("stringListField")
+                    .add()
+                .fieldEntry()
+                    .name("longField")
+                    .add()
+                .create();
     }
 
     @AfterClass
@@ -142,7 +160,7 @@ public class JsonConversionTest {
     public void testScanRecordTypeFilter() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
 
-        QName recordType = new QName("namespace1", "name1");
+        QName recordType = new QName("ns", "rt");
 
         RecordScan scan = new RecordScan();
         scan.setRecordFilter(new RecordTypeFilter(recordType));
@@ -159,7 +177,7 @@ public class JsonConversionTest {
         JsonNode node = new ObjectMapper().readTree(data);
         assertEquals("org.lilyproject.repository.api.filter.RecordTypeFilter",
                 node.get("recordFilter").get("@class").getTextValue());
-        assertEquals("{namespace1}name1",
+        assertEquals("{ns}rt",
                 node.get("recordFilter").get("recordType").getTextValue());
     }
 
@@ -191,7 +209,7 @@ public class JsonConversionTest {
     public void testScanFieldValueFilter() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
 
-        QName name = new QName("ns", "f1");
+        QName name = new QName("ns", "stringField");
         Object value = "foo";
 
         RecordScan scan = new RecordScan();
@@ -211,36 +229,25 @@ public class JsonConversionTest {
         JsonNode node = new ObjectMapper().readTree(data);
         assertEquals("org.lilyproject.repository.api.filter.FieldValueFilter",
                 node.get("recordFilter").get("@class").getTextValue());
-        assertEquals("STRING",
-                node.get("recordFilter").get("fieldValue").get("valueType").getTextValue());
-        assertEquals("foo",
-                node.get("recordFilter").get("fieldValue").get("value").getTextValue());
+        assertEquals("foo", node.get("recordFilter").get("fieldValue").getTextValue());
 
         // Try different data types as field value
         value = new Long(3);
-        scan.setRecordFilter(new FieldValueFilter(name, value));
-        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
-                .getRecordFilter()).getFieldValue());
-
-        value = new BigDecimal(3);
-        scan.setRecordFilter(new FieldValueFilter(name, value));
-        assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
-                .getRecordFilter()).getFieldValue());
-
-        value = new LocalDate();
-        scan.setRecordFilter(new FieldValueFilter(name, value));
+        scan.setRecordFilter(new FieldValueFilter(new QName("ns", "longField"), value));
         assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
         value = Lists.newArrayList("foo", "bar");;
-        scan.setRecordFilter(new FieldValueFilter(name, value));
+        scan.setRecordFilter(new FieldValueFilter(new QName("ns", "stringListField"), value));
         assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
+        // The following test made more sense when we were using a generic type-detection
+        // in the json serialization rather than using TypeManager.
         // Use a list as field value, but with a mixture of datatypes. This should fail,
         // as lists in Lily should contain values of the same type.
         value = Lists.newArrayList("foo", new Long(123));
-        scan.setRecordFilter(new FieldValueFilter(name, value));
+        scan.setRecordFilter(new FieldValueFilter(new QName("ns", "stringListField"), value));
         try {
             data = scanToBytes(scan);
             fail("Expected exception with list containing different data types");
@@ -258,7 +265,7 @@ public class JsonConversionTest {
         RecordScan scan = new RecordScan();
         RecordFilterList filterList = new RecordFilterList(RecordFilterList.Operator.MUST_PASS_ONE);
         filterList.addFilter(new RecordIdPrefixFilter(recordId));
-        filterList.addFilter(new RecordTypeFilter(new QName("ns", "f")));
+        filterList.addFilter(new RecordTypeFilter(new QName("ns", "stringField")));
         scan.setRecordFilter(filterList);
 
         byte[] data = scanToBytes(scan);
@@ -286,7 +293,7 @@ public class JsonConversionTest {
     public void testScanReturnFields() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
 
-        QName recordType = new QName("namespace1", "name1");
+        QName recordType = new QName("ns", "rt");
 
         RecordScan scan = new RecordScan();
         scan.setReturnFields(ReturnFields.NONE);

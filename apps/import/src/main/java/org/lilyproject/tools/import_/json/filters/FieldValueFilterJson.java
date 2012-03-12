@@ -26,17 +26,18 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
         FieldValueFilter filter = new FieldValueFilter();
 
         String field = JsonUtil.getString(node, "field", null);
-        ObjectNode fieldValue = JsonUtil.getObject(node, "fieldValue", null);
-
-        if (field != null) {
-            filter.setField(QNameConverter.fromJson(field, namespaces));
+        JsonNode fieldValue = node.get("fieldValue");
+        
+        // field and fieldValue should be specified both, or not at all, for deserialization to work
+        if ((field != null || fieldValue != null) && (field == null || fieldValue == null)) {
+            throw new RuntimeException("FieldValueFilter deserialization: both field and fieldValue must be specified.");
         }
 
-        if (fieldValue != null) {
-            String valueTypeName = JsonUtil.getString(fieldValue, "valueType");
-            JsonNode valueNode = JsonUtil.getNode(fieldValue, "value");
-            ValueType valueType = repository.getTypeManager().getValueType(valueTypeName);
-            Object value = RecordReader.INSTANCE.readValue(valueNode, valueType, "value", new NamespacesImpl(), repository);
+        if (field != null && fieldValue != null) {
+            QName fieldQName = QNameConverter.fromJson(field, namespaces); 
+            filter.setField(fieldQName);
+            ValueType valueType = repository.getTypeManager().getFieldTypeByName(fieldQName).getValueType();
+            Object value = RecordReader.INSTANCE.readValue(fieldValue, valueType, "value", new NamespacesImpl(), repository);
             filter.setFieldValue(value);
         }
 
@@ -55,97 +56,30 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
             RecordFilterJsonConverter<RecordFilter> converter)
             throws RepositoryException, InterruptedException {
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
+
+        // field and fieldValue should be specified both, or not at all, for serialization to work
+        if ((filter.getField() != null || filter.getFieldValue() != null) &&
+                (filter.getField() == null || filter.getFieldValue() == null)) {
+            throw new RuntimeException("Both field and fieldValue must be specified.");
+        }
         
-        if (filter.getField() != null) {
+        if (filter.getField() != null && filter.getFieldValue() != null) {
             node.put("field", QNameConverter.toJson(filter.getField(), namespaces));
+            
+            ValueType valueType = repository.getTypeManager().getFieldTypeByName(filter.getField()).getValueType();
+            JsonNode valueAsJson = RecordWriter.INSTANCE.valueToJson(filter.getFieldValue(), valueType,
+                    new WriteOptions(), namespaces, repository);
+            
+            node.put("fieldValue", valueAsJson);
+            ObjectNode valueNode = node.putObject("value");
         }
 
         if (filter.getCompareOp() != null) {
             node.put("compareOp", filter.getCompareOp().toString());
         }
         
-        if (filter.getFieldValue() != null) {
-            node.put("fieldValue", fieldValueToJson(filter.getFieldValue(), repository));
-            ObjectNode valueNode = node.putObject("value");
-        }
-
         node.put("filterIfMissing", filter.getFilterIfMissing());        
         
         return node;
-    }
-
-    // This code could move to a separate class when more generally useful
-    private static ObjectNode fieldValueToJson(Object value, Repository repository) throws RepositoryException, InterruptedException {
-        String valueTypeName = determineValueType(value);
-        ValueType valueType = repository.getTypeManager().getValueType(valueTypeName);
-        WriteOptions options = new WriteOptions();
-        Namespaces namespaces = new NamespacesImpl(false);
-
-        JsonNode node = RecordWriter.INSTANCE.valueToJson(value, valueType, options, namespaces, repository);
-
-        ObjectNode valueNode = JsonFormat.OBJECT_MAPPER.createObjectNode();
-        valueNode.put("valueType", valueTypeName);
-        valueNode.put("value", node);
-
-        return valueNode;
-    }
-
-    /**
-     * Generates a Lily value type string for a given value. For LIST-type values, it assumes
-     * the first value in the list is representative for all the values in the list, it is not
-     * validated that all list entries are of the same type (this would be costly, it is
-     * assumed this is check when serializing or de-serializing).
-     */
-    private static String determineValueType(Object value) {
-        String typeName;
-
-        if (value instanceof List) {
-            List list = (List)value;
-            if (list.size() == 0) {
-                // the type doesn't matter, but is obliged, so just use string
-                return "LIST<STRING>";
-            } else {
-                typeName = "LIST<" + determineValueType(list.get(0)) + ">";
-            }
-        } else if (value instanceof HierarchyPath) {
-            HierarchyPath path = (HierarchyPath)value;
-            if (path.size() == 0) {
-                // the type doesn't matter, but is obliged, so just use string
-                return "PATH<STRING>";
-            } else {
-                typeName = "PATH<" + determineValueType(path.get(0)) + ">";
-            }
-        } else if (value instanceof String) {
-            typeName = "STRING";
-        } else if (value instanceof Integer) {
-            typeName = "INTEGER";
-        } else if (value instanceof Long) {
-            typeName = "LONG";
-        } else if (value instanceof Double) {
-            typeName = "DOUBLE";
-        } else if (value instanceof BigDecimal) {
-            typeName = "DECIMAL";
-        } else if (value instanceof Boolean) {
-            typeName = "BOOLEAN";
-        } else if (value instanceof org.joda.time.LocalDate) {
-            typeName = "DATE";
-        } else if (value instanceof org.joda.time.DateTime) {
-            typeName = "DATETIME";
-        } else if (value instanceof Blob) {
-            typeName = "BLOB";
-        } else if (value instanceof Link) {
-            typeName = "LINK";
-        } else if (value instanceof URI) {
-            typeName = "URI";
-        } else if (value instanceof Record) {
-            typeName = "RECORD";
-        } else if (value instanceof ByteArray) {
-            typeName = "BYTEARRAY";
-        } else {
-            throw new RuntimeException("This type of object is not supported by the JSON field value serialization: " +
-                    value.getClass().getName());
-        }
-
-        return typeName;
     }
 }
