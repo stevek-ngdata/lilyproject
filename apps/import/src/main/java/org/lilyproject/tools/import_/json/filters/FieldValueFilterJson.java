@@ -24,18 +24,14 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
             RecordFilterJsonConverter<RecordFilter> converter)
             throws JsonFormatException, RepositoryException, InterruptedException {
         FieldValueFilter filter = new FieldValueFilter();
-        
+
         String field = JsonUtil.getString(node, "field", null);
+        ObjectNode fieldValue = JsonUtil.getObject(node, "fieldValue", null);
+
         if (field != null) {
             filter.setField(QNameConverter.fromJson(field, namespaces));
         }
-        
-        String compareOp = JsonUtil.getString(node, "compareOp", null);
-        if (compareOp != null) {
-            filter.setCompareOp(CompareOp.valueOf(compareOp));
-        }
-        
-        ObjectNode fieldValue = JsonUtil.getObject(node, "fieldValue", null);
+
         if (fieldValue != null) {
             String valueTypeName = JsonUtil.getString(fieldValue, "valueType");
             JsonNode valueNode = JsonUtil.getNode(fieldValue, "value");
@@ -43,7 +39,13 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
             Object value = RecordReader.INSTANCE.readValue(valueNode, valueType, "value", new NamespacesImpl(), repository);
             filter.setFieldValue(value);
         }
+
+        String compareOp = JsonUtil.getString(node, "compareOp", null);
+        if (compareOp != null) {
+            filter.setCompareOp(CompareOp.valueOf(compareOp));
+        }
         
+
         filter.setFilterIfMissing(JsonUtil.getBoolean(node, "filterIfMissing", filter.getFilterIfMissing()));
         
         return filter;
