@@ -269,7 +269,6 @@ public class JsonConversionTest {
         scan.setRecordFilter(filterList);
 
         byte[] data = scanToBytes(scan);
-        System.out.println(Bytes.toString(data));
         RecordScan parsedScan = scanFromBytes(data);
 
         assertNotNull(parsedScan.getRecordFilter());
@@ -306,11 +305,36 @@ public class JsonConversionTest {
         // Test with enumeration of fields to return
         scan.setReturnFields(new ReturnFields(new QName("ns", "f1"), new QName("ns", "f2")));
         data = scanToBytes(scan);
-        System.out.println(Bytes.toString(data));
         parsedScan = scanFromBytes(data);
 
         assertEquals(ReturnFields.Type.ENUM, parsedScan.getReturnFields().getType());
         assertEquals(Lists.newArrayList(new QName("ns", "f1"), new QName("ns", "f2")),
                 parsedScan.getReturnFields().getFields());
+    }
+
+    @Test
+    public void testScanNamespaces() throws Exception {
+        IdGenerator idGenerator = new IdGeneratorImpl();
+
+        QName name = new QName("ns", "stringField");
+        Object value = "foo";
+
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new FieldValueFilter(name, value));
+
+        // Test serialization without namespace prefixes
+        byte[] data = scanToBytes(scan);
+
+        JsonNode node = new ObjectMapper().readTree(data);
+        assertNull(node.get("namespaces"));
+        assertEquals("{ns}stringField", node.get("recordFilter").get("field").getTextValue());
+
+        // Test serialization with namespace prefixes
+        byte[] dataWithPrefixes = JsonFormat.serializeAsBytes(
+                writer.toJson(scan, new WriteOptions(), repository));
+
+        JsonNode nodeWithPrefixes = new ObjectMapper().readTree(dataWithPrefixes);
+        assertNotNull(nodeWithPrefixes.get("namespaces"));
+        assertTrue(nodeWithPrefixes.get("recordFilter").get("field").getTextValue().endsWith("$stringField"));
     }
 }
