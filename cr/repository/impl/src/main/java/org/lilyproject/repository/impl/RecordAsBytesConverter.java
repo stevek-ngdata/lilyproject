@@ -63,7 +63,7 @@ public class RecordAsBytesConverter {
             try {
                 valueType.write(entry.getValue(), output, new IdentityRecordStack());
             } catch (Exception e) {
-                throw new RuntimeException("Error serializing field " + entry.getKey(), e);
+                throw new RecordException("Error serializing field " + entry.getKey(), e);
             }
         }
         
