@@ -15,6 +15,7 @@
  */
 package org.lilyproject.process.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -81,11 +82,57 @@ public class LilyClientTest {
         blobStream.close();
         assertTrue(blob.getValue() != null);
 
-        // Create a record wit this blob
+        // Create a record with this blob
         Record record = repository.newRecord();
         record.setRecordType(new QName(NS, "file"));
         record.setField(new QName(NS, "data"), blob);
         record = repository.create(record);
+    }
+
+    /**
+     * Test scanners: scanners work directly on HBase, also remotely.
+     */
+    @Test
+    public void testScanners() throws Exception {
+        LilyClient client = lilyProxy.getLilyServerProxy().getClient();
+
+        // Obtain a repository
+        Repository repository = client.getRepository();
+        IdGenerator idGenerator = repository.getIdGenerator();
+
+        String NS = "org.lilyproject.client.test";
+
+        // Create a field type and record type
+        TypeManager typeManager = repository.getTypeManager();
+        FieldType fieldType = typeManager.newFieldType("STRING", new QName(NS, "scanfield"), Scope.VERSIONED);
+        fieldType = typeManager.createFieldType(fieldType);
+
+        RecordType recordType = typeManager.newRecordType(new QName(NS, "scanrt"));
+        recordType.addFieldTypeEntry(fieldType.getId(), true);
+        recordType = typeManager.createRecordType(recordType);
+        
+        // Create some records
+        for (int i = 0; i < 10; i++) {
+            Record record = repository.newRecord();
+            record.setId(repository.getIdGenerator().newRecordId("A" + i));
+            record.setRecordType(new QName(NS, "scanrt"));
+            record.setField(new QName(NS, "scanfield"), "value " + i);
+            repository.create(record);
+        }
+        
+        // Do a scan
+        RecordScan scan = new RecordScan();
+        scan.setStartRecordId(idGenerator.newRecordId("A"));
+        scan.setStopRecordId(idGenerator.newRecordId("B"));
+        
+        RecordScanner scanner = repository.getScanner(scan);
+        int i = 0;
+        while (scanner.next() != null) {
+            i++;
+        }
+        
+        assertEquals("Number of scanned records", 10, i);
+
     }
 
     private byte[] makeBlobData(int size) {

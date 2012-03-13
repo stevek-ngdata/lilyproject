@@ -16,6 +16,7 @@ import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
@@ -170,7 +171,7 @@ public class RepositorySetup {
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
 
         remoteRepository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                remoteTypeManager, idGenerator, remoteBlobManager);
+                remoteTypeManager, idGenerator, remoteBlobManager, getHadoopConf());
 
         remoteConverter.setRepository(repository);
         remoteTypeManager.start();

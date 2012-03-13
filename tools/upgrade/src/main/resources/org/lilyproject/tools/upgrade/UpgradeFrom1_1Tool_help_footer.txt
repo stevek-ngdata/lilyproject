@@ -1,0 +1,2 @@
+WARNING! Lily should not be running when executing this upgrade tool.
+         Only HBase, Hadoop and Zookeeper should be running.

@@ -14,8 +14,15 @@ To generate a project use (adjust version to current one):
 mvn archetype:generate \
   -DarchetypeGroupId=org.lilyproject \
   -DarchetypeArtifactId=lily-archetype-basic \
-  -DarchetypeVersion=1.1-SNAPSHOT
+  -DarchetypeVersion=1.2-SNAPSHOT
 
+MapReduce Job
+-------------
+
+mvn archetype:generate \
+  -DarchetypeGroupId=org.lilyproject \
+  -DarchetypeArtifactId=lily-archetype-mapreduce \
+  -DarchetypeVersion=1.2-SNAPSHOT
 
 Repository Decorator
 --------------------
@@ -23,4 +30,4 @@ Repository Decorator
 mvn archetype:generate \
   -DarchetypeGroupId=org.lilyproject \
   -DarchetypeArtifactId=lily-archetype-lily-server-plugin \
-  -DarchetypeVersion=1.1-SNAPSHOT
+  -DarchetypeVersion=1.2-SNAPSHOT

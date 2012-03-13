@@ -1,20 +1,35 @@
 package org.lilyproject.repository.impl;
 
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.filter.RecordFilter;
+import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.hbase.LilyHBaseSchema;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ServiceLoader;
 
 public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
     protected final TypeManager typeManager;
     protected final IdGenerator idGenerator;
+    protected final RecordDecoder recdec;
+    protected final HTableInterface recordTable;
 
-    protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator) {
+    protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator,
+            HTableInterface recordTable) {
         this.typeManager = typeManager;
         this.blobManager = blobManager;
         this.idGenerator = idGenerator;
+        this.recordTable = recordTable;
+        this.recdec = new RecordDecoder(typeManager, idGenerator);
     }
     
     @Override
@@ -24,13 +39,13 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public Record newRecord() {
-        return new RecordImpl();
+        return recdec.newRecord();
     }
 
     @Override
     public Record newRecord(RecordId recordId) {
         ArgumentValidator.notNull(recordId, "recordId");
-        return new RecordImpl(recordId);
+        return recdec.newRecord(recordId);
     }
 
     @Override
@@ -108,4 +123,79 @@ public abstract class BaseRepository implements Repository {
 
         return indexes;
     }
+
+    @Override
+    public RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException {
+        Scan hbaseScan = new Scan();
+
+        hbaseScan.setMaxVersions(1);
+
+        if (scan.getRawStartRecordId() != null) {
+            hbaseScan.setStartRow(scan.getRawStartRecordId());
+        } else if (scan.getStartRecordId() != null) {
+            hbaseScan.setStartRow(scan.getStartRecordId().toBytes());
+        }
+
+        if (scan.getRawStopRecordId() != null) {
+            hbaseScan.setStopRow(scan.getRawStopRecordId());
+        } else if (scan.getStopRecordId() != null) {
+            hbaseScan.setStopRow(scan.getStopRecordId().toBytes());
+        }
+        
+        if (scan.getRecordFilter() != null) {
+            Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), this, filterFactory);
+            hbaseScan.setFilter(filter);
+        }
+
+        hbaseScan.setCaching(scan.getCaching());
+
+        hbaseScan.setCacheBlocks(scan.getCacheBlocks());
+
+        ReturnFields returnFields = scan.getReturnFields();
+        if (returnFields != null && returnFields.getType() != ReturnFields.Type.ALL) {
+            RecordDecoder.addSystemColumnsToScan(hbaseScan);            
+            switch (returnFields.getType()) {
+                case ENUM:
+                    for (QName field : returnFields.getFields()) {
+                        FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeByName(field);
+                        hbaseScan.addColumn(LilyHBaseSchema.RecordCf.DATA.bytes, fieldType.getQualifier());
+                    }
+                    break;
+                case NONE:
+                    // nothing to add
+                    break;
+                default:
+                    throw new RuntimeException("Unrecognized ReturnFields type: " + returnFields.getType());
+            }
+        } else {
+            hbaseScan.addFamily(LilyHBaseSchema.RecordCf.DATA.bytes);
+        }
+
+        ResultScanner hbaseScanner;
+        try {
+            hbaseScanner = recordTable.getScanner(hbaseScan);
+        } catch (IOException e) {
+            throw new RecordException("Error creating scanner", e);
+        }
+
+        HBaseRecordScanner scanner = new HBaseRecordScanner(hbaseScanner, recdec);
+
+        return scanner;
+    }
+
+    private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
+        private ServiceLoader<HBaseRecordFilterFactory> filterLoader = ServiceLoader.load(HBaseRecordFilterFactory.class);
+
+        @Override
+        public Filter createHBaseFilter(RecordFilter filter, Repository repository, HBaseRecordFilterFactory factory)
+                throws RepositoryException, InterruptedException {
+            for (HBaseRecordFilterFactory filterFactory : filterLoader) {
+                Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
+                if (hbaseFilter != null)
+                    return hbaseFilter;
+            }
+            throw new RepositoryException("No implementation available for filter type " + filter.getClass().getName());
+        }
+    };
+
 }

@@ -6,7 +6,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.hbaseindex.*;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.testclientfw.BaseTestTool;
 import org.lilyproject.testclientfw.Util;
 import org.lilyproject.testclientfw.Words;

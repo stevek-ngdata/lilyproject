@@ -1,0 +1,2 @@
+Prints or counts Lily records by performing a scan over the records.
+Scanner options such as filters, start & stop key can be specified.

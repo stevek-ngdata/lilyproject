@@ -27,14 +27,21 @@ public class RecordTypeReader implements EntityReader<RecordType> {
     public static EntityReader<RecordType> INSTANCE  = new RecordTypeReader();
 
     @Override
-    public RecordType fromJson(ObjectNode node, Repository repository) throws JsonFormatException, RepositoryException,
+    public RecordType fromJson(JsonNode node, Repository repository) throws JsonFormatException, RepositoryException,
             InterruptedException {
         return fromJson(node, null, repository);
     }
 
     @Override
-    public RecordType fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
+    public RecordType fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
+
+        if (!nodeNode.isObject()) {
+            throw new JsonFormatException("Expected a json object for record type, got: " +
+                    nodeNode.getClass().getName());
+        }
+
+        ObjectNode node = (ObjectNode)nodeNode;
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
 

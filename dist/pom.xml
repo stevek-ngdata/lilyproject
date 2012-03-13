@@ -117,6 +117,11 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-linkindex-cli</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-scan-records</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

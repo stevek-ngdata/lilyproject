@@ -33,14 +33,33 @@ public interface DataOutput {
     void writeBytes(byte[] value);
 
     /**
-     * Writes a string to the <code>DataOutput</code>. </p>
-     * The string is encoded in unmodified UTF-8. </br>
-     * Its encoding includes the size of the string so that it can be read from a {@link DataInput} 
+     * Writes a string to the <code>DataOutput</code>.
+     * 
+     * <p>The string is encoded in unmodified UTF-8.
+     * 
+     * <p>Its encoding includes the size of the string so that it can be read from a {@link DataInput} 
      * without the need to specify its size.
      * 
      * @param value the string to write. Empty string and null are also allowed.
      */
     void writeUTF(String value);
+
+    /**
+     * Same as {@link #writeUTF(String)} but writes the length as a
+     * variable-length integer.
+     */
+    void writeVUTF(String string);
+
+    /**
+     * Writes a string to the <code>DataOutput</code>.
+     * 
+     * <p>This method is the same as {@link #writeUTF(String)} but allows to disable
+     * writing the length of the string.</p>
+     *
+     * @param value the string to write. Empty string and null are also allowed.
+     * @param includeLength boolean indicating whether the length should be written             
+     */
+    void writeUTF(String value, boolean includeLength);
 
     /**
      * Writes an integer to the <code>DataOutput</code>

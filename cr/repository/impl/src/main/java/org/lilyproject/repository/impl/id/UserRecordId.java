@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl;
+package org.lilyproject.repository.impl.id;
 
-import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.RecordId;
 
 import java.util.Collections;
@@ -39,16 +39,12 @@ public class UserRecordId implements RecordId {
         this.idGenerator = idGenerator;
     }
 
-    protected UserRecordId(DataInput dataInput, IdGeneratorImpl idGenerator) {
-        basicRecordIdString = dataInput.readUTF();
-        IdGeneratorImpl.checkIdString(basicRecordIdString, "record id");
-        this.idGenerator = idGenerator;
-    }
-
     @Override
     public byte[] toBytes() {
         if (recordIdBytes == null) {
-            recordIdBytes = idGenerator.toBytes(this);
+            DataOutput dataOutput = new DataOutputImpl();
+            writeBytes(dataOutput);
+            recordIdBytes = dataOutput.toByteArray();
         }
         return recordIdBytes;
     }
@@ -56,7 +52,8 @@ public class UserRecordId implements RecordId {
     @Override
     public void writeBytes(DataOutput dataOutput) {
         if (recordIdBytes == null) {
-            idGenerator.writeBytes(this, dataOutput);
+            dataOutput.writeByte(IdGeneratorImpl.IdType.USER.getIdentifierByte());
+            dataOutput.writeUTF(basicRecordIdString, false);
         } else {
             dataOutput.writeBytes(recordIdBytes);
         }
@@ -68,15 +65,7 @@ public class UserRecordId implements RecordId {
         }
         return recordIdString;
     }
-    
-    /**
-     * Writes the byte representation of the user record id to the DataOutput, without adding the identifying byte
-     */
 
-    public void writeBasicBytes(DataOutput dataOutput) {
-        dataOutput.writeUTF(basicRecordIdString);
-    }
-    
     protected String getBasicString() {
         return basicRecordIdString;
     }

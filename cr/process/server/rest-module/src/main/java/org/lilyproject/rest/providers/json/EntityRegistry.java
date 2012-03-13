@@ -20,12 +20,15 @@ import java.util.Map;
 
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.tools.import_.json.EntityReader;
 import org.lilyproject.tools.import_.json.EntityWriter;
 import org.lilyproject.tools.import_.json.FieldTypeReader;
 import org.lilyproject.tools.import_.json.FieldTypeWriter;
 import org.lilyproject.tools.import_.json.RecordReader;
+import org.lilyproject.tools.import_.json.RecordScanReader;
+import org.lilyproject.tools.import_.json.RecordScanWriter;
 import org.lilyproject.tools.import_.json.RecordTypeReader;
 import org.lilyproject.tools.import_.json.RecordTypeWriter;
 import org.lilyproject.tools.import_.json.RecordWriter;
@@ -37,6 +40,7 @@ public class EntityRegistry {
         SUPPORTED_TYPES.put(RecordType.class, new RegistryEntry(RecordTypeReader.INSTANCE, RecordTypeWriter.INSTANCE, "recordType"));
         SUPPORTED_TYPES.put(FieldType.class, new RegistryEntry(FieldTypeReader.INSTANCE, FieldTypeWriter.INSTANCE, "fieldType"));
         SUPPORTED_TYPES.put(Record.class, new RegistryEntry(RecordReader.INSTANCE, RecordWriter.INSTANCE, "record"));
+        SUPPORTED_TYPES.put(RecordScan.class, new RegistryEntry(RecordScanReader.INSTANCE, RecordScanWriter.INSTANCE, "scan"));
     }
 
     public static EntityReader findReader(Class clazz) {

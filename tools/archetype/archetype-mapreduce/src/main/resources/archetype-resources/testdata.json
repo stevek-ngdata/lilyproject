@@ -1,0 +1,63 @@
+{
+  namespaces: {
+    "mrsample": "p"
+  },
+  fieldTypes: [
+    {
+      name: "p$text",
+      valueType: "STRING",
+      scope: "non_versioned"
+    },
+    {
+      name: "p$wordcount",
+      valueType: "INTEGER",
+      scope: "non_versioned"
+    }
+  ],
+  recordTypes: [
+    {
+      name: "p$Document",
+      fields: [
+        {name: "p$text", mandatory: true }
+      ]
+    },
+    {
+      name: "p$Summary",
+      fields: [
+        {name: "p$wordcount", mandatory: true }
+      ]
+    }
+  ],
+  records: [
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "foo bar bar foobar bar foo"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "foo foo foobar foobar foo"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "bar bar bar foo"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "foobar barfoo foo foo foobar"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "foo bar"
+      }
+    }
+  ]
+}

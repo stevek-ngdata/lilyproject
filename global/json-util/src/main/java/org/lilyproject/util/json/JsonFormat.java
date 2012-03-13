@@ -45,6 +45,10 @@ public class JsonFormat {
         return OBJECT_MAPPER.writeValueAsBytes(jsonNode);
     }
 
+    public static String serializeAsString(JsonNode jsonNode) throws IOException {
+        return OBJECT_MAPPER.writeValueAsString(jsonNode);
+    }
+
     /**
      * Variant of serialize that converts the IOException to a RuntimeException.
      *
@@ -73,6 +77,11 @@ public class JsonFormat {
         return jp.readValueAsTree();
     }
 
+    public static JsonNode deserialize(String data) throws IOException {
+        JsonParser jp = JSON_FACTORY.createJsonParser(data);
+        return jp.readValueAsTree();
+    }
+
     /**
      * Variant of deserialize that converts the IOException to a RuntimeException.
      *
@@ -88,6 +97,11 @@ public class JsonFormat {
     }
 
     public static JsonNode deserializeNonStd(byte[] data) throws IOException {
+        JsonParser jp = JSON_FACTORY_NON_STD.createJsonParser(data);
+        return jp.readValueAsTree();
+    }
+
+    public static JsonNode deserializeNonStd(String data) throws IOException {
         JsonParser jp = JSON_FACTORY_NON_STD.createJsonParser(data);
         return jp.readValueAsTree();
     }

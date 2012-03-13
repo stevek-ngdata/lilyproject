@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Documentation about this file format can be found at:
+http://maven.apache.org/plugins/maven-archetype-plugin/specification/archetype-metadata.html
+-->
+<archetype-descriptor name="basic">
+  <requiredProperties>
+    <requiredProperty key="groupId">
+      <defaultValue>com.mycompany</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="artifactId">
+      <defaultValue>my-lily-mrjob</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="version">
+      <defaultValue>1.0-SNAPSHOT</defaultValue>
+    </requiredProperty>
+  </requiredProperties>
+
+  <fileSets>
+    <fileSet filtered="true">
+      <directory/>
+      <includes>
+        <include>README.txt</include>
+        <include>testdata.json</include>
+        <include>mrjob-assembly.xml</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" packaged="true">
+      <directory>src/main/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+
+</archetype-descriptor>

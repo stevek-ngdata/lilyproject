@@ -1,0 +1,142 @@
+{
+  namespaces: {
+    "test": "t"
+  },
+  fieldTypes: [
+    {
+      name: "t$field1",
+      valueType: "STRING",
+      scope: "non_versioned"
+    },
+    {
+      name: "t$field2",
+      valueType: "STRING",
+      scope: "versioned"
+    },
+    {
+      name: "t$field3",
+      valueType: "LINK",
+      scope: "versioned"
+    },
+    {
+      name: "t$field4",
+      valueType: "LIST<LINK>",
+      scope: "versioned"
+    },
+    {
+      name: "t$field5",
+      valueType: "STRING",
+      scope: "versioned_mutable"
+    }
+  ],
+  recordTypes: [
+    {
+      name: "t$RT",
+      fields: [
+        {name: "t$field1", mandatory: false },
+        {name: "t$field2", mandatory: false },
+        {name: "t$field3", mandatory: false },
+        {name: "t$field4", mandatory: false },
+        {name: "t$field5", mandatory: false }
+      ]
+    }
+  ],
+  records: [
+    /* Create a record with multiple versions */
+    {
+      type: "t$RT",
+      id: "USER.versions",
+      fields: {
+        "t$field1": "text - unversioned",
+        "t$field2": "text - version 1",
+        "t$field5": "versioned-mutable field v1"
+      }
+    },
+    {
+      type: "t$RT",
+      id: "USER.versions",
+      fields: {
+        "t$field1": "text - unversioned update 1",
+        "t$field2": "text - version 2",
+        "t$field5": "versioned-mutable field v2"
+      }
+    },
+    {
+      type: "t$RT",
+      id: "USER.versions",
+      fields: {
+        "t$field2": "text - version 3"
+      }
+    },
+    {
+      type: "t$RT",
+      id: "USER.versions",
+      fields: {
+        "t$field1": "text - unversioned update 2",
+        "t$field2": "text - version 4",
+        "t$field5": "versioned-mutable field v3"
+      }
+    },
+    /* Create a record with a variant id */
+    {
+      type: "t$RT",
+      id: "USER.foo.param1=x,param2=y",
+      fields: {
+        "t$field1": "record with variant id"
+      }
+    },
+    /* Create a record with a UUID */
+    {
+      type: "t$RT",
+      fields: {
+        "t$field1": "record with a UUID"
+      }
+    },
+    /* Create some records to which we will link */
+    {
+      type: "t$RT",
+      id: "USER.rA",
+      fields: {
+        "t$field1": "record A"
+      }
+    },
+    {
+      type: "t$RT",
+      id: "USER.rB",
+      fields: {
+        "t$field1": "record B"
+      }
+    },
+    {
+      type: "t$RT",
+      id: "USER.rC",
+      fields: {
+        "t$field1": "record C"
+      }
+    },
+    {
+      type: "t$RT",
+      id: "USER.rD",
+      fields: {
+        "t$field1": "record D"
+      }
+    },
+    {
+      type: "t$RT",
+      id: "USER.rE",
+      fields: {
+        "t$field1": "record E"
+      }
+    },
+    /* Create record with link fields */
+    {
+      type: "t$RT",
+      id: "USER.links",
+      fields: {
+        "t$field1": "record with links",
+        "t$field3": "USER.rA",
+        "t$field4": ["USER.rB", "USER.rC", "USER.rD", "USER.rE"]
+      }
+    }
+  ]
+}

@@ -9,9 +9,9 @@
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily</artifactId>
+    <artifactId>lily-archetype-parent</artifactId>
     <version>1.2-SNAPSHOT</version>
-    <relativePath>../../..</relativePath>
+    <relativePath>../</relativePath>
   </parent>
 
   <name>Lily: basic archetype</name>

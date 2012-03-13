@@ -15,14 +15,15 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 
 public interface EntityReader<T> {
-    T fromJson(ObjectNode node, Namespaces namespaces, Repository repository)
+    T fromJson(JsonNode node, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException;
 
-    T fromJson(ObjectNode node, Repository repository)
+    T fromJson(JsonNode node, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException;
 }

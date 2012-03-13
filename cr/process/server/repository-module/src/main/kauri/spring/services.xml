@@ -75,7 +75,7 @@
       factory-bean="hadoopConfFactory"
       factory-method="getHBaseConf"/>
 
-  <bean id="idGenerator" class="org.lilyproject.repository.impl.IdGeneratorImpl"/>
+  <bean id="idGenerator" class="org.lilyproject.repository.impl.id.IdGeneratorImpl"/>
 
   <bean id="typeManager" class="org.lilyproject.repository.impl.HBaseTypeManager">
     <constructor-arg ref="idGenerator"/>
@@ -96,7 +96,6 @@
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
-    <constructor-arg ref="hbaseConf"/>
   </bean>
   
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
@@ -161,6 +160,7 @@
     <constructor-arg>
       <bean factory-bean="avroServer" factory-method="getPort"/>
     </constructor-arg>
+    <constructor-arg ref="hbaseConf"/>
   </bean>
 
   <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">

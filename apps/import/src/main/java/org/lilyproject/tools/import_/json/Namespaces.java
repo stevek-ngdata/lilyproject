@@ -19,13 +19,15 @@ import java.util.Map;
 
 public interface Namespaces {
 
-    public String getOrMakePrefix(String namespace);
+    boolean usePrefixes();
 
-    public void addMapping(String prefix, String namespace);
+    String getOrMakePrefix(String namespace);
 
-    public String getNamespace(String prefix);
+    void addMapping(String prefix, String namespace);
 
-    public String getPrefix(String namespace);
+    String getNamespace(String prefix);
 
-    public Map<String, String> getNsToPrefixMapping();
+    String getPrefix(String namespace);
+
+    Map<String, String> getNsToPrefixMapping();
 }

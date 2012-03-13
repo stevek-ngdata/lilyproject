@@ -35,6 +35,18 @@ public interface DataInput {
     String readUTF();
 
     /**
+     * Same as {@link #readUTF()}, but for when the length
+     * of the string was encoded as a variable-length integer,
+     * thus a written by {@link DataOutput#writeVUTF}.
+     */
+    String readVUTF();
+    
+    /**
+     * Reads a string from the <code>DataInput</code>
+     */
+    String readUTF(int length);
+
+    /**
      * Reads a boolean from the <code>DataInput</code>
      */
     boolean readBoolean();
@@ -87,4 +99,12 @@ public interface DataInput {
      * Allows to shrink (not grow) the input to make it appear shorter. Does not actually resize anything.
      */
     void setSize(int size);
+
+    /**
+     * Search for the first occurrence of the given byte, starting from the current position.
+     * Does not modify the position.
+     *
+     * @return -1 if not found, otherwise the (absolute) position where it is found
+     */
+    int indexOf(byte value);
 }

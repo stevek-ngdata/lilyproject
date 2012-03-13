@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.lilyproject</groupId>
+  <artifactId>lily-archetype-mapreduce</artifactId>
+  <packaging>jar</packaging>
+  <version>1.2-SNAPSHOT</version>
+
+  <parent>
+    <groupId>org.lilyproject</groupId>
+    <artifactId>lily-archetype-parent</artifactId>
+    <version>1.2-SNAPSHOT</version>
+    <relativePath>../</relativePath>
+  </parent>
+
+  <name>Lily: basic archetype</name>
+
+  <build>
+    <plugins>
+      <!--
+         Use the antrun plugin to put the lily version into the pom.xml which
+         is part of the archetype content. At the time of this writing, Maven's
+         resource plugin can't handle this, since there's no escape syntax to
+         leave the other properties (which are resolved during archetype-generation)
+         intact, nor are there configurable property-delimiters.
+       -->
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <configuration>
+              <tasks>
+                <filter token="lilyversion" value="${project.version}" />
+                <copy file="${basedir}/src/main/resources/archetype-resources/pom.xml" tofile="${project.build.directory}/classes/archetype-resources/pom.xml" filtering="true" overwrite="true">
+                </copy>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
