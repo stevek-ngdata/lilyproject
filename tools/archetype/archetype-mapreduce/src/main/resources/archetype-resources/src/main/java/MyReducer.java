@@ -6,7 +6,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
-import org.lilyproject.mapreduce.LilyInputFormat;
+import org.lilyproject.mapreduce.LilyScanInputFormat;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
@@ -25,7 +25,7 @@ public class MyReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
     protected void setup(Context context) throws IOException, InterruptedException {
         super.setup(context);
 
-        String zkConnectString = context.getConfiguration().get(LilyInputFormat.ZK_CONNECT_STRING);
+        String zkConnectString = context.getConfiguration().get(LilyScanInputFormat.ZK_CONNECT_STRING);
         try {
             lilyClient = new LilyClient(zkConnectString, 30000);
             repository = lilyClient.getRepository();

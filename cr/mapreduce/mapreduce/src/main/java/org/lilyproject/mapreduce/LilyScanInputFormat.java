@@ -10,10 +10,8 @@ import org.apache.hadoop.hbase.mapreduce.TableSplit;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.mapreduce.*;
-import org.apache.zookeeper.KeeperException;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
@@ -34,12 +32,12 @@ import java.util.List;
 /**
  * A MapReduce InputFormat for Lily based on Lily scanners.
  */
-public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritable> implements Configurable {
+public class LilyScanInputFormat extends InputFormat<RecordIdWritable, RecordWritable> implements Configurable {
     
     public static final String SCAN = "lily.mapreduce.scan";
     public static final String ZK_CONNECT_STRING = "lily.mapreduce.zookeeper";
 
-    final Log log = LogFactory.getLog(LilyInputFormat.class);
+    final Log log = LogFactory.getLog(LilyScanInputFormat.class);
     
     private Configuration conf;
     private String zkConnectString;
@@ -188,7 +186,7 @@ public class LilyInputFormat extends InputFormat<RecordIdWritable, RecordWritabl
             throw new IOException("Error setting up RecordScanner", e);
         }
 
-        return new LilyRecordReader(lilyClient, scanner);
+        return new LilyScanRecordReader(lilyClient, scanner);
     }
     
     private RecordScan getScan(Repository repository) {

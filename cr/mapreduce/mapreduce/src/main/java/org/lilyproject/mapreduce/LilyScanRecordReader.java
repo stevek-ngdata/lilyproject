@@ -12,7 +12,10 @@ import org.lilyproject.util.io.Closer;
 
 import java.io.IOException;
 
-public class LilyRecordReader extends RecordReader<RecordIdWritable, RecordWritable> {
+/**
+ * A Hadoop RecordReader based on Lily RecordScanners. Used by {@link LilyScanInputFormat}.
+ */
+public class LilyScanRecordReader extends RecordReader<RecordIdWritable, RecordWritable> {
     private LilyClient lilyClient;
     private RecordScanner scanner;
     private Record currentRecord;
@@ -20,7 +23,7 @@ public class LilyRecordReader extends RecordReader<RecordIdWritable, RecordWrita
     private RecordIdWritable recordId = new RecordIdWritable();
     private RecordWritable record = new RecordWritable();
     
-    public LilyRecordReader(LilyClient lilyClient, RecordScanner scanner) {
+    public LilyScanRecordReader(LilyClient lilyClient, RecordScanner scanner) {
         this.lilyClient = lilyClient;
         this.scanner = scanner;
     }
