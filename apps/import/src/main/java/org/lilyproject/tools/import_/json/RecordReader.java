@@ -143,61 +143,61 @@ public class RecordReader implements EntityReader<Record> {
             return readPath(node, valueType.getNestedValueType(), prop, namespaces, repository);
         } else if (name.equals("STRING")) {
             if (!node.isTextual())
-                throw new JsonFormatException("Expected text value for " + prop);
+                throw new JsonFormatException("Expected text value for property '" + prop + "'");
 
             return node.getTextValue();
         } else if (name.equals("INTEGER")) {
             if (!node.isIntegralNumber())
-                throw new JsonFormatException("Expected int value for " + prop);
+                throw new JsonFormatException("Expected int value for property '" + prop + "'");
 
             return node.getIntValue();
         } else if (name.equals("LONG")) {
             if (!node.isIntegralNumber())
-                throw new JsonFormatException("Expected long value for " + prop);
+                throw new JsonFormatException("Expected long value for property '" + prop + "'");
 
             return node.getLongValue();
         } else if (name.equals("DOUBLE")) {
             if (!node.isNumber())
-                throw new JsonFormatException("Expected double value for " + prop);
+                throw new JsonFormatException("Expected double value for property '" + prop + "'");
 
             return node.getDoubleValue();
         } else if (name.equals("DECIMAL")) {
             if (!node.isNumber())
-                throw new JsonFormatException("Expected decimal value for " + prop);
+                throw new JsonFormatException("Expected decimal value for property '" + prop + "'");
 
             return node.getDecimalValue();
         } else if (name.equals("URI")) {
             if (!node.isTextual())
-                throw new JsonFormatException("Expected URI (string) value for " + prop);
+                throw new JsonFormatException("Expected URI (string) value for property '" + prop + "'");
 
             try {
                 return new URI(node.getTextValue());
             } catch (URISyntaxException e) {
-                throw new JsonFormatException("Invalid URI in property " + prop + ": " + node.getTextValue());
+                throw new JsonFormatException("Invalid URI in property '" + prop + "': " + node.getTextValue());
             }
         } else if (name.equals("BOOLEAN")) {
             if (!node.isBoolean())
-                throw new JsonFormatException("Expected boolean value for " + prop);
+                throw new JsonFormatException("Expected boolean value for property '" + prop + "'");
 
             return node.getBooleanValue();
         } else if (name.equals("LINK")) {
             if (!node.isTextual())
-                throw new JsonFormatException("Expected text value for " + prop);
+                throw new JsonFormatException("Expected text value for property '" + prop + "'");
 
             return Link.fromString(node.getTextValue(), repository.getIdGenerator());
         } else if (name.equals("DATE")) {
             if (!node.isTextual())
-                throw new JsonFormatException("Expected text value for " + prop);
+                throw new JsonFormatException("Expected text value for property '" + prop + "'");
 
             return new LocalDate(node.getTextValue());
         } else if (name.equals("DATETIME")) {
             if (!node.isTextual())
-                throw new JsonFormatException("Expected text value for " + prop);
+                throw new JsonFormatException("Expected text value for property '" + prop + "'");
 
             return new DateTime(node.getTextValue());
         } else if (name.equals("BLOB")) {
             if (!node.isObject())
-                throw new JsonFormatException("Expected object value for " + prop);
+                throw new JsonFormatException("Expected object value for property '" + prop + "'");
 
             ObjectNode blobNode = (ObjectNode)node;
             return BlobConverter.fromJson(blobNode);
@@ -206,11 +206,11 @@ public class RecordReader implements EntityReader<Record> {
 
         } else if (name.equals("BYTEARRAY")) {
             if (!node.isTextual())
-                throw new JsonFormatException("Expected base64 encoded value for " + prop);
+                throw new JsonFormatException("Expected base64 encoded value for property '" + prop + "'");
             try {
                 return new ByteArray(node.getBinaryValue());
             } catch (IOException e) {
-                throw new JsonFormatException("Could not read base64 value for " + prop, e);
+                throw new JsonFormatException("Could not read base64 value for property '" + prop + "'", e);
             }
         } else {
             throw new JsonFormatException("Value type not supported: " + name);
