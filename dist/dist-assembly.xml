@@ -305,6 +305,18 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+
+    <!-- Record scan CLI tool -->
+    <file>
+      <source>${basedir}/../apps/scan-records/target/lily-scan-records</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>${basedir}/../apps/scan-records/target/lily-scan-records.bat</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
   </files>
 
   <fileSets>
