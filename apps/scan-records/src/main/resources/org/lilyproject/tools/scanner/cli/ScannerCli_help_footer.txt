@@ -14,9 +14,6 @@ Here is an example json config to filter on field value:
     "@class": "org.lilyproject.repository.api.filter.FieldValueFilter",
     field: "{org.lilyproject.bookssample}language",
     compareOp: "EQUAL",
-    fieldValue: {
-      valueType: "STRING",
-      value: "English"
-    }
+    fieldValue: "English"
   }
 }
