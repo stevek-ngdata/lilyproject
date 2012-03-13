@@ -34,4 +34,4 @@ To run this example:
 If you want to run the job a second time, you will have to remove
 the output directory first:
 
-./bin/hadoop fs -rmr hdfs://localhost:8020/user/bruno/my-job-output
+./bin/hadoop fs -rmr hdfs://localhost:8020/user/$USER/my-job-output
