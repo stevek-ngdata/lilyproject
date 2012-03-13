@@ -1140,8 +1140,7 @@ public class RestTest {
         assertStatus(Status.SUCCESS_NO_CONTENT, response);
     }
     
-    @Test 
-    public void testScanPost() throws Exception {
+    private void setupRecordScannerTest () throws Exception{
         makeBookSchema();
 
         // Create a record using PUT and a user ID
@@ -1151,15 +1150,31 @@ public class RestTest {
         response = put(BASE_URI + "/record/USER.scan_fister_fashing", body);
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Fly fishing with Flash' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
         response = put(BASE_URI + "/record/USER.scan_fly_fishing_with_flash", body);
+    }
+    
+    @Test 
+    public void testRecordScanPost() throws Exception {
+        setupRecordScannerTest();
         
         // Create a scanner to see if it gest created. Check the location header
-        body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
-        response = post(BASE_URI + "/scan", body);
+        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
+        Response response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();
-        assertTrue(location.contains("/repository/scan/"));
+        assertTrue(location.contains("/repository/scan/"));          
+    }
+    
+    @Test 
+    public void testRecordScanGet() throws Exception {
+        setupRecordScannerTest();
         
-        // Check if the scanner can be retrieved. Retrieve 1 record by default
+     // Create a scanner to see if it gest created. Check the location header
+        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
+        Response response = post(BASE_URI + "/scan", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+        String location = response.getLocationRef().toUri().toString();
+
+     // Check if the scanner can be retrieved. Retrieve 1 record by default
         response = get(location);
         assertStatus(Status.SUCCESS_OK, response);
         JsonNode json = readJson(response.getEntity());
@@ -1179,7 +1194,19 @@ public class RestTest {
         response = get(location + "blablabla");
         assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response); 
         
-        // Delete scanner
+    }
+    
+    @Test
+    public void testRecordScanDelete() throws Exception {
+        setupRecordScannerTest();
+        
+     // Create a scanner to see if it gest created. Check the location header
+        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
+        Response response = post(BASE_URI + "/scan", body);
+        assertStatus(Status.SUCCESS_CREATED, response);
+        String location = response.getLocationRef().toUri().toString();
+        
+     // Delete scanner
         response = delete(location);
         assertStatus(Status.SUCCESS_OK, response);
         
@@ -1189,7 +1216,7 @@ public class RestTest {
 
         // Delete a non existing scanner gets a 404
         response = delete(location + "not_here");
-        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);      
+        assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);    
     }
 
     private JsonNode getFieldValue(JsonNode recordJson, String fieldName) {
