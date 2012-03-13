@@ -1146,14 +1146,14 @@ public class RestTest {
 
         // Create a record using PUT and a user ID
         String body = json("{ type: 'b$book', fields: { 'b$title' : 'Faster Fishing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        Response response = put(BASE_URI + "/record/USER.faster_fishing", body);        
+        Response response = put(BASE_URI + "/record/USER.scan_faster_fishing", body);        
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Fister Fashing' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        response = put(BASE_URI + "/record/USER.fister_fashing", body);
+        response = put(BASE_URI + "/record/USER.scan_fister_fashing", body);
         body = json("{ type: 'b$book', fields: { 'b$title' : 'Fly fishing with Flash' }, namespaces : { 'org.lilyproject.resttest': 'b' } }");
-        response = put(BASE_URI + "/record/USER.fly_fishing_with_flash", body);
+        response = put(BASE_URI + "/record/USER.scan_fly_fishing_with_flash", body);
         
         // Create a scanner to see if it gest created. Check the location header
-        body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordTypeFilter', 'recordType' : '{org.lilyproject.resttest}book'}}, 'caching' : 1024, 'cacheBlocks' : false}");
+        body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
         response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();

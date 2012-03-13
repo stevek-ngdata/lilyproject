@@ -19,16 +19,21 @@ import javax.ws.rs.core.UriInfo;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.common.cache.Cache;
 
 @Path("scan/{id}")
 public class RecordScanResource extends RepositoryEnabled {
+    @Autowired
+    private Cache<String, RecordScanner> recordScannerMap;
     
     @GET
     @Produces("application/json")
     public EntityList<Record> get(@PathParam("id") String scanId, @DefaultValue("1") @QueryParam("batch") Long batch, @Context UriInfo uriInfo) {
-        if (RecordScanCollectionResource.hasScanner(scanId)) {           
+        RecordScanner scanner = recordScannerMap.getIfPresent(scanId);
+        if (scanner != null) {           
             List<Record> records = new ArrayList<Record>();
-            RecordScanner scanner = RecordScanCollectionResource.getScanner(scanId);
             
             try {                
                 Record record;            
@@ -53,13 +58,13 @@ public class RecordScanResource extends RepositoryEnabled {
     
     @DELETE
     public Response delete(@PathParam("id") String scanId) {
-        if (RecordScanCollectionResource.hasScanner(scanId)) { 
-            RecordScanner scanner = RecordScanCollectionResource.removeScanner(scanId);
-            scanner.close();     
+        RecordScanner scanner = this.recordScannerMap.getIfPresent(scanId);
+        if (scanner != null) {            
+            scanner.close();  
+            this.recordScannerMap.invalidate(scanId);
             return Response.ok().build();
         } else {
             throw new ResourceException("No scan with ID " + scanId + " found", Status.NOT_FOUND.getStatusCode());        
         }
     }
-
 }
