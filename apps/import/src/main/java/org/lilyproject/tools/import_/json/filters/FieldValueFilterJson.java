@@ -37,7 +37,7 @@ public class FieldValueFilterJson implements RecordFilterJsonConverter<FieldValu
             QName fieldQName = QNameConverter.fromJson(field, namespaces); 
             filter.setField(fieldQName);
             ValueType valueType = repository.getTypeManager().getFieldTypeByName(fieldQName).getValueType();
-            Object value = RecordReader.INSTANCE.readValue(fieldValue, valueType, "value", new NamespacesImpl(), repository);
+            Object value = RecordReader.INSTANCE.readValue(fieldValue, valueType, "fieldValue", new NamespacesImpl(), repository);
             filter.setFieldValue(value);
         }
 
