@@ -4,19 +4,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
 
-import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ReturnFields;
-import org.lilyproject.repository.api.filter.RecordFilter;
-import org.lilyproject.tools.import_.json.RecordFilterReader;
+import org.lilyproject.repository.api.filter.RecordFilterList;
+import org.lilyproject.repository.api.filter.RecordFilterList.Operator;
+import org.lilyproject.repository.api.filter.RecordTypeFilter;
 import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.util.json.JsonFormat;
-import org.lilyproject.util.json.JsonUtil;
 import org.lilyproject.util.repo.PrintUtil;
 
 public class RecordScanTool {
@@ -25,15 +24,15 @@ public class RecordScanTool {
     private static boolean DEFAULT_CACHE_BLOCKS = false;
 
     public static void count(Repository repository) throws Exception {
-        count(repository, null, null, null);
+        count(repository, null, null);
     }
     
     public static void count(Repository repository, String startId, String stopId) throws Exception {
-        count(repository, startId, stopId, null);
+        count(repository, startId, stopId, null, null);
     }
     
-    public static void count(Repository repository, String startId, String stopId, File configFile) throws Exception {
-        new RecordScanTool(repository).count(startId, stopId, configFile);
+    public static void count(Repository repository, String startId, String stopId, String recordTypeFilter, File configFile) throws Exception {
+        new RecordScanTool(repository).count(startId, stopId, recordTypeFilter, configFile);
     }
     
     public static void print(Repository repository) throws Exception {
@@ -45,20 +44,20 @@ public class RecordScanTool {
     }
     
     public static void print(Repository repository, long limit, File config) throws Exception {
-        print(repository, null, null, limit, config);
+        print(repository, null, null, limit, null, config);
     }
     
-    public static void print(Repository repository, String startId, String stopId, long limit, File config) throws Exception {
-        new RecordScanTool(repository).print(startId, stopId, limit, config);
+    public static void print(Repository repository, String startId, String stopId, long limit, String recordTypeFilter, File config) throws Exception {
+        new RecordScanTool(repository).print(startId, stopId, limit, recordTypeFilter, config);
     }
 
     public RecordScanTool(Repository repository) {
         this.repository = repository;
     }
 
-    public void count(String startId, String stopId, File configFile) throws Exception {
+    public void count(String startId, String stopId, String recordTypeFilter, File configFile) throws Exception {
         System.out.println("Counting records");
-        RecordScan scan = createRecordScan(startId, stopId, configFile);
+        RecordScan scan = createRecordScan(startId, stopId, recordTypeFilter, configFile);
         if (configFile == null) {
             // We don't need to return fields for counting
             scan.setReturnFields(ReturnFields.NONE);
@@ -81,12 +80,12 @@ public class RecordScanTool {
         }
     }
 
-    public void print(String startId, String stopId, long limit, File configFile) throws Exception {
+    public void print(String startId, String stopId, long limit, String recordTypeFilter, File configFile) throws Exception {
         if (limit < 0) {
             limit = Long.MAX_VALUE;
         }
 
-        RecordScan scan = createRecordScan(startId, stopId, configFile);
+        RecordScan scan = createRecordScan(startId, stopId, recordTypeFilter, configFile);
         RecordScanner scanner = repository.getScanner(scan);
         try {
             int i = 0;
@@ -101,7 +100,7 @@ public class RecordScanTool {
 
     }
 
-    private RecordScan createRecordScan(String startId, String stopId, File scanConfFile) throws Exception {
+    private RecordScan createRecordScan(String startId, String stopId, String recordTypeFilter, File scanConfFile) throws Exception {
         RecordScan scan = null;
         
         if (scanConfFile != null) {
@@ -119,7 +118,20 @@ public class RecordScanTool {
         
         if (stopId != null && stopId.length() > 0) {
             scan.setStopRecordId(repository.getIdGenerator().fromString(stopId));
-        }        
+        }  
+        
+        if (recordTypeFilter != null && !recordTypeFilter.isEmpty()) {
+            RecordFilterList filterList = new RecordFilterList(Operator.MUST_PASS_ONE);
+            if (scan.getRecordFilter() != null) {
+                filterList.addFilter(scan.getRecordFilter());
+            }
+            scan.setRecordFilter(filterList);
+            
+            String[] recordTypes = recordTypeFilter.split(",");
+            for (String recordType : recordTypes) {
+                filterList.addFilter(new RecordTypeFilter(QName.fromString(recordType)));
+            }
+        }
 
         return scan;
     }

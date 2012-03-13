@@ -18,6 +18,7 @@ public class ScannerCli extends BaseZkCliTool {
     private Option configOption;
     private Option startOption;
     private Option stopOption;
+    private Option recordTypeOption;
 
     /**
      * @param args
@@ -73,6 +74,13 @@ public class ScannerCli extends BaseZkCliTool {
                 .withDescription("Scan records stopping at the record with the given ID")
                 .withLongOpt("stop")
                 .create();
+        recordTypeOption = OptionBuilder
+                .hasArg()
+                .withArgName("{namespace}recordTypeName")
+                .withDescription("Filter records by record type name")
+                .withLongOpt("recordType")
+                .create("r");
+        
 
         options.add(printOption);
         options.add(limitOption);
@@ -80,6 +88,7 @@ public class ScannerCli extends BaseZkCliTool {
         options.add(configOption);
         options.add(startOption);
         options.add(stopOption);
+        options.add(recordTypeOption);
 
         return options;
     }
@@ -97,14 +106,15 @@ public class ScannerCli extends BaseZkCliTool {
         
         String startId = cmd.hasOption(startOption.getLongOpt()) ? cmd.getOptionValue(startOption.getLongOpt()) : null;
         String stopId = cmd.hasOption(stopOption.getLongOpt()) ? cmd.getOptionValue(stopOption.getLongOpt()) : null;
+        String recordTypeFilter = cmd.hasOption(recordTypeOption.getOpt()) ? cmd.getOptionValue(recordTypeOption.getOpt()) : null;
         File configFile = cmd.hasOption(configOption.getLongOpt()) ? new File (cmd.getOptionValue(configOption.getLongOpt())) : null;
         long limit = cmd.hasOption(limitOption.getLongOpt()) ? Long.parseLong(cmd.getOptionValue(limitOption.getLongOpt())) : -1;
 
         lilyClient = new LilyClient(zkConnectionString, zkSessionTimeout);
         if (cmd.hasOption(countOption.getOpt())) {            
-            RecordScanTool.count(lilyClient.getRepository(), startId, stopId, configFile);
+            RecordScanTool.count(lilyClient.getRepository(), startId, stopId,recordTypeFilter, configFile);
         } else if (cmd.hasOption(printOption.getOpt())) {
-            RecordScanTool.print(lilyClient.getRepository(), startId, stopId, limit, configFile);
+            RecordScanTool.print(lilyClient.getRepository(), startId, stopId, limit, recordTypeFilter, configFile);
         }
 
         return 0;
