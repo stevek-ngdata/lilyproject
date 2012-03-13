@@ -42,6 +42,8 @@ public class MyJob {
         }
         
         Configuration config = HBaseConfiguration.create();
+        // If you launch this using hadoop tools and your -site.xml files are configured, then
+        // you can drop these settings here.
         config.set("mapred.job.tracker", masterHost + ":9001");
         config.set("fs.default.name", "hdfs://" + masterHost + ":8020");
         String zooKeeperHost = masterHost;
