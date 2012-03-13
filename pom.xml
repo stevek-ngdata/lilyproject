@@ -415,6 +415,11 @@
         <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-scan-records</artifactId>
+        <version>1.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${version.zookeeper}</version>
