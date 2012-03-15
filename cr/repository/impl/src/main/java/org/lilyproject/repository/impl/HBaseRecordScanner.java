@@ -24,30 +24,19 @@ public class HBaseRecordScanner implements RecordScanner  {
 
     @Override
     public Record next() throws RepositoryException, InterruptedException {
-        Record record = null;
-        while (record == null) {
-            Result result;
-            try {
-                result = hbaseScanner.next();
-            } catch (IOException e) {
-                throw new RepositoryException(e);
-            }
-
-            if (result == null) {
-                // no more results
-                return null;
-            }
-
-            // Check if the record was deleted
-            byte[] deleted = recdec.getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-            if ((deleted == null) || (Bytes.toBoolean(deleted))) {
-                // skip
-            } else {
-                record = recdec.decodeRecord(result);
-            }
+        Result result;
+        try {
+            result = hbaseScanner.next();
+        } catch (IOException e) {
+            throw new RepositoryException(e);
         }
 
-        return record;
+        if (result == null) {
+            // no more results
+            return null;
+        }
+
+        return recdec.decodeRecord(result);
     }
 
     @Override

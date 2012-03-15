@@ -2455,6 +2455,52 @@ public abstract class AbstractRepositoryTest {
         scanner.close();
     }
 
+    /**
+     * At the time of this writing, record deletion was implemented by marking records
+     * as deleted. We need to make sure these are skipped when scanning, and that
+     * this doesn't conflict with custom filters.
+     */
+    @Test
+    public void testScannerAndDeletedRecords() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            RecordId id = idGenerator.newRecordId("ScanDeleteTest-" + i);
+            Record record = repository.newRecord(id);
+            record.setRecordType(recordType1.getName());
+            String value = "dummy";
+            record.setField(fieldType1.getName(), value);
+            repository.create(record);
+        }
+
+        RecordScan scan = new RecordScan();
+        scan.setStartRecordId(idGenerator.newRecordId("ScanDeleteTest-"));
+        scan.setRecordFilter(new RecordIdPrefixFilter(idGenerator.newRecordId("ScanDeleteTest-")));
+
+        RecordScanner scanner = repository.getScanner(scan);
+        assertEquals(5, countResults(scanner));
+        scanner.close();
+
+        // This is to make sure the filtering of deleted records also works when we don't
+        // specify a filter on our scan.
+        RecordScan singleScan = new RecordScan();
+        singleScan.setStartRecordId(idGenerator.newRecordId("ScanDeleteTest-0"));
+        singleScan.setStopRecordId(idGenerator.newRecordId("ScanDeleteTest-0"));
+
+        scanner = repository.getScanner(singleScan);
+        assertEquals(1, countResults(scanner));
+        scanner.close();
+
+        // Delete the records, verify the new scanner results
+        repository.delete(idGenerator.newRecordId("ScanDeleteTest-0"));
+
+        scanner = repository.getScanner(scan);
+        assertEquals(4, countResults(scanner));
+        scanner.close();
+
+        scanner = repository.getScanner(singleScan);
+        assertEquals(0, countResults(scanner));
+        scanner.close();
+    }
+
     private int countResults(RecordScanner scanner) throws RepositoryException, InterruptedException {
         int i = 0;
         while (scanner.next() != null) {

@@ -3,7 +3,10 @@ package org.lilyproject.repository.impl;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.api.filter.RecordFilter;
@@ -15,6 +18,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ServiceLoader;
+
+import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
 
 public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
@@ -141,11 +146,21 @@ public abstract class BaseRepository implements Repository {
         } else if (scan.getStopRecordId() != null) {
             hbaseScan.setStopRow(scan.getStopRecordId().toBytes());
         }
-        
+
+        // Filters
+        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+
+        // filter out deleted records
+        filterList.addFilter(new SingleColumnValueFilter(RecordCf.DATA.bytes,
+                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true)));
+
+        // add user's filter
         if (scan.getRecordFilter() != null) {
             Filter filter = filterFactory.createHBaseFilter(scan.getRecordFilter(), this, filterFactory);
-            hbaseScan.setFilter(filter);
+            filterList.addFilter(filter);
         }
+
+        hbaseScan.setFilter(filterList);
 
         hbaseScan.setCaching(scan.getCaching());
 
@@ -158,7 +173,7 @@ public abstract class BaseRepository implements Repository {
                 case ENUM:
                     for (QName field : returnFields.getFields()) {
                         FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeByName(field);
-                        hbaseScan.addColumn(LilyHBaseSchema.RecordCf.DATA.bytes, fieldType.getQualifier());
+                        hbaseScan.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
                     }
                     break;
                 case NONE:
@@ -168,7 +183,7 @@ public abstract class BaseRepository implements Repository {
                     throw new RuntimeException("Unrecognized ReturnFields type: " + returnFields.getType());
             }
         } else {
-            hbaseScan.addFamily(LilyHBaseSchema.RecordCf.DATA.bytes);
+            hbaseScan.addFamily(RecordCf.DATA.bytes);
         }
 
         ResultScanner hbaseScanner;
