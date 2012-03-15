@@ -21,9 +21,6 @@ public class LilyMapReduceUtil {
         job.setInputFormatClass(LilyScanInputFormat.class);
         job.getConfiguration().set(ZK_CONNECT_STRING, zooKeeperConnectString);
 
-        job.getConfiguration().set("mapred.map.tasks.speculative.execution", "false");
-        job.getConfiguration().set("mapred.reduce.tasks.speculative.execution", "false");
-
         if (scan != null) {
             try {
                 JsonNode node = RecordScanWriter.INSTANCE.toJson(scan, new WriteOptions(), repository);
