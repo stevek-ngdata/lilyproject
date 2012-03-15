@@ -10,8 +10,6 @@ import org.lilyproject.repository.api.Record;
 
 import java.io.IOException;
 import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Sample MapReduce mapper which gets its input from Lily.
@@ -19,7 +17,7 @@ import java.util.regex.Pattern;
 public class MyMapper extends RecordMapper<Text, IntWritable> {
     private Text keyOut = new Text();
     private IntWritable valueOut = new IntWritable(1);
-    
+
     @Override
     protected void map(RecordIdWritable recordIdWritable, RecordWritable recordWritable, Context context)
             throws IOException, InterruptedException {
@@ -29,8 +27,7 @@ public class MyMapper extends RecordMapper<Text, IntWritable> {
 
         StringTokenizer tokenizer = new StringTokenizer(value);
         while (tokenizer.hasMoreTokens()) {
-            String word = tokenizer.nextToken();
-            keyOut.set(word);
+            keyOut.set(tokenizer.nextToken());
             context.write(keyOut, valueOut);
         }
     }

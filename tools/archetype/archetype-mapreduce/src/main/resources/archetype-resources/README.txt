@@ -30,8 +30,3 @@ To run this example:
 
  - if the job has run correctly, you can run lily-scan-records to
    check the output produced by the reducer
-
-If you want to run the job a second time, you will have to remove
-the output directory first:
-
-./bin/hadoop fs -rmr hdfs://localhost:8020/user/$USER/my-job-output
