@@ -35,7 +35,6 @@ import java.util.List;
 public class LilyScanInputFormat extends InputFormat<RecordIdWritable, RecordWritable> implements Configurable {
     
     public static final String SCAN = "lily.mapreduce.scan";
-    public static final String ZK_CONNECT_STRING = "lily.mapreduce.zookeeper";
 
     final Log log = LogFactory.getLog(LilyScanInputFormat.class);
     
@@ -45,7 +44,7 @@ public class LilyScanInputFormat extends InputFormat<RecordIdWritable, RecordWri
     @Override
     public void setConf(Configuration conf) {
         this.conf = conf;
-        zkConnectString = conf.get(ZK_CONNECT_STRING);
+        zkConnectString = conf.get(LilyMapReduceUtil.ZK_CONNECT_STRING);
         if (zkConnectString == null) {
             log.warn("ZooKeeper connection string not specified, will use 'localhost'.");
             zkConnectString = "localhost";
