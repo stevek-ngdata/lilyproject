@@ -1157,7 +1157,8 @@ public class RestTest {
         setupRecordScannerTest();
         
         // Create a scanner to see if it gest created. Check the location header
-        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
+        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
+                "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
         Response response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();
@@ -1169,7 +1170,8 @@ public class RestTest {
         setupRecordScannerTest();
         
      // Create a scanner to see if it gest created. Check the location header
-        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
+        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
+                "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
         Response response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();
@@ -1200,17 +1202,18 @@ public class RestTest {
     public void testRecordScanDelete() throws Exception {
         setupRecordScannerTest();
         
-     // Create a scanner to see if it gest created. Check the location header
-        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', 'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
+        // Create a scanner to see if it gest created. Check the location header
+        String body = json("{'recordFilter' : { '@class' : 'org.lilyproject.repository.api.filter.RecordIdPrefixFilter', " +
+                "'recordId' : 'USER.scan_'}}, 'caching' : 1024, 'cacheBlocks' : false}");
         Response response = post(BASE_URI + "/scan", body);
         assertStatus(Status.SUCCESS_CREATED, response);
         String location = response.getLocationRef().toUri().toString();
         
-     // Delete scanner
+        // Delete scanner
         response = delete(location);
         assertStatus(Status.SUCCESS_OK, response);
         
-       // Check that scanner is gone        
+        // Check that scanner is gone
         response = get(location);
         assertStatus(Status.CLIENT_ERROR_NOT_FOUND, response);
 
