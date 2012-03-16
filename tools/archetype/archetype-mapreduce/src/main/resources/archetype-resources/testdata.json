@@ -32,31 +32,37 @@
     {
       type: "p$Document",
       fields: {
-        "p$text": "foo bar bar foobar bar foo"
+        "p$text": "the old night keeper keeps the keep in the town"
       }
     },
     {
       type: "p$Document",
       fields: {
-        "p$text": "foo foo foobar foobar foo"
+        "p$text": "in the big old house in the big old gown"
       }
     },
     {
       type: "p$Document",
       fields: {
-        "p$text": "bar bar bar foo"
+        "p$text": "the house in the town had the big old keep"
       }
     },
     {
       type: "p$Document",
       fields: {
-        "p$text": "foobar barfoo foo foo foobar"
+        "p$text": "where the old night keeper never did sleep"
       }
     },
     {
       type: "p$Document",
       fields: {
-        "p$text": "foo bar"
+        "p$text": "the old night keeper keeps the keep in the night"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "and keeps in the dark and sleeps in the light"
       }
     }
   ]
