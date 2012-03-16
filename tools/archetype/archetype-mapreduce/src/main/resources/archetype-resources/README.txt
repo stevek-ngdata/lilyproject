@@ -29,4 +29,5 @@ To run this example:
    see MyJob code to adjust)
 
  - if the job has run correctly, you can run lily-scan-records to
-   check the output produced by the reducer
+   check the output produced by the reducer:
+   lily-scan-records -p --record-type {mrsample}Summary
