@@ -78,7 +78,7 @@ public class ScannerCli extends BaseZkCliTool {
                 .hasArg()
                 .withArgName("{namespace}recordTypeName")
                 .withDescription("Filter records by record type name")
-                .withLongOpt("recordType")
+                .withLongOpt("record-type")
                 .create("r");
         
 
