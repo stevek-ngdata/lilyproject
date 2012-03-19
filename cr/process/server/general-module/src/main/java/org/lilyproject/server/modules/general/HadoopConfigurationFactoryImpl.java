@@ -15,6 +15,8 @@
  */
 package org.lilyproject.server.modules.general;
 
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -66,6 +68,8 @@ public class HadoopConfigurationFactoryImpl implements HadoopConfigurationFactor
                 log.warn("ZooKeeperConnectionException while trying to connect to HBase, attempt = " + attempt, e);
             } catch (RetriesExhaustedException e) {
                 log.warn("RetriesExhaustedException while trying to connect to HBase, attempt = " + attempt, e);
+            } catch (IOException e) {
+            	log.warn("RetriesExhaustedException while trying to connect to HBase, attempt = " + attempt, e);
             }
             attempt++;
         }

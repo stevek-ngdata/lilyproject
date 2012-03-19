@@ -46,6 +46,19 @@
   </parent>
 
   <dependencies>
+     <!-- This dependency is needed for CDH4
+          in order to have its mapreduce classes in the 
+          same (general) classloader as the hbase classes -->
+     <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-core</artifactId>
+      <version>${version.hadoop}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+      <version>${version.hadoop}</version>
+    </dependency> 
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
@@ -206,10 +219,6 @@
           <groupId>com.cloudera.cdh</groupId>
           <artifactId>hadoop-ant</artifactId>
         </exclusion>
-        <exclusion>
-	  <groupId>org.apache.avro</groupId>
-	  <artifactId>avro</artifactId>
-	</exclusion>
 	<exclusion>
 	  <groupId>org.apache.avro</groupId>
 	  <artifactId>avro-ipc</artifactId>

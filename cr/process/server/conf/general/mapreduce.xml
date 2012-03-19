@@ -7,6 +7,29 @@
      |  used for MR jobs.
      -->
   <properties conf:inheritKey="string(name)">
+    <!-- Add some settings a Yarn mapreduce job needs to be able to startup -->
+    <property>
+      <name>mapreduce.framework.name</name>
+      <value>yarn</value>
+    </property>
+
+    <!-- The default classpath looks in $HADOOP_HOME/share/hadoop/... 
+         but CDH4 puts the libraries in /usr/lib/hadoop/... -->
+    <property>
+      <name>yarn.application.classpath</name>
+      <value>/usr/lib/hadoop/*,/usr/lib/hadoop/lib/*</value>
+    </property>
+
+    <property>
+      <name>mapreduce.jobhistory.address</name>
+      <value>localhost:10020</value>
+    </property>
+
+    <property>
+      <name>mapreduce.jobhistory.webapp.address</name>
+      <value>localhost:19888</value>
+    </property>
+  
     <property>
       <!-- DFS location: needed for distributed cache (maybe also for other things, not sure) -->
       <name>fs.default.name</name>
