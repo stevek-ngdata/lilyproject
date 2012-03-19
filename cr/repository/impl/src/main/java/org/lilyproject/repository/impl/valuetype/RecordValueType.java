@@ -202,8 +202,9 @@ public class RecordValueType extends AbstractValueType implements ValueType {
     
     private Collection<FieldTypeEntry> getFieldTypeEntries(RecordType recordType)
             throws RepositoryException, InterruptedException {
-
-        Collection<FieldTypeEntry> fieldTypeEntries = recordType.getFieldTypeEntries();
+        
+        // Wrap the list as an array list since we don't know if the collection will actually support the .addAll() methodq
+        Collection<FieldTypeEntry> fieldTypeEntries = new ArrayList<FieldTypeEntry>(recordType.getFieldTypeEntries());
         Map<SchemaId, Long> mixins = recordType.getMixins();
         for (Entry<SchemaId, Long> mixinEntry: mixins.entrySet()) {
             RecordType mixinRecordType = typeManager.getRecordTypeById(mixinEntry.getKey(), mixinEntry.getValue());

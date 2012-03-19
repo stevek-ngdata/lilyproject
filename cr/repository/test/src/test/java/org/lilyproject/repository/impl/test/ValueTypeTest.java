@@ -28,9 +28,12 @@ import org.junit.*;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.valuetype.AbstractValueType;
+import org.lilyproject.repository.impl.valuetype.RecordValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
 
 public class ValueTypeTest {
@@ -629,6 +632,45 @@ public class ValueTypeTest {
         } catch (RecordException expected) {
             
         }
+    }
+    
+    @Test
+    public void testRecordVTReadWrite() throws Exception {
+        String ns = "testRecordVTWrite";
+     // Create a fieldType to be used as a field in a record type to be used as the type for a RecordValueType
+        FieldType fieldType1 = typeManager.createFieldType(typeManager.newFieldType(typeManager.getValueType("STRING"), new QName(ns, "field1"), Scope.NON_VERSIONED));
+        // Create a record type to be used as the type for a RecordValueType
+        RecordType rt1 = typeManager.recordTypeBuilder().name(new QName(ns, "rt1")).field(fieldType1.getId(), false).create();
+
+        // Make a RecordValueType without the record type specified
+        ValueType recordVT = typeManager.getValueType("RECORD");
+
+        
+        RecordType rt2 = typeManager.recordTypeBuilder()
+            .name(new QName(ns, "rt2"))
+            .mixin().id(rt1.getId()).add()
+            .create();
+        
+        
+        
+        // Create a record with a record as field
+        Record createdRecord = repository.recordBuilder()
+                .recordType(new QName(ns, "rt2"))
+                .field(new QName(ns,"field1"), "def")
+                .create();
+        
+       
+        DataOutput dataOutput = new DataOutputImpl();
+        
+        // Do a write and lets not get exceptions
+        recordVT.write(createdRecord, dataOutput, new IdentityRecordStack());
+        
+        DataInput dataInput = new DataInputImpl(dataOutput.toByteArray());
+        
+        // Do a read and lets not get exceptions
+        Record readRecord = recordVT.read(dataInput);
+        
+        assertEquals(createdRecord.getFields(), readRecord.getFields());
     }
 
     @Test
