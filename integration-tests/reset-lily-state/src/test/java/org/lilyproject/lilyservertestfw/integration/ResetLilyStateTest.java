@@ -77,14 +77,15 @@ public class ResetLilyStateTest {
      * This would fail if the schema cache wouldn't detect that all paths were erased from ZooKeeper, and
      * that it hence has to install new ZooKeeper watchers.
      */
-    private void testSchemaCacheRefreshingAfterResetLilyState() throws Exception {
+    @Test
+    public void testSchemaCacheRefreshingAfterResetLilyState() throws Exception {
         // Create two LilyClient's: each will have its own schema cache
         LilyClient lilyClient1 = new LilyClient(System.getProperty("zkConn", "localhost:2181"), 20000);
         Repository repository1 = lilyClient1.getRepository();
 
         LilyClient lilyClient2 = new LilyClient(System.getProperty("zkConn", "localhost:2181"), 20000);
         Repository repository2 = lilyClient2.getRepository();
-        
+
         resetLilyState();
 
         // After resetLilyState, there should be no types
@@ -94,13 +95,13 @@ public class ResetLilyStateTest {
         InputStream is = ResetLilyStateTest.class.getResourceAsStream("schema.json");
         JsonImport.load(repository1, is, false);
         is.close();
-        
+
         // Give client 2 just a bit of time to refresh its cache
         Thread.sleep(2000);
 
         // Check client 2 knows the type know
         assertEquals(1, repository2.getTypeManager().getRecordTypes().size());
-        
+
         lilyClient1.close();
         lilyClient2.close();
     }
