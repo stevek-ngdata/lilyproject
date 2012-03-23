@@ -87,8 +87,11 @@ public class BatchIndexBuilder {
         // Define the HBase scanner
         //
         FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-        filterList.addFilter(new SingleColumnValueFilter(RecordCf.DATA.bytes,
-                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true)));
+        // See also BaseRepository#REAL_RECORDS_FILTER
+        SingleColumnValueFilter realRecordsFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes,
+                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true));
+        realRecordsFilter.setFilterIfMissing(true);
+        filterList.addFilter(realRecordsFilter);
         Scan scan = new Scan();
         scan.setFilter(filterList);
         scan.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);

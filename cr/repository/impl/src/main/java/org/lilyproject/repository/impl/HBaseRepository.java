@@ -1014,6 +1014,7 @@ public class HBaseRepository extends BaseRepository {
             throws RecordException {
         Result result;
         Get get = new Get(recordId.toBytes());
+        get.setFilter(REAL_RECORDS_FILTER);
 
         try {
             // Add the columns for the fields to get
@@ -1029,11 +1030,6 @@ public class HBaseRepository extends BaseRepository {
             if (result == null || result.isEmpty())
                 throw new RecordNotFoundException(recordId);
             
-            // Check if the record was deleted
-            byte[] deleted = recdec.getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-            if ((deleted == null) || (Bytes.toBoolean(deleted))) {
-                throw new RecordNotFoundException(recordId);
-            }
         } catch (IOException e) {
             throw new RecordException("Exception occurred while retrieving record '" + recordId
                     + "' from HBase table", e);
@@ -1357,8 +1353,7 @@ public class HBaseRepository extends BaseRepository {
         byte[] masterRecordIdBytes = recordId.getMaster().toBytes();
         FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
         filterList.addFilter(new PrefixFilter(masterRecordIdBytes));
-        filterList.addFilter(new SingleColumnValueFilter(RecordCf.DATA.bytes,
-                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true)));
+        filterList.addFilter(REAL_RECORDS_FILTER);
 
         Scan scan = new Scan(masterRecordIdBytes, filterList);
         scan.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);

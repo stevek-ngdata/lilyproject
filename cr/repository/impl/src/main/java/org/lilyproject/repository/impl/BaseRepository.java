@@ -12,7 +12,6 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.ArgumentValidator;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +26,20 @@ public abstract class BaseRepository implements Repository {
     protected final IdGenerator idGenerator;
     protected final RecordDecoder recdec;
     protected final HTableInterface recordTable;
+    /**
+     * Not all rows in the HBase record table are real records, this filter excludes non-valid
+     * record rows.
+     */
+    protected static final SingleColumnValueFilter REAL_RECORDS_FILTER;
+    static {
+        // A record is a real row iff the deleted flag exists and is not true.
+        // It is possible for the delete flag not to exist on a row: this is
+        // in case a lock was taken on a not-yet-existing row and the record
+        // creation failed. Therefore, the filterIfMissing is important.
+        REAL_RECORDS_FILTER = new SingleColumnValueFilter(RecordCf.DATA.bytes,
+                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true));
+        REAL_RECORDS_FILTER.setFilterIfMissing(true);
+    }
 
     protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator,
             HTableInterface recordTable) {
@@ -151,8 +164,7 @@ public abstract class BaseRepository implements Repository {
         FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
 
         // filter out deleted records
-        filterList.addFilter(new SingleColumnValueFilter(RecordCf.DATA.bytes,
-                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true)));
+        filterList.addFilter(REAL_RECORDS_FILTER);
 
         // add user's filter
         if (scan.getRecordFilter() != null) {
