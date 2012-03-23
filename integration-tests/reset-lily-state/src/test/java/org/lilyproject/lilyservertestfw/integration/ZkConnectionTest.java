@@ -16,8 +16,17 @@ import static org.junit.Assert.fail;
  *
  * <p>We test the presence of ZK connections by looking if there are any threads with the
  * typical ZooKeeper name.</p>
+ *
+ * <p>This is implemented as an integration test, since if the Hadoop/Lily stack would be
+ * started embedded, there would be extra ZK connections which would be hard to
+ * distinguish from those set up by LilyClient.</p>
+ *
  */
 public class ZkConnectionTest {
+    // For each ZK client, there are two threads, one with "-EventThread" in the name,
+    // and one with "-SendThread" in the name. We arbitrarily use one of these.
+    private static final String ZK_THREAD_MARKER = "-SendThread";
+
     @Test
     public void testZkConnectionsGoneAfterLilyClientStop() throws Exception {
         
@@ -87,7 +96,7 @@ public class ZkConnectionTest {
             
             String name = info.getThreadName();
             
-            if (name.contains("-SendThread")) {
+            if (name.contains(ZK_THREAD_MARKER)) {
                 return name;
             }
         }
@@ -102,7 +111,7 @@ public class ZkConnectionTest {
             ThreadInfo info = threadBean.getThreadInfo(tid);
             String name = info.getThreadName();
 
-            if (name.contains("-SendThread")) {
+            if (name.contains(ZK_THREAD_MARKER)) {
                 count++;
             }
         }
@@ -117,7 +126,7 @@ public class ZkConnectionTest {
 
             String name = info.getThreadName();
 
-            if (name.contains("-SendThread")) {
+            if (name.contains(ZK_THREAD_MARKER)) {
                 System.out.println(name);
             }
         }
