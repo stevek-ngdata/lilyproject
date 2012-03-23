@@ -1,4 +1,4 @@
-package org.lilyproject.lilyservertestfw.integration;
+package org.lilyproject.client.integration;
 
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
