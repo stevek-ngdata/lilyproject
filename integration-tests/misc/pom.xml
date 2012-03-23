@@ -23,8 +23,8 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-it-reset-lily-state</artifactId>
-  <name>Lily: resetLilyState test</name>
+  <artifactId>lily-it-misc</artifactId>
+  <name>Lily: misc integration tests</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
