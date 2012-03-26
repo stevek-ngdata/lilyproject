@@ -845,6 +845,8 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <version>2.11</version>
             <configuration>
+              <forkMode>always</forkMode>
+              <argLine>-Xmx256m ${argLine}</argLine>
               <includes>
                 <include>**/integration/*.java</include>
               </includes>
