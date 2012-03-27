@@ -71,6 +71,8 @@ public class LilyClient implements Closeable {
     private Repository balancingAndRetryingRepository = BalancingAndRetryingRepository.getInstance(this);
     private RemoteSchemaCache schemaCache;
     private HBaseConnections hbaseConnections = new HBaseConnections();
+    
+    private boolean isClosed = true;
 
     public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException, ZkConnectException,
             NoServersException, RepositoryException {
@@ -95,6 +97,7 @@ public class LilyClient implements Closeable {
         zk.addDefaultWatcher(watcher);
         refreshServers();
         schemaCache.start();
+        this.isClosed = false;
     }
 
     @Override
@@ -116,6 +119,16 @@ public class LilyClient implements Closeable {
         // advanced connection mgmt so that these connections don't stay open for the lifetime
         // of LilyClient.
         Closer.close(hbaseConnections);
+        
+        this.isClosed = true;
+    }
+
+    /**
+     * Returns if the connection to the lily server has been closed.
+     * @return
+     */
+    public boolean isClosed() {
+        return isClosed;
     }
 
     /**
