@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
+import org.lilyproject.indexer.batchbuild.hbasemr_patched.TableMapReduceUtil;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
