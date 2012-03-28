@@ -1,0 +1,3 @@
+Performs upgrade of the HBase storage format from Lily 1.1 to Lily 1.2
+
+Be sure to read the Lily documentation on how to use this tool!

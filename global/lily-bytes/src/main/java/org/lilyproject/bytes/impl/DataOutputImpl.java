@@ -40,7 +40,7 @@ public class DataOutputImpl implements DataOutput {
     /**
      * Default constructor.
      * When it is possible to give a good estimate of the number of bytes 
-     * that will be written, it is better to use {@link DataOutputImpl(int sizeEstimate)}.
+     * that will be written, it is better to use {@link DataOutputImpl(int)}.
      */
     public DataOutputImpl() {
         this(256);
@@ -98,14 +98,28 @@ public class DataOutputImpl implements DataOutput {
      */
     @Override
     public void writeUTF(String string) {
+        writeUTF(string, true);
+    }
+
+    @Override
+    public void writeVUTF(String string) {
+        writeUTF(string, true, true);
+    }
+
+    @Override
+    public void writeUTF(String string, boolean includeLength) {
+        writeUTF(string, includeLength, false);
+    }
+
+    private void writeUTF(String string, boolean includeLength, boolean useVInt) {
         if (string == null) {
             writeInt(-1);
             return;
         }
-            
+
         int strlen = string.length();
         int utflen = 0;
-        
+
         // First calculate the utflen
         int i = 0;
         while(i < strlen) {
@@ -132,24 +146,30 @@ public class DataOutputImpl implements DataOutput {
             }
         }
 
-        
+
         assureSize(4 + utflen); // Make sure the buffer has enough space to put the bytes for the length and the string
 
-        writeIntUnsafe(utflen); // Write the length in the buffer
-        
+        if (includeLength) {
+            // Write the length in the buffer
+            if (useVInt) {
+                writeVIntUnsafe(utflen);
+            } else {
+                writeIntUnsafe(utflen);
+            }
+        }
 
         int ch = 0; // Character from the string
-        
+
         // Optimized for loop as long as the characters can be encoded as one byte
         for (i = 0; i < strlen; i++) {
             ch = string.charAt(i);
             if (!(ch < 0x80)) break; // Once we encounter a character that should be encoded with >1 byte we jump out of this optimized loop
             buffer[pos++] = (byte) ch;
         }
-        
+
         while(i < strlen) {
             ch = (int) string.charAt(i++);
-    
+
             if (ch< 0x80)
                 buffer[pos++] = (byte) ch;
             else if (ch < 0x800) {
@@ -165,7 +185,7 @@ public class DataOutputImpl implements DataOutput {
                 if (ch < 0xDC00 && i < strlen) {
                     int utf32 = string.charAt(i);
                     // confirm valid low surrogate and write pair
-                    if (utf32 >= 0xDC00 && utf32 <= 0xDFFF) { 
+                    if (utf32 >= 0xDC00 && utf32 <= 0xDFFF) {
                         utf32 = (ch << 10) + utf32 + SURROGATE_OFFSET;
                         i++;
                         buffer[pos++] = (byte)(0xF0 | (utf32 >> 18));
@@ -183,7 +203,7 @@ public class DataOutputImpl implements DataOutput {
             }
         }
     }
-    
+
     @Override
     public void writeInt(int integer) {
         assureSize(4); // Make sure the buffer has enough space

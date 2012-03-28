@@ -35,7 +35,7 @@
   </parent>
 
   <modules>
-    <module>reset-lily-state</module>
+    <module>misc</module>
   </modules>
 
 </project>

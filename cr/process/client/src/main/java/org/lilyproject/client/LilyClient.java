@@ -33,10 +33,11 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.AvroConverter;
 import org.lilyproject.repository.impl.*;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
@@ -51,9 +52,6 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
  *
  * <p>Connects to zookeeper to find out available repository nodes.
  *
- * <p>Each call to {@link #getRepository()} will return a server at random. If you are in a situation where the
- * number of clients is limited and clients are long-running (e.g. some front-end servers), you should frequently
- * request an new Repository object in order to avoid talking to the same server all the time.
  */
 public class LilyClient implements Closeable {
     private ZooKeeperItf zk;
@@ -62,8 +60,8 @@ public class LilyClient implements Closeable {
     private Set<String> serverAddresses = new HashSet<String>();
     private RetryConf retryConf = new RetryConf();
     private static final String nodesPath = "/lily/repositoryNodes";
+    private static final String hbaseConfigPath = "/lily/hbaseConfig";
     private static final String blobDfsUriPath = "/lily/blobStoresConfig/dfsUri";
-    private static final String blobHBaseConfigPath = "/lily/blobStoresConfig/hbaseConfig";
     private static final String blobStoreAccessConfigPath = "/lily/blobStoresConfig/accessConfig";
 
     private Log log = LogFactory.getLog(getClass());
@@ -73,6 +71,8 @@ public class LilyClient implements Closeable {
     private Repository balancingAndRetryingRepository = BalancingAndRetryingRepository.getInstance(this);
     private RemoteSchemaCache schemaCache;
     private HBaseConnections hbaseConnections = new HBaseConnections();
+    
+    private boolean isClosed = true;
 
     public LilyClient(ZooKeeperItf zk) throws IOException, InterruptedException, KeeperException, ZkConnectException,
             NoServersException, RepositoryException {
@@ -97,6 +97,7 @@ public class LilyClient implements Closeable {
         zk.addDefaultWatcher(watcher);
         refreshServers();
         schemaCache.start();
+        this.isClosed = false;
     }
 
     @Override
@@ -118,6 +119,16 @@ public class LilyClient implements Closeable {
         // advanced connection mgmt so that these connections don't stay open for the lifetime
         // of LilyClient.
         Closer.close(hbaseConnections);
+        
+        this.isClosed = true;
+    }
+
+    /**
+     * Returns if the connection to the lily server has been closed.
+     * @return
+     */
+    public boolean isClosed() {
+        return isClosed;
     }
 
     /**
@@ -167,9 +178,12 @@ public class LilyClient implements Closeable {
 
         // TODO BlobManager can probably be shared across all repositories
         BlobManager blobManager = getBlobManager(zk, hbaseConnections);
-        
+
+        Configuration hbaseConf = getHBaseConfiguration(zk);
+        hbaseConf = hbaseConnections.getExisting(hbaseConf);
+
         Repository repository = new RemoteRepository(parseAddressAndPort(server.lilyAddressAndPort),
-                remoteConverter, typeManager, idGenerator, blobManager);
+                remoteConverter, typeManager, idGenerator, blobManager, hbaseConf);
         
         remoteConverter.setRepository(repository);
         typeManager.start();
@@ -177,7 +191,7 @@ public class LilyClient implements Closeable {
     }
     
     public static BlobManager getBlobManager(ZooKeeperItf zk, HBaseConnections hbaseConns) throws IOException {
-        Configuration configuration = getBlobHBaseConfiguration(zk);
+        Configuration configuration = getHBaseConfiguration(zk);
         // Avoid HBase(Admin)/ZooKeeper connection leaks when using new Configuration objects each time.
         configuration = hbaseConns.getExisting(configuration);
         HBaseTableFactory hbaseTableFactory = new HBaseTableFactoryImpl(configuration);
@@ -212,23 +226,22 @@ public class LilyClient implements Closeable {
         }
     }
 
-    private static Configuration getBlobHBaseConfiguration(ZooKeeperItf zk) {
+    public static Configuration getHBaseConfiguration(ZooKeeperItf zk) {
         try {
             Configuration configuration = HBaseConfiguration.create();
-            byte[] data = zk.getData(blobHBaseConfigPath, false, new Stat());
-            ArrayNode propertiesNode = (ArrayNode)JsonFormat.deserializeSoft(data, "Blob HBase configuration");
-            for (JsonNode jsonNode : propertiesNode) {
-                ArrayNode propertyNode = (ArrayNode)jsonNode;
-                String propertyName = propertyNode.get(0).getTextValue();
-                String propertyValue = propertyNode.get(1).getTextValue();
-                configuration.set(propertyName, propertyValue);
+            byte[] data = zk.getData(hbaseConfigPath, false, new Stat());
+            ObjectNode propertiesNode = (ObjectNode)JsonFormat.deserializeSoft(data, "HBase configuration");
+            Iterator<Map.Entry<String, JsonNode>> it = propertiesNode.getFields();
+            while (it.hasNext()) {
+                Map.Entry<String, JsonNode> entry = it.next();
+                configuration.set(entry.getKey(), entry.getValue().getTextValue());
             }
             return configuration;
         } catch (Exception e) {
-            throw new RuntimeException("Blob stores config lookup: failed to get HBase configuration from ZooKeeper", e);
+            throw new RuntimeException("Failed to get HBase configuration from ZooKeeper", e);
         }
     }
-    
+
     private InetSocketAddress parseAddressAndPort(String addressAndPort) {
         int colonPos = addressAndPort.indexOf(":");
         if (colonPos == -1) {

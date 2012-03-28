@@ -53,6 +53,10 @@
     </dependency>
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-general-module</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-cli-fw</artifactId>
     </dependency>
   </dependencies>
@@ -67,6 +71,10 @@
             <script>
               <basename>lily-upgrade-from-1.0</basename>
               <mainClass>org.lilyproject.tools.upgrade.UpgradeFrom1_0Tool</mainClass>
+            </script>
+            <script>
+              <basename>lily-upgrade-from-1.1</basename>
+              <mainClass>org.lilyproject.tools.upgrade.UpgradeFrom1_1Tool</mainClass>
             </script>
           </scripts>
         </configuration>

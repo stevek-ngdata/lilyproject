@@ -85,6 +85,7 @@
     <module>cr/repository-api-tutorial</module>
     <module>cr/server-test-fw</module>
     <module>cr/standalone-launcher</module>
+    <module>cr/mapreduce</module>
 
     <module>global/hbaseindex</module>
     <module>global/hbaseindex-perftest</module>
@@ -119,6 +120,7 @@
     <module>apps/tester</module>
     <module>apps/mbox-import</module>
     <module>apps/linkindex-cli</module>
+    <module>apps/scan-records</module>
 
     <module>dist</module>
 
@@ -403,6 +405,21 @@
         <version>1.2-SNAPSHOT</version>
       </dependency>
       <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-mapreduce</artifactId>
+        <version>1.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-mapreduce-test-jobs</artifactId>
+        <version>1.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-scan-records</artifactId>
+        <version>1.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${version.zookeeper}</version>
@@ -635,7 +652,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>r09</version>
+        <version>11.0.2</version>
       </dependency>
       <!-- Force usage of jersey version 1.8
            Hadoop uses 1.8, Hbase 1.4
@@ -908,6 +925,8 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <version>2.11</version>
             <configuration>
+              <forkMode>always</forkMode>
+              <argLine>-Xmx256m ${argLine}</argLine>
               <includes>
                 <include>**/integration/*.java</include>
               </includes>

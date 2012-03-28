@@ -65,7 +65,7 @@ public class TableConfig {
         } else if (regionCount != null && regionCount <= 1) {
             // one region requested, no need to define splits
         } else if (regionCount != null) {
-            byte[] startBytes = new byte[]{(byte)0};
+            byte[] startBytes = splitKeyPrefix.length > 0 ? splitKeyPrefix : new byte[]{(byte)0};
             byte[] endBytes =  new byte[splitKeyPrefix.length + 16];
             System.arraycopy(splitKeyPrefix, 0, endBytes, 0, splitKeyPrefix.length);
             for (int i = splitKeyPrefix.length; i < endBytes.length; i++) {

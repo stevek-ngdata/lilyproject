@@ -11,7 +11,7 @@ import org.joda.time.LocalDateTime;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.impl.IdGeneratorImpl;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.hbase.HBaseAdminFactory;

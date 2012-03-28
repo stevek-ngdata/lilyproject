@@ -2,6 +2,10 @@
 
 # You can use the following environment variables to customize the startup
 #
+# LILY_CONF_DIR
+#    Additional environment properties will be sourced
+#    from $LILY_CONF_DIR/lily-env.sh
+#
 # LILY_CLI_CLASSPATH
 #    additional entries to be added to the classpath
 #
@@ -36,7 +40,13 @@ if [ -z "$LILY_HOME" -o ! -d "$LILY_HOME" ] ; then
   LILY_HOME=`cd "$LILY_HOME" && pwd`
 fi
 
-# This will set/check JAVA_HOME
+# Source shared environment variables
+LILY_CONF_DIR=${LILY_CONF_DIR:-/etc/lily/conf}
+if [ -f "$LILY_CONF_DIR/lily-env.sh" ]; then
+  . "$LILY_CONF_DIR/lily-env.sh"
+fi
+
+# Source lily-env.sh for checking/setting JAVA_HOME
 . $LILY_HOME/bin/lily-env.sh
 
 # The repository suitable for bootstrapping Kauri

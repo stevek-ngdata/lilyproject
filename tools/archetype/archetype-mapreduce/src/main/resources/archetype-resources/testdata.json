@@ -1,0 +1,69 @@
+{
+  namespaces: {
+    "mrsample": "p"
+  },
+  fieldTypes: [
+    {
+      name: "p$text",
+      valueType: "STRING",
+      scope: "non_versioned"
+    },
+    {
+      name: "p$wordcount",
+      valueType: "INTEGER",
+      scope: "non_versioned"
+    }
+  ],
+  recordTypes: [
+    {
+      name: "p$Document",
+      fields: [
+        {name: "p$text", mandatory: true }
+      ]
+    },
+    {
+      name: "p$Summary",
+      fields: [
+        {name: "p$wordcount", mandatory: true }
+      ]
+    }
+  ],
+  records: [
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "the old night keeper keeps the keep in the town"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "in the big old house in the big old gown"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "the house in the town had the big old keep"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "where the old night keeper never did sleep"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "the old night keeper keeps the keep in the night"
+      }
+    },
+    {
+      type: "p$Document",
+      fields: {
+        "p$text": "and keeps in the dark and sleeps in the light"
+      }
+    }
+  ]
+}

@@ -32,7 +32,8 @@ import java.util.Set;
 /**
  * Repository is the primary access point for accessing the functionality of the Lily repository.
  *
- * <p>Via Repository, you can perform all {@link Record}-related CRUD operations.
+ * <p>Via Repository, you can perform all {@link Record}-related CRUD operations. You can also
+ * scan sequentially over records using {@link #getScanner(RecordScan)}.
  */
 public interface Repository extends Closeable {
     /**
@@ -513,6 +514,24 @@ public interface Repository extends Closeable {
      *         exist.
      */
     Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException;
+
+    /**
+     * Get a scanner to sequentially run over all, or a subset of, the records in the repository.
+     * 
+     * <p>To run over a subset of the records, use the methods {@link RecordScan#setStartRecordId(RecordId)}
+     * and {@link RecordScan#setStopRecordId(RecordId)}. Additionally, you can set filters on
+     * the RecordScan to further restrain the returned records.</p>
+     *
+     * <p>Scanners always return the latest versions of records.</p>
+     *
+     * <p>Note that scans, and the filters defined as part of it, are not based on indexes:
+     * the scan always runs over the defined range of records and checks each record one
+     * by one. Hence, this is intended for batch-use, or for cases where you scan over a
+     * manageable amount of records</p>
+     *
+     * @param scan the details of the scan to be performed
+     */
+    RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException;
 
     /**
      * Returns a record builder object which can be used to compose a record object and create or update it on the

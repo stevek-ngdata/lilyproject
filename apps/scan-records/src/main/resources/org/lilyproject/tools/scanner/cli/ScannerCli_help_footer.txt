@@ -1,0 +1,19 @@
+This tool can run in two modes:
+ * count mode, activated with -c
+ * print mode, activated with -p
+
+To print just a few records, use the --limit option.
+
+The full scanner configuration can be supplied as JSON, in the same format
+as in the REST interface, so see its documentation for the full description.
+
+Here is an example json config to filter on field value:
+
+{
+  recordFilter: {
+    "@class": "org.lilyproject.repository.api.filter.FieldValueFilter",
+    field: "{org.lilyproject.bookssample}language",
+    compareOp: "EQUAL",
+    fieldValue: "English"
+  }
+}

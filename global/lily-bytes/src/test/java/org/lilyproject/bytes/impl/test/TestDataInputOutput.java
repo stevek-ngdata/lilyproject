@@ -81,7 +81,19 @@ public class TestDataInputOutput extends TestCase {
             Assert.assertEquals(string, result);
         }
     }
-    
+
+    public void testRandomVString() {
+        for (int i = 0; i < 1000; i++) {
+            String string = randomUnicodeString();
+            DataOutput dataOutput = new DataOutputImpl();
+            dataOutput.writeVUTF(string);
+            byte[] bytes = dataOutput.toByteArray();
+            DataInput dataInput = new DataInputImpl(bytes);
+            String result = dataInput.readVUTF();
+            Assert.assertEquals(string, result);
+        }
+    }
+
     public void testAllCombinations() {
         char[] chars = new char[6];
         int i = 0;

@@ -1,0 +1,57 @@
+{
+  failuresFile: "failures.log",
+
+  namespaces: {
+    "tester": "t"
+  },
+
+  recordSpaces: [
+    {
+      name: "records",
+      limit: 1000
+    }
+  ],
+
+  fieldTypes: [
+    {
+      name: "t$field1",
+      valueType: "STRING",
+      scope: "non_versioned",
+      properties: {wordCount: 3}
+    }
+  ],
+
+  recordTypes: [
+    {
+      name: "t$RT1",
+      fields: [
+        {
+          name: "t$field1"
+        }
+      ]
+    }
+  ],
+
+  scenario: [
+    {
+      name: "create",
+      action: "create",
+      recordType: "t$RT1",
+      destination: "records",
+      count: 10
+    },
+    {
+      name: "delete",
+      action: "delete",
+      recordType: "t$RT1",
+      source: "records",
+      count: 2
+    }
+  ],
+
+  stopConditions: {
+    /* The time is in minutes */
+    maximumRunTime: 45,
+    maximumFailures: 1000
+  }
+}

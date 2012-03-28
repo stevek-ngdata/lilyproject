@@ -10,6 +10,11 @@ public class UnmodifiableNamespaces implements Namespaces {
     }
 
     @Override
+    public boolean usePrefixes() {
+        return delegate.usePrefixes();
+    }
+
+    @Override
     public String getOrMakePrefix(String namespace) {
         throw new RuntimeException("This namespace context is not modifiable.");
     }
