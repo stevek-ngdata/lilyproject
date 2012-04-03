@@ -65,6 +65,8 @@ public class BalancingAndRetryingRepository {
                     // Needs to be wrapped because NoServersException is not in the throws clause of the
                     // Repository & TypeManager methods
                     handleThrowable(new IOTypeException(e), method, startedAt, attempt, OperationType.TYPE);
+                } catch (InterruptedException e) {
+                    throw e;
                 } catch (Throwable throwable) {
                     handleThrowable(throwable, method, startedAt, attempt, OperationType.TYPE);
                 }
@@ -110,6 +112,8 @@ public class BalancingAndRetryingRepository {
                     } else {
                         handleThrowable(new IORecordException(e), method, startedAt, attempt, OperationType.RECORD);
                     }
+                } catch (InterruptedException e) {
+                    throw e;
                 } catch (Throwable throwable) {
                     if (isBlobMethod(method)) {
                         handleThrowable(throwable, method, startedAt, attempt, OperationType.BLOB);
