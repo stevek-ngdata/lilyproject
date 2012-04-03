@@ -150,8 +150,6 @@ public class LilyServerProxy {
     }
     
     public void stop() {
-        Closer.close(lilyServerTestUtility);
-
         if (mode == Mode.CONNECT) {
             Closer.close(zooKeeper);
             Closer.close(indexerModel);
@@ -162,6 +160,10 @@ public class LilyServerProxy {
         this.zooKeeper = null;
         this.indexerModel = null;
         this.lilyClient = null;
+
+        // We close the server after the client, to avoid client threads possibly hanging
+        // in retry loops when no servers are available
+        Closer.close(lilyServerTestUtility);
     }
     
     public synchronized LilyClient getClient() throws IOException, InterruptedException, KeeperException,
