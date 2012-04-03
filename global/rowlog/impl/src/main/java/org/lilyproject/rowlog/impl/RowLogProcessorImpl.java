@@ -39,6 +39,7 @@ import org.lilyproject.rowlog.api.SubscriptionsObserver;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.util.io.Closer;
 
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
     private volatile boolean stop = true;
@@ -51,6 +52,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     private ScheduledExecutorService scheduledServices;
     private Configuration hbaseConf;
     private RowLogProcessorSettings settings;
+    private Triggerable bufferedProcessorNotifier;
 
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     
@@ -111,12 +113,20 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
             initializeRowLogConfig();
             initializeSubscriptions();
             initializeNotifyObserver();
+
+            bufferedProcessorNotifier = new BufferedTriggerable(new Triggerable() {
+                @Override
+                public void trigger() {
+                    notifyProcessorNonDelayed();
+                }
+            }, rowLogConfig.getNotifyDelay());
         }
     }
 
     @Override
     public synchronized void stop() {
         stop = true;
+        Closer.close(bufferedProcessorNotifier);
         if (scheduledServices != null)
             scheduledServices.shutdownNow();
         stopRowLogConfig();
@@ -265,13 +275,22 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     public boolean isRunning(String subscriptionId) {
         return subscriptionThreads.get(subscriptionId) != null;
     }
-    
+            
     /**
      * Called when a message has been posted on the rowlog that needs to be processed by this RowLogProcessor.
      * The notification will only be taken into account when a delay has passed since the previous notification.
      */
     @Override
-    synchronized public void notifyProcessor() {
+    public void notifyProcessor() {
+        try {
+            bufferedProcessorNotifier.trigger();
+        } catch (InterruptedException e) {
+            // we are asked to stop
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private synchronized void notifyProcessorNonDelayed() {
         Collection<SubscriptionThread> threadsToWakeup;
         synchronized (subscriptionThreads) {
             threadsToWakeup = new HashSet<SubscriptionThread>(subscriptionThreads.values());
