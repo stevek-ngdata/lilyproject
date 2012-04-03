@@ -15,50 +15,52 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.google.common.base.Function;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.util.io.Closer;
 
 public class RowLogProcessorNotifier {
-    
     private RowLogConfigurationManager rowLogConfigurationManager;
-    private Map<String, Long> wakeupDelays = Collections.synchronizedMap(new HashMap<String, Long>());
-    private long delay;
     private Log log = LogFactory.getLog(getClass());
+    private Cache<String, Triggerable> triggerables;
 
-    public RowLogProcessorNotifier(RowLogConfigurationManager rowLogConfigurationManager, long delay) {
+    public RowLogProcessorNotifier(RowLogConfigurationManager rowLogConfigurationManager, final long delay) {
         this.rowLogConfigurationManager = rowLogConfigurationManager;
-        this.delay = delay;
-    }
-    
-    public void setDelay(long delay) {
-        this.delay = delay;
-    }
-    
-    protected void notifyProcessor(String rowLogId) throws InterruptedException {
-        long now = System.currentTimeMillis();
-        Long delayUntil = wakeupDelays.get(rowLogId);
-        if (delayUntil == null || now >= delayUntil) {
-            sendNotification(rowLogId);
-            // Wait at least <delay>miliseconds before sending another notification 
-            wakeupDelays.put(rowLogId, now + delay);
-        }
+
+        this.triggerables = CacheBuilder.newBuilder().build(CacheLoader.from(new Function<String, Triggerable>() {
+            @Override
+            public Triggerable apply(final String rowLogId) {
+                return new BufferedTriggerable(new Triggerable() {
+                    @Override
+                    public void trigger() throws InterruptedException {
+                        sendNotification(rowLogId);
+                    }
+                }, delay);
+            }
+        }));
     }
 
-	private void sendNotification(String rowLogId)
-			throws InterruptedException {
+    protected void notifyProcessor(final String rowLogId) throws InterruptedException {
+        triggerables.getUnchecked(rowLogId).trigger();
+    }
+
+	private void sendNotification(String rowLogId) throws InterruptedException {
 		try {
 			rowLogConfigurationManager.notifyProcessor(rowLogId);
 		} catch (KeeperException e) {
 			log.debug("Exception while notifying processor of rowLog '" + rowLogId + "'", e);
 		}
-	}
-    
-    public void close() {
     }
+    
+    public void close() throws InterruptedException {
+        for (Triggerable triggerable : triggerables.asMap().values()) {
+            Closer.close(triggerable);
+        }
+    }    
 }
