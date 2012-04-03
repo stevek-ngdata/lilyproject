@@ -220,11 +220,16 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
             // If the Put was not supplied by the user, apply it now
             if (ownPut) {
                 rowTable.put(put);
+
+                // The notify should happen after the put on the row-local queue, so
+                // we only do it in case we did the put. Since the notifications are most/only
+                // important for the MQ case and since for the MQ currently the Put is always
+                // done here, this is sufficient.
+                if (rowLogConfig.isEnableNotify()) {
+                    processorNotifier.notifyProcessor(id);
+                }
             }
 
-            if (rowLogConfig.isEnableNotify()) {
-                processorNotifier.notifyProcessor(id);
-            }
             return message;
         } catch (IOException e) {
             throw new RowLogException("Failed to put message on RowLog", e);
