@@ -82,4 +82,9 @@ public class DummyRowLog implements RowLog {
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
+
+    @Override
+    public RowLogConfig getConfig() {
+        throw new RuntimeException(failMessage);
+    }
 }

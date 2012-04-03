@@ -17,6 +17,8 @@ package org.lilyproject.lilyservertestfw;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,21 +33,29 @@ import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.io.Closer;
 
 public class LilyServerTestUtility {
+    public static final String TEST_SPECIFIC_CONF_RESOURCE_PATH = "org/lilyproject/lilyservertestfw/test_specific_conf/";
 
     private KauriRuntime runtime;
     private final String defaultConfDir;
     private final String customConfDir;
+    private final File testSpecificConfDir;
     private ArtifactRepository artifactRepository;
 
     /**
      * LilyServerTestUtility is used to start Lily using the KauriRuntime.
      * 
      * @param defaultConfDir path to the directory containing the default configuration files to startup lily 
-     * @param customConfDir path to a directory containing custom configuration files which should be used on top of the default configuration files
+     * @param customConfDir path to a directory containing custom configuration files which should be used on top
+     *                      of the default configuration files
      */
-    public LilyServerTestUtility(String defaultConfDir, String customConfDir) {
+    public LilyServerTestUtility(String defaultConfDir, String customConfDir, File testHome) throws IOException, URISyntaxException {
         this.defaultConfDir = defaultConfDir;
         this.customConfDir = customConfDir;
+
+        // test-specific-conf are changes to the default configuration to optimize for test cases
+        testSpecificConfDir = new File(testHome, "test-specific-conf");
+        URL confUrl = getClass().getClassLoader().getResource(TEST_SPECIFIC_CONF_RESOURCE_PATH);
+        ConfUtil.copyConfResources(confUrl, TEST_SPECIFIC_CONF_RESOURCE_PATH, testSpecificConfDir);
     }
     
     public void start() throws Exception {
@@ -67,6 +77,7 @@ public class LilyServerTestUtility {
     
     private ConfManager getConfManager() {
         List<File> confDirs = new ArrayList<File>();
+        confDirs.add(testSpecificConfDir);
         if (customConfDir != null)
             confDirs.add(new File(customConfDir));
         if (defaultConfDir != null)

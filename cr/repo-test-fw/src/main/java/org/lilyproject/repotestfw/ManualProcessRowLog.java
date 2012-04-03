@@ -85,4 +85,9 @@ public class ManualProcessRowLog implements RowLog {
     public boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException {
         return delegate.isMessageAvailable(message, subscriptionId);
     }
+
+    @Override
+    public RowLogConfig getConfig() {
+        return delegate.getConfig();
+    }
 }

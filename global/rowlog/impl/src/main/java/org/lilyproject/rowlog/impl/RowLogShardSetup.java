@@ -46,7 +46,8 @@ public class RowLogShardSetup {
         RowLogShardList shards = rowLog.getShardList();
         for (int i = 0; i < shardCount; i++) {
             byte[] rowKeyPrefix = new byte[] { (byte)i };
-            shards.addShard(new RowLogShardImpl("shard" + i, rowKeyPrefix, table, rowLog, 100));
+            shards.addShard(new RowLogShardImpl("shard" + i, rowKeyPrefix, table, rowLog,
+                    rowLog.getConfig().getDeleteBufferSize()));
         }
     }
 }

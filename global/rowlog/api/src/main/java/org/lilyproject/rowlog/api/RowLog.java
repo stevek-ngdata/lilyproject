@@ -189,4 +189,6 @@ public interface RowLog {
      * @throws RowLogException
      */
     boolean isMessageAvailable(RowLogMessage message, String subscriptionId) throws RowLogException;
+    
+    RowLogConfig getConfig();
 }

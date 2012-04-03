@@ -69,15 +69,28 @@ public class RowLogSetup {
         this.lilyInfo = lilyInfo;
         this.hostName = hostName;
     }
+    
+    private RowLogConfig createRowLogConfig(Conf initialConf) {
+        boolean respectOrder = initialConf.getChild("respectOrder").getValueAsBoolean();
+        boolean enableNotify = initialConf.getChild("enableNotify").getValueAsBoolean();
+        long notifyDelay = initialConf.getChild("notifyDelay").getValueAsLong();
+        long minimalProcessDelay = initialConf.getChild("minimalProcessDelay").getValueAsLong();
+        long wakeupTimeout = initialConf.getChild("wakeupTimeout").getValueAsLong();
+        long orphanedMessageDelay = initialConf.getChild("orphanedMessageDelay").getValueAsLong();
+        int deleteBufferSize = initialConf.getChild("deleteBufferSize").getValueAsInteger();
+        
+        return new RowLogConfig(respectOrder, enableNotify, notifyDelay, minimalProcessDelay, wakeupTimeout,
+                orphanedMessageDelay, deleteBufferSize);
+    }
 
     @PostConstruct
     public void start() throws InterruptedException, KeeperException, IOException, LeaderElectionSetupException, RowLogException {
         if (!confMgr.rowLogExists("wal")) {
-            confMgr.addRowLog("wal", new RowLogConfig(true, false, 100L, 5000L, 5000L, 120000L));
+            confMgr.addRowLog("wal", createRowLogConfig(rowLogConf.getChild("mqConfig")));
         }
         
         if (!confMgr.rowLogExists("mq")) {
-            confMgr.addRowLog("mq", new RowLogConfig(false, true, 100L, 0L, 5000L, 120000L));
+            confMgr.addRowLog("mq", createRowLogConfig(rowLogConf.getChild("walConfig")));
         } else {
             // Before Lily 1.0.4, the respectOrder parameter for the MQ was true. Change it if necessary.
             for (Map.Entry<String, RowLogConfig> entry : confMgr.getRowLogs().entrySet()) {

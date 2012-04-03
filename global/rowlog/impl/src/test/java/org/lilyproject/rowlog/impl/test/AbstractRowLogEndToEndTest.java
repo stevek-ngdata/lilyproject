@@ -60,7 +60,7 @@ public abstract class AbstractRowLogEndToEndTest {
         zooKeeper = ZkUtil.connect(HBASE_PROXY.getZkConnectString(), 120000);
         rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
         // The orphanedMessageDelay is smaller than usual on purpose, since some tests wait on this cleanup
-        rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(true, true, 100L, 0L, 5000L, 5000L));
+        rowLogConfigurationManager.addRowLog("EndToEndRowLog", new RowLogConfig(true, true, 100L, 0L, 5000L, 5000L, 100));
         rowLog = new RowLogImpl("EndToEndRowLog", rowTable, RowLogTableUtil.ROWLOG_COLUMN_FAMILY,
                 (byte)1, rowLogConfigurationManager, null, new RowLogHashShardRouter());
         RowLogShardSetup.setupShards(1, rowLog, new HBaseTableFactoryImpl(configuration));

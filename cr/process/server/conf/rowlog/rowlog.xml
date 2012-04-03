@@ -2,6 +2,30 @@
 <rowlog  xmlns:conf="http://kauriproject.org/configuration"
          conf:inherit="deep">
 
+  <!-- This is the initial config used at first startup. Afterwards, use lily-update-rowlog
+       to change settings. -->
+  <mqConfig>
+    <respectOrder>true</respectOrder>
+    <enableNotify>false</enableNotify>
+    <notifyDelay>100</notifyDelay>
+    <minimalProcessDelay>5000</minimalProcessDelay>
+    <wakeupTimeout>5000</wakeupTimeout>
+    <orphanedMessageDelay>120000</orphanedMessageDelay>
+    <deleteBufferSize>100</deleteBufferSize>
+  </mqConfig>
+
+  <!-- This is the initial config used at first startup. Afterwards, use lily-update-rowlog
+       to change settings. -->
+  <walConfig>
+    <respectOrder>false</respectOrder>
+    <enableNotify>true</enableNotify>
+    <notifyDelay>100</notifyDelay>
+    <minimalProcessDelay>0</minimalProcessDelay>
+    <wakeupTimeout>5000</wakeupTimeout>
+    <orphanedMessageDelay>120000</orphanedMessageDelay>
+    <deleteBufferSize>100</deleteBufferSize>
+  </walConfig>
+
   <!-- The WAL or MQ processor is a component which is active on one of the Lily servers,
        elected through ZooKeeper. The processor is responsible for continuing interrupted
        secondary actions (in case of the WAL) or distributing messages to listeners (in

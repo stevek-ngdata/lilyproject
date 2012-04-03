@@ -95,11 +95,19 @@ public class RowLogShardImpl implements RowLogShard {
      */
     @Override
     public void removeMessage(RowLogMessage message, String subscription) throws RowLogException {
-        synchronized (messagesToDelete) {
-            messagesToDelete.add(new Delete(createRowKey(message, subscription)));
-        }
-        if (messagesToDelete.size() >= deleteBufferSize || (lastDelete + 300000 < System.currentTimeMillis())) {
-            flushMessageDeleteBuffer();
+        if (deleteBufferSize <= 1) {
+            try {
+                table.delete(new Delete(createRowKey(message, subscription)));
+            } catch (IOException e) {
+                throw new RowLogException("Failed deleting message from rowlog shard table", e);
+            }
+        } else {
+            synchronized (messagesToDelete) {
+                messagesToDelete.add(new Delete(createRowKey(message, subscription)));
+            }
+            if (messagesToDelete.size() >= deleteBufferSize || (lastDelete + 300000 < System.currentTimeMillis())) {
+                flushMessageDeleteBuffer();
+            }
         }
     }
 

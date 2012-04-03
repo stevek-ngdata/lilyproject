@@ -674,6 +674,9 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
         buffer.putLong(timestamp);
         return buffer.array();
     }
-    
-    
- }
+
+    @Override
+    public RowLogConfig getConfig() {
+        return rowLogConfig;
+    }
+}

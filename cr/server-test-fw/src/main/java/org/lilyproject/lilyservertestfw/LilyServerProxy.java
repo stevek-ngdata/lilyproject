@@ -139,7 +139,8 @@ public class LilyServerProxy {
                 // Get custom conf dir 
                 String customConfDir = System.getProperty(LILY_CONF_CUSTOMDIR);
                 
-                lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), customConfDir);
+                lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), customConfDir,
+                        testHome);
                 lilyServerTestUtility.start();
                 break;
             case CONNECT:

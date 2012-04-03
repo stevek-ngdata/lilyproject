@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<rowlog  xmlns:conf="http://kauriproject.org/configuration"
+         conf:inherit="deep">
+
+  <mqConfig>
+    <notifyDelay>20</notifyDelay>
+
+    <!-- required for HBaseProxy.waitMQMessagesProcessed to work without pausing -->
+    <deleteBufferSize>0</deleteBufferSize>
+  </mqConfig>
+
+  <walConfig>
+    <notifyDelay>20</notifyDelay>
+
+    <!-- required for HBaseProxy.waitWalMessagesProcessed to work without pausing -->
+    <deleteBufferSize>0</deleteBufferSize>
+  </walConfig>
+</rowlog>

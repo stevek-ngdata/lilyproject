@@ -1,5 +1,7 @@
 package org.lilyproject.rowlog.api;
 
+import com.google.common.base.Objects;
+
 public class RowLogConfig {
 
     private boolean respectOrder;
@@ -8,6 +10,7 @@ public class RowLogConfig {
     private long minimalProcessDelay;
     private long wakeupTimeout;
     private long orphanedMessageDelay;
+    private int deleteBufferSize;
 
     /**
      * A value object bundling the configuration paramaters for a rowlog and its processors.
@@ -21,15 +24,17 @@ public class RowLogConfig {
      *                      missed notifying is disabled
      * @param orphanedMessageDelay time that should have passed before deciding that an entry on the global queue is
      *                             orphaned, i.e. has no corresponding message on the row-local queue.
+     * @param deleteBufferSize number of deletes to buffer per rowlog shard before applying them to HBase.
      */
     public RowLogConfig(boolean respsectOrder, boolean enableNotify, long notifyDelay, long minimalProcessDelay,
-            long wakeupTimeout, long orphanedMessageDelay) {
+            long wakeupTimeout, long orphanedMessageDelay, int deleteBufferSize) {
         this.respectOrder = respsectOrder;
         this.enableNotify = enableNotify;
         this.notifyDelay = notifyDelay;
         this.minimalProcessDelay = minimalProcessDelay;
         this.wakeupTimeout = wakeupTimeout;
         this.orphanedMessageDelay = orphanedMessageDelay;
+        this.deleteBufferSize = deleteBufferSize;
     }
 
     public boolean isRespectOrder() {
@@ -80,17 +85,18 @@ public class RowLogConfig {
         this.orphanedMessageDelay = orphanedMessageDelay;
     }
 
+    public int getDeleteBufferSize() {
+        return deleteBufferSize;
+    }
+
+    public void setDeleteBufferSize(int deleteBufferSize) {
+        this.deleteBufferSize = deleteBufferSize;
+    }
+
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (enableNotify ? 1231 : 1237);
-        result = prime * result + (int) (minimalProcessDelay ^ (minimalProcessDelay >>> 32));
-        result = prime * result + (int) (notifyDelay ^ (notifyDelay >>> 32));
-        result = prime * result + (int) (wakeupTimeout ^ (wakeupTimeout >>> 32));
-        result = prime * result + (int) (orphanedMessageDelay ^ (orphanedMessageDelay >>> 32));
-        result = prime * result + (respectOrder ? 1231 : 1237);
-        return result;
+        return Objects.hashCode(enableNotify, minimalProcessDelay, notifyDelay, wakeupTimeout, orphanedMessageDelay,
+                respectOrder, deleteBufferSize);
     }
 
     @Override
@@ -102,25 +108,20 @@ public class RowLogConfig {
         if (getClass() != obj.getClass())
             return false;
         RowLogConfig other = (RowLogConfig) obj;
-        if (enableNotify != other.enableNotify)
-            return false;
-        if (minimalProcessDelay != other.minimalProcessDelay)
-            return false;
-        if (notifyDelay != other.notifyDelay)
-            return false;
-        if (wakeupTimeout != other.wakeupTimeout)
-            return false;
-        if (orphanedMessageDelay != other.orphanedMessageDelay)
-            return false;
-        if (respectOrder != other.respectOrder)
-            return false;
-        return true;
+        return Objects.equal(enableNotify, other.enableNotify)
+                && Objects.equal(minimalProcessDelay, other.minimalProcessDelay)
+                && Objects.equal(notifyDelay, other.notifyDelay)
+                && Objects.equal(wakeupTimeout, other.wakeupTimeout)
+                && Objects.equal(orphanedMessageDelay, other.orphanedMessageDelay)
+                && Objects.equal(respectOrder, other.respectOrder)
+                && Objects.equal(deleteBufferSize, other.deleteBufferSize);
     }
 
     @Override
     public String toString() {
         return "RowLogConfig [respectOrder=" + respectOrder + ", enableNotify="
                 + enableNotify + ", notifyDelay=" + notifyDelay + ", minimalProcessDelay=" + minimalProcessDelay +
-                ", wakeupTimeout=" + wakeupTimeout + ", orphanedMessageDelay=" + orphanedMessageDelay + "]";
+                ", wakeupTimeout=" + wakeupTimeout + ", orphanedMessageDelay=" + orphanedMessageDelay +
+                ", deleteBufferSize=" + deleteBufferSize + "]";
     }
 }

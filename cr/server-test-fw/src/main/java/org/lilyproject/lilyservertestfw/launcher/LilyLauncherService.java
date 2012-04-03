@@ -15,6 +15,7 @@ import org.lilyproject.util.MavenUtil;
 
 public class LilyLauncherService implements LauncherService {
     private LilyServerTestUtility lilyServerTestUtility;
+    private File testHome;
     private File defaultConfDir = null;
     private ArtifactRepository artifactRepository;
 
@@ -24,6 +25,7 @@ public class LilyLauncherService implements LauncherService {
 
     @Override
     public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
+        this.testHome = testHome;
         String defaultConfDirPath = System.getProperty("lily.conf.dir");
         if (defaultConfDirPath != null) {
             defaultConfDir = new File(defaultConfDirPath);
@@ -47,7 +49,7 @@ public class LilyLauncherService implements LauncherService {
 
     @Override
     public int start(List<String> postStartupInfo) throws Exception {
-        lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), null);
+        lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), null, testHome);
         lilyServerTestUtility.setArtifactRepository(artifactRepository);
         lilyServerTestUtility.start();
 
