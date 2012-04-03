@@ -16,6 +16,8 @@
 package org.lilyproject.hadooptestfw;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.*;
@@ -50,6 +52,7 @@ public class HBaseProxy {
     private boolean enableMapReduce = false;
     private boolean clearData = true;
     private boolean format;
+    private Log log = LogFactory.getLog(getClass());
 
     public enum Mode { EMBED, CONNECT }
     public static String HBASE_MODE_PROP_NAME = "lily.hbaseproxy.mode";
@@ -322,14 +325,13 @@ public class HBaseProxy {
      * @return false if the timeout was reached before all messages were processed
      */
     public boolean waitWalMessagesProcessed(long timeout) throws Exception {
-        String tableName = "rowlog-mq";
+        String tableName = "rowlog-wal";
         HTable hTable = new HTable(conf, Bytes.toBytes(tableName));
         try {
             return waitRowLogMessagesProcessed(timeout, hTable);
         } finally {
             hTable.close();
         }
-        
     }
 
     /**
@@ -349,17 +351,28 @@ public class HBaseProxy {
     }
     
     private boolean waitRowLogMessagesProcessed(long timeout, HTable hTable) throws Exception {
-        long tryUntil = System.currentTimeMillis() + timeout;
-        while (System.currentTimeMillis() < tryUntil) {
-            hTable.flushCommits();
-            ResultScanner scanner = hTable.getScanner(Bytes.toBytes("messages"));
-            Result result = scanner.next();
-            scanner.close();
-            if (result == null || result.size() <= 0) {
-                return true;
-            }
-            Thread.sleep(50);
+        if (log.isDebugEnabled()) {
+            log.debug("Begin waiting on " + Bytes.toString(hTable.getTableName()));
         }
-        return false;
+
+        long before = System.currentTimeMillis();
+        try {
+            long tryUntil = System.currentTimeMillis() + timeout;
+            while (System.currentTimeMillis() < tryUntil) {
+                ResultScanner scanner = hTable.getScanner(Bytes.toBytes("messages"));
+                Result result = scanner.next();
+                scanner.close();
+                if (result == null || result.size() <= 0) {
+                    return true;
+                }
+                Thread.sleep(30);
+            }
+            return false;
+        } finally {
+            if (log.isDebugEnabled()) {
+                log.debug("Waiting on " + Bytes.toString(hTable.getTableName()) + " took " +
+                        (System.currentTimeMillis() - before));
+            }
+        }
     }
 }
