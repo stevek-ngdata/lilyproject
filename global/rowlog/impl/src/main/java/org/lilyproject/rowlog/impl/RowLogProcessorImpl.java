@@ -46,7 +46,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     protected final Map<String, SubscriptionThread> subscriptionThreads = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
     private RowLogConfigurationManager rowLogConfigurationManager;
     private Log log = LogFactory.getLog(RowLogProcessorImpl.class);
-    private long lastNotify = -1;
     private RowLogConfig rowLogConfig;
     private ThreadPoolExecutor globalQScanExecutor;
     private ScheduledExecutorService scheduledServices;
@@ -273,18 +272,13 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
      */
     @Override
     synchronized public void notifyProcessor() {
-    	long now = System.currentTimeMillis();
-    	// Only consume the notification if the notifyDelay has expired to avoid too many wakeups
-    	if ((lastNotify + rowLogConfig.getNotifyDelay()) <= now) { 
-    		lastNotify = now;
-	    	Collection<SubscriptionThread> threadsToWakeup;
-	        synchronized (subscriptionThreads) {
-	            threadsToWakeup = new HashSet<SubscriptionThread>(subscriptionThreads.values());
-	        }
-	        for (SubscriptionThread subscriptionThread : threadsToWakeup) {
-	            subscriptionThread.wakeup();
-	        }
-    	}
+        Collection<SubscriptionThread> threadsToWakeup;
+        synchronized (subscriptionThreads) {
+            threadsToWakeup = new HashSet<SubscriptionThread>(subscriptionThreads.values());
+        }
+        for (SubscriptionThread subscriptionThread : threadsToWakeup) {
+            subscriptionThread.wakeup();
+        }
     }
 
     protected class SubscriptionThread extends Thread {
