@@ -81,12 +81,8 @@ public interface FieldType {
     boolean equals(Object obj);
 
     /**
-     * Returns a mutable clone of the field type
+     * Returns a clone of the field type
      */
     FieldType clone();
 
-    /**
-     * Returns an immutable version of the field type
-     */
-    FieldType immutable();
 }

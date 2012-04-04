@@ -29,7 +29,7 @@ public class FieldTypesImpl implements FieldTypes {
     public List<FieldType> getFieldTypes() throws InterruptedException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
         for (FieldType fieldType : getNameCache().values()) {
-            fieldTypes.add(fieldType);
+            fieldTypes.add(fieldType.clone());
         }
         return fieldTypes;
     }
@@ -47,7 +47,7 @@ public class FieldTypesImpl implements FieldTypes {
         if (fieldType == null) {
             throw new FieldTypeNotFoundException(id);
         }
-        return fieldType;
+        return fieldType.clone();
     }
 
     @Override
@@ -57,13 +57,13 @@ public class FieldTypesImpl implements FieldTypes {
         if (fieldType == null) {
             throw new FieldTypeNotFoundException(name);
         }
-        return fieldType;
+        return fieldType.clone();
     }
 
     public FieldType getFieldTypeByNameReturnNull(QName name) throws InterruptedException {
         ArgumentValidator.notNull(name, "name");
         FieldType fieldType = getNameCache().get(name);
-        return fieldType != null ? fieldType : null;
+        return fieldType != null ? fieldType.clone() : null;
     }
 
     public boolean fieldTypeExists(QName name) throws InterruptedException {

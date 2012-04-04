@@ -578,9 +578,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
             }
             
             // Update the caches
-            // No need to clone the field type here
-            // The cache will store an immutable version
-            updateFieldTypeCache(newFieldType);
+            updateFieldTypeCache(newFieldType.clone());
         } catch (IOException e) {
             throw new TypeException("Exception occurred while updating fieldType '" + fieldType.getId() + "' on HBase",
                     e);
@@ -753,9 +751,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         } catch (IOException e) {
             throw new TypeException("Exception occurred while retrieving fieldType '" + id + "' from HBase", e);
         }
-        // Clone it here since the extracted field type is immutable
-        // And the returned field type might be used in a mutable fashion
-        return extractFieldType(id, result).clone();
+        return extractFieldType(id, result);
     }
 
     private FieldType extractFieldType(SchemaId id, Result result) throws RepositoryException, InterruptedException {
@@ -764,7 +760,7 @@ public class HBaseTypeManager extends AbstractTypeManager implements TypeManager
         name = decodeName(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_NAME.bytes));
         ValueType valueType = decodeValueType(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_VALUETYPE.bytes));
         Scope scope = Scope.valueOf(Bytes.toString(nonVersionableColumnFamily.get(TypeColumn.FIELDTYPE_SCOPE.bytes)));
-        return new ImmutableFieldType(id, valueType, name, scope);
+        return new FieldTypeImpl(id, valueType, name, scope);
     }
 
     @Override

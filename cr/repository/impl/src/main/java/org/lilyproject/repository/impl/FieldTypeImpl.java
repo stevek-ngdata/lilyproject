@@ -99,11 +99,6 @@ public class FieldTypeImpl implements FieldType, Cloneable {
     }
 
     @Override
-    public FieldType immutable() {
-        return new ImmutableFieldType(id, valueType, name, scope);
-    }
-
-    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
