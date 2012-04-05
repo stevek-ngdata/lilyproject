@@ -141,6 +141,8 @@ public class CleanupUtil {
             }
 
             Scan scan = new Scan();
+            scan.setCaching(1000);
+            scan.setCacheBlocks(false);
             ResultScanner scanner = htable.getScanner(scan);
             Result[] results;
             int totalCount = 0;
