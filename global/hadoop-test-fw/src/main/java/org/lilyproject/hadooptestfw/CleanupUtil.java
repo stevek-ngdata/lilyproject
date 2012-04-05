@@ -60,7 +60,7 @@ public class CleanupUtil {
         long waitUntil = System.currentTimeMillis() + sessionTimeout;
         while (zk.getState() != CONNECTED && waitUntil > System.currentTimeMillis()) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(20);
             } catch (InterruptedException e) {
                 break;
             }
@@ -72,22 +72,37 @@ public class CleanupUtil {
 
         if (zk.exists("/lily", false) != null) {
             System.out.println("----------------- Clearing '/lily' node in ZooKeeper -------------------");
-            deleteChildren("/lily", zk);
-            zk.delete("/lily", -1);
+
+            List<String> paths = new ArrayList<String>();
+            collectChildren("/lily", zk, paths);
+            paths.add("/lily");
+
+            for (String path : paths) {
+                zk.delete(path, -1, null, null);
+            }
+            
+            long startWait = System.currentTimeMillis();
+            while (zk.exists("/lily", null) != null) {
+                Thread.sleep(5);
+                
+                if (System.currentTimeMillis() - startWait > 120000) {
+                    throw new RuntimeException("State was not cleared in ZK within the expected timeout");
+                }
+            }
+            
+            System.out.println("Deleted " + paths.size() + " paths from ZooKeeper");
             System.out.println("------------------------------------------------------------------------");
         }
 
         zk.close();
     }
 
-    private void deleteChildren(String path, ZooKeeper zk) throws InterruptedException, KeeperException {
+    private void collectChildren(String path, ZooKeeper zk, List<String> paths) throws InterruptedException, KeeperException {
         List<String> children = zk.getChildren(path, false);
-        if (!children.isEmpty())
-            System.out.println("Deleting path " + path + " and its " + children.size() + " children");
         for (String child : children) {
             String childPath = path + "/" + child;
-            deleteChildren(childPath, zk);
-            zk.delete(childPath, -1);
+            collectChildren(childPath, zk, paths);
+            paths.add(childPath);
         }
     }
 
