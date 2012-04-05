@@ -144,12 +144,13 @@ public class LilyProxy {
     }
 
     public void start(byte[] solrSchemaData) throws Exception {
-        cleanOldTmpDirs();
         if (started) {
             throw new IllegalStateException("LilyProxy is already started.");
         } else {
             started = true;
         }
+
+        cleanOldTmpDirs();
 
         if (hasBeenStarted && this.mode == Mode.EMBED) {
             // In embed mode, we can't support multiple start-stop sequences since
@@ -183,9 +184,13 @@ public class LilyProxy {
                 testHome = TestHomeUtil.createTestHome(TEMP_DIR_PREFIX);
             
             if (mode == Mode.EMBED)
-                hbaseProxy.setTestHome(new File(testHome, "hadoop"));
-            solrProxy.setTestHome(new File(testHome, "solr"));
-            lilyServerProxy.setTestHome(new File(testHome, "lilyserver"));
+                hbaseProxy.setTestHome(new File(testHome, TemplateDir.HADOOP_DIR));
+            solrProxy.setTestHome(new File(testHome, TemplateDir.SOLR_DIR));
+            lilyServerProxy.setTestHome(new File(testHome, TemplateDir.LILYSERVER_DIR));
+        }
+        
+        if (mode == Mode.EMBED) {
+            TemplateDir.restoreTemplateDir(testHome);
         }
 
         hbaseProxy.start();

@@ -25,6 +25,7 @@ import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.sharding.ShardingConfigException;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -163,7 +164,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-indexer-admin-cli");
+        return Version.readVersion("org.lilyproject", "lily-indexer-admin-cli");
     }
 
     @Override

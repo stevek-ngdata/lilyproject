@@ -56,7 +56,7 @@ public class Tester extends BaseRepositoryTestTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-tester");
+        return org.lilyproject.util.Version.readVersion("org.lilyproject", "lily-tester");
     }
 
     @Override

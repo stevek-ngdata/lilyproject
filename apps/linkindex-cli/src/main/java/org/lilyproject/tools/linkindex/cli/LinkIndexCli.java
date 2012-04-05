@@ -11,6 +11,7 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
 
@@ -37,7 +38,7 @@ public class LinkIndexCli extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-linkindex-cli");
+        return Version.readVersion("org.lilyproject", "lily-linkindex-cli");
     }
 
     @Override

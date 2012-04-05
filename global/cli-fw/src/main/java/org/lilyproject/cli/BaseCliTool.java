@@ -249,24 +249,4 @@ public abstract class BaseCliTool {
     }
     
     protected abstract String getVersion();
-
-    protected String readVersion(String groupId, String artifactId) {
-        String propPath = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
-        InputStream is = getClass().getResourceAsStream(propPath);
-        if (is != null) {
-            Properties properties = new Properties();
-            try {
-                properties.load(is);
-                String version = properties.getProperty("version");
-                if (version != null) {
-                    return version;
-                }
-            } catch (IOException e) {
-                // ignore
-            }
-            Closer.close(is);
-        }
-        
-        return "undetermined (please report this as bug)";
-    }
 }

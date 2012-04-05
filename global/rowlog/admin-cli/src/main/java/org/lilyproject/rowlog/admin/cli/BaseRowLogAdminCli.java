@@ -8,6 +8,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -114,7 +115,7 @@ public abstract class BaseRowLogAdminCli extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-rowlog-admin-cli");
+        return Version.readVersion("org.lilyproject", "lily-rowlog-admin-cli");
     }
 
     @Override

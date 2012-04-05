@@ -16,6 +16,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.testclientfw.BaseTestTool;
 import org.lilyproject.testclientfw.Util;
 import org.lilyproject.testclientfw.Words;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.json.JsonFormat;
 
 import java.io.ByteArrayOutputStream;
@@ -45,7 +46,7 @@ public class RestPerfTest extends BaseTestTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-rest-perftest");
+        return Version.readVersion("org.lilyproject", "lily-rest-perftest");
     }
 
     @Override

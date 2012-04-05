@@ -6,6 +6,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lilyproject.lilyservertestfw.TemplateDir;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.w3c.dom.Document;
@@ -48,7 +49,7 @@ public class SolrLauncherService implements LauncherService {
 
     @Override
     public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
-        this.testHome = new File(testHome, "solr");
+        this.testHome = new File(testHome, TemplateDir.SOLR_DIR);
         FileUtils.forceMkdir(testHome);
         this.clearData = clearData;
 

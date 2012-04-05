@@ -10,6 +10,7 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.testclientfw.BaseTestTool;
 import org.lilyproject.testclientfw.Util;
 import org.lilyproject.testclientfw.Words;
+import org.lilyproject.util.Version;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class HbaseIndexPerfTest extends BaseTestTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-hbaseindex-perftest");
+        return Version.readVersion("org.lilyproject", "lily-hbaseindex-perftest");
     }
 
     @Override

@@ -32,6 +32,7 @@ import org.apache.james.mime4j.util.MimeUtil;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
 import org.lilyproject.tools.import_.cli.JsonImport;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.io.Closer;
 
 import java.io.*;
@@ -57,7 +58,7 @@ public class MboxImport extends BaseRepositoryTestTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-mbox-import");
+        return Version.readVersion("org.lilyproject", "lily-mbox-import");
     }
 
     public static void main(String[] args) throws Exception {

@@ -35,6 +35,7 @@ import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -86,7 +87,7 @@ public class UpgradeFrom1_0Tool extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-upgrade");
+        return Version.readVersion("org.lilyproject", "lily-upgrade");
     }
 
     @Override

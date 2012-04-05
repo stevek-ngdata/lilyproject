@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.lilyproject.hadooptestfw.HBaseTestingUtilityFactory;
+import org.lilyproject.lilyservertestfw.TemplateDir;
 
 import java.io.File;
 import java.util.List;
@@ -34,7 +35,7 @@ public class HadoopLauncherService implements LauncherService {
 
     @Override
     public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
-        this.testHome = new File(testHome, "hadoop");
+        this.testHome = new File(testHome, TemplateDir.HADOOP_DIR);
         FileUtils.forceMkdir(testHome);
         this.clearData = clearData;
         disableMapReduce = cmd.hasOption(disableMROption.getOpt());

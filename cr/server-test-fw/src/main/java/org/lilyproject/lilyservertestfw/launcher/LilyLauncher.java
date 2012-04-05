@@ -11,6 +11,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.lilyservertestfw.TemplateDir;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;
@@ -59,7 +61,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-server-test-fw");
+        return Version.readVersion("org.lilyproject", "lily-server-test-fw");
     }
 
     @Override
@@ -125,6 +127,9 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println("Will start up, stop, and then snapshot the data directory.");
             System.out.println("Please be patient.");
             System.out.println("----------------------------------------------------------");
+
+            // If there would be an old template dir, drop it
+            TemplateDir.deleteTemplateDir();
         }
 
         //
@@ -171,7 +176,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         } else {
             testHome = TestHomeUtil.createTestHome("lily-launcher-");
             if (!prepareMode) {
-                restoreTemplateDir();
+                TemplateDir.restoreTemplateDir(testHome);
             }
         }
 
@@ -202,7 +207,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
 
             System.out.println("----------------------------------------------------------");
             System.out.println("Prepare mode: creating template data directory");
-            makeTemplateDir();
+            TemplateDir.makeTemplateDir(testHome);
             System.out.println("----------------------------------------------------------");
             System.out.println("Done");
 
@@ -330,41 +335,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         conn.disconnect();
         return response;
     }
-    
-    private void makeTemplateDir() throws IOException {
-        File destination = getTemplateDir();
         
-        if (destination.exists()) {
-            System.out.println("Removing existing directory " + destination.getAbsolutePath());
-            FileUtils.deleteDirectory(destination);
-        }
-        
-        System.out.println("Copying data directory state to " + destination.getAbsolutePath());
-        FileUtils.copyDirectory(testHome, destination);
-        
-        System.out.println("Deleting data directory " + testHome.getAbsolutePath());
-        TestHomeUtil.cleanupTestHome(testHome);        
-    }
-    
-    private void restoreTemplateDir() throws IOException {
-        File templateDir = getTemplateDir();
-        if (templateDir.exists()) {
-            System.out.println("----------------------------------------------------------");
-            System.out.println("Restoring template data directory");
-            System.out.println(templateDir.getAbsolutePath());
-            System.out.println("----------------------------------------------------------");
-            FileUtils.copyDirectory(templateDir, testHome);
-        } else {
-            System.out.println("----------------------------------------------------------");
-            System.out.println("Tip: for faster startup in the future, run once:");
-            System.out.println(getCmdName() + " --" + prepareOption.getLongOpt());
-            System.out.println("----------------------------------------------------------");
-        }
-    }
-    
-    private File getTemplateDir() {
-        //String f = File.separator;
-        return new File(System.getProperty("user.home") + "/.lily/launcher/template/" + getVersion());
-    }
 }
 

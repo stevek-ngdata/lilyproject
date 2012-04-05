@@ -4,6 +4,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.lilyproject.cli.BaseCliTool;
+import org.lilyproject.util.Version;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -19,7 +20,7 @@ public class PrintHostTool extends BaseCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-print-host");
+        return Version.readVersion("org.lilyproject", "lily-print-host");
     }
 
     @Override

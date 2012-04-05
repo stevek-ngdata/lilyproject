@@ -11,6 +11,7 @@ import org.kauriproject.runtime.repository.ArtifactRepository;
 import org.kauriproject.runtime.repository.ChainedMaven2StyleArtifactRepository;
 import org.lilyproject.lilyservertestfw.ConfUtil;
 import org.lilyproject.lilyservertestfw.LilyServerTestUtility;
+import org.lilyproject.lilyservertestfw.TemplateDir;
 import org.lilyproject.util.MavenUtil;
 
 public class LilyLauncherService implements LauncherService {
@@ -25,7 +26,7 @@ public class LilyLauncherService implements LauncherService {
 
     @Override
     public int setup(CommandLine cmd, File testHome, boolean clearData) throws Exception {
-        this.testHome = testHome;
+        this.testHome = new File(testHome, TemplateDir.LILYSERVER_DIR);
         String defaultConfDirPath = System.getProperty("lily.conf.dir");
         if (defaultConfDirPath != null) {
             defaultConfDir = new File(defaultConfDirPath);

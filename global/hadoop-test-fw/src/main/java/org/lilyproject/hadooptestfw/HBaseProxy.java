@@ -103,10 +103,6 @@ public class HBaseProxy {
         if (!testHome.exists()) 
             format = true; // A new directory: the NameNode and DataNodes will have to be formatted first
         FileUtils.forceMkdir(testHome);
-        if (clearData) {
-            FileUtils.cleanDirectory(testHome);
-            format = true; // After cleaning the directory the NameNode and DataNodes will have to be formatted
-        }
     }
 
     public boolean getCleanStateOnConnect() {

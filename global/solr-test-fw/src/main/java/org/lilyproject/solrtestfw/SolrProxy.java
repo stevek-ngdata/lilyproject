@@ -97,8 +97,6 @@ public class SolrProxy {
         }
 
         FileUtils.forceMkdir(testHome);
-        if (clearData)
-            FileUtils.cleanDirectory(testHome);
     }
 
     public void start() throws Exception {

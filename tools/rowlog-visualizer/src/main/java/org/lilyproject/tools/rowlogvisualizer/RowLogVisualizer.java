@@ -14,6 +14,7 @@ import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
@@ -42,7 +43,7 @@ public class RowLogVisualizer extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-rowlog-visualizer");
+        return Version.readVersion("org.lilyproject", "lily-rowlog-visualizer");
     }
 
     @Override

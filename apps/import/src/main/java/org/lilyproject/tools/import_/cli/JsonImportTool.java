@@ -18,6 +18,7 @@ package org.lilyproject.tools.import_.cli;
 import org.apache.commons.cli.*;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.io.Closer;
 
@@ -36,7 +37,7 @@ public class JsonImportTool extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-import");
+        return Version.readVersion("org.lilyproject", "lily-import");
     }
 
     public static void main(String[] args) throws Exception {

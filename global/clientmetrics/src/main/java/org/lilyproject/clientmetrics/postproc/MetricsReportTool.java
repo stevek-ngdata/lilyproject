@@ -8,6 +8,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.util.ConsoleUtil;
+import org.lilyproject.util.Version;
 
 import java.io.*;
 import java.text.Collator;
@@ -67,7 +68,7 @@ public class MetricsReportTool extends BaseCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-clientmetrics");
+        return Version.readVersion("org.lilyproject", "lily-clientmetrics");
     }
 
     public static void main(String[] args) {

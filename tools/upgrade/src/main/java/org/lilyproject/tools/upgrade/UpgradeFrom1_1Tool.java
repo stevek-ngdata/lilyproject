@@ -16,6 +16,7 @@ import org.lilyproject.repository.impl.compat.Lily11RecordIdDecoder;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.server.modules.general.TableConfigBuilder;
 import org.lilyproject.util.ByteArrayKey;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.*;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
@@ -50,7 +51,7 @@ public class UpgradeFrom1_1Tool extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-upgrade");
+        return Version.readVersion("org.lilyproject", "lily-upgrade");
     }
 
     public static void main(String[] args) {

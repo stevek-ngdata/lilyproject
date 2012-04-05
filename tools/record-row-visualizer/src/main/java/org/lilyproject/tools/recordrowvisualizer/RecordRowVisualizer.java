@@ -20,6 +20,7 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.io.Closer;
@@ -51,7 +52,7 @@ public class RecordRowVisualizer extends BaseZkCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-record-row-visualizer");
+        return Version.readVersion("org.lilyproject", "lily-record-row-visualizer");
     }
 
     @Override

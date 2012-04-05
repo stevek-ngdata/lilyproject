@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.hadooptestfw.fork.HBaseTestingUtility;
+import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import java.io.File;
@@ -24,7 +25,7 @@ public class HadoopLauncher extends BaseCliTool {
 
     @Override
     protected String getVersion() {
-        return readVersion("org.lilyproject", "lily-hadoop-test-fw");
+        return Version.readVersion("org.lilyproject", "lily-hadoop-test-fw");
     }
 
     public static void main(String[] args) throws Exception {
