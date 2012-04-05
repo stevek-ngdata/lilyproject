@@ -97,6 +97,7 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:zookeeper");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:hadoop-core");
         ALLOWED_ARTIFACTS.add("com.google.guava:guava");
+        ALLOWED_ARTIFACTS.add("org.apache.hadoop.thirdparty.guava:guava");
         ALLOWED_ARTIFACTS.add("org.apache.zookeeper:zookeeper");
     }
     

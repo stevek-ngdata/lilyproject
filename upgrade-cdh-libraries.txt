@@ -1,0 +1,46 @@
+This document describes the steps to take on the Lily code when upgrading to new CDH libraries. 
+It is based on the work done to upgrade the cdh3u2 libraries to cdh3u3.
+
+Create Lily-version of HBase libaries
+=====================================
+
+Lily applies some patches on the (cdh) HBase libraries in order to quickly interrupt threads when an InterruptedException is thrown.
+
+- Download and untar the hbase source code http://archive.cloudera.com/cdh/3/hbase-0.90.4-cdh3u3.tar.gz
+- Apply same patches as in lily/patches/hbase-0.90.4-cdh3u2.patch.txt
+- In the root pom change the version to 0.90.4-cdh3u3-lily
+- Create a diff of the changes: diff -r hbase-0.90.4-cdh3u3 hbase-0.90.4-cdh3u3-lily > hbase-0.90.4-cdh3u3.patch.txt and put it in the lily/patches folder.
+- Build hbase-0.90.4-cdh3u3-lily.jar: cloudera/do-release-build
+- Deploy the jars and tar.gz on the repository as described in http://docs.outerthought.org/lily-docs-current/422-lily/g4/417-lily.html
+
+Change the Lily code to use the new libraries
+=============================================
+
+Adjust the versions in the root pom
+- hbase: 0.90.4-cdh3u3-lily
+- hadoop: 0.20.2-cdh3u3
+- zookeeper: 3.3.4
+
+Build Lily and add any proposed exclusions to global/hbase-client/pom.xml, or add them to the allowed artifacts in HBaseExclusionsMojo.java 
+
+Some Hadoop and HBase classes have been patched. If the original classes have been changed, these new classes need to taken and the Lily-specific patched need to be re-applied if still needed.
+These classes include:
+- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableInputFormat.java
+- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableInputFormatBase.java
+- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableMapReduceUtil.java
+- org.lilyproject.indexer.batchbuild.hbasemr_patched.TableRecordReader.java
+- org.lilyproject.hadooptestfw.fork.HBaseTestingUtility.java
+- org.lilyproject.hadooptestfw.fork.MiniMRCluster.java
+- org.lilyproject.hadooptestfw.fork.MiniZooKeeperCluster.java
+- org.lilyproject.util.hbase.HTablePool.java
+
+The following diff-commands can be used to quickly check if there are any changes on the original classes (between cdh3u2 and cdh3u3 in this case):
+diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java
+diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java
+diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java
+diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java
+diff ./hbase-0.90.4-cdh3u2/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java ./hbase-0.90.4-cdh3u3/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java
+diff ./hadoop-0.20.2-cdh3u2/src/test/org/apache/hadoop/mapred/MiniMRCluster.java ./hadoop-0.20.2-cdh3u3/src/test/org/apache/hadoop/mapred/MiniMRCluster.java
+diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java
+diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java
+

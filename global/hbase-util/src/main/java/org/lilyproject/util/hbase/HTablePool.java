@@ -1,6 +1,8 @@
 // Do not add Lily license: this file is copied from the HBase source tree
 package org.lilyproject.util.hbase;
 
+import java.io.Closeable;
+import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HConnectionManager;
@@ -14,10 +16,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-// Copied from CDH3u2, with as modification that we don't clone the Configuration object,
+// Copied from CDH3u3, with as modification that we don't clone the Configuration object,
 // in order to avoid setting up additional HBase & ZooKeeper connections (and to avoid
 // leaks due to unclosed connections when using resetLilyState)
-public class HTablePool {
+public class HTablePool implements Closeable {
     private final ConcurrentMap<String, LinkedList<HTableInterface>> tables =
             new ConcurrentHashMap<String, LinkedList<HTableInterface>>();
     private final Configuration config;
@@ -45,7 +47,7 @@ public class HTablePool {
         // Make a new configuration instance so I can safely cleanup when
         // done with the pool.
         // Modified for Lily: don't clone Configuration object
-        this.config = config;
+        this.config = config == null ? new Configuration() : config;
         this.maxSize = maxSize;
         this.tableFactory = tableFactory == null? new HTableFactory(): tableFactory;
     }
@@ -138,6 +140,18 @@ public class HTablePool {
      */
     public void closeTablePool(final byte[] tableName)  {
         closeTablePool(Bytes.toString(tableName));
+    }
+
+    /**
+     * Closes all the HTable instances , belonging to all tables in the table
+     * pool.
+     * <p>
+     * Note: this is a 'shutdown' of all the table pools.
+     */
+    public void close() throws IOException {
+        for (String tableName : tables.keySet()) {
+            closeTablePool(tableName);
+        }
     }
 
     int getCurrentPoolSize(String tableName) {

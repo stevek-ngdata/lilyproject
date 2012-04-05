@@ -316,9 +316,7 @@ public class CleanupUtil {
             throws ZooKeeperConnectionException, IOException {
         CatalogTracker ct = null;
         try {
-            HConnection connection =
-                    HConnectionManager.getConnection(new Configuration(this.conf));
-            ct = new CatalogTracker(connection);
+            ct = new CatalogTracker(this.conf);
             ct.start();
         } catch (InterruptedException e) {
             // Let it out as an IOE for now until we redo all so tolerate IEs
@@ -327,6 +325,7 @@ public class CleanupUtil {
         }
         return ct;
     }
+
 
     /** Copied from HBase source to support flush fix. */
     private void cleanupCatalogTracker(final CatalogTracker ct) {
