@@ -1,0 +1,184 @@
+diff --git pom.xml pom.xml
+index c9e671d..bf6eac6 100644
+--- pom.xml
++++ pom.xml
+@@ -29,7 +29,7 @@
+   <groupId>org.apache.hbase</groupId>
+   <artifactId>hbase</artifactId>
+   <packaging>jar</packaging>
+-  <version>0.90.4-cdh3u3</version>
++  <version>0.90.4-cdh3u3-lily-v2</version>
+   <name>HBase</name>
+   <description>
+     HBase is the &amp;lt;a href="http://hadoop.apache.org"&amp;rt;Hadoop&lt;/a&amp;rt; database. Use it when you need
+@@ -203,6 +203,14 @@
+   </repositories>
+ 
+   <build>
++    <extensions>
++      <extension>
++        <groupId>org.apache.maven.wagon</groupId>
++         <artifactId>wagon-ssh</artifactId>
++         <version>2.0</version>
++      </extension>
++    </extensions>
++
+     <!-- Some plugins (javadoc for example) can be used in the normal build- and the site phase.
+          These plugins inherit their options from the <reporting> section below. These settings
+          can be overwritten here. -->
+diff --git src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+index bcfba42..2ba04c2 100644
+--- src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
++++ src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
+@@ -322,6 +322,11 @@ public class HConnectionManager {
+       try {
+         connection.close();
+       } catch (Exception e) {
++        // Lily change
++        if (e instanceof InterruptedException) {
++            Thread.currentThread().interrupt();
++            throw new IOException("Giving up: thread is interrupted.", e);
++        }
+         if (connectSucceeded) {
+           throw new IOException("The connection to " + connection
+               + " could not be deleted.", e);
+@@ -591,7 +596,8 @@ public class HConnectionManager {
+             this.masterLock.wait(getPauseTime(tries));
+           } catch (InterruptedException e) {
+             Thread.currentThread().interrupt();
+-            throw new RuntimeException("Thread was interrupted while trying to connect to master.");
++            // Lily change: nest interruptedexc so that we can detect it
++            throw new RuntimeException("Thread was interrupted while trying to connect to master.", e);
+           }
+         }
+         this.masterChecked = true;
+@@ -1006,8 +1012,9 @@ public class HConnectionManager {
+           Thread.sleep(getPauseTime(tries));
+         } catch (InterruptedException e) {
+           Thread.currentThread().interrupt();
++          // Lily change: nest interruptedexc so that we can detect it
+           throw new IOException("Giving up trying to location region in " +
+-            "meta: thread is interrupted.");
++            "meta: thread is interrupted.", e);
+         }
+       }
+     }
+@@ -1225,6 +1232,11 @@ public class HConnectionManager {
+           callable.instantiateServer(tries != 0);
+           return callable.call();
+         } catch (Throwable t) {
++          // Lily change
++          if (t instanceof InterruptedException) {
++              Thread.currentThread().interrupt();
++              throw new IOException("Giving up trying to get region server: thread is interrupted.", t);
++          }
+           t = translateException(t);
+           exceptions.add(t);
+           if (tries == numRetries - 1) {
+@@ -1236,7 +1248,8 @@ public class HConnectionManager {
+           Thread.sleep(getPauseTime(tries));
+         } catch (InterruptedException e) {
+           Thread.currentThread().interrupt();
+-          throw new IOException("Giving up trying to get region server: thread is interrupted.");
++          // Lily change: nest interruptedexc so that we can detect it
++          throw new IOException("Giving up trying to get region server: thread is interrupted.", e);
+         }
+       }
+       return null;
+@@ -1251,6 +1264,10 @@ public class HConnectionManager {
+         Throwable t2 = translateException(t);
+         if (t2 instanceof IOException) {
+           throw (IOException)t2;
++        } else if (t2 instanceof InterruptedException) {
++            // Lily change
++            Thread.currentThread().interrupt();
++            throw new IOException("Giving up trying to get region server: thread is interrupted.", t2);
+         } else {
+           throw new RuntimeException(t2);
+         }
+@@ -1437,6 +1454,8 @@ public class HConnectionManager {
+       try {
+         processBatch((List) list, tableName, pool, results);
+       } catch (InterruptedException e) {
++        // Lily change
++        Thread.currentThread().interrupt();
+         throw new IOException(e);
+       } finally {
+ 
+diff --git src/main/java/org/apache/hadoop/hbase/client/HTable.java src/main/java/org/apache/hadoop/hbase/client/HTable.java
+index cb62586..9f78448 100644
+--- src/main/java/org/apache/hadoop/hbase/client/HTable.java
++++ src/main/java/org/apache/hadoop/hbase/client/HTable.java
+@@ -587,6 +587,8 @@ public class HTable implements HTableInterface, Closeable {
+ 
+        return results;
+      } catch (InterruptedException e) {
++       // Lily change
++       Thread.currentThread().interrupt();
+        throw new IOException(e);
+      }
+    }
+@@ -662,6 +664,8 @@ public class HTable implements HTableInterface, Closeable {
+     try {
+       connection.processBatch((List) deletes, tableName, pool, results);
+     } catch (InterruptedException e) {
++      // Lily change
++      Thread.currentThread().interrupt();
+       throw new IOException(e);
+     } finally {
+       // mutate list so that it is empty for complete success, or contains only failed records
+diff --git src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+index 4cc7b9c..25b3056 100644
+--- src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
++++ src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
+@@ -393,7 +393,11 @@ public class HBaseClient {
+       // otherwise back off and retry
+       try {
+         Thread.sleep(failureSleep);
+-      } catch (InterruptedException ignored) {}
++      } catch (InterruptedException ignored) {
++        // Lily change
++        Thread.currentThread().interrupt();
++        throw new IOException("Giving up: thread is interrupted.", ignored);
++      }
+ 
+       LOG.info("Retrying connect to server: " + remoteId.getAddress() +
+         " after sleeping " + failureSleep + "ms. Already tried " + curRetries +
+@@ -477,6 +481,10 @@ public class HBaseClient {
+           receiveResponse();
+         }
+       } catch (Throwable t) {
++        // Lily change
++        if (t instanceof InterruptedException) {
++            Thread.currentThread().interrupt();
++        }
+         LOG.warn("Unexpected exception receiving call responses", t);
+         markClosed(new IOException("Unexpected exception receiving call responses", t));
+       }
+@@ -758,6 +766,12 @@ public class HBaseClient {
+         } catch (InterruptedException ignored) {
+           // save the fact that we were interrupted
+           interrupted = true;
++
++          // Lily change: noticed that often HBase kept hanging on the above call.wait when the
++          // thread was interrupted, even if there was no reason for the call to take a long
++          // time (= hbase & zookeeper running)
++          Thread.currentThread().interrupt();
++          throw new RuntimeException("HBaseClient: interrupted while waiting for call to be done.");
+         }
+       }
+ 
+diff --git src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+index 4f4828b..0fdfd80 100644
+--- src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
++++ src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java
+@@ -370,6 +370,9 @@ public class HBaseRPC {
+         Thread.sleep(1000);
+       } catch (InterruptedException ie) {
+         // IGNORE
++        // Lily change
++        Thread.currentThread().interrupt();
++        throw new RuntimeException("Thread interrupted.", ie);
+       }
+     }
+   }

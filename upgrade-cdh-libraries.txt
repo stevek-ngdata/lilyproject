@@ -1,17 +1,60 @@
-This document describes the steps to take on the Lily code when upgrading to new CDH libraries. 
+This document describes the steps to take on the Lily code when upgrading to
+new CDH libraries. 
+
 It is based on the work done to upgrade the cdh3u2 libraries to cdh3u3.
 
 Create Lily-version of HBase libaries
 =====================================
+Lily applies some patches on the (cdh) HBase libraries in order to quickly
+interrupt threads when an InterruptedException is thrown.
 
-Lily applies some patches on the (cdh) HBase libraries in order to quickly interrupt threads when an InterruptedException is thrown.
+Download
+--------
+Download and untar the hbase source code http://archive.cloudera.com/cdh/3/hbase-0.90.4-cdh3u3.tar.gz
 
-- Download and untar the hbase source code http://archive.cloudera.com/cdh/3/hbase-0.90.4-cdh3u3.tar.gz
-- Apply same patches as in lily/patches/hbase-0.90.4-cdh3u2.patch.txt
-- In the root pom change the version to 0.90.4-cdh3u3-lily
-- Create a diff of the changes: diff -r hbase-0.90.4-cdh3u3 hbase-0.90.4-cdh3u3-lily > hbase-0.90.4-cdh3u3.patch.txt and put it in the lily/patches folder.
-- Build hbase-0.90.4-cdh3u3-lily.jar: cloudera/do-release-build
-- Deploy the jars and tar.gz on the repository as described in http://docs.outerthought.org/lily-docs-current/422-lily/g4/417-lily.html
+Init version repo
+-----------------
+The easiest and most sure way to keep track of changes is to track the changes
+using, for example, git.
+
+Therefore, execute these commands in the hbase source tree:
+
+git init
+git add .
+git commit -m "original sources"
+
+Apply existing patches
+----------------------
+Apply same patches as in lily/patches/hbase-previous.patch.txt
+
+patch -p0 < lily/patches/hbase-previous.patch.txt
+
+Change version number
+---------------------
+In the root pom change the version to 0.90.4-cdh3u3-lily
+
+Make diff
+---------
+We don't keep a full fork around of the source tree, we just add a patch file
+to the Lily source tree.
+
+Create a diff of the changes:
+
+git diff --no-prefix > hbase-0.90.4-cdh3u3.patch.txt
+
+and put it in the lily/patches folder.
+
+Build & deploy
+--------------
+Build using:
+
+mvn -DskipTests clean install
+
+Deploy jars using:
+
+mvn deploy -DskipTests -DaltDeploymentRepository=org.lilyproject.maven-deploy::default::scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/deploy
+
+But first make sure you set up http://docs.outerthought.org/lily-docs-current/422-lily/416-lily.html
 
 Change the Lily code to use the new libraries
 =============================================
@@ -21,9 +64,13 @@ Adjust the versions in the root pom
 - hadoop: 0.20.2-cdh3u3
 - zookeeper: 3.3.4
 
-Build Lily and add any proposed exclusions to global/hbase-client/pom.xml, or add them to the allowed artifacts in HBaseExclusionsMojo.java 
+Build Lily and add any proposed exclusions to global/hbase-client/pom.xml,
+or add them to the allowed artifacts in HBaseExclusionsMojo.java 
 
-Some Hadoop and HBase classes have been patched. If the original classes have been changed, these new classes need to taken and the Lily-specific patched need to be re-applied if still needed.
+Some Hadoop and HBase classes have been patched. If the original classes have
+been changed, these new classes need to taken and the Lily-specific patched
+need to be re-applied if still needed (otherwise, the fork can be removed).
+
 These classes include:
 - org.lilyproject.indexer.batchbuild.hbasemr_patched.TableInputFormat.java
 - org.lilyproject.indexer.batchbuild.hbasemr_patched.TableInputFormatBase.java

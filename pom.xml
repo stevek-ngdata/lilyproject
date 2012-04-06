@@ -19,7 +19,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <version.hbase>0.90.4-cdh3u3-lily</version.hbase>
+    <!-- This modified '-lily' version contains only small changes to the HBase client
+         libs to support better interruptability. See 'patches' directory. -->
+    <version.hbase>0.90.4-cdh3u3-lily-v2</version.hbase>
     <!-- When changing the hbase version, also change the hadoop and zookeeper version below to match
          what is in HBase's pom.xml -->
 
