@@ -5,7 +5,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTableFactory;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTableInterfaceFactory;
@@ -130,7 +129,6 @@ public class HTablePool implements Closeable {
                 table = queue.poll();
             }
         }
-        HConnectionManager.deleteConnection(this.config, true);
     }
 
     /**
