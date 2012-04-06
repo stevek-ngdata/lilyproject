@@ -548,9 +548,14 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                     return;
                 } catch (Throwable t) {
                     // Sometimes InterruptedException is wrapped in IOException (from hbase)
-                    // or RemoteException (from avro)
-                    if (t.getCause() != null && t.getCause() instanceof InterruptedException) {
-                        return;
+                    // or RemoteException (from avro), and sometimes these by themselves are again
+                    // wrapped in a TypeException of Lily.
+                    Throwable cause = t.getCause();
+                    while (cause != null) {
+                        if (cause instanceof InterruptedException) {
+                            return;
+                        }
+                        cause = cause.getCause();
                     }
                     log.error("Error refreshing type manager cache. Cache is possibly out of date!", t);
                 }
