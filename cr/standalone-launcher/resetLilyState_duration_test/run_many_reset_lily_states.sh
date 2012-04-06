@@ -15,11 +15,7 @@ if [ ! -e $JMXTERM_JAR ]; then
 fi
 
 scriptdir=$(dirname $0)
-scriptdir=$(cd $scriptdir; pwd)
 LILY_SOURCE=$(cd $scriptdir/../../../ && pwd)
-
-# Use the script holding this file as pwd (to avoid littering)
-cd $scriptdir
 
 INDEX=false
 
@@ -37,9 +33,6 @@ done
 echo Lily source tree root: $LILY_SOURCE
 
 i=0
-
-# Create the tester.json file
-$LILY_SOURCE/apps/tester/target/lily-tester -d > $scriptdir/tester.json
 
 while true
 do
@@ -68,5 +61,5 @@ do
   fi
 
   # Call resetLilyState
-  echo run -b LilyLauncher:name=Launcher -m resetLilyState | java -jar $JMXTERM_JAR -l localhost:10102 -v silent
+  echo run -b LilyLauncher:name=Launcher -m resetLilyState | java -jar $JMXTERM_JAR -l localhost:10102
 done
