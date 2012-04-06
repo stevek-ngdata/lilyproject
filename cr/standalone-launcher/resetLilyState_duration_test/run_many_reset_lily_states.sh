@@ -14,7 +14,13 @@ if [ ! -e $JMXTERM_JAR ]; then
   exit 1
 fi
 
-LILY_SOURCE=$(cd ../../../ && pwd)
+scriptdir=$(dirname $0)
+scriptdir=$(cd $scriptdir; pwd)
+LILY_SOURCE=$(cd $scriptdir/../../../ && pwd)
+
+# Use the script holding this file as pwd (to avoid littering)
+cd $scriptdir
+
 INDEX=false
 
 while getopts "s:i" OPTION; do
@@ -32,6 +38,9 @@ echo Lily source tree root: $LILY_SOURCE
 
 i=0
 
+# Create the tester.json file
+$LILY_SOURCE/apps/tester/target/lily-tester -d > $scriptdir/tester.json
+
 while true
 do
   i=$((i + 1))
@@ -45,7 +54,7 @@ do
   rm failures.log*
 
   # Do an import
-  $LILY_SOURCE/apps/tester/target/lily-tester -z localhost -w 1 -i 50 -c tester.json
+  $LILY_SOURCE/apps/tester/target/lily-tester -z localhost -w 1 -i 50 -c $scriptdir/tester.json
 
   # Request an index rebuild
   if [[ "$INDEX" = "true" ]]; then
