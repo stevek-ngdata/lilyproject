@@ -308,12 +308,12 @@
 
     <!-- Record scan CLI tool -->
     <file>
-      <source>${basedir}/../apps/scan-records/target/lily-scan-records</source>
+      <source>${basedir}/../apps/scan-records/target/dist-scripts/lily-scan-records</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${basedir}/../apps/scan-records/target/lily-scan-records.bat</source>
+      <source>${basedir}/../apps/scan-records/target/dist-scripts/lily-scan-records.bat</source>
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
