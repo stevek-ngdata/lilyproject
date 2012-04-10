@@ -53,7 +53,7 @@ public class TracingRepository {
     
     private static void logMethodCall(Method method, Object[] args) {        
         StringBuilder builder = new StringBuilder();
-        builder.append(method.getClass().getSimpleName()).append(".").append(method.getName());
+        builder.append(method.getDeclaringClass().getSimpleName()).append(".").append(method.getName());
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 builder.append(i > 0 ? ", " : " ");
