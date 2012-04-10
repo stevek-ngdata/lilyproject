@@ -32,7 +32,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.AvroConverter;
@@ -186,6 +185,11 @@ public class LilyClient implements Closeable {
                 remoteConverter, typeManager, idGenerator, blobManager, hbaseConf);
         
         remoteConverter.setRepository(repository);
+        
+        if ("true".equals(System.getProperty("lilyclient.trace"))) {
+            repository = TracingRepository.wrap(repository);
+        }
+        
         typeManager.start();
         server.repository = repository;
     }
