@@ -4,6 +4,11 @@
   <records>
     <record matchNamespace="ns" matchName="ComplexFieldsRecordType" matchVariant="*" vtags="last"/>
   </records>
+  
+  <formatters>
+    <formatter name="default" class="org.lilyproject.indexer.model.indexerconf.DefaultFormatter"/>
+    <formatter name="shallowJson" class="org.lilyproject.indexer.model.indexerconf.ShallowJsonFormatter"/>
+  </formatters>
 
   <fields>
     <field name="cf_nestedlists" value="ns:cf_nestedlists"/>
@@ -15,6 +20,11 @@
     <field name="cf_record_field1" value="ns:cf_record=>ns:nv_field1"/>
 
     <field name="cf_recordlist_field1" value="ns:cf_recordlist=>ns:nv_field1"/>
+    
+    <field name="cf_shallow_record" value="ns:cf_record" formatter="shallowJson"/>
+    
+    <field name="cf_shallow_recordlist" value="ns:cf_recordlist" formatter="shallowJson"/>
+    
   </fields>
 
 </indexer>

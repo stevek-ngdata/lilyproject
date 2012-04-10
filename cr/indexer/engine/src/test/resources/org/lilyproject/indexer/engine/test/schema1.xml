@@ -122,6 +122,7 @@
 
    <field name="year" type="int" indexed="true" stored="true" required="false"/>
    <field name="firstValue" type="text" indexed="true" stored="true" required="false"/>
+   <field name="shallowJson" type="text" indexed="false" stored="true" required="false"/>
 
    <!-- complex field type test -->
    <field name="cf_nestedlists" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
@@ -129,6 +130,8 @@
    <field name="cf_recordlist" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
    <field name="cf_record_field1" type="text" indexed="true" stored="true" required="false"/>
    <field name="cf_recordlist_field1" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
+   <field name="cf_shallow_record" type="text" indexed="true" stored="true" required="false"/>
+   <field name="cf_shallow_recordlist" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
 
    <!-- complex field type update denormalized data test -->
    <field name="cfd_case1" type="text" indexed="true" stored="true" required="false"/>

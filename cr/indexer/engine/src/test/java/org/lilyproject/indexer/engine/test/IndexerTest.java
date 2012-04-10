@@ -21,6 +21,7 @@ import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
 import static org.lilyproject.util.repo.RecordEvent.Type.UPDATE;
 
+import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,16 +42,37 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.indexer.engine.*;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.IndexUpdater;
+import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.SolrClientException;
+import org.lilyproject.indexer.engine.SolrShardManager;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -60,7 +81,6 @@ import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
-import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
@@ -1635,59 +1655,86 @@ public class IndexerTest {
         log.debug("Begin test V502");
         changeIndexUpdater("indexerconf_complexfields.xml");
 
-        //
-        // Test
-        //
-        RecordId recordId = idGenerator.newRecordId();
-        expectEvent(CREATE, recordId, nestedListsField.getId(), recordField.getId(), recordListField.getId());
+        {
+          //
+          // Test
+          //
+          RecordId recordId = idGenerator.newRecordId();
+          expectEvent(CREATE, recordId, nestedListsField.getId(), recordField.getId(), recordListField.getId());
+  
+          repository
+                  .recordBuilder()
+                  .id(recordId)
+                  .recordType(cfRecordType.getName())
+                  .field(nestedListsField.getName(),
+                          Arrays.asList(
+                                  Arrays.asList("dutch", "french", "english"),
+                                  Arrays.asList("italian", "greek")
+                          ))
+                  .field(recordField.getName(),
+                          repository
+                                  .recordBuilder()
+                                  .recordType(nvRecordType1.getName())
+                                  .field(nvfield1.getName(), "german")
+                                  .field(nvfield2.getName(), "spanish")
+                                  .build())
+                  .field(recordListField.getName(),
+                          Arrays.asList(
+                                  repository
+                                          .recordBuilder()
+                                          .recordType(nvRecordType1.getName())
+                                          .field(nvfield1.getName(), "swedish")
+                                          .field(nvfield2.getName(), "chinese")
+                                          .build(),
+                                  repository
+                                          .recordBuilder()
+                                          .recordType(nvRecordType1.getName())
+                                          .field(nvfield1.getName(), "vietnamese")
+                                          .field(nvfield2.getName(), "wolof")
+                                          .build()
+                          )
+                  )
+                  .create();
 
-        repository
-                .recordBuilder()
-                .id(recordId)
-                .recordType(cfRecordType.getName())
-                .field(nestedListsField.getName(),
-                        Arrays.asList(
-                                Arrays.asList("dutch", "french", "english"),
-                                Arrays.asList("italian", "greek")
-                        ))
-                .field(recordField.getName(),
-                        repository
-                                .recordBuilder()
-                                .recordType(nvRecordType1.getName())
-                                .field(nvfield1.getName(), "german")
-                                .field(nvfield2.getName(), "spanish")
-                                .build())
-                .field(recordListField.getName(),
-                        Arrays.asList(
-                                repository
-                                        .recordBuilder()
-                                        .recordType(nvRecordType1.getName())
-                                        .field(nvfield1.getName(), "swedish")
-                                        .field(nvfield2.getName(), "chinese")
-                                        .build(),
-                                repository
-                                        .recordBuilder()
-                                        .recordType(nvRecordType1.getName())
-                                        .field(nvfield1.getName(), "vietnamese")
-                                        .field(nvfield2.getName(), "wolof")
-                                        .build()
-                        )
-                )
-                .create();
+          commitIndex();
+  
+          verifyResultCount("+cf_nestedlists:italian", 1);
+          verifyResultCount("+cf_record:german", 1);
+          verifyResultCount("+cf_recordlist:chinese", 1);
+  
+          verifyResultCount("+cf_recordlist_field1:swedish", 1);
+          verifyResultCount("+cf_recordlist_field1:vietnamese", 1);
+          verifyResultCount("+cf_recordlist_field1:chinese", 0);
+          verifyResultCount("+cf_recordlist_field1:wolof", 0);
+  
+          verifyResultCount("+cf_record_field1:german", 1);
+          verifyResultCount("+cf_record_field1:spanish", 0);
+        }
+        
+        {
+          log.debug("Begin test CF503");
 
-        commitIndex();
+          Record beta = repository.recordBuilder()
+              .recordType(vRecordType1.getName())
+              .field(vfield1.getName(), "whiskey").build();
+    
+          Record gamma = repository.recordBuilder()
+              .recordType(vRecordType1.getName())
+              .field(vfield1.getName(), "wodka").build();
+    
+          RecordId alplhaId = idGenerator.newRecordId();
+          Record alpha = repository.recordBuilder().id(alplhaId)
+              .recordType(cfRecordType.getName())
+              .field(recordField.getName(), beta)
+              .field(recordListField.getName(), Lists.newArrayList(beta, gamma)).build();
+          expectEvent(CREATE, alplhaId, recordField.getId(), recordListField.getId());
+          alpha = repository.create(alpha);
+    
+          commitIndex();
+          verifyFieldValues("+cf_record:whiskey", "cf_shallow_record", "{\"v_field1\":\"whiskey\"}");
+          verifyFieldValues("+cf_record:whiskey", "cf_shallow_recordlist", "{\"v_field1\":\"whiskey\"}", "{\"v_field1\":\"wodka\"}");
 
-        verifyResultCount("+cf_nestedlists:italian", 1);
-        verifyResultCount("+cf_record:german", 1);
-        verifyResultCount("+cf_recordlist:chinese", 1);
-
-        verifyResultCount("+cf_recordlist_field1:swedish", 1);
-        verifyResultCount("+cf_recordlist_field1:vietnamese", 1);
-        verifyResultCount("+cf_recordlist_field1:chinese", 0);
-        verifyResultCount("+cf_recordlist_field1:wolof", 0);
-
-        verifyResultCount("+cf_record_field1:german", 1);
-        verifyResultCount("+cf_record_field1:spanish", 0);
+        }
 
         assertEquals("All received messages are correct.", 0, messageVerifier.getFailures());
     }
@@ -2116,11 +2163,16 @@ public class IndexerTest {
         solrShardManager.commit(true, true);
     }
 
-    private void verifyResultCount(String query, int count) throws SolrClientException, InterruptedException {
+    private QueryResponse getQueryResponse(String query) throws SolrClientException, InterruptedException {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.set("q", query);
         solrQuery.set("rows", 5000);
         QueryResponse response = solrShardManager.query(solrQuery);
+        return response;
+    }
+   
+    private void verifyResultCount(String query, int count) throws SolrClientException, InterruptedException {
+        QueryResponse response = getQueryResponse(query);
         if (count != response.getResults().size()) {
             System.out.println("The query result contains a wrong number of documents, here is the result:");
             for (int i = 0; i < response.getResults().size(); i++) {
@@ -2129,6 +2181,20 @@ public class IndexerTest {
             }
         }
         assertEquals(count, response.getResults().getNumFound());
+    }
+
+    private void verifyFieldValues(String query, String fieldName, String... expectedValues) throws SolrClientException, InterruptedException {
+      QueryResponse response = getQueryResponse(query);
+      if (1 != response.getResults().size()) {
+          System.out.println("The query result contains a wrong number of documents, here is the result:");
+          for (int i = 0; i < response.getResults().size(); i++) {
+              SolrDocument result = response.getResults().get(i);
+              System.out.println(result.getFirstValue("lily.key"));
+          }
+      }
+      assertEquals(1, response.getResults().getNumFound());
+      
+      Assert.assertArrayEquals((Object[])expectedValues, response.getResults().get(0).getFieldValues(fieldName).toArray(new Object[]{}));
     }
 
     private void expectEvent(RecordEvent.Type type, RecordId recordId, SchemaId... updatedFields) {
