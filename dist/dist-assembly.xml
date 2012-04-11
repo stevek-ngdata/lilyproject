@@ -269,6 +269,12 @@
       <outputDirectory>/bin/</outputDirectory>
       <fileMode>0755</fileMode>
     </file>
+    <!-- Lily schema upgrade tool for upgrade from Lily 1.1 to Lily 1.2 -->
+    <file>
+      <source>${basedir}/../tools/upgrade/target/dist-scripts/lily-upgrade-from-1.1</source>
+      <outputDirectory>/bin/</outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
 
     <!-- Rowlog visualizer tool -->
     <file>
