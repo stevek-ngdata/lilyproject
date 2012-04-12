@@ -39,6 +39,7 @@ import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
+import org.lilyproject.util.hbase.LocalHTable;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.DfsUri;
@@ -108,11 +109,15 @@ public class LilyClient implements Closeable {
         for (ServerNode node : servers) {
             Closer.close(node.repository);
         }
+        
+        
 
         if (managedZk && zk != null) {
             zk.close();
         }
 
+        LocalHTable.closeAllPools();
+        
         // Close HBase connections created by [only] this LilyClient instance.
         // This will almost always contain only one connection, if not we would need a more
         // advanced connection mgmt so that these connections don't stay open for the lifetime

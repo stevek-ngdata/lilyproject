@@ -32,11 +32,13 @@ public class HBaseConnectionDisposer {
 
     @PreDestroy
     public void stop() {
-        // LocalHTable keeps HTablePools in static vars: make sure that is cleaned out
-        // (to avoid leaks when using resetLilyState)
-        LocalHTable.closeAllPools();
-
+        
         try {
+         // LocalHTable keeps HTablePools in static vars: make sure that is cleaned out
+            // (to avoid leaks when using resetLilyState)
+            LocalHTable.closeAllPools();
+
+            // FIXME : is this still needed?
             HConnectionManager.deleteConnection(conf, true);
         } catch (Throwable t) {
             LogFactory.getLog(getClass()).error("Problem cleaning up HBase connections", t);

@@ -125,19 +125,21 @@ public class LocalHTable implements HTableInterface {
         return pool;
     }
     
-    public static void closePool(Configuration configuration) {
+    public static void closePool(Configuration configuration) throws IOException{
         synchronized (HTABLE_POOLS) {
-            HTABLE_POOLS.remove(configuration);
-            HConnectionManager.deleteConnection(configuration, true);
+            HTABLE_POOLS.remove(configuration).close();
         }
     }
     
-    public static void closeAllPools() {
+    public static void closeAllPools() throws IOException{
         synchronized (HTABLE_POOLS) {
             Iterator<Map.Entry<Configuration, HTablePool>> it = HTABLE_POOLS.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<Configuration, HTablePool> entry = it.next();
-                HConnectionManager.deleteConnection(entry.getKey(), true);
+                // closing the table pool will close the connection for every table.
+                entry.getValue().close();
+                
+                //HConnectionManager.deleteConnection(entry.getKey(), true);
             }
         }
     }
