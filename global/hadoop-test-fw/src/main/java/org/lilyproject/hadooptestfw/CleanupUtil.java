@@ -179,7 +179,7 @@ public class CleanupUtil {
             htable.close();
 
             if (timestampReusingTables.containsKey(table.getNameAsString())) {
-                flush(admin, table.getNameAsString());
+                admin.flush(table.getNameAsString());
                 admin.majorCompact(table.getName());
             }
         }
@@ -266,7 +266,7 @@ public class CleanupUtil {
         }
 
         // Perform major compaction
-        flush(admin, tableName);
+        admin.flush(tableName);
         admin.majorCompact(tableName);
 
         // Wait for compact to finish
