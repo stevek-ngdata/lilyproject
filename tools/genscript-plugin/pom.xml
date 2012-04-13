@@ -20,14 +20,14 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-genscript-plugin</artifactId>
-  <version>1.2</version>
+  <version>2.0-SNAPSHOT</version>
   <name>Lily: Maven plugin to generate shell scripts</name>
   <packaging>maven-plugin</packaging>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily</artifactId>
-    <version>1.2</version>
+    <version>2.0-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
