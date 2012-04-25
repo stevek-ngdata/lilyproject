@@ -57,19 +57,20 @@ public class LinkIndex {
         //    entries for a record without having to know the vtags under which they occur
         //  - the sourcefield will often by optional in queries, that's why it comes last
 
+        final int schemaIdByteLength = 16; // see SchemaIdImpl
         {
             IndexDefinition indexDef = new IndexDefinition("links-forward");
-            indexDef.addByteField("source");
-            indexDef.addByteField("vtag");
-            indexDef.addByteField("sourcefield");
+            indexDef.addVariableLengthByteField("source", 1); // there is a fixed part of 1 byte: the record identifier byte
+            indexDef.addByteField("vtag", schemaIdByteLength);
+            indexDef.addByteField("sourcefield", schemaIdByteLength);
             forwardIndex = indexManager.getIndex(indexDef);
         }
 
         {
             IndexDefinition indexDef = new IndexDefinition("links-backward");
-            indexDef.addByteField("target");
-            indexDef.addByteField("vtag");
-            indexDef.addByteField("sourcefield");
+            indexDef.addVariableLengthByteField("target", 1); // there is a fixed part of 1 byte: the record identifier byte
+            indexDef.addByteField("vtag", schemaIdByteLength);
+            indexDef.addByteField("sourcefield", schemaIdByteLength);
             backwardIndex = indexManager.getIndex(indexDef);
         }
     }
@@ -81,10 +82,10 @@ public class LinkIndex {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
-    
+
             // Read links from the forwards table
             Set<Pair<FieldedLink, SchemaId>> oldLinks = getAllForwardLinks(sourceRecord);
-    
+
             // Delete existing entries from the backwards table
             List<IndexEntry> entries = new ArrayList<IndexEntry>(oldLinks.size());
             for (Pair<FieldedLink, SchemaId> link : oldLinks) {
@@ -93,7 +94,7 @@ public class LinkIndex {
                 entries.add(entry);
             }
             backwardIndex.removeEntries(entries);
-    
+
             // Delete existing entries from the forwards table
             entries.clear();
             for (Pair<FieldedLink, SchemaId> link : oldLinks) {
@@ -115,10 +116,10 @@ public class LinkIndex {
         long before = System.currentTimeMillis();
         try {
             byte[] sourceAsBytes = sourceRecord.toBytes();
-    
+
             // Read links from the forwards table
             Set<FieldedLink> oldLinks = getFieldedForwardLinks(sourceRecord, vtag);
-    
+
             // Delete existing entries from the backwards table
             List<IndexEntry> entries = new ArrayList<IndexEntry>(oldLinks.size());
             for (FieldedLink link : oldLinks) {
@@ -127,7 +128,7 @@ public class LinkIndex {
                 entries.add(entry);
             }
             backwardIndex.removeEntries(entries);
-    
+
             // Delete existing entries from the forwards table
             entries.clear();
             for (FieldedLink link : oldLinks) {
@@ -170,13 +171,13 @@ public class LinkIndex {
                 // No links to add, no links to remove
                 return;
             }
-    
+
             // Find out what changed
             Set<FieldedLink> removedLinks = new HashSet<FieldedLink>(oldLinks);
             removedLinks.removeAll(links);
             Set<FieldedLink> addedLinks = new HashSet<FieldedLink>(links);
             addedLinks.removeAll(oldLinks);
-    
+
             // Apply added links
             byte[] sourceAsBytes = sourceRecord.toBytes();
             List<IndexEntry> fwdEntries = null;
@@ -188,7 +189,7 @@ public class LinkIndex {
                     IndexEntry fwdEntry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
                     fwdEntry.setIdentifier(link.getRecordId().toBytes());
                     fwdEntries.add(fwdEntry);
-    
+
                     IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
                     bkwdEntry.setIdentifier(sourceAsBytes);
                     bkwdEntries.add(bkwdEntry);
@@ -196,7 +197,7 @@ public class LinkIndex {
                 forwardIndex.addEntries(fwdEntries);
                 backwardIndex.addEntries(bkwdEntries);
             }
-    
+
             // Apply removed links
             if (removedLinks.size() > 0) {
                 if (fwdEntries != null) {
@@ -206,12 +207,12 @@ public class LinkIndex {
                     fwdEntries = new ArrayList<IndexEntry>(removedLinks.size());
                     bkwdEntries = new ArrayList<IndexEntry>(fwdEntries.size());
                 }
-    
+
                 for (FieldedLink link : removedLinks) {
                     IndexEntry bkwdEntry = createBackwardIndexEntry(vtag, link.getRecordId(), link.getFieldTypeId());
                     bkwdEntry.setIdentifier(sourceAsBytes);
                     bkwdEntries.add(bkwdEntry);
-    
+
                     IndexEntry fwdEntry = createForwardIndexEntry(vtag, sourceRecord, link.getFieldTypeId());
                     fwdEntry.setIdentifier(link.getRecordId().toBytes());
                     fwdEntries.add(fwdEntry);
@@ -267,16 +268,16 @@ public class LinkIndex {
             if (sourceField != null) {
                 query.addEqualsCondition("sourcefield", sourceField.getBytes());
             }
-    
+
             Set<RecordId> result = new HashSet<RecordId>();
-    
+
             QueryResult qr = backwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 result.add(idGenerator.fromBytes(id));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
-    
+
             return result;
         } catch (IOException e) {
             throw new LinkIndexException("Error getting referrers for record '" + record + "', vtag '" + vtag +
@@ -294,9 +295,9 @@ public class LinkIndex {
             if (vtag != null) {
                 query.addEqualsCondition("vtag", vtag.getBytes());
             }
-    
+
             Set<FieldedLink> result = new HashSet<FieldedLink>();
-    
+
             QueryResult qr = backwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
@@ -304,7 +305,7 @@ public class LinkIndex {
                 result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
-    
+
             return result;
         } catch (IOException e) {
             throw new LinkIndexException("Error getting referrers for record '" + record + "', vtag '" + vtag + "'", e);
@@ -320,7 +321,7 @@ public class LinkIndex {
             query.addEqualsCondition("source", record.toBytes());
 
             Set<Pair<FieldedLink, SchemaId>> result = new HashSet<Pair<FieldedLink, SchemaId>>();
-    
+
             QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
@@ -329,7 +330,7 @@ public class LinkIndex {
                 result.add(new Pair<FieldedLink, SchemaId>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
-    
+
             return result;
         } catch (IOException e) {
             throw new LinkIndexException("Error getting forward links for record '" + record + "'", e);
@@ -357,14 +358,14 @@ public class LinkIndex {
             }
 
             Set<RecordId> result = new HashSet<RecordId>();
-    
+
             QueryResult qr = forwardIndex.performQuery(query);
             byte[] id;
             while ((id = qr.next()) != null) {
                 result.add(idGenerator.fromBytes(id));
             }
             Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
-    
+
             return result;
         } catch (IOException e) {
             throw new LinkIndexException("Error getting forward links for record '" + record + "', vtag '" +

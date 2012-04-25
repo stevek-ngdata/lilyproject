@@ -77,8 +77,7 @@ public class IndexTest {
         IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
 
         IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
-        ByteIndexFieldDefinition fieldDef = indexDef.addByteField("field1");
-        fieldDef.setLength(3);
+        indexDef.addByteField("field1", 3);
         Index index = indexManager.getIndex(indexDef);
 
         // Create a few index entries, inserting them in non-sorted order

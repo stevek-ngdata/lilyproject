@@ -25,10 +25,12 @@ import org.codehaus.jackson.node.ObjectNode;
  * be padded with zeros.
  */
 public class ByteIndexFieldDefinition extends IndexFieldDefinition {
-    private int length = 10;
+    private int length;
 
-    public ByteIndexFieldDefinition(String name) {
+    public ByteIndexFieldDefinition(String name, int length) {
         super(name, IndexValueType.BYTES);
+
+        this.length = length;
     }
 
     public ByteIndexFieldDefinition(String name, ObjectNode jsonObject) {
@@ -36,16 +38,6 @@ public class ByteIndexFieldDefinition extends IndexFieldDefinition {
 
         if (jsonObject.get("length") != null)
             this.length = jsonObject.get("length").getIntValue();
-    }
-
-    /**
-     * Set the length of this field, thus the maximum size of byte array
-     * you want to store in it.
-     *
-     * <p>The default is 10.
-     */
-    public void setLength(int length) {
-        this.length = length;
     }
 
     @Override

@@ -15,26 +15,29 @@
  */
 package org.lilyproject.linkindex.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.*;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.linkindex.FieldedLink;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.VersionTag;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class LinkIndexTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -118,6 +121,69 @@ public class LinkIndexTest {
         referrers = linkIndex.getReferrers(ids.newRecordId("id2a"), liveTag);
         assertTrue(referrers.contains(ids.newRecordId("idA")));
         assertEquals(1, referrers.size());
+    }
+
+    @Test
+    public void testLinkIndexWithShortRecordIds() throws Exception {
+        final RecordId id1 = ids.newRecordId("id1");
+        final RecordId id2 = ids.newRecordId("id2");
+        final RecordId id3 = ids.newRecordId("id3");
+        final RecordId id4 = ids.newRecordId("id4");
+
+        testLinkIndexRetrievalWithProvidedIds(id1, id2, id3, id4);
+    }
+
+    @Test
+    public void testLinkIndexWithLongRecordIds() throws Exception {
+        final RecordId id1 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes1");
+        final RecordId id2 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes2");
+        final RecordId id3 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes3");
+        final RecordId id4 = ids.newRecordId("thisIsARecordIdWhichIsMuchLongerThanTenBytes4");
+
+        testLinkIndexRetrievalWithProvidedIds(id1, id2, id3, id4);
+    }
+
+    private void testLinkIndexRetrievalWithProvidedIds(RecordId id1, RecordId id2, RecordId id3, RecordId id4) throws Exception {
+        SchemaId liveTag = repository.getIdGenerator().getSchemaId(UUID.randomUUID());
+
+        Set<FieldedLink> links1 = new HashSet<FieldedLink>();
+        links1.add(new FieldedLink(id1, field1));
+        links1.add(new FieldedLink(id2, field1));
+
+        Set<FieldedLink> links2 = new HashSet<FieldedLink>();
+        links2.add(new FieldedLink(id3, field1));
+        links2.add(new FieldedLink(id4, field1));
+
+        linkIndex.updateLinks(ids.newRecordId("idA"), liveTag, links1);
+        linkIndex.updateLinks(ids.newRecordId("idB"), liveTag, links2);
+
+        // Test forward link retrieval
+        Set<FieldedLink> linksFromA = linkIndex.getFieldedForwardLinks(ids.newRecordId("idA"), liveTag);
+        assertTrue(linksFromA.contains(new FieldedLink(id1, field1)));
+        assertTrue(linksFromA.contains(new FieldedLink(id2, field1)));
+        assertEquals(2, linksFromA.size());
+
+        Set<FieldedLink> linksFromB = linkIndex.getFieldedForwardLinks(ids.newRecordId("idB"), liveTag);
+        assertTrue(linksFromB.contains(new FieldedLink(id3, field1)));
+        assertTrue(linksFromB.contains(new FieldedLink(id4, field1)));
+        assertEquals(2, linksFromB.size());
+
+        // Test backward link retrieval
+        Set<RecordId> referrers1 = linkIndex.getReferrers(id1, liveTag);
+        assertTrue(referrers1.contains(ids.newRecordId("idA")));
+        assertEquals(1, referrers1.size());
+
+        Set<RecordId> referrers2 = linkIndex.getReferrers(id2, liveTag);
+        assertTrue(referrers2.contains(ids.newRecordId("idA")));
+        assertEquals(1, referrers2.size());
+
+        Set<RecordId> referrers3 = linkIndex.getReferrers(id3, liveTag);
+        assertTrue(referrers3.contains(ids.newRecordId("idB")));
+        assertEquals(1, referrers3.size());
+
+        Set<RecordId> referrers4 = linkIndex.getReferrers(id4, liveTag);
+        assertTrue(referrers4.contains(ids.newRecordId("idB")));
+        assertEquals(1, referrers4.size());
     }
 
     @Test

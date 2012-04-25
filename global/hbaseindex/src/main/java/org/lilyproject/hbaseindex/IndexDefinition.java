@@ -124,16 +124,25 @@ public class IndexDefinition {
         return definition;
     }
 
-    public ByteIndexFieldDefinition addByteField(String name) {
+    public VariableLengthByteIndexFieldDefinition addVariableLengthByteField(String name, int fixedPartLength) {
         validateName(name);
-        ByteIndexFieldDefinition definition = new ByteIndexFieldDefinition(name);
+        final VariableLengthByteIndexFieldDefinition definition =
+                new VariableLengthByteIndexFieldDefinition(name, fixedPartLength);
         add(definition);
         return definition;
     }
 
-    private void add(IndexFieldDefinition fieldDef) {
+    public ByteIndexFieldDefinition addByteField(String name, int lengthInBytes) {
+        validateName(name);
+        ByteIndexFieldDefinition definition = new ByteIndexFieldDefinition(name, lengthInBytes);
+        add(definition);
+        return definition;
+    }
+
+    private IndexFieldDefinition add(IndexFieldDefinition fieldDef) {
         fields.add(fieldDef);
         fieldsByName.put(fieldDef.getName(), fieldDef);
+        return fieldDef;
     }
 
     private void validateName(String name) {
