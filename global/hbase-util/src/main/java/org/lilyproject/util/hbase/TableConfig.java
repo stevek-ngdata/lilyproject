@@ -89,7 +89,7 @@ public class TableConfig {
             // number of splits = number of regions - 1
             splitKeys = Bytes.split(startBytes, endBytes, regionCount - 1);
             // Stripping the first key to avoid a region [null,0[ which will always be empty
-            // And the last key to avoind [xffxffxff....,null[ to contain only few values if variants are created
+            // And the last key to avoid [xffxffxff....,null[ to contain only few values if variants are created
             // for a record with record id xffxffxff.....
             splitKeys = Arrays.copyOfRange(splitKeys, 1, splitKeys.length - 1);
         }
