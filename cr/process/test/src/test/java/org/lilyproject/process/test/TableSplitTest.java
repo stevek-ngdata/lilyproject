@@ -21,7 +21,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,7 +32,6 @@ import org.lilyproject.util.test.TestHomeUtil;
 import java.io.File;
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -42,7 +40,7 @@ import static org.junit.Assert.assertTrue;
 public class TableSplitTest {
     private static LilyProxy lilyProxy;
     private static File tmpDir;
-    
+
     private static List<String> TABLE_NAMES = Lists.newArrayList("record", "links-forward", "links-backward");
 
     @BeforeClass
@@ -115,9 +113,11 @@ public class TableSplitTest {
         String tablesXml = "<tables xmlns:conf='http://kauriproject.org/configuration' conf:inherit='shallow' " +
                 "conf:inheritKey=\"string(@name)\">" +
                 "<table name='record'>" +
+                // 0x01 is the identifier byte for UUID records
                 "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x01</splitKeyPrefix></splits>" +
                 "</table>" +
                 "<table name='links-forward'>" +
+                // 0x00 is the flags byte used in the index. Together with the above it becomes 0x0001
                 "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x00\\x01</splitKeyPrefix></splits>" +
                 "</table>" +
                 "<table name='links-backward'>" +
@@ -168,14 +168,15 @@ public class TableSplitTest {
                 Scan scan = new Scan();
                 scan.setStartRow(regionInfo.getStartKey());
                 scan.setStopRow(regionInfo.getEndKey());
-                
+
                 //System.out.println("table " + Bytes.toString(table.getTableName()));;
                 //System.out.println("start key: " + Bytes.toStringBinary(regionInfo.getStartKey()));
                 //System.out.println("end key: " + Bytes.toStringBinary(regionInfo.getEndKey()));
-                
+
                 ResultScanner scanner = table.getScanner(scan);
                 int count = 0;
                 for (Result result : scanner) {
+                    //System.out.println("result = " + Arrays.toString(result.getRow()));
                     count++;
                 }
 
