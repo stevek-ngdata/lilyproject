@@ -56,7 +56,7 @@
   <groupId>org.lilyproject</groupId>
   <artifactId>lily</artifactId>
   <packaging>pom</packaging>
-  <version>2.0-SNAPSHOT</version>
+  <version>1.2.1-SNAPSHOT</version>
   <name>Lily</name>
 
   <url>http://www.lilyproject.org/</url>
@@ -134,292 +134,292 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-util</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-bytes</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repo-util</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repo-test-fw</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-ext</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-util</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-zk-util</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-json-util</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-api</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-spi</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-impl</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-linkindex</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-clientmetrics</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-testclient-fw</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hadoop-test-fw</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-server-test-fw</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-standalone-launcher</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-solr-test-fw</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbaseindex</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rowlog-api</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rowlog-impl</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rowlog-admin-cli</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rowlog-module</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rowlock</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-client</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-import</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rest-module</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-module</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-general-module</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-repository-module</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-model</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-master</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-worker</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-engine</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-admin-cli</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-indexer-batchbuild</artifactId>
         <classifier>mapreduce-job</classifier>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbase-client</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-cli-fw</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-print-host</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-tester</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mbox-import</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-pluginregistry-api</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-pluginregistry-impl</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-test-decorator</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-test-updatehook</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-webui-module</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-archetype-basic</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-archetype-lily-server-plugin</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-kauri-plugin</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-upgrade</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-rowlog-visualizer</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-record-row-visualizer</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-linkindex-cli</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mapreduce</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-mapreduce-test-jobs</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-scan-records</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.2.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.apache.zookeeper</groupId>
