@@ -156,40 +156,34 @@ public class VariableLengthByteIndexFieldDefinition extends IndexFieldDefinition
             throw new IllegalArgumentException("can not encode negative numbers");
 
         final char[] digits = value.toString(10).toCharArray();
-        final byte[] bcd = digitsToCustomizedBcd(digits);
-        final byte[] packedBcd = bcdToPackedBcd(bcd);
-
-        return packedBcd;
+        return digitsToCustomizedPackedBcd(digits);
     }
 
-    private static byte[] CUSTOMIZED_BCD_ENCODING_LOOKUP_TABLE = new byte[]{0, 2, 4, 5, 7, 9, 10, 12, 14, 15};
+    private static byte[] CUSTOMIZED_BCD_ENC_LOOKUP = new byte[]{0, 2, 4, 5, 7, 9, 10, 12, 14, 15};
 
     // note that the value -1 means invalid
-    private static byte[] CUSTOMIZED_BCD_DECODING_LOOKUP_TABLE =
-            new byte[]{0, -1, 1, -1, 2, 3, -1, 4, -1, 5, 6, -1, 7, -1, 8, 9};
+    private static byte[] CUSTOMIZED_BCD_DEC_LOOKUP = new byte[]{0, -1, 1, -1, 2, 3, -1, 4, -1, 5, 6, -1, 7, -1, 8, 9};
 
-    private static byte[] digitsToCustomizedBcd(char[] digits) {
-        final byte[] bcd = new byte[digits.length];
-        for (int i = 0; i < digits.length; i++) {
-            bcd[i] = CUSTOMIZED_BCD_ENCODING_LOOKUP_TABLE[Character.digit(digits[i], 10)];
-        }
-        return bcd;
-    }
+    private static byte[] digitsToCustomizedPackedBcd(char[] digits) {
+        final boolean evenDigitsLength = digits.length % 2 == 0;
+        final int encodedLength = evenDigitsLength ? digits.length / 2 : digits.length / 2 + 1;
 
-    private static byte[] bcdToPackedBcd(byte[] bcd) {
-        final byte[] packedBcd = new byte[(bcd.length >> 1) + (bcd.length & 1)];
-        for (int i = alignFirstByte(bcd, packedBcd), j = i; j < bcd.length; j += 2) {
-            packedBcd[i] = (byte) (bcd[j] << 4);
-            packedBcd[i++] |= bcd[j + 1];
-        }
-        return packedBcd;
-    }
+        final byte[] encoded = new byte[encodedLength];
 
-    private static int alignFirstByte(byte[] bcd, byte[] packedBcd) {
-        if ((bcd.length & 1) == 1) {
-            packedBcd[0] = bcd[0];
+        for (int i = 0; i < encoded.length; i++) {
+            int digitsIndex = i * 2;
+            if (evenDigitsLength) {
+                encoded[i] = (byte) (CUSTOMIZED_BCD_ENC_LOOKUP[Character.digit(digits[digitsIndex], 10)] << 4);
+                if (digitsIndex + 1 < digits.length)
+                    encoded[i] |= CUSTOMIZED_BCD_ENC_LOOKUP[Character.digit(digits[digitsIndex + 1], 10)];
+            } else {
+                encoded[i] = CUSTOMIZED_BCD_ENC_LOOKUP[Character.digit(digits[digitsIndex], 10)];
+                if (digitsIndex - 1 > 0)
+                    encoded[i] |= (byte) (CUSTOMIZED_BCD_ENC_LOOKUP[Character.digit(digits[digitsIndex - 1], 10)] << 4);
+            }
         }
-        return (bcd.length & 1);
+
+        return encoded;
     }
 
     /**
@@ -202,12 +196,12 @@ public class VariableLengthByteIndexFieldDefinition extends IndexFieldDefinition
         final StringBuilder buf = new StringBuilder(bytes.length * 2);
 
         for (int i = 0; i < bytes.length; i++) {
-            final byte decodedFirst4Bits = CUSTOMIZED_BCD_DECODING_LOOKUP_TABLE[((bytes[i] & 0xf0) >> 4)];
+            final byte decodedFirst4Bits = CUSTOMIZED_BCD_DEC_LOOKUP[((bytes[i] & 0xf0) >> 4)];
             checkValidCustomizedBcdDigit(decodedFirst4Bits);
             buf.append((char) (decodedFirst4Bits + '0'));
 
             if ((i != bytes.length)) {
-                final byte decodedLast4Bits = CUSTOMIZED_BCD_DECODING_LOOKUP_TABLE[(bytes[i] & 0x0f)];
+                final byte decodedLast4Bits = CUSTOMIZED_BCD_DEC_LOOKUP[(bytes[i] & 0x0f)];
                 checkValidCustomizedBcdDigit(decodedLast4Bits);
                 buf.append((char) (decodedLast4Bits + '0'));
             }
