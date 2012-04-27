@@ -21,13 +21,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-test-updatehook</artifactId>
-  <version>1.2.1</version>
+  <version>1.2.2-SNAPSHOT</version>
   <name>Lily: test record update hook</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-process</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 

@@ -21,13 +21,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-pluginregistry-api</artifactId>
-  <version>1.2.1</version>
+  <version>1.2.2-SNAPSHOT</version>
   <name>Lily: Plugin Registry: API</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
     <artifactId>lily-pluginregistry-parent</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2-SNAPSHOT</version>
   </parent>
 
   <build>
