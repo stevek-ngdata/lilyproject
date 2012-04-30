@@ -15,15 +15,10 @@
  */
 package org.lilyproject.repository.impl;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
-import javax.annotation.PreDestroy;
-
 import com.google.common.collect.Sets;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -36,11 +31,16 @@ import org.lilyproject.util.Pair;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+
 
 public abstract class AbstractSchemaCache implements SchemaCache {
 
     protected ZooKeeperItf zooKeeper;
-    protected Log log;
+    protected Log log = LogFactory.getLog(getClass());
 
     private final CacheRefresher cacheRefresher = new CacheRefresher();
 
@@ -69,7 +69,6 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     public AbstractSchemaCache(ZooKeeperItf zooKeeper) {
         this.zooKeeper = zooKeeper;
-        cacheRefresher.start();
     }
 
     /**
@@ -129,6 +128,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     }
 
     public void start() throws InterruptedException, KeeperException, RepositoryException {
+        cacheRefresher.start();
+
         ZkUtil.createPath(zooKeeper, CACHE_INVALIDATION_PATH);
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++) {

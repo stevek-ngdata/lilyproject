@@ -15,12 +15,14 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -33,7 +35,6 @@ public class LocalSchemaCache extends AbstractSchemaCache implements SchemaCache
     public LocalSchemaCache(ZooKeeperItf zooKeeper, TypeManager typeManager) {
         super(zooKeeper);
         this.typeManager = typeManager;
-        log = LogFactory.getLog(getClass());
     }
 
     protected TypeManager getTypeManager() {

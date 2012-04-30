@@ -15,7 +15,6 @@
  */
 package org.lilyproject.client;
 
-import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
 import org.lilyproject.repository.impl.SchemaCache;
@@ -28,7 +27,6 @@ public class RemoteSchemaCache extends AbstractSchemaCache implements SchemaCach
     public RemoteSchemaCache(ZooKeeperItf zooKeeper, LilyClient lilyClient) {
         super(zooKeeper);
         this.lilyClient = lilyClient;
-        log = LogFactory.getLog(getClass());
     }
 
     @Override

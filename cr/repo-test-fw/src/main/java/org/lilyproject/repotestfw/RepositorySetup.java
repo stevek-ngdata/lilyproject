@@ -15,21 +15,18 @@
  */
 package org.lilyproject.repotestfw;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
 import org.junit.Assert;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.*;
+import org.lilyproject.repository.avro.AvroConverter;
+import org.lilyproject.repository.avro.AvroLily;
+import org.lilyproject.repository.avro.AvroLilyImpl;
+import org.lilyproject.repository.avro.LilySpecificResponder;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
@@ -44,6 +41,11 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Helper class to instantiate and wire all the repository related services.
@@ -360,7 +362,6 @@ public class RepositorySetup {
 
         public RemoteTestSchemaCache(ZooKeeperItf zooKeeper) {
             super(zooKeeper);
-            log = LogFactory.getLog(getClass());
         }
 
         public void setTypeManager(TypeManager typeManager) {
