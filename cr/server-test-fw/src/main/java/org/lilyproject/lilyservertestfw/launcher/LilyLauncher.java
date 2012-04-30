@@ -25,13 +25,16 @@ import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.hadooptestfw.CleanupUtil;
-import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.hadooptestfw.JavaLoggingToLog4jRedirector;
 import org.lilyproject.lilyservertestfw.TemplateDir;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 
 import javax.management.ObjectName;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -242,6 +245,10 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             System.out.println(msg);
         }
 
+        // redirect all jdk logging (e.g. from Restlet) to log4j (done after startup of all services, to make sure
+        // all loggers registered during startup of some services are also redirected)
+        JavaLoggingToLog4jRedirector.activate();
+
         return 0;
     }
 
@@ -350,6 +357,6 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         conn.disconnect();
         return response;
     }
-        
+
 }
 
