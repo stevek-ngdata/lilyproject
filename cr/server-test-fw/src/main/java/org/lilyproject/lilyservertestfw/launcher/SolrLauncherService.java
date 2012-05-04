@@ -15,6 +15,8 @@
  */
 package org.lilyproject.lilyservertestfw.launcher;
 
+import java.io.File;
+import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -26,14 +28,13 @@ import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.w3c.dom.Document;
 
-import java.io.File;
-import java.util.List;
-
 public class SolrLauncherService implements LauncherService {
     private Option schemaOption;
     private Option commitOption;
+    private Option solrLibsOption;
 
     private String autoCommitSetting;
+    private String solrLibs;
     private String schema;
     private File testHome;
     private boolean clearData;
@@ -54,11 +55,19 @@ public class SolrLauncherService implements LauncherService {
         options.add(schemaOption);
 
         commitOption = OptionBuilder
-                .withArgName("seconds")
-                .hasArg()
-                .withDescription("Auto commit index within this amount of seconds (default: no auto commit)")
-                .withLongOpt("commit")
-                .create("c");
+            .withArgName("seconds")
+            .hasArg()
+            .withDescription("Auto commit index within this amount of seconds (default: no auto commit)")
+            .withLongOpt("commit")
+            .create("c");
+
+        solrLibsOption = OptionBuilder
+            .withArgName("libs")
+            .hasArg()
+            .withDescription("Colon-separated list of libraries to add to solrconfig")
+            .withLongOpt("libs")
+            .create("l");
+
         options.add(commitOption);
     }
 
@@ -84,6 +93,11 @@ public class SolrLauncherService implements LauncherService {
                 System.err.println("commit option should specify an integer, not: " + cmd.getOptionValue(commitOption.getOpt()));
                 return 1;
             }
+        }
+        
+        solrLibs = "";
+        if (cmd.hasOption(solrLibsOption.getOpt())) {
+          solrLibs = cmd.getOptionValue(solrLibsOption.getOpt());
         }
 
         return 0;
@@ -121,6 +135,7 @@ public class SolrLauncherService implements LauncherService {
     public int start(List<String> postStartupInfo) throws Exception {
         solrTestingUtility = new SolrTestingUtility(testHome, clearData);
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
+        solrTestingUtility.setSolrLibs(solrLibs.split(":"));
         byte[] schemaData = schema == null ? null : FileUtils.readFileToByteArray(new File(schema));
         solrTestingUtility.setSchemaData(schemaData);
 

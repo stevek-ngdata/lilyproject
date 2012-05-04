@@ -40,8 +40,10 @@ public class SolrProxy {
 
     public enum Mode { EMBED, CONNECT }
     public static String SOLR_MODE_PROP_NAME = "lily.solrproxy.mode";
+    public static String SOLR_LIBS_PROP_NAME = "lily.solrproxy.libs";
 
     private SolrTestingUtility solrTestingUtility;
+    private String solrLibs;
     private SolrServer solrServer;
 
     private MultiThreadedHttpConnectionManager connectionManager;
@@ -69,9 +71,11 @@ public class SolrProxy {
      */
     public SolrProxy(Mode mode, boolean clearData) throws IOException {
         this.clearData = clearData;
+
+        this.solrLibs = System.getProperty(SOLR_LIBS_PROP_NAME);
         
         if (mode == null) {
-            String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
+          String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
             if (solrModeProp == null || solrModeProp.equals("") || solrModeProp.equals("embed")) {
                 this.mode = Mode.EMBED;
             } else if (solrModeProp.equals("connect")) {
@@ -111,6 +115,9 @@ public class SolrProxy {
                 initTestHome();
                 System.out.println("SolrProxy embedded mode temp dir: " + testHome.getAbsolutePath());
                 solrTestingUtility = new SolrTestingUtility(testHome, clearData);
+                if (solrLibs != null) {
+                    solrTestingUtility.setSolrLibs(solrLibs.split(":"));
+                }
                 if (solrSchemaData != null) {
                     solrTestingUtility.setSchemaData(solrSchemaData);
                 }

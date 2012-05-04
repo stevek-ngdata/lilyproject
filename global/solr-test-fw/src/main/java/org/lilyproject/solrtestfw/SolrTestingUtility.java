@@ -15,6 +15,21 @@
  */
 package org.lilyproject.solrtestfw;
 
+import java.util.regex.Matcher;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
@@ -23,16 +38,12 @@ import org.lilyproject.util.test.TestHomeUtil;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
-import java.io.*;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class SolrTestingUtility {
     private int solrPort = 8983;
     private Server server;
     private byte[] schemaData;
     private String autoCommitSetting;
+    private String[] solrLibs;
     private String solrWarPath;
     private File solrHomeDir;
     private File solrCoreDir;
@@ -62,11 +73,15 @@ public class SolrTestingUtility {
     }
 
     public String getAutoCommitSetting() {
-        return autoCommitSetting;
+      return autoCommitSetting;
     }
 
     public void setAutoCommitSetting(String autoCommitSetting) {
         this.autoCommitSetting = autoCommitSetting;
+    }
+
+    public void setSolrLibs(String[] solrLibs) {
+      this.solrLibs = solrLibs;
     }
 
     public String getSolrWarPath() {
@@ -212,18 +227,45 @@ public class SolrTestingUtility {
 
         FileWriter writer = new FileWriter(destination);
 
-        String placeholder = Pattern.quote("<!--AUTOCOMMIT_PLACEHOLDER-->");
-        String replacement = Matcher.quoteReplacement(autoCommitSetting);
-
-        String line;
-        while ((line = reader.readLine()) != null) {
-            line = line.replaceAll(placeholder, replacement);
-            writer.write(line);
-            writer.write('\n');
+        Map<String, String> substitutions = new HashMap<String,String>();
+        substitutions.put("AUTOCOMMIT", autoCommitSetting);
+        if (solrLibs != null) {
+          StringBuilder libsReplacement = new StringBuilder();
+          for (String lib: solrLibs) {
+            libsReplacement.append("<lib path=\"");
+            libsReplacement.append(lib);
+            libsReplacement.append("\"/>");
+          }
+          substitutions.put("LIBS", libsReplacement.toString());
         }
+        
+        replacePlaceholders(Pattern.compile("<!--(.*)_PLACEHOLDER-->"), substitutions, reader, writer);
 
         reader.close();
         writer.close();
+    }
+
+    private void replacePlaceholders(Pattern capturingPattern,
+        Map<String, String> substitutions, BufferedReader reader,
+        Writer writer) throws IOException {
+      
+      String line;
+      while ((line = reader.readLine()) != null) {
+        Matcher matcher = capturingPattern.matcher(line);
+        StringBuffer buf = new StringBuffer();
+        while (matcher.find()) {
+          if (substitutions.containsKey(matcher.group(1))) {
+            matcher.appendReplacement(buf, substitutions.get(matcher.group(1)));
+          } else {
+            matcher.appendReplacement(buf, "");
+          }
+        }
+        matcher.appendTail(buf);
+        
+        writer.write(buf.toString());
+        writer.write('\n');
+      }
+
     }
 
     private void createEmptyFile(File destination) throws IOException {
