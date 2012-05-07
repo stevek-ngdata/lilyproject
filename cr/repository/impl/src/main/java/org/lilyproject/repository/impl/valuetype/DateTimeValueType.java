@@ -19,6 +19,7 @@ package org.lilyproject.repository.impl.valuetype;
 import java.util.Comparator;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.repository.api.IdentityRecordStack;
@@ -51,7 +52,8 @@ public class DateTimeValueType extends AbstractValueType implements ValueType {
     public DateTime read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
-        return new DateTime(dataInput.readLong());
+        // Always construct UTC such that it is not depending on the default timezone of the current host
+        return new DateTime(dataInput.readLong(), DateTimeZone.UTC);
     }
 
     @Override

@@ -51,6 +51,7 @@ public class DateValueType extends AbstractValueType implements ValueType {
     public LocalDate read(DataInput dataInput) {
         // Read the encoding version byte, but ignore it for the moment since there is only one encoding
         dataInput.readByte();
+        // Always construct UTC such that it is not depending on the default timezone of the current host
         return new LocalDate(dataInput.readLong(), DateTimeZone.UTC);
     }
 

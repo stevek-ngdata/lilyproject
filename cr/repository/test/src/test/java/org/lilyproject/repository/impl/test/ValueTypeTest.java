@@ -15,26 +15,53 @@
  */
 package org.lilyproject.repository.impl.test;
 
-import static org.junit.Assert.*;
-
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Random;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.lilyproject.bytes.api.ByteArray;
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.HierarchyPath;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RecordTypeBuilder;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.UnknownValueTypeEncodingException;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.ValueTypeFactory;
 import org.lilyproject.repository.impl.valuetype.AbstractValueType;
-import org.lilyproject.repository.impl.valuetype.RecordValueType;
 import org.lilyproject.repotestfw.RepositorySetup;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ValueTypeTest {
 
@@ -111,12 +138,12 @@ public class ValueTypeTest {
 
     @Test
     public void testDateTimeType() throws Exception {
-        runValueTypeTests("dateTimeRecordTypeId", "DATETIME", new DateTime(), new DateTime(Long.MAX_VALUE), new DateTime(Long.MIN_VALUE));
+        runValueTypeTests("dateTimeRecordTypeId", "DATETIME", new DateTime(DateTimeZone.UTC), new DateTime(Long.MAX_VALUE, DateTimeZone.UTC), new DateTime(Long.MIN_VALUE, DateTimeZone.UTC));
     }
 
     @Test
     public void testDateType() throws Exception {
-        runValueTypeTests("dateRecordTypeId", "DATE", new LocalDate(), new LocalDate(2900, 10, 14), new LocalDate(1300, 5, 4));
+        runValueTypeTests("dateRecordTypeId", "DATE", new LocalDate(DateTimeZone.UTC), new LocalDate(2900, 10, 14), new LocalDate(1300, 5, 4));
     }
 
     @Test
