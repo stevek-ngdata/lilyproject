@@ -15,19 +15,25 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.lilyproject.rowlog.api.ListenersObserver;
 import org.lilyproject.rowlog.api.ProcessorNotifyObserver;
@@ -141,7 +147,8 @@ public class RowLogConfigurationManagerImpl implements RowLogConfigurationManage
                     return zooKeeper.getData(rowLogPath(rowLogId), false, null);
                 }
             });
-            rowLogs.put(rowLogId, RowLogConfigConverter.INSTANCE.fromJsonBytes(rowLogId, data));
+            if (data != null)
+                rowLogs.put(rowLogId, RowLogConfigConverter.INSTANCE.fromJsonBytes(rowLogId, data));
         }
         return rowLogs;
     }
