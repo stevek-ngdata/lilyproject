@@ -95,7 +95,7 @@ public class SolrTestingUtility {
         FileUtils.forceMkdir(solrConfDir);
 
         writeCoresConf();
-        copyDefaultConfigToSolrHome(autoCommitSetting == null ? "" : autoCommitSetting);
+        copyDefaultConfigToSolrHome();
 
         if (solrConfigData == null) {
             solrConfigData = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("org/lilyproject/solrtestfw/conftemplate/solrconfig.xml"));
@@ -199,7 +199,7 @@ public class SolrTestingUtility {
         writer.close();
     }
 
-    private void copyDefaultConfigToSolrHome(String autoCommitSetting) throws IOException {
+    private void copyDefaultConfigToSolrHome() throws IOException {
         createEmptyFile(new File(solrConfDir, "synonyms.txt"));
         createEmptyFile(new File(solrConfDir, "stopwords.txt"));
         createEmptyFile(new File(solrConfDir, "stopwords_en.txt"));
@@ -212,7 +212,7 @@ public class SolrTestingUtility {
 
     private void writeSolrConfig() throws IOException {
         String solrConfigString = new String(solrConfigData, "UTF-8");
-        solrConfigString = solrConfigString.replaceAll(Pattern.quote("<!--AUTOCOMMIT_PLACEHOLDER-->"), autoCommitSetting);
+        solrConfigString = solrConfigString.replaceAll(Pattern.quote("<!--AUTOCOMMIT_PLACEHOLDER-->"), autoCommitSetting == null ? "" : autoCommitSetting);
         FileUtils.writeStringToFile(new File(solrConfDir, "solrconfig.xml"), solrConfigString);
     }
 
