@@ -15,21 +15,14 @@
  */
 package org.lilyproject.solrtestfw;
 
-import java.util.regex.Matcher;
-
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Writer;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
@@ -42,8 +35,8 @@ public class SolrTestingUtility {
     private int solrPort = 8983;
     private Server server;
     private byte[] schemaData;
+    private byte[] solrConfigData;
     private String autoCommitSetting;
-    private String[] solrLibs;
     private String solrWarPath;
     private File solrHomeDir;
     private File solrCoreDir;
@@ -72,16 +65,16 @@ public class SolrTestingUtility {
         this.schemaData = schemaData;
     }
 
+    public void setSolrConfigData(byte[] solrConfigData) {
+        this.solrConfigData = solrConfigData;
+    }
+
     public String getAutoCommitSetting() {
       return autoCommitSetting;
     }
 
     public void setAutoCommitSetting(String autoCommitSetting) {
         this.autoCommitSetting = autoCommitSetting;
-    }
-
-    public void setSolrLibs(String[] solrLibs) {
-      this.solrLibs = solrLibs;
     }
 
     public String getSolrWarPath() {
@@ -104,8 +97,13 @@ public class SolrTestingUtility {
         writeCoresConf();
         copyDefaultConfigToSolrHome(autoCommitSetting == null ? "" : autoCommitSetting);
 
+        if (solrConfigData == null) {
+            solrConfigData = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("org/lilyproject/solrtestfw/conftemplate/solrconfig.xml"));
+        }
+        writeSolrConfig();
+        
         if (schemaData == null) {
-            schemaData = IOUtils.toByteArray(getClass().getResourceAsStream("conftemplate/schema.xml"));
+            schemaData = IOUtils.toByteArray(getClass().getResourceAsStream("org/lilyproject/solrtestfw/conftemplate/schema.xml"));
         }
         writeSchema();
 
@@ -202,8 +200,6 @@ public class SolrTestingUtility {
     }
 
     private void copyDefaultConfigToSolrHome(String autoCommitSetting) throws IOException {
-        copyResourceFiltered("org/lilyproject/solrtestfw/conftemplate/solrconfig.xml",
-                new File(solrConfDir, "solrconfig.xml"), autoCommitSetting);
         createEmptyFile(new File(solrConfDir, "synonyms.txt"));
         createEmptyFile(new File(solrConfDir, "stopwords.txt"));
         createEmptyFile(new File(solrConfDir, "stopwords_en.txt"));
@@ -214,58 +210,10 @@ public class SolrTestingUtility {
         FileUtils.writeByteArrayToFile(new File(solrConfDir, "schema.xml"), schemaData);
     }
 
-    private void copyResource(String path, File destination) throws IOException {
-        InputStream is = getClass().getClassLoader().getResourceAsStream(path);
-        FileUtils.copyInputStreamToFile(is, destination);
-        is.close();
-    }
-
-    private void copyResourceFiltered(String path, File destination, String autoCommitSetting) throws IOException {
-
-        InputStream is = getClass().getClassLoader().getResourceAsStream(path);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-
-        FileWriter writer = new FileWriter(destination);
-
-        Map<String, String> substitutions = new HashMap<String,String>();
-        substitutions.put("AUTOCOMMIT", autoCommitSetting);
-        if (solrLibs != null) {
-          StringBuilder libsReplacement = new StringBuilder();
-          for (String lib: solrLibs) {
-            libsReplacement.append("<lib path=\"");
-            libsReplacement.append(lib);
-            libsReplacement.append("\"/>");
-          }
-          substitutions.put("LIBS", libsReplacement.toString());
-        }
-        
-        replacePlaceholders(Pattern.compile("<!--(.*)_PLACEHOLDER-->"), substitutions, reader, writer);
-
-        reader.close();
-        writer.close();
-    }
-
-    private void replacePlaceholders(Pattern capturingPattern,
-        Map<String, String> substitutions, BufferedReader reader,
-        Writer writer) throws IOException {
-      
-      String line;
-      while ((line = reader.readLine()) != null) {
-        Matcher matcher = capturingPattern.matcher(line);
-        StringBuffer buf = new StringBuffer();
-        while (matcher.find()) {
-          if (substitutions.containsKey(matcher.group(1))) {
-            matcher.appendReplacement(buf, substitutions.get(matcher.group(1)));
-          } else {
-            matcher.appendReplacement(buf, "");
-          }
-        }
-        matcher.appendTail(buf);
-        
-        writer.write(buf.toString());
-        writer.write('\n');
-      }
-
+    private void writeSolrConfig() throws IOException {
+        String solrConfigString = new String(solrConfigData, "UTF-8");
+        solrConfigString = solrConfigString.replaceAll(Pattern.quote("<!--AUTOCOMMIT_PLACEHOLDER-->"), autoCommitSetting);
+        FileUtils.writeStringToFile(new File(solrConfDir, "solrconfig.xml"), solrConfigString);
     }
 
     private void createEmptyFile(File destination) throws IOException {

@@ -17,6 +17,7 @@ package org.lilyproject.lilyservertestfw.launcher;
 
 import java.io.File;
 import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -31,11 +32,11 @@ import org.w3c.dom.Document;
 public class SolrLauncherService implements LauncherService {
     private Option schemaOption;
     private Option commitOption;
-    private Option solrLibsOption;
+    private Option solrConfigOption;
 
     private String autoCommitSetting;
-    private String solrLibs;
     private String schema;
+    private String solrConfig;
     private File testHome;
     private boolean clearData;
 
@@ -60,15 +61,16 @@ public class SolrLauncherService implements LauncherService {
             .withDescription("Auto commit index within this amount of seconds (default: no auto commit)")
             .withLongOpt("commit")
             .create("c");
-
-        solrLibsOption = OptionBuilder
-            .withArgName("libs")
-            .hasArg()
-            .withDescription("Colon-separated list of libraries to add to solrconfig")
-            .withLongOpt("libs")
-            .create("l");
-
         options.add(commitOption);
+
+        solrConfigOption = OptionBuilder
+            .withArgName("solrconfig")
+            .hasArg()
+            .withDescription("Custom solrconfig file")
+            .withLongOpt("solrconfig")
+            .create("sc");
+        options.add(solrConfigOption);
+
     }
 
     @Override
@@ -84,6 +86,13 @@ public class SolrLauncherService implements LauncherService {
                 return result;
         }
 
+        solrConfig = cmd.getOptionValue(solrConfigOption.getOpt());
+        if (solrConfig != null) {
+            int result = checkSolrConfig(solrConfig);
+            if (result != 0)
+                return result;
+        }
+        
         autoCommitSetting = "";
         if (cmd.hasOption(commitOption.getOpt())) {
             try {
@@ -95,11 +104,6 @@ public class SolrLauncherService implements LauncherService {
             }
         }
         
-        solrLibs = "";
-        if (cmd.hasOption(solrLibsOption.getOpt())) {
-          solrLibs = cmd.getOptionValue(solrLibsOption.getOpt());
-        }
-
         return 0;
     }
 
@@ -131,13 +135,44 @@ public class SolrLauncherService implements LauncherService {
         return 0;
     }
 
+    private int checkSolrConfig(String solrConfig) {
+        File solrConfigFile = new File(solrConfig);
+        if (!solrConfigFile.exists()) {
+            System.err.println("Specified solrconfig file does not exist:");
+            System.err.println(solrConfigFile.getAbsolutePath());
+            return 1;
+        }
+
+        Document document;
+        try {
+            document = DocumentHelper.parse(solrConfigFile);
+        } catch (Exception e) {
+            System.err.println("Error reading or parsing solrconfig file.");
+            System.err.println();
+            e.printStackTrace();
+            return 1;
+        }
+
+        if (!document.getDocumentElement().getLocalName().equals("config")) {
+            System.err.println("A solrconfig file should have a <config> root element, which the following file");
+            System.err.println("has not:");
+            System.err.println(solrConfigFile.getAbsolutePath());
+            return 1;
+        }
+
+        return 0;
+    }
+
     @Override
     public int start(List<String> postStartupInfo) throws Exception {
         solrTestingUtility = new SolrTestingUtility(testHome, clearData);
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
-        solrTestingUtility.setSolrLibs(solrLibs.split(":"));
+        
         byte[] schemaData = schema == null ? null : FileUtils.readFileToByteArray(new File(schema));
         solrTestingUtility.setSchemaData(schemaData);
+        
+        byte[] solrConfigData = solrConfig == null ? null : FileUtils.readFileToByteArray(new File(solrConfig));
+        solrTestingUtility.setSolrConfigData(solrConfigData);
 
         solrTestingUtility.start();
 
@@ -150,13 +185,16 @@ public class SolrLauncherService implements LauncherService {
         postStartupInfo.add("Web GUI available at:");
         postStartupInfo.add("http://localhost:8983/solr/admin/");
         postStartupInfo.add("");
-        if (autoCommitTime == -1) {
-            postStartupInfo.add("Index is not auto-committed, you can commit it using:");
-            postStartupInfo.add("curl http://localhost:8983/solr/update -H 'Content-type:text/xml' --data-binary '<commit/>'");
-        } else {
-            postStartupInfo.add("Index auto commit: " + autoCommitTime + " seconds");
+        
+        if (solrConfig == null) { // only show the autocommit information if the user is using the built-in solrconfig
+            if (autoCommitTime == -1) {
+                postStartupInfo.add("Index is not auto-committed, you can commit it using:");
+                postStartupInfo.add("curl http://localhost:8983/solr/update -H 'Content-type:text/xml' --data-binary '<commit/>'");
+            } else {
+                postStartupInfo.add("Index auto commit: " + autoCommitTime + " seconds");
+            }
+            postStartupInfo.add("");
         }
-        postStartupInfo.add("");
 
         return 0;
     }

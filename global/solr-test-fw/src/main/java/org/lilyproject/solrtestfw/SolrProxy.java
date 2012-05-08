@@ -15,6 +15,15 @@
  */
 package org.lilyproject.solrtestfw;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Arrays;
+
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.io.FileUtils;
@@ -27,23 +36,13 @@ import org.lilyproject.util.xml.XPathUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Arrays;
-
 public class SolrProxy {
     private Mode mode;
 
     public enum Mode { EMBED, CONNECT }
     public static String SOLR_MODE_PROP_NAME = "lily.solrproxy.mode";
-    public static String SOLR_LIBS_PROP_NAME = "lily.solrproxy.libs";
 
     private SolrTestingUtility solrTestingUtility;
-    private String solrLibs;
     private SolrServer solrServer;
 
     private MultiThreadedHttpConnectionManager connectionManager;
@@ -65,15 +64,13 @@ public class SolrProxy {
     
     /**
      * Creates a new SolrProxy
-     * @param mode either EMBEd or CONNECT
+     * @param mode either EMBED or CONNECT
      * @param clearData it true, clears the data directories upon shutdown
      * @throws IOException
      */
     public SolrProxy(Mode mode, boolean clearData) throws IOException {
         this.clearData = clearData;
 
-        this.solrLibs = System.getProperty(SOLR_LIBS_PROP_NAME);
-        
         if (mode == null) {
           String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
             if (solrModeProp == null || solrModeProp.equals("") || solrModeProp.equals("embed")) {
@@ -104,10 +101,10 @@ public class SolrProxy {
     }
 
     public void start() throws Exception {
-        start(null);
+        start(null, null);
     }
 
-    public void start(byte[] solrSchemaData) throws Exception {
+    public void start(byte[] solrSchemaData, byte[] solrConfigData) throws Exception {
         System.out.println("SolrProxy mode: " + mode);
 
         switch (mode) {
@@ -115,19 +112,19 @@ public class SolrProxy {
                 initTestHome();
                 System.out.println("SolrProxy embedded mode temp dir: " + testHome.getAbsolutePath());
                 solrTestingUtility = new SolrTestingUtility(testHome, clearData);
-                if (solrLibs != null) {
-                    solrTestingUtility.setSolrLibs(solrLibs.split(":"));
-                }
                 if (solrSchemaData != null) {
                     solrTestingUtility.setSchemaData(solrSchemaData);
+                }
+                if (solrConfigData != null) {
+                    solrTestingUtility.setSolrConfigData(solrConfigData);
                 }
                 solrTestingUtility.start();
                 this.uri = solrTestingUtility.getUri();
                 solrServer = new CommonsHttpSolrServer(uri, httpClient);
                 break;
             case CONNECT:
-                if (solrSchemaData != null) {
-                    changeSolrSchema(solrSchemaData);
+                if (solrSchemaData != null || solrConfigData != null) {
+                    changeSolrSchemaAndConfig(solrSchemaData, solrConfigData);
                 }
                 this.uri = "http://localhost:8983/solr";
                 solrServer = new CommonsHttpSolrServer(uri, httpClient);
@@ -167,34 +164,60 @@ public class SolrProxy {
         return uri;
     }
 
+    public void changeSolrConfig(byte[] newConfigData) throws Exception {
+        changeSolrSchemaAndConfig(null, newConfigData);
+    }
+    
     public void changeSolrSchema(byte[] newSchemaData) throws Exception {
+        changeSolrSchemaAndConfig(newSchemaData, null);
+    }
+
+    public void changeSolrSchemaAndConfig(byte[] newSchemaData, byte[] newConfigData) throws Exception {
         //
         // Find out location of Solr home dir
         //
         Document doc = readCoreStatus();
         File solrHomeDir = new File(XPathUtils.evalString("/response/lst[@name='status']/lst[@name='core0']/str[@name='instanceDir']", doc));
 
-        //
-        // Write the schema file
-        //
-        File solrConfDir = new File(solrHomeDir, "conf");
-        File schemaFile = new File(solrConfDir, "schema.xml");
-
-        byte[] existingSchemaData = FileUtils.readFileToByteArray(schemaFile);
-
-        if (Arrays.equals(newSchemaData, existingSchemaData)) {
-            // Schema is unchanged, do nothing
-            System.out.println("Solr schema was unchanged, not overwriting it and not reloading the Solr core.");
-            return;
+        boolean schemaChanged = updateFile(newFile(solrHomeDir, "conf", "schema.xml"), newSchemaData);
+        if (!schemaChanged) {
+            System.out.println("Solr schema was unchanged, not overwriting it");
         }
 
-        FileUtils.writeByteArrayToFile(schemaFile, newSchemaData);
-        System.out.println("Wrote new Solr schema to " + schemaFile.getAbsolutePath());
+        boolean solrConfigChanged = updateFile(newFile(solrHomeDir, "conf", "solrconfig.xml"), newConfigData);
+        if (!solrConfigChanged) {
+            System.out.println("Solr config was unchanged, not overwriting it");
+        }
 
-        //
-        // Restart Solr
-        //
-        reloadCore();
+        if (schemaChanged || solrConfigChanged) {
+            reloadCore();
+        } else {
+            System.out.println("No changes to schema or config file. Not restarting Solr");
+        }
+    }
+
+    /**
+     * Ensure the target file has the specified content.
+     * @param target
+     * @param content
+     * @return true if the content of the file was changed
+     */
+    private boolean updateFile(File target, byte[] content) throws IOException {
+        byte[] oldContent = FileUtils.readFileToByteArray(target);
+        
+        boolean equal = Arrays.equals(oldContent, content);
+        if (!equal) {
+            FileUtils.writeByteArrayToFile(target, content);
+        }
+        return !equal;
+    }
+
+    private File newFile(File parentDir, String... pathElements) {
+        File result = parentDir;
+        for (String child: pathElements) {
+            result = new File(result, child);
+        }
+        return result;
     }
 
     private Document readCoreStatus() throws IOException, SAXException, ParserConfigurationException {
