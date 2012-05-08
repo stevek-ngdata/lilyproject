@@ -8,7 +8,7 @@ set -e
 set -u
 
 # Check no other/previous instance is running
-PORTCHECK=$(netstat -l | grep 8020 || true)
+PORTCHECK=$(netstat -ln | grep 8020 || true)
 if [ -n "$PORTCHECK" ]; then
   echo launch-test-lily or launch-hadoop or other hadoop is already running
   exit 1
