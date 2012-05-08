@@ -16,8 +16,23 @@
 package org.lilyproject.rowlog.impl;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.ComparisonChain;
@@ -537,7 +552,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     @Override
     public void rowLogConfigChanged(RowLogConfig rowLogConfig) {
         this.rowLogConfig = rowLogConfig;
-        if (!initialRowLogConfigLoaded.get()) {
+        if (this.rowLogConfig != null && !initialRowLogConfigLoaded.get()) {
             synchronized(initialRowLogConfigLoaded) {
                 initialRowLogConfigLoaded.set(true);
                 initialRowLogConfigLoaded.notifyAll();
