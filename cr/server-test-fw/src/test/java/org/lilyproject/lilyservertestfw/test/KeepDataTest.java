@@ -50,7 +50,7 @@ public class KeepDataTest {
     public static void setUpBeforeClass() throws Exception {
         lilyProxy = new LilyProxy();
         byte[] schemaData = IOUtils.toByteArray(LilyProxyTest.class.getResourceAsStream("lilytestutility_solr_schema.xml"));
-        lilyProxy.start(schemaData);
+        lilyProxy.start(schemaData, null);
         LilyClient lilyClient = lilyProxy.getLilyServerProxy().getClient();
         repository = lilyClient.getRepository();
     }
