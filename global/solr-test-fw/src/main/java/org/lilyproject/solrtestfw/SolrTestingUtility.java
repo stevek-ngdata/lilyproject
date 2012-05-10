@@ -103,7 +103,7 @@ public class SolrTestingUtility {
         writeSolrConfig();
         
         if (schemaData == null) {
-            schemaData = IOUtils.toByteArray(getClass().getResourceAsStream("org/lilyproject/solrtestfw/conftemplate/schema.xml"));
+            schemaData = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("org/lilyproject/solrtestfw/conftemplate/schema.xml"));
         }
         writeSchema();
 
