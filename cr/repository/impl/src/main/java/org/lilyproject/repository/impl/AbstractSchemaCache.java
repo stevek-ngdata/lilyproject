@@ -58,7 +58,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     protected static final String CACHE_INVALIDATION_PATH = "/lily/typemanager/cache/invalidate";
     protected static final String CACHE_REFRESHENABLED_PATH = "/lily/typemanager/cache/enabled";
     private static final String LILY_NODES_PATH = "/lily/repositoryNodes";
-    
+
     /**
      * Paths we need to watch for existence, since we need to re-initialize after they are recreated.
      * Normally this doesn't happen, but it can happen with the resetLilyState() call of Lily's test
@@ -74,16 +74,15 @@ public abstract class AbstractSchemaCache implements SchemaCache {
     /**
      * Used to build output as Hex
      */
-    private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
-            'e', 'f' };
+    private static final char[] DIGITS_LOWER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+            'e', 'f'};
     private ConnectionWatcher connectionWatcher;
     private LilyNodesWatcher lilyNodesWatcher;
 
     /**
      * Simplified version of {@link Hex#encodeHex(byte[])}
-     * <p>
-     * In this version we avoid having to create a new byte[] to give to
-     * {@link Hex#encodeHex(byte[])}
+     * <p/>
+     * In this version we avoid having to create a new byte[] to give to {@link Hex#encodeHex(byte[])}
      */
     public static String encodeHex(byte[] data) {
         char[] out = new char[2];
@@ -95,13 +94,11 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     /**
      * Decodes a string containing 2 characters representing a hex value.
-     * <p>
-     * The returned byte[] contains the byte represented by the string and the
-     * next byte.
-     * <p>
+     * <p/>
+     * The returned byte[] contains the byte represented by the string and the next byte.
+     * <p/>
      * This code is based on {@link Hex#decodeHex(char[])}
-     * <p>
-     * 
+     * <p/>
      */
     public static byte[] decodeHexAndNextHex(String data) {
         byte[] out = new byte[2];
@@ -114,7 +111,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
         return out;
     }
-    
+
     public static byte[] decodeNextHex(String data) {
         byte[] out = new byte[1];
 
@@ -180,7 +177,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             return fieldTypesSnapshot;
         }
     }
-    
+
     public void updateFieldType(FieldType fieldType) throws TypeException, InterruptedException {
         fieldTypesCache.update(fieldType);
         updatedFieldTypes = true;
@@ -256,7 +253,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 // initialize the caches.
             }
         }
-        
+
         if (bucketVersions.isEmpty()) {
             // All buckets need to be refreshed
 
@@ -276,7 +273,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                             log.debug("Failed to put watcher on bucket " + bucketPath + " : thread interrupted");
                     } else {
                         log.warn("Failed to put watcher on bucket " + bucketPath
-                                + " - Relying on connection watcher to reinitialize cache", e);
+                                         + " - Relying on connection watcher to reinitialize cache", e);
                         // Failed to put our watcher.
                         // Relying on the ConnectionWatcher to put it again and
                         // initialize the caches.
@@ -303,7 +300,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                 Stat stat = new Stat();
                 try {
                     ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
-                    Integer oldVersion = bucketVersions.get(bucketId); 
+                    Integer oldVersion = bucketVersions.get(bucketId);
                     if (oldVersion == null || (oldVersion != stat.getVersion()))
                         newBucketVersions.put(bucketId, stat.getVersion());
                 } catch (KeeperException e) {
@@ -312,7 +309,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                             log.debug("Failed to put watcher on bucket " + bucketPath + " : thread is interrupted");
                     } else {
                         log.warn("Failed to put watcher on bucket " + bucketPath
-                                + " - Relying on connection watcher to reinitialize cache", e);
+                                         + " - Relying on connection watcher to reinitialize cache", e);
                         // Failed to put our watcher.
                         // Relying on the ConnectionWatcher to put it again and
                         // initialize the caches.
@@ -355,14 +352,14 @@ public abstract class AbstractSchemaCache implements SchemaCache {
             try {
                 ZkUtil.getData(zooKeeper, bucketPath, watcher, stat);
                 if (stat.getVersion() == bucketVersions.get(bucketId))
-                        continue; // The bucket is up to date
+                    continue; // The bucket is up to date
             } catch (KeeperException e) {
                 if (Thread.currentThread().isInterrupted()) {
                     if (log.isDebugEnabled())
                         log.debug("Failed to put watcher on bucket " + bucketPath + " : thread is interrupted");
                 } else {
                     log.warn("Failed to put watcher on bucket " + bucketPath
-                            + " - Relying on connection watcher to reinitialize cache", e);
+                                     + " - Relying on connection watcher to reinitialize cache", e);
                     // Failed to put our watcher.
                     // Relying on the ConnectionWatcher to put it again and
                     // initialize the caches.
@@ -397,41 +394,47 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     /**
      * Cache refresher refreshes the cache when flagged.
-     * <p>
-     * The {@link CacheWatcher} monitors the cache invalidation flag on
-     * Zookeeper. When this flag changes it will call {@link #needsRefresh} on
-     * the CacheRefresher, setting the needsRefresh flag. This is the only thing
-     * the CacheWatcher does. Thereby it can return quickly when it received an
-     * event.<br/>
-     * 
-     * The CacheRefresher in its turn will notice the needsRefresh flag being
-     * set and will refresh the cache. It runs in a separate thread so that we
-     * can avoid that the refresh work would be done in the thread of the
-     * watcher.
+     * <p/>
+     * The {@link CacheWatcher} monitors the cache invalidation flag on Zookeeper. When this flag changes it will call
+     * {@link #needsRefresh} on the CacheRefresher, setting the needsRefresh flag. This is the only thing the
+     * CacheWatcher does. Thereby it can return quickly when it received an event.<br/>
+     * <p/>
+     * The CacheRefresher in its turn will notice the needsRefresh flag being set and will refresh the cache. It runs in
+     * a separate thread so that we can avoid that the refresh work would be done in the thread of the watcher.
      */
     private class CacheRefresher implements Runnable {
         private volatile boolean needsRefresh;
         private volatile boolean needsRefreshAll;
         private volatile boolean lilyNodesChanged;
-        private volatile boolean stop;
+        // we do not rely on thread interruption alone because some libraries "eat" interrupted exceptions
+        private volatile boolean running;
         private final Object needsRefreshLock = new Object();
         private Set<CacheWatcher> needsRefreshWatchers = new HashSet<CacheWatcher>();
         private Thread thread;
         private List<String> knownLilyNodes = new ArrayList<String>();
 
         public void start() {
-            thread = new Thread(this, "TypeManager cache refresher");
-            thread.setDaemon(true); // Since this might be used in clients
-            thread.start();
+            if (running) {
+                if (log.isDebugEnabled()) {
+                    log.debug("not starting because already running");
+                }
+            } else {
+                running = true;
+                thread = new Thread(this, "TypeManager cache refresher");
+                thread.setDaemon(true); // Since this might be used in clients
+                thread.start();
+            }
         }
 
         public void stop() throws InterruptedException {
-            stop = true;
-            if (thread != null) {
-                thread.interrupt();
-                Logs.logThreadJoin(thread);
-                thread.join();
-                thread = null;
+            if (running) {
+                running = false;
+                if (thread != null) {
+                    thread.interrupt();
+                    Logs.logThreadJoin(thread);
+                    thread.join();
+                    thread = null;
+                }
             }
         }
 
@@ -479,7 +482,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
         @Override
         public void run() {
-            while (!stop && !Thread.interrupted()) {
+            while (running && !Thread.interrupted()) {
                 try {
                     // Check if the lily nodes changed
                     // or if the LilyNodesWatcher has not been set yet
@@ -505,7 +508,8 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                                         parentVersion = null;
                                         if (log.isDebugEnabled())
                                             log.debug("One or more LilyNodes stopped. "
-                                                    + "Refreshing cache to cover possibly missed refresh triggers");
+                                                              +
+                                                              "Refreshing cache to cover possibly missed refresh triggers");
                                     }
                                     knownLilyNodes.clear();
                                     knownLilyNodes.addAll(lilyNodes);
@@ -541,7 +545,7 @@ public abstract class AbstractSchemaCache implements SchemaCache {
                     }
 
                     synchronized (needsRefreshLock) {
-                        if (!needsRefresh && !needsRefreshAll && !stop) {
+                        if (!needsRefresh && !needsRefreshAll && running) {
                             needsRefreshLock.wait();
                         }
                     }
@@ -588,9 +592,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     /**
      * This watcher will be triggered when an explicit refresh is requested.
-     * <p>
+     * <p/>
      * It is put on the parent path: CACHE_INVALIDATION_PATH
-     * 
+     *
      * @see {@link TypeManager#triggerSchemaCacheRefresh()}
      */
     private class ParentWatcher implements Watcher {
@@ -604,9 +608,9 @@ public abstract class AbstractSchemaCache implements SchemaCache {
 
     /**
      * The ConnectionWatcher monitors for zookeeper (re-)connection events.
-     * <p>
-     * It will set the cache invalidation flag if needed and refresh the caches
-     * since events could have been missed while being disconnected.
+     * <p/>
+     * It will set the cache invalidation flag if needed and refresh the caches since events could have been missed
+     * while being disconnected.
      */
     protected class ConnectionWatcher implements Watcher {
         @Override
