@@ -81,13 +81,19 @@ These classes include:
 - org.lilyproject.hadooptestfw.fork.MiniZooKeeperCluster.java
 - org.lilyproject.util.hbase.HTablePool.java
 
-The following diff-commands can be used to quickly check if there are any changes on the original classes (between cdh3u2 and cdh3u3 in this case):
-diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java
-diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java
-diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java
-diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java
-diff ./hbase-0.90.4-cdh3u2/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java ./hbase-0.90.4-cdh3u3/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java
-diff ./hadoop-0.20.2-cdh3u2/src/test/org/apache/hadoop/mapred/MiniMRCluster.java ./hadoop-0.20.2-cdh3u3/src/test/org/apache/hadoop/mapred/MiniMRCluster.java
-diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java
-diff ./hbase-0.90.4-cdh3u2/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java ./hbase-0.90.4-cdh3u3/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java
+The following diff-commands can be used to quickly check if there are any changes on the original classes:
+
+OLD_HBASE_DIR=./hbase-0.90.4-cdh3u3
+NEW_HBASE_DIR=./hbase-0.90.6-cdh3u4
+OLD_HADOOP_DIR=./hadoop-0.20.2-cdh3u3
+NEW_HADOOP_DIR=./hadoop-0.20.2-cdh3u4
+
+diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormat.java
+diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java
+diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableMapReduceUtil.java
+diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/mapreduce/TableRecordReader.java
+diff -u $OLD_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java $NEW_HBASE_DIR/src/test/java/org/apache/hadoop/hbase/HBaseTestingUtility.java
+diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/zookeeper/MiniZooKeeperCluster.java
+diff -u $OLD_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java $NEW_HBASE_DIR/src/main/java/org/apache/hadoop/hbase/client/HTablePool.java
+diff -u $OLD_HADOOP_DIR/src/test/org/apache/hadoop/mapred/MiniMRCluster.java $NEW_HADOOP_DIR/src/test/org/apache/hadoop/mapred/MiniMRCluster.java
 
