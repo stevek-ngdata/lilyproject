@@ -143,6 +143,10 @@ public class LilyProxy {
         start(null, null);
     }
 
+    public void start(byte[] solrSchemaData) throws Exception {
+        start(solrSchemaData, null);
+    }
+
     public void start(byte[] solrSchemaData, byte[] solrConfigData) throws Exception {
         if (started) {
             throw new IllegalStateException("LilyProxy is already started.");
