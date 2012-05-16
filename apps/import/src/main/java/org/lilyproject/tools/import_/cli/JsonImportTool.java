@@ -17,9 +17,9 @@ package org.lilyproject.tools.import_.cli;
 
 import org.apache.commons.cli.*;
 import org.lilyproject.cli.BaseZkCliTool;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.util.Version;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.io.Closer;
 
 import java.io.FileInputStream;
@@ -28,6 +28,7 @@ import java.util.*;
 
 public class JsonImportTool extends BaseZkCliTool {
     private Option schemaOnlyOption;
+    private Option workersOption;
     private LilyClient lilyClient;
 
     @Override
@@ -48,6 +49,14 @@ public class JsonImportTool extends BaseZkCliTool {
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
 
+        workersOption = OptionBuilder
+                .withArgName("count")
+                .hasArg()
+                .withDescription("Number of workers (threads)")
+                .withLongOpt("workers")
+                .create("w");
+        options.add(workersOption);
+
         schemaOnlyOption = OptionBuilder
                 .withDescription("Only import the field types and record types, not the records.")
                 .withLongOpt("schema-only")
@@ -63,6 +72,8 @@ public class JsonImportTool extends BaseZkCliTool {
         if (result != 0)
             return result;
 
+        int workers = OptionUtil.getIntOption(cmd, workersOption, 1);
+
         if (cmd.getArgList().size() < 1) {
             System.out.println("No import file specified!");
             return 1;
@@ -77,7 +88,7 @@ public class JsonImportTool extends BaseZkCliTool {
             System.out.println("Importing " + arg);
             InputStream is = new FileInputStream(arg);
             try {
-                JsonImport.load(lilyClient.getRepository(), is, schemaOnly);
+                JsonImport.load(lilyClient.getRepository(), is, schemaOnly, workers);
             } finally {
                 Closer.close(is);
             }

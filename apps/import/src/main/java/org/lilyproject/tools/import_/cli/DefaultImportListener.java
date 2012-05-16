@@ -29,6 +29,12 @@ public class DefaultImportListener implements ImportListener {
     }
 
     @Override
+    public void exception(Throwable throwable) {
+        out.println("Error during import:");
+        throwable.printStackTrace(out);
+    }
+
+    @Override
     public void conflict(EntityType entityType, String entityName, String propName, Object oldValue, Object newValue)
             throws ImportConflictException {
         throw new ImportConflictException(String.format("%1$s %2$s exists but with %3$s %4$s instead of %5$s",

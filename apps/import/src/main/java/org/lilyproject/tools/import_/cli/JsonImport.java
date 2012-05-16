@@ -22,17 +22,26 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.tools.import_.core.*;
 import org.lilyproject.tools.import_.json.*;
+import org.lilyproject.util.concurrent.WaitPolicy;
 import org.lilyproject.util.json.JsonFormat;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class JsonImport {
     private Namespaces namespaces = new NamespacesImpl();
     private Repository repository;
     private TypeManager typeManager;
     private ImportListener importListener;
+    private int threadCount;
+    private ThreadPoolExecutor executor;
+    private volatile boolean errorHappened = false;
+
+    public static void load(Repository repository, InputStream is, boolean schemaOnly, int threadCount) throws Exception {
+        load(repository, new DefaultImportListener(), is, schemaOnly, threadCount);
+    }
 
     public static void load(Repository repository, InputStream is, boolean schemaOnly) throws Exception {
         load(repository, new DefaultImportListener(), is, schemaOnly);
@@ -40,13 +49,23 @@ public class JsonImport {
 
     public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly)
             throws Exception {
-        new JsonImport(repository, importListener).load(is, schemaOnly);
+        load(repository, importListener, is, schemaOnly, 1);
+    }
+
+    public static void load(Repository repository, ImportListener importListener, InputStream is, boolean schemaOnly,
+            int threadCount) throws Exception {
+        new JsonImport(repository, importListener, threadCount).load(is, schemaOnly);
     }
 
     public JsonImport(Repository repository, ImportListener importListener) {
-        this.importListener = importListener;
+        this(repository, importListener, 1);
+    }
+
+    public JsonImport(Repository repository, ImportListener importListener, int threadCount) {
+        this.importListener = new SynchronizedImportListener(importListener);
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
+        this.threadCount = threadCount;
     }
 
     public void load(InputStream is, boolean schemaOnly) throws Exception {
@@ -55,60 +74,74 @@ public class JsonImport {
         // This way things should still work fast and within little memory if anyone would use this to
         // load large amounts of records.
 
-        namespaces = new NamespacesImpl();
+        try {
+            namespaces = new NamespacesImpl();
 
-        JsonParser jp = JsonFormat.JSON_FACTORY_NON_STD.createJsonParser(is);
+            JsonParser jp = JsonFormat.JSON_FACTORY_NON_STD.createJsonParser(is);
 
-        JsonToken current;
-        current = jp.nextToken();
+            JsonToken current;
+            current = jp.nextToken();
 
-        if (current != JsonToken.START_OBJECT) {
-            System.out.println("Error: expected object node as root of the input. Giving up.");
-            return;
-        }
+            if (current != JsonToken.START_OBJECT) {
+                System.out.println("Error: expected object node as root of the input. Giving up.");
+                return;
+            }
 
-        while (jp.nextToken() != JsonToken.END_OBJECT) {
-            String fieldName = jp.getCurrentName();
-            current = jp.nextToken(); // move from field name to field value
-            if (fieldName.equals("namespaces")) {
-                if (current == JsonToken.START_OBJECT) {
-                    readNamespaces((ObjectNode)jp.readValueAsTree());
-                } else {
-                    System.out.println("Error: namespaces property should be an object. Skipping.");
-                    jp.skipChildren();
-                }
-            } else if (fieldName.equals("fieldTypes")) {
-                if (current == JsonToken.START_ARRAY) {
-                    while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        importFieldType(jp.readValueAsTree());
-                    }
-                } else {
-                    System.out.println("Error: fieldTypes property should be an array. Skipping.");
-                    jp.skipChildren();
-                }
-            } else if (fieldName.equals("recordTypes")) {
-                if (current == JsonToken.START_ARRAY) {
-                    while (jp.nextToken() != JsonToken.END_ARRAY) {
-                        importRecordType(jp.readValueAsTree());
-                    }
-                } else {
-                    System.out.println("Error: recordTypes property should be an array. Skipping.");
-                    jp.skipChildren();
-                }
-            } else if (fieldName.equals("records")) {
-                if (!schemaOnly) {
-                    if (current == JsonToken.START_ARRAY) {
-                        while (jp.nextToken() != JsonToken.END_ARRAY) {
-                            importRecord(jp.readValueAsTree());
-                        }
+            while (jp.nextToken() != JsonToken.END_OBJECT && !errorHappened) {
+                String fieldName = jp.getCurrentName();
+                current = jp.nextToken(); // move from field name to field value
+                if (fieldName.equals("namespaces")) {
+                    if (current == JsonToken.START_OBJECT) {
+                        readNamespaces((ObjectNode)jp.readValueAsTree());
                     } else {
-                        System.out.println("Error: records property should be an array. Skipping.");
+                        System.out.println("Error: namespaces property should be an object. Skipping.");
                         jp.skipChildren();
                     }
-                } else {
-                    jp.skipChildren();
+                } else if (fieldName.equals("fieldTypes")) {
+                    if (current == JsonToken.START_ARRAY) {
+                        startExecutor();
+                        while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
+                            pushTask(new FieldTypeImportTask(jp.readValueAsTree()));
+                        }
+                        waitTasksFinished();
+                    } else {
+                        System.out.println("Error: fieldTypes property should be an array. Skipping.");
+                        jp.skipChildren();
+                    }
+                } else if (fieldName.equals("recordTypes")) {
+                    if (current == JsonToken.START_ARRAY) {
+                        startExecutor();
+                        while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
+                            pushTask(new RecordTypeImportTask(jp.readValueAsTree()));
+                        }
+                        waitTasksFinished();
+                    } else {
+                        System.out.println("Error: recordTypes property should be an array. Skipping.");
+                        jp.skipChildren();
+                    }
+                } else if (fieldName.equals("records")) {
+                    if (!schemaOnly) {
+                        if (current == JsonToken.START_ARRAY) {
+                            startExecutor();
+                            while (jp.nextToken() != JsonToken.END_ARRAY && !errorHappened) {
+                                pushTask(new RecordImportTask(jp.readValueAsTree()));
+                            }
+                            waitTasksFinished();
+                        } else {
+                            System.out.println("Error: records property should be an array. Skipping.");
+                            jp.skipChildren();
+                        }
+                    } else {
+                        jp.skipChildren();
+                    }
                 }
             }
+        } finally {
+            waitTasksFinished();
+        }
+
+        if (errorHappened) {
+            throw new ImportException("Errors happened during import.");
         }
     }
 
@@ -272,5 +305,89 @@ public class JsonImport {
         }
 
         return record;
+    }
+
+    private void handleImportError(Throwable throwable) {
+        // In case of an error, we want to stop the import asap. Since it's multi-threaded, it can
+        // be that there are still a few operations done before it's done.
+        // We don't do an immediate shutdown of the ExecutorService since we don't want to interrupt running threads,
+        // they are allowed to finish what they are doing.
+        errorHappened = true;
+        executor.getQueue().clear();
+        importListener.exception(throwable);
+    }
+
+    private void startExecutor() {
+        executor = new ThreadPoolExecutor(threadCount, threadCount, 10, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(5));
+        executor.setRejectedExecutionHandler(new WaitPolicy());
+    }
+
+    private void waitTasksFinished() throws InterruptedException, ExecutionException {
+        if (executor == null) {
+            return;
+        }
+
+        executor.shutdown();
+        boolean successfulFinish = executor.awaitTermination(10, TimeUnit.MINUTES);
+        if (!successfulFinish) {
+            throw new RuntimeException("JSON import executor did not end successfully.");
+        }
+        executor = null;
+    }
+
+    private void pushTask(Runnable runnable) {
+        executor.submit(runnable);
+    }
+
+    private class FieldTypeImportTask implements Runnable {
+        private JsonNode json;
+
+        public FieldTypeImportTask(JsonNode json) {
+            this.json = json;
+        }
+
+        @Override
+        public void run() {
+            try {
+                importFieldType(json);
+            } catch (Throwable t) {
+                handleImportError(t);
+            }
+        }
+    }
+
+    private class RecordTypeImportTask implements Runnable {
+        private JsonNode json;
+
+        public RecordTypeImportTask(JsonNode json) {
+            this.json = json;
+        }
+
+        @Override
+        public void run() {
+            try {
+                importRecordType(json);
+            } catch (Throwable t) {
+                handleImportError(t);
+            }
+        }
+    }
+
+    private class RecordImportTask implements Runnable {
+        private JsonNode json;
+
+        public RecordImportTask(JsonNode json) {
+            this.json = json;
+        }
+
+        @Override
+        public void run() {
+            try {
+                importRecord(json);
+            } catch (Throwable t) {
+                handleImportError(t);
+            }
+        }
     }
 }

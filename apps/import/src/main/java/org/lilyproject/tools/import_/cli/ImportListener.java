@@ -16,6 +16,12 @@
 package org.lilyproject.tools.import_.cli;
 
 public interface ImportListener {
+    /**
+     * An exception occurring during import. This method should itself not throw exceptions, it should log
+     * it or collect it for later reporting.
+     */
+    void exception(Throwable throwable);
+
     void conflict(EntityType entityType, String entityName, String propName, Object oldValue, Object newValue)
             throws ImportConflictException;
 
