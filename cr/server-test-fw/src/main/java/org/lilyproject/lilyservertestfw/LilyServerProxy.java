@@ -41,6 +41,7 @@ import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
@@ -263,9 +264,14 @@ public class LilyServerProxy {
      *        This can only be true if the waitForIndexerModel is true as well. 
      * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
      */
-    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
+    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel,
+            boolean waitForMQRowlog) throws Exception {
         byte[] indexerConfiguration = FileUtils.readFileToByteArray(new File(indexerConf));
         return addIndex(indexName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+    }
+
+    public void validateIndexerconf(byte[] indexerConfiguration) throws Exception {
+        IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getClient().getRepository());
     }
     
     /**
@@ -275,9 +281,9 @@ public class LilyServerProxy {
         return addIndexFromFile(indexName, indexerConf, timeout, true, true);
     }
 
-    private boolean addIndex(String indexName, byte[] indexerConfiguration, long timeout, boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
-        long tryUntil = System.currentTimeMillis() + timeout; 
-        IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getClient().getRepository());
+    private boolean addIndex(String indexName, byte[] indexerConfiguration, long timeout, boolean waitForIndexerModel,
+            boolean waitForMQRowlog) throws Exception {
+        long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
         Map<String, String> solrShards = new HashMap<String, String>();
@@ -285,7 +291,7 @@ public class LilyServerProxy {
         index.setSolrShards(solrShards);
         index.setConfiguration(indexerConfiguration);
         indexerModel.addIndex(index);
-        
+
         String subscriptionId;
         if (waitForIndexerModel) {
             // Wait for subscriptionId to be known by indexerModel
@@ -295,7 +301,7 @@ public class LilyServerProxy {
         } else {
             return true;
         }
-        
+
         if (waitForMQRowlog) {
             // Wait for RowLog to know the mq subscriptionId
             return waitOnMQSubscription(subscriptionId, true, timeout);
@@ -313,9 +319,9 @@ public class LilyServerProxy {
         WriteableIndexerModel indexerModel = getIndexerModel();
         String subscriptionId = null;
 
-        // Wait for index to be known by indexerModel 
+        // Wait for index to be known by indexerModel
         while (!indexerModel.hasIndex(indexName) && System.currentTimeMillis() < tryUntil) {
-            Thread.sleep(50);
+            Thread.sleep(10);
         }
         if (!indexerModel.hasIndex(indexName)) {
             log.info("Index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
@@ -325,7 +331,7 @@ public class LilyServerProxy {
         IndexDefinition indexDefinition = indexerModel.getIndex(indexName);
         subscriptionId = indexDefinition.getQueueSubscriptionId();
         while (subscriptionId == null && System.currentTimeMillis() < tryUntil) {
-            Thread.sleep(50);
+            Thread.sleep(10);
             subscriptionId = indexerModel.getIndex(indexName).getQueueSubscriptionId();
         }
         if (subscriptionId == null) {
