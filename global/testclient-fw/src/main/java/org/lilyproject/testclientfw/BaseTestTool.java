@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.joda.time.DateTime;
 import org.lilyproject.cli.BaseZkCliTool;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.clientmetrics.*;
 import org.lilyproject.util.concurrent.WaitPolicy;
 import org.lilyproject.util.hbase.HBaseAdminFactory;
@@ -114,7 +115,7 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         if (result != 0)
             return result;
 
-        workers = Util.getIntOption(cmd, workersOption, getDefaultWorkers());
+        workers = OptionUtil.getIntOption(cmd, workersOption, getDefaultWorkers());
 
         if (cmd.hasOption(verboseOption.getOpt())) {
             verbose = true;

@@ -27,6 +27,7 @@ import org.apache.zookeeper.KeeperException;
 import org.codehaus.jackson.*;
 import org.codehaus.jackson.node.ObjectNode;
 import org.joda.time.DateTime;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.NoServersException;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
@@ -137,7 +138,7 @@ public class Tester extends BaseRepositoryTestTool {
         try {            
             System.out.println("Running tests...");
             System.out.println("Tail the output files if you wonder what is happening.");
-            nrOfIterations = Util.getIntOption(cmd, iterationsOption, 1000);
+            nrOfIterations = OptionUtil.getIntOption(cmd, iterationsOption, 1000);
             test();
         } finally {
             closeStreams();

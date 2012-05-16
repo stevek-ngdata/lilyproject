@@ -28,6 +28,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.testclientfw.BaseTestTool;
 import org.lilyproject.testclientfw.Util;
 import org.lilyproject.testclientfw.Words;
@@ -85,7 +86,7 @@ public class RestPerfTest extends BaseTestTool {
         if (result != 0)
             return result;
 
-        iterations = Util.getIntOption(cmd, iterationsOption, 10000);
+        iterations = OptionUtil.getIntOption(cmd, iterationsOption, 10000);
 
         setupMetrics();
 

@@ -19,6 +19,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
+import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.hbaseindex.*;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
@@ -109,9 +110,9 @@ public class HbaseIndexPerfTest extends BaseTestTool {
 
         index = indexMgr.getIndex(indexDef);
 
-        initialInserts = Util.getIntOption(cmd, initialInsertOption, 5000000);
-        initialInsertsBatchSize = Util.getIntOption(cmd, initialInsertBatchOption, 300);
-        loops = Util.getIntOption(cmd, loopsOption, 100000);
+        initialInserts = OptionUtil.getIntOption(cmd, initialInsertOption, 5000000);
+        initialInsertsBatchSize = OptionUtil.getIntOption(cmd, initialInsertBatchOption, 300);
+        loops = OptionUtil.getIntOption(cmd, loopsOption, 100000);
 
         System.out.println("Will insert " + initialInserts + " index entries in batches of " + initialInsertBatchOption);
         System.out.println("Will then perform " + loops + " tests on it");
