@@ -82,9 +82,9 @@ public class ZkConnectionTest {
         // What number of ZK connections we expect?
         //  1 for Lily
         //  1 for HBase (connection used for direct ops such as scanning, blobs)
-        //  1 for HBaseAdmin
+        //  [not applicable anymore since CDH3u4] 1 for HBaseAdmin
         int threadCnt = countZkThreads();
-        assertEquals(3, threadCnt);
+        assertEquals(2, threadCnt);
         
         Closer.close(lilyClient);
     }
