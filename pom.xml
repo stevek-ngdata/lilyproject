@@ -21,11 +21,11 @@
   <properties>
     <!-- This modified '-lily' version contains only small changes to the HBase client
          libs to support better interruptability. See 'patches' directory. -->
-    <version.hbase>0.90.4-cdh3u3-lily-v3</version.hbase>
+    <version.hbase>0.90.6-cdh3u4-lily</version.hbase>
     <!-- When changing the hbase version, also change the hadoop and zookeeper version below to match
          what is in HBase's pom.xml -->
 
-    <version.hadoop>0.20.2-cdh3u3</version.hadoop>
+    <version.hadoop>0.20.2-cdh3u4</version.hadoop>
     <version.zookeeper>3.3.4</version.zookeeper>
     <version.maven>2.0.9</version.maven>
     <version.solr>3.5.0</version.solr>
