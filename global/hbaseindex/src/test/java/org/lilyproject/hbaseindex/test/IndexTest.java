@@ -897,6 +897,7 @@ public class IndexTest {
             i++;
         }
         assertNull(result.next());
+        assertEquals("too little results", identifiers.length, i);
     }
 
     private void assertResultSize(int expectedCount, QueryResult result) throws IOException {
