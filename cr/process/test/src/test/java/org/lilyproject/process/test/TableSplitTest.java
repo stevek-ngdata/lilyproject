@@ -15,22 +15,34 @@
  */
 package org.lilyproject.process.test;
 
+import java.io.File;
+import java.util.List;
+
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.test.TestHomeUtil;
-
-import java.io.File;
-import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -117,11 +129,10 @@ public class TableSplitTest {
                 "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x01</splitKeyPrefix></splits>" +
                 "</table>" +
                 "<table name='links-forward'>" +
-                // 0x00 is the flags byte used in the index. Together with the above it becomes 0x0001
-                "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x00\\x01</splitKeyPrefix></splits>" +
+                "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x01</splitKeyPrefix></splits>" +
                 "</table>" +
                 "<table name='links-backward'>" +
-                "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x00\\x01</splitKeyPrefix></splits>" +
+                "  <splits><regionCount>3</regionCount><splitKeyPrefix>\\x01</splitKeyPrefix></splits>" +
                 "</table>" +
                 "</tables>";
 
@@ -182,7 +193,8 @@ public class TableSplitTest {
 
                 //System.out.println("Number of splits in region " + regionInfo.getRegionNameAsString() + " : " + count);
 
-                assertTrue("Number of splits in region " + regionInfo.getRegionNameAsString(), count > 80 && count < 120);
+                assertTrue("Number of splits in region " + regionInfo.getRegionNameAsString(),
+                        count > 80 && count < 120);
             }
         }
     }

@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.hbaseindex.test;
-
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Test;
-import org.lilyproject.hbaseindex.Conjunction;
-import org.lilyproject.hbaseindex.Disjunction;
-import org.lilyproject.hbaseindex.QueryResult;
-import static org.junit.Assert.*;
+package org.lilyproject.hbaseindex;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 public class MergeJoinTest {
     @Test
     public void testConjunction() throws Exception {
-        String[] values1 = {"a", "b", "c",           "f", "g"};
-        String[] values2 = {     "b", "c", "d", "e", "f"};
+        String[] values1 = {"a", "b", "c", "f", "g"};
+        String[] values2 = {"b", "c", "d", "e", "f"};
 
         QueryResult result = new Conjunction(buildQueryResult(values1), buildQueryResult(values2));
 
@@ -41,8 +40,8 @@ public class MergeJoinTest {
 
     @Test
     public void testDisjunction() throws Exception {
-        String[] values1 = {"a", "b", "c",           "f", "g"};
-        String[] values2 = {     "b", "c", "d", "e", "f"};
+        String[] values1 = {"a", "b", "c", "f", "g"};
+        String[] values2 = {"b", "c", "d", "e", "f"};
 
         QueryResult result = new Disjunction(buildQueryResult(values1), buildQueryResult(values2));
 

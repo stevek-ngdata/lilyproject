@@ -15,11 +15,12 @@
  */
 package org.lilyproject.hbaseindex;
 
-import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.util.ByteArrayKey;
-
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import org.lilyproject.util.ByteArrayKey;
 
 /**
  * An entry to add to or remove from an Index.
@@ -29,42 +30,38 @@ import java.util.Map;
  *
  * <p>The fields added to this entry should correspond in name
  * and type to the fields defined in the {@link IndexDefinition}.
- * This is not validated when adding the fields to this IndexEntry,
- * but only later on when passing it to a method of {@link Index}.
  *
  * <p>Missing fields will be interpreted as fields with a null value.
  */
 public class IndexEntry {
+    private final IndexDefinition definition;
     private Map<String, Object> fields = new HashMap<String, Object>();
     private Map<ByteArrayKey, byte[]> data = new HashMap<ByteArrayKey, byte[]>();
     private byte[] identifier;
 
+    public IndexEntry(IndexDefinition definition) {
+        this.definition = definition;
+    }
+
+    public IndexEntry(IndexDefinition definition, byte[] identifier) {
+        this.definition = definition;
+        this.identifier = identifier;
+    }
+
     public void addField(String name, Object value) {
+        definition.checkFieldSupport(name, value);
+
         fields.put(name, value);
     }
 
-    public Object getValue(String name) {
-        return fields.get(name);
-    }
-
-    protected Map<String, Object> getFields() {
-        return fields;
-    }
-
+    /**
+     * Allows to add optional data to be stored in the index entry row.
+     *
+     * @param qualifier
+     * @param value
+     */
     public void addData(byte[] qualifier, byte[] value) {
         data.put(new ByteArrayKey(qualifier), value);
-    }
-
-    /**
-     * Convenience variant of {@link #addData(byte[], byte[])} which does
-     * the conversion to bytes for you.
-     */
-    public void addData(String qualifier, String value) {
-        addData(Bytes.toBytes(qualifier), Bytes.toBytes(value));
-    }
-
-    public byte[] getData(byte[] qualifier) {
-        return data.get(new ByteArrayKey(qualifier));
     }
 
     protected Map<ByteArrayKey, byte[]> getData() {
@@ -72,14 +69,31 @@ public class IndexEntry {
     }
 
     /**
-     * The identifier of the indexed object, typically the key of a row in
-     * another HBase table.
+     * Get the values to be serialized into a byte array, in index definition order. Missing fields are inserted as
+     * null
+     * values.
+     *
+     * @return the values to be serialized into a byte array
      */
-    public byte[] getIdentifier() {
-        return identifier;
+    Object[] getFieldValuesInSerializationOrder() {
+        final List<Object> values = new ArrayList<Object>(definition.getFields().size() + 1);
+        for (IndexFieldDefinition indexFieldDefinition : definition.getFields()) {
+            final Object fieldValueOrNull = fields.get(indexFieldDefinition.getName());
+            values.add(fieldValueOrNull);
+        }
+
+        values.add(identifier);
+
+        return values.toArray();
     }
 
     public void setIdentifier(byte[] identifier) {
         this.identifier = identifier;
+    }
+
+    public void validate() {
+        if (identifier == null) {
+            throw new MalformedIndexEntryException("Index entry does not specify an identifier.");
+        }
     }
 }

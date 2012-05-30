@@ -15,15 +15,28 @@
  */
 package org.lilyproject.linkindex;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.hbaseindex.*;
+import org.lilyproject.hbaseindex.Index;
+import org.lilyproject.hbaseindex.IndexDefinition;
+import org.lilyproject.hbaseindex.IndexEntry;
+import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.hbaseindex.IndexNotFoundException;
+import org.lilyproject.hbaseindex.Query;
+import org.lilyproject.hbaseindex.QueryResult;
 import org.lilyproject.linkindex.LinkIndexMetrics.Action;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * The index of links that exist between documents.
@@ -31,8 +44,8 @@ import java.util.*;
  * <p>Terminology:
  *
  * <ul>
- *     <li>referrers = backwards links = incoming links</li>
- *     <li>forward links = outgoing links</li>
+ * <li>referrers = backwards links = incoming links</li>
+ * <li>forward links = outgoing links</li>
  * </ul>
  */
 // IMPORTANT implementation note: the order in which changes are applied, first to the forward or first to
@@ -60,7 +73,12 @@ public class LinkIndex {
         final int schemaIdByteLength = 16; // see SchemaIdImpl
         {
             IndexDefinition indexDef = new IndexDefinition("links-forward");
-            indexDef.addVariableLengthByteField("source", 1); // there is a fixed part of 1 byte: the record identifier byte
+            // For the record ID we use a variable length byte array field of which the first two bytes are fixed length
+            // The first byte is actually the record identifier byte.
+            // The second byte really is the first byte of the record id. We put this in the fixed length part
+            // (safely because a record id should at least be a single byte long) because this prevents BCD encoding
+            // on the first byte, thus making it easier to configure table splitting based on the original input.
+            indexDef.addVariableLengthByteField("source", 2);
             indexDef.addByteField("vtag", schemaIdByteLength);
             indexDef.addByteField("sourcefield", schemaIdByteLength);
             forwardIndex = indexManager.getIndex(indexDef);
@@ -68,7 +86,8 @@ public class LinkIndex {
 
         {
             IndexDefinition indexDef = new IndexDefinition("links-backward");
-            indexDef.addVariableLengthByteField("target", 1); // there is a fixed part of 1 byte: the record identifier byte
+            // Same remark as in the forwardIndex.
+            indexDef.addVariableLengthByteField("target", 2);
             indexDef.addByteField("vtag", schemaIdByteLength);
             indexDef.addByteField("sourcefield", schemaIdByteLength);
             backwardIndex = indexManager.getIndex(indexDef);
@@ -89,7 +108,8 @@ public class LinkIndex {
             // Delete existing entries from the backwards table
             List<IndexEntry> entries = new ArrayList<IndexEntry>(oldLinks.size());
             for (Pair<FieldedLink, SchemaId> link : oldLinks) {
-                IndexEntry entry = createBackwardIndexEntry(link.getV2(), link.getV1().getRecordId(), link.getV1().getFieldTypeId());
+                IndexEntry entry = createBackwardIndexEntry(link.getV2(), link.getV1().getRecordId(),
+                        link.getV1().getFieldTypeId());
                 entry.setIdentifier(sourceAsBytes);
                 entries.add(entry);
             }
@@ -138,9 +158,11 @@ public class LinkIndex {
             }
             forwardIndex.removeEntries(entries);
         } catch (LinkIndexException e) {
-            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "', vtag '" + vtag + "'", e);
+            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "', vtag '" + vtag + "'",
+                    e);
         } catch (IOException e) {
-            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "', vtag '" + vtag + "'", e);
+            throw new LinkIndexException("Error deleting links for record '" + sourceRecord + "', vtag '" + vtag + "'",
+                    e);
         } finally {
             metrics.report(Action.DELETE_LINKS_VTAG, System.currentTimeMillis() - before);
         }
@@ -151,9 +173,9 @@ public class LinkIndex {
     }
 
     /**
-     *
-     * @param links if this set is empty, then calling this method is equivalent to calling deleteLinks
-     * @param isNewRecord if this is a new record, then we can skip querying the existing links, thus gaining some time.
+     * @param links       if this set is empty, then calling this method is equivalent to calling deleteLinks
+     * @param isNewRecord if this is a new record, then we can skip querying the existing links, thus gaining some
+     *                    time.
      */
     public void updateLinks(RecordId sourceRecord, SchemaId vtag, Set<FieldedLink> links, boolean isNewRecord)
             throws LinkIndexException {
@@ -229,7 +251,7 @@ public class LinkIndex {
     }
 
     private IndexEntry createBackwardIndexEntry(SchemaId vtag, RecordId target, SchemaId sourceField) {
-        IndexEntry entry = new IndexEntry();
+        IndexEntry entry = new IndexEntry(backwardIndex.getDefinition());
 
         entry.addField("vtag", vtag.getBytes());
         entry.addField("target", target.toBytes());
@@ -241,7 +263,7 @@ public class LinkIndex {
     }
 
     private IndexEntry createForwardIndexEntry(SchemaId vtag, RecordId source, SchemaId sourceField) {
-        IndexEntry entry = new IndexEntry();
+        IndexEntry entry = new IndexEntry(forwardIndex.getDefinition());
 
         entry.addField("vtag", vtag.getBytes());
         entry.addField("source", source.toBytes());
@@ -276,12 +298,13 @@ public class LinkIndex {
             while ((id = qr.next()) != null) {
                 result.add(idGenerator.fromBytes(id));
             }
-            Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
+            Closer.close(
+                    qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
 
             return result;
         } catch (IOException e) {
             throw new LinkIndexException("Error getting referrers for record '" + record + "', vtag '" + vtag +
-                "', field '" + sourceField + "'", e);
+                    "', field '" + sourceField + "'", e);
         } finally {
             metrics.report(Action.GET_REFERRERS, System.currentTimeMillis() - before);
         }
@@ -304,7 +327,8 @@ public class LinkIndex {
                 SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
                 result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
             }
-            Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
+            Closer.close(
+                    qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
 
             return result;
         } catch (IOException e) {
@@ -327,9 +351,11 @@ public class LinkIndex {
             while ((id = qr.next()) != null) {
                 SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
                 SchemaId vtag = idGenerator.getSchemaId(qr.getData(VTAG_KEY));
-                result.add(new Pair<FieldedLink, SchemaId>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
+                result.add(
+                        new Pair<FieldedLink, SchemaId>(new FieldedLink(idGenerator.fromBytes(id), sourceField), vtag));
             }
-            Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
+            Closer.close(
+                    qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
 
             return result;
         } catch (IOException e) {
@@ -364,7 +390,8 @@ public class LinkIndex {
             while ((id = qr.next()) != null) {
                 result.add(idGenerator.fromBytes(id));
             }
-            Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
+            Closer.close(
+                    qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
 
             return result;
         } catch (IOException e) {
@@ -393,7 +420,8 @@ public class LinkIndex {
                 SchemaId sourceField = idGenerator.getSchemaId(qr.getData(SOURCE_FIELD_KEY));
                 result.add(new FieldedLink(idGenerator.fromBytes(id), sourceField));
             }
-            Closer.close(qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
+            Closer.close(
+                    qr); // Not closed in finally block: avoid HBase contact when there could be connection problems.
 
             return result;
         } catch (IOException e) {

@@ -15,34 +15,32 @@
  */
 package org.lilyproject.hbaseindex;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import com.gotometrics.orderly.LongRowKey;
+import com.gotometrics.orderly.RowKey;
+import com.gotometrics.orderly.Termination;
 import org.codehaus.jackson.node.ObjectNode;
 
 public class LongIndexFieldDefinition extends IndexFieldDefinition {
     public LongIndexFieldDefinition(String name) {
-        super(name, IndexValueType.LONG);
+        super(name);
     }
 
     public LongIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        super(name, IndexValueType.LONG, jsonObject);
+        super(name, jsonObject);
     }
 
     @Override
-    public int getLength() {
-        return Bytes.SIZEOF_LONG;
+    RowKey asRowKey() {
+        final LongRowKey rowKey = new LongRowKey();
+        rowKey.setOrder(this.getOrder());
+        return rowKey;
     }
 
     @Override
-    public byte[] toBytes(Object value) {
-        byte[] bytes = new byte[getLength()];
-
-        long longValue = (Long)value;
-        Bytes.putLong(bytes, 0, longValue);
-
-        // To make the longs sort correctly when comparing their binary
-        // representations, we need to invert the sign bit
-        bytes[0] = (byte)(bytes[0] ^ 0x80);
-
-        return bytes;
+    RowKey asRowKeyWithoutTermination() {
+        final RowKey rowKey = asRowKey();
+        rowKey.setTermination(Termination.SHOULD_NOT);
+        return rowKey;
     }
+
 }

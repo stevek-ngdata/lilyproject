@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.hbaseindex.test;
+package org.lilyproject.hbaseindex;
 
 import org.codehaus.jackson.node.ObjectNode;
 import org.junit.Test;
-import org.lilyproject.hbaseindex.*;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class IndexDefinitionSerializationTest {
     @Test
@@ -29,12 +28,9 @@ public class IndexDefinitionSerializationTest {
         ObjectNode json = indexDef.toJson();
 
         IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        StringIndexFieldDefinition newField = (StringIndexFieldDefinition)newIndexDef.getField("stringfield");
+        StringIndexFieldDefinition newField = (StringIndexFieldDefinition) newIndexDef.getField("stringfield");
 
         assertEquals(field.getName(), newField.getName());
-        assertEquals(field.isCaseSensitive(), newField.isCaseSensitive());
-        assertEquals(field.getByteEncodeMode(), newField.getByteEncodeMode());
-        assertEquals(field.getLocale(), newField.getLocale());
     }
 
     @Test
@@ -44,7 +40,7 @@ public class IndexDefinitionSerializationTest {
         ObjectNode json = indexDef.toJson();
 
         IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        IntegerIndexFieldDefinition newField = (IntegerIndexFieldDefinition)newIndexDef.getField("intfield");
+        IntegerIndexFieldDefinition newField = (IntegerIndexFieldDefinition) newIndexDef.getField("intfield");
 
         assertEquals(field.getName(), newField.getName());
     }
@@ -56,22 +52,22 @@ public class IndexDefinitionSerializationTest {
         ObjectNode json = indexDef.toJson();
 
         IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        FloatIndexFieldDefinition newField = (FloatIndexFieldDefinition)newIndexDef.getField("floatfield");
+        FloatIndexFieldDefinition newField = (FloatIndexFieldDefinition) newIndexDef.getField("floatfield");
 
         assertEquals(field.getName(), newField.getName());
     }
 
     @Test
-    public void testDateTimeField() throws Exception {
+    public void testByteIndexField() throws Exception {
         IndexDefinition indexDef = new IndexDefinition("index");
-        DateTimeIndexFieldDefinition field = indexDef.addDateTimeField("datetimefield");
-        field.setPrecision(DateTimeIndexFieldDefinition.Precision.DATETIME);
+        ByteIndexFieldDefinition field = indexDef.addByteField("bytefield", 123);
         ObjectNode json = indexDef.toJson();
 
-        IndexDefinition newIndexDef = new IndexDefinition("index", json);
-        DateTimeIndexFieldDefinition newField = (DateTimeIndexFieldDefinition)newIndexDef.getField("datetimefield");
+        final IndexDefinition newIndexDef = new IndexDefinition("index", json);
+        ByteIndexFieldDefinition newField = (ByteIndexFieldDefinition) newIndexDef.getField("bytefield");
 
         assertEquals(field.getName(), newField.getName());
-        assertEquals(field.getPrecision(), newField.getPrecision());
+        assertEquals(field.getLength(), newField.getLength());
     }
+
 }

@@ -15,6 +15,8 @@
  */
 package org.lilyproject.hbaseindex;
 
+import com.gotometrics.orderly.Order;
+import com.gotometrics.orderly.RowKey;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.util.ArgumentValidator;
@@ -25,32 +27,22 @@ import org.lilyproject.util.ArgumentValidator;
 public abstract class IndexFieldDefinition {
     private final String name;
     private Order order;
-    private IndexValueType type;
-    private static final byte[] EOF_MARKER = new byte[0];
 
-    public IndexFieldDefinition(String name, IndexValueType type) {
-        this(name, type, Order.ASCENDING);
+    public IndexFieldDefinition(String name) {
+        this(name, Order.ASCENDING);
     }
 
-    public IndexFieldDefinition(String name, IndexValueType type, Order order) {
+    public IndexFieldDefinition(String name, Order order) {
         this.name = name;
         this.order = order;
-        this.type = type;
     }
 
-    public IndexFieldDefinition(String name, IndexValueType type, ObjectNode jsonObject) {
-        this(name, type);
-
-        if (jsonObject.get("order") != null)
-            this.order = Order.valueOf(jsonObject.get("order").getTextValue());
+    public IndexFieldDefinition(String name, ObjectNode jsonObject) {
+        this(name, jsonObject.get("order") != null ? Order.valueOf(jsonObject.get("order").getTextValue()) : null);
     }
 
     public String getName() {
         return name;
-    }
-
-    public IndexValueType getType() {
-        return type;
     }
 
     public Order getOrder() {
@@ -62,29 +54,6 @@ public abstract class IndexFieldDefinition {
         this.order = order;
     }
 
-    /**
-     * The length of this index field in bytes, thus the number of bytes
-     * this entry needs in the index row key. For variable-length fields,
-     * this should return -1.
-     */
-    public abstract int getLength();
-
-    /**
-     * Converts the specified value to bytes according to the rules of this
-     * IndexFieldDefinition.
-     */
-    public abstract byte[] toBytes(Object value);
-
-    /**
-     * For variable-length fields, returns a sequence which should be used
-     * to mark the end of the field. It is an error if this sequence occurs
-     * in the value. For fixed-length fields, this should return a zero-length
-     * byte array.
-     */
-    public byte[] getEndOfFieldMarker() {
-        return EOF_MARKER;
-    }
-
     public ObjectNode toJson() {
         JsonNodeFactory factory = JsonNodeFactory.instance;
         ObjectNode object = factory.objectNode();
@@ -92,6 +61,14 @@ public abstract class IndexFieldDefinition {
         object.put("order", this.order.toString());
         return object;
     }
+
+    abstract RowKey asRowKey();
+
+    /**
+     * @return a rowKey with termination explicitely disabled (only to be used for prefix searches etc, never to be
+     *         used for actually storing in HBase!)
+     */
+    abstract RowKey asRowKeyWithoutTermination();
 
     @Override
     public boolean equals(Object obj) {
@@ -102,15 +79,12 @@ public abstract class IndexFieldDefinition {
         if (getClass() != obj.getClass())
             return false;
 
-        IndexFieldDefinition other = (IndexFieldDefinition)obj;
+        IndexFieldDefinition other = (IndexFieldDefinition) obj;
 
         if (!name.equals(other.name))
             return false;
 
         if (order != other.order)
-            return false;
-
-        if (type != other.type)
             return false;
 
         return true;
@@ -120,7 +94,6 @@ public abstract class IndexFieldDefinition {
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (order != null ? order.hashCode() : 0);
-        result = 31 * result + (type != null ? type.hashCode() : 0);
         return result;
     }
 }

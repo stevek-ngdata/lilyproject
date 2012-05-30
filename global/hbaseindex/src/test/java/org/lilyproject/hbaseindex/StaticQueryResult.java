@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.hbaseindex.test;
-
-import org.lilyproject.hbaseindex.QueryResult;
+package org.lilyproject.hbaseindex;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -32,7 +30,7 @@ public class StaticQueryResult implements QueryResult {
     public byte[] next() throws IOException {
         return iterator.hasNext() ? iterator.next() : null;
     }
-    
+
     @Override
     public byte[] getData(byte[] qualifier) {
         return null;

@@ -15,20 +15,22 @@
  */
 package org.lilyproject.hbaseindex;
 
-import org.apache.hadoop.hbase.client.ResultScanner;
-
 import java.io.IOException;
+
+import com.gotometrics.orderly.StructIterator;
+import com.gotometrics.orderly.StructRowKey;
+import org.apache.hadoop.hbase.client.ResultScanner;
 
 /**
  * A QueryResult on top of a HBase scanner.
  */
 class ScannerQueryResult extends BaseQueryResult {
     private ResultScanner scanner;
-    private boolean invertIdentifier;
+    private IndexDefinition definition;
 
-    public ScannerQueryResult(ResultScanner scanner, boolean invertIdentifier) {
+    public ScannerQueryResult(ResultScanner scanner, IndexDefinition definition) {
         this.scanner = scanner;
-        this.invertIdentifier = invertIdentifier;
+        this.definition = definition;
     }
 
     @Override
@@ -40,9 +42,23 @@ class ScannerQueryResult extends BaseQueryResult {
 
         byte[] rowKey = currentResult.getRow();
 
-        byte[] identifier = IdentifierEncoding.decode(rowKey, invertIdentifier);
-        
-        return identifier;
+        return decodeIdentifierFrom(rowKey);
+    }
+
+    private byte[] decodeIdentifierFrom(byte[] rowKey) throws IOException {
+        final StructRowKey structRowKey = definition.asStructRowKey();
+        structRowKey.iterateOver(rowKey);
+
+        final StructIterator iterator = structRowKey.iterator();
+
+        int nbrFields = structRowKey.getFields().length;
+        // ignore all but last field (i.e. the identifier)
+        for (int i = 0; i < nbrFields - 1; i++) {
+            iterator.skip();
+        }
+
+        // read the last field (i.e. the identifier)
+        return (byte[]) iterator.next();
     }
 
     @Override

@@ -15,34 +15,41 @@
  */
 package org.lilyproject.hbaseindex;
 
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.*;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.util.ArgumentValidator;
-import org.lilyproject.util.ByteArrayKey;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.gotometrics.orderly.RowKey;
+import com.gotometrics.orderly.StructBuilder;
+import com.gotometrics.orderly.StructRowKey;
+import com.gotometrics.orderly.Termination;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.ByteArrayKey;
+
 /**
  * Allows to query an index, and add entries to it or remove entries from it.
  *
  * <p>An Index instance can be obtained from {@link IndexManager#getIndex(String)}.
- *
  */
 public class Index {
     private HTableInterface htable;
     private IndexDefinition definition;
 
     protected static final byte[] DATA_FAMILY = Bytes.toBytes("data");
-    private static final byte[] DUMMY_QUALIFIER = new byte[] { 0 };
-    private static final byte[] DUMMY_VALUE = new byte[] { 0 };
-
-    /** Number of bytes overhead per field. */
-    private static final int FIELD_FLAGS_SIZE = 1;
+    private static final byte[] DUMMY_QUALIFIER = new byte[]{0};
+    private static final byte[] DUMMY_VALUE = new byte[]{0};
 
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
@@ -51,7 +58,7 @@ public class Index {
         this.definition = definition;
     }
 
-    protected IndexDefinition getDefinition() {
+    public IndexDefinition getDefinition() {
         return definition;
     }
 
@@ -63,7 +70,7 @@ public class Index {
      */
     public void addEntry(IndexEntry entry) throws IOException {
         ArgumentValidator.notNull(entry, "entry");
-        validateIndexEntry(entry);
+        entry.validate();
 
         Put put = createAddEntryPut(entry);
         htable.put(put);
@@ -77,7 +84,7 @@ public class Index {
         List<Put> puts = new ArrayList<Put>();
 
         for (IndexEntry entry : entries) {
-            validateIndexEntry(entry);
+            entry.validate();
             Put put = createAddEntryPut(entry);
             puts.add(put);
         }
@@ -85,7 +92,7 @@ public class Index {
         htable.put(puts);
     }
 
-    private Put createAddEntryPut(IndexEntry entry) {
+    private Put createAddEntryPut(IndexEntry entry) throws IOException {
         byte[] indexKey = buildRowKey(entry);
         Put put = new Put(indexKey);
 
@@ -108,7 +115,7 @@ public class Index {
      */
     public void removeEntry(IndexEntry entry) throws IOException {
         ArgumentValidator.notNull(entry, "entry");
-        validateIndexEntry(entry);
+        entry.validate();
 
         byte[] indexKey = buildRowKey(entry);
         Delete delete = new Delete(indexKey);
@@ -120,7 +127,7 @@ public class Index {
 
         List<Delete> deletes = new ArrayList<Delete>();
         for (IndexEntry entry : entries) {
-            validateIndexEntry(entry);
+            entry.validate();
 
             byte[] indexKey = buildRowKey(entry);
             Delete delete = new Delete(indexKey);
@@ -130,178 +137,74 @@ public class Index {
         htable.delete(deletes);
     }
 
-    private void validateIndexEntry(IndexEntry indexEntry) {
-        if (indexEntry.getIdentifier() == null) {
-            throw new MalformedIndexEntryException("Index entry does not specify an identifier.");
-        }
-
-        for (Map.Entry<String, Object> entry : indexEntry.getFields().entrySet()) {
-            IndexFieldDefinition fieldDef = definition.getField(entry.getKey());
-            if (fieldDef == null) {
-                throw new MalformedIndexEntryException("Index entry contains a field that is not part of " +
-                        "the index definition: " + entry.getKey());
-            }
-
-            if (entry.getValue() != null) {
-                if (!fieldDef.getType().supportsType(entry.getValue().getClass())) {
-                    throw new MalformedIndexEntryException("Index entry for field " + entry.getKey() + " contains" +
-                            " a value of an incorrect type. Expected: " + fieldDef.getType().getType().getName() +
-                            ", found: " + entry.getValue().getClass().getName());
-                }
-            }
-        }
-    }
-
     /**
      * Build the index row key.
      *
      * <p>The format is as follows:
      *
      * <pre>
-     * ([1 byte field flags][value as bytes][end-of-field marker in case of variable-length fields)*[identifier]
+     * ([encoded value][terminator for variable length fields])*[identifier]
      * </pre>
-     *
-     * <p>The field flags are currently used to mark if a field is null
-     * or not. If a field is null, its value will be encoded as all-zero bits.
      */
-    private byte[] buildRowKey(IndexEntry entry) {
-        List<byte[]> keyComponents = new ArrayList<byte[]>(definition.getFields().size());
+    private byte[] buildRowKey(IndexEntry entry) throws IOException {
+        final StructRowKey indexEntryRowKeySerializer = definition.asStructRowKey();
 
-        for (IndexFieldDefinition fieldDef : definition.getFields()) {
-            Object value = entry.getValue(fieldDef.getName());
-            byte[] bytes = fieldToBytes(fieldDef, value, true);
-            keyComponents.add(bytes);
-        }
-
-        byte[] encodedIdentifier = IdentifierEncoding.encode(entry.getIdentifier());
-
-        // Calculate length of the index key
-        int keyLength = 0;
-        for (byte[] bytes : keyComponents) {
-            keyLength += bytes.length;
-        }
-        keyLength += encodedIdentifier.length;
-
-        // Create the index key
-        // Add all the fields
-        byte[] indexKey = new byte[keyLength];
-        int pos = 0;
-        for (byte[] bytes : keyComponents) {
-            System.arraycopy(bytes, 0, indexKey, pos, bytes.length);
-            pos += bytes.length;
-        }
-
-        // Add the identifier
-        System.arraycopy(encodedIdentifier, 0, indexKey, pos, encodedIdentifier.length);
-
-        if (definition.getIdentifierOrder() == Order.DESCENDING) {
-            invertBits(indexKey, pos, indexKey.length);
-        }
-
-        return indexKey;
-    }
-
-    /**
-     *
-     * @param includeEndMarker for variable-length fields, indicates that the end-of-field marker should be included
-     */
-    private byte[] fieldToBytes(IndexFieldDefinition fieldDef, Object value, boolean includeEndMarker) {
-        byte[] valueAsBytes;
-        if (value != null) {
-            valueAsBytes = fieldDef.toBytes(value);
-        } else {
-            valueAsBytes = new byte[0];
-        }
-
-        byte[] eof = includeEndMarker ? fieldDef.getEndOfFieldMarker() : EMPTY_BYTE_ARRAY;
-
-        //
-        // Construct the result, which consists of flags + value + eof
-        //
-        int totalLength = FIELD_FLAGS_SIZE + valueAsBytes.length + eof.length;
-
-        byte[] bytes = new byte[totalLength];
-        if (value == null) {
-            bytes[0] = setNullFlag((byte)0);
-        }
-
-        System.arraycopy(valueAsBytes, 0, bytes, 1, valueAsBytes.length);
-
-        System.arraycopy(eof, 0, bytes, valueAsBytes.length + 1, eof.length);
-        
-        if (fieldDef.getOrder() == Order.DESCENDING) {
-            // we invert everything, including the field flags (which is not really necessary)
-            invertBits(bytes, 0, bytes.length);
-        }
-
-        return bytes;
-    }
-
-    private void invertBits(byte[] bytes, int startOffset, int endOffset) {
-        for (int i = startOffset; i < endOffset; i++) {
-            bytes[i] ^= 0xFF;
-        }
-    }
-
-    private byte setNullFlag(byte flags) {
-        return (byte)(flags | 0x01);
+        return indexEntryRowKeySerializer.serialize(entry.getFieldValuesInSerializationOrder());
     }
 
     public QueryResult performQuery(Query query) throws IOException {
-        // First validate that all the fields used in the query exist in the index definition
-        for (Query.EqualsCondition eqCond : query.getEqConditions()) {
-            if (definition.getField(eqCond.getName()) == null) {
-                String msg = String.format("The query refers to a field which does not exist in this index: %1$s",
-                        eqCond.getName());
-                throw new MalformedQueryException(msg);
-            }
-        }
-        if (query.getRangeCondition() != null && definition.getField(query.getRangeCondition().getName()) == null) {
-            String msg = String.format("The query refers to a field which does not exist in this index: %1$s",
-                    query.getRangeCondition().getName());
-            throw new MalformedQueryException(msg);
-        }
+        validateQuery(query);
+
+        final StructBuilder fromKeyStructBuilder = new StructBuilder();
+        final StructBuilder toKeyStructBuilder = new StructBuilder();
 
         // Construct from and to keys
 
-        List<IndexFieldDefinition> fieldDefs = definition.getFields();
-
-        List<byte[]> fromKeyComponents = new ArrayList<byte[]>(fieldDefs.size());
+        final List<Object> fromKeyComponents = new ArrayList<Object>(definition.getFields().size());
         byte[] fromKey = null;
         byte[] toKey = null;
 
-        Query.RangeCondition rangeCond = query.getRangeCondition();
+        final Query.RangeCondition rangeCond = query.getRangeCondition();
         boolean rangeCondSet = false;
         int usedConditionsCount = 0;
-        int i = 0;
-        for (; i < fieldDefs.size(); i++) {
-            IndexFieldDefinition fieldDef = fieldDefs.get(i);
+        int definedFieldsIndex = 0;
 
-            Query.EqualsCondition eqCond = query.getCondition(fieldDef.getName());
+        // loop through all defined index fields, and see if they occur in the query
+        for (; definedFieldsIndex < definition.getFields().size(); definedFieldsIndex++) {
+            final IndexFieldDefinition fieldDef = definition.getFields().get(definedFieldsIndex);
+
+            final Query.EqualsCondition eqCond = query.getCondition(fieldDef.getName());
             if (eqCond != null) {
+                // there is an equality condition for this field
                 checkQueryValueType(fieldDef, eqCond.getValue());
-                byte[] bytes = fieldToBytes(fieldDef, eqCond.getValue(), true);
-                fromKeyComponents.add(bytes);
+                final RowKey key = fieldDef.asRowKey();
+                key.setTermination(Termination.MUST);
+                fromKeyStructBuilder.add(key);
+                fromKeyComponents.add(eqCond.getValue());
                 usedConditionsCount++;
             } else if (rangeCond != null) {
+                // no equality condition for this field, but there is a range condition
                 if (!rangeCond.getName().equals(fieldDef.getName())) {
                     throw new MalformedQueryException("Query defines range condition on field " + rangeCond.getName() +
                             " but has no equals condition on field " + fieldDef.getName() +
                             " which comes earlier in the index definition.");
                 }
 
-                List<byte[]> toKeyComponents = new ArrayList<byte[]>(fromKeyComponents.size() + 1);
+                final List<Object> toKeyComponents = new ArrayList<Object>(fromKeyComponents.size() + 1);
                 toKeyComponents.addAll(fromKeyComponents);
+                for (RowKey rowKey : fromKeyStructBuilder.getFields()) {
+                    toKeyStructBuilder.add(rowKey);
+                }
 
-                Object fromValue = query.getRangeCondition().getFromValue();
-                Object toValue = query.getRangeCondition().getToValue();
+                final Object fromValue = query.getRangeCondition().getFromValue();
+                final Object toValue = query.getRangeCondition().getToValue();
 
                 if (fromValue == Query.MIN_VALUE) {
                     // just leave of the value, a shorter key is smaller than anything else
                 } else {
                     checkQueryValueType(fieldDef, fromValue);
-                    byte[] bytes = fieldToBytes(fieldDef, fromValue, false);
-                    fromKeyComponents.add(bytes);
+                    fromKeyComponents.add(fromValue);
+                    fromKeyStructBuilder.add(fieldDef.asRowKeyWithoutTermination());
                 }
 
                 if (toValue == Query.MAX_VALUE) {
@@ -310,12 +213,14 @@ public class Index {
                     // So, append nothing to the search key.
                 } else {
                     checkQueryValueType(fieldDef, toValue);
-                    byte[] bytes = fieldToBytes(fieldDef, toValue, false);
-                    toKeyComponents.add(bytes);
+                    toKeyComponents.add(toValue);
+                    toKeyStructBuilder.add(fieldDef.asRowKeyWithoutTermination());
                 }
 
-                fromKey = concat(fromKeyComponents);
-                toKey = concat(toKeyComponents);
+                final StructRowKey frk = fromKeyStructBuilder.toRowKey();
+                fromKey = frk.serialize(fromKeyComponents.toArray());
+                final StructRowKey trk = toKeyStructBuilder.toRowKey();
+                toKey = trk.serialize(toKeyComponents.toArray());
 
                 rangeCondSet = true;
                 usedConditionsCount++;
@@ -328,12 +233,14 @@ public class Index {
         }
 
         // Check if we have used all conditions defined in the query
-        if (i < fieldDefs.size() && usedConditionsCount < query.getEqConditions().size() + (rangeCond != null ? 1 : 0)) {
+        if (definedFieldsIndex < definition.getFields().size() &&
+                usedConditionsCount < query.getEqConditions().size() + (rangeCond != null ? 1 : 0)) {
             StringBuilder message = new StringBuilder();
             message.append("The query contains conditions on fields which either did not follow immediately on ");
-            message.append("the previous equals condition or followed after a range condition on a field. The fields are: ");
-            for (; i < fieldDefs.size(); i++) {
-                IndexFieldDefinition fieldDef = fieldDefs.get(i);
+            message.append(
+                    "the previous equals condition or followed after a range condition on a field. The fields are: ");
+            for (; definedFieldsIndex < definition.getFields().size(); definedFieldsIndex++) {
+                IndexFieldDefinition fieldDef = definition.getFields().get(definedFieldsIndex);
                 if (query.getCondition(fieldDef.getName()) != null) {
                     message.append(fieldDef.getName());
                 } else if (rangeCond != null && rangeCond.getName().equals(fieldDef.getName())) {
@@ -346,7 +253,9 @@ public class Index {
 
         if (!rangeCondSet) {
             // Construct fromKey/toKey for the case there were only equals conditions
-            fromKey = concat(fromKeyComponents);
+            final StructRowKey rk = fromKeyStructBuilder.toRowKey();
+            rk.setTermination(Termination.MUST);
+            fromKey = rk.serialize(fromKeyComponents.toArray());
             toKey = fromKey;
         }
 
@@ -355,7 +264,8 @@ public class Index {
         // Query.MAX_VALUE is a value which should be larger than anything, so cannot be an inclusive upper bound
         // The importance of this is because for Query.MAX_VALUE, we do a prefix scan so the operator should be
         // CompareOp.LESS_OR_EQUAL
-        boolean upperBoundInclusive = rangeCond != null && (rangeCond.isUpperBoundInclusive() || rangeCond.getToValue() == Query.MAX_VALUE);
+        boolean upperBoundInclusive =
+                rangeCond != null && (rangeCond.isUpperBoundInclusive() || rangeCond.getToValue() == Query.MAX_VALUE);
         CompareOp op = rangeCondSet && !upperBoundInclusive ? CompareOp.LESS : CompareOp.LESS_OR_EQUAL;
         Filter toFilter = new RowFilter(op, new BinaryPrefixComparator(toKey));
 
@@ -375,29 +285,40 @@ public class Index {
 
         scan.setCaching(30);
 
-        return new ScannerQueryResult(htable.getScanner(scan), definition.getIdentifierOrder() == Order.DESCENDING);
+        return new ScannerQueryResult(htable.getScanner(scan), definition);
+    }
+
+    /**
+     * Validates that all fields used in the query actually exist in the index definition.
+     *
+     * TODO: shouldn't we also validate that the requested sort order corresponds with the indexed order etc?
+     *
+     * @param query query to validate
+     */
+    private void validateQuery(Query query) {
+        for (Query.EqualsCondition eqCond : query.getEqConditions()) {
+            if (definition.getField(eqCond.getName()) == null) {
+                throw new MalformedQueryException(
+                        String.format("The query refers to a field which does not exist in this index: %1$s",
+                                eqCond.getName()));
+            }
+        }
+        if (query.getRangeCondition() != null && definition.getField(query.getRangeCondition().getName()) == null) {
+            throw new MalformedQueryException(
+                    String.format("The query refers to a field which does not exist in this index: %1$s",
+                            query.getRangeCondition().getName()));
+        }
     }
 
     private void checkQueryValueType(IndexFieldDefinition fieldDef, Object value) {
-        if (value != null && !fieldDef.getType().supportsType(value.getClass())) {
-            throw new MalformedQueryException("Query includes a condition on field " + fieldDef.getName() + " with" +
-                    " a value of an incorrect type. Expected: " + fieldDef.getType().getType().getName() +
-                    ", found: " + value.getClass().getName());
+        if (value != null) {
+            final RowKey rowKey = fieldDef.asRowKey();
+            if (!rowKey.getDeserializedClass().isAssignableFrom(value.getClass())) {
+                throw new MalformedQueryException("query for field " + fieldDef.getName() + " contains" +
+                        " a value of an incorrect type. Expected: " + rowKey.getDeserializedClass() +
+                        ", found: " + value.getClass().getName());
+            }
         }
-    }
-
-    private byte[] concat(List<byte[]> list) {
-        int length = 0;
-        for (byte[] bytes : list) {
-            length += bytes.length;
-        }
-        byte[] result = new byte[length];
-        int pos = 0;
-        for (byte[] bytes : list) {
-            System.arraycopy(bytes, 0, result, pos, bytes.length);
-            pos += bytes.length;
-        }
-        return result;
     }
 
 }

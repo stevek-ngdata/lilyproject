@@ -15,48 +15,45 @@
  */
 package org.lilyproject.hbaseindex;
 
+import com.gotometrics.orderly.FixedByteArrayRowKey;
+import com.gotometrics.orderly.RowKey;
+import com.gotometrics.orderly.Termination;
 import org.codehaus.jackson.node.ObjectNode;
 
 /**
- * This kind of field allows to store arbitrary bytes (a byte array)
- * in the index key, the ideal fallback the case none of the other
- * types suite your needs. Only for fixed-length byte arrays, if the
- * provided value is longer it will be cut off, otherwise it will
- * be padded with zeros.
+ * This kind of field allows to store arbitrary bytes (a byte array) in the index key, the ideal fallback the case none
+ * of the other types suite your needs. Only for fixed-length byte arrays, if the provided value is longer it will be
+ * cut off, otherwise it will be padded with zeros.
  */
 public class ByteIndexFieldDefinition extends IndexFieldDefinition {
-    private int length;
+    private final int length;
 
     public ByteIndexFieldDefinition(String name, int length) {
-        super(name, IndexValueType.BYTES);
+        super(name);
 
         this.length = length;
     }
 
     public ByteIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        super(name, IndexValueType.BYTES, jsonObject);
-
-        if (jsonObject.get("length") != null)
-            this.length = jsonObject.get("length").getIntValue();
+        this(name, jsonObject.get("length") != null ? jsonObject.get("length").getIntValue() : -1);
     }
 
-    @Override
     public int getLength() {
         return length;
     }
 
     @Override
-    public byte[] toBytes(Object value) {
-        byte[] byteValue = (byte[])value;
-        if (byteValue.length == getLength())
-            return byteValue;
+    RowKey asRowKey() {
+        final FixedByteArrayRowKey rowKey = new FixedByteArrayRowKey(length);
+        rowKey.setOrder(this.getOrder());
+        return rowKey;
+    }
 
-        byte[] bytes = new byte[getLength()];
-
-        int copyLength = byteValue.length < length ? byteValue.length : length;
-        System.arraycopy(byteValue, 0, bytes, 0, copyLength);
-
-        return bytes;
+    @Override
+    RowKey asRowKeyWithoutTermination() {
+        final RowKey rowKey = asRowKey();
+        rowKey.setTermination(Termination.SHOULD_NOT);
+        return rowKey;
     }
 
     @Override

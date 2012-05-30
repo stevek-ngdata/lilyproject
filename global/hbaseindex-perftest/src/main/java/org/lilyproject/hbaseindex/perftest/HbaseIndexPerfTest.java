@@ -15,21 +15,25 @@
  */
 package org.lilyproject.hbaseindex.perftest;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.lilyproject.cli.OptionUtil;
-import org.lilyproject.hbaseindex.*;
+import org.lilyproject.hbaseindex.Index;
+import org.lilyproject.hbaseindex.IndexDefinition;
+import org.lilyproject.hbaseindex.IndexEntry;
+import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.hbaseindex.Query;
+import org.lilyproject.hbaseindex.QueryResult;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.testclientfw.BaseTestTool;
-import org.lilyproject.testclientfw.Util;
 import org.lilyproject.testclientfw.Words;
 import org.lilyproject.util.Version;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class HbaseIndexPerfTest extends BaseTestTool {
@@ -114,7 +118,8 @@ public class HbaseIndexPerfTest extends BaseTestTool {
         initialInsertsBatchSize = OptionUtil.getIntOption(cmd, initialInsertBatchOption, 300);
         loops = OptionUtil.getIntOption(cmd, loopsOption, 100000);
 
-        System.out.println("Will insert " + initialInserts + " index entries in batches of " + initialInsertBatchOption);
+        System.out
+                .println("Will insert " + initialInserts + " index entries in batches of " + initialInsertBatchOption);
         System.out.println("Will then perform " + loops + " tests on it");
 
         setupMetrics();
@@ -169,9 +174,9 @@ public class HbaseIndexPerfTest extends BaseTestTool {
                 List<IndexEntry> entries = new ArrayList<IndexEntry>(amount);
 
                 for (int i = 0; i < amount; i++) {
-                    IndexEntry entry = new IndexEntry();
+                    IndexEntry entry = new IndexEntry(index.getDefinition());
                     entry.addField("word", Words.get());
-                    entry.addField("number", (long)Math.floor(Math.random() * Long.MAX_VALUE));
+                    entry.addField("number", (long) Math.floor(Math.random() * Long.MAX_VALUE));
                     entry.setIdentifier(idGenerator.newRecordId().toBytes());
                     entries.add(entry);
                 }

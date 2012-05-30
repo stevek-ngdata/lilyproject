@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.hbaseindex.test;
+package org.lilyproject.hbaseindex;
+
+import java.io.IOException;
+import java.math.BigDecimal;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
-import org.lilyproject.hbaseindex.*;
-import org.lilyproject.hbaseindex.DateTimeIndexFieldDefinition.Precision;
-import java.math.BigDecimal;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Various tests that check whether the comparison of the binary representations
  * of values gives the expected result.
+ *
+ * Actually we are testing Orderly here, which is the underlying library used for encoding/decoding index row keys.
  */
 public class ByteComparisonTest {
     @Test
@@ -106,69 +107,40 @@ public class ByteComparisonTest {
     }
 
     @Test
-    public void testCollatorStringCompare() throws Exception {
-        StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
-        fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.COLLATOR);
-
-        byte[] string1 = fieldDef.toBytes("\u00EAtre"); // être
-
-        byte[] string2 = fieldDef.toBytes("heureux");
-
-        assertTrue(Bytes.compareTo(string1, string2) < 0);
-    }
-
-    @Test
     public void testUtf8StringCompare() throws Exception {
         StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
-        fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.UTF8);
 
-        byte[] string1 = fieldDef.toBytes("\u00EAtre");
+        byte[] string1 = fieldDef.asRowKey().serialize(Bytes.toBytes("\u00EAtre"));
 
-        byte[] string2 = fieldDef.toBytes("heureux");
+        byte[] string2 = fieldDef.asRowKey().serialize(Bytes.toBytes("heureux"));
 
         assertTrue(Bytes.compareTo(string1, string2) > 0);
     }
 
-    @Test
-    public void testAsciiFoldingStringCompare() throws Exception {
-        StringIndexFieldDefinition fieldDef = new StringIndexFieldDefinition("foobar");
-        fieldDef.setByteEncodeMode(StringIndexFieldDefinition.ByteEncodeMode.ASCII_FOLDING);
-
-        byte[] string1 = fieldDef.toBytes("\u00EAtre");
-
-        byte[] string2 = fieldDef.toBytes("etre");
-
-        assertTrue(Bytes.compareTo(string1, string2) == 0);               
-    }
-
-    private byte[] toSortableBytes(int value) {
+    private byte[] toSortableBytes(int value) throws IOException {
         IntegerIndexFieldDefinition fieldDef = new IntegerIndexFieldDefinition("foobar");
-        byte[] result = fieldDef.toBytes(value);
-        return result;
+        return fieldDef.asRowKey().serialize(value);
     }
 
-    private byte[] toSortableBytes(float value) {
+    private byte[] toSortableBytes(float value) throws IOException {
         FloatIndexFieldDefinition fieldDef = new FloatIndexFieldDefinition("foobar");
-        byte[] result = fieldDef.toBytes(value);
-        return result;
+        return fieldDef.asRowKey().serialize(value);
     }
 
-    private byte[] toSortableBytes(BigDecimal value) {
+    private byte[] toSortableBytes(BigDecimal value) throws IOException {
         DecimalIndexFieldDefinition fieldDef = new DecimalIndexFieldDefinition("foobar");
-        fieldDef.setLength(50);
-        byte[] result = fieldDef.toBytes(value);
-        return result;
+        return fieldDef.asRowKey().serialize(value);
     }
 
     @Test
     public void testDecimalCompare() throws Exception {
         String[] testNumbers = {"-99999999999999999999999999999999999999999999999999999999999999999999999999999999",
-        "-10.000000000000000000000000000000000000000000000000000000000000000000000000000000002",
-        "-10.000000000000000000000000000000000000000000000000000000000000000000000000000000001",
-        "0",
-        "5.5",
-        "55.5",
-        "0.1E16383"};
+                "-10.000000000000000000000000000000000000000000000000000000000000000000000000000000002",
+                "-10.000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+                "0",
+                "5.5",
+                "55.5",
+                "0.1E16383"};
 
         BigDecimal[] testDecimals = new BigDecimal[testNumbers.length];
         for (int i = 0; i < testDecimals.length; i++) {
@@ -198,90 +170,6 @@ public class ByteComparisonTest {
                 }
             }
         }
-
-        // Verify cutoff of precision
-        DecimalIndexFieldDefinition fieldDef = new DecimalIndexFieldDefinition("foobar");
-        fieldDef.setLength(5);
-        byte[] r1 = fieldDef.toBytes(new BigDecimal("10.000000000000000000000000000000000000000000000000000000000000001"));
-        byte[] r2 = fieldDef.toBytes(new BigDecimal("10.000000000000000000000000000000000000000000000000000000000000002"));
-
-        assertEquals(5, r1.length);
-        assertEquals(5, r2.length);
-
-        assertEquals(0, Bytes.compareTo(r1, r2));
-
-        // Verify checks on maximum supported exponents
-        try {
-            toSortableBytes(new BigDecimal("0.1E16384"));
-            fail("Expected error");
-        } catch (RuntimeException e) {}
-
-        try {
-            toSortableBytes(new BigDecimal("0.1E-16385"));
-            fail("Expected error");
-        } catch (RuntimeException e) {}
-    }
-
-    @Test
-    public void testDateCompare() throws Exception {
-        byte[] bytes1 = date(Precision.DATE, 2010, 2, 1, 14, 20, 10, 333);
-        byte[] bytes2 = date(Precision.DATE, 2010, 2, 1, 8, 15, 11, 250);
-        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
-    }
-
-    @Test
-    public void testTimeCompare() throws Exception {
-        byte[] bytes1 = date(Precision.TIME, 2008, 5, 12, 8, 15, 11, 250);
-        byte[] bytes2 = date(Precision.TIME, 2010, 2, 1, 8, 15, 11, 250);
-        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
-
-        bytes1 = date(Precision.TIME, 2008, 5, 12, 8, 15, 11, 250);
-        bytes2 = date(Precision.TIME, 2010, 2, 1, 8, 15, 11, 251);
-        assertTrue(Bytes.compareTo(bytes1, bytes2) < 0);
-
-        bytes1 = date(Precision.TIME, 2008, 5, 12, 8, 15, 11, 251);
-        bytes2 = date(Precision.TIME, 2010, 2, 1, 8, 15, 11, 250);
-        assertTrue(Bytes.compareTo(bytes1, bytes2) > 0);
-    }
-
-    @Test
-    public void testTimeNoMillisCompare() throws Exception {
-        byte[] bytes1 = date(Precision.TIME_NOMILLIS, 2008, 5, 12, 8, 15, 11, 250);
-        byte[] bytes2 = date(Precision.TIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 251);
-        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
-    }
-
-    @Test
-    public void testDateTimeCompare() throws Exception {
-        byte[] bytes1 = date(Precision.DATETIME, 2010, 2, 1, 8, 15, 11, 250);
-        byte[] bytes2 = date(Precision.DATETIME, 2010, 2, 1, 8, 15, 11, 250);
-        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
-    }
-
-    @Test
-    public void testDateTimeNoMillisCompare() throws Exception {
-        byte[] bytes1 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 250);
-        byte[] bytes2 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 251);
-        assertEquals(0, Bytes.compareTo(bytes1, bytes2));
-
-        bytes1 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 250);
-        bytes2 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 12, 250);
-        assertTrue(Bytes.compareTo(bytes1, bytes2) < 0);
-
-        bytes1 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 12, 250);
-        bytes2 = date(Precision.DATETIME_NOMILLIS, 2010, 2, 1, 8, 15, 11, 250);
-        assertTrue(Bytes.compareTo(bytes1, bytes2) > 0);
-    }
-
-    private byte[] date(Precision precision, int year, int month, int day, int hour, int minutes, int seconds, int millis) {
-        GregorianCalendar calendar = new GregorianCalendar(year, month - 1, day, hour, minutes, seconds);
-        calendar.set(Calendar.MILLISECOND, millis);
-
-        DateTimeIndexFieldDefinition fieldDef = new DateTimeIndexFieldDefinition("foobar");
-        fieldDef.setPrecision(precision);
-
-        byte[] bytes = fieldDef.toBytes(calendar.getTime());
-        return bytes;
     }
 
     /**

@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.hbaseindex.test;
+package org.lilyproject.hbaseindex;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+
+import com.gotometrics.orderly.Order;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
-import org.lilyproject.hbaseindex.*;
 import org.lilyproject.hadooptestfw.HBaseProxy;
 import org.lilyproject.hadooptestfw.TestHelper;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 // Important: while not done in these testcases, it is recommended to call QueryResult.close()
 // when done using the QueryResult.
@@ -59,7 +63,7 @@ public class IndexTest {
         String[] values = {"d", "a", "c", "e", "b"};
 
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + i));
             index.addEntry(entry);
@@ -84,7 +88,7 @@ public class IndexTest {
         byte[][] values = {Bytes.toBytes("aaa"), Bytes.toBytes("aab")};
 
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + i));
             index.addEntry(entry);
@@ -110,11 +114,11 @@ public class IndexTest {
         int[] values = new int[COUNT];
 
         for (int i = 0; i < COUNT; i++) {
-            values[i] = (int)(Math.random() * MAXVALUE);
+            values[i] = (int) (Math.random() * MAXVALUE);
         }
 
         for (int value : values) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", value);
             entry.setIdentifier(Bytes.toBytes("key" + value));
             index.addEntry(entry);
@@ -144,7 +148,7 @@ public class IndexTest {
 
         long values[] = {Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE};
         for (long value : values) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", value);
             entry.setIdentifier(Bytes.toBytes("key" + value));
             index.addEntry(entry);
@@ -173,7 +177,7 @@ public class IndexTest {
         float[] values = {55.45f, 63.88f, 55.46f, 55.47f, -0.3f};
 
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + i));
             index.addEntry(entry);
@@ -183,37 +187,6 @@ public class IndexTest {
         query.setRangeCondition("field1", new Float(55.44f), new Float(55.48f));
         QueryResult result = index.performQuery(query);
         assertResultIds(result, "key0", "key2", "key3");
-    }
-
-    @Test
-    public void testSingleDateTimeFieldIndex() throws Exception {
-        final String INDEX_NAME = "singleDateTimeField";
-        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
-
-        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
-        DateTimeIndexFieldDefinition fieldDef = indexDef.addDateTimeField("field1");
-        fieldDef.setPrecision(DateTimeIndexFieldDefinition.Precision.DATETIME_NOMILLIS);
-        Index index = indexManager.getIndex(indexDef);
-
-        Date[] values = {
-                new GregorianCalendar(2010, 1, 15, 14, 5, 0).getTime(),
-                new GregorianCalendar(2010, 1, 15, 14, 5, 1).getTime(),
-                new GregorianCalendar(2010, 1, 16, 10, 0, 0).getTime(),
-                new GregorianCalendar(2010, 1, 17, 10, 0, 0).getTime()
-        };
-
-        for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
-            entry.addField("field1", values[i]);
-            entry.setIdentifier(Bytes.toBytes("key" + i));
-            index.addEntry(entry);
-        }
-
-        Query query = new Query();
-        query.setRangeCondition("field1", new GregorianCalendar(2010, 1, 15, 14, 5, 0).getTime(),
-                new GregorianCalendar(2010, 1, 15, 14, 5, 1).getTime());
-        QueryResult result = index.performQuery(query);
-        assertResultIds(result, "key0", "key1");
     }
 
     @Test
@@ -228,7 +201,7 @@ public class IndexTest {
         String[] values = {"33.66", "-1", "-3.00007E77"};
 
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", new BigDecimal(values[i]));
             entry.setIdentifier(Bytes.toBytes("key" + i));
             index.addEntry(entry);
@@ -263,7 +236,7 @@ public class IndexTest {
         String[] values = {"a", "a", "a", "a", "b", "c", "d"};
 
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + i));
             index.addEntry(entry);
@@ -287,7 +260,7 @@ public class IndexTest {
 
         Index index = indexManager.getIndex(indexDef);
 
-        IndexEntry entry = new IndexEntry();
+        IndexEntry entry = new IndexEntry(indexDef);
         entry.addField("field1", 10);
         entry.addField("field2", "a");
         entry.setIdentifier(Bytes.toBytes("key1"));
@@ -297,13 +270,13 @@ public class IndexTest {
         entry.setIdentifier(Bytes.toBytes("key3"));
         index.addEntry(entry);
 
-        entry = new IndexEntry();
+        entry = new IndexEntry(indexDef);
         entry.addField("field1", 11);
         entry.addField("field2", "a");
         entry.setIdentifier(Bytes.toBytes("key4"));
         index.addEntry(entry);
 
-        entry = new IndexEntry();
+        entry = new IndexEntry(indexDef);
         entry.addField("field1", 10);
         entry.addField("field2", "b");
         entry.setIdentifier(Bytes.toBytes("key5"));
@@ -328,7 +301,7 @@ public class IndexTest {
         Index index = indexManager.getIndex(indexDef);
 
         // Add the entry
-        IndexEntry entry = new IndexEntry();
+        IndexEntry entry = new IndexEntry(indexDef);
         entry.addField("field1", "foobar");
         entry.setIdentifier(Bytes.toBytes("key1"));
         index.addEntry(entry);
@@ -362,16 +335,16 @@ public class IndexTest {
 
         Index index = indexManager.getIndex(indexDef);
 
-        IndexEntry entry = new IndexEntry();
+        IndexEntry entry = new IndexEntry(indexDef);
         entry.addField("field1", "foobar");
         entry.setIdentifier(Bytes.toBytes("key1"));
         index.addEntry(entry);
 
-        entry = new IndexEntry();
+        entry = new IndexEntry(indexDef);
         entry.setIdentifier(Bytes.toBytes("key2"));
         index.addEntry(entry);
 
-        entry = new IndexEntry();
+        entry = new IndexEntry(indexDef);
         entry.addField("field2", "foobar");
         entry.setIdentifier(Bytes.toBytes("key3"));
         index.addEntry(entry);
@@ -442,34 +415,25 @@ public class IndexTest {
 
         Index index = indexManager.getIndex(INDEX_NAME);
 
-        IndexEntry entry = new IndexEntry();
-        entry.addField("nonexistingfield", "foobar");
-        entry.setIdentifier(Bytes.toBytes("key"));
-
+        IndexEntry entry = new IndexEntry(indexDef);
         try {
-            index.addEntry(entry);
+            entry.addField("nonexistingfield", "foobar");
             fail("Expected a MalformedIndexEntryException.");
         } catch (MalformedIndexEntryException e) {
             // ok
         }
 
-        entry = new IndexEntry();
-        entry.addField("stringfield", new Integer(55));
-        entry.setIdentifier(Bytes.toBytes("key"));
-
+        entry = new IndexEntry(indexDef);
         try {
-            index.addEntry(entry);
+            entry.addField("stringfield", new Integer(55));
             fail("Expected a MalformedIndexEntryException.");
         } catch (MalformedIndexEntryException e) {
             // ok
         }
 
-        entry = new IndexEntry();
-        entry.addField("floatfield", "hello world");
-        entry.setIdentifier(Bytes.toBytes("key"));
-
+        entry = new IndexEntry(indexDef);
         try {
-            index.addEntry(entry);
+            entry.addField("floatfield", "hello world");
             fail("Expected a MalformedIndexEntryException.");
         } catch (MalformedIndexEntryException e) {
             // ok
@@ -489,7 +453,7 @@ public class IndexTest {
         String[] values = {"baard", "boer", "beek", "kanaal", "paard"};
 
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + i));
             index.addEntry(entry);
@@ -517,7 +481,7 @@ public class IndexTest {
         Index index = indexManager.getIndex(indexDef);
 
         for (int i = 0; i < 3; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", "value A " + i);
             entry.addField("field2", 10 + i);
             entry.addField("field3", "value B " + i);
@@ -620,17 +584,15 @@ public class IndexTest {
         //
 
         // First test correct situation
-        IndexEntry entry = new IndexEntry();
+        IndexEntry entry = new IndexEntry(indexDef);
         entry.addField("field1", "a");
         entry.setIdentifier(Bytes.toBytes("1"));
         index.addEntry(entry);
 
         // Now test incorrect situation
-        entry = new IndexEntry();
-        entry.addField("field1", 55);
-        entry.setIdentifier(Bytes.toBytes("1"));
+        entry = new IndexEntry(indexDef);
         try {
-            index.addEntry(entry);
+            entry.addField("field1", 55);
             fail("Expected exception.");
         } catch (MalformedIndexEntryException e) {
             //System.out.println(e.getMessage());
@@ -665,8 +627,9 @@ public class IndexTest {
         try {
             indexManager.getIndex(indexDef);
             fail("Exception expected.");
-        } catch (IllegalArgumentException e) {}
-    }    
+        } catch (IllegalArgumentException e) {
+        }
+    }
 
     @Test
     public void testExclusiveRanges() throws Exception {
@@ -679,7 +642,7 @@ public class IndexTest {
 
         int[] values = {1, 2, 3, 4};
         for (int value : values) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", value);
             entry.setIdentifier(Bytes.toBytes("key" + value));
             index.addEntry(entry);
@@ -723,9 +686,9 @@ public class IndexTest {
         indexDef.addIntegerField("field1");
         Index index = indexManager.getIndex(indexDef);
 
-        Integer[] values = {Integer.MIN_VALUE, 1, 2, Integer.MAX_VALUE, null};
+        Integer[] values = {null, Integer.MIN_VALUE, 1, 2, Integer.MAX_VALUE};
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + (i + 1)));
             index.addEntry(entry);
@@ -742,14 +705,14 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", Query.MIN_VALUE, 0);
             QueryResult result = index.performQuery(query);
-            assertResultIds(result, "key1");
+            assertResultIds(result, "key1", "key2");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", 0, Query.MAX_VALUE);
             QueryResult result = index.performQuery(query);
-            assertResultIds(result, "key2", "key3", "key4", "key5");
+            assertResultIds(result, "key3", "key4", "key5");
         }
     }
 
@@ -764,9 +727,9 @@ public class IndexTest {
         fieldDef.setOrder(Order.DESCENDING);
         Index index = indexManager.getIndex(indexDef);
 
-        Integer[] values = {1, 2, 2, 3, null};
+        Integer[] values = {null, 1, 2, 2, 3};
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + (i + 1)));
             index.addEntry(entry);
@@ -783,7 +746,7 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", 3, 1);
             QueryResult result = index.performQuery(query);
-            assertResultIds(result, "key4", "key3", "key2", "key1");
+            assertResultIds(result, "key5", "key4", "key3", "key2");
         }
     }
 
@@ -799,7 +762,7 @@ public class IndexTest {
 
         Integer[] values = {1, 1, 2, 2};
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + (i + 1)));
             index.addEntry(entry);
@@ -811,6 +774,47 @@ public class IndexTest {
         query.setRangeCondition("field1", 2, 1);
         QueryResult result = index.performQuery(query);
         assertResultIds(result, "key3", "key4", "key1", "key2");
+    }
+
+    @Test
+    public void testAscendingStringIndex() throws Exception {
+        final String INDEX_NAME = "ascendingStringIndex";
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.setIdentifierOrder(Order.ASCENDING);
+        StringIndexFieldDefinition fieldDef = indexDef.addStringField("field1");
+        fieldDef.setOrder(Order.ASCENDING);
+        Index index = indexManager.getIndex(indexDef);
+
+        String[] values = {"a", "ab", "abc", "b"};
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry(indexDef);
+            entry.addField("field1", values[i]);
+            entry.setIdentifier(Bytes.toBytes("key" + (i + 1)));
+            index.addEntry(entry);
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
+            QueryResult result = index.performQuery(query);
+            assertResultIds(result, "key1", "key2", "key3", "key4");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", "a", "b");
+            QueryResult result = index.performQuery(query);
+            assertResultIds(result, "key1", "key2", "key3", "key4");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", "a", "a");
+            QueryResult result = index.performQuery(query);
+            assertResultIds(result, "key1", "key2", "key3");
+        }
     }
 
     @Test
@@ -826,7 +830,48 @@ public class IndexTest {
 
         String[] values = {"a", "ab", "abc", "b"};
         for (int i = 0; i < values.length; i++) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
+            entry.addField("field1", values[i]);
+            entry.setIdentifier(Bytes.toBytes("key" + (i + 1)));
+            index.addEntry(entry);
+        }
+
+//        {
+//            Query query = new Query();
+//            query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
+//            QueryResult result = index.performQuery(query);
+//            assertResultIds(result, "key4", "key3", "key2", "key1");
+//        }
+//
+//        {
+//            Query query = new Query();
+//            query.setRangeCondition("field1", "b", "a");
+//            QueryResult result = index.performQuery(query);
+//            assertResultIds(result, "key4", "key3", "key2", "key1");
+//        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", "a", "a");
+            QueryResult result = index.performQuery(query);
+            assertResultIds(result, "key3", "key2", "key1");
+        }
+    }
+
+    @Test
+    public void testDescendingStringIndexSpecialCases() throws Exception {
+        final String INDEX_NAME = "descendingStringIndexSpecialCases";
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.setIdentifierOrder(Order.DESCENDING);
+        StringIndexFieldDefinition fieldDef = indexDef.addStringField("field1");
+        fieldDef.setOrder(Order.DESCENDING);
+        Index index = indexManager.getIndex(indexDef);
+
+        String[] values = {null, "", "a", "aa", "ab"};
+        for (int i = 0; i < values.length; i++) {
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", values[i]);
             entry.setIdentifier(Bytes.toBytes("key" + (i + 1)));
             index.addEntry(entry);
@@ -836,21 +881,61 @@ public class IndexTest {
             Query query = new Query();
             query.setRangeCondition("field1", Query.MIN_VALUE, Query.MAX_VALUE);
             QueryResult result = index.performQuery(query);
-            assertResultIds(result, "key4", "key3", "key2", "key1");
-        }
-
-        {
-            Query query = new Query();
-            query.setRangeCondition("field1", "b", "a");
-            QueryResult result = index.performQuery(query);
-            assertResultIds(result, "key4", "key3", "key2", "key1");
+            assertResultIds(result, "key5", "key4", "key3", "key2", "key1");
         }
 
         {
             Query query = new Query();
             query.setRangeCondition("field1", "a", "a");
             QueryResult result = index.performQuery(query);
-            assertResultIds(result, "key3", "key2", "key1");
+            assertResultIds(result, "key5", "key4", "key3");
+        }
+
+    }
+
+    @Test
+    public void testMultiFieldIndexPrefixSearch() throws Exception {
+        final String INDEX_NAME = "multiFieldPrefixSearch";
+        IndexManager indexManager = new IndexManager(HBASE_PROXY.getConf());
+
+        IndexDefinition indexDef = new IndexDefinition(INDEX_NAME);
+        indexDef.setIdentifierOrder(Order.DESCENDING);
+
+        indexDef.addStringField("field1").setOrder(Order.DESCENDING);
+        indexDef.addStringField("field2").setOrder(Order.DESCENDING);
+
+        Index index = indexManager.getIndex(indexDef);
+
+        {
+            IndexEntry entry = new IndexEntry(indexDef);
+            entry.addField("field1", "ab");
+            entry.addField("field2", "cd");
+            entry.setIdentifier(Bytes.toBytes("key1"));
+            index.addEntry(entry);
+        }
+
+        {
+            IndexEntry entry = new IndexEntry(indexDef);
+            entry.addField("field1", "abc");
+            entry.addField("field2", "d");
+            entry.setIdentifier(Bytes.toBytes("key2"));
+            index.addEntry(entry);
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", "ab", "ab");
+            QueryResult result = index.performQuery(query);
+
+            assertResultIds(result, "key2", "key1");
+        }
+
+        {
+            Query query = new Query();
+            query.setRangeCondition("field1", "abc", "abc");
+            QueryResult result = index.performQuery(query);
+
+            assertResultIds(result, "key2");
         }
     }
 
@@ -864,10 +949,10 @@ public class IndexTest {
         indexManager.getIndex(indexDef);
         Index index = indexManager.getIndex(INDEX_NAME);
 
-        String[] values = new String[] {"foo", "bar"};
+        String[] values = new String[]{"foo", "bar"};
 
         for (String value : values) {
-            IndexEntry entry = new IndexEntry();
+            IndexEntry entry = new IndexEntry(indexDef);
             entry.addField("field1", value);
             entry.addData(Bytes.toBytes("originalValue"), Bytes.toBytes(value));
             entry.setIdentifier(Bytes.toBytes(value));
@@ -886,18 +971,18 @@ public class IndexTest {
         assertEquals("foo", result.getDataAsString("originalValue"));
     }
 
-    private void assertResultIds(QueryResult result, String... identifiers) throws IOException {
-        int i = 0;
+    private void assertResultIds(QueryResult result, String... expectedIdentifiers) throws IOException {
+        int resultIdx = 0;
         byte[] identifier;
         while ((identifier = result.next()) != null) {
-            if (i >= identifiers.length) {
+            if (resultIdx >= expectedIdentifiers.length) {
                 fail("Too many query results.");
             }
-            assertEquals(identifiers[i], Bytes.toString(identifier));
-            i++;
+            assertEquals(expectedIdentifiers[resultIdx], Bytes.toString(identifier));
+            resultIdx++;
         }
         assertNull(result.next());
-        assertEquals("too little results", identifiers.length, i);
+        assertEquals("too little query results", expectedIdentifiers.length, resultIdx);
     }
 
     private void assertResultSize(int expectedCount, QueryResult result) throws IOException {

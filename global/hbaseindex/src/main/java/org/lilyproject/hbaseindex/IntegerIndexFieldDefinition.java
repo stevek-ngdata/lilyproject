@@ -15,33 +15,33 @@
  */
 package org.lilyproject.hbaseindex;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import com.gotometrics.orderly.IntegerRowKey;
+import com.gotometrics.orderly.RowKey;
+import com.gotometrics.orderly.Termination;
 import org.codehaus.jackson.node.ObjectNode;
 
 public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
     public IntegerIndexFieldDefinition(String name) {
-        super(name, IndexValueType.INTEGER);
+        super(name);
     }
 
     public IntegerIndexFieldDefinition(String name, ObjectNode jsonObject) {
-        super(name, IndexValueType.INTEGER, jsonObject);
+        super(name, jsonObject);
     }
 
     @Override
-    public int getLength() {
-        return Bytes.SIZEOF_INT;
+    RowKey asRowKey() {
+        final
+        IntegerRowKey rowKey = new IntegerRowKey();
+        rowKey.setOrder(this.getOrder());
+        return rowKey;
     }
 
     @Override
-    public byte[] toBytes(Object value) {
-        byte[] bytes = new byte[getLength()];
-        int integer = (Integer)value;
-        Bytes.putInt(bytes, 0, integer);
-
-        // To make the integers sort correctly when comparing their binary
-        // representations, we need to invert the sign bit
-        bytes[0] ^= 0x80;
-
-        return bytes;
+    RowKey asRowKeyWithoutTermination() {
+        final RowKey rowKey = asRowKey();
+        rowKey.setTermination(Termination.SHOULD_NOT);
+        return rowKey;
     }
+
 }
