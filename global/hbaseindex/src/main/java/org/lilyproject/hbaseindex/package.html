@@ -1,23 +1,21 @@
 <html>
 <body>
 <h1>Intro</h1>
+
 <p>This package contains a library that aids in building and
-  querying indexes on top of HBase, in Google App Engine datastore-style.
-  This basically means querying by range-scanning on specifically constructed index tables.</p>
+    querying indexes on top of HBase, in Google App Engine datastore-style.
+    This basically means querying by range-scanning on specifically constructed index tables.</p>
 
 <p>The goal of this library is to hide the details of playing with HBase's byte[] row keys
-  to construct indexes. Actually pushing data towards the index is not handled by this package.</p>
-
-<p>For more information also see
-  <a href="http://www.lilyproject.org/lily/about/playground/hbaseindexes.html"
-          >this web page</a>.</p>
+    to construct indexes (using the Orderly library under the hood) and to hide the complexity of how queries are
+    performed on indexes. Actually pushing data towards the index is not handled by this package.</p>
 
 <h1>General</h1>
 
 <p>Each index corresponds to one HBase table.</p>
 
 <p>The definition of an index is stored as json in a property LILY_INDEX in the
-  HBase table descriptor (you can see this e.g. in the HBase web ui).</p>
+    HBase table descriptor (you can see this e.g. in the HBase web ui).</p>
 
 <h1>Usage</h1>
 
@@ -45,7 +43,7 @@
   Index index = indexManager.getIndex("myindex");
 
   // Add many entries like this
-  IndexEntry entry = new IndexEntry();
+  IndexEntry entry = new IndexEntry(index);
   entry.addField("myStringField", "foobar");
   entry.addField("myIntField", 55);
   entry.setIdentifier(Bytes.toBytes("identifier"));
@@ -79,26 +77,26 @@
 </pre>
 
 <p>You need to fill the query objects with equals conditions
-  and optionally one range condition. You need to use the fields
-  in the index from left to right, and only on the rightmost used
-  field a range condition can be used.</p>
+    and optionally one range condition. You need to use the fields
+    in the index from left to right, and only on the rightmost used
+    field a range condition can be used.</p>
 
 <p>Range conditions by default have inclusive bounds ('greater
-  than or equals' and 'less than or equals'), but as
-  you can find in the API exclusive bounds are also possible.</p>
+    than or equals' and 'less than or equals'), but as
+    you can find in the API exclusive bounds are also possible.</p>
 
 <h1>Misc</h1>
 
 <h2>Merging results from multiple indexes</h2>
 
 <p>If you build up your queries such that each identifier in the result
-  is unique, then you can merge results from multiple indexes as an
-  "AND" or "OR" operation.</p>
+    is unique, then you can merge results from multiple indexes as an
+    "AND" or "OR" operation.</p>
 
 <p>This is done by using the classes Conjunction or Disjunction.</p>
 
 <p>The way it works is that you build up your two queries and obtain
-  their results, and then supply them to a conjunction:</p>
+    their results, and then supply them to a conjunction:</p>
 
 <pre>
   QueryResult result1 = index.performQuery(query1);
@@ -116,23 +114,22 @@
 </pre>
 
 <p>If you want to combine more than two indexes, you could nest multiple
-  Conjunctions.</p>
+    Conjunctions.</p>
 
 <h2>Null values</h2>
 
 <p>Indexing and querying on null values is supported.</p>
 
-<p>This works because in the index row key there is a meta-byte for
-  each field which records if the field is null or not.</p>
+<p>This works because the row keys support encoding null values.</p>
 
 <h2>Using key-value style indexes</h2>
 
 <p>Note that you could create an index with "key" and "value" fields
-  to create a more generic index, a bit like you would create a key-value
-  table in a SQL database.</p>
+    to create a more generic index, a bit like you would create a key-value
+    table in a SQL database.</p>
 
 <p>In this case, using a Conjunction with queryresults from the same
-  table can be useful.</p>
+    table can be useful.</p>
 
 <h2>NOT-queries</h2>
 
