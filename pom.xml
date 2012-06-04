@@ -72,9 +72,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:svn:https://dev.outerthought.org/svn/outerthought_lilyproject/trunk</connection>
-    <developerConnection>scm:svn:https://dev.outerthought.org/svn/outerthought_lilyproject/trunk</developerConnection>
-    <url>https://dev.outerthought.org/svn/outerthought_lilyproject</url>
+    <connection>scm:git:git@github.com:NGDATA/lilyproject.git</connection>
+    <url>scm:git:git@github.com:NGDATA/lilyproject.git</url>
+    <developerConnection>scm:git:git@github.com:NGDATA/lilyproject.git</developerConnection>
   </scm>
 
   <modules>
