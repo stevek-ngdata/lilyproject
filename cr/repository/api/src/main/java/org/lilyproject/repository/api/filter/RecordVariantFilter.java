@@ -9,7 +9,7 @@ import org.lilyproject.repository.api.RecordId;
  * @author Jan Van Besien
  */
 public class RecordVariantFilter implements RecordFilter {
-    private RecordId recordId;
+    private final RecordId recordId;
 
     public RecordVariantFilter(RecordId recordId) {
         this.recordId = recordId;
@@ -17,9 +17,5 @@ public class RecordVariantFilter implements RecordFilter {
 
     public RecordId getRecordId() {
         return recordId;
-    }
-
-    public void setRecordId(RecordId recordId) {
-        this.recordId = recordId;
     }
 }
