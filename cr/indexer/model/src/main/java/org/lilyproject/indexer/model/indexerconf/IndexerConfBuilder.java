@@ -17,9 +17,13 @@ package org.lilyproject.indexer.model.indexerconf;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
-
 import javax.xml.XMLConstants;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
@@ -30,7 +34,14 @@ import javax.xml.validation.Validator;
 import com.google.common.base.Splitter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.location.LocationAttributes;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
@@ -67,8 +78,6 @@ public class IndexerConfBuilder {
 
     private IndexerConf conf;
 
-    private Repository repository;
-
     private TypeManager typeManager;
 
     private SystemFields systemFields;
@@ -90,7 +99,6 @@ public class IndexerConfBuilder {
     private IndexerConf build(Document doc, Repository repository) throws IndexerConfException {
         validate(doc);
         this.doc = doc;
-        this.repository = repository;
         this.typeManager = repository.getTypeManager();
         this.systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
         this.conf = new IndexerConf();
@@ -170,15 +178,17 @@ public class IndexerConfBuilder {
         try {
             formatterClass = contextCL.loadClass(className);
         } catch (ClassNotFoundException e) {
-            throw new IndexerConfException("Error loading formatter class " + className + " from context class loader.", e);
+            throw new IndexerConfException("Error loading formatter class " + className + " from context class loader.",
+                    e);
         }
 
         if (!Formatter.class.isAssignableFrom(formatterClass)) {
-            throw new IndexerConfException("Specified formatter class does not implement Formatter interface: " + className);
+            throw new IndexerConfException(
+                    "Specified formatter class does not implement Formatter interface: " + className);
         }
 
         try {
-            return (Formatter)formatterClass.newInstance();
+            return (Formatter) formatterClass.newInstance();
         } catch (Exception e) {
             throw new IndexerConfException("Error instantiating formatter class " + className, e);
         }
@@ -290,7 +300,8 @@ public class IndexerConfBuilder {
                 log.warn("The attribute matchMultiValue on dynamicField is not supported anymore, it will be ignored.");
             }
             if (DocumentHelper.getAttribute(fieldEl, "matchHierarchical", false) != null) {
-                log.warn("The attribute matchHierarchical on dynamicField is not supported anymore, it will be ignored.");
+                log.warn(
+                        "The attribute matchHierarchical on dynamicField is not supported anymore, it will be ignored.");
             }
 
             Set<String> variables = new HashSet<String>();
@@ -338,7 +349,6 @@ public class IndexerConfBuilder {
     private Value buildValue(Element fieldEl) throws Exception {
         String valueExpr = DocumentHelper.getAttribute(fieldEl, "value", true);
 
-        FieldType fieldType;
         Value value;
 
         boolean extractContent = DocumentHelper.getBooleanAttribute(fieldEl, "extractContent", false);
@@ -355,124 +365,22 @@ public class IndexerConfBuilder {
         //   * dereference expressions (following links to some other record and then taking a field value from it)
         //
 
-        // A derefence expression is specified as "somelink=>somelink=>somefield"
+        // A dereference expression is specified as "somelink=>somelink=>somefield"
 
         if (valueExpr.contains("=>")) {
             //
-            // Split, normalize, validate the input
+            // A dereference field
             //
-            String[] derefParts = valueExpr.split(Pattern.quote("=>"));
-            for (int i = 0; i < derefParts.length; i++) {
-                String trimmed = derefParts[i].trim();
-                if (trimmed.length() == 0) {
-                    throw new IndexerConfException("Invalid dereference expression '" + valueExpr + "' at "
-                        + LocationAttributes.getLocationString(fieldEl));
-                }
-                derefParts[i] = trimmed;
-            }
-
-            if (derefParts.length < 2) {
-                throw new IndexerConfException("Invalid dereference expression '" + valueExpr + "' at "
-                    + LocationAttributes.getLocationString(fieldEl));
-            }
-
-            //
-            // Last element in the list should be a field
-            //
-            QName targetFieldName;
-            try {
-                targetFieldName = parseQName(derefParts[derefParts.length - 1], fieldEl);
-            } catch (IndexerConfException e) {
-                throw new IndexerConfException("Dereference expression does not end on a valid field name. " +
-                    "Expression: '" + valueExpr + "' at " + LocationAttributes.getLocationString(fieldEl), e);
-            }
-            fieldType = getFieldType(targetFieldName);
-
-            DerefValue deref = new DerefValue(fieldType, extractContent, formatter);
-
-            //
-            // Run over all children except the last
-            //
-            boolean lastFollowIsRecord = false;
-            for (int i = 0; i < derefParts.length - 1; i++) {
-                String derefPart = derefParts[i];
-
-                // A deref expression can navigate through 4 kinds of 'links':
-                //  - a link stored in a link field (detected based on presence of a colon)
-                //  - a nested record
-                //  - a link to the master variant (if it's the literal string 'master')
-                //  - a link to a less-dimensioned variant (all other cases)
-
-                if (derefPart.contains(":")) { // It's a field name
-                    FieldType followField = getFieldType(derefPart, fieldEl);
-
-                    String type = followField.getValueType().getBaseName();
-                    if (type.equals("LIST")) {
-                        type = followField.getValueType().getNestedValueType().getBaseName();
-                    }
-
-                    if (type.equals("RECORD")) {
-                        deref.addRecordFieldFollow(followField);
-                        lastFollowIsRecord = true;
-                    } else if (type.equals("LINK")) {
-                        deref.addLinkFieldFollow(followField);
-                        lastFollowIsRecord = false;
-                    } else {
-                        throw new IndexerConfException("Dereferencing is not possible on field of type " +
-                                followField.getValueType().getName() + ". Field: '" + derefPart +
-                                "', deref expression '" + valueExpr + "' at " +
-                                LocationAttributes.getLocation(fieldEl));
-                    }
-                } else if (derefPart.equals("master")) { // Link to master variant
-                    if (lastFollowIsRecord) {
-                        throw new IndexerConfException("In dereferencing, master cannot follow on record-type field." +
-                                " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
-                    }
-                    lastFollowIsRecord = false;
-                    deref.addMasterFollow();
-                } else {  // Link to less dimensioned variant
-                    if (lastFollowIsRecord) {
-                        throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
-                                " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
-                    }
-                    lastFollowIsRecord = false;
-
-                    // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
-                    boolean validConfig = true;
-                    Set<String> dimensions = new HashSet<String>();
-                    for (String op : COMMA_SPLITTER.split(derefPart)) {
-                        if (op.length() > 1 && op.startsWith("-")) {
-                            String dimension = op.substring(1);
-                            dimensions.add(dimension);
-                        } else {
-                            validConfig = false;
-                            break;
-                        }
-                    }
-                    if (dimensions.size() == 0)
-                        validConfig = false;
-
-                    if (!validConfig) {
-                        throw new IndexerConfException("Invalid specification of variants to follow: '" +
-                                derefPart + "', deref expression: '" + valueExpr + "' " +
-                                "at " + LocationAttributes.getLocation(fieldEl));
-                    }
-
-                    deref.addVariantFollow(dimensions);
-                }
-            }
-
-            deref.init(typeManager);
-            value = deref;
+            value = buildDerefValue(fieldEl, valueExpr, extractContent, formatter);
         } else {
             //
             // A plain field
             //
-            fieldType = getFieldType(valueExpr, fieldEl);
-            value = new FieldValue(fieldType, extractContent, formatter);
+            value = new FieldValue(getFieldType(valueExpr, fieldEl), extractContent, formatter);
         }
 
-        if (extractContent && !fieldType.getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
+        if (extractContent &&
+                !value.getTargetFieldType().getValueType().getDeepestValueType().getBaseName().equals("BLOB")) {
             throw new IndexerConfException("extractContent is used for a non-blob value at "
                     + LocationAttributes.getLocation(fieldEl));
         }
@@ -480,10 +388,145 @@ public class IndexerConfBuilder {
         return value;
     }
 
+    private Value buildDerefValue(Element fieldEl, String valueExpr, boolean extractContent, String formatter)
+            throws IndexerConfException, InterruptedException, RepositoryException {
+
+        final String[] derefParts = parseDerefParts(fieldEl, valueExpr);
+        final FieldType fieldType = constructDerefFieldType(fieldEl, valueExpr, derefParts);
+
+        final DerefValue deref = new DerefValue(fieldType, extractContent, formatter);
+
+        //
+        // Run over all children except the last
+        //
+        boolean lastFollowIsRecord = false;
+        for (int i = 0; i < derefParts.length - 1; i++) {
+            String derefPart = derefParts[i];
+
+            // A deref expression can navigate through 5 kinds of 'links':
+            //  - a link stored in a link field (detected based on presence of a colon)
+            //  - a nested record
+            //  - a link to the master variant (if it's the literal string 'master')
+            //  - a link to a less-dimensioned variant
+            //  - a link to a more-dimensioned variant
+
+            if (derefPart.contains(":")) { // It's a field name
+                lastFollowIsRecord = processFieldDeref(fieldEl, valueExpr, deref, derefPart);
+            } else if (derefPart.equals("master")) { // Link to master variant
+                if (lastFollowIsRecord) {
+                    throw new IndexerConfException("In dereferencing, master cannot follow on record-type field." +
+                            " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+                }
+                lastFollowIsRecord = false;
+
+                deref.addMasterFollow();
+            } else {  // Link to less dimensioned variant
+                if (lastFollowIsRecord) {
+                    throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
+                            " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+                }
+                lastFollowIsRecord = false;
+
+                processLessDimensionedVariantsDeref(fieldEl, valueExpr, deref, derefPart);
+            }
+        }
+
+        deref.init(typeManager);
+        return deref;
+    }
+
+    private String[] parseDerefParts(Element fieldEl, String valueExpr) throws IndexerConfException {
+        //
+        // Split, normalize, validate the input
+        //
+        String[] derefParts = valueExpr.split(Pattern.quote("=>"));
+        for (int i = 0; i < derefParts.length; i++) {
+            String trimmed = derefParts[i].trim();
+            if (trimmed.length() == 0) {
+                throw new IndexerConfException("Invalid dereference expression '" + valueExpr + "' at "
+                        + LocationAttributes.getLocationString(fieldEl));
+            }
+            derefParts[i] = trimmed;
+        }
+
+        if (derefParts.length < 2) {
+            throw new IndexerConfException("Invalid dereference expression '" + valueExpr + "' at "
+                    + LocationAttributes.getLocationString(fieldEl));
+        }
+        return derefParts;
+    }
+
+    private FieldType constructDerefFieldType(Element fieldEl, String valueExpr, String[] derefParts)
+            throws IndexerConfException, InterruptedException, RepositoryException {
+        //
+        // Last element in the list should be a field
+        //
+        QName targetFieldName;
+        try {
+            targetFieldName = parseQName(derefParts[derefParts.length - 1], fieldEl);
+        } catch (IndexerConfException e) {
+            throw new IndexerConfException("Dereference expression does not end on a valid field name. " +
+                    "Expression: '" + valueExpr + "' at " + LocationAttributes.getLocationString(fieldEl), e);
+        }
+        return getFieldType(targetFieldName);
+    }
+
+    private boolean processFieldDeref(Element fieldEl, String valueExpr, DerefValue deref, String derefPart)
+            throws IndexerConfException, InterruptedException, RepositoryException {
+        boolean lastFollowIsRecord;
+        FieldType followField = getFieldType(derefPart, fieldEl);
+
+        String type = followField.getValueType().getBaseName();
+        if (type.equals("LIST")) {
+            type = followField.getValueType().getNestedValueType().getBaseName();
+        }
+
+        if (type.equals("RECORD")) {
+            deref.addRecordFieldFollow(followField);
+            lastFollowIsRecord = true;
+        } else if (type.equals("LINK")) {
+            deref.addLinkFieldFollow(followField);
+            lastFollowIsRecord = false;
+        } else {
+            throw new IndexerConfException("Dereferencing is not possible on field of type " +
+                    followField.getValueType().getName() + ". Field: '" + derefPart +
+                    "', deref expression '" + valueExpr + "' at " +
+                    LocationAttributes.getLocation(fieldEl));
+        }
+        return lastFollowIsRecord;
+    }
+
+    private void processLessDimensionedVariantsDeref(Element fieldEl, String valueExpr, DerefValue deref,
+                                                     String derefPart) throws IndexerConfException {
+        // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
+        boolean validConfig = true;
+        Set<String> dimensions = new HashSet<String>();
+        for (String op : COMMA_SPLITTER.split(derefPart)) {
+            if (op.length() > 1 && op.startsWith("-")) {
+                String dimension = op.substring(1);
+                dimensions.add(dimension);
+            } else {
+                validConfig = false;
+                break;
+            }
+        }
+        if (dimensions.size() == 0)
+            validConfig = false;
+
+        if (!validConfig) {
+            throw new IndexerConfException("Invalid specification of variants to follow: '" +
+                    derefPart + "', deref expression: '" + valueExpr + "' " +
+                    "at " + LocationAttributes.getLocation(fieldEl));
+        }
+
+        deref.addVariantFollow(dimensions);
+    }
+
     private QName parseQName(String qname, Element contextEl) throws IndexerConfException {
         int colonPos = qname.indexOf(":");
         if (colonPos == -1) {
-            throw new IndexerConfException("Field name is not a qualified name, it should include a namespace prefix: " + qname);
+            throw new IndexerConfException(
+                    "Field name is not a qualified name, it should include a namespace prefix: " + qname);
         }
 
         String prefix = qname.substring(0, colonPos);
@@ -516,7 +559,8 @@ public class IndexerConfBuilder {
     private void validate(Document document) throws IndexerConfException {
         try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            URL url = getClass().getClassLoader().getResource("org/lilyproject/indexer/model/indexerconf/indexerconf.xsd");
+            URL url = getClass().getClassLoader()
+                    .getResource("org/lilyproject/indexer/model/indexerconf/indexerconf.xsd");
             Schema schema = factory.newSchema(url);
             Validator validator = schema.newValidator();
             validator.validate(new DOMSource(document));
@@ -530,7 +574,8 @@ public class IndexerConfBuilder {
 
         try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            URL url = IndexerConfBuilder.class.getClassLoader().getResource("org/lilyproject/indexer/model/indexerconf/indexerconf.xsd");
+            URL url = IndexerConfBuilder.class.getClassLoader()
+                    .getResource("org/lilyproject/indexer/model/indexerconf/indexerconf.xsd");
             Schema schema = factory.newSchema(url);
             Validator validator = schema.newValidator();
             validator.setErrorHandler(errorHandler);
@@ -543,7 +588,7 @@ public class IndexerConfBuilder {
 
         if (errorHandler.hasErrors()) {
             throw new IndexerConfException("The following errors occurred validating the indexer configuration:\n" +
-                errorHandler.getMessage());
+                    errorHandler.getMessage());
         }
     }
 
