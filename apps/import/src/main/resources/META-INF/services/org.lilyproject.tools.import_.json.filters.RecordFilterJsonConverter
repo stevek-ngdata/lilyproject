@@ -2,3 +2,4 @@ org.lilyproject.tools.import_.json.filters.FieldValueFilterJson
 org.lilyproject.tools.import_.json.filters.RecordFilterListJson
 org.lilyproject.tools.import_.json.filters.RecordIdPrefixFilterJson
 org.lilyproject.tools.import_.json.filters.RecordTypeFilterJson
+org.lilyproject.tools.import_.json.filters.RecordVariantFilterJson

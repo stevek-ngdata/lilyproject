@@ -2,3 +2,4 @@ org.lilyproject.repository.impl.filter.HBaseRecordTypeFilter
 org.lilyproject.repository.impl.filter.HBaseFieldValueFilter
 org.lilyproject.repository.impl.filter.HBaseRecordIdPrefixFilter
 org.lilyproject.repository.impl.filter.HBaseRecordFilterList
+org.lilyproject.repository.impl.filter.HBaseRecordVariantFilter

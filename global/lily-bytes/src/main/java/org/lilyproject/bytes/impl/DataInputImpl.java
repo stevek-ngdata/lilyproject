@@ -20,26 +20,26 @@ import org.lilyproject.bytes.api.DataInput;
 /**
  * Implementation of {@link DataInput} which reads primitve values from an underlying byte[].
  * The byte[] should have been created, encoded by the related to {@link DataOutputImpl}.
- * 
+ *
  * <p>The position within the underlying byte[] is maintained so that each read
- *    call will return the next value in the byte[].
- * 
+ * call will return the next value in the byte[].
+ *
  * <p>This implementation (especially #readUTF()) is based on (and some pieces are copied from) the work
- *    done by Lucene in the methods <code>UTF16toUTF8</code> and <code>UTF8toUTF16</code> 
- *    in <code>org.apache.lucene.util.UnicodeUtil.java</code> (revision 1030754),
- *    and combined with the work done by ElasticSearch in 
- *    <code>org.elasticsearch.common.io.stream.BytesStreamInput.java</code>,
- *    <code>org.elasticsearch.common.io.stream.BytesStreamOutput.java</code>,
- *    <code>org.elasticsearch.common.io.stream.StreamInput.java</code>,
- *    <code>org.elasticsearch.common.io.stream.StreamOutput.java</code>.
- * 
+ * done by Lucene in the methods <code>UTF16toUTF8</code> and <code>UTF8toUTF16</code>
+ * in <code>org.apache.lucene.util.UnicodeUtil.java</code> (revision 1030754),
+ * and combined with the work done by ElasticSearch in
+ * <code>org.elasticsearch.common.io.stream.BytesStreamInput.java</code>,
+ * <code>org.elasticsearch.common.io.stream.BytesStreamOutput.java</code>,
+ * <code>org.elasticsearch.common.io.stream.StreamInput.java</code>,
+ * <code>org.elasticsearch.common.io.stream.StreamOutput.java</code>.
+ *
  * <p>See also <a href=http://en.wikipedia.org/wiki/UTF-16/UCS-2>http://en.wikipedia.org/wiki/UTF-16/UCS-2</a>
  */
 public class DataInputImpl implements DataInput {
     public static final int UNI_SUR_LOW_START = 0xDC00;
-    
+
     private static final long UNI_MAX_BMP = 0x0000FFFF;
-    
+
     private static final long HALF_SHIFT = 10;
     private static final long HALF_MASK = 0x3FFL;
 
@@ -47,33 +47,46 @@ public class DataInputImpl implements DataInput {
     private int startPosition;
     private int pos; // Position of the next value to be read
     private int size;
-    
+
     // Character array build while reading a string.
     // The same char array is reused for each read, avoiding to allocated a new array each time.
     // It is resized it when needed.
-    private char[] chararr = new char[80]; 
+    private char[] chararr = new char[80];
 
     /**
      * Constructor for the {@link DataInput}.
-     * The source is the underlying byte[] from which the data will be read.
-     * It should have been created using {@link DataOutputImpl}.
+     * The source should have been created using {@link DataOutputImpl}.
+     *
+     * @param source the underlying byte[] from which the data will be read.
      */
     public DataInputImpl(byte[] source) {
+        this(source, 0, source.length);
+    }
+
+    /**
+     * Constructor for the {@link DataInput} based on a part of a byte[] (from startPosition to startPostion + size).
+     * The source should have been created using {@link DataOutputImpl}.
+     *
+     * @param source        the underlying byte[] from which the data will be read.
+     * @param startPosition start position in the source byte[]
+     * @param size          size of the relevant part of the source[] array to consider
+     */
+    public DataInputImpl(byte[] source, int startPosition, int size) {
         this.source = source;
-        this.startPosition = 0;
+        this.startPosition = startPosition;
+        this.size = size;
         this.pos = 0;
-        this.size = source.length;
     }
 
     /**
      * Constructor for the {@link DataInput} based on an existing DataInputImpl.
      * Its source (the underlying byte[]) is the same as for the given dataInput.
-     * 
+     *
      * @param startPosition position within the source, relative to the startPosition of the given dataInput
-     * @param size the size of the DataInput
-     * The source is a sub-array of the underlying byte[] from which the data will be read,
-     * limited between startPosition en startPosition+length
-     * It should have been created using {@link DataOutputImpl}.
+     * @param size          the size of the DataInput
+     *                      The source is a sub-array of the underlying byte[] from which the data will be read,
+     *                      limited between startPosition en startPosition+length
+     *                      It should have been created using {@link DataOutputImpl}.
      */
     public DataInputImpl(DataInputImpl dataInput, int startPosition, int size) {
         this.source = dataInput.source;
@@ -81,7 +94,7 @@ public class DataInputImpl implements DataInput {
         this.size = size;
     }
 
-    
+
     @Override
     public byte readByte() {
         return source[pos++];
@@ -94,11 +107,10 @@ public class DataInputImpl implements DataInput {
         pos += length;
         return result;
     }
-    
+
     /**
      * Reads an (unmodified)UTF-8 from the underlying byte[].
-     * @return null when the utflen == -1, meaning a null-string was written by {@link DataOutputImpl#writeUTF(String)}
-     * @return empty string when the utflen == 0, meaning an empty string was written by {@link DataOutputImpl#writeUTF(String)}
+     *
      * @return the string written {@link DataOutputImpl#writeUTF(String)} in all other cases.
      */
     @Override
@@ -131,8 +143,9 @@ public class DataInputImpl implements DataInput {
         // Start with a loop expecting each character to be encoded by one byte
         // This will be most likely the case for most strings.
         while (count < endPos) {
-            b = source[count]&0xff;
-            if (!(b < 0xc0)) break; // Once a character is encountered which is encoded with multiple bytes, jump to the next loop
+            b = source[count] & 0xff;
+            if (!(b < 0xc0))
+                break; // Once a character is encountered which is encoded with multiple bytes, jump to the next loop
             count++;
             assert b < 0x80;
             ch = b;
@@ -141,17 +154,18 @@ public class DataInputImpl implements DataInput {
 
         // Decode characters which can be encoded by multiple bytes
         while (count < endPos) {
-            b = source[count++]&0xff;
+            b = source[count++] & 0xff;
             if (b < 0xc0) {
                 assert b < 0x80;
                 ch = b;
             } else if (b < 0xe0) {
-                ch = ((b&0x1f)<<6) + (source[count++]&0x3f);
+                ch = ((b & 0x1f) << 6) + (source[count++] & 0x3f);
             } else if (b < 0xf0) {
-                ch = ((b&0xf)<<12) + ((source[count++]&0x3f)<<6) + (source[count++]&0x3f);
+                ch = ((b & 0xf) << 12) + ((source[count++] & 0x3f) << 6) + (source[count++] & 0x3f);
             } else {
                 assert b < 0xf8;
-                ch = ((b&0x7)<<18) + ((source[count++]&0x3f)<<12) + ((source[count++]&0x3f)<<6) + (source[count++]&0x3f);
+                ch = ((b & 0x7) << 18) + ((source[count++] & 0x3f) << 12) + ((source[count++] & 0x3f) << 6) +
+                        (source[count++] & 0x3f);
             }
 
             chararr_count = putChar(chararr_count, ch);
@@ -185,10 +199,10 @@ public class DataInputImpl implements DataInput {
 
     @Override
     public int readInt() {
-        return ((readByte() & 0xFF) << 24) 
-            | ((readByte() & 0xFF) << 16)
-            | ((readByte() & 0xFF) << 8) 
-            | (readByte() & 0xFF);
+        return ((readByte() & 0xFF) << 24)
+                | ((readByte() & 0xFF) << 16)
+                | ((readByte() & 0xFF) << 8)
+                | (readByte() & 0xFF);
     }
 
     @Override
@@ -205,12 +219,12 @@ public class DataInputImpl implements DataInput {
     public float readFloat() {
         return Float.intBitsToFloat(readInt());
     }
-    
+
     /**
-    * Reads an int stored in variable-length format. Reads between one and
-    * five bytes. Smaller values take fewer bytes. Negative numbers are not
-    * supported.
-    */
+     * Reads an int stored in variable-length format. Reads between one and
+     * five bytes. Smaller values take fewer bytes. Negative numbers are not
+     * supported.
+     */
     @Override
     public int readVInt() {
         byte b = readByte();
@@ -221,12 +235,12 @@ public class DataInputImpl implements DataInput {
         }
         return i;
     }
-    
+
     /**
-    * Reads a long stored in variable-length format. Reads between one and
-    * nine bytes. Smaller values take fewer bytes. Negative numbers are not
-    * supported.
-    */
+     * Reads a long stored in variable-length format. Reads between one and
+     * nine bytes. Smaller values take fewer bytes. Negative numbers are not
+     * supported.
+     */
     @Override
     public long readVLong() {
         byte b = readByte();
@@ -237,17 +251,17 @@ public class DataInputImpl implements DataInput {
         }
         return i;
     }
-    
+
     @Override
     public int getPosition() {
         return pos;
     }
-    
+
     @Override
     public void setPosition(int position) {
         this.pos = position;
     }
-    
+
     @Override
     public int getSize() {
         return size;
