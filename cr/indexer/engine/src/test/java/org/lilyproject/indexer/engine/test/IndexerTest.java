@@ -693,6 +693,7 @@ public class IndexerTest {
             verifyResultCount("v_deref3:fig", 2);
             verifyResultCount("v_deref2:fig", 1);
             verifyResultCount("v_deref4:banana", 1);
+            verifyResultCount("v_deref5:coconut", 1);
 
             // remove the live tag from record1
             log.debug("Begin test V7");
@@ -751,7 +752,7 @@ public class IndexerTest {
             verifyResultCount("+v_field1:kiwi +lily.vtag:latest", 1);
             verifyResultCount("+v_field1:fig +lily.vtag:live", 1);
 
-            // Perform updates to record3 and check if denorm'ed data in record4 follows
+            // Perform updates to record3 and check if denorm'ed data in index of record4 follows
             log.debug("Begin test V11");
             record3.delete(vfield1.getName(), true);
             expectEvent(UPDATE, record3.getId(), 2L, null, vfield1.getId());
@@ -760,7 +761,7 @@ public class IndexerTest {
             commitIndex();
             verifyResultCount("v_deref4:banana", 1); // live tag still points to version 1!
 
-            log.debug("Begin test V12");
+            log.debug("Begin test V11.1");
             repository.read(record3Id, Long.valueOf(2)); // check version 2 really exists
             record3.setField(liveTag.getName(), Long.valueOf(2));
             expectEvent(UPDATE, record3.getId(), liveTag.getId());
@@ -769,6 +770,24 @@ public class IndexerTest {
             commitIndex();
             verifyResultCount("v_deref4:banana", 0);
             verifyResultCount("v_field1:coconut", 1);
+
+            // Perform updates to record4 and check if denorm'ed data in index of record3 follows
+            log.debug("Begin test V12");
+            record4.delete(vfield1.getName(), true);
+            expectEvent(UPDATE, record4.getId(), 2L, null, vfield1.getId());
+            record4 = repository.update(record4);
+
+            commitIndex();
+            verifyResultCount("v_deref5:coconut", 1); // live tag still points to version 1!
+
+            log.debug("Begin test V12.1");
+            repository.read(record4Id, Long.valueOf(2)); // check version 2 really exists
+            record4.setField(liveTag.getName(), Long.valueOf(2));
+            expectEvent(UPDATE, record4.getId(), liveTag.getId());
+            repository.update(record4);
+
+            commitIndex();
+            verifyResultCount("v_deref5:coconut", 0); // now it's gone
 
             // Delete master
             log.debug("Begin test V13");

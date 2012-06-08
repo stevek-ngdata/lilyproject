@@ -112,6 +112,7 @@
     <field name="v_deref2" type="text" indexed="true" stored="true" required="false"/>
     <field name="v_deref3" type="text" indexed="true" stored="true" required="false"/>
     <field name="v_deref4" type="text" indexed="true" stored="true" required="false"/>
+    <field name="v_deref5" type="text" indexed="true" stored="true" required="false"/>
 
     <field name="nv_v_deref" type="text" indexed="true" stored="true" required="false"/>
     <field name="nv_v_nv_deref" type="text" indexed="true" stored="true" required="false"/>

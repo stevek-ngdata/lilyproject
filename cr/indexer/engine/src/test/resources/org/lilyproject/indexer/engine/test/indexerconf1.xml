@@ -45,6 +45,8 @@
 
     <field name="v_deref4" value="-branch=>ns2:v_field1"/>
 
+    <field name="v_deref5" value="+branch=>ns2:v_field1"/>
+
     <!--
        | Mixed versioned & non-versioned usage.
        -->
