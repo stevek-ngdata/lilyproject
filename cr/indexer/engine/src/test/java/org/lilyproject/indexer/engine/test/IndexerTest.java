@@ -461,7 +461,7 @@ public class IndexerTest {
             log.debug("Begin test NV8");
             Record record1 = repository.newRecord(idGenerator.newRecordId("boe"));
             record1.setRecordType(nvRecordType1.getName());
-            record1.setField(nvfield1.getName(), "cumcumber");
+            record1.setField(nvfield1.getName(), "cucumber");
             record1.setField(nvTag.getName(), 0L);
             expectEvent(CREATE, record1.getId(), nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
@@ -497,9 +497,9 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref1:cumcumber", 1);
-            verifyResultCount("nv_deref2:cumcumber", 1);
-            verifyResultCount("nv_deref3:cumcumber", 2);
+            verifyResultCount("nv_deref1:cucumber", 1);
+            verifyResultCount("nv_deref2:cucumber", 1);
+            verifyResultCount("nv_deref3:cucumber", 2);
             verifyResultCount("nv_deref5:broccoli", 1);
 
             // Update record1, check if index of the others is updated
@@ -512,9 +512,9 @@ public class IndexerTest {
             verifyResultCount("nv_deref1:tomato", 1);
             verifyResultCount("nv_deref2:tomato", 1);
             verifyResultCount("nv_deref3:tomato", 2);
-            verifyResultCount("nv_deref1:cumcumber", 0);
-            verifyResultCount("nv_deref2:cumcumber", 0);
-            verifyResultCount("nv_deref3:cumcumber", 0);
+            verifyResultCount("nv_deref1:cucumber", 0);
+            verifyResultCount("nv_deref2:cucumber", 0);
+            verifyResultCount("nv_deref3:cucumber", 0);
             verifyResultCount("nv_deref4:eggplant", 1);
 
             // Update record3, index for record4 should be updated
@@ -829,7 +829,7 @@ public class IndexerTest {
             record1.setRecordType(vRecordType1.getName());
             record1.setField(nvfield1.getName(), "Brussels");
             record1.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record1.getId(), (Long) null, null, nvfield1.getId(), nvTag.getId());
+            expectEvent(CREATE, record1.getId(), (Long)null, null, nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
 
             Record record2 = repository.newRecord();
@@ -843,7 +843,7 @@ public class IndexerTest {
             record3.setRecordType(vRecordType1.getName());
             record3.setField(nvLinkField2.getName(), new Link(record2.getId()));
             record3.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, record3.getId(), (Long) null, null, nvLinkField2.getId(), nvTag.getId());
+            expectEvent(CREATE, record3.getId(), (Long)null, null, nvLinkField2.getId(), nvTag.getId());
             record3 = repository.create(record3);
 
             commitIndex();
@@ -1022,8 +1022,7 @@ public class IndexerTest {
             Blob blob1 = createBlob("blob1_msword.doc", "application/msword", "blob1_msword.doc");
             Blob blob1dup = createBlob("blob1_msword.doc", "application/msword", "blob1_msword.doc");
             Blob blob2 = createBlob("blob2.pdf", "application/pdf", "blob2.pdf");
-            Blob blob3 =
-                    createBlob("blob3_oowriter.odt", "application/vnd.oasis.opendocument.text", "blob3_oowriter.odt");
+            Blob blob3 = createBlob("blob3_oowriter.odt", "application/vnd.oasis.opendocument.text", "blob3_oowriter.odt");
             Blob blob4 = createBlob("blob4_excel.xls", "application/excel", "blob4_excel.xls");
 
             // Single-valued blob field
@@ -1103,8 +1102,7 @@ public class IndexerTest {
             record1.setField(vDateTimeField.getName(), new DateTime(2058, 10, 14, 15, 30, 12, 756, DateTimeZone.UTC));
             record1.setField(vStringMvField.getName(), Arrays.asList("wood", "plastic"));
             record1.setField(liveTag.getName(), 1L);
-            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), vStringMvField.getId(),
-                    liveTag.getId());
+            expectEvent(CREATE, record1.getId(), 1L, null, vDateTimeField.getId(), vStringMvField.getId(), liveTag.getId());
             record1 = repository.create(record1);
 
             commitIndex();
@@ -1234,34 +1232,25 @@ public class IndexerTest {
 
         FieldType field2 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field2"), Scope.VERSIONED);
 
-        FieldType field3 =
-                typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "name_field3"), Scope.VERSIONED);
+        FieldType field3 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "name_field3"), Scope.VERSIONED);
 
-        FieldType field4 =
-                typeManager.createFieldType(longValueType, new QName(DYN_NS2, "name_field4"), Scope.VERSIONED);
+        FieldType field4 = typeManager.createFieldType(longValueType, new QName(DYN_NS2, "name_field4"), Scope.VERSIONED);
 
-        FieldType field5 =
-                typeManager.createFieldType(mvStringValueType, new QName(DYN_NS2, "name_field5"), Scope.VERSIONED);
+        FieldType field5 = typeManager.createFieldType(mvStringValueType, new QName(DYN_NS2, "name_field5"), Scope.VERSIONED);
 
-        FieldType field6 =
-                typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "scope_field6"), Scope.VERSIONED);
+        FieldType field6 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "scope_field6"), Scope.VERSIONED);
 
-        FieldType field7 =
-                typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "scope_field7"), Scope.NON_VERSIONED);
+        FieldType field7 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "scope_field7"), Scope.NON_VERSIONED);
 
         FieldType field8 = typeManager.createFieldType(dateValueType, new QName(DYN_NS2, "field8"), Scope.VERSIONED);
 
-        FieldType field9 =
-                typeManager.createFieldType(mvStringValueType, new QName(DYN_NS2, "mv_field9"), Scope.VERSIONED);
+        FieldType field9 = typeManager.createFieldType(mvStringValueType, new QName(DYN_NS2, "mv_field9"), Scope.VERSIONED);
 
-        FieldType field10 =
-                typeManager.createFieldType(hierStringValueType, new QName(DYN_NS2, "hier_field10"), Scope.VERSIONED);
+        FieldType field10 = typeManager.createFieldType(hierStringValueType, new QName(DYN_NS2, "hier_field10"), Scope.VERSIONED);
 
-        FieldType field11 =
-                typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field11"), Scope.VERSIONED_MUTABLE);
+        FieldType field11 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field11"), Scope.VERSIONED_MUTABLE);
 
-        FieldType field12 =
-                typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field12"), Scope.VERSIONED_MUTABLE);
+        FieldType field12 = typeManager.createFieldType(stringValueType, new QName(DYN_NS2, "field12"), Scope.VERSIONED_MUTABLE);
 
         FieldType field13 = typeManager.createFieldType(blobValueType, new QName(DYN_NS2, "field13"), Scope.VERSIONED);
 
@@ -1632,8 +1621,7 @@ public class IndexerTest {
         log.debug("Begin test V409");
         record2 = repository.newRecord(record2.getId());
         record2.setRecordType(rt2.getName());
-        record2.setField(field1.getName(),
-                "obtuse3"); // currently can't only change record type, so touch field as well
+        record2.setField(field1.getName(), "obtuse3"); // currently can't only change record type, so touch field as well
         expectEvent(UPDATE, record2.getId(), 3L, null, true, field1.getId());
         record2 = repository.update(record2);
 
@@ -1684,84 +1672,83 @@ public class IndexerTest {
         changeIndexUpdater("indexerconf_complexfields.xml");
 
         {
-            //
-            // Test
-            //
-            RecordId recordId = idGenerator.newRecordId();
-            expectEvent(CREATE, recordId, nestedListsField.getId(), recordField.getId(), recordListField.getId());
+          //
+          // Test
+          //
+          RecordId recordId = idGenerator.newRecordId();
+          expectEvent(CREATE, recordId, nestedListsField.getId(), recordField.getId(), recordListField.getId());
+  
+          repository
+                  .recordBuilder()
+                  .id(recordId)
+                  .recordType(cfRecordType.getName())
+                  .field(nestedListsField.getName(),
+                          Arrays.asList(
+                                  Arrays.asList("dutch", "french", "english"),
+                                  Arrays.asList("italian", "greek")
+                          ))
+                  .field(recordField.getName(),
+                          repository
+                                  .recordBuilder()
+                                  .recordType(nvRecordType1.getName())
+                                  .field(nvfield1.getName(), "german")
+                                  .field(nvfield2.getName(), "spanish")
+                                  .build())
+                  .field(recordListField.getName(),
+                          Arrays.asList(
+                                  repository
+                                          .recordBuilder()
+                                          .recordType(nvRecordType1.getName())
+                                          .field(nvfield1.getName(), "swedish")
+                                          .field(nvfield2.getName(), "chinese")
+                                          .build(),
+                                  repository
+                                          .recordBuilder()
+                                          .recordType(nvRecordType1.getName())
+                                          .field(nvfield1.getName(), "vietnamese")
+                                          .field(nvfield2.getName(), "wolof")
+                                          .build()
+                          )
+                  )
+                  .create();
 
-            repository
-                    .recordBuilder()
-                    .id(recordId)
-                    .recordType(cfRecordType.getName())
-                    .field(nestedListsField.getName(),
-                            Arrays.asList(
-                                    Arrays.asList("dutch", "french", "english"),
-                                    Arrays.asList("italian", "greek")
-                            ))
-                    .field(recordField.getName(),
-                            repository
-                                    .recordBuilder()
-                                    .recordType(nvRecordType1.getName())
-                                    .field(nvfield1.getName(), "german")
-                                    .field(nvfield2.getName(), "spanish")
-                                    .build())
-                    .field(recordListField.getName(),
-                            Arrays.asList(
-                                    repository
-                                            .recordBuilder()
-                                            .recordType(nvRecordType1.getName())
-                                            .field(nvfield1.getName(), "swedish")
-                                            .field(nvfield2.getName(), "chinese")
-                                            .build(),
-                                    repository
-                                            .recordBuilder()
-                                            .recordType(nvRecordType1.getName())
-                                            .field(nvfield1.getName(), "vietnamese")
-                                            .field(nvfield2.getName(), "wolof")
-                                            .build()
-                            )
-                    )
-                    .create();
-
-            commitIndex();
-
-            verifyResultCount("+cf_nestedlists:italian", 1);
-            verifyResultCount("+cf_record:german", 1);
-            verifyResultCount("+cf_recordlist:chinese", 1);
-
-            verifyResultCount("+cf_recordlist_field1:swedish", 1);
-            verifyResultCount("+cf_recordlist_field1:vietnamese", 1);
-            verifyResultCount("+cf_recordlist_field1:chinese", 0);
-            verifyResultCount("+cf_recordlist_field1:wolof", 0);
-
-            verifyResultCount("+cf_record_field1:german", 1);
-            verifyResultCount("+cf_record_field1:spanish", 0);
+          commitIndex();
+  
+          verifyResultCount("+cf_nestedlists:italian", 1);
+          verifyResultCount("+cf_record:german", 1);
+          verifyResultCount("+cf_recordlist:chinese", 1);
+  
+          verifyResultCount("+cf_recordlist_field1:swedish", 1);
+          verifyResultCount("+cf_recordlist_field1:vietnamese", 1);
+          verifyResultCount("+cf_recordlist_field1:chinese", 0);
+          verifyResultCount("+cf_recordlist_field1:wolof", 0);
+  
+          verifyResultCount("+cf_record_field1:german", 1);
+          verifyResultCount("+cf_record_field1:spanish", 0);
         }
-
+        
         {
-            log.debug("Begin test CF503");
+          log.debug("Begin test CF503");
 
-            Record beta = repository.recordBuilder()
-                    .recordType(vRecordType1.getName())
-                    .field(vfield1.getName(), "whiskey").build();
-
-            Record gamma = repository.recordBuilder()
-                    .recordType(vRecordType1.getName())
-                    .field(vfield1.getName(), "wodka").build();
-
-            RecordId alplhaId = idGenerator.newRecordId();
-            Record alpha = repository.recordBuilder().id(alplhaId)
-                    .recordType(cfRecordType.getName())
-                    .field(recordField.getName(), beta)
-                    .field(recordListField.getName(), Lists.newArrayList(beta, gamma)).build();
-            expectEvent(CREATE, alplhaId, recordField.getId(), recordListField.getId());
-            alpha = repository.create(alpha);
-
-            commitIndex();
-            verifyFieldValues("+cf_record:whiskey", "cf_shallow_record", "{\"v_field1\":\"whiskey\"}");
-            verifyFieldValues("+cf_record:whiskey", "cf_shallow_recordlist", "{\"v_field1\":\"whiskey\"}",
-                    "{\"v_field1\":\"wodka\"}");
+          Record beta = repository.recordBuilder()
+              .recordType(vRecordType1.getName())
+              .field(vfield1.getName(), "whiskey").build();
+    
+          Record gamma = repository.recordBuilder()
+              .recordType(vRecordType1.getName())
+              .field(vfield1.getName(), "wodka").build();
+    
+          RecordId alplhaId = idGenerator.newRecordId();
+          Record alpha = repository.recordBuilder().id(alplhaId)
+              .recordType(cfRecordType.getName())
+              .field(recordField.getName(), beta)
+              .field(recordListField.getName(), Lists.newArrayList(beta, gamma)).build();
+          expectEvent(CREATE, alplhaId, recordField.getId(), recordListField.getId());
+          alpha = repository.create(alpha);
+    
+          commitIndex();
+          verifyFieldValues("+cf_record:whiskey", "cf_shallow_record", "{\"v_field1\":\"whiskey\"}");
+          verifyFieldValues("+cf_record:whiskey", "cf_shallow_recordlist", "{\"v_field1\":\"whiskey\"}", "{\"v_field1\":\"wodka\"}");
 
         }
 
@@ -1827,10 +1814,10 @@ public class IndexerTest {
                                     .recordType(recordType.getName())
                                     .field(recordField.getName(),
                                             repository
-                                                    .recordBuilder()
-                                                    .recordType(recordType.getName())
-                                                    .field(stringField.getName(), "bordeaux")
-                                                    .build())
+                                            .recordBuilder()
+                                            .recordType(recordType.getName())
+                                            .field(stringField.getName(), "bordeaux")
+                                            .build())
                                     .create()
                                     .getId()))
                     .create();
@@ -1847,10 +1834,10 @@ public class IndexerTest {
                     .id(recordId)
                     .field(recordField.getName(),
                             repository
-                                    .recordBuilder()
-                                    .recordType(recordType.getName())
-                                    .field(stringField.getName(), "bordooo")
-                                    .build())
+                            .recordBuilder()
+                            .recordType(recordType.getName())
+                            .field(stringField.getName(), "bordooo")
+                            .build())
                     .update();
 
             commitIndex();
@@ -1878,17 +1865,17 @@ public class IndexerTest {
                                     .recordType(recordType.getName())
                                     .field(recordField.getName(),
                                             repository
+                                            .recordBuilder()
+                                            .recordType(recordType.getName())
+                                            .field(linkField.getName(),
+                                                    new Link(repository
                                                     .recordBuilder()
+                                                    .id(recordId2)
                                                     .recordType(recordType.getName())
-                                                    .field(linkField.getName(),
-                                                            new Link(repository
-                                                                    .recordBuilder()
-                                                                    .id(recordId2)
-                                                                    .recordType(recordType.getName())
-                                                                    .field(stringField.getName(), "beaujolais")
-                                                                    .create()
-                                                                    .getId()))
-                                                    .build())
+                                                    .field(stringField.getName(), "beaujolais")
+                                                    .create()
+                                                    .getId()))
+                                            .build())
                                     .create()
                                     .getId()))
                     .create();
@@ -1925,17 +1912,17 @@ public class IndexerTest {
                     .recordType(recordType.getName())
                     .field(record2Field.getName(),
                             repository
-                                    .recordBuilder()
-                                    .recordType(recordType.getName())
-                                    .field(linkField.getName(),
-                                            new Link(repository
-                                                    .recordBuilder()
-                                                    .id(recordId)
-                                                    .recordType(recordType.getName())
-                                                    .field(stringField.getName(), "bourgogne")
-                                                    .create()
-                                                    .getId()))
-                                    .build())
+                            .recordBuilder()
+                            .recordType(recordType.getName())
+                            .field(linkField.getName(),
+                                    new Link(repository
+                                            .recordBuilder()
+                                            .id(recordId)
+                                            .recordType(recordType.getName())
+                                            .field(stringField.getName(), "bourgogne")
+                                            .create()
+                                            .getId()))
+                            .build())
                     .create();
 
             commitIndex();
@@ -1980,31 +1967,31 @@ public class IndexerTest {
                                     .field(recordListField.getName(),
                                             Arrays.asList(
                                                     repository
-                                                            .recordBuilder()
-                                                            .id(recordId3)
-                                                            .recordType(recordType.getName())
-                                                            .field(linkField.getName(),
-                                                                    new Link(repository
-                                                                            .recordBuilder()
-                                                                            .id(recordId3)
-                                                                            .recordType(recordType.getName())
-                                                                            .field(stringField.getName(), "champagne")
-                                                                            .create()
-                                                                            .getId()))
-                                                            .build(),
+                                                    .recordBuilder()
+                                                    .id(recordId3)
+                                                    .recordType(recordType.getName())
+                                                    .field(linkField.getName(),
+                                                            new Link(repository
+                                                                     .recordBuilder()
+                                                                     .id(recordId3)
+                                                                     .recordType(recordType.getName())
+                                                                     .field(stringField.getName(), "champagne")
+                                                                     .create()
+                                                                     .getId()))
+                                                    .build(),
                                                     repository
-                                                            .recordBuilder()
-                                                            .id(recordId4)
-                                                            .recordType(recordType.getName())
-                                                            .field(linkField.getName(),
-                                                                    new Link(repository
-                                                                            .recordBuilder()
-                                                                            .id(recordId4)
-                                                                            .recordType(recordType.getName())
-                                                                            .field(stringField.getName(), "languedoc")
-                                                                            .create()
-                                                                            .getId()))
-                                                            .build()
+                                                    .recordBuilder()
+                                                    .id(recordId4)
+                                                    .recordType(recordType.getName())
+                                                    .field(linkField.getName(),
+                                                            new Link(repository
+                                                                     .recordBuilder()
+                                                                     .id(recordId4)
+                                                                     .recordType(recordType.getName())
+                                                                     .field(stringField.getName(), "languedoc")
+                                                                     .create()
+                                                                     .getId()))
+                                                    .build()
                                             ))
                                     .create()
                                     .getId()))
@@ -2074,15 +2061,15 @@ public class IndexerTest {
                                     .recordType(recordType.getName())
                                     .field(recordField.getName(),
                                             repository
+                                            .recordBuilder()
+                                            .recordType(recordType.getName())
+                                            .field(recordField.getName(),
+                                                    repository
                                                     .recordBuilder()
                                                     .recordType(recordType.getName())
-                                                    .field(recordField.getName(),
-                                                            repository
-                                                                    .recordBuilder()
-                                                                    .recordType(recordType.getName())
-                                                                    .field(stringField.getName(), "loire")
-                                                                    .build())
+                                                    .field(stringField.getName(), "loire")
                                                     .build())
+                                            .build())
                                     .create()
                                     .getId()))
                     .create();
@@ -2100,15 +2087,15 @@ public class IndexerTest {
                     .recordType(recordType.getName())
                     .field(recordField.getName(),
                             repository
+                            .recordBuilder()
+                            .recordType(recordType.getName())
+                            .field(recordField.getName(),
+                                    repository
                                     .recordBuilder()
                                     .recordType(recordType.getName())
-                                    .field(recordField.getName(),
-                                            repository
-                                                    .recordBuilder()
-                                                    .recordType(recordType.getName())
-                                                    .field(stringField.getName(), "lwaare")
-                                                    .build())
+                                    .field(stringField.getName(), "lwaare")
                                     .build())
+                            .build())
                     .update();
 
             commitIndex();
@@ -2148,7 +2135,7 @@ public class IndexerTest {
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
         byte[] mswordblob = readResource(resource);
 
-        Blob blob = new Blob(mediaType, (long) mswordblob.length, fileName);
+        Blob blob = new Blob(mediaType, (long)mswordblob.length, fileName);
         OutputStream os = repository.getOutputStream(blob);
         try {
             os.write(mswordblob);
@@ -2160,7 +2147,7 @@ public class IndexerTest {
     }
 
     private Blob createBlob(byte[] content, String mediaType, String fileName) throws Exception {
-        Blob blob = new Blob(mediaType, (long) content.length, fileName);
+        Blob blob = new Blob(mediaType, (long)content.length, fileName);
         OutputStream os = repository.getOutputStream(blob);
         try {
             os.write(content);
@@ -2176,7 +2163,7 @@ public class IndexerTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int read;
-        while ((read = mswordblob.read(buffer)) != -1) {
+        while ((read = mswordblob.read(buffer)) != -1){
             bos.write(buffer, 0, read);
         }
 
@@ -2199,7 +2186,7 @@ public class IndexerTest {
         QueryResponse response = solrShardManager.query(solrQuery);
         return response;
     }
-
+   
     private void verifyResultCount(String query, int count) throws SolrClientException, InterruptedException {
         QueryResponse response = getQueryResponse(query);
         if (count != response.getResults().size()) {
@@ -2212,20 +2199,18 @@ public class IndexerTest {
         assertEquals(count, response.getResults().getNumFound());
     }
 
-    private void verifyFieldValues(String query, String fieldName, String... expectedValues)
-            throws SolrClientException, InterruptedException {
-        QueryResponse response = getQueryResponse(query);
-        if (1 != response.getResults().size()) {
-            System.out.println("The query result contains a wrong number of documents, here is the result:");
-            for (int i = 0; i < response.getResults().size(); i++) {
-                SolrDocument result = response.getResults().get(i);
-                System.out.println(result.getFirstValue("lily.key"));
-            }
-        }
-        assertEquals(1, response.getResults().getNumFound());
-
-        Assert.assertArrayEquals((Object[]) expectedValues,
-                response.getResults().get(0).getFieldValues(fieldName).toArray(new Object[]{}));
+    private void verifyFieldValues(String query, String fieldName, String... expectedValues) throws SolrClientException, InterruptedException {
+      QueryResponse response = getQueryResponse(query);
+      if (1 != response.getResults().size()) {
+          System.out.println("The query result contains a wrong number of documents, here is the result:");
+          for (int i = 0; i < response.getResults().size(); i++) {
+              SolrDocument result = response.getResults().get(i);
+              System.out.println(result.getFirstValue("lily.key"));
+          }
+      }
+      assertEquals(1, response.getResults().getNumFound());
+      
+      Assert.assertArrayEquals((Object[])expectedValues, response.getResults().get(0).getFieldValues(fieldName).toArray(new Object[]{}));
     }
 
     private void expectEvent(RecordEvent.Type type, RecordId recordId, SchemaId... updatedFields) {
@@ -2233,12 +2218,12 @@ public class IndexerTest {
     }
 
     private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
-                             SchemaId... updatedFields) {
+            SchemaId... updatedFields) {
         expectEvent(type, recordId, versionCreated, versionUpdated, false, updatedFields);
     }
 
     private void expectEvent(RecordEvent.Type type, RecordId recordId, Long versionCreated, Long versionUpdated,
-                             boolean recordTypeChanged, SchemaId... updatedFields) {
+            boolean recordTypeChanged, SchemaId... updatedFields) {
         RecordEvent event = new RecordEvent();
 
         event.setType(type);
@@ -2292,7 +2277,7 @@ public class IndexerTest {
 
             // In case of failures we print out "load" messages, the main junit thread is expected to
             // test that the failures variable is 0.
-
+            
             RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
             try {
                 RecordEvent event = new RecordEvent(message.getPayload(), idGenerator);
@@ -2304,8 +2289,7 @@ public class IndexerTest {
                     System.err.println(event.toJson());
                 } else {
                     if (!event.equals(expectedEvent) ||
-                            !(recordId.equals(expectedId) ||
-                                    (expectedId == null && expectedEvent.getType() == CREATE))) {
+                            !(recordId.equals(expectedId) || (expectedId == null && expectedEvent.getType() == CREATE))) {
                         failures++;
                         printSomethingLoad();
                         System.err.println("Expected message:");
