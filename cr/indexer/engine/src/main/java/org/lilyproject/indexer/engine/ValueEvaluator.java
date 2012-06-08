@@ -453,8 +453,8 @@ public class ValueEvaluator {
     }
 
     private List<IdRecord> evalForwardVariantFollow(DerefValue.ForwardVariantFollow follow, FollowRecord frecord,
-                                                    Repository repository,
-                                                    SchemaId vtag) throws RepositoryException, InterruptedException {
+                                                    Repository repository, SchemaId vtag)
+            throws RepositoryException, InterruptedException {
 
         RecordId recordId = frecord.record.getId();
 
@@ -470,13 +470,11 @@ public class ValueEvaluator {
             // now find all the records of this newly defined variant
             final ArrayList<IdRecord> result = new ArrayList<IdRecord>();
 
-            // TODO: think this version tag stuff through....
-//            final IdRecord versionTaggedRecordId = VersionTag.getIdRecord(resolvedRecordId, vtag, repository);
             final RecordScan scan = new RecordScan();
             scan.setRecordFilter(new RecordVariantFilter(resolvedRecordId));
             final RecordScanner scanner = repository.getScanner(scan);
             Record next;
-            // TODO: going through the idRecord stuff results in reading again!!!
+            // TODO: going through the idRecord stuff results in reading again!!! -> scanner should return IdRecord and I should be able to specify a specific version/vtag in the scanner?!
             while ((next = scanner.next()) != null)
                 result.add(VersionTag.getIdRecord(next.getId(), vtag, repository));
 
