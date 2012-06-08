@@ -457,7 +457,7 @@ public class IndexerTest {
             log.debug("Begin test NV8");
             Record record1 = repository.newRecord(idGenerator.newRecordId("boe"));
             record1.setRecordType(nvRecordType1.getName());
-            record1.setField(nvfield1.getName(), "cumcumber");
+            record1.setField(nvfield1.getName(), "cucumber");
             record1.setField(nvTag.getName(), 0L);
             expectEvent(CREATE, record1.getId(), nvfield1.getId(), nvTag.getId());
             record1 = repository.create(record1);
@@ -493,9 +493,9 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref1:cumcumber", 1);
-            verifyResultCount("nv_deref2:cumcumber", 1);
-            verifyResultCount("nv_deref3:cumcumber", 2);
+            verifyResultCount("nv_deref1:cucumber", 1);
+            verifyResultCount("nv_deref2:cucumber", 1);
+            verifyResultCount("nv_deref3:cucumber", 2);
 
             // Update record1, check if index of the others is updated
             log.debug("Begin test NV9");
@@ -507,9 +507,9 @@ public class IndexerTest {
             verifyResultCount("nv_deref1:tomato", 1);
             verifyResultCount("nv_deref2:tomato", 1);
             verifyResultCount("nv_deref3:tomato", 2);
-            verifyResultCount("nv_deref1:cumcumber", 0);
-            verifyResultCount("nv_deref2:cumcumber", 0);
-            verifyResultCount("nv_deref3:cumcumber", 0);
+            verifyResultCount("nv_deref1:cucumber", 0);
+            verifyResultCount("nv_deref2:cucumber", 0);
+            verifyResultCount("nv_deref3:cucumber", 0);
             verifyResultCount("nv_deref4:eggplant", 1);
 
             // Update record3, index for record4 should be updated
