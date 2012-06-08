@@ -15,6 +15,15 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
@@ -23,19 +32,26 @@ import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexException;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
-import org.lilyproject.util.repo.RecordEvent;
-import org.lilyproject.util.repo.VTaggedRecord;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.util.ObjectUtils;
+import org.lilyproject.util.repo.RecordEvent;
+import org.lilyproject.util.repo.VTaggedRecord;
 
-import static org.lilyproject.util.repo.RecordEvent.Type.*;
-
-import java.io.IOException;
-import java.util.*;
+import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
+import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
+import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
 
 
 //
@@ -85,11 +101,10 @@ public class IndexUpdater implements RowLogMessageListener {
     private IdGenerator idGenerator;
 
     /**
-     *
      * @param rowLog this should be the message queue
      */
     public IndexUpdater(Indexer indexer, Repository repository,
-            LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics)
+                        LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics)
             throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
@@ -176,7 +191,8 @@ public class IndexUpdater implements RowLogMessageListener {
                     indexLocker.unlockLogFailure(recordId);
                 }
 
-                updateDenormalizedData(recordId, event, vtRecord.getUpdatedFieldsByScope(), vtRecord.getVTagsByVersion(),
+                updateDenormalizedData(recordId, event, vtRecord.getUpdatedFieldsByScope(),
+                        vtRecord.getVTagsByVersion(),
                         vtRecord.getModifiedVTags());
             }
 
@@ -253,8 +269,9 @@ public class IndexUpdater implements RowLogMessageListener {
                         indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
                         // After this we go to the treatment of changed vtag fields
                         if (log.isDebugEnabled()) {
-                            log.debug(String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
-                                    vtRecord.getId()));
+                            log.debug(
+                                    String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
+                                            vtRecord.getId()));
                         }
                     }
                 }
@@ -273,7 +290,8 @@ public class IndexUpdater implements RowLogMessageListener {
                     if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED))
                             || atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE))) {
 
-                        long version = event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();
+                        long version =
+                                event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();
                         if (vtagsByVersion.containsKey(version)) {
                             Set<SchemaId> tmp = new HashSet<SchemaId>();
                             tmp.addAll(indexCase.getVersionTags());
@@ -323,8 +341,10 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     private void updateDenormalizedData(RecordId recordId, RecordEvent event,
-            Map<Scope, Set<FieldType>> updatedFieldsByScope, Map<Long, Set<SchemaId>> vtagsByVersion,
-            Set<SchemaId> changedVTagFields) throws RepositoryException, InterruptedException, LinkIndexException {
+                                        Map<Scope, Set<FieldType>> updatedFieldsByScope,
+                                        Map<Long, Set<SchemaId>> vtagsByVersion,
+                                        Set<SchemaId> changedVTagFields)
+            throws RepositoryException, InterruptedException, LinkIndexException {
 
         // This algorithm is designed to first collect all the reindex-work, and then to perform it.
         // Otherwise the same document would be indexed multiple times if it would become invalid
@@ -339,7 +359,7 @@ public class IndexUpdater implements RowLogMessageListener {
             @Override
             public Set<SchemaId> get(Object key) {
                 if (!this.containsKey(key) && key instanceof IndexField) {
-                    this.put((IndexField)key, new HashSet<SchemaId>());
+                    this.put((IndexField) key, new HashSet<SchemaId>());
                 }
                 return super.get(key);
             }
@@ -351,64 +371,10 @@ public class IndexUpdater implements RowLogMessageListener {
         // We now handle these 2 cases.
 
         // === Case 1 === updates in response to changes to this record
-
-        long version = event.getVersionCreated() == -1 ? event.getVersionUpdated() : event.getVersionCreated();
-
-        // Determine the relevant index fields
-        List<IndexField> indexFields;
-        if (event.getType() == RecordEvent.Type.DELETE) {
-            indexFields = indexer.getConf().getDerefIndexFields();
-        } else {
-            indexFields = new ArrayList<IndexField>();
-
-            collectDerefIndexFields(updatedFieldsByScope.get(Scope.NON_VERSIONED), indexFields);
-
-            if (version != -1 && vtagsByVersion.get(version) != null) {
-                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED), indexFields);
-                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE), indexFields);
-            }
-        }
-
-        // For each indexField, determine the vtags of the referrer that we should consider.
-        // In the context of this algorithm, a referrer is each record whose index might contain
-        // denormalized data from the record of which we are now processing the change event.
-        nextIndexField:
-        for (IndexField indexField : indexFields) {
-            DerefValue derefValue = (DerefValue)indexField.getValue();
-            FieldType fieldType = derefValue.getLastRealField();
-
-            //
-            // Determine the vtags of the referrer that we should consider
-            //
-            Set<SchemaId> referrerVtags = indexFieldsAndVTags.get(indexField);
-
-            if (fieldType.getScope() == Scope.NON_VERSIONED || event.getType() == RecordEvent.Type.DELETE) {
-                // If it is a non-versioned field, then all vtags should be considered.
-                // If it is a delete event, we do not know what vtags existed for the record, so consider them all.
-                referrerVtags.addAll(indexer.getConf().getVtags());
-            } else {
-                // Otherwise only the vtags of the created/updated version, if any
-                if (version != -1) {
-                    Set<SchemaId> vtags = vtagsByVersion.get(version);
-                    if (vtags != null)
-                        referrerVtags.addAll(vtags);
-                }
-            }
-        }
-
+        findRelevantIndexFieldsForRecordChanges(event, updatedFieldsByScope, vtagsByVersion, indexFieldsAndVTags);
 
         // === Case 2 === handle updated/added/removed vtags
-        if (changedVTagFields != null && !changedVTagFields.isEmpty()) {
-            // In this case, the IndexFields which we need to handle are those that use fields from:
-            //  - the previous version to which the vtag pointed (if it is not a new vtag)
-            //  - the new version to which the vtag points (if it is not a deleted vtag)
-            // But rather than calculating all that (consider the need to retrieve the versions),
-            // for now we simply consider all IndexFields.
-            // TODO could optimize this to exclude deref fields that use only non-versioned fields?
-            for (IndexField indexField : indexer.getConf().getDerefIndexFields()) {
-                indexFieldsAndVTags.get(indexField).addAll(changedVTagFields);
-            }
-        }
+        findRelevantIndexFieldsForVTagChanges(changedVTagFields, indexFieldsAndVTags);
 
         //
         // Now search the referrers, that is: for each link field, find out which records point to the current record
@@ -420,7 +386,7 @@ public class IndexUpdater implements RowLogMessageListener {
             @Override
             public Set<SchemaId> get(Object key) {
                 if (!containsKey(key) && key instanceof RecordId) {
-                    put((RecordId)key, new HashSet<SchemaId>());
+                    put((RecordId) key, new HashSet<SchemaId>());
                 }
                 return super.get(key);
             }
@@ -429,11 +395,10 @@ public class IndexUpdater implements RowLogMessageListener {
         int searchedFollowCount = 0;
 
         // Run over the IndexFields
-        nextIndexField:
         for (Map.Entry<IndexField, Set<SchemaId>> entry : indexFieldsAndVTags.entrySet()) {
             IndexField indexField = entry.getKey();
             Set<SchemaId> referrerVTags = entry.getValue();
-            DerefValue derefValue = (DerefValue)indexField.getValue();
+            DerefValue derefValue = (DerefValue) indexField.getValue();
 
             // Run over the version tags
             for (SchemaId referrerVtag : referrerVTags) {
@@ -449,64 +414,17 @@ public class IndexUpdater implements RowLogMessageListener {
                     Set<RecordId> newReferrers = new HashSet<RecordId>();
 
                     if (follow instanceof DerefValue.LinkFieldFollow) {
-                        SchemaId fieldId = ((DerefValue.LinkFieldFollow)follow).getOwnerFieldType().getId();
-                        for (RecordId referrer : referrers) {
-                            Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);
-                            newReferrers.addAll(linkReferrers);
-                        }
+                        final DerefValue.LinkFieldFollow linkFollowField = (DerefValue.LinkFieldFollow) follow;
+                        newReferrers.addAll(searchReferrersLinkFieldFollow(referrerVtag, referrers, linkFollowField));
                     } else if (follow instanceof DerefValue.VariantFollow) {
-                        DerefValue.VariantFollow varFollow = (DerefValue.VariantFollow)follow;
-                        Set<String> dimensions = varFollow.getDimensions();
-
-                        // We need to find out the variants of the current set of referrers which have the
-                        // same variant properties as the referrer (= same key/value pairs) and additionally
-                        // have the extra dimensions defined in the VariantFollow.
-
-                        nextReferrer:
-                        for (RecordId referrer : referrers) {
-
-                            Map<String, String> refprops = referrer.getVariantProperties();
-
-                            // If the referrer already has one of the dimensions, then skip it
-                            for (String dimension : dimensions) {
-                                if (refprops.containsKey(dimension))
-                                    continue nextReferrer;
-                            }
-
-                            //
-                            Set<RecordId> variants = repository.getVariants(referrer);
-
-                            nextVariant:
-                            for (RecordId variant : variants) {
-                                Map<String, String> varprops = variant.getVariantProperties();
-
-                                // Check it has each of the variant properties of the current referrer record
-                                for (Map.Entry<String, String> refprop : refprops.entrySet()) {
-                                    if (!ObjectUtils.safeEquals(varprops.get(refprop.getKey()), refprop.getValue())) {
-                                        // skip this variant
-                                        continue nextVariant;
-                                    }
-                                }
-
-                                // Check it has the additional dimensions
-                                for (String dimension : dimensions) {
-                                    if (!varprops.containsKey(dimension))
-                                        continue nextVariant;
-                                }
-
-                                // We have a hit
-                                newReferrers.add(variant);
-                            }
-                        }
+                        DerefValue.VariantFollow varFollow = (DerefValue.VariantFollow) follow;
+                        newReferrers.addAll(searchReferrersVariantFollow(referrers, varFollow));
+                    } else if (follow instanceof DerefValue.ForwardVariantFollow) {
+                        final DerefValue.ForwardVariantFollow forwardVarFollow =
+                                (DerefValue.ForwardVariantFollow) follow;
+                        newReferrers.addAll(searchReferrersForwardVariantFollow(referrers, forwardVarFollow));
                     } else if (follow instanceof DerefValue.MasterFollow) {
-                        for (RecordId referrer : referrers) {
-                            // A MasterFollow can only point to masters
-                            if (referrer.isMaster()) {
-                                Set<RecordId> variants = repository.getVariants(referrer);
-                                variants.remove(referrer);
-                                newReferrers.addAll(variants);
-                            }
-                        }
+                        newReferrers.addAll(searchReferrersMasterFollow(referrers));
                     } else {
                         throw new RuntimeException("Unexpected implementation of DerefValue.Follow: " +
                                 follow.getClass().getName());
@@ -550,7 +468,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
             // TODO how will this behave if the row was meanwhile deleted?
             try {
-               rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null);
+                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null);
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.
@@ -558,6 +476,199 @@ public class IndexUpdater implements RowLogMessageListener {
                 metrics.errors.inc();
             }
         }
+    }
+
+    private void findRelevantIndexFieldsForRecordChanges(RecordEvent event,
+                                                         Map<Scope, Set<FieldType>> updatedFieldsByScope,
+                                                         Map<Long, Set<SchemaId>> vtagsByVersion,
+                                                         Map<IndexField, Set<SchemaId>> indexFieldsAndVTags) {
+        long version = event.getVersionCreated() == -1 ? event.getVersionUpdated() : event.getVersionCreated();
+
+        // Determine the relevant index fields
+        List<IndexField> indexFields;
+        if (event.getType() == RecordEvent.Type.DELETE) {
+            indexFields = indexer.getConf().getDerefIndexFields();
+        } else {
+            indexFields = new ArrayList<IndexField>();
+
+            collectDerefIndexFields(updatedFieldsByScope.get(Scope.NON_VERSIONED), indexFields);
+
+            if (version != -1 && vtagsByVersion.get(version) != null) {
+                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED), indexFields);
+                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE), indexFields);
+            }
+        }
+
+        // For each indexField, determine the vtags of the referrer that we should consider.
+        // In the context of this algorithm, a referrer is each record whose index might contain
+        // denormalized data from the record of which we are now processing the change event.
+        for (IndexField indexField : indexFields) {
+            DerefValue derefValue = (DerefValue) indexField.getValue();
+            FieldType fieldType = derefValue.getLastRealField();
+
+            //
+            // Determine the vtags of the referrer that we should consider
+            //
+            Set<SchemaId> referrerVtags = indexFieldsAndVTags.get(indexField);
+
+            if (fieldType.getScope() == Scope.NON_VERSIONED || event.getType() == RecordEvent.Type.DELETE) {
+                // If it is a non-versioned field, then all vtags should be considered.
+                // If it is a delete event, we do not know what vtags existed for the record, so consider them all.
+                referrerVtags.addAll(indexer.getConf().getVtags());
+            } else {
+                // Otherwise only the vtags of the created/updated version, if any
+                if (version != -1) {
+                    Set<SchemaId> vtags = vtagsByVersion.get(version);
+                    if (vtags != null)
+                        referrerVtags.addAll(vtags);
+                }
+            }
+        }
+    }
+
+    private void findRelevantIndexFieldsForVTagChanges(Set<SchemaId> changedVTagFields,
+                                                       Map<IndexField, Set<SchemaId>> indexFieldsAndVTags) {
+        if (changedVTagFields != null && !changedVTagFields.isEmpty()) {
+            // In this case, the IndexFields which we need to handle are those that use fields from:
+            //  - the previous version to which the vtag pointed (if it is not a new vtag)
+            //  - the new version to which the vtag points (if it is not a deleted vtag)
+            // But rather than calculating all that (consider the need to retrieve the versions),
+            // for now we simply consider all IndexFields.
+            // TODO could optimize this to exclude deref fields that use only non-versioned fields?
+            for (IndexField indexField : indexer.getConf().getDerefIndexFields()) {
+                indexFieldsAndVTags.get(indexField).addAll(changedVTagFields);
+            }
+        }
+    }
+
+    private Set<RecordId> searchReferrersLinkFieldFollow(SchemaId referrerVtag, Set<RecordId> referrers,
+                                                         DerefValue.LinkFieldFollow linkFollowField)
+            throws LinkIndexException {
+        final SchemaId fieldId = linkFollowField.getOwnerFieldType().getId();
+
+        final HashSet<RecordId> result = new HashSet<RecordId>();
+        for (RecordId referrer : referrers) {
+            Set<RecordId> linkReferrers = linkIndex.getReferrers(referrer, referrerVtag, fieldId);
+            result.addAll(linkReferrers);
+        }
+        return result;
+    }
+
+    private Set<RecordId> searchReferrersVariantFollow(Set<RecordId> referrers, DerefValue.VariantFollow varFollow)
+            throws RepositoryException, InterruptedException {
+        final HashSet<RecordId> result = new HashSet<RecordId>();
+
+        Set<String> dimensions = varFollow.getDimensions();
+
+        // We need to find out the variants of the current set of referrers which have the
+        // same variant properties as the referrer (= same key/value pairs) and additionally
+        // have the extra dimensions defined in the VariantFollow.
+
+        nextReferrer:
+        for (RecordId referrer : referrers) {
+
+            Map<String, String> refprops = referrer.getVariantProperties();
+
+            // If the referrer already has one of the dimensions, then skip it
+            for (String dimension : dimensions) {
+                if (refprops.containsKey(dimension))
+                    continue nextReferrer;
+            }
+
+            //
+            Set<RecordId> variants = repository.getVariants(referrer);
+
+            nextVariant:
+            for (RecordId variant : variants) {
+                Map<String, String> varprops = variant.getVariantProperties();
+
+                // Check it has each of the variant properties of the current referrer record
+                for (Map.Entry<String, String> refprop : refprops.entrySet()) {
+                    if (!ObjectUtils.safeEquals(varprops.get(refprop.getKey()), refprop.getValue())) {
+                        // skip this variant
+                        continue nextVariant;
+                    }
+                }
+
+                // Check it has the additional dimensions
+                for (String dimension : dimensions) {
+                    if (!varprops.containsKey(dimension))
+                        continue nextVariant;
+                }
+
+                // We have a hit
+                result.add(variant);
+            }
+        }
+
+        return result;
+    }
+
+    private Set<RecordId> searchReferrersForwardVariantFollow(Set<RecordId> referrers,
+                                                              DerefValue.ForwardVariantFollow forwardVarFollow)
+            throws RepositoryException, InterruptedException {
+        final HashSet<RecordId> result = new HashSet<RecordId>();
+
+        final String dimension = forwardVarFollow.getDimension();
+
+        // If the current referrer has the variant dimension which was specified in the
+        // ForwardVariantFollow, we need to reindex all records which have the same RecordId but without
+        // the given variant dimension.
+
+        for (RecordId referrer : referrers) {
+
+            Map<String, String> referrerVariantProps = referrer.getVariantProperties();
+
+            // If the referrer does not have the dimension, skip it
+            if (referrerVariantProps.containsKey(dimension)) {
+
+                // all variants of the current referrer -> find the ones which have the same properties
+                // except for the given variant dimension of the ForwardVariantFollow
+                final Set<RecordId> variants = repository.getVariants(referrer);
+
+                for (RecordId variant : variants) {
+                    Map<String, String> variantProps = variant.getVariantProperties();
+
+                    // Check it doesn't have the given dimension
+                    if (!variantProps.containsKey(dimension)) {
+
+                        boolean allVariantsEqualExceptGivenDimension = true;
+
+                        // Check it has each of the variant properties of the current referrer record, except
+                        // the dimension from the ForwardVariantFollow
+                        for (Map.Entry<String, String> referrerProp : referrerVariantProps.entrySet()) {
+                            if (!referrerProp.getKey().equals(dimension)) { // ignore given dimension
+                                if (!ObjectUtils.safeEquals(variantProps.get(referrerProp.getKey()),
+                                        referrerProp.getValue())) {
+                                    allVariantsEqualExceptGivenDimension = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (allVariantsEqualExceptGivenDimension) // We have a hit
+                            result.add(variant);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Set<RecordId> searchReferrersMasterFollow(Set<RecordId> referrers)
+            throws RepositoryException, InterruptedException {
+        final HashSet<RecordId> result = new HashSet<RecordId>();
+
+        for (RecordId referrer : referrers) {
+            // A MasterFollow can only point to masters
+            if (referrer.isMaster()) {
+                Set<RecordId> variants = repository.getVariants(referrer);
+                variants.remove(referrer);
+                result.addAll(variants);
+            }
+        }
+        return result;
     }
 
     /**
