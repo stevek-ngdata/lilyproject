@@ -439,9 +439,9 @@ public class IndexerTest {
             RecordId var2Id = idGenerator.newRecordId(masterRecord.getId(), varProps);
             Record var2Record = repository.newRecord(var2Id);
             var2Record.setRecordType(nvRecordType1.getName());
-            var2Record.setField(nvfield2.getName(), "blue");
+            var2Record.setField(nvfield1.getName(), "blue");
             var2Record.setField(nvTag.getName(), 0L);
-            expectEvent(CREATE, var2Id, nvfield2.getId(), nvTag.getId());
+            expectEvent(CREATE, var2Id, nvfield1.getId(), nvTag.getId());
             repository.create(var2Record);
 
             commitIndex();
@@ -475,7 +475,7 @@ public class IndexerTest {
             expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvfield1.getId(), nvTag.getId());
             record2 = repository.create(record2);
 
-            // Create a record which will contain denormalized data through master-dereferencing
+            // Create a record which will contain denormalized data through master-dereferencing and forward-variant-dereferencing
             RecordId record3Id = idGenerator.newRecordId(record1.getId(), Collections.singletonMap("lang", "en"));
             Record record3 = repository.newRecord(record3Id);
             record3.setRecordType(nvRecordType1.getName());
@@ -500,6 +500,7 @@ public class IndexerTest {
             verifyResultCount("nv_deref1:cumcumber", 1);
             verifyResultCount("nv_deref2:cumcumber", 1);
             verifyResultCount("nv_deref3:cumcumber", 2);
+            verifyResultCount("nv_deref5:broccoli", 1);
 
             // Update record1, check if index of the others is updated
             log.debug("Begin test NV9");
@@ -525,6 +526,16 @@ public class IndexerTest {
             commitIndex();
             verifyResultCount("nv_deref4:courgette", 1);
             verifyResultCount("nv_deref4:eggplant", 0);
+
+            // Update record4, index for record3 should be updated
+            log.debug("Begin test NV10.1");
+            record4.setField(nvfield1.getName(), "courgette");
+            expectEvent(UPDATE, record4.getId(), nvfield1.getId());
+            repository.update(record4);
+
+            commitIndex();
+            verifyResultCount("nv_deref5:courgette", 1);
+            verifyResultCount("nv_deref5:broccoli", 0);
 
             // Delete record 3: index for record 4 should be updated
             log.debug("Begin test NV11");
