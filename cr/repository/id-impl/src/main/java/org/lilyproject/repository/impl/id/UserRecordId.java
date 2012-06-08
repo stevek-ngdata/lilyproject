@@ -15,13 +15,13 @@
  */
 package org.lilyproject.repository.impl.id;
 
-import org.lilyproject.bytes.api.DataOutput;
-import org.lilyproject.bytes.impl.DataOutputImpl;
-import org.lilyproject.repository.api.RecordId;
-
 import java.util.Collections;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataOutputImpl;
+import org.lilyproject.repository.api.RecordId;
 
 
 public class UserRecordId implements RecordId {
@@ -30,8 +30,9 @@ public class UserRecordId implements RecordId {
     protected byte[] recordIdBytes;
     protected String recordIdString;
     private final IdGeneratorImpl idGenerator;
-    
-    private static final SortedMap<String, String> EMPTY_SORTED_MAP = Collections.unmodifiableSortedMap(new TreeMap<String, String>());
+
+    private static final SortedMap<String, String> EMPTY_SORTED_MAP =
+            Collections.unmodifiableSortedMap(new TreeMap<String, String>());
 
     protected UserRecordId(String recordId, IdGeneratorImpl idGenerator) {
         IdGeneratorImpl.checkIdString(recordId, "record id");
@@ -48,7 +49,7 @@ public class UserRecordId implements RecordId {
         }
         return recordIdBytes;
     }
-    
+
     @Override
     public void writeBytes(DataOutput dataOutput) {
         if (recordIdBytes == null) {

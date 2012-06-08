@@ -25,7 +25,7 @@ import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.SchemaId;
 
 public class SchemaIdImpl implements SchemaId {
-    
+
     private UUID uuid;
     private byte[] bytes;
     private String string;
@@ -34,22 +34,22 @@ public class SchemaIdImpl implements SchemaId {
         this.uuid = uuid;
         this.bytes = idToBytes(uuid);
     }
-    
+
     public SchemaIdImpl(byte[] id) {
         this.bytes = id;
     }
-    
+
     public SchemaIdImpl(String id) {
         this.string = id;
         this.uuid = UUID.fromString(id);
         this.bytes = idToBytes(uuid);
     }
-    
+
     @Override
     public byte[] getBytes() {
         return bytes;
     }
-    
+
     public String toString() {
         if (string == null) {
             if (uuid == null) {
@@ -60,7 +60,7 @@ public class SchemaIdImpl implements SchemaId {
         }
         return string;
     }
-    
+
     private byte[] idToBytes(UUID uuid) {
         DataOutput dataOutput = new DataOutputImpl(16);
         dataOutput.writeLong(uuid.getMostSignificantBits());
@@ -89,6 +89,6 @@ public class SchemaIdImpl implements SchemaId {
             return false;
         return true;
     }
-    
-    
+
+
 }

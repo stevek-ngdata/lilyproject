@@ -25,8 +25,8 @@ public interface RecordIdFactory {
      * are no variant properties.
      */
     DataInput[] splitInMasterAndVariant(DataInput dataInput);
-    
+
     RecordId fromBytes(DataInput dataInput, IdGeneratorImpl idGenerator);
-    
+
     RecordId fromString(String string, IdGeneratorImpl idGenerator);
 }

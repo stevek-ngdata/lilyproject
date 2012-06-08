@@ -261,11 +261,11 @@ public class IdGeneratorImpl implements IdGenerator {
     protected static void checkReservedCharacters(String text) {
         for (int i = 0; i < text.length(); i++) {
             switch (text.charAt(i)) {
-            /*
-             * case '.': case '=': case ',':
-             */
-            case '\u0000':
-                throw new IllegalArgumentException("Null characters may not be used in a record ID");
+                /*
+                * case '.': case '=': case ',':
+                */
+                case '\u0000':
+                    throw new IllegalArgumentException("Null characters may not be used in a record ID");
             }
         }
     }
@@ -281,14 +281,14 @@ public class IdGeneratorImpl implements IdGenerator {
                     escaped = false;
                 } else {
                     switch (text.charAt(i)) {
-                    case '.':
-                    case '=':
-                    case ',':
-                        throw new IllegalArgumentException(
-                                "Reserved characters [.,=] must be escaped in a RecordID using '\\'. RecordID = "
-                                        + text);
-                    case '\\':
-                        escaped = true;
+                        case '.':
+                        case '=':
+                        case ',':
+                            throw new IllegalArgumentException(
+                                    "Reserved characters [.,=] must be escaped in a RecordID using '\\'. RecordID = "
+                                            + text);
+                        case '\\':
+                            escaped = true;
                     }
                 }
             }

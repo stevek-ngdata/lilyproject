@@ -1,4 +1,4 @@
-package org.lilyproject.repository.impl.filter;
+package org.lilyproject.hbaseext;
 
 import java.io.DataInput;
 import java.io.DataOutput;

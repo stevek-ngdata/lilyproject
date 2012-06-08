@@ -15,7 +15,10 @@
  */
 package org.lilyproject.repository.impl.id;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.UUID;
 
 import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataOutputImpl;
@@ -29,13 +32,14 @@ public class UUIDRecordId implements RecordId {
     private byte[] uuidBytes;
     private final IdGeneratorImpl idGenerator;
 
-    private static final SortedMap<String, String> EMPTY_SORTED_MAP = Collections.unmodifiableSortedMap(new TreeMap<String, String>());
+    private static final SortedMap<String, String> EMPTY_SORTED_MAP =
+            Collections.unmodifiableSortedMap(new TreeMap<String, String>());
 
     protected UUIDRecordId(IdGeneratorImpl idGenerator) {
         this.idGenerator = idGenerator;
         uuid = UUID.randomUUID();
     }
-    
+
     protected UUIDRecordId(UUID uuid, IdGeneratorImpl idGenerator) {
         this.uuid = uuid;
         this.idGenerator = idGenerator;
@@ -46,18 +50,18 @@ public class UUIDRecordId implements RecordId {
         this.uuid = UUID.fromString(basicUUIDString);
         this.basicUUIDString = basicUUIDString;
     }
-    
+
     public UUID getUuid() {
         return uuid;
     }
-    
+
     public String toString() {
         if (uuidString == null) {
             uuidString = idGenerator.toString(this);
         }
         return uuidString;
     }
-    
+
     @Override
     public byte[] toBytes() {
         if (uuidBytes == null) {
@@ -67,7 +71,7 @@ public class UUIDRecordId implements RecordId {
         }
         return uuidBytes;
     }
-    
+
     @Override
     public void writeBytes(DataOutput dataOutput) {
         if (uuidBytes == null) {

@@ -15,8 +15,12 @@
  */
 package org.lilyproject.repository.impl.id;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.lilyproject.bytes.api.DataInput;
 import org.lilyproject.bytes.api.DataOutput;
@@ -32,7 +36,8 @@ public class VariantRecordId implements RecordId {
     private byte[] recordIdBytes;
     private String recordIdString;
 
-    protected VariantRecordId(RecordId masterRecordId, Map<String, String> variantProperties, IdGeneratorImpl idGenerator) {
+    protected VariantRecordId(RecordId masterRecordId, Map<String, String> variantProperties,
+                              IdGeneratorImpl idGenerator) {
         this.masterRecordId = masterRecordId;
 
         SortedMap<String, String> varProps = createVariantPropertiesMap();
@@ -41,7 +46,7 @@ public class VariantRecordId implements RecordId {
 
         this.idGenerator = idGenerator;
     }
-    
+
     protected VariantRecordId(RecordId masterRecordId, DataInput dataInput, IdGeneratorImpl idGenerator) {
         this.masterRecordId = masterRecordId;
         this.idGenerator = idGenerator;
@@ -50,7 +55,7 @@ public class VariantRecordId implements RecordId {
         while (dataInput.getPosition() < dataInput.getSize()) {
             String dimension = dataInput.readVUTF();
             String dimensionValue = dataInput.readVUTF();
-            
+
             IdGeneratorImpl.checkVariantPropertyNameValue(dimension);
             IdGeneratorImpl.checkVariantPropertyNameValue(dimensionValue);
             varProps.put(dimension, dimensionValue);
@@ -65,11 +70,11 @@ public class VariantRecordId implements RecordId {
 
     public String toString() {
         if (recordIdString == null) {
-            recordIdString = idGenerator.toString(this); 
+            recordIdString = idGenerator.toString(this);
         }
         return recordIdString;
     }
-    
+
     @Override
     public byte[] toBytes() {
         if (recordIdBytes == null) {
@@ -79,7 +84,7 @@ public class VariantRecordId implements RecordId {
         }
         return recordIdBytes;
     }
-    
+
     @Override
     public final void writeBytes(DataOutput dataOutput) {
         if (recordIdBytes == null) {
@@ -87,10 +92,10 @@ public class VariantRecordId implements RecordId {
 
             // TODO this needs to be designed some other way
             if (masterRecordId instanceof UserRecordId) {
-                dataOutput.writeByte((byte)0);
+                dataOutput.writeByte((byte) 0);
             }
 
-            Set<Entry<String,String>> entrySet = variantProperties.entrySet();
+            Set<Entry<String, String>> entrySet = variantProperties.entrySet();
             for (Entry<String, String> entry : entrySet) {
                 // entry consists of the dimension and the dimension value
                 dataOutput.writeVUTF(entry.getKey());

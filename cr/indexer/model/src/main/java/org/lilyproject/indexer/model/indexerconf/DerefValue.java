@@ -15,9 +15,15 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-import java.util.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
 
 public class DerefValue extends BaseValue {
     private List<Follow> follows = new ArrayList<Follow>();
@@ -52,7 +58,7 @@ public class DerefValue extends BaseValue {
             if (i == follows.size() - 1) {
                 lastRealField = targetField;
             } else {
-                lastRealField = ((RecordFieldFollow)follows.get(i + 1)).getFieldType();
+                lastRealField = ((RecordFieldFollow) follows.get(i + 1)).getFieldType();
             }
             break;
         }
@@ -64,10 +70,11 @@ public class DerefValue extends BaseValue {
         for (Follow follow : follows) {
             if (follow instanceof LinkFieldFollow) {
                 if (currentRootRecordFieldFollow != null) {
-                    ((LinkFieldFollow)follow).ownerFieldType = currentRootRecordFieldFollow.getFieldType();
+                    ((LinkFieldFollow) follow).ownerFieldType = currentRootRecordFieldFollow.getFieldType();
                 }
                 currentRootRecordFieldFollow = null;
-            } else if (follow instanceof MasterFollow || follow instanceof VariantFollow) {
+            } else if (follow instanceof MasterFollow || follow instanceof VariantFollow ||
+                    follow instanceof ForwardVariantFollow) {
                 if (currentRootRecordFieldFollow != null) {
                     throw new RuntimeException("Unexpected situation: master or variant follow after record" +
                             " follow: this should have been validated by the indexer conf parser.");
@@ -75,7 +82,7 @@ public class DerefValue extends BaseValue {
                 currentRootRecordFieldFollow = null;
             } else if (follow instanceof RecordFieldFollow) {
                 if (currentRootRecordFieldFollow == null) {
-                    currentRootRecordFieldFollow = (RecordFieldFollow)follow;
+                    currentRootRecordFieldFollow = (RecordFieldFollow) follow;
                 }
             } else {
                 throw new RuntimeException("Unexpected follow impl: " + follow.getClass().getName());
@@ -101,6 +108,12 @@ public class DerefValue extends BaseValue {
 
     protected void addVariantFollow(Set<String> dimensions) {
         VariantFollow follow = new VariantFollow(dimensions);
+        follows.add(follow);
+        crossRecordFollows.add(follow);
+    }
+
+    protected void addForwardVariantFollow(String dimension) {
+        ForwardVariantFollow follow = new ForwardVariantFollow(dimension);
         follows.add(follow);
         crossRecordFollows.add(follow);
     }
@@ -182,10 +195,22 @@ public class DerefValue extends BaseValue {
         }
     }
 
+    public static class ForwardVariantFollow implements Follow {
+        private String dimension;
+
+        public ForwardVariantFollow(String dimension) {
+            this.dimension = dimension;
+        }
+
+        public String getDimension() {
+            return dimension;
+        }
+    }
+
     @Override
     public SchemaId getFieldDependency() {
         if (follows.get(0) instanceof LinkFieldFollow) {
-            return ((LinkFieldFollow)follows.get(0)).fieldType.getId();
+            return ((LinkFieldFollow) follows.get(0)).fieldType.getId();
         } else {
             // A follow-variant is like a link to another document, but the link can never change as the
             // identity of the document never changes. Therefore, there is no dependency on a field.

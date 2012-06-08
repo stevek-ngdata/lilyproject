@@ -15,6 +15,15 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.io.InputStream;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.primitives.Ints;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,20 +33,35 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
-import org.lilyproject.indexer.model.indexerconf.*;
+import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.Follow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.LinkFieldFollow;
+import org.lilyproject.indexer.model.indexerconf.DerefValue.MasterFollow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.RecordFieldFollow;
 import org.lilyproject.indexer.model.indexerconf.DerefValue.VariantFollow;
-import org.lilyproject.indexer.model.indexerconf.DerefValue.MasterFollow;
+import org.lilyproject.indexer.model.indexerconf.FieldValue;
 import org.lilyproject.indexer.model.indexerconf.Formatter;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.indexer.model.indexerconf.IndexValue;
+import org.lilyproject.indexer.model.indexerconf.IndexerConf;
+import org.lilyproject.indexer.model.indexerconf.Value;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.RecordScanner;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
-
-import java.io.InputStream;
-import java.util.*;
 
 /**
  * Evaluates an index field value (a {@link Value}) to a value.
@@ -82,13 +106,13 @@ public class ValueEvaluator {
      * called if the field is present in the record.
      */
     public List<String> format(IdRecord record, FieldType fieldType, boolean extractContent, String formatterName,
-            Repository repository) throws InterruptedException {
+                               Repository repository) throws InterruptedException {
         Object value = record.getField(fieldType.getId());
 
         List<IndexValue> indexValues;
 
         if (fieldType.getValueType().getBaseName().equals("LIST")) {
-            List<Object> values = (List<Object>)value;
+            List<Object> values = (List<Object>) value;
             indexValues = new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
                 indexValues.add(new IndexValue(record, fieldType, i, values.get(i)));
@@ -127,10 +151,10 @@ public class ValueEvaluator {
     }
 
     private void extractContent(Object value, Deque<Integer> indexes, Record record, FieldType fieldType,
-            List<String> result, Repository repository) {
+                                List<String> result, Repository repository) {
 
         if (value instanceof List) { // this covers both LIST and PATH types
-            List values = (List)value;
+            List values = (List) value;
             for (int i = 0; i < values.size(); i++) {
                 indexes.addLast(i);
                 extractContent(values.get(i), indexes, record, fieldType, result, repository);
@@ -142,9 +166,9 @@ public class ValueEvaluator {
     }
 
     private void extractContent(Object value, Record record, FieldType fieldType, int[] indexes, List<String> result,
-            Repository repository) {
+                                Repository repository) {
 
-        Blob blob = (Blob)value;
+        Blob blob = (Blob) value;
         InputStream is = null;
 
         // TODO make write limit configurable
@@ -186,9 +210,9 @@ public class ValueEvaluator {
     private List<IndexValue> evalValue(Value value, IdRecord record, Repository repository, SchemaId vtag)
             throws RepositoryException, InterruptedException {
         if (value instanceof FieldValue) {
-            return evalFieldValue((FieldValue)value, record, repository);
+            return evalFieldValue((FieldValue) value, record, repository);
         } else if (value instanceof DerefValue) {
-            return evalDerefValue((DerefValue)value, record, repository, vtag);
+            return evalDerefValue((DerefValue) value, record, repository, vtag);
         } else {
             throw new RuntimeException("Unexpected type of value: " + value.getClass().getName());
         }
@@ -200,13 +224,12 @@ public class ValueEvaluator {
     }
 
     /**
-     *
      * @param indexValues optional, if supplied values will be added to this list, otherwise a new list
      *                    will be created and returned
      * @return null if there's no value
      */
     private List<IndexValue> getValue(IdRecord record, FieldType fieldType, List<IndexValue> indexValues,
-            TypeManager typeManager) throws RepositoryException, InterruptedException {
+                                      TypeManager typeManager) throws RepositoryException, InterruptedException {
 
         Object value;
 
@@ -225,7 +248,7 @@ public class ValueEvaluator {
         }
 
         if (fieldType.getValueType().getBaseName().equals("LIST")) {
-            List<Object> values = (List<Object>)value;
+            List<Object> values = (List<Object>) value;
             result = indexValues != null ? indexValues : new ArrayList<IndexValue>(values.size());
             for (int i = 0; i < values.size(); i++) {
                 result.add(new IndexValue(record, fieldType, i, values.get(i)));
@@ -282,18 +305,22 @@ public class ValueEvaluator {
      * are no results (link doesn't exist, points to non-existing doc, etc.).
      */
     private List<FollowRecord> evalFollow(DerefValue deref, Follow follow, FollowRecord record, Repository repository,
-            SchemaId vtag) throws RepositoryException, InterruptedException {
+                                          SchemaId vtag) throws RepositoryException, InterruptedException {
         if (follow instanceof LinkFieldFollow) {
-            List<IdRecord> records = evalLinkFieldFollow(deref, (LinkFieldFollow)follow, record, repository, vtag);
+            List<IdRecord> records = evalLinkFieldFollow(deref, (LinkFieldFollow) follow, record, repository, vtag);
             return addContext(records);
         } else if (follow instanceof RecordFieldFollow) {
-            List<IdRecord> records = evalRecordFieldFollow(deref, (RecordFieldFollow)follow, record, repository, vtag);
+            List<IdRecord> records = evalRecordFieldFollow(deref, (RecordFieldFollow) follow, record, repository, vtag);
             return addContext(records, record.record);
         } else if (follow instanceof VariantFollow) {
-            List<IdRecord> records = evalVariantFollow((VariantFollow)follow, record, repository, vtag);
+            List<IdRecord> records = evalVariantFollow((VariantFollow) follow, record, repository, vtag);
+            return addContext(records);
+        } else if (follow instanceof DerefValue.ForwardVariantFollow) {
+            List<IdRecord> records = evalForwardVariantFollow((DerefValue.ForwardVariantFollow) follow, record,
+                    repository, vtag);
             return addContext(records);
         } else if (follow instanceof MasterFollow) {
-            List<IdRecord> records = evalMasterFollow((MasterFollow)follow, record, repository, vtag);
+            List<IdRecord> records = evalMasterFollow((MasterFollow) follow, record, repository, vtag);
             return addContext(records);
         } else {
             throw new RuntimeException("Unexpected type of follow: " + follow.getClass().getName());
@@ -327,7 +354,8 @@ public class ValueEvaluator {
     }
 
     private List<IdRecord> evalLinkFieldFollow(DerefValue deref, LinkFieldFollow follow, FollowRecord frecord,
-            Repository repository, SchemaId vtag) throws RepositoryException, InterruptedException {
+                                               Repository repository, SchemaId vtag)
+            throws RepositoryException, InterruptedException {
 
         IdRecord record = frecord.record;
         FieldType fieldType = follow.getFieldType();
@@ -338,14 +366,14 @@ public class ValueEvaluator {
 
         Object value = record.getField(fieldType.getId());
         if (value instanceof Link) {
-            RecordId recordId = ((Link)value).resolve(frecord.contextRecord, repository.getIdGenerator());
+            RecordId recordId = ((Link) value).resolve(frecord.contextRecord, repository.getIdGenerator());
             IdRecord linkedRecord = resolveRecordId(recordId, vtag, repository);
             return linkedRecord == null ? null : Collections.singletonList(linkedRecord);
-        } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Link) {
-            List list = (List)value;
+        } else if (value instanceof List && ((List) value).size() > 0 && ((List) value).get(0) instanceof Link) {
+            List list = (List) value;
             List<IdRecord> result = new ArrayList<IdRecord>(list.size());
             for (Object link : list) {
-                RecordId recordId = ((Link)link).resolve(frecord.contextRecord, repository.getIdGenerator());
+                RecordId recordId = ((Link) link).resolve(frecord.contextRecord, repository.getIdGenerator());
                 IdRecord linkedRecord = resolveRecordId(recordId, vtag, repository);
                 if (linkedRecord != null) {
                     result.add(linkedRecord);
@@ -359,7 +387,8 @@ public class ValueEvaluator {
     }
 
     private List<IdRecord> evalRecordFieldFollow(DerefValue deref, RecordFieldFollow follow, FollowRecord frecord,
-            Repository repository, SchemaId vtag) throws RepositoryException, InterruptedException {
+                                                 Repository repository, SchemaId vtag)
+            throws RepositoryException, InterruptedException {
 
         IdRecord record = frecord.record;
         FieldType fieldType = follow.getFieldType();
@@ -370,9 +399,9 @@ public class ValueEvaluator {
 
         Object value = record.getField(fieldType.getId());
         if (value instanceof Record) {
-            return Collections.singletonList((IdRecord)value);
-        } else if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Record) {
-            List<IdRecord> records = (List<IdRecord>)value;
+            return Collections.singletonList((IdRecord) value);
+        } else if (value instanceof List && ((List) value).size() > 0 && ((List) value).get(0) instanceof Record) {
+            List<IdRecord> records = (List<IdRecord>) value;
             return records.isEmpty() ? null : records;
         } else {
             throw new RuntimeException("A record dereference is used but type is not RECORD or LIST<RECORD>, value: " +
@@ -396,7 +425,7 @@ public class ValueEvaluator {
     }
 
     private List<IdRecord> evalVariantFollow(VariantFollow follow, FollowRecord frecord, Repository repository,
-            SchemaId vtag) throws RepositoryException, InterruptedException {
+                                             SchemaId vtag) throws RepositoryException, InterruptedException {
 
         RecordId recordId = frecord.record.getId();
 
@@ -423,7 +452,43 @@ public class ValueEvaluator {
         }
     }
 
-    private List<IdRecord> evalMasterFollow(MasterFollow follow, FollowRecord frecord, Repository repository, SchemaId vtag)
+    private List<IdRecord> evalForwardVariantFollow(DerefValue.ForwardVariantFollow follow, FollowRecord frecord,
+                                                    Repository repository,
+                                                    SchemaId vtag) throws RepositoryException, InterruptedException {
+
+        RecordId recordId = frecord.record.getId();
+
+        if (recordId.getVariantProperties().containsKey(follow.getDimension())) {
+            // the record already contains the variant dimension -> stop here
+            return null;
+        } else {
+            // build a new record id which is the one we started with + the dimension to follow
+            final Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
+            varProps.put(follow.getDimension(), "dummy");
+            final RecordId resolvedRecordId = repository.getIdGenerator().newRecordId(recordId.getMaster(), varProps);
+
+            // now find all the records of this newly defined variant
+            final ArrayList<IdRecord> result = new ArrayList<IdRecord>();
+
+            // TODO: think this version tag stuff through....
+//            final IdRecord versionTaggedRecordId = VersionTag.getIdRecord(resolvedRecordId, vtag, repository);
+            final RecordScan scan = new RecordScan();
+            scan.setRecordFilter(new RecordVariantFilter(resolvedRecordId));
+            final RecordScanner scanner = repository.getScanner(scan);
+            Record next;
+            // TODO: going through the idRecord stuff results in reading again!!!
+            while ((next = scanner.next()) != null)
+                result.add(VersionTag.getIdRecord(next.getId(), vtag, repository));
+
+            scanner.close();
+            scanner.close();
+
+            return result;
+        }
+    }
+
+    private List<IdRecord> evalMasterFollow(MasterFollow follow, FollowRecord frecord, Repository repository,
+                                            SchemaId vtag)
             throws RepositoryException, InterruptedException {
 
         if (frecord.record.getId().isMaster())

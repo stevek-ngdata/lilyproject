@@ -420,7 +420,7 @@ public class IndexerConfBuilder {
                 lastFollowIsRecord = false;
 
                 deref.addMasterFollow();
-            } else {  // Link to less dimensioned variant
+            } else if (derefPart.contains("-")) {  // Link to less dimensioned variant
                 if (lastFollowIsRecord) {
                     throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
                             " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
@@ -428,6 +428,14 @@ public class IndexerConfBuilder {
                 lastFollowIsRecord = false;
 
                 processLessDimensionedVariantsDeref(fieldEl, valueExpr, deref, derefPart);
+            } else if (derefPart.contains("+")) {  // Link to more dimensioned variant
+                if (lastFollowIsRecord) {
+                    throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
+                            " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+                }
+                lastFollowIsRecord = false;
+
+                processMoreDimensionedVariantsDeref(fieldEl, valueExpr, deref, derefPart);
             }
         }
 
@@ -520,6 +528,22 @@ public class IndexerConfBuilder {
         }
 
         deref.addVariantFollow(dimensions);
+    }
+
+    private void processMoreDimensionedVariantsDeref(Element fieldEl, String valueExpr, DerefValue deref,
+                                                     String derefPart) throws IndexerConfException {
+        // The variant dimension is specified in a syntax like "+var1" (only one!)
+        String dimension = null;
+
+        if (derefPart.startsWith("+") && derefPart.length() > 2)
+            dimension = derefPart.substring(1);
+
+        if (dimension == null || dimension.contains("+") || dimension.contains(","))
+            throw new IndexerConfException("Invalid specification of variants to follow: '" +
+                    derefPart + "', deref expression: '" + valueExpr + "' " +
+                    "at " + LocationAttributes.getLocation(fieldEl));
+
+        deref.addForwardVariantFollow(dimension);
     }
 
     private QName parseQName(String qname, Element contextEl) throws IndexerConfException {

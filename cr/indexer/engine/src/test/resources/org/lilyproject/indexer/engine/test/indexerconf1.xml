@@ -29,6 +29,8 @@
 
     <field name="nv_deref4" value="-branch=>ns:nv_field1"/>
 
+    <field name="nv_deref5" value="+branch=>ns:nv_field1"/>
+
     <!--
        | These fields are about versioned things (v_ prefix)
        -->
