@@ -131,17 +131,13 @@ public class JsonConversionTest {
 
     @Test
     public void testScanCustomJson() throws Exception {
-        IdGenerator idGenerator = new IdGeneratorImpl();
-
         // verify the json parser accepts comments and unquoted attributes
         String json = "{ /* a comment */ startRecordId: \"USER.foo\"}";
-        RecordScan parsedScan = scanFromBytes(json.getBytes());
+        scanFromBytes(json.getBytes());
     }
 
     @Test
     public void testScanRawStartStop() throws Exception {
-        IdGenerator idGenerator = new IdGeneratorImpl();
-
         RecordScan scan = new RecordScan();
         scan.setRawStartRecordId(Bytes.toBytes("bar"));
         scan.setRawStopRecordId(Bytes.toBytes("foo"));
@@ -173,8 +169,6 @@ public class JsonConversionTest {
     
     @Test
     public void testScanRecordTypeFilter() throws Exception {
-        IdGenerator idGenerator = new IdGeneratorImpl();
-
         QName recordType = new QName("ns", "rt");
 
         RecordScan scan = new RecordScan();
@@ -222,8 +216,6 @@ public class JsonConversionTest {
 
     @Test
     public void testScanFieldValueFilter() throws Exception {
-        IdGenerator idGenerator = new IdGeneratorImpl();
-
         QName name = new QName("ns", "stringField");
         Object value = "foo";
 
@@ -247,12 +239,12 @@ public class JsonConversionTest {
         assertEquals("foo", node.get("recordFilter").get("fieldValue").getTextValue());
 
         // Try different data types as field value
-        value = new Long(3);
+        value = 3L;
         scan.setRecordFilter(new FieldValueFilter(new QName("ns", "longField"), value));
         assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
 
-        value = Lists.newArrayList("foo", "bar");;
+        value = Lists.newArrayList("foo", "bar");
         scan.setRecordFilter(new FieldValueFilter(new QName("ns", "stringListField"), value));
         assertEquals(value, ((FieldValueFilter)scanFromBytes(scanToBytes(scan))
                 .getRecordFilter()).getFieldValue());
@@ -261,7 +253,7 @@ public class JsonConversionTest {
         // in the json serialization rather than using TypeManager.
         // Use a list as field value, but with a mixture of datatypes. This should fail,
         // as lists in Lily should contain values of the same type.
-        value = Lists.newArrayList("foo", new Long(123));
+        value = Lists.newArrayList("foo", 123L);
         scan.setRecordFilter(new FieldValueFilter(new QName("ns", "stringListField"), value));
         try {
             data = scanToBytes(scan);
@@ -305,10 +297,6 @@ public class JsonConversionTest {
 
     @Test
     public void testScanReturnFields() throws Exception {
-        IdGenerator idGenerator = new IdGeneratorImpl();
-
-        QName recordType = new QName("ns", "rt");
-
         RecordScan scan = new RecordScan();
         scan.setReturnFields(ReturnFields.NONE);
 
@@ -329,8 +317,6 @@ public class JsonConversionTest {
 
     @Test
     public void testScanNamespaces() throws Exception {
-        IdGenerator idGenerator = new IdGeneratorImpl();
-
         QName name = new QName("ns", "stringField");
         Object value = "foo";
 
