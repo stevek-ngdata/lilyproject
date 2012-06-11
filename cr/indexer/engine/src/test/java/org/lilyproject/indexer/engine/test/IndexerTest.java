@@ -452,6 +452,7 @@ public class IndexerTest {
             verifyResultCount("nv_deref5:blue", 1);
             verifyResultCount("nv_deref5:green", 0);
             verifyResultCount("nv_deref5:yellow", 0);
+            verifyResultCount("nv_deref6:blue", 2);
         }
 
         //

@@ -106,6 +106,7 @@
     <field name="nv_deref3" type="text" indexed="true" stored="true" required="false"/>
     <field name="nv_deref4" type="text" indexed="true" stored="true" required="false"/>
     <field name="nv_deref5" type="text" indexed="true" stored="true" required="false"/>
+    <field name="nv_deref6" type="text" indexed="true" stored="true" required="false"/>
 
     <field name="v_field1" type="text" indexed="true" stored="true" required="false"/>
     <field name="v_deref1" type="text" indexed="true" stored="true" required="false"/>

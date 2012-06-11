@@ -112,8 +112,8 @@ public class DerefValue extends BaseValue {
         crossRecordFollows.add(follow);
     }
 
-    protected void addForwardVariantFollow(String dimension) {
-        ForwardVariantFollow follow = new ForwardVariantFollow(dimension);
+    protected void addForwardVariantFollow(Set<String> dimensions) {
+        ForwardVariantFollow follow = new ForwardVariantFollow(dimensions);
         follows.add(follow);
         crossRecordFollows.add(follow);
     }
@@ -195,15 +195,20 @@ public class DerefValue extends BaseValue {
         }
     }
 
+    /**
+     * Follow definition for the +foo,+bar syntax to dereference towards more dimensioned variants. If a record has
+     * none of the defined variant dimensions, or only some, the indexer looks for variants which have all of the
+     * defined dimensions. If a record already has all of the defined variant dimensions, the indexer looks no further.
+     */
     public static class ForwardVariantFollow implements Follow {
-        private String dimension;
+        private Set<String> dimensions;
 
-        public ForwardVariantFollow(String dimension) {
-            this.dimension = dimension;
+        public ForwardVariantFollow(Set<String> dimensions) {
+            this.dimensions = dimensions;
         }
 
-        public String getDimension() {
-            return dimension;
+        public Set<String> getDimensions() {
+            return dimensions;
         }
     }
 

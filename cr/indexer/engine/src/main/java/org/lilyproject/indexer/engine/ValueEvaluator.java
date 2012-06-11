@@ -458,13 +458,15 @@ public class ValueEvaluator {
 
         RecordId recordId = frecord.record.getId();
 
-        if (recordId.getVariantProperties().containsKey(follow.getDimension())) {
-            // the record already contains the variant dimension -> stop here
+        if (recordId.getVariantProperties().keySet().containsAll(follow.getDimensions())) {
+            // the record already contains all of the variant dimension -> stop here
             return null;
         } else {
-            // build a new record id which is the one we started with + the dimension to follow
+            // build a new record id which is the one we started with + the dimensions to follow
             final Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
-            varProps.put(follow.getDimension(), "dummy");
+            for (String dimension : follow.getDimensions()) {
+                varProps.put(dimension, "dummy");
+            }
             final RecordId resolvedRecordId = repository.getIdGenerator().newRecordId(recordId.getMaster(), varProps);
 
             // now find all the records of this newly defined variant
@@ -475,10 +477,13 @@ public class ValueEvaluator {
             final RecordScanner scanner = repository.getScanner(scan);
             Record next;
             // TODO: going through the idRecord stuff results in reading again!!! -> scanner should return IdRecord and I should be able to specify a specific version/vtag in the scanner?!
-            while ((next = scanner.next()) != null)
-                result.add(VersionTag.getIdRecord(next.getId(), vtag, repository));
+            while ((next = scanner.next()) != null) {
+                final IdRecord idRecord = VersionTag.getIdRecord(next.getId(), vtag, repository);
+                if (idRecord != null) {
+                    result.add(idRecord);
+                }
+            }
 
-            scanner.close();
             scanner.close();
 
             return result;

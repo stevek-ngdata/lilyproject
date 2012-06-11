@@ -532,18 +532,28 @@ public class IndexerConfBuilder {
 
     private void processMoreDimensionedVariantsDeref(Element fieldEl, String valueExpr, DerefValue deref,
                                                      String derefPart) throws IndexerConfException {
-        // The variant dimension is specified in a syntax like "+var1" (only one!)
-        String dimension = null;
+        // The variant dimension is specified in a syntax like "+var1,+var2"
+        boolean validConfig = true;
+        Set<String> dimensions = new HashSet<String>();
+        for (String op : COMMA_SPLITTER.split(derefPart)) {
+            if (op.length() > 1 && op.startsWith("+")) {
+                String dimension = op.substring(1);
+                dimensions.add(dimension);
+            } else {
+                validConfig = false;
+                break;
+            }
+        }
+        if (dimensions.size() == 0)
+            validConfig = false;
 
-        if (derefPart.startsWith("+") && derefPart.length() > 2)
-            dimension = derefPart.substring(1);
-
-        if (dimension == null || dimension.contains("+") || dimension.contains(","))
+        if (!validConfig) {
             throw new IndexerConfException("Invalid specification of variants to follow: '" +
                     derefPart + "', deref expression: '" + valueExpr + "' " +
                     "at " + LocationAttributes.getLocation(fieldEl));
+        }
 
-        deref.addForwardVariantFollow(dimension);
+        deref.addForwardVariantFollow(dimensions);
     }
 
     private QName parseQName(String qname, Element contextEl) throws IndexerConfException {

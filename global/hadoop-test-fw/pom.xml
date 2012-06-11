@@ -112,72 +112,59 @@
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>
-                WEBAPPSDIR=${basedir}/target/hadoopwebapps
-                mkdir -p $WEBAPPSDIR
-                CWD=`pwd`
-                cd $WEBAPPSDIR
-                $JAVA_HOME/bin/jar xf
-                ${settings.localRepository}/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar
-                webapps
-                $JAVA_HOME/bin/jar xf
-                ${settings.localRepository}/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar
-                hbase-webapps
-                cd $CWD
+              <value><![CDATA[
+WEBAPPSDIR=${basedir}/target/hadoopwebapps
+mkdir -p $WEBAPPSDIR
+CWD=`pwd`
+cd $WEBAPPSDIR
+$JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar webapps
+$JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
+cd $CWD
 
-                # Enable JMX access on the same port as used by HBase's region server
-                # This is handy because some of our test tools can read out HBase metrics this way
-                LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false
-                -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
-                LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
-              </value>
+# Enable JMX access on the same port as used by HBase's region server
+# This is handy because some of our test tools can read out HBase metrics this way
+LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
+LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+              ]]></value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>
-                WEBAPPSDIR=$LILY_HOME/tmp/hadoopwebapps
-                mkdir -p $WEBAPPSDIR
-                CWD=`pwd`
-                cd $WEBAPPSDIR
-                $JAVA_HOME/bin/jar xf
-                $M2_REPO/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar webapps
-                $JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar
-                hbase-webapps
-                cd $CWD
-              </value>
+              <value><![CDATA[
+WEBAPPSDIR=$LILY_HOME/tmp/hadoopwebapps
+mkdir -p $WEBAPPSDIR
+CWD=`pwd`
+cd $WEBAPPSDIR
+$JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hadoop/hadoop-core/${version.hadoop}/hadoop-core-${version.hadoop}.jar webapps
+$JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
+cd $CWD
+              ]]></value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dev</mode>
-              <value>
-                set WEBAPPSDIR=${basedir}\target\hadoopwebapps
-                mkdir %WEBAPPSDIR%
-                set CWD=%CD%
-                cd %WEBAPPSDIR%
-                "%JAVA_HOME%\bin\jar" xf
-                ${settings.localRepository}\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar
-                webapps
-                "%JAVA_HOME%\bin\jar" xf
-                ${settings.localRepository}\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar
-                hbase-webapps
-                chdir /d %CWD%
-              </value>
+              <value><![CDATA[
+set WEBAPPSDIR=${basedir}\target\hadoopwebapps
+mkdir %WEBAPPSDIR%
+set CWD=%CD%
+cd %WEBAPPSDIR%
+"%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar webapps
+"%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
+chdir /d %CWD%
+              ]]></value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>
-                set WEBAPPSDIR=%LILY_HOME%\tmp\hadoopwebapps
-                mkdir %WEBAPPSDIR%
-                set CWD=%CD%
-                cd %WEBAPPSDIR%
-                "%JAVA_HOME%\bin\jar" xf
-                %M2_REPO%\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar webapps
-                "%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar
-                hbase-webapps
-                chdir /d %CWD%
-              </value>
+              <value><![CDATA[
+set WEBAPPSDIR=%LILY_HOME%\tmp\hadoopwebapps
+mkdir %WEBAPPSDIR%
+set CWD=%CD%
+cd %WEBAPPSDIR%
+"%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hadoop\hadoop-core\${version.hadoop}\hadoop-core-${version.hadoop}.jar webapps
+"%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
+chdir /d %CWD%
+              ]]></value>
             </parameter>
           </beforeJavaHook>
           <classPathPrefix>

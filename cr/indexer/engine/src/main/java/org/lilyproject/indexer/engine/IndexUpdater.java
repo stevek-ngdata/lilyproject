@@ -582,7 +582,7 @@ public class IndexUpdater implements RowLogMessageListener {
             for (RecordId variant : variants) {
                 Map<String, String> varprops = variant.getVariantProperties();
 
-                // Check it has each of the variant properties of the current referrer record
+                // Check it has the same value for each of the variant properties of the current referrer record
                 for (Map.Entry<String, String> refprop : refprops.entrySet()) {
                     if (!ObjectUtils.safeEquals(varprops.get(refprop.getKey()), refprop.getValue())) {
                         // skip this variant
@@ -609,35 +609,33 @@ public class IndexUpdater implements RowLogMessageListener {
             throws RepositoryException, InterruptedException {
         final HashSet<RecordId> result = new HashSet<RecordId>();
 
-        final String dimension = forwardVarFollow.getDimension();
-
-        // If the current referrer has the variant dimension which was specified in the
+        // If the current referrer has the variant dimensions which were specified in the
         // ForwardVariantFollow, we need to reindex all records which have the same RecordId but without
-        // the given variant dimension.
+        // one of the given variant dimensions.
 
         for (RecordId referrer : referrers) {
 
             Map<String, String> referrerVariantProps = referrer.getVariantProperties();
 
-            // If the referrer does not have the dimension, skip it
-            if (referrerVariantProps.containsKey(dimension)) {
+            // If the referrer does not have all the dimensions, skip it
+            if (referrerVariantProps.keySet().containsAll(forwardVarFollow.getDimensions())) {
 
                 // all variants of the current referrer -> find the ones which have the same properties
-                // except for the given variant dimension of the ForwardVariantFollow
-                final Set<RecordId> variants = repository.getVariants(referrer);
+                // except for the given variant dimensions of the ForwardVariantFollow
+                final Set<RecordId> variants = repository.getVariants(referrer.getMaster());
 
                 for (RecordId variant : variants) {
                     Map<String, String> variantProps = variant.getVariantProperties();
 
-                    // Check it doesn't have the given dimension
-                    if (!variantProps.containsKey(dimension)) {
+                    // Check it doesn't have all the given dimensions
+                    if (!variantProps.keySet().containsAll(forwardVarFollow.getDimensions())) {
 
                         boolean allVariantsEqualExceptGivenDimension = true;
 
-                        // Check it has each of the variant properties of the current referrer record, except
-                        // the dimension from the ForwardVariantFollow
+                        // Check it has the same value for each of the variant properties of the current referrer
+                        // record, except for the dimensions from the ForwardVariantFollow
                         for (Map.Entry<String, String> referrerProp : referrerVariantProps.entrySet()) {
-                            if (!referrerProp.getKey().equals(dimension)) { // ignore given dimension
+                            if (!forwardVarFollow.getDimensions().contains(referrerProp.getKey())) { // ignore given dimensions
                                 if (!ObjectUtils.safeEquals(variantProps.get(referrerProp.getKey()),
                                         referrerProp.getValue())) {
                                     allVariantsEqualExceptGivenDimension = false;
