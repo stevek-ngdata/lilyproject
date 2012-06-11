@@ -24,7 +24,7 @@ import org.junit.*;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.AbstractSchemaCache;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 
 public class SchemaCacheTest {

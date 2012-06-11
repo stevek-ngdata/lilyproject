@@ -31,6 +31,7 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.avro.*;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.repository.impl.valuetype.StringValueType;
 
 

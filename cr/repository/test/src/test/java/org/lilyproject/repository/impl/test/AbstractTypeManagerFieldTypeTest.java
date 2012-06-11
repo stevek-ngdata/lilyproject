@@ -24,7 +24,7 @@ import java.util.UUID;
 
 import org.junit.Test;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 
 public abstract class AbstractTypeManagerFieldTypeTest {
 

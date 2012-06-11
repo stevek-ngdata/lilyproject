@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.RecordAsBytesConverter;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.SystemFields;
 

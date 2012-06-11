@@ -32,7 +32,7 @@ import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.impl.EncodingUtil;
 import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.rowlog.api.ExecutionState;
 import org.lilyproject.rowlog.impl.SubscriptionExecutionState;
 import org.lilyproject.util.Version;

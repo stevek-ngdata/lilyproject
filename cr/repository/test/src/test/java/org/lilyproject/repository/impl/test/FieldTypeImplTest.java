@@ -29,7 +29,8 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.FieldTypeImpl;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
+
 /**
  *
  */

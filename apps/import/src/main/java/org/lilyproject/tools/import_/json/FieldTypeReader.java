@@ -18,7 +18,7 @@ package org.lilyproject.tools.import_.json;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.SchemaIdImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.repo.VersionTag;
 
 import static org.lilyproject.util.json.JsonUtil.*;

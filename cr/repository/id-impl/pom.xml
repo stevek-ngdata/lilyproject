@@ -21,8 +21,8 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-repository-recordid-impl</artifactId>
-  <name>Lily: Repository RecordId IMPL</name>
+  <artifactId>lily-repository-id-impl</artifactId>
+  <name>Lily: Repository Id IMPL</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>

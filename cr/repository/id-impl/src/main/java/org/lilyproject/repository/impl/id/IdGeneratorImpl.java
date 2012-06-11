@@ -26,7 +26,6 @@ import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.repository.impl.SchemaIdImpl;
 import org.lilyproject.util.ArgumentValidator;
 
 public class IdGeneratorImpl implements IdGenerator {

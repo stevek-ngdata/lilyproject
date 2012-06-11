@@ -34,6 +34,7 @@ import org.lilyproject.bytes.api.DataOutput;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.HBaseTableFactory;

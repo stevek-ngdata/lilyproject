@@ -69,7 +69,7 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-recordid-impl</artifactId>
+      <artifactId>lily-repository-id-impl</artifactId>
     </dependency>
 
     <dependency>
