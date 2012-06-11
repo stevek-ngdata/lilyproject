@@ -476,7 +476,8 @@ public class ValueEvaluator {
             scan.setRecordFilter(new RecordVariantFilter(resolvedRecordId));
             final RecordScanner scanner = repository.getScanner(scan);
             Record next;
-            // TODO: going through the idRecord stuff results in reading again!!! -> scanner should return IdRecord and I should be able to specify a specific version/vtag in the scanner?!
+            // TODO: once LILY-352 is implemented, we should get IdRecord instances from the scanner, and prevent
+            // reading the record once again if the vtag is already the correct one (i.e. the latest)
             while ((next = scanner.next()) != null) {
                 final IdRecord idRecord = VersionTag.getIdRecord(next.getId(), vtag, repository);
                 if (idRecord != null) {
