@@ -15,6 +15,7 @@
  */
 package org.lilyproject.tools.import_.json.test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.JsonNode;
@@ -30,6 +31,7 @@ import org.lilyproject.repository.api.filter.FieldValueFilter;
 import org.lilyproject.repository.api.filter.RecordFilterList;
 import org.lilyproject.repository.api.filter.RecordIdPrefixFilter;
 import org.lilyproject.repository.api.filter.RecordTypeFilter;
+import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.tools.import_.cli.JsonImport;
@@ -262,6 +264,31 @@ public class JsonConversionTest {
             // expected
         }
     }
+
+    @Test
+    public void testScanRecordVariantFilter() throws Exception {
+        IdGenerator idGenerator = new IdGeneratorImpl();
+
+        RecordId recordId = idGenerator.newRecordId("foo", ImmutableMap.of("lang", "en"));
+
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new RecordVariantFilter(recordId));
+
+        byte[] data = scanToBytes(scan);
+        RecordScan parsedScan = scanFromBytes(data);
+
+        assertNotNull(parsedScan.getRecordFilter());
+        assertTrue(parsedScan.getRecordFilter() instanceof RecordVariantFilter);
+        assertEquals(recordId, ((RecordVariantFilter)parsedScan.getRecordFilter()).getRecordId());
+
+        // Check json
+        JsonNode node = new ObjectMapper().readTree(data);
+        assertEquals("org.lilyproject.repository.api.filter.RecordVariantFilter",
+                node.get("recordFilter").get("@class").getTextValue());
+        assertEquals("USER.foo.lang=en",
+                node.get("recordFilter").get("recordId").getTextValue());
+    }
+
 
     @Test
     public void testScanRecordFilterList() throws Exception {
