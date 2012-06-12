@@ -18,7 +18,7 @@ import org.lilyproject.util.ArgumentValidator;
 /**
  * Actual implementation of an HBase filter to filter out variant lily records. This returns all records which have
  * exactly the given variant properties (i.e. not the records which have these variant properties and some additional
- * onces).
+ * ones).
  *
  * @author Jan Van Besien
  */
