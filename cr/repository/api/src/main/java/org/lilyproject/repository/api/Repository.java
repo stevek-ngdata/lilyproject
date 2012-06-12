@@ -58,12 +58,9 @@ public interface Repository extends Closeable {
      * <p>If a recordId is given in {@link Record}, that id is used. If not, a new id is generated and available
      * from the returned Record object.
      *
-     * @throws RecordExistsException
-     *             if a record with the given recordId already exists
-     * @throws RecordNotFoundException
-     *             if the master record for a variant record does not exist
-     * @throws InvalidRecordException
-     *             if an empty record is being created
+     * @throws RecordExistsException       if a record with the given recordId already exists
+     * @throws RecordNotFoundException     if the master record for a variant record does not exist
+     * @throws InvalidRecordException      if an empty record is being created
      * @throws FieldTypeNotFoundException
      * @throws RecordTypeNotFoundException
      */
@@ -73,7 +70,8 @@ public interface Repository extends Closeable {
      * Shortcut for {@link #update(Record, boolean, boolean, java.util.List)
      * update(record, updateVersion, useLatestRecordType, null)}.
      */
-    Record update(Record record, boolean updateVersion, boolean useLatestRecordType) throws RepositoryException, InterruptedException;
+    Record update(Record record, boolean updateVersion, boolean useLatestRecordType)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Shortcut for {@link #update(Record, boolean, boolean, java.util.List) update(record, false, true, null)}.
@@ -102,7 +100,8 @@ public interface Repository extends Closeable {
      * can be sparsely filled. If you want to be sure of the value of all fields, then specify them all, even if
      * they have not changed compared to what you read, since another update might have been performed concurrently.
      * Fields that are not present in the record will not be deleted, deleting fields
-     * needs to be done explicitly by adding them to the list of fields to delete, see {@link Record#getFieldsToDelete}.
+     * needs to be done explicitly by adding them to the list of fields to delete, see {@link
+     * Record#getFieldsToDelete}.
      *
      * <p>If the record contains any changed versioned fields, a new version will be created. The number of the created
      * version will be available on the returned Record object.
@@ -164,18 +163,18 @@ public interface Repository extends Closeable {
      * <p>The conditions are checked before checking if the record actually needs updating, so you might get
      * a conflict response even if the stored record state corresponds to the supplied record state.</p>
      *
-     * @param updateVersion if true, the version indicated in the record will be updated (i.e. only the mutable fields will be updated)
-     *          otherwise, a new version of the record will be created (if it contains versioned fields)
-     * @param useLatestRecordType if true, the RecordType version given in the Record will be ignored and the latest available RecordType will
-     *        be used while updating the Record
-     * @param conditions optional (can be null), set of conditions that should be satisfied for the update to proceed
-     *
-     * @throws RecordNotFoundException
-     *             if the record does not exist
-     * @throws InvalidRecordException
-     *             if no update information is provided
-     * @throws RepositoryException
-     *             TBD
+     * @param updateVersion       if true, the version indicated in the record will be updated (i.e. only the mutable
+     *                            fields will be updated)
+     *                            otherwise, a new version of the record will be created (if it contains versioned
+     *                            fields)
+     * @param useLatestRecordType if true, the RecordType version given in the Record will be ignored and the latest
+     *                            available RecordType will
+     *                            be used while updating the Record
+     * @param conditions          optional (can be null), set of conditions that should be satisfied for the update to
+     *                            proceed
+     * @throws RecordNotFoundException     if the record does not exist
+     * @throws InvalidRecordException      if no update information is provided
+     * @throws RepositoryException         TBD
      * @throws FieldTypeNotFoundException
      * @throws RecordTypeNotFoundException
      * @throws WalProcessingException
@@ -204,155 +203,162 @@ public interface Repository extends Closeable {
     Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException, InterruptedException;
 
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
-     * 
-     * Reads a record limited to a subset of the fields. Only the fields specified in the fieldNames list will be
-     * included.
-     *
-     * <p>Versioned and versioned-mutable fields will be taken from the latest version.
-     *
-     * <p>It is not an error if the record would not have a particular field, though it is an error to specify
-     * a non-existing field name.
-     * 
-     * @param recordId the id of the record to read, null is not allowed
+     * @param recordId   the id of the record to read, null is not allowed
      * @param fieldNames list of names of the fields to read or null to read all fields
+     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
+     *
+     *             Reads a record limited to a subset of the fields. Only the fields specified in the fieldNames list
+     *             will be
+     *             included.
+     *
+     *             <p>Versioned and versioned-mutable fields will be taken from the latest version.
+     *
+     *             <p>It is not an error if the record would not have a particular field, though it is an error to
+     *             specify
+     *             a non-existing field name.
      */
-    @Deprecated 
+    @Deprecated
     Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException;
-    
+
     /**
      * Reads a record.
      * If fieldNames are specified, the read is limited to include only this subset of fields.
-     * Otherwise all fields of the record are read. 
+     * Otherwise all fields of the record are read.
      *
      * <p>Versioned and versioned-mutable fields will be taken from the latest version.
      *
      * <p>It is not an error if the record would not have a particular field, though it is an error to specify
      * a non-existing field name.
-     * 
-     * @param recordId the id of the record to read, null is not allowed
+     *
+     * @param recordId   the id of the record to read, null is not allowed
      * @param fieldNames names of the fields to read or null to read all fields
      */
     Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException;
-    
+
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
-     *
-     * Reads a list of records limited to a subset of the fields. Only the fields specified in the fieldNames list will be
-     * included.
-     *
-     * <p>Versioned and versioned-mutable fields will be taken from the latest version.
-     *
-     * <p>It is not an error if the records would not have a particular field, though it is an error to specify
-     * a non-existing field name.
-     * 
-     * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
-     * Instead, the returned list will not contain an entry for that requested id. 
-     *
-     * @param recordIds or recordIds to read, null is not allowed
+     * @param recordIds  or recordIds to read, null is not allowed
      * @param fieldNames list of names of the fields to read or null to read all fields
      * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
+     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(List, QName...)} instead.
+     *
+     *             Reads a list of records limited to a subset of the fields. Only the fields specified in the
+     *             fieldNames list will be
+     *             included.
+     *
+     *             <p>Versioned and versioned-mutable fields will be taken from the latest version.
+     *
+     *             <p>It is not an error if the records would not have a particular field, though it is an error to
+     *             specify
+     *             a non-existing field name.
+     *
+     *             <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
+     *             Instead, the returned list will not contain an entry for that requested id.
      */
     @Deprecated
-    List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RepositoryException, InterruptedException;
-    
+    List<Record> read(List<RecordId> recordIds, List<QName> fieldNames)
+            throws RepositoryException, InterruptedException;
+
     /**
      * Reads a list of records.
      * If fieldNames are specified, the read is limited to include only this subset of fields.
-     * Otherwise all fields are read. 
+     * Otherwise all fields are read.
      *
      * <p>Versioned and versioned-mutable fields will be taken from the latest version.
      *
      * <p>It is not an error if the records would not have a particular field, though it is an error to specify
      * a non-existing field name.
-     * 
-     * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
-     * Instead, the returned list will not contain an entry for that requested id. 
      *
-     * @param recordIds or recordIds to read, null is not allowed
+     * <p>No RecordNotFoundException is thrown when a record does not exist or has been deleted.
+     * Instead, the returned list will not contain an entry for that requested id.
+     *
+     * @param recordIds  or recordIds to read, null is not allowed
      * @param fieldNames names of the fields to read or null to read all fields
      * @return list of records that are read, can be smaller than the amount or requested ids when those are not found
      */
     List<Record> read(List<RecordId> recordIds, QName... fieldNames) throws RepositoryException, InterruptedException;
-    
+
     /**
-     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(RecordId, Long, QName...)} instead.
-     * 
-     * Reads a specific version of a record limited to a subset of the fields.
-     * 
-     * <p>If the given list of fields is empty, all fields will be read.
+     * @deprecated in favor of using varargs for the fieldNames. Please use {@link #read(RecordId, Long, QName...)}
+     *             instead.
+     *
+     *             Reads a specific version of a record limited to a subset of the fields.
+     *
+     *             <p>If the given list of fields is empty, all fields will be read.
      */
     @Deprecated
-    Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RepositoryException, InterruptedException;
-    
+    Record read(RecordId recordId, Long version, List<QName> fieldNames)
+            throws RepositoryException, InterruptedException;
+
     /**
      * Reads a specific version of a record.
      * If fieldNames are specified, the read is limited to include only this subset of fields.
-     * Otherwise all fields are read. 
-     * 
+     * Otherwise all fields are read.
+     *
      * <p>If the given list of fields is empty, all fields will be read.
      */
     Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException;
-    
+
     /**
      * @deprecated in favor of using varargs for the fieldNames. Please use
-     * {@link #readVersions(RecordId, Long, Long, QName...)} instead.
-     * 
-     * Reads all versions of a record between fromVersion and toVersion (both included), limited to a subset of the fields.
-     * 
-     * <p>If the given list of fields is empty, all fields will be read.
+     *             {@link #readVersions(RecordId, Long, Long, QName...)} instead.
+     *
+     *             Reads all versions of a record between fromVersion and toVersion (both included), limited to a subset
+     *             of the fields.
+     *
+     *             <p>If the given list of fields is empty, all fields will be read.
      */
     @Deprecated
     List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
             throws RepositoryException, InterruptedException;
-    
-    
+
+
     /**
      * Reads all versions of a record between fromVersion and toVersion (both included).
      * If fieldNames are specified, the read is limited to include only this subset of fields.
-     * Otherwise all fields are read. 
-     * 
+     * Otherwise all fields are read.
+     *
      * <p>If the given list of fields is empty, all fields will be read.
      */
     List<Record> readVersions(RecordId recordId, Long fromversion, Long toVersion, QName... fieldNames)
             throws RepositoryException, InterruptedException;
 
     /**
+     * @param recordId   id of the record to read
+     * @param versions   the list of versions to read, should not contain null values
+     * @param fieldNames list of fields to read, if null all fields will be read
+     * @return a list of records. The list can be smaller than the number of requested versions if some requested
+     *         versions
+     *         have a higher number than the highest existing version.
      * @deprecated in favor of using varargs for the fieldNames. Please use
      *             {@link #read(RecordId, List<Long>, QName...)} instead.
-     * 
-     * Reads all versions of a record listed the <code>versions</code>, limited to a subset of the fields.
-     * 
-     * @param recordId id of the record to read
-     * @param versions the list of versions to read, should not contain null values
-     * @param fieldNames list of fields to read, if null all fields will be read
-     * @return a list of records. The list can be smaller than the number of requested versions if some requested versions
-     * have a higher number than the highest existing version.
+     *
+     *             Reads all versions of a record listed the <code>versions</code>, limited to a subset of the fields.
      */
     @Deprecated
     List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
             throws RepositoryException, InterruptedException;
-        
+
     /**
      * Reads all versions of a record listed the <code>versions</code>.
      * If fieldNames are specified, the read is limited to include only this subset of fields.
-     * Otherwise all fields are read. 
-     * 
-     * @param recordId id of the record to read
-     * @param versions the list of versions to read, should not contain null values
+     * Otherwise all fields are read.
+     *
+     * @param recordId   id of the record to read
+     * @param versions   the list of versions to read, should not contain null values
      * @param fieldNames names of fields to read, if null all fields will be read
-     * @return a list of records. The list can be smaller than the number of requested versions if some requested versions
-     * have a higher number than the highest existing version.
+     * @return a list of records. The list can be smaller than the number of requested versions if some requested
+     *         versions
+     *         have a higher number than the highest existing version.
      */
     List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
             throws RepositoryException, InterruptedException;
-    
+
     /**
      * Reads a Record and also returns the mapping from QNames to IDs.
      *
      * <p>See {@link IdRecord} for more information.
      *
-     * @param version version to load. Optional, can be null.
+     * @param version  version to load. Optional, can be null.
      * @param fieldIds load only the fields with these ids. optional, can be null.
      */
     IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
@@ -361,8 +367,7 @@ public interface Repository extends Closeable {
     /**
      * Delete a {@link Record} from the repository.
      *
-     * @param recordId
-     *            id of the record to delete
+     * @param recordId id of the record to delete
      */
     void delete(RecordId recordId) throws RepositoryException, InterruptedException;
 
@@ -378,7 +383,8 @@ public interface Repository extends Closeable {
      * field set to {@link ResponseStatus#CONFLICT}. The fields contained in the record object will be those
      * referred to in the conditions, as far as they exist.</p>
      */
-    Record delete(RecordId recordId, List<MutationCondition> conditions) throws RepositoryException, InterruptedException;
+    Record delete(RecordId recordId, List<MutationCondition> conditions)
+            throws RepositoryException, InterruptedException;
 
     /**
      * Returns the IdGenerator service.
@@ -395,7 +401,6 @@ public interface Repository extends Closeable {
      * it can be used. Any BlobStoreAccess that has ever been used to store
      * binary data of a blob must be registered before that data can be
      * retrieved again.
-     *
      */
     void registerBlobStoreAccess(BlobStoreAccess blobStoreAccess);
 
@@ -410,8 +415,7 @@ public interface Repository extends Closeable {
      * The {@link BlobStoreAccessFactory} will decide to which underlying
      * blobstore the data will be written.
      *
-     * @param blob
-     *            the blob for which to open an OutputStream
+     * @param blob the blob for which to open an OutputStream
      * @return an OutputStream
      * @throws RepositoryException when an unexpected exception occurs
      */
@@ -424,18 +428,17 @@ public interface Repository extends Closeable {
      * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
      * And in case of ListValueType or PathValueType fields an array of indexes.
      *
-     * @param recordId the id of the record containing the blob
-     * @param version optionally a version of the record, if null the latest record version is used
+     * @param recordId  the id of the record containing the blob
+     * @param version   optionally a version of the record, if null the latest record version is used
      * @param fieldName the QName of the field containing the blob
-     * @param indexes optionally, the position of a blob in a List or Path field,
-     *        where each index gives the position at a deeper level
-
+     * @param indexes   optionally, the position of a blob in a List or Path field,
+     *                  where each index gives the position at a deeper level
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
-     * @throws BlobException thrown when opening an InputStream on the blob fails
+     * @throws BlobException         thrown when opening an InputStream on the blob fails
      */
     BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException;
-    
+
     /**
      * Backwards compatibility method, which accepts null arguments for the indexes.
      *
@@ -454,18 +457,17 @@ public interface Repository extends Closeable {
 
     /**
      * Returns an {@link InputStream} from which the binary data of a blob can be read.
-     * 
+     *
      * <p>A blob is retrieved by specifying the {record id, version, field name} coordinates.
      * And in case of ListValueType or PathValueType fields an array of indexes.
-     * 
-     * @param recordId the id of the record containing the blob
-     * @param version optionally a version of the record, if null the latest record version is used
+     *
+     * @param recordId  the id of the record containing the blob
+     * @param version   optionally a version of the record, if null the latest record version is used
      * @param fieldName the QName of the field containing the blob
-     * @param indexes optionally, the position of a blob in a List or Path field,
-     *        where each index gives the position at a deeper level
-
+     * @param indexes   optionally, the position of a blob in a List or Path field,
+     *                  where each index gives the position at a deeper level
      * @throws BlobNotFoundException thrown when no blob can be found at the given location
-     * @throws BlobException thrown when opening an InputStream on the blob fails
+     * @throws BlobException         thrown when opening an InputStream on the blob fails
      */
     InputStream getInputStream(RecordId recordId, Long version, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException;
@@ -517,7 +519,7 @@ public interface Repository extends Closeable {
 
     /**
      * Get a scanner to sequentially run over all, or a subset of, the records in the repository.
-     * 
+     *
      * <p>To run over a subset of the records, use the methods {@link RecordScan#setStartRecordId(RecordId)}
      * and {@link RecordScan#setStopRecordId(RecordId)}. Additionally, you can set filters on
      * the RecordScan to further restrain the returned records.</p>
@@ -532,6 +534,14 @@ public interface Repository extends Closeable {
      * @param scan the details of the scan to be performed
      */
     RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException;
+
+    /**
+     * Get a scanner to sequentially run over all, or a subset of, the records in the repository. This is the same as
+     * {@link #getScanner(RecordScan)}, except that it returns {@link IdRecord} in stead of {@link Record} instances.
+     *
+     * <p>See {@link IdRecord} for more information.
+     */
+    IdRecordScanner getScannerWithIds(RecordScan scan) throws RepositoryException, InterruptedException;
 
     /**
      * Returns a record builder object which can be used to compose a record object and create or update it on the

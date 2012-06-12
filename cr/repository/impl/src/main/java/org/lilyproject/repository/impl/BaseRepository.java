@@ -35,6 +35,7 @@ import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordException;
@@ -177,6 +178,15 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException {
+        return new HBaseRecordScannerImpl(createHBaseResultScanner(scan), recdec);
+    }
+
+    @Override
+    public IdRecordScanner getScannerWithIds(RecordScan scan) throws RepositoryException, InterruptedException {
+        return new HBaseIdRecordScannerImpl(createHBaseResultScanner(scan), recdec);
+    }
+
+    private ResultScanner createHBaseResultScanner(RecordScan scan) throws RepositoryException, InterruptedException {
         Scan hbaseScan = new Scan();
 
         hbaseScan.setMaxVersions(1);
@@ -237,10 +247,7 @@ public abstract class BaseRepository implements Repository {
         } catch (IOException e) {
             throw new RecordException("Error creating scanner", e);
         }
-
-        HBaseRecordScanner scanner = new HBaseRecordScanner(hbaseScanner, recdec, scan.isReturnsIdRecords());
-
-        return scanner;
+        return hbaseScanner;
     }
 
     private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {

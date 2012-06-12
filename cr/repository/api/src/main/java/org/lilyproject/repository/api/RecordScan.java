@@ -31,7 +31,6 @@ public class RecordScan {
     private ReturnFields returnFields;
     private int caching = -1;
     private boolean cacheBlocks = true;
-    private boolean returnsIdRecords = false;
 
     /**
      * @see #setStartRecordId(RecordId)
@@ -210,26 +209,5 @@ public class RecordScan {
      */
     public void setCacheBlocks(boolean cacheBlocks) {
         this.cacheBlocks = cacheBlocks;
-    }
-
-    /**
-     * @see #setReturnsIdRecords(boolean)
-     */
-    public boolean isReturnsIdRecords() {
-        return returnsIdRecords;
-    }
-
-    /**
-     * Enable or disable the scanner to return {@link IdRecord} instances in stead of {@link Record} instances. You
-     * will
-     * have to cast the results explicitely to {@link IdRecord} to make use of the additional {@link IdRecord}
-     * features.
-     *
-     * <p>This is false by default, because it is usually not necessary and has a performance cost to it.</p>
-     *
-     * @see IdRecord for more information
-     */
-    public void setReturnsIdRecords(boolean returnsIdRecords) {
-        this.returnsIdRecords = returnsIdRecords;
     }
 }

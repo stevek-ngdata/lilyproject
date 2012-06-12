@@ -35,6 +35,7 @@ import org.lilyproject.repository.api.FieldNotFoundException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.InvalidRecordException;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.MutationCondition;
@@ -2199,12 +2200,11 @@ public abstract class AbstractRepositoryTest {
         repository.create(record);
 
         RecordScan scan = new RecordScan();
-        scan.setReturnsIdRecords(true);
 
-        RecordScanner scanner = repository.getScanner(scan);
-        final Record next = scanner.next();
+        IdRecordScanner scanner = repository.getScannerWithIds(scan);
+        final IdRecord next = scanner.next();
         assertNotNull(next);
-        assertFalse(((IdRecord) next).getFieldIdToNameMapping().isEmpty());
+        assertFalse(next.getFieldIdToNameMapping().isEmpty());
     }
 
     @Test(expected = ClassCastException.class)
@@ -2216,8 +2216,8 @@ public abstract class AbstractRepositoryTest {
         repository.create(record);
 
         RecordScan scan = new RecordScan();
-        scan.setReturnsIdRecords(false); // normal Record instances!
 
+        // normal Record scanner!
         RecordScanner scanner = repository.getScanner(scan);
         final Record next = scanner.next();
         assertNotNull(next);

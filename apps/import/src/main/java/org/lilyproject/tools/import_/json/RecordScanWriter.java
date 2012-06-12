@@ -81,8 +81,6 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
 
         node.put("cacheBlocks", scan.getCacheBlocks());
 
-        node.put("returnsIdRecords", scan.isReturnsIdRecords());
-
         return node;
     }
 }

@@ -104,8 +104,6 @@ public class RecordScanReader implements EntityReader<RecordScan> {
 
         scan.setCacheBlocks(JsonUtil.getBoolean(node, "cacheBlocks", scan.getCacheBlocks()));
 
-        scan.setReturnsIdRecords(JsonUtil.getBoolean(node, "returnsIdRecords", scan.isReturnsIdRecords()));
-
         return scan;
     }
 }
