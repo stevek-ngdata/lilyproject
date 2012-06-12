@@ -3,9 +3,12 @@ package org.lilyproject.hbaseext;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.lilyproject.bytes.impl.DataInputImpl;
 import org.lilyproject.repository.api.RecordId;
@@ -20,13 +23,13 @@ import org.lilyproject.util.ArgumentValidator;
  * @author Jan Van Besien
  */
 public class LilyRecordVariantFilter extends FilterBase {
-    private Set<String> variantProperties;
+    private Map<String, String> variantProperties;
     private final IdGeneratorImpl idGenerator = new IdGeneratorImpl();
 
     /**
      * @param variantProperties the variant properties that the records should have
      */
-    public LilyRecordVariantFilter(final Set<String> variantProperties) {
+    public LilyRecordVariantFilter(final Map<String, String> variantProperties) {
         ArgumentValidator.notNull(variantProperties, "variantProperties");
 
         this.variantProperties = variantProperties;
@@ -36,7 +39,7 @@ public class LilyRecordVariantFilter extends FilterBase {
         // for hbase readFields
     }
 
-    public Set<String> getVariantProperties() {
+    public Map<String, String> getVariantProperties() {
         return variantProperties;
     }
 
@@ -48,33 +51,51 @@ public class LilyRecordVariantFilter extends FilterBase {
 
         final RecordId recordId = idGenerator.fromBytes(new DataInputImpl(buffer, offset, length));
 
-        final Set<String> recordVariantProperties = recordId.getVariantProperties().keySet();
+        final SortedMap<String, String> recordVariantProperties = recordId.getVariantProperties();
 
         // check if the record has all expected variant properties
-        final HashSet<String> allExpected = new HashSet<String>(variantProperties);
-        allExpected.removeAll(recordVariantProperties);
+        if (containsAllExpectedDimensions(recordVariantProperties) &&
+                hasSameValueForValuedDimensions(recordVariantProperties)) {
 
-        if (allExpected.isEmpty()) {
             // check if the record doesn't have other variant properties
-            final HashSet<String> allFromRecord = new HashSet<String>(recordVariantProperties);
-            allFromRecord.removeAll(variantProperties);
-
-            return !allFromRecord.isEmpty();
+            return variantProperties.size() != recordVariantProperties.size();
         } else return true;
     }
 
+    private boolean containsAllExpectedDimensions(Map<String, String> recordVariantProperties) {
+        return recordVariantProperties.keySet().containsAll(this.variantProperties.keySet());
+    }
+
+    private boolean hasSameValueForValuedDimensions(Map<String, String> variantProperties) {
+        return variantProperties.entrySet().containsAll(getValuedDimensions().entrySet());
+    }
+
+    private Map<String, String> getValuedDimensions() {
+        return Maps.filterValues(variantProperties, new Predicate<String>() {
+            @Override
+            public boolean apply(String input) {
+                return input != null;
+            }
+        });
+    }
+
+
     public void write(DataOutput out) throws IOException {
         out.writeInt(variantProperties.size());
-        for (String variantProperty : variantProperties) {
-            out.writeUTF(variantProperty);
+        for (Map.Entry<String, String> variantProperty : variantProperties.entrySet()) {
+            out.writeUTF(variantProperty.getKey());
+            out.writeUTF(variantProperty.getValue() != null ? variantProperty.getValue() : "\u0000");
         }
     }
 
     public void readFields(DataInput in) throws IOException {
         final int size = in.readInt();
-        variantProperties = new HashSet<String>(size);
+        variantProperties = new HashMap<String, String>(size);
         for (int i = 0; i < size; i++) {
-            variantProperties.add(in.readUTF());
+            final String key = in.readUTF();
+            final String value = in.readUTF();
+            variantProperties.put(key, value.equals("\u0000") ? null : value);
         }
     }
 }
+

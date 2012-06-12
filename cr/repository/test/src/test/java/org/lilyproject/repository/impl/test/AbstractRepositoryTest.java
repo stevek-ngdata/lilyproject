@@ -2573,10 +2573,10 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
-    public void testVariantScans() throws Exception {
-        final RecordId master = idGenerator.newRecordId("VariantScanTest");
+    public void testVariantScansWithKeys() throws Exception {
+        final RecordId master = idGenerator.newRecordId("VariantScanWithKeysTest");
         final RecordId variant = idGenerator.newRecordId(master, ImmutableMap.of("key1", "value1", "key2", "value2"));
-        final RecordId variantVariation =
+        final RecordId variantWithOtherValues =
                 idGenerator.newRecordId(master, ImmutableMap.of("key1", "other-value-1", "key2", "other-value-2"));
         final RecordId extendedVariant =
                 idGenerator.newRecordId(master, ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value3"));
@@ -2600,7 +2600,7 @@ public abstract class AbstractRepositoryTest {
                 .create();
 
         repository.recordBuilder()
-                .id(variantVariation)
+                .id(variantWithOtherValues)
                 .recordType(recordType1.getName())
                 .field(fieldType1.getName(), "foo")
                 .create();
@@ -2608,7 +2608,7 @@ public abstract class AbstractRepositoryTest {
         {
             // master scan
             final RecordScan scan = new RecordScan();
-            scan.setRecordFilter(new RecordVariantFilter(master));
+            scan.setRecordFilter(new RecordVariantFilter(master, new HashMap<String, String>()));
             RecordScanner scanner = repository.getScanner(scan);
             assertEquals(master, scanner.next().getId());
             assertNull(scanner.next());
@@ -2617,25 +2617,123 @@ public abstract class AbstractRepositoryTest {
 
         {
             // variant scan
+            final HashMap<String, String> variantProperties = new HashMap<String, String>();
+            variantProperties.put("foo", null);
+            variantProperties.put("bar", null);
+
             final RecordScan scan = new RecordScan();
-            scan.setRecordFilter(new RecordVariantFilter(variant));
+            scan.setRecordFilter(new RecordVariantFilter(variant.getMaster(), variantProperties));
+            RecordScanner scanner = repository.getScanner(scan);
+            assertNull(scanner.next()); // it doesn't match anything
+            scanner.close();
+        }
+
+        {
+            // variant scan for something completely different
+            final HashMap<String, String> variantProperties = new HashMap<String, String>();
+            variantProperties.put("key1", null);
+            variantProperties.put("key2", null);
+
+            final RecordScan scan = new RecordScan();
+            scan.setRecordFilter(new RecordVariantFilter(variant.getMaster(), variantProperties));
             RecordScanner scanner = repository.getScanner(scan);
             assertEquals(variant, scanner.next().getId());
-            assertEquals(variantVariation, scanner.next().getId());
+            assertEquals(variantWithOtherValues, scanner.next().getId());
             assertNull(scanner.next()); // it doesn't match the extendedVariant!
             scanner.close();
         }
 
         {
             // extended variant scan
+            final HashMap<String, String> variantProperties = new HashMap<String, String>();
+            variantProperties.put("key1", null);
+            variantProperties.put("key2", null);
+            variantProperties.put("key3", null);
+
             final RecordScan scan = new RecordScan();
-            scan.setRecordFilter(new RecordVariantFilter(extendedVariant));
+            scan.setRecordFilter(
+                    new RecordVariantFilter(extendedVariant.getMaster(), variantProperties));
             RecordScanner scanner = repository.getScanner(scan);
             assertEquals(extendedVariant, scanner.next().getId());
             assertNull(scanner.next());
             scanner.close();
         }
-
     }
 
+    @Test
+    public void testVariantScansWithKeysAndValues() throws Exception {
+        final RecordId master = idGenerator.newRecordId("VariantScanWithKeysAndValuesTest");
+        final RecordId variant = idGenerator.newRecordId(master, ImmutableMap.of("key1", "value1", "key2", "value2"));
+        final RecordId variantWithOtherValues =
+                idGenerator.newRecordId(master, ImmutableMap.of("key1", "other-value-1", "key2", "value2"));
+        final RecordId extendedVariant =
+                idGenerator.newRecordId(master, ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value3"));
+
+        repository.recordBuilder()
+                .id(master)
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id(variant)
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id(extendedVariant)
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        repository.recordBuilder()
+                .id(variantWithOtherValues)
+                .recordType(recordType1.getName())
+                .field(fieldType1.getName(), "foo")
+                .create();
+
+        {
+            // variant scan with all values
+            final HashMap<String, String> variantProperties = new HashMap<String, String>();
+            variantProperties.put("key1", "value1");
+            variantProperties.put("key2", "value2");
+
+            final RecordScan scan = new RecordScan();
+            scan.setRecordFilter(new RecordVariantFilter(variant.getMaster(), variantProperties));
+            RecordScanner scanner = repository.getScanner(scan);
+            assertEquals(variant, scanner.next().getId());
+            assertNull(scanner.next()); // it doesn't match the other variants
+            scanner.close();
+        }
+
+        {
+            // variant scan with specific value for key2 only
+            final HashMap<String, String> variantProperties = new HashMap<String, String>();
+            variantProperties.put("key1", null);
+            variantProperties.put("key2", "value2");
+
+            final RecordScan scan = new RecordScan();
+            scan.setRecordFilter(new RecordVariantFilter(variant.getMaster(), variantProperties));
+            RecordScanner scanner = repository.getScanner(scan);
+            assertEquals(variant, scanner.next().getId());
+            assertEquals(variantWithOtherValues, scanner.next().getId()); // has same value for key2
+            assertNull(scanner.next()); // it doesn't match the other variants
+            scanner.close();
+        }
+
+        {
+            // variant scan with specific value for key1 only
+            final HashMap<String, String> variantProperties = new HashMap<String, String>();
+            variantProperties.put("key1", "value1");
+            variantProperties.put("key2", null);
+
+            final RecordScan scan = new RecordScan();
+            scan.setRecordFilter(new RecordVariantFilter(variant.getMaster(), variantProperties));
+            RecordScanner scanner = repository.getScanner(scan);
+            assertEquals(variant, scanner.next().getId());
+            assertNull(scanner.next()); // it doesn't match the other variants
+            scanner.close();
+        }
+    }
 }

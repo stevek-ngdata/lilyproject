@@ -15,6 +15,10 @@
  */
 package org.lilyproject.tools.import_.json.filters;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.repository.api.Repository;
@@ -39,8 +43,13 @@ public class RecordVariantFilterJson implements RecordFilterJsonConverter<Record
 
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
 
-        if (filter.getRecordId() != null) {
-            node.put("recordId", filter.getRecordId().toString());
+        if (filter.getMasterRecordId() != null) {
+            node.put("recordId", filter.getMasterRecordId().toString());
+            final ObjectNode variantProperties = JsonFormat.OBJECT_MAPPER.createObjectNode();
+            for (Map.Entry<String, String> variantProperty : filter.getVariantProperties().entrySet()) {
+                variantProperties.put(variantProperty.getKey(), variantProperty.getValue());
+            }
+            node.put("variantProperties", variantProperties);
         }
 
         return node;
@@ -52,9 +61,20 @@ public class RecordVariantFilterJson implements RecordFilterJsonConverter<Record
             throws JsonFormatException, RepositoryException, InterruptedException {
 
         String recordId = JsonUtil.getString(node, "recordId", null);
-        if (recordId != null)
-            return new RecordVariantFilter(repository.getIdGenerator().fromString(recordId));
-        else
+        if (recordId == null)
             throw new IllegalStateException("expected non null recordId in json input");
+
+        final ObjectNode variantPropertiesNode = JsonUtil.getObject(node, "variantProperties", null);
+        if (variantPropertiesNode == null)
+            throw new IllegalStateException("expected non null variantProperties in json input");
+
+        final HashMap<String, String> variantProperties = new HashMap<String, String>();
+
+        final Iterator<Map.Entry<String, JsonNode>> fields = variantPropertiesNode.getFields();
+        while (fields.hasNext()) {
+            final Map.Entry<String, JsonNode> next = fields.next();
+            variantProperties.put(next.getKey(), next.getValue().asText());
+        }
+        return new RecordVariantFilter(repository.getIdGenerator().fromString(recordId), variantProperties);
     }
 }

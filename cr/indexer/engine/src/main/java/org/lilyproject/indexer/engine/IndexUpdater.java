@@ -615,12 +615,11 @@ public class IndexUpdater implements RowLogMessageListener {
 
         for (RecordId referrer : referrers) {
 
-            Map<String, String> referrerVariantProps = referrer.getVariantProperties();
+            // If the referrer does not have all the dimensions with the correct values, skip it
+            if (hasAllDefinedDimensions(referrer, forwardVarFollow) &&
+                    hasSameValueForValuedDimensions(referrer, forwardVarFollow)) {
 
-            // If the referrer does not have all the dimensions, skip it
-            if (referrerVariantProps.keySet().containsAll(forwardVarFollow.getDimensions())) {
-
-                // all variants of the current referrer -> find the ones which have the same properties
+                // start with all variants of the current referrer and find the ones which have the same properties
                 // except for the given variant dimensions of the ForwardVariantFollow
                 final Set<RecordId> variants = repository.getVariants(referrer.getMaster());
 
@@ -628,14 +627,16 @@ public class IndexUpdater implements RowLogMessageListener {
                     Map<String, String> variantProps = variant.getVariantProperties();
 
                     // Check it doesn't have all the given dimensions
-                    if (!variantProps.keySet().containsAll(forwardVarFollow.getDimensions())) {
+                    if (!haveAllDefinedDimensions(variantProps, forwardVarFollow)) {
 
                         boolean allVariantsEqualExceptGivenDimension = true;
 
                         // Check it has the same value for each of the variant properties of the current referrer
                         // record, except for the dimensions from the ForwardVariantFollow
+                        Map<String, String> referrerVariantProps = referrer.getVariantProperties();
                         for (Map.Entry<String, String> referrerProp : referrerVariantProps.entrySet()) {
-                            if (!forwardVarFollow.getDimensions().contains(referrerProp.getKey())) { // ignore given dimensions
+                            if (!forwardVarFollow.getDimensions()
+                                    .containsKey(referrerProp.getKey())) { // ignore given dimensions
                                 if (!ObjectUtils.safeEquals(variantProps.get(referrerProp.getKey()),
                                         referrerProp.getValue())) {
                                     allVariantsEqualExceptGivenDimension = false;
@@ -652,6 +653,21 @@ public class IndexUpdater implements RowLogMessageListener {
         }
 
         return result;
+    }
+
+    private boolean hasAllDefinedDimensions(RecordId referrer, DerefValue.ForwardVariantFollow forwardVarFollow) {
+        return haveAllDefinedDimensions(referrer.getVariantProperties(), forwardVarFollow);
+    }
+
+    private boolean haveAllDefinedDimensions(Map<String, String> variantProperties,
+                                             DerefValue.ForwardVariantFollow forwardVarFollow) {
+        return variantProperties.keySet().containsAll(forwardVarFollow.getDimensions().keySet());
+    }
+
+    private boolean hasSameValueForValuedDimensions(RecordId referrer,
+                                                    DerefValue.ForwardVariantFollow forwardVarFollow) {
+        return referrer.getVariantProperties().entrySet()
+                .containsAll(forwardVarFollow.getValuedDimensions().entrySet());
     }
 
     private Set<RecordId> searchReferrersMasterFollow(Set<RecordId> referrers)

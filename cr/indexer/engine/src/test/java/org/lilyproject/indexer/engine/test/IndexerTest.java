@@ -453,6 +453,8 @@ public class IndexerTest {
             verifyResultCount("nv_deref5:green", 0);
             verifyResultCount("nv_deref5:yellow", 0);
             verifyResultCount("nv_deref6:blue", 2);
+            verifyResultCount("nv_deref7:blue", 1);
+            verifyResultCount("nv_deref8:blue", 0);
         }
 
         //
@@ -502,6 +504,8 @@ public class IndexerTest {
             verifyResultCount("nv_deref2:cucumber", 1);
             verifyResultCount("nv_deref3:cucumber", 2);
             verifyResultCount("nv_deref5:broccoli", 1);
+            verifyResultCount("nv_deref6:broccoli", 2);
+            verifyResultCount("nv_deref7:broccoli", 1);
 
             // Update record1, check if index of the others is updated
             log.debug("Begin test NV9");
@@ -528,7 +532,7 @@ public class IndexerTest {
             verifyResultCount("nv_deref4:courgette", 1);
             verifyResultCount("nv_deref4:eggplant", 0);
 
-            // Update record4, index for record3 should be updated
+            // Update record4, index for record3 and record1 should be updated
             log.debug("Begin test NV10.1");
             record4.setField(nvfield1.getName(), "courgette");
             expectEvent(UPDATE, record4.getId(), nvfield1.getId());
@@ -537,6 +541,10 @@ public class IndexerTest {
             commitIndex();
             verifyResultCount("nv_deref5:courgette", 1);
             verifyResultCount("nv_deref5:broccoli", 0);
+            verifyResultCount("nv_deref6:courgette", 2);
+            verifyResultCount("nv_deref6:broccoli", 0);
+            verifyResultCount("nv_deref7:courgette", 1);
+            verifyResultCount("nv_deref7:broccoli", 0);
 
             // Delete record 3: index for record 4 should be updated
             log.debug("Begin test NV11");

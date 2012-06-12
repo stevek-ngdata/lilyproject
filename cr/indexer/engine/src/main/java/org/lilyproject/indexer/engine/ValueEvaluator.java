@@ -458,22 +458,21 @@ public class ValueEvaluator {
 
         RecordId recordId = frecord.record.getId();
 
-        if (recordId.getVariantProperties().keySet().containsAll(follow.getDimensions())) {
+        if (recordId.getVariantProperties().keySet().containsAll(follow.getDimensions().keySet())) {
             // the record already contains all of the variant dimension -> stop here
             return null;
         } else {
-            // build a new record id which is the one we started with + the dimensions to follow
+            // build a new set of variant properties which are the ones we started with + the dimensions to follow
             final Map<String, String> varProps = new HashMap<String, String>(recordId.getVariantProperties());
-            for (String dimension : follow.getDimensions()) {
-                varProps.put(dimension, "dummy");
+            for (Map.Entry<String, String> dimension : follow.getDimensions().entrySet()) {
+                varProps.put(dimension.getKey(), dimension.getValue());
             }
-            final RecordId resolvedRecordId = repository.getIdGenerator().newRecordId(recordId.getMaster(), varProps);
 
             // now find all the records of this newly defined variant
             final ArrayList<IdRecord> result = new ArrayList<IdRecord>();
 
             final RecordScan scan = new RecordScan();
-            scan.setRecordFilter(new RecordVariantFilter(resolvedRecordId));
+            scan.setRecordFilter(new RecordVariantFilter(recordId.getMaster(), varProps));
             final RecordScanner scanner = repository.getScanner(scan);
             Record next;
             // TODO: once LILY-352 is implemented, we should get IdRecord instances from the scanner, and prevent

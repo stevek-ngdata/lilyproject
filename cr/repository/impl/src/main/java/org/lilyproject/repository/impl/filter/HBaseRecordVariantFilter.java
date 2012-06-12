@@ -21,7 +21,6 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.lilyproject.hbaseext.LilyRecordVariantFilter;
-import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.filter.RecordFilter;
@@ -39,14 +38,17 @@ public class HBaseRecordVariantFilter implements HBaseRecordFilterFactory {
 
         final RecordVariantFilter filter = (RecordVariantFilter) uncastFilter;
 
-        if (filter.getRecordId() == null) {
+        if (filter.getMasterRecordId() == null) {
             throw new IllegalArgumentException("Record ID should be specified in RecordVariantFilter");
         }
 
-        final RecordId recordId = filter.getRecordId();
+        if (filter.getVariantProperties() == null) {
+            throw new IllegalArgumentException("VariantProperties should be specified in RecordVariantFilter");
+        }
 
-        return new FilterList(Arrays.<Filter>asList(new PrefixFilter(recordId.getMaster().toBytes()),
-                new LilyRecordVariantFilter(recordId.getVariantProperties().keySet())));
+        return new FilterList(Arrays.<Filter>asList(
+                new PrefixFilter(filter.getMasterRecordId().getMaster().toBytes()),
+                new LilyRecordVariantFilter(filter.getVariantProperties())));
 
     }
 }

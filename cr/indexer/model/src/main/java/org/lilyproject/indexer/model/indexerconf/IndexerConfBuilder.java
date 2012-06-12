@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,6 +72,8 @@ public class IndexerConfBuilder {
             new LocalXPathExpression("/indexer/dynamicFields/dynamicField");
 
     private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
+
+    private static final Splitter EQUAL_SIGN_SPLITTER = Splitter.on('=').trimResults().omitEmptyStrings();
 
     private Log log = LogFactory.getLog(getClass());
 
@@ -532,13 +535,27 @@ public class IndexerConfBuilder {
 
     private void processMoreDimensionedVariantsDeref(Element fieldEl, String valueExpr, DerefValue deref,
                                                      String derefPart) throws IndexerConfException {
-        // The variant dimension is specified in a syntax like "+var1,+var2"
+        // The variant dimension is specified in a syntax like "+var1=boo,+var2"
         boolean validConfig = true;
-        Set<String> dimensions = new HashSet<String>();
+        Map<String, String> dimensions = new HashMap<String, String>();
         for (String op : COMMA_SPLITTER.split(derefPart)) {
             if (op.length() > 1 && op.startsWith("+")) {
-                String dimension = op.substring(1);
-                dimensions.add(dimension);
+                final Iterator<String> keyAndValue = EQUAL_SIGN_SPLITTER.split(op).iterator();
+                if (keyAndValue.hasNext()) {
+                    final String key = keyAndValue.next().substring(1); // ignore leading '+'
+                    if (keyAndValue.hasNext()) {
+                        // there is an equal sign -> key and value
+                        final String value = keyAndValue.next();
+                        dimensions.put(key, value);
+                    } else {
+                        // no equal sign -> only key without value
+                        dimensions.put(key, null);
+                    }
+                } else {
+                    // nothing at all?
+                    validConfig = false;
+                    break;
+                }
             } else {
                 validConfig = false;
                 break;
