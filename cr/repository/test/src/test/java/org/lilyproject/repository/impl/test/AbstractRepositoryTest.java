@@ -2191,6 +2191,42 @@ public abstract class AbstractRepositoryTest {
     }
 
     @Test
+    public void testScannerWithIdRecords() throws Exception {
+        RecordId id = idGenerator.newRecordId();
+        Record record = repository.newRecord(id);
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "dummy value");
+        repository.create(record);
+
+        RecordScan scan = new RecordScan();
+        scan.setReturnsIdRecords(true);
+
+        RecordScanner scanner = repository.getScanner(scan);
+        final Record next = scanner.next();
+        assertNotNull(next);
+        assertFalse(((IdRecord) next).getFieldIdToNameMapping().isEmpty());
+    }
+
+    @Test(expected = ClassCastException.class)
+    public void testScannerWithoutIdRecords() throws Exception {
+        RecordId id = idGenerator.newRecordId();
+        Record record = repository.newRecord(id);
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "dummy value");
+        repository.create(record);
+
+        RecordScan scan = new RecordScan();
+        scan.setReturnsIdRecords(false); // normal Record instances!
+
+        RecordScanner scanner = repository.getScanner(scan);
+        final Record next = scanner.next();
+        assertNotNull(next);
+
+        // this cast will fail
+        final IdRecord casted = (IdRecord) next;
+    }
+
+    @Test
     public void testRecordTypeFilter() throws Exception {
         RecordType rt1 = typeManager.recordTypeBuilder()
                 .name("RecordTypeFilter", "rt1")

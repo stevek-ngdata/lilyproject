@@ -15,26 +15,24 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordScanner;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
 import java.io.IOException;
 import java.util.Iterator;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordScanner;
+import org.lilyproject.repository.api.RepositoryException;
 
-public class HBaseRecordScanner implements RecordScanner  {
-    private RecordDecoder recdec;
-    private ResultScanner hbaseScanner;
+public class HBaseRecordScanner implements RecordScanner {
+    private final RecordDecoder recdec;
+    private final ResultScanner hbaseScanner;
+    private final boolean returnsIdRecords;
 
-    public HBaseRecordScanner(ResultScanner hbaseScanner, RecordDecoder recdec) {
+    public HBaseRecordScanner(ResultScanner hbaseScanner, RecordDecoder recdec, boolean returnsIdRecords) {
         this.hbaseScanner = hbaseScanner;
         this.recdec = recdec;
+        this.returnsIdRecords = returnsIdRecords;
     }
 
     @Override
@@ -51,7 +49,11 @@ public class HBaseRecordScanner implements RecordScanner  {
             return null;
         }
 
-        return recdec.decodeRecord(result);
+        if (returnsIdRecords)
+            return recdec.decodeRecordWithIds(result);
+        else
+            return recdec.decodeRecord(result);
+
     }
 
     @Override
@@ -63,7 +65,7 @@ public class HBaseRecordScanner implements RecordScanner  {
     public Iterator<Record> iterator() {
         return new Iterator<Record>() {
             private Record next;
-            
+
             @Override
             public boolean hasNext() {
                 if (next != null) {
@@ -86,7 +88,7 @@ public class HBaseRecordScanner implements RecordScanner  {
                 if (!hasNext()) {
                     return null;
                 }
-                
+
                 Record result = next;
                 next = null;
                 return result;
