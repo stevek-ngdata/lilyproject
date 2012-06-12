@@ -2,26 +2,26 @@
 <indexer>
 
   <records>
-    <record matchNamespace="ns" matchName="ComplexFieldsRecordType" matchVariant="*" vtags="last"/>
+    <record matchNamespace="ns" matchName="ComplexConfiguration" matchVariant="*" vtags="last"/>
   </records>
 
   <fields>
-    <field name="cc_less_variant_spaces" value="-my branch=>ns:nv_field1"/>
+    <field name="cc_less_variant_spaces" value="-my branch=>ns:string"/>
 
-    <field name="cc_less_variant_spaces_twice" value="-my branch,-some lang=>ns:nv_field1"/>
+    <field name="cc_less_variant_spaces_twice" value="-my branch,-some lang=>ns:string"/>
 
-    <field name="cc_more_variant_spaces" value="+my branch=>ns:nv_field1"/>
+    <field name="cc_more_variant_spaces" value="+my branch=>ns:string"/>
 
-    <field name="cc_more_variant_spaces_twice" value="+my branch,+some lang=>ns:nv_field1"/>
+    <field name="cc_more_variant_spaces_twice" value="+my branch,+some lang=>ns:string"/>
 
     <!-- this is not allowed -->
-    <!--<field name="cc_less_and_more_variant_combined" value="+branch,-lang=>ns:nv_field1"/>-->
+    <!--<field name="cc_less_and_more_variant_combined" value="+branch,-lang=>ns:string"/>-->
 
-    <field name="cc_more_variant_spaces_value" value="+branch=some value=>ns:nv_field1"/>
+    <field name="cc_more_variant_spaces_value" value="+branch=some value=>ns:string"/>
 
-    <field name="cc_more_variant_spaces_twice_value" value="+branch=some value,+lang=some lang=>ns:nv_field1"/>
+    <field name="cc_more_variant_spaces_twice_value" value="+branch=some value,+lang=some lang=>ns:string"/>
 
-    <field name="cc_more_variant_spaces_key_and_value" value="+my branch=some value,+my lang=some lang=>ns:nv_field1"/>
+    <field name="cc_more_variant_spaces_key_and_value" value="+my branch=some value,+my lang=some lang=>ns:string"/>
 
   </fields>
 

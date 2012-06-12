@@ -2183,6 +2183,17 @@ public class IndexerTest {
      */
     @Test
     public void testParseComplexConfiguration() throws Exception {
+        //
+        // Create schema
+        //
+        FieldType stringField = typeManager.createFieldType(typeManager.getValueType("STRING"),
+                new QName(NS, "string"), Scope.NON_VERSIONED);
+
+        typeManager.recordTypeBuilder()
+                .name(new QName(NS, "ComplexConfiguration"))
+                .field(stringField.getId(), false)
+                .create();
+
         changeIndexUpdater("indexerconf_complex_configuration.xml");
 
         final List<IndexField> derefIndexFields = INDEXER_CONF.getDerefIndexFields();
