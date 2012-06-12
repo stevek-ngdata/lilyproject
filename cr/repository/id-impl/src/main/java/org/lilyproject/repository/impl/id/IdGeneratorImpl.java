@@ -260,9 +260,6 @@ public class IdGeneratorImpl implements IdGenerator {
     protected static void checkReservedCharacters(String text) {
         for (int i = 0; i < text.length(); i++) {
             switch (text.charAt(i)) {
-                /*
-                * case '.': case '=': case ',':
-                */
                 case '\u0000':
                     throw new IllegalArgumentException("Null characters may not be used in a record ID");
             }
