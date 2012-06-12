@@ -18,7 +18,8 @@ import org.lilyproject.util.ArgumentValidator;
 /**
  * Actual implementation of an HBase filter to filter out variant lily records. This returns all records which have
  * exactly the given variant properties (i.e. not the records which have these variant properties and some additional
- * ones).
+ * ones). If the value of the variant property is specified, it has to match exactly. If the value is
+ * <code>null</code>, any value will match.
  *
  * @author Jan Van Besien
  */

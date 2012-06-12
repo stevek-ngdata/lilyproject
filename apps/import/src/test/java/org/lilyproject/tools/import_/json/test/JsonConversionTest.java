@@ -16,8 +16,9 @@
 package org.lilyproject.tools.import_.json.test;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.JsonNode;
@@ -282,10 +283,14 @@ public class JsonConversionTest {
     public void testScanRecordVariantFilter() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
 
-        RecordId recordId = idGenerator.newRecordId("foo", ImmutableMap.of("lang", "en"));
+        final Map<String, String> variantProperties = new HashMap<String, String>();
+        variantProperties.put("lang", "en");
+        variantProperties.put("branch", null);
+
+        RecordId recordId = idGenerator.newRecordId("foo");
 
         RecordScan scan = new RecordScan();
-        scan.setRecordFilter(new RecordVariantFilter(recordId, recordId.getVariantProperties()));
+        scan.setRecordFilter(new RecordVariantFilter(recordId, variantProperties));
 
         byte[] data = scanToBytes(scan);
         RecordScan parsedScan = scanFromBytes(data);
@@ -293,8 +298,7 @@ public class JsonConversionTest {
         assertNotNull(parsedScan.getRecordFilter());
         assertTrue(parsedScan.getRecordFilter() instanceof RecordVariantFilter);
         assertEquals(recordId.getMaster(), ((RecordVariantFilter) parsedScan.getRecordFilter()).getMasterRecordId());
-        assertEquals(recordId.getVariantProperties(),
-                ((RecordVariantFilter) parsedScan.getRecordFilter()).getVariantProperties());
+        assertEquals(variantProperties, ((RecordVariantFilter) parsedScan.getRecordFilter()).getVariantProperties());
 
         // Check json
         JsonNode node = new ObjectMapper().readTree(data);
@@ -302,6 +306,7 @@ public class JsonConversionTest {
                 node.get("recordFilter").get("@class").getTextValue());
         assertEquals("USER.foo", node.get("recordFilter").get("recordId").getTextValue());
         assertEquals("en", node.get("recordFilter").get("variantProperties").get("lang").getTextValue());
+        assertEquals(null, node.get("recordFilter").get("variantProperties").get("branch").getTextValue());
     }
 
 

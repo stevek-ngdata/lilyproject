@@ -73,7 +73,7 @@ public class RecordVariantFilterJson implements RecordFilterJsonConverter<Record
         final Iterator<Map.Entry<String, JsonNode>> fields = variantPropertiesNode.getFields();
         while (fields.hasNext()) {
             final Map.Entry<String, JsonNode> next = fields.next();
-            variantProperties.put(next.getKey(), next.getValue().asText());
+            variantProperties.put(next.getKey(), next.getValue().getTextValue());
         }
         return new RecordVariantFilter(repository.getIdGenerator().fromString(recordId), variantProperties);
     }

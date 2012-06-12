@@ -5,8 +5,10 @@ import java.util.Map;
 import org.lilyproject.repository.api.RecordId;
 
 /**
- * Filters based on variant properties. It returns only records which have the same variant properties as the given
- * variant properties.
+ * Filters based on variant properties. It only returns records which have exactly the same variant properties as the
+ * given variant properties (i.e. not the records which have these variant properties and some additional ones). If the
+ * value of the variant property is specified, it has to match exactly. If the value is <code>null</code>, any value
+ * will match.
  *
  * @author Jan Van Besien
  */
