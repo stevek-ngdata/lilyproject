@@ -370,9 +370,9 @@ public class TutorialTest {
         FieldType body = typeManager.createFieldType("STRING", new QName(ANS, "body"), Scope.NON_VERSIONED);
 
         RecordType articleType = typeManager.newRecordType(new QName(ANS, "article"));
-        authorType.addFieldTypeEntry(title.getId(), true);
-        authorType.addFieldTypeEntry(authors.getId(), true);
-        authorType.addFieldTypeEntry(body.getId(), true);
+        articleType.addFieldTypeEntry(title.getId(), true);
+        articleType.addFieldTypeEntry(authors.getId(), true);
+        articleType.addFieldTypeEntry(body.getId(), true);
         articleType = typeManager.createRecordType(articleType);
         
         // (3)
