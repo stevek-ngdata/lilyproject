@@ -10,7 +10,8 @@ interrupt threads when an InterruptedException is thrown.
 
 Download
 --------
-Download and untar the hbase source code http://archive.cloudera.com/cdh/3/hbase-0.90.4-cdh3u3.tar.gz
+Download the hbase source code from the Cloudera website (tgz version) and
+untar it.
 
 Init version repo
 -----------------
@@ -48,12 +49,12 @@ Build & deploy
 --------------
 Build using:
 
-mvn -DskipTests clean install
+mvn -Dhadoop.profile=23 -DskipTests clean install
 
 Deploy jars using:
 But first make sure you set up http://docs.outerthought.org/lily-docs-current/422-lily/416-lily.html
 
-mvn deploy -DskipTests -DaltDeploymentRepository=org.lilyproject.maven-deploy::default::scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/deploy
+mvn deploy -Dhadoop.profile=23 -DskipTests -DaltDeploymentRepository=org.lilyproject.maven-deploy::default::scp://lilyproject.org/var/www/lilyproject.org/maven/maven2/deploy
 
 
 Change the Lily code to use the new libraries
