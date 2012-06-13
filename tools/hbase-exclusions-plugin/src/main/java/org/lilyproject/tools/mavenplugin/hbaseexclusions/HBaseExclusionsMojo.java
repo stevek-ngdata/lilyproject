@@ -124,6 +124,9 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         ALLOWED_ARTIFACTS.add("com.google.guava:guava");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop.thirdparty.guava:guava");
         ALLOWED_ARTIFACTS.add("org.apache.zookeeper:zookeeper");
+        ALLOWED_ARTIFACTS.add("commons-configuration:commons-configuration");
+        ALLOWED_ARTIFACTS.add("org.apache.hadoop:hadoop-auth");
+        ALLOWED_ARTIFACTS.add("com.google.protobuf:protobuf-java");
     }
     
     private boolean isAllowed(String groupId, String artifactId) {
