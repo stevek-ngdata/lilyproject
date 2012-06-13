@@ -326,7 +326,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 throw new RuntimeException("Solr delete all docs: expected 200 status but it is " + response);
             }
 
-            // The following is useful to observer what threads were not stopped properly after stopping Lily
+            // The following is useful to observe what threads were not stopped properly after stopping Lily
             if (System.getProperty("lily.launcher.threaddump-after-lily-stop") != null) {
                 ReflectionUtils.printThreadInfo(new PrintWriter("launcher-threadump-after-lily-stop"), "Thread dump");
             }
