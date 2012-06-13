@@ -15,11 +15,27 @@
  */
 package org.lilyproject.util.repo;
 
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+
 import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
-
-import java.util.*;
-
-import org.lilyproject.repository.api.*;
 
 /**
  * This is a record with added logic/state for version tag behavior.
@@ -29,7 +45,7 @@ public class VTaggedRecord {
     /**
      * The record containing the last version (or none if non-versioned fields only).
      */
-    private IdRecord record;
+    private final IdRecord record;
 
     /**
      * The record object containing only the non-versioned fields.
@@ -53,25 +69,30 @@ public class VTaggedRecord {
     private FieldFilter fieldFilter;
 
     public VTaggedRecord(RecordId recordId, Repository repository) throws RepositoryException, InterruptedException {
-        this(recordId, null, repository);
+        this(recordId, null, null, repository);
     }
 
-    public VTaggedRecord(RecordId recordId, FieldFilter fieldFilter, Repository repository) throws RepositoryException,
-            InterruptedException {
-        this(recordId, null, fieldFilter, repository);
-    }
-
+    /**
+     * Construct based on a recordId. This will do a repository read to get the latest record.
+     */
     public VTaggedRecord(RecordId recordId, RecordEvent recordEvent, FieldFilter fieldFilter, Repository repository)
             throws RepositoryException, InterruptedException {
-
-        this.repository = repository;
-        typeManager = repository.getTypeManager();
-
         // Load the last version of the record to get vtag and non-versioned fields information
         // We will also reuse this record object in case the last version or the non-versioned data is needed,
         // to avoid extra gets on HBase.
-        record = repository.readWithIds(recordId, null, null);
+        this(repository.readWithIds(recordId, null, null), recordEvent, fieldFilter, repository);
+    }
 
+    /**
+     * Construct based on an existing record to prevent additional repository reads when the record is already
+     * available. The existing IdRecord should be the last (when it was read) and should have been read with all
+     * fields!
+     */
+    public VTaggedRecord(IdRecord idRecord, RecordEvent recordEvent, FieldFilter fieldFilter, Repository repository)
+            throws RepositoryException, InterruptedException {
+        this.repository = repository;
+        this.typeManager = repository.getTypeManager();
+        this.record = idRecord;
         this.recordEvent = recordEvent;
         this.fieldFilter = fieldFilter != null ? fieldFilter : PASS_ALL_FIELD_FILTER;
     }
@@ -139,7 +160,7 @@ public class VTaggedRecord {
             }
 
             if (VersionTag.isVersionTag(fieldType)) {
-                vtags.put(fieldType.getId(), (Long)field.getValue());
+                vtags.put(fieldType.getId(), (Long) field.getValue());
             }
         }
 
@@ -240,7 +261,7 @@ public class VTaggedRecord {
         return getIdRecord(version, null);
     }
 
-    public IdRecord getIdRecord(long version, List<SchemaId> fields) throws InterruptedException, RepositoryException {
+    private IdRecord getIdRecord(long version, List<SchemaId> fields) throws InterruptedException, RepositoryException {
         // TODO in case of the cached copies, we should filter the fields to the requested fields (not used anywhere
         // at the time of this writing)
         if (version == 0L) {
@@ -278,8 +299,8 @@ public class VTaggedRecord {
         }
 
         // Remove versioned record type info
-        record.setRecordType(Scope.VERSIONED, (QName)null, null);
-        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName)null, null);
+        record.setRecordType(Scope.VERSIONED, (QName) null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName) null, null);
     }
 
     private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds)

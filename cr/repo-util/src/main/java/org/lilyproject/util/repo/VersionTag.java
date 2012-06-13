@@ -15,9 +15,23 @@
  */
 package org.lilyproject.util.repo;
 
-import org.lilyproject.repository.api.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 
 /**
  * Version tag related utilities.
@@ -69,10 +83,24 @@ public class VersionTag {
         return result;
     }
 
+    /**
+     * Get an IdRecord of the given vtag version, based on a recordId.
+     */
     public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository)
             throws RepositoryException, InterruptedException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, null, repository);
+        return vtRecord.getIdRecord(vtagId);
+    }
+
+    /**
+     * Get an IdRecord of the given vtag version, based on a existing IdRecord. The existing IdRecord should be the
+     * last (when it was read) and should have been read with all fields!
+     */
+    public static IdRecord getIdRecord(IdRecord idRecord, SchemaId vtagId, Repository repository)
+            throws RepositoryException, InterruptedException {
+
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, null, repository);
         return vtRecord.getIdRecord(vtagId);
     }
 
@@ -95,7 +123,7 @@ public class VersionTag {
         } else if (!record.hasField(vtagName)) {
             return null;
         } else {
-            version = (Long)record.getField(vtagName);
+            version = (Long) record.getField(vtagName);
 
             if (version == 0) {
                 reduceToNonVersioned(record, fields != null ? new HashSet<QName>(fields) : null,
@@ -130,8 +158,8 @@ public class VersionTag {
         }
 
         // Remove versioned record type info
-        record.setRecordType(Scope.VERSIONED, (QName)null, null);
-        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName)null, null);
+        record.setRecordType(Scope.VERSIONED, (QName) null, null);
+        record.setRecordType(Scope.VERSIONED_MUTABLE, (QName) null, null);
     }
 
     private static void filterFields(Record record, Set<QName> fields) {
