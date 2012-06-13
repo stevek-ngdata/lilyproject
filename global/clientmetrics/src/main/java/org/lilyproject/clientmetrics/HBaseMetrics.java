@@ -15,10 +15,7 @@
  */
 package org.lilyproject.clientmetrics;
 
-import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.HServerInfo;
-import org.apache.hadoop.hbase.HServerLoad;
-import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
@@ -53,12 +50,11 @@ public class HBaseMetrics {
 
     public void reportMetrics(Metrics metrics) throws Exception {
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
-        for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
-            String serverName = serverInfo.getHostname();
+        for (ServerName serverName : clusterStatus.getServers()) {
+            int hbaseLoad = clusterStatus.getLoad(serverName).getLoad();
 
-            int hbaseLoad = serverInfo.getLoad().getLoad();
-
-            MBeanServerConnection connection = jmxConnections.getConnector(serverName, HBASE_JMX_PORT).getMBeanServerConnection();
+            MBeanServerConnection connection = jmxConnections.getConnector(serverName.getHostname(), HBASE_JMX_PORT)
+                    .getMBeanServerConnection();
             initGarbageCollMetrics(connection);
 
             Integer blockCacheHitRatio = (Integer)connection.getAttribute(regionServerStats, "blockCacheHitRatio");
@@ -100,16 +96,17 @@ public class HBaseMetrics {
 
     public void reportRequestCountMetric(Metrics metrics) throws Exception {
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
-        for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
-            metrics.increment("-hbaseRequestCount@" + serverInfo.getHostname(), serverInfo.getLoad().getNumberOfRequests());
+        for (ServerName serverName : clusterStatus.getServers()) {
+            int requestCount = clusterStatus.getLoad(serverName).getNumberOfRequests();
+            metrics.increment("-hbaseRequestCount@" + serverName.getHostname(), requestCount);
         }
     }
 
     public Collection<TableInfo> getHBaseTableInfo(ClusterStatus clusterStatus) throws IOException {
         SortedMap<String, TableInfo> tableInfos = new TreeMap<String, TableInfo>();
 
-        for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
-            for (HServerLoad.RegionLoad regionLoad : serverInfo.getLoad().getRegionsLoad()) {
+        for (ServerName serverName : clusterStatus.getServers()) {
+            for (HServerLoad.RegionLoad regionLoad : clusterStatus.getLoad(serverName).getRegionsLoad().values()) {
                 String regionName = regionLoad.getNameAsString();
                 String tableName = getTableNameFromRegionName(regionName);
 
@@ -217,8 +214,8 @@ public class HBaseMetrics {
         ObjectName runtime = new ObjectName("java.lang:type=Runtime");
 
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
-        for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
-            String hostname = serverInfo.getHostname();
+        for (ServerName serverName : clusterStatus.getServers()) {
+            String hostname = serverName.getHostname();
             MBeanServerConnection connection = jmxConnections.getConnector(hostname, HBASE_JMX_PORT).getMBeanServerConnection();
 
             String arch = (String)connection.getAttribute(operationSystem, "Arch");
@@ -253,9 +250,9 @@ public class HBaseMetrics {
         table.columnSepLine();
 
         ClusterStatus clusterStatus = hbaseAdmin.getClusterStatus();
-        for (HServerInfo serverInfo : clusterStatus.getServerInfo()) {
+        for (ServerName serverName : clusterStatus.getServers()) {
             Map<String, Integer> regionCounts = new HashMap<String, Integer>();
-            for (HServerLoad.RegionLoad regionLoad : serverInfo.getLoad().getRegionsLoad()) {
+            for (HServerLoad.RegionLoad regionLoad : clusterStatus.getLoad(serverName).getRegionsLoad().values()) {
                 String tableName = getTableNameFromRegionName(regionLoad.getNameAsString());
                 if (regionCounts.containsKey(tableName)) {
                     regionCounts.put(tableName, regionCounts.get(tableName) + 1);
@@ -264,7 +261,7 @@ public class HBaseMetrics {
                 }
             }
 
-            String hostName = serverInfo.getHostname();
+            String hostName = serverName.getHostname();
 
             for (Map.Entry<String, Integer> entry : regionCounts.entrySet()) {
                 table.columns(hostName, entry.getKey(), entry.getValue());

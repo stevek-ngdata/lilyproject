@@ -231,7 +231,7 @@ public class HBaseProxy {
                     try {
                         hbaseTestUtil.shutdownMiniCluster();
                         hbaseTestUtil = null;
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         System.out.println("Error shutting down mini cluster.");
                         e.printStackTrace();
                     }

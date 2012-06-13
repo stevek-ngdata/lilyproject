@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class HBaseTestingUtilityFactory {
+    public static final String TEST_DIR_KEY = "lily.hbasetestingutility.dir";
+
     /**
      * Creates an HBaseTestingUtility with settings applied such that everything will be stored below the
      * supplied directory and makes (to some extent) use of standard port numbers.
@@ -35,8 +37,7 @@ public class HBaseTestingUtilityFactory {
     public static HBaseTestingUtility create(Configuration conf, File tmpDir, boolean clearData) throws IOException {
 
         // This location will be used for dfs, zookeeper, ...
-        System.setProperty(HBaseTestingUtility.TEST_DIRECTORY_KEY, createSubDir(tmpDir, "hadoop"));
-        conf.set(HBaseTestingUtility.TEST_DIRECTORY_KEY, createSubDir(tmpDir, "hadoop"));
+        conf.set(TEST_DIR_KEY, createSubDir(tmpDir, "hbase-test-util"));
 
         // This property is picked up by our fork of MiniMRCluster (the default implementation was hardcoded
         // to use build/test/mapred/local)

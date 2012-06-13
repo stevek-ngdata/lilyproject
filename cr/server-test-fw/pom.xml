@@ -83,7 +83,7 @@
           <targetDirectory>${basedir}/target/</targetDirectory>
           <targetFileName>classloader-for-use-by-launcher.xml</targetFileName>
           <includeSelf>true</includeSelf>
-          <includeTypes>jar</includeTypes>
+          <includeTypes>jar,test-jar</includeTypes>
         </configuration>
       </plugin>
     </plugins>

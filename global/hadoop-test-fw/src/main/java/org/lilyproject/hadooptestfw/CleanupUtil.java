@@ -135,7 +135,8 @@ public class CleanupUtil {
 
         HBaseAdmin admin = HBaseAdminFactory.get(conf);
         HTableDescriptor[] tables = admin.listTables();
-        System.out.println("Found tables: " + tables.length);
+        System.out.println("Found tables: " + (tables == null ? "null" : tables.length));
+        tables = tables == null ? new HTableDescriptor[0] : tables;
 
         Set<String> exploitTimestampTables = new HashSet<String>();
 
@@ -280,56 +281,5 @@ public class CleanupUtil {
         FileSystem fs = FileSystem.get(new URI(dfsUri.getScheme() + "://" + dfsUri.getAuthority()), conf);
         Path blobRootPath = new Path(dfsUri.getPath());
         fs.delete(blobRootPath, true);
-    }
-
-    /**
-     * This method was copied from HBase's HBaseAdmin source file in order to fix a connection leak:
-     * the CatalogTracker was not closed, this would among other things leak a ZooKeeper client connection
-     * on each flush (especially important when this is used in the LilyLauncher).
-     *
-     * <p></p>This bug was present in chd3u, but already fixed in HBase trunk, so this method can be
-     * removed after upgrade.
-     */
-    private void flush(HBaseAdmin hbaseAdmin, String tableName) throws IOException, InterruptedException {
-        CatalogTracker ct = getCatalogTracker();
-        try {
-            List<Pair<HRegionInfo, HServerAddress>> pairs =
-                    MetaReader.getTableRegionsAndLocations(ct, tableName);
-            for (Pair<HRegionInfo, HServerAddress> pair: pairs) {
-                if (pair.getSecond() == null) continue;
-                flush(hbaseAdmin, pair.getSecond(), pair.getFirst());
-            }
-        } finally {
-            cleanupCatalogTracker(ct);
-        }
-    }
-
-    /** Copied from HBase source to support flush fix. */
-    private void flush(HBaseAdmin hbaseAdmin, final HServerAddress hsa, final HRegionInfo hri)
-            throws IOException {
-        HRegionInterface rs = hbaseAdmin.getConnection().getHRegionConnection(hsa);
-        rs.flushRegion(hri);
-    }
-
-    /** Copied from HBase source to support flush fix. */
-    private synchronized CatalogTracker getCatalogTracker()
-            throws ZooKeeperConnectionException, IOException {
-        CatalogTracker ct = null;
-        try {
-            ct = new CatalogTracker(this.conf);
-            ct.start();
-        } catch (InterruptedException e) {
-            // Let it out as an IOE for now until we redo all so tolerate IEs
-            Thread.currentThread().interrupt();
-            throw new IOException("Interrupted", e);
-        }
-        return ct;
-    }
-
-
-    /** Copied from HBase source to support flush fix. */
-    private void cleanupCatalogTracker(final CatalogTracker ct) {
-        ct.stop();
-        HConnectionManager.deleteConnection(ct.getConnection().getConfiguration(), true);
     }
 }

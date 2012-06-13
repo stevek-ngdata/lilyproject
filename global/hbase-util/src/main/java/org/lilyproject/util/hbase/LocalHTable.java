@@ -20,6 +20,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
@@ -437,14 +439,46 @@ public class LocalHTable implements HTableInterface {
             }
         });
     }
-    
+
+    @Override
+    public <T extends CoprocessorProtocol> T coprocessorProxy(final Class<T> protocol, final byte[] row) {
+        return runNoExc(new TableRunnable<T>() {
+            @Override
+            public T run(HTableInterface table) throws IOException, InterruptedException {
+                return table.coprocessorProxy(protocol, row);
+            }
+        });
+    }
+
+    @Override
+    public <T extends CoprocessorProtocol, R> Map<byte[], R> coprocessorExec(Class<T> protocol,
+            byte[] startKey, byte[] endKey, Batch.Call<T,R> callable) throws IOException, Throwable {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            return table.coprocessorExec(protocol, startKey, endKey, callable);
+        } finally {
+            table.close();
+        }
+    }
+
+    @Override
+    public <T extends CoprocessorProtocol, R> void coprocessorExec(Class<T> protocol, byte[] startKey, byte[] endKey,
+            Batch.Call<T,R> callable, Batch.Callback<R> callback) throws IOException, Throwable {
+        HTableInterface table = pool.getTable(tableNameString);
+        try {
+            table.coprocessorExec(protocol, startKey, endKey, callable, callback);
+        } finally {
+            table.close();
+        }
+    }
+
     private <T> T run(TableRunnable<T> runnable) throws IOException, InterruptedException {
         // passing tableNameString, since otherwise pool.getTable converts it to string anyway
         HTableInterface table = pool.getTable(tableNameString);
         try {
             return runnable.run(table);
         } finally {
-            pool.putTable(table);
+            table.close();
         }
     }
 
@@ -455,7 +489,7 @@ public class LocalHTable implements HTableInterface {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            pool.putTable(table);
+            table.close();
         }
     }
 
@@ -468,7 +502,11 @@ public class LocalHTable implements HTableInterface {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            pool.putTable(table);
+            try {
+                table.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

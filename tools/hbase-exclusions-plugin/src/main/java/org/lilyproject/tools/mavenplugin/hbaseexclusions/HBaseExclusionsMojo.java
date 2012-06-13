@@ -43,7 +43,8 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         List<Artifact> dependencies = (List<Artifact>)project.getRuntimeArtifacts();
-        List<Artifact> excludes = new ArrayList<Artifact>(dependencies.size());
+        // excludes grouped by parent artifact
+        Map<String, List<Artifact>> excludesByParent = new HashMap<String, List<Artifact>>();
 
         for (Artifact artifact : dependencies) {
             // Rather than simply outputting all dependencies as excludes, we only want to output
@@ -51,21 +52,39 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
             // will be disabled recursively by Maven.
             int allowedParentPos = getAllowedParentPostion(artifact.getDependencyTrail());
             if (allowedParentPos != -1 && allowedParentPos == artifact.getDependencyTrail().size() - 2) {
+                // entry at level 0 in dependency trail is the project itself, entry at position 1 the
+                // dependencies listed in the pom, and deeper are the recursive deps
+                String topLevelParent = (String)artifact.getDependencyTrail().get(1);
+                List<Artifact> excludes = excludesByParent.get(topLevelParent);
+                if (excludes == null) {
+                    excludes = new ArrayList<Artifact>();
+                    excludesByParent.put(topLevelParent, excludes);
+                }
                 excludes.add(artifact);
             }
         }
 
-        if (excludes.size() > 0) {
+        if (excludesByParent.size() > 0) {
             System.out.println();
             System.out.println();
             System.out.println();
             System.out.println("Please add these excludes to the lily-hbase-client pom:");
             System.out.println();
-            for (Artifact artifact : excludes) {
-                System.out.println("<exclusion>");
-                System.out.println("  <groupId>" + artifact.getGroupId() + "</groupId>");
-                System.out.println("  <artifactId>" + artifact.getArtifactId() + "</artifactId>");
-                System.out.println("</exclusion>");
+            System.out.println();
+            for (Map.Entry<String, List<Artifact>> entry : excludesByParent.entrySet()) {
+                System.out.println("<dependency>");
+                String[] artifactParts = parseArtifactName(entry.getKey());
+                System.out.println("  <groupId>" + artifactParts[0] + "</groupId>");
+                System.out.println("  <artifactId>" + artifactParts[1] + "</artifactId>");
+                System.out.println("  <exclusions>");
+                for (Artifact artifact : entry.getValue()) {
+                    System.out.println("    <exclusion>");
+                    System.out.println("      <groupId>" + artifact.getGroupId() + "</groupId>");
+                    System.out.println("      <artifactId>" + artifact.getArtifactId() + "</artifactId>");
+                    System.out.println("    </exclusion>");
+                }
+                System.out.println("  <exclusions>");
+                System.out.println("</dependency>");
             }
             System.out.println();
             System.out.println();
@@ -78,17 +97,21 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
     private int getAllowedParentPostion(List<String> trail) {
         for (int i = trail.size() - 1; i >= 0; i--) {
             String artifact = trail.get(i);
-
-            int groupIdEnd = artifact.indexOf(':');
-            String groupId = artifact.substring(0, groupIdEnd);
-            int artifactIdEnd = artifact.indexOf(':', groupIdEnd + 1);
-            String artifactId = artifact.substring(groupIdEnd + 1, artifactIdEnd);
-
-            if (isAllowed(groupId, artifactId)) {
+            String[] artifactParts = parseArtifactName(artifact);
+            if (isAllowed(artifactParts[0], artifactParts[1])) {
                 return i;
             }
         }
         return -1;
+    }
+
+    private String[] parseArtifactName(String artifact) {
+        int groupIdEnd = artifact.indexOf(':');
+        String groupId = artifact.substring(0, groupIdEnd);
+        int artifactIdEnd = artifact.indexOf(':', groupIdEnd + 1);
+        String artifactId = artifact.substring(groupIdEnd + 1, artifactIdEnd);
+
+        return new String[] { groupId, artifactId };
     }
 
     private static Set<String> ALLOWED_ARTIFACTS = new HashSet<String>();
@@ -96,6 +119,8 @@ public class HBaseExclusionsMojo  extends AbstractMojo {
         ALLOWED_ARTIFACTS.add("org.apache.hbase:hbase");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:zookeeper");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop:hadoop-core");
+        ALLOWED_ARTIFACTS.add("org.apache.hadoop:hadoop-common");
+        ALLOWED_ARTIFACTS.add("org.apache.hadoop:hadoop-hdfs");
         ALLOWED_ARTIFACTS.add("com.google.guava:guava");
         ALLOWED_ARTIFACTS.add("org.apache.hadoop.thirdparty.guava:guava");
         ALLOWED_ARTIFACTS.add("org.apache.zookeeper:zookeeper");
