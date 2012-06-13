@@ -79,7 +79,9 @@ public class BlobManagerSetup {
 
     @PreDestroy
     public void stop() {
-        Closer.close(fs);
+        // Since CDH4: don't close connection as this seems to close it for other clients (such as HBase)
+        // too in case of launch-test-lily with resetLilyState.
+        // Closer.close(fs);
     }
 
     public BlobManager getBlobManager() {
