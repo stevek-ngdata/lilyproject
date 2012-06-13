@@ -26,6 +26,30 @@ index 66341ad..0aaa401 100644
      <!-- Some plugins (javadoc for example) can be used in the normal build- and the site phase.
           These plugins inherit their options from the <reporting> section below. These settings
           can be overwritten here. -->
+diff --git src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java
+index 9ec189b..15480d6 100644
+--- src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java
++++ src/main/java/org/apache/hadoop/hbase/HBaseConfiguration.java
+@@ -131,7 +131,18 @@ public class HBaseConfiguration extends Configuration {
+    **/
+   public static void merge(Configuration destConf, Configuration srcConf) {
+     for (Entry<String, String> e : srcConf) {
+-      destConf.set(e.getKey(), e.getValue());
++      // Lily change (only compiles against Hadoop 0.23):
++      // without the isDeprecated check, we see quite some messages logged in LilyClient-using
++      // apps about deprecated properties. These deprecated properties are nowhere explicitly
++      // configured. Rather, Hadoop Configuration internally stores properties both under new
++      // and old names, and then in this situation where we iterate over all of them, we also
++      // get the old names, and would then set these old names in the new config and get the
++      // warning.
++      // (didn't test if this outside of Lily and whether this is only with Cloudera, but would
++      // make sense to do so and report higher up)
++      if (!Configuration.isDeprecated(e.getKey())) {
++        destConf.set(e.getKey(), e.getValue());
++      }
+     }
+   }
+ }
 diff --git src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
 index 052637f..f610de6 100644
 --- src/main/java/org/apache/hadoop/hbase/client/HConnectionManager.java
@@ -105,6 +129,23 @@ index 91abaef..9fc952c 100644
          throw new IOException(e);
        } finally {
          // mutate list so that it is empty for complete success, or contains
+diff --git src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java
+index c0de5fc..1caac7b 100644
+--- src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java
++++ src/main/java/org/apache/hadoop/hbase/io/hfile/Compression.java
+@@ -188,7 +188,11 @@ public final class Compression {
+ 
+     Algorithm(String name) {
+       this.conf = new Configuration();
+-      this.conf.setBoolean("hadoop.native.lib", true);
++      if (Configuration.isDeprecated("hadoop.native.lib")) {
++        this.conf.setBoolean("io.native.lib.available", true);
++      } else {
++        this.conf.setBoolean("hadoop.native.lib", true);
++      }
+       this.compressName = name;
+     }
+ 
 diff --git src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
 index 0aed5bf..5cbaea9 100644
 --- src/main/java/org/apache/hadoop/hbase/ipc/HBaseClient.java
