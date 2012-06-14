@@ -226,10 +226,10 @@ public class MapReduceTest {
     }
     
     private long getTotalLaunchedMaps(Job job) throws IOException {
-        return job.getCounters().findCounter("org.apache.hadoop.mapred.JobInProgress$Counter", "TOTAL_LAUNCHED_MAPS").getValue();
+        return job.getCounters().findCounter("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_MAPS").getValue();
     }
     
     private long getTotalInputRecords(Job job) throws IOException {
-        return job.getCounters().findCounter("org.apache.hadoop.mapred.Task$Counter", "MAP_INPUT_RECORDS").getValue();
+        return job.getCounters().findCounter("org.apache.hadoop.mapreduce.TaskCounter", "MAP_INPUT_RECORDS").getValue();
     }
 }
