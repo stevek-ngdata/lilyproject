@@ -192,22 +192,22 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-Dlily.conf.dir=$LILY_HOME/conf -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=$LILY_HOME/conf -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>-Dlily.conf.dir=${basedir}/../../cr/process/server/conf -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=${basedir}/../../cr/process/server/conf -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>-Dlily.conf.dir=%LILY_HOME%\conf -Dlily.plugin.dir=%LILY_HOME%\plugins -Dlily.testlauncher.repository=%M2_REPO% -Dsolr.war=%M2_REPO%\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war</value>
+              <value>-XX:MaxPermSize=128m -Dlily.conf.dir=%LILY_HOME%\conf -Dlily.plugin.dir=%LILY_HOME%\plugins -Dlily.testlauncher.repository=%M2_REPO% -Dsolr.war=%M2_REPO%\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war</value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dev</mode>
-              <value>-Dlily.plugin.dir=${basedir}\..\..\cr\process\server\conf -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\plugins</value>
+              <value>-XX:MaxPermSize=128m -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\conf -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\plugins</value>
             </parameter>
           </defaultJvmArgs>
         </configuration>
