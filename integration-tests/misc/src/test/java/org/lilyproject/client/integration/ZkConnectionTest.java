@@ -15,7 +15,6 @@
  */
 package org.lilyproject.client.integration;
 
-import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.util.io.Closer;
@@ -66,7 +65,7 @@ public class ZkConnectionTest {
         }
         
         //System.out.println("After close:");
-        printAllZkThreads();
+        //printAllZkThreads();
 
         // Lily client is stopped, ZK threads should have been closed
         checkNoZkThread();
