@@ -140,8 +140,8 @@ public class LocalHTable implements HTableInterface {
                 Map.Entry<Configuration, HTablePool> entry = it.next();
                 // closing the table pool will close the connection for every table.
                 entry.getValue().close();
-                
-                //HConnectionManager.deleteConnection(entry.getKey(), true);
+                // Since CDH4.0, we need to delete the connection again (this was also the case up to CDH3u2)
+                HConnectionManager.deleteConnection(entry.getKey(), true);
             }
         }
     }
