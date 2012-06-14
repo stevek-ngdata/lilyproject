@@ -71,7 +71,7 @@ public class HadoopLauncherService implements LauncherService {
         postStartupInfo.add("-------------------------");
         postStartupInfo.add("HDFS is running");
         postStartupInfo.add("");
-        postStartupInfo.add("HDFS web ui: http://" + conf.get("dfs.http.address"));
+        postStartupInfo.add("HDFS web ui: http://" + conf.get("dfs.namenode.http-address"));
         postStartupInfo.add("");
 
         postStartupInfo.add("-------------------------");

@@ -387,7 +387,8 @@ public class HBaseTestingUtility {
         FileSystem fs = this.dfsCluster.getFileSystem();
         this.conf.set("fs.defaultFS", fs.getUri().toString());
         // Do old style too just to be safe.
-        this.conf.set("fs.default.name", fs.getUri().toString());
+        // Lily change: commented this out to avoid warnings
+        // this.conf.set("fs.default.name", fs.getUri().toString());
 
         // Wait for the cluster to be totally up
         this.dfsCluster.waitClusterUp();

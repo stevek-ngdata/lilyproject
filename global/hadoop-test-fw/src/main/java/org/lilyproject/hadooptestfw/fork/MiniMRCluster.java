@@ -177,7 +177,8 @@ public class MiniMRCluster {
                 conf = createJobConf(cfg);
             }
             if (hostname != null) {
-                conf.set("slave.host.name", hostname);
+                // Lily change: use new property name: slave.host.name is deprecated -> use dfs.datanode.hostname
+                conf.set("dfs.datanode.hostname", hostname);
             }
             conf.set("mapred.task.tracker.http.address", "0.0.0.0:0");
             conf.set("mapred.task.tracker.report.address",

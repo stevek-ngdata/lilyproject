@@ -83,7 +83,7 @@ public class HadoopLauncher extends BaseCliTool {
         System.out.println();
         System.out.println("JobTracker web ui:   http://localhost:" +
                 testUtil.getMRCluster().getJobTrackerRunner().getJobTrackerInfoPort());
-        System.out.println("HDFS web ui:         http://" + conf.get("dfs.http.address"));
+        System.out.println("HDFS web ui:         http://" + conf.get("dfs.namenode.http-address"));
         System.out.println("HBase master web ui: http://localhost:" +
                 testUtil.getHBaseCluster().getMaster().getInfoServer().getPort());
         System.out.println("-------------------------");

@@ -157,7 +157,7 @@ public class MapReduceTest {
             Configuration config = HBaseConfiguration.create();
 
             config.set("mapred.job.tracker", "localhost:9001");
-            config.set("fs.default.name", "hdfs://localhost:8020");
+            config.set("fs.defaultFS", "hdfs://localhost:8020");
 
             Job job = new Job(config, "Test1");
             job.setJarByClass(Test1Mapper.class);
@@ -188,7 +188,7 @@ public class MapReduceTest {
             Configuration config = HBaseConfiguration.create();
 
             config.set("mapred.job.tracker", "localhost:9001");
-            config.set("fs.default.name", "hdfs://localhost:8020");
+            config.set("fs.defaultFS", "hdfs://localhost:8020");
 
             Job job = new Job(config, "Test1");
             job.setJarByClass(Test1Mapper.class);

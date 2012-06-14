@@ -36,7 +36,7 @@ public class MyJob {
         // If you launch this using Hadoop tools and your -site.xml files are configured, then
         // you can drop these settings here.
         config.set("mapred.job.tracker", masterHost + ":9001");
-        config.set("fs.default.name", "hdfs://" + masterHost + ":8020");
+        config.set("fs.defaultFS", "hdfs://" + masterHost + ":8020");
 
         String zkConnectString = masterHost;
 
