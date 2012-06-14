@@ -216,10 +216,13 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
   </build>
     
   <dependencies>
+    <!--
+      This dependency is here only to get the build order right. Since it's in test scope,
+      it won't be included in the classpath. -->
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-server-test-fw</artifactId>
     </dependency>
-    
   </dependencies>
+
 </project>
