@@ -15,18 +15,19 @@
  */
 package org.lilyproject.tools.import_.json;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.api.filter.RecordFilter;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ReturnFields;
 import org.lilyproject.tools.import_.json.filters.RecordFilterJsonConverters;
-import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonUtil;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class RecordScanReader implements EntityReader<RecordScan> {
     public static final RecordScanReader INSTANCE = new RecordScanReader();
@@ -40,18 +41,18 @@ public class RecordScanReader implements EntityReader<RecordScan> {
     @Override
     public RecordScan fromJson(JsonNode nodeNode, Namespaces namespaces, Repository repository)
             throws JsonFormatException, RepositoryException, InterruptedException {
-        
+
         if (!nodeNode.isObject()) {
             throw new JsonFormatException("Expected a json object for record scan, got: " +
                     nodeNode.getClass().getName());
         }
-        
-        ObjectNode node = (ObjectNode)nodeNode;
+
+        ObjectNode node = (ObjectNode) nodeNode;
 
         namespaces = NamespacesConverter.fromContextJson(node, namespaces);
-        
+
         RecordScan scan = new RecordScan();
-        
+
         String startRecordId = JsonUtil.getString(node, "startRecordId", null);
         if (startRecordId != null) {
             scan.setStartRecordId(repository.getIdGenerator().fromString(startRecordId));
@@ -77,7 +78,7 @@ public class RecordScanReader implements EntityReader<RecordScan> {
             scan.setRecordFilter(RecordFilterJsonConverters.INSTANCE.fromJson(filter, namespaces, repository,
                     RecordFilterJsonConverters.INSTANCE));
         }
-        
+
         ObjectNode returnFieldsNode = JsonUtil.getObject(node, "returnFields", null);
         if (returnFieldsNode != null) {
             ReturnFields returnFields = new ReturnFields();
@@ -89,7 +90,7 @@ public class RecordScanReader implements EntityReader<RecordScan> {
                 for (JsonNode subFilterNode : fieldsArray) {
                     if (!subFilterNode.isTextual()) {
                         throw new JsonFormatException("ReturnFields.fields should be a string array, found: "
-                            + subFilterNode.getClass().getName());
+                                + subFilterNode.getClass().getName());
                     }
                     fields.add(QNameConverter.fromJson(subFilterNode.getTextValue(), namespaces));
                 }
@@ -98,7 +99,7 @@ public class RecordScanReader implements EntityReader<RecordScan> {
 
             scan.setReturnFields(returnFields);
         }
-        
+
         scan.setCaching(JsonUtil.getInt(node, "caching", scan.getCaching()));
 
         scan.setCacheBlocks(JsonUtil.getBoolean(node, "cacheBlocks", scan.getCacheBlocks()));

@@ -17,8 +17,10 @@ package org.lilyproject.tools.import_.json;
 
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.api.filter.RecordFilter;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.tools.import_.json.filters.RecordFilterJsonConverters;
 import org.lilyproject.util.json.JsonFormat;
 
@@ -42,7 +44,7 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
             throws RepositoryException, InterruptedException {
 
         ObjectNode node = JsonFormat.OBJECT_MAPPER.createObjectNode();
-        
+
         if (scan.getStartRecordId() != null) {
             node.put("startRecordId", scan.getStartRecordId().toString());
         }
@@ -58,12 +60,12 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
         if (scan.getRawStopRecordId() != null) {
             node.put("rawStopRecordId", scan.getRawStopRecordId());
         }
-        
+
         if (scan.getRecordFilter() != null) {
             node.put("recordFilter", RecordFilterJsonConverters.INSTANCE.toJson(scan.getRecordFilter(),
                     namespaces, repository, RecordFilterJsonConverters.INSTANCE));
         }
-        
+
         if (scan.getReturnFields() != null) {
             ObjectNode returnFieldsNode = node.putObject("returnFields");
             returnFieldsNode.put("type", scan.getReturnFields().getType().toString());
@@ -74,9 +76,9 @@ public class RecordScanWriter implements EntityWriter<RecordScan> {
                 }
             }
         }
-        
+
         node.put("caching", scan.getCaching());
-        
+
         node.put("cacheBlocks", scan.getCacheBlocks());
 
         return node;

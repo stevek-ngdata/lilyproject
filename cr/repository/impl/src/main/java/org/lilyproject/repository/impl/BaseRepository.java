@@ -15,6 +15,11 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ServiceLoader;
+
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -23,17 +28,30 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.BlobAccess;
+import org.lilyproject.repository.api.BlobException;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecordScanner;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.RecordScanner;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.ReturnFields;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.repository.spi.HBaseRecordFilterFactory;
 import org.lilyproject.util.ArgumentValidator;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ServiceLoader;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 public abstract class BaseRepository implements Repository {
     protected final BlobManager blobManager;
@@ -46,6 +64,7 @@ public abstract class BaseRepository implements Repository {
      * record rows.
      */
     protected static final SingleColumnValueFilter REAL_RECORDS_FILTER;
+
     static {
         // A record is a real row iff the deleted flag exists and is not true.
         // It is possible for the delete flag not to exist on a row: this is
@@ -57,14 +76,14 @@ public abstract class BaseRepository implements Repository {
     }
 
     protected BaseRepository(TypeManager typeManager, BlobManager blobManager, IdGenerator idGenerator,
-            HTableInterface recordTable) {
+                             HTableInterface recordTable) {
         this.typeManager = typeManager;
         this.blobManager = blobManager;
         this.idGenerator = idGenerator;
         this.recordTable = recordTable;
         this.recdec = new RecordDecoder(typeManager, idGenerator);
     }
-    
+
     @Override
     public TypeManager getTypeManager() {
         return typeManager;
@@ -97,20 +116,20 @@ public abstract class BaseRepository implements Repository {
         Record record = read(recordId, version, fieldName);
         return getInputStream(record, fieldName, indexes);
     }
-    
+
     @Override
     public InputStream getInputStream(RecordId recordId, QName fieldName)
             throws RepositoryException, InterruptedException {
         return getInputStream(recordId, null, fieldName);
     }
-    
+
     @Override
     public InputStream getInputStream(Record record, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException {
         FieldType fieldType = typeManager.getFieldTypeByName(fieldName);
         return blobManager.getBlobAccess(record, fieldName, fieldType, indexes).getInputStream();
     }
-    
+
     @Override
     public BlobAccess getBlob(RecordId recordId, Long version, QName fieldName, int... indexes)
             throws RepositoryException, InterruptedException {
@@ -147,11 +166,11 @@ public abstract class BaseRepository implements Repository {
         if (mvIndex == null && hIndex == null) {
             indexes = new int[0];
         } else if (mvIndex == null) {
-            indexes = new int[] { hIndex };
+            indexes = new int[]{hIndex};
         } else if (hIndex == null) {
-            indexes = new int[] { mvIndex };
+            indexes = new int[]{mvIndex};
         } else {
-            indexes = new int[] { mvIndex, hIndex };
+            indexes = new int[]{mvIndex, hIndex};
         }
 
         return indexes;
@@ -159,6 +178,15 @@ public abstract class BaseRepository implements Repository {
 
     @Override
     public RecordScanner getScanner(RecordScan scan) throws RepositoryException, InterruptedException {
+        return new HBaseRecordScannerImpl(createHBaseResultScanner(scan), recdec);
+    }
+
+    @Override
+    public IdRecordScanner getScannerWithIds(RecordScan scan) throws RepositoryException, InterruptedException {
+        return new HBaseIdRecordScannerImpl(createHBaseResultScanner(scan), recdec);
+    }
+
+    private ResultScanner createHBaseResultScanner(RecordScan scan) throws RepositoryException, InterruptedException {
         Scan hbaseScan = new Scan();
 
         hbaseScan.setMaxVersions(1);
@@ -195,11 +223,11 @@ public abstract class BaseRepository implements Repository {
 
         ReturnFields returnFields = scan.getReturnFields();
         if (returnFields != null && returnFields.getType() != ReturnFields.Type.ALL) {
-            RecordDecoder.addSystemColumnsToScan(hbaseScan);            
+            RecordDecoder.addSystemColumnsToScan(hbaseScan);
             switch (returnFields.getType()) {
                 case ENUM:
                     for (QName field : returnFields.getFields()) {
-                        FieldTypeImpl fieldType = (FieldTypeImpl)typeManager.getFieldTypeByName(field);
+                        FieldTypeImpl fieldType = (FieldTypeImpl) typeManager.getFieldTypeByName(field);
                         hbaseScan.addColumn(RecordCf.DATA.bytes, fieldType.getQualifier());
                     }
                     break;
@@ -219,14 +247,12 @@ public abstract class BaseRepository implements Repository {
         } catch (IOException e) {
             throw new RecordException("Error creating scanner", e);
         }
-
-        HBaseRecordScanner scanner = new HBaseRecordScanner(hbaseScanner, recdec);
-
-        return scanner;
+        return hbaseScanner;
     }
 
     private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
-        private ServiceLoader<HBaseRecordFilterFactory> filterLoader = ServiceLoader.load(HBaseRecordFilterFactory.class);
+        private ServiceLoader<HBaseRecordFilterFactory> filterLoader =
+                ServiceLoader.load(HBaseRecordFilterFactory.class);
 
         @Override
         public Filter createHBaseFilter(RecordFilter filter, Repository repository, HBaseRecordFilterFactory factory)

@@ -35,6 +35,7 @@ import org.lilyproject.repository.api.FieldNotFoundException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.InvalidRecordException;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.MutationCondition;
@@ -2188,6 +2189,41 @@ public abstract class AbstractRepositoryTest {
         }
 
         assertTrue("Found at least 26 records", i >= 26);
+    }
+
+    @Test
+    public void testScannerWithIdRecords() throws Exception {
+        RecordId id = idGenerator.newRecordId();
+        Record record = repository.newRecord(id);
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "dummy value");
+        repository.create(record);
+
+        RecordScan scan = new RecordScan();
+
+        IdRecordScanner scanner = repository.getScannerWithIds(scan);
+        final IdRecord next = scanner.next();
+        assertNotNull(next);
+        assertFalse(next.getFieldIdToNameMapping().isEmpty());
+    }
+
+    @Test(expected = ClassCastException.class)
+    public void testScannerWithoutIdRecords() throws Exception {
+        RecordId id = idGenerator.newRecordId();
+        Record record = repository.newRecord(id);
+        record.setRecordType(recordType1.getName());
+        record.setField(fieldType1.getName(), "dummy value");
+        repository.create(record);
+
+        RecordScan scan = new RecordScan();
+
+        // normal Record scanner!
+        RecordScanner scanner = repository.getScanner(scan);
+        final Record next = scanner.next();
+        assertNotNull(next);
+
+        // this cast will fail
+        final IdRecord casted = (IdRecord) next;
     }
 
     @Test

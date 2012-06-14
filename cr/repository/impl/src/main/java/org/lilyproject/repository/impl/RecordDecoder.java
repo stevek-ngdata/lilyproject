@@ -15,22 +15,42 @@
  */
 package org.lilyproject.repository.impl;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 
-import java.util.*;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 
 /**
  * Methods related to decoding HBase Result objects into Lily Record objects.
- * 
+ *
  * <p>The methods in this class assume they are supplied with non-deleted records, thus where the
  * {@link LilyHBaseSchema.RecordColumn#DELETED} flag is false.</p>
  */
@@ -49,6 +69,7 @@ public class RecordDecoder {
     }
 
     public static List<byte[]> SYSTEM_FIELDS = new ArrayList<byte[]>();
+
     static {
         SYSTEM_FIELDS.add(RecordColumn.DELETED.bytes);
         SYSTEM_FIELDS.add(RecordColumn.VERSION.bytes);
@@ -79,10 +100,10 @@ public class RecordDecoder {
     }
 
     /**
-     *  Gets the requested version of the record (fields and recordTypes) from the Result object.
+     * Gets the requested version of the record (fields and recordTypes) from the Result object.
      */
     public Record decodeRecord(RecordId recordId, Long requestedVersion, ReadContext readContext,
-            Result result, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
+                               Result result, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
         Record record = newRecord(recordId);
         record.setVersion(requestedVersion);
         Set<Scope> scopes = EnumSet.noneOf(Scope.class); // Set of scopes for which a field has been read
@@ -104,7 +125,8 @@ public class RecordDecoder {
                     Map.Entry<Long, byte[]> ceilingEntry = allValueVersions.ceilingEntry(versionToRead);
                     if (ceilingEntry != null) {
                         // Extract and decode the value of the field
-                        Pair<FieldType, Object> field = extractField(key, ceilingEntry.getValue(), readContext, fieldTypes);
+                        Pair<FieldType, Object> field =
+                                extractField(key, ceilingEntry.getValue(), readContext, fieldTypes);
                         if (field != null) {
                             record.setField(field.getV1().getName(), field.getV2());
                             scopes.add(field.getV1().getScope());
@@ -120,7 +142,8 @@ public class RecordDecoder {
                 // There can only be non-versioned fields, so only read the non-versioned record type
                 Pair<SchemaId, Long> recordTypePair = extractLatestRecordType(Scope.NON_VERSIONED, result);
                 if (recordTypePair != null) {
-                    RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                    RecordType recordType =
+                            typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
                     record.setRecordType(recordType.getName(), recordType.getVersion());
                     if (readContext != null)
                         readContext.setRecordTypeId(Scope.NON_VERSIONED, recordType);
@@ -132,7 +155,8 @@ public class RecordDecoder {
                 for (Scope scope : scopes) {
                     Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, requestedVersion);
                     if (recordTypePair != null) {
-                        RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                        RecordType recordType =
+                                typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
                         record.setRecordType(scope, recordType.getName(), recordType.getVersion());
                         if (readContext != null)
                             readContext.setRecordTypeId(scope, recordType);
@@ -145,11 +169,41 @@ public class RecordDecoder {
     }
 
     /**
-     *  Gets the requested version of the record (fields and recordTypes) from the Result object.
-     *  This method is optimized for reading multiple versions.
+     * Version of #decodeRecord() which returns an {@link IdRecord} instance rather than a {@link Record} instance.
+     */
+    public IdRecord decodeRecordWithIds(Result result) throws InterruptedException, RepositoryException {
+        Long latestVersion = getLatestVersion(result);
+        RecordId recordId = idGenerator.fromBytes(result.getRow());
+        return decodeRecordWithIds(recordId, latestVersion, result, typeManager.getFieldTypesSnapshot());
+    }
+
+    /**
+     * Version of #decodeRecord() which returns an {@link IdRecord} instance rather than a {@link Record} instance.
+     */
+    public IdRecord decodeRecordWithIds(RecordId recordId, Long requestedVersion, Result result, FieldTypes fieldTypes)
+            throws InterruptedException, RepositoryException {
+        final ReadContext readContext = new ReadContext();
+        final Record record = decodeRecord(recordId, requestedVersion, readContext, result, fieldTypes);
+
+        Map<SchemaId, QName> idToQNameMapping = new HashMap<SchemaId, QName>();
+        for (FieldType fieldType : readContext.getFieldTypes().values()) {
+            idToQNameMapping.put(fieldType.getId(), fieldType.getName());
+        }
+
+        Map<Scope, SchemaId> recordTypeIds = new EnumMap<Scope, SchemaId>(Scope.class);
+        for (Map.Entry<Scope, RecordType> entry : readContext.getRecordTypes().entrySet()) {
+            recordTypeIds.put(entry.getKey(), entry.getValue().getId());
+        }
+
+        return new IdRecordImpl(record, idToQNameMapping, recordTypeIds);
+    }
+
+    /**
+     * Gets the requested version of the record (fields and recordTypes) from the Result object.
+     * This method is optimized for reading multiple versions.
      */
     public List<Record> decodeRecords(RecordId recordId, List<Long> requestedVersions, Result result,
-            FieldTypes fieldTypes) throws InterruptedException, RepositoryException{
+                                      FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
         Map<Long, Record> records = new HashMap<Long, Record>(requestedVersions.size());
         Map<Long, Set<Scope>> scopes = new HashMap<Long, Set<Scope>>(requestedVersions.size());
         for (Long requestedVersion : requestedVersions) {
@@ -211,7 +265,8 @@ public class RecordDecoder {
                 for (Scope scope : scopesForVersion) {
                     Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, recordEntry.getKey());
                     if (recordTypePair != null) {
-                        RecordType recordType = typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                        RecordType recordType =
+                                typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
                         recordEntry.getValue().setRecordType(scope, recordType.getName(), recordType.getVersion());
                     }
                 }
@@ -230,12 +285,13 @@ public class RecordDecoder {
     }
 
     private Pair<FieldType, Object> extractField(byte[] key, byte[] prefixedValue, ReadContext context,
-            FieldTypes fieldTypes) throws RepositoryException, InterruptedException {
+                                                 FieldTypes fieldTypes)
+            throws RepositoryException, InterruptedException {
         byte prefix = prefixedValue[0];
         if (LilyHBaseSchema.DELETE_FLAG == prefix) {
             return null;
         }
-        FieldType fieldType = fieldTypes.getFieldType(new SchemaIdImpl(Bytes.tail(key, key.length-1)));
+        FieldType fieldType = fieldTypes.getFieldType(new SchemaIdImpl(Bytes.tail(key, key.length - 1)));
         if (context != null)
             context.addFieldType(fieldType);
         ValueType valueType = fieldType.getValueType();

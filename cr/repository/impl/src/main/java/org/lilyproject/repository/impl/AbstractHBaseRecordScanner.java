@@ -15,30 +15,24 @@
  */
 package org.lilyproject.repository.impl;
 
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordScanner;
-import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.util.hbase.LilyHBaseSchema;
-
 import java.io.IOException;
 import java.util.Iterator;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RepositoryException;
 
-public class HBaseRecordScanner implements RecordScanner  {
-    private RecordDecoder recdec;
-    private ResultScanner hbaseScanner;
+abstract class AbstractHBaseRecordScanner<T extends Record> {
+    private final ResultScanner hbaseScanner;
 
-    public HBaseRecordScanner(ResultScanner hbaseScanner, RecordDecoder recdec) {
+    public AbstractHBaseRecordScanner(ResultScanner hbaseScanner) {
         this.hbaseScanner = hbaseScanner;
-        this.recdec = recdec;
     }
 
-    @Override
-    public Record next() throws RepositoryException, InterruptedException {
+    abstract T decode(Result result) throws RepositoryException, InterruptedException;
+
+    public T next() throws RepositoryException, InterruptedException {
         Result result;
         try {
             result = hbaseScanner.next();
@@ -51,26 +45,24 @@ public class HBaseRecordScanner implements RecordScanner  {
             return null;
         }
 
-        return recdec.decodeRecord(result);
+        return decode(result);
     }
 
-    @Override
     public void close() {
         hbaseScanner.close();
     }
 
-    @Override
-    public Iterator<Record> iterator() {
-        return new Iterator<Record>() {
-            private Record next;
-            
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private T next;
+
             @Override
             public boolean hasNext() {
                 if (next != null) {
                     return true;
                 } else {
                     try {
-                        next = HBaseRecordScanner.this.next();
+                        next = AbstractHBaseRecordScanner.this.next();
                     } catch (RepositoryException e) {
                         throw new RuntimeException(e);
                     } catch (InterruptedException e) {
@@ -82,12 +74,12 @@ public class HBaseRecordScanner implements RecordScanner  {
             }
 
             @Override
-            public Record next() {
+            public T next() {
                 if (!hasNext()) {
                     return null;
                 }
-                
-                Record result = next;
+
+                T result = next;
                 next = null;
                 return result;
             }

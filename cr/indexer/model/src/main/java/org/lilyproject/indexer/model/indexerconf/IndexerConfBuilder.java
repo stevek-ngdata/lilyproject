@@ -423,7 +423,7 @@ public class IndexerConfBuilder {
                 lastFollowIsRecord = false;
 
                 deref.addMasterFollow();
-            } else if (derefPart.contains("-")) {  // Link to less dimensioned variant
+            } else if (derefPart.trim().startsWith("-")) {  // Link to less dimensioned variant
                 if (lastFollowIsRecord) {
                     throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
                             " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
@@ -431,7 +431,7 @@ public class IndexerConfBuilder {
                 lastFollowIsRecord = false;
 
                 processLessDimensionedVariantsDeref(fieldEl, valueExpr, deref, derefPart);
-            } else if (derefPart.contains("+")) {  // Link to more dimensioned variant
+            } else if (derefPart.trim().startsWith("+")) {  // Link to more dimensioned variant
                 if (lastFollowIsRecord) {
                     throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
                             " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));

@@ -47,12 +47,12 @@ import org.lilyproject.indexer.model.indexerconf.Value;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
@@ -473,15 +473,12 @@ public class ValueEvaluator {
 
             final RecordScan scan = new RecordScan();
             scan.setRecordFilter(new RecordVariantFilter(recordId.getMaster(), varProps));
-            final RecordScanner scanner = repository.getScanner(scan);
-            Record next;
-            // TODO: once LILY-352 is implemented, we should get IdRecord instances from the scanner, and prevent
-            // reading the record once again if the vtag is already the correct one (i.e. the latest)
+            final IdRecordScanner scanner = repository.getScannerWithIds(scan);
+            IdRecord next;
             while ((next = scanner.next()) != null) {
-                final IdRecord idRecord = VersionTag.getIdRecord(next.getId(), vtag, repository);
-                if (idRecord != null) {
+                final IdRecord idRecord = VersionTag.getIdRecord(next, vtag, repository);
+                if (idRecord != null)
                     result.add(idRecord);
-                }
             }
 
             scanner.close();
