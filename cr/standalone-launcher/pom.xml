@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -29,7 +30,7 @@
     <version>2.0-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
-  
+
   <build>
     <plugins>
       <plugin>
@@ -44,13 +45,14 @@
                     Copy the classloader XML file, for which we rely on the lily-server-test-fw project
                     to generate it for us.
                 -->
-                <property name="classLoaderXmlLocation" value="${basedir}/../server-test-fw/target/classloader-for-use-by-launcher.xml" />
-                <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}" />
-                <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}" />
+                <property name="classLoaderXmlLocation"
+                          value="${basedir}/../server-test-fw/target/classloader-for-use-by-launcher.xml"/>
+                <available property="classLoaderXmlAvailable" file="${classLoaderXmlLocation}"/>
+                <fail unless="classLoaderXmlAvailable" message="File not available: ${classLoaderXmlLocation}"/>
 
-                <property name="targetDir" value="target/classes/org/lilyproject/lilyservertestfwloader" />
-                <mkdir dir="${targetDir}" />
-                <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml" />
+                <property name="targetDir" value="target/classes/org/lilyproject/lilyservertestfwloader"/>
+                <mkdir dir="${targetDir}"/>
+                <copy file="${classLoaderXmlLocation}" tofile="${targetDir}/classloader.xml"/>
               </tasks>
             </configuration>
             <goals>
@@ -65,15 +67,17 @@
             </goals>
             <configuration>
               <tasks>
-                <mkdir dir="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/" />
-                <echo file="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/kauri.properties" encoding="utf8">kauri.version=${version.kauri}</echo>
+                <mkdir dir="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/"/>
+                <echo file="${basedir}/target/classes/org/lilyproject/lilyservertestfwloader/kauri.properties"
+                      encoding="utf8">kauri.version=${version.kauri}
+                </echo>
               </tasks>
             </configuration>
           </execution>
         </executions>
       </plugin>
- 
-       <plugin>
+
+      <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-genscript-plugin</artifactId>
         <configuration>
@@ -83,16 +87,18 @@
               <mainClass>org.lilyproject.lilyservertestfwloader.ClassLoadingLilyLauncher</mainClass>
             </script>
           </scripts>
+          <!-- Here we are extracting various webapps because otherwise jetty doesn't seem to be able to correctly resolve the location of the web.xml -->
           <beforeJavaHook>
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>
+              <value><![CDATA[
 WEBAPPSDIR=${basedir}/target/hadoopwebapps
 mkdir -p $WEBAPPSDIR
 CWD=`pwd`
 cd $WEBAPPSDIR
 $JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hadoop/hadoop-core/${version.hadoop.mr1}/hadoop-core-${version.hadoop.mr1}.jar webapps
+$JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hadoop/hadoop-hdfs/${version.hadoop}/hadoop-hdfs-${version.hadoop}-tests.jar webapps
 $JAVA_HOME/bin/jar xf ${settings.localRepository}/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
 cd $CWD
 
@@ -100,17 +106,18 @@ cd $CWD
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
 LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
-              </value>
+              ]]></value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>
+              <value><![CDATA[
 WEBAPPSDIR=$LILY_HOME/tmp/hadoopwebapps
 mkdir -p $WEBAPPSDIR
 CWD=`pwd`
 cd $WEBAPPSDIR
 $JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hadoop/hadoop-core/${version.hadoop.mr1}/hadoop-core-${version.hadoop.mr1}.jar webapps
+$JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hadoop/hadoop-hdfs/${version.hadoop}/hadoop-hdfs-${version.hadoop}-tests.jar webapps
 $JAVA_HOME/bin/jar xf $M2_REPO/org/apache/hbase/hbase/${version.hbase}/hbase-${version.hbase}.jar hbase-webapps
 cd $CWD
 
@@ -118,17 +125,18 @@ cd $CWD
 # This is handy because some of our test tools can read out HBase metrics this way
 LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102"
 LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS -Dkauri.cacheclassloaders=true"
-              </value>
+              ]]></value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dev</mode>
-              <value>
+              <value><![CDATA[
 set WEBAPPSDIR=${basedir}\target\hadoopwebapps
 mkdir %WEBAPPSDIR%
 set CWD=%CD%
 cd %WEBAPPSDIR%
 "%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hadoop\hadoop-core\${version.hadoop.mr1}\hadoop-core-${version.hadoop.mr1}.jar webapps
+"%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hadoop\hadoop-hdfs\${version.hadoop}\hadoop-hdfs-${version.hadoop}-tests.jar webapps
 "%JAVA_HOME%\bin\jar" xf ${settings.localRepository}\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
 chdir /d %CWD%
 
@@ -136,17 +144,18 @@ rem Enable JMX access on the same port as used by HBase's region server
 rem This is handy because some of our test tools can read out HBase metrics this way
 set LILY_JMX_OPTIONS=-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102
 set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloaders=true
-              </value>
+              ]]></value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>
+              <value><![CDATA[
 set WEBAPPSDIR=%LILY_HOME%\tmp\hadoopwebapps
 mkdir %WEBAPPSDIR%
 set CWD=%CD%
 cd %WEBAPPSDIR%
 "%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hadoop\hadoop-core\${version.hadoop.mr1}\hadoop-core-${version.hadoop.mr1}.jar webapps
+"%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hadoop\hadoop-hfds\${version.hadoop}\hadoop-hfds-${version.hadoop}-tests.jar webapps
 "%JAVA_HOME%\bin\jar" xf %M2_REPO%\org\apache\hbase\hbase\${version.hbase}\hbase-${version.hbase}.jar hbase-webapps
 chdir /d %CWD%
 
@@ -154,7 +163,7 @@ rem Enable JMX access on the same port as used by HBase's region server
 rem This is handy because some of our test tools can read out HBase metrics this way
 set LILY_JMX_OPTIONS=-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10102
 set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloaders=true
-              </value>
+              ]]></value>
             </parameter>
           </beforeJavaHook>
           <classPathPrefix>
@@ -183,22 +192,32 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
             <parameter>
               <platform>unix</platform>
               <mode>dist</mode>
-              <value>-Dlily.conf.dir=$LILY_HOME/conf -Dlily.plugin.dir=$LILY_HOME/plugins -Dlily.testlauncher.repository=$M2_REPO -Dsolr.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war</value>
+              <value>-Dlily.conf.dir=$LILY_HOME/conf -Dlily.plugin.dir=$LILY_HOME/plugins
+                -Dlily.testlauncher.repository=$M2_REPO
+                -Dsolr.war=$M2_REPO/org/apache/solr/solr-webapp/${version.solr}/solr-webapp-${version.solr}.war
+              </value>
             </parameter>
             <parameter>
               <platform>unix</platform>
               <mode>dev</mode>
-              <value>-Dlily.conf.dir=${basedir}/../../cr/process/server/conf -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins</value>
+              <value>-Dlily.conf.dir=${basedir}/../../cr/process/server/conf
+                -Dlily.plugin.dir=${basedir}/../../cr/process/server/plugins
+              </value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dist</mode>
-              <value>-Dlily.conf.dir=%LILY_HOME%\conf -Dlily.plugin.dir=%LILY_HOME%\plugins -Dlily.testlauncher.repository=%M2_REPO% -Dsolr.war=%M2_REPO%\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war</value>
+              <value>-Dlily.conf.dir=%LILY_HOME%\conf -Dlily.plugin.dir=%LILY_HOME%\plugins
+                -Dlily.testlauncher.repository=%M2_REPO%
+                -Dsolr.war=%M2_REPO%\org\apache\solr\solr-webapp\${version.solr}\solr-webapp-${version.solr}.war
+              </value>
             </parameter>
             <parameter>
               <platform>windows</platform>
               <mode>dev</mode>
-              <value>-Dlily.plugin.dir=${basedir}\..\..\cr\process\server\conf -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\plugins</value>
+              <value>-Dlily.plugin.dir=${basedir}\..\..\cr\process\server\conf
+                -Dlily.plugin.dir=${basedir}\..\..\cr\process\server\plugins
+              </value>
             </parameter>
           </defaultJvmArgs>
         </configuration>
@@ -214,7 +233,7 @@ set LILY_OPTIONS=%LILY_JAVA_OPTIONS% %LILY_JMX_OPTIONS% -Dkauri.cacheclassloader
 
     </plugins>
   </build>
-    
+
   <dependencies>
     <!--
       This dependency is here only to get the build order right. Since it's in test scope,
