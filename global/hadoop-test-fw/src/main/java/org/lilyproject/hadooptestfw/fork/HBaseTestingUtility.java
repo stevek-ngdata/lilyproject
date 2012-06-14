@@ -36,6 +36,9 @@ package org.lilyproject.hadooptestfw.fork;
 
 import static org.junit.Assert.assertTrue;
 
+// Lily change: comment out import in order to use our own fork
+//import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -77,7 +80,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.util.Writables;
-import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
