@@ -49,6 +49,7 @@ public class LilyProxy {
     public static String MODE_PROP_NAME = "lily.lilyproxy.mode";
     public static String TESTHOME_PROP_NAME = "lily.lilyproxy.dir";
     public static String CLEARDATA_PROP_NAME = "lily.lilyproxy.clear";
+    public static String RESTORE_TEMPLATE_DIR_PROP_NAME = "lily.lilyproxy.restoretemplatedir";
 
     public LilyProxy() throws IOException {
         this(null);
@@ -193,7 +194,7 @@ public class LilyProxy {
             lilyServerProxy.setTestHome(new File(testHome, TemplateDir.LILYSERVER_DIR));
         }
         
-        if (mode == Mode.EMBED) {
+        if (mode == Mode.EMBED && Boolean.parseBoolean(System.getProperty(RESTORE_TEMPLATE_DIR_PROP_NAME, "true"))) {
             TemplateDir.restoreTemplateDir(testHome);
         }
 
