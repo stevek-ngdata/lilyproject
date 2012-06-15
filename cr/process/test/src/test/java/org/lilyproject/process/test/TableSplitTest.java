@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -82,15 +83,26 @@ public class TableSplitTest {
         tmpDir = TestHomeUtil.createTestHome("lily-tablesplit-test-");
 
         File customConfDir = setupConfDirectory(tmpDir);
-        System.setProperty("lily.conf.customdir", customConfDir.getAbsolutePath());
+        String oldCustomConfDir = setProperty("lily.conf.customdir", customConfDir.getAbsolutePath());
+        String oldRestoreTemplate = setProperty("lily.lilyproxy.restoretemplatedir", "false");
 
         try {
-            lilyProxy = new LilyProxy();
             lilyProxy.start();
         } finally {
-            // Make sure it's properties won't be used by later-running tests
-            System.getProperties().remove("lily.conf.customdir");
+            // Make sure the properties won't be used by later-running tests
+            setProperty("lily.conf.customdir", oldCustomConfDir);
+            setProperty("lily.lilyproxy.restoretemplatedir", oldRestoreTemplate);
         }
+    }
+
+    private static String setProperty(String name, String value) {
+        String oldValue = System.getProperty(name);
+        if (value == null) {
+            System.getProperties().remove(name);
+        } else {
+            System.setProperty(name, value);
+        }
+        return oldValue;
     }
 
     @AfterClass
