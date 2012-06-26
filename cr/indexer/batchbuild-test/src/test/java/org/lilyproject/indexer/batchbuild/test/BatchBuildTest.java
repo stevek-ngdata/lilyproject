@@ -142,10 +142,14 @@ public class BatchBuildTest {
             
             
             boolean success = lilyProxy.getLilyServerProxy().batchBuildIndex("batchtest", 90000);
-            if (success)
+            if (success) {
+                Thread.sleep(100);
                 solrProxy.commit();
-            else
+                // give things time to commit
+                Thread.sleep(100);
+            } else {
                 Assert.fail("Batch build did not end after 90000 millis");
+            }
             
             response = solrProxy.getSolrServer().query(new SolrQuery("*:*"));
             Assert.assertEquals(1, response.getResults().size());
