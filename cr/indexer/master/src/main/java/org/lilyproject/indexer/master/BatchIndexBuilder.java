@@ -15,28 +15,24 @@
  */
 package org.lilyproject.indexer.master;
 
-import net.iharder.Base64;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.lilyproject.indexer.batchbuild.IndexingMapper;
-import org.lilyproject.indexer.batchbuild.hbasemr_patched.TableMapReduceUtil;
-import org.lilyproject.indexer.engine.SolrClientConfig;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
-
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
 import java.util.Map;
+
+import net.iharder.Base64;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.lilyproject.indexer.batchbuild.IndexingMapper;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.mapreduce.LilyMapReduceUtil;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.ReturnFields;
 
 public class BatchIndexBuilder {
     /**
@@ -44,7 +40,7 @@ public class BatchIndexBuilder {
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf,
-            Configuration hbaseConf, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
+            Repository repository, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
             boolean enableLocking) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
@@ -82,28 +78,13 @@ public class BatchIndexBuilder {
 
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
+        
+        RecordScan recordScan = new RecordScan();
+        recordScan.setReturnFields(ReturnFields.NONE);
+        recordScan.setCacheBlocks(false);
+        recordScan.setCaching(1024);
 
-        //
-        // Define the HBase scanner
-        //
-        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-        // See also BaseRepository#REAL_RECORDS_FILTER
-        SingleColumnValueFilter realRecordsFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes,
-                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true));
-        realRecordsFilter.setFilterIfMissing(true);
-        filterList.addFilter(realRecordsFilter);
-        Scan scan = new Scan();
-        scan.setFilter(filterList);
-        scan.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-
-        TableMapReduceUtil.initTableMapperJob(Table.RECORD.name, scan,
-                IndexingMapper.class, null, null, job);
-
-        //
-        // Provide properties to connect to HBase
-        //
-        job.getConfiguration().set("hbase.zookeeper.quorum", hbaseConf.get("hbase.zookeeper.quorum"));
-        job.getConfiguration().set("hbase.zookeeper.property.clientPort", hbaseConf.get("hbase.zookeeper.property.clientPort"));
+        LilyMapReduceUtil.initMapperJob(recordScan, zkConnectString, repository, job);
 
         //
         // Provide Lily ZooKeeper props

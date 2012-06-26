@@ -173,20 +173,26 @@ public class SolrProxy {
     }
 
     public void changeSolrSchemaAndConfig(byte[] newSchemaData, byte[] newConfigData) throws Exception {
+        boolean schemaChanged = false;
+        boolean solrConfigChanged = false;
         //
         // Find out location of Solr home dir
         //
         Document doc = readCoreStatus();
         File solrHomeDir = new File(XPathUtils.evalString("/response/lst[@name='status']/lst[@name='core0']/str[@name='instanceDir']", doc));
 
-        boolean schemaChanged = updateFile(newFile(solrHomeDir, "conf", "schema.xml"), newSchemaData);
-        if (!schemaChanged) {
-            System.out.println("Solr schema was unchanged, not overwriting it");
+        if (newSchemaData != null) {
+            schemaChanged = updateFile(newFile(solrHomeDir, "conf", "schema.xml"), newSchemaData);
+            if (!schemaChanged) {
+                System.out.println("Solr schema was unchanged, not overwriting it");
+            }
         }
 
-        boolean solrConfigChanged = updateFile(newFile(solrHomeDir, "conf", "solrconfig.xml"), newConfigData);
-        if (!solrConfigChanged) {
-            System.out.println("Solr config was unchanged, not overwriting it");
+        if (newConfigData != null) {
+            solrConfigChanged = updateFile(newFile(solrHomeDir, "conf", "solrconfig.xml"), newConfigData);
+            if (!solrConfigChanged) {
+                System.out.println("Solr config was unchanged, not overwriting it");
+            }
         }
 
         if (schemaChanged || solrConfigChanged) {

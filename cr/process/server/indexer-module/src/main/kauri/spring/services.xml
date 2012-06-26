@@ -83,6 +83,7 @@
   <bean id="indexerMaster" class="org.lilyproject.indexer.master.IndexerMaster">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="indexerModel"/>
+    <constructor-arg ref="repository"/> 
     <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getMapReduceConf"/></constructor-arg>
     <constructor-arg>
       <bean factory-bean="hadoopConfFactory" factory-method="getMapReduceConf">
@@ -91,7 +92,6 @@
         </constructor-arg>
       </bean>
     </constructor-arg>
-    <constructor-arg ref="hbaseConf"/>
     <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperConnectString"/></constructor-arg>
     <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperSessionTimeout"/></constructor-arg>
     <constructor-arg ref="rowLogConfigurationMgr"/>

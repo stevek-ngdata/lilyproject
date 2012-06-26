@@ -24,6 +24,7 @@ import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.LilyInfo;
@@ -59,8 +60,6 @@ public class IndexerMaster {
 
     private final Configuration mapReduceJobConf;
 
-    private final Configuration hbaseConf;
-
     private final String zkConnectString;
 
     private final int zkSessionTimeout;
@@ -84,20 +83,22 @@ public class IndexerMaster {
     private JobClient jobClient;
 
     private LilyInfo lilyInfo;
+    
+    private Repository repository;
 
     private final Log log = LogFactory.getLog(getClass());
 
     private final String nodes;
 
-    public IndexerMaster(ZooKeeperItf zk , WriteableIndexerModel indexerModel, Configuration mapReduceConf,
-            Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString, int zkSessionTimeout,
+    public IndexerMaster(ZooKeeperItf zk , WriteableIndexerModel indexerModel, Repository repository, Configuration mapReduceConf,
+            Configuration mapReduceJobConf, String zkConnectString, int zkSessionTimeout,
             RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
             boolean enableLocking, String hostName, String nodes) {
         this.zk = zk;
         this.indexerModel = indexerModel;
+        this.repository = repository;
         this.mapReduceConf = mapReduceConf;
         this.mapReduceJobConf = mapReduceJobConf;
-        this.hbaseConf = hbaseConf;
         this.zkConnectString = zkConnectString;
         this.zkSessionTimeout = zkSessionTimeout;
         this.rowLogConfMgr = rowLogConfMgr;
@@ -252,7 +253,7 @@ public class IndexerMaster {
                     Job job = null;
                     boolean jobStarted;
                     try {
-                        job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
+                        job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, repository,
                                 zkConnectString, zkSessionTimeout, solrClientConfig, enableLocking);
                         jobStarted = true;
                     } catch (Throwable t) {
