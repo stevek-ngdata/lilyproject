@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -134,27 +135,22 @@ public class BatchBuildTest {
         
         lilyProxy.getLilyServerProxy().addIndexFromResource("batchtest", "org/lilyproject/indexer/batchbuild/test/indexerconf.xml", 5);
         
-            repository.recordBuilder()
-                    .id("batch-index-test")
-                    .recordType(rt1.getName())
-                    .field(ft1.getName(), "foo bar bar")
-                    .create();
-            
-            
-            boolean success = lilyProxy.getLilyServerProxy().batchBuildIndex("batchtest", 90000);
-            if (success) {
-                Thread.sleep(100);
-                solrProxy.commit();
-                // give things time to commit
-                Thread.sleep(100);
-            } else {
-                Assert.fail("Batch build did not end after 90000 millis");
-            }
-            
-            response = solrProxy.getSolrServer().query(new SolrQuery("*:*"));
-            Assert.assertEquals(1, response.getResults().size());
+        repository.recordBuilder()
+                .id("batch-index-test")
+                .recordType(rt1.getName())
+                .field(ft1.getName(), "foo bar bar")
+                .create();
         
-    
+        
+        boolean success = lilyProxy.getLilyServerProxy().batchBuildIndex("batchtest", 90000);
+        if (success) {
+            solrProxy.getSolrServer().commit();            
+        } else {
+            Assert.fail("Batch build did not end after 90000 millis");
+        }
+        
+        response = solrProxy.getSolrServer().query(new SolrQuery("*:*"));
+        Assert.assertEquals(1, response.getResults().size());
     }
 
 }

@@ -193,7 +193,6 @@ public class IndexingMapper extends RecordMapper<ImmutableBytesWritable, Result>
     @Override
     public void map(RecordIdWritable recordIdWritable, RecordWritable recordWritable, Context context)
             throws IOException, InterruptedException {
-
         executor.submit(new MappingTask(recordIdWritable.getRecordId(), context));
     }
 
@@ -207,7 +206,7 @@ public class IndexingMapper extends RecordMapper<ImmutableBytesWritable, Result>
         }
 
         @Override
-        public void run() {            
+        public void run() {
             boolean locked = false;
             try {
                 indexLocker.lock(recordId);

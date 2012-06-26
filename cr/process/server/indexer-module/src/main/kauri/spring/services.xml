@@ -92,6 +92,7 @@
         </constructor-arg>
       </bean>
     </constructor-arg>
+    <constructor-arg ref="hbaseConf"/>
     <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperConnectString"/></constructor-arg>
     <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperSessionTimeout"/></constructor-arg>
     <constructor-arg ref="rowLogConfigurationMgr"/>

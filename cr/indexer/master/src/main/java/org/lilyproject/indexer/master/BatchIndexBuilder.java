@@ -36,15 +36,15 @@ import org.lilyproject.repository.api.ReturnFields;
 
 public class BatchIndexBuilder {
     /**
-     *
+     * 
      * @return the ID of the started job
      */
-    public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf,
+    public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
             Repository repository, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
             boolean enableLocking) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
-        Job job = new Job(conf);
+        Job job = new Job(conf, "BatchIndexBuild Job");
 
         //
         // Find and set the MapReduce job jar.
@@ -57,6 +57,7 @@ public class BatchIndexBuilder {
         }
 
         job.getConfiguration().set("mapred.jar", jobJar);
+        job.setMapperClass(mapperClass);
 
         //
         // Pass information about the index to be built
@@ -78,11 +79,15 @@ public class BatchIndexBuilder {
 
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
-        
+
         RecordScan recordScan = new RecordScan();
         recordScan.setReturnFields(ReturnFields.NONE);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);
+
+        job.getConfiguration().set("hbase.zookeeper.quorum", hbaseConf.get("hbase.zookeeper.quorum"));
+        job.getConfiguration().set("hbase.zookeeper.property.clientPort",
+                hbaseConf.get("hbase.zookeeper.property.clientPort"));
 
         LilyMapReduceUtil.initMapperJob(recordScan, zkConnectString, repository, job);
 
@@ -90,16 +95,19 @@ public class BatchIndexBuilder {
         // Provide Lily ZooKeeper props
         //
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperConnectString", zkConnectString);
-        job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", String.valueOf(zkSessionTimeout));
+        job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout",
+                String.valueOf(zkSessionTimeout));
 
         //
         // Solr options
         //
         if (solrConfig.getRequestWriter() != null) {
-            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.requestwriter", solrConfig.getRequestWriter());
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.requestwriter",
+                    solrConfig.getRequestWriter());
         }
         if (solrConfig.getResponseParser() != null) {
-            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.responseparser", solrConfig.getResponseParser());
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.responseparser",
+                    solrConfig.getResponseParser());
         }
 
         //
@@ -119,8 +127,7 @@ public class BatchIndexBuilder {
         ClassLoader loader = my_class.getClassLoader();
         String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
         try {
-            for(Enumeration itr = loader.getResources(class_file);
-                itr.hasMoreElements();) {
+            for (Enumeration itr = loader.getResources(class_file); itr.hasMoreElements();) {
                 URL url = (URL) itr.nextElement();
                 if ("jar".equals(url.getProtocol())) {
                     String toReturn = url.getPath();
