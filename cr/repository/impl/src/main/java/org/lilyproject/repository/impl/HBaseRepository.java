@@ -205,12 +205,9 @@ public class HBaseRepository extends BaseRepository {
         try {
             checkCreatePreconditions(record);
 
-            Record newRecord = record.cloneRecord();
-
-            RecordId recordId = newRecord.getId();
+            RecordId recordId = record.getId();
             if (recordId == null) {
                 recordId = idGenerator.newRecordId();
-                newRecord.setId(recordId);
             }
 
             byte[] rowId = recordId.toBytes();
@@ -246,11 +243,19 @@ public class HBaseRepository extends BaseRepository {
                     }
                 }
 
+                RecordEvent recordEvent = new RecordEvent();
+                recordEvent.setType(Type.CREATE);
+
+                for (RecordUpdateHook hook : updateHooks) {
+                    hook.beforeCreate(record, this, fieldTypes, recordEvent);
+                }
+
+                Record newRecord = record.cloneRecord();
+                newRecord.setId(recordId);
+
                 Record dummyOriginalRecord = newRecord();
                 Put put = new Put(newRecord.getId().toBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(false));
-                RecordEvent recordEvent = new RecordEvent();
-                recordEvent.setType(Type.CREATE);
                 Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
                 Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
 
@@ -272,6 +277,10 @@ public class HBaseRepository extends BaseRepository {
                 // Remove the used blobs from the blobIncubator
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
 
+                newRecord.setResponseStatus(ResponseStatus.CREATED);
+                newRecord.getFieldsToDelete().clear();
+                return newRecord;
+
             } catch (IOException e) {
                 throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
                         e);
@@ -288,10 +297,6 @@ public class HBaseRepository extends BaseRepository {
             } finally {
                 unlockRow(rowLock);
             }
-
-            newRecord.setResponseStatus(ResponseStatus.CREATED);
-            newRecord.getFieldsToDelete().clear();
-            return newRecord;
         } finally {
             metrics.report(Action.CREATE, System.currentTimeMillis() - before);
         }
@@ -374,8 +379,11 @@ public class HBaseRepository extends BaseRepository {
         try {
             Record originalRecord = new UnmodifiableRecord(read(record.getId(), null, null, fieldTypes));
 
+            RecordEvent recordEvent = new RecordEvent();
+            recordEvent.setType(Type.UPDATE);
+
             for (RecordUpdateHook hook : updateHooks) {
-                hook.beforeUpdate(record, originalRecord, this, fieldTypes);
+                hook.beforeUpdate(record, originalRecord, this, fieldTypes, recordEvent);
             }
 
             Record newRecord = record.cloneRecord();
@@ -383,8 +391,6 @@ public class HBaseRepository extends BaseRepository {
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
             Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
-            RecordEvent recordEvent = new RecordEvent();
-            recordEvent.setType(Type.UPDATE);
             long newVersion = originalRecord.getVersion() == null ? 1 : originalRecord.getVersion() + 1;
 
             if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
@@ -1192,7 +1198,14 @@ public class HBaseRepository extends BaseRepository {
             // We need to read the original record in order to put the delete marker in the non-versioned fields.
             // Throw RecordNotFoundException if there is no record to be deleted
             FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-            Record originalRecord = read(recordId, null, null, fieldTypes);
+            Record originalRecord = new UnmodifiableRecord(read(recordId, null, null, fieldTypes));
+
+            RecordEvent recordEvent = new RecordEvent();
+            recordEvent.setType(Type.DELETE);
+
+            for (RecordUpdateHook hook : updateHooks) {
+                hook.beforeDelete(originalRecord, this, fieldTypes, recordEvent);
+            }
 
             if (conditions != null) {
                 Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
@@ -1218,8 +1231,6 @@ public class HBaseRepository extends BaseRepository {
 
             }
 
-            RecordEvent recordEvent = new RecordEvent();
-            recordEvent.setType(Type.DELETE);
             RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
             if (!rowLocker.put(put, rowLock)) {
                 throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");

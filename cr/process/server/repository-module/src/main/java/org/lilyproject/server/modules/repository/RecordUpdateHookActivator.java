@@ -65,17 +65,34 @@ public class RecordUpdateHookActivator implements PluginUser<RecordUpdateHook> {
     public void pluginRemoved(PluginHandle<RecordUpdateHook> pluginHandle) {
     }
 
-    public Repository activeUpdateHooks(HBaseRepository repository) {
+    public Repository activateUpdateHooks(HBaseRepository repository) {
         // We don't use all the registered update-hook plugins, but only those the user
         // activated through the configuration, and in the order specified in the
-        // configuration
+        // configuration.
+        //
+        // An exception are Lily's core hooks, which we recognize by their name prefix,
+        // which are always activated.
+
         List<RecordUpdateHook> updateHooks = new ArrayList<RecordUpdateHook>(configuredHooks.size());
-        for (String name : configuredHooks) {
-            RecordUpdateHook updateHook = this.hooks.get(name);
-            if (updateHook == null) {
-                throw new RuntimeException("No record update hook registered with the name '" + name + "'");
+
+        // Handle built-in hooks
+        for (Map.Entry<String, RecordUpdateHook> entry : hooks.entrySet()) {
+            if (entry.getKey().startsWith("org.lilyproject")) {
+                updateHooks.add(entry.getValue());
             }
-            updateHooks.add(updateHook);
+        }
+
+        // Handle user-configured hooks
+        for (String name : configuredHooks) {
+            if (!name.startsWith("org.lilyproject")) {
+                RecordUpdateHook updateHook = this.hooks.get(name);
+                if (updateHook == null) {
+                    throw new RuntimeException("No record update hook registered with the name '" + name + "'");
+                }
+                updateHooks.add(updateHook);
+            } else {
+                log.error("Custom update hooks shouldn't start their name with 'org.lilyproject'.");
+            }
         }
 
         repository.setRecordUpdateHooks(updateHooks);
