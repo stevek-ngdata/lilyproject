@@ -169,12 +169,19 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
 
     @Override
-    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws InterruptedException, RowLogException {
+    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put)
+            throws InterruptedException, RowLogException {
+        // Take current snapshot of the subscriptions so that shard.putMessage and initializeSubscriptions
+        // use the exact same set of subscriptions.
+        List<RowLogSubscription> subscriptions = getSubscriptions();
+        return putMessage(rowKey, data, payload, put, subscriptions);
+    }
+
+    @Override
+    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
+            List<RowLogSubscription> subscriptions) throws RowLogException, InterruptedException {
         try {
-            // Take current snapshot of the subscriptions so that shard.putMessage and initializeSubscriptions
-            // use the exact same set of subscriptions.
-            List<RowLogSubscription> subscriptions = getSubscriptions();
-            if (subscriptions.isEmpty()) 
+            if (subscriptions.isEmpty())
                 return null;
 
             // Get a sequence number for this new message

@@ -111,7 +111,13 @@ public interface RowLog {
      * @throws InterruptedException 
      */
     RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws RowLogException, InterruptedException;
-    
+
+    /**
+     * A variant of putMessage which allows the client to specify what subscriptions should receive this message.
+     */
+    RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
+            List<RowLogSubscription> subscriptions) throws RowLogException, InterruptedException;
+
     /**
      * Request each registered {@link RowLogMessageListener} to process a {@link RowLogMessage} explicitly. 
      * This method can be called independently from a {@link RowLogProcessor} and can be used for instance when a message
