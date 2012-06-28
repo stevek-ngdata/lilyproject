@@ -92,7 +92,7 @@ public class IndexerTest {
     private static Repository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
-    private static SolrShardManager solrShardManager;
+    private static SolrShardManagerImpl solrShardManager;
     private static LinkIndex linkIndex;
 
     private static FieldType nvTag;
