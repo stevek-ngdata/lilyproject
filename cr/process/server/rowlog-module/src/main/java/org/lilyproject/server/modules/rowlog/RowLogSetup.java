@@ -139,7 +139,9 @@ public class RowLogSetup {
         RowLogShardSetup.setupShards(shardCount, writeAheadLog, hbaseTableFactory);
 
         RowLogMessageListenerMapping.INSTANCE.put(WalListener.ID, new WalListener(writeAheadLog, rowLocker));
-        RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
+        // Instead of using the default MQFeeder, a custom one is used to do selective feeding of indexer
+        // related subscriptions, see IndexAwareMQFeeder.
+        // RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
 
         // Start the message queue processor
         Conf mqProcessorConf = rowLogConf.getChild("mqProcessor");
@@ -246,9 +248,23 @@ public class RowLogSetup {
         public void run() {
             long timeOut = 5 * 60 * 1000; // 5 minutes
             long waitUntil = System.currentTimeMillis() + timeOut;
+
             while (RowLogMessageListenerMapping.INSTANCE.get("LinkIndexUpdater") == null) {
                 if (System.currentTimeMillis() > waitUntil) {
                     log.error("IMPORTANT: LinkIndexUpdater did not appear in RowLogMessageListenerMapping after" +
+                            " waiting for " + timeOut + "ms. Will not start up WAL processor.");
+                    return;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+
+            while (RowLogMessageListenerMapping.INSTANCE.get("LinkIndexUpdater") == null) {
+                if (System.currentTimeMillis() > waitUntil) {
+                    log.error("IMPORTANT: MQFeeder did not appear in RowLogMessageListenerMapping after" +
                             " waiting for " + timeOut + "ms. Will not start up WAL processor.");
                     return;
                 }

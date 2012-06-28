@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
+import javax.xml.stream.events.EndElement;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -43,6 +44,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.util.location.LocationAttributes;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
@@ -61,6 +63,12 @@ import org.xml.sax.SAXParseException;
 public class IndexerConfBuilder {
     private static LocalXPathExpression INDEX_CASES =
             new LocalXPathExpression("/indexer/records/record");
+
+    private static LocalXPathExpression RECORD_INCLUDE_FILTERS =
+            new LocalXPathExpression("/indexer/recordFilter/includes/include");
+
+    private static LocalXPathExpression RECORD_EXCLUDE_FILTERS =
+            new LocalXPathExpression("/indexer/recordFilter/excludes/exclude");
 
     private static LocalXPathExpression FORMATTERS =
             new LocalXPathExpression("/indexer/formatters/formatter");
@@ -108,7 +116,7 @@ public class IndexerConfBuilder {
         this.conf.setSystemFields(systemFields);
 
         try {
-            buildCases();
+            buildRecordFilter();
             buildFormatters();
             buildIndexFields();
             buildDynamicFields();
@@ -119,7 +127,25 @@ public class IndexerConfBuilder {
         return conf;
     }
 
-    private void buildCases() throws Exception {
+    private void buildRecordFilter() throws Exception {
+        IndexRecordFilter recordFilter = new IndexRecordFilter();
+
+        List<Element> includes = RECORD_INCLUDE_FILTERS.get().evalAsNativeElementList(doc);
+        for (Element includeEl : includes) {
+            RecordMatcher recordMatcher = parseRecordMatcher(includeEl);
+            String vtagsSpec = DocumentHelper.getAttribute(includeEl, "vtags", false);
+            Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
+            recordFilter.addInclude(recordMatcher, new IndexCase(vtags));
+        }
+
+        List<Element> excludes = RECORD_EXCLUDE_FILTERS.get().evalAsNativeElementList(doc);
+        for (Element excludeEl : excludes) {
+            RecordMatcher recordMatcher = parseRecordMatcher(excludeEl);
+            recordFilter.addExclude(recordMatcher);
+        }
+
+        // This is for backwards compatibility: previously, <recordFilter> was called <records> and didn't have
+        // excludes.
         List<Element> cases = INDEX_CASES.get().evalAsNativeElementList(doc);
         for (Element caseEl : cases) {
             WildcardPattern matchNamespace = null;
@@ -149,9 +175,51 @@ public class IndexerConfBuilder {
             Map<String, String> varPropsPattern = parseVariantPropertiesPattern(caseEl);
             Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
 
-            IndexCase indexCase = new IndexCase(matchNamespace, matchName, varPropsPattern, vtags);
-            conf.addIndexCase(indexCase);
+            RecordMatcher recordMatcher = new RecordMatcher(matchNamespace, matchName, null, null, varPropsPattern);
+            recordFilter.addInclude(recordMatcher, new IndexCase(vtags));
         }
+
+        conf.setRecordFilter(recordFilter);
+    }
+
+    private RecordMatcher parseRecordMatcher(Element element) throws Exception {
+        WildcardPattern rtNamespacePattern = null;
+        WildcardPattern rtNamePattern = null;
+
+        String recordTypeAttr = DocumentHelper.getAttribute(element, "recordType", false);
+        if (recordTypeAttr != null) {
+            // Should be of form {namespace-pattern}name-pattern.
+            if (!recordTypeAttr.startsWith("{")) {
+                throw new IndexerConfException("Record type pattern should be of the form " +
+                        "\"{namespace-pattern}name-pattern\", which the following is not: " + recordTypeAttr);
+            }
+
+            int closingBracePos = recordTypeAttr.indexOf("}");
+            if (closingBracePos == -1) {
+                throw new IndexerConfException("Record type pattern should be of the form " +
+                        "\"{namespace-pattern}name-pattern\", which the following is not: " + recordTypeAttr);
+            }
+
+            String namespaceExpr = recordTypeAttr.substring(1, closingBracePos);
+            String nameExpr = recordTypeAttr.substring(closingBracePos + 1);
+
+            // If the matchNamespace attr does not contain a wildcard expression, and its value
+            // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
+            if (!WildcardPattern.isWildcardExpression(namespaceExpr)) {
+                String uri = element.lookupNamespaceURI(namespaceExpr);
+                if (uri != null)
+                    namespaceExpr = uri;
+            }
+            rtNamespacePattern = new WildcardPattern(namespaceExpr);
+            rtNamePattern = new WildcardPattern(nameExpr);
+        }
+
+        Map<String, String> varPropsPattern = parseVariantPropertiesPattern(element);
+
+        // TODO implement field-value filter
+        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, null, null, varPropsPattern);
+
+        return matcher;
     }
 
     private void buildFormatters() throws Exception {

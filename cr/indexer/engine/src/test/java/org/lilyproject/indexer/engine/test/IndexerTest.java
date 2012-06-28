@@ -43,13 +43,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.indexer.engine.IndexLocker;
-import org.lilyproject.indexer.engine.IndexUpdater;
-import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
-import org.lilyproject.indexer.engine.Indexer;
-import org.lilyproject.indexer.engine.IndexerMetrics;
-import org.lilyproject.indexer.engine.SolrClientException;
-import org.lilyproject.indexer.engine.SolrShardManager;
+import org.lilyproject.indexer.engine.*;
+import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
@@ -171,7 +166,7 @@ public class IndexerTest {
 
         repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
 
-        solrShardManager = SolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
+        solrShardManager = SolrShardManagerImpl.createForOneShard(SOLR_TEST_UTIL.getUri());
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);

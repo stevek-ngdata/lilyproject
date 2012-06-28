@@ -36,6 +36,10 @@
   </bean>
 
   <kauri:import-service
+      id="prematureRepository"
+      service="org.lilyproject.util.repo.PrematureRepository"/>
+
+  <kauri:import-service
       id="hadoopConfFactory"
       service="org.lilyproject.server.modules.general.HadoopConfigurationFactory"/>
 
@@ -116,7 +120,7 @@
 
   <bean id="undecoratedRepository"
         factory-bean="recordUpdateHookActivator"
-        factory-method="activeUpdateHooks">
+        factory-method="activateUpdateHooks">
     <constructor-arg>
       <bean class="org.lilyproject.repository.impl.HBaseRepository">
         <constructor-arg ref="typeManager"/>
@@ -174,6 +178,11 @@
     <property name="server">
       <bean class="java.lang.management.ManagementFactory" factory-method="getPlatformMBeanServer"/>
     </property>
+  </bean>
+
+  <bean class="org.lilyproject.server.modules.repository.PrematureRepositoryActivator">
+    <constructor-arg ref="prematureRepository"/>
+    <constructor-arg ref="undecoratedRepository"/>
   </bean>
 
 </beans>

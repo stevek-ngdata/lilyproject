@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<indexer xmlns:t="mqfeedtest">
+  <recordFilter>
+    <includes>
+      <include recordType="{t}typeB" vtags="last"/>
+      <include recordType="{t}typeC" vtags="last"/>
+    </includes>
+  </recordFilter>
+
+  <fields>
+    <field name="field1" value="t:field1"/>
+  </fields>
+
+</indexer>

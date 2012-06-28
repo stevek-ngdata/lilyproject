@@ -16,7 +16,7 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.repo.SystemFields;
 
@@ -35,7 +35,7 @@ import java.util.*;
  * construction.
  */
 public class IndexerConf {
-    private List<IndexCase> indexCases = new ArrayList<IndexCase>();
+    private IndexRecordFilter recordFilter;
     private List<IndexField> indexFields = new ArrayList<IndexField>();
     private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
     private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
@@ -45,26 +45,26 @@ public class IndexerConf {
     private Formatters formatters = new Formatters();
     private SystemFields systemFields;
 
-    protected void addIndexCase(IndexCase indexCase) {
-        indexCases.add(indexCase);
-        vtags.addAll(indexCase.getVersionTags());
+    protected void setRecordFilter(IndexRecordFilter recordFilter) {
+        this.recordFilter = recordFilter;
+        for (IndexCase indexCase : recordFilter.getAllIndexCases()) {
+            vtags.addAll(indexCase.getVersionTags());
+        }
     }
 
     /**
      * @return null if there is no matching IndexCase
      */
-    public IndexCase getIndexCase(QName recordTypeName, Map<String, String> varProps) {
-        for (IndexCase indexCase : indexCases) {
-            if (indexCase.match(recordTypeName, varProps)) {
-                return indexCase;
-            }
-        }
-
-        return null;
+    public IndexCase getIndexCase(Record record) {
+        return recordFilter.getIndexCase(record);
     }
 
     public List<IndexField> getIndexFields() {
         return indexFields;
+    }
+
+    public IndexRecordFilter getRecordFilter() {
+        return recordFilter;
     }
 
     protected void addIndexField(IndexField indexField) {

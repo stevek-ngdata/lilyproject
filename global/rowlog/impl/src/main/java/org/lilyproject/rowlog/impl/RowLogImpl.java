@@ -252,7 +252,11 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     
     private void initializeSubscriptions(RowLogMessage message, Put put, List<RowLogSubscription> subscriptions)
             throws IOException {
-        String[] subscriptionIds = getSubscriptionIds().toArray(new String[0]);
+        String[] subscriptionIds = new String[subscriptions.size()];
+        for (int i = 0; i < subscriptions.size(); i++) {
+            subscriptionIds[i] = subscriptions.get(i).getId();
+        }
+
         ExecutionState executionState = new SubscriptionExecutionState(message.getTimestamp(),
                 subscriptionIds);
         byte[] qualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());

@@ -29,6 +29,7 @@ import org.lilyproject.repository.avro.AvroLilyImpl;
 import org.lilyproject.repository.avro.LilySpecificResponder;
 import org.lilyproject.repository.impl.*;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
@@ -45,6 +46,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -85,7 +87,14 @@ public class RepositorySetup {
 
     private long hbaseBlobLimit = -1;
     private long inlineBlobLimit = -1;
+
+    private List<RecordUpdateHook> recordUpdateHooks = Collections.emptyList();
+
     private RemoteTestSchemaCache remoteSchemaCache;
+
+    public void setRecordUpdateHooks(List<RecordUpdateHook> recordUpdateHooks) {
+        this.recordUpdateHooks = recordUpdateHooks;
+    }
 
     public void setupCore() throws Exception {
         if (coreSetup)
@@ -132,6 +141,7 @@ public class RepositorySetup {
         }
 
         repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
+        repository.setRecordUpdateHooks(recordUpdateHooks);
 
         repositorySetup = true;
     }
@@ -203,7 +213,7 @@ public class RepositorySetup {
     /**
      *
      * @param withManualProcessing if true, the MQ RowLog will be wrapped to keep track of added messages to allow
-     *                             triggering a manual processing, see method {@processMQ}. Usually you will want
+     *                             triggering a manual processing, see method {@link #processMQ}. Usually you will want
      *                             either this or withProcessor, not both.
      */
     public void setupMessageQueue(boolean withProcessor, boolean withManualProcessing) throws Exception {
@@ -219,7 +229,7 @@ public class RepositorySetup {
         }
 
         RowLogMessageListenerMapping listenerClassMapping = RowLogMessageListenerMapping.INSTANCE;
-        listenerClassMapping.put("MQFeeder", new MessageQueueFeeder(mq));
+        listenerClassMapping.put("MQFeeder", createMQFeeder(mq));
 
         waitForSubscription(wal, "MQFeeder");
 
@@ -230,7 +240,14 @@ public class RepositorySetup {
     }
 
     /**
-     * When the message queue was setup with the option for manuall processing, calling this method will
+     * Can be overridden by subclass to provide other implementation.
+     */
+    public RowLogMessageListener createMQFeeder(RowLog mq) {
+        return new MessageQueueFeeder(mq);
+    }
+
+    /**
+     * When the message queue was setup with the option for manual processing, calling this method will
      * trigger synchronous MQ processing.
      */
     public void processMQ() throws RowLogException, InterruptedException {

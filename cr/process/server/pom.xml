@@ -39,6 +39,7 @@
     <module>indexer-module</module>
     <module>rest-module</module>
     <module>webui-module</module>
+    <module>indexer-integration-module</module>
   </modules>
 
   <build>

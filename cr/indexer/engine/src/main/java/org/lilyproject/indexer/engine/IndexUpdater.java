@@ -224,8 +224,7 @@ public class IndexUpdater implements RowLogMessageListener {
         //  The indexing of all versions is determined by the record type of the non-versioned scope.
         //  This makes that the indexing behavior of all versions is equal, and can be changed (the
         //  record type of the versioned scope is immutable).
-        IndexCase indexCase = indexer.getConf().getIndexCase(vtRecord.getRecord().getRecordTypeName(),
-                vtRecord.getId().getVariantProperties());
+        IndexCase indexCase = indexer.getConf().getIndexCase(vtRecord.getRecord());
 
         if (indexCase == null) {
             // The record should not be indexed
@@ -703,10 +702,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 return;
             }
 
-            IdRecord record = vtRecord.getRecord();
-
-            IndexCase indexCase = indexer.getConf().getIndexCase(record.getRecordTypeName(),
-                    record.getId().getVariantProperties());
+            IndexCase indexCase = indexer.getConf().getIndexCase(vtRecord.getRecord());
 
             if (indexCase == null) {
                 return;

@@ -170,7 +170,7 @@ public class IndexerWorker {
 
             checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
 
-            SolrShardManager solrShardMgr = new SolrShardManager(index.getName(), index.getSolrShards(), shardSelector,
+            SolrShardManager solrShardMgr = new SolrShardManagerImpl(index.getName(), index.getSolrShards(), shardSelector,
                     httpClient, solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());

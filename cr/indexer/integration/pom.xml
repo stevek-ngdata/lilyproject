@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /*
- * Copyright 2010 Outerthought bvba
+ * Copyright 2012 NGDATA nv
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,35 +20,35 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-repo-util</artifactId>
-  <name>Lily: Repository related utility classes</name>
+  <artifactId>lily-indexer-integration</artifactId>
+  <name>Lily: Indexer: Integration</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily</artifactId>
+    <artifactId>lily-indexer</artifactId>
     <version>2.0-SNAPSHOT</version>
-    <relativePath>../..</relativePath>
+    <relativePath>../</relativePath>
   </parent>
 
-  <build>
-  </build>
-
   <dependencies>
-    <!-- Please keep the dependencies of this project to a minimum! -->
-    
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-api</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-json-util</artifactId>
+      <artifactId>lily-indexer-model</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-repository-spi</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-pluginregistry-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-rowlog-api</artifactId>
     </dependency>
 
     <dependency>
@@ -58,7 +58,13 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-id-impl</artifactId>
+      <artifactId>lily-repo-test-fw</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-engine</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

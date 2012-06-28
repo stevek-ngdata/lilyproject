@@ -10,6 +10,11 @@
     <artifact id="rowlog" groupId="org.lilyproject" artifactId="lily-rowlog-module" version="2.0-SNAPSHOT">
     </artifact>
 
+    <artifact id="indexer-integration" groupId="org.lilyproject" artifactId="lily-indexer-integration-module"
+              version="2.0-SNAPSHOT">
+      <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
+    </artifact>
+
     <directory id="plugin" path="${lily.plugin.dir}${file.separator}load-before-repository"/>
 
     <artifact id="repository" groupId="org.lilyproject" artifactId="lily-repository-module" version="2.0-SNAPSHOT">

@@ -79,7 +79,7 @@ public class Indexer {
         VTaggedRecord vtRecord = new VTaggedRecord(recordId, repository);
         IdRecord record = vtRecord.getRecord();
 
-        IndexCase indexCase = conf.getIndexCase(record.getRecordTypeName(), record.getId().getVariantProperties());
+        IndexCase indexCase = conf.getIndexCase(record);
         if (indexCase == null) {
             return;
         }
