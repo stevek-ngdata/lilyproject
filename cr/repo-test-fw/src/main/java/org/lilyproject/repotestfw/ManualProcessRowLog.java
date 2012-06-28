@@ -54,6 +54,16 @@ public class ManualProcessRowLog implements RowLog {
         return msg;
     }
 
+    @Override
+    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
+            List<RowLogSubscription> subscriptions) throws RowLogException, InterruptedException {
+
+        RowLogMessage msg = delegate.putMessage(rowKey, data, payload, put, subscriptions);
+        unprocessedMessages.add(msg);
+
+        return msg;
+    }
+
     public void processMessages() throws RowLogException, InterruptedException {
         while (!unprocessedMessages.isEmpty()) {
             RowLogMessage msg = unprocessedMessages.remove(0);

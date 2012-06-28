@@ -44,6 +44,12 @@ public class DummyRowLog implements RowLog {
     }
 
     @Override
+    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
+            List<RowLogSubscription> subscriptions) throws RowLogException, InterruptedException {
+        throw new RuntimeException(failMessage);
+    }
+
+    @Override
     public boolean processMessage(RowLogMessage message, RowLock rowLock) throws RowLogException {
         throw new RuntimeException(failMessage);
     }
