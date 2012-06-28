@@ -15,22 +15,46 @@
  */
 package org.lilyproject.indexer.worker;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.hbaseindex.*;
-import org.lilyproject.indexer.engine.*;
+import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.IndexUpdater;
+import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.engine.SolrShardManager;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+import org.lilyproject.indexer.model.api.IndexerModel;
+import org.lilyproject.indexer.model.api.IndexerModelEvent;
+import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
-import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rowlog.api.RowLog;
@@ -42,15 +66,9 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 /**
  * IndexerWorker is responsible for the incremental indexing updating, thus for starting

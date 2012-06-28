@@ -17,7 +17,6 @@ package org.lilyproject.indexer.model.indexerconf;
 
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.repository.api.ValueType;
 
 public interface Value {
     /**

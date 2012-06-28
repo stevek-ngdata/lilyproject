@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2">
+
+  <records>
+    <record matchNamespace="ns1" matchName="Alpha" matchVariant="*" vtags="live,nonversioned"/>
+    <record matchNamespace="ns1" matchName="Beta" matchVariant="*" vtags="live,nonversioned"/>
+    <record matchNamespace="ns2" matchName="Alpha" matchVariant="*" vtags="live,nonversioned"/>
+    <record matchNamespace="ns2" matchName="Beta" matchVariant="*" vtags="live,nonversioned"/>
+  </records>
+
+  <formatters default="default">
+    <formatter name="default" class="org.lilyproject.indexer.model.indexerconf.DefaultFormatter"/>
+  </formatters>
+
+  <fields>
+
+    <!-- always indexed -->
+    <field name="match1" value="ns:match1"/>
+
+    <!-- match on ns only -->
+    <match recordType="ns:*">
+      <field name="match2" value="ns:match2"/>
+    </match>
+    <match recordType="ns2:*">
+      <field name="match3" value="ns:match3"/>
+    </match>
+
+    <!-- match on name only -->
+    <match recordType="*:Alpha">
+      <field name="match4" value="ns:match4"/>
+    </match>
+    <match recordType="*:Beta">
+      <field name="match5" value="ns:match5"/>
+    </match>
+
+    <!-- match on ns and name -->
+    <match recordType="ns:Alpha">
+      <field name="match6" value="ns:match6"/>
+    </match>
+
+    <match recordType="ns2:Beta">
+      <field name="match7" value="ns:match7"/>
+    </match>
+
+  </fields>
+
+</indexer>

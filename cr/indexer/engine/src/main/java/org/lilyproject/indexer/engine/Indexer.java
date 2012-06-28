@@ -15,17 +15,34 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
-import org.lilyproject.indexer.model.indexerconf.*;
+import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField.DynamicIndexFieldMatch;
+import org.lilyproject.indexer.model.indexerconf.IndexCase;
+import org.lilyproject.indexer.model.indexerconf.IndexField;
+import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.util.repo.VTaggedRecord;
-
-import java.util.*;
 
 
 // IMPORTANT: each call to solrClient should be followed by a corresponding metrics update.
@@ -157,23 +174,17 @@ public class Indexer {
         // because a deref-field could share the same name with a non-deref field, we simply
         // re-evaluate all fields for each vtag.
         for (SchemaId vtag : vtags) {
-            SolrInputDocument solrDoc = new SolrInputDocument();
 
-            boolean valueAdded = false;
+            SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(typeManager);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 
             //
             // 1: evaluate the static index fields
             //
-            for (IndexField indexField : conf.getIndexFields()) {
-                List<String> values = valueEvaluator.eval(indexField.getValue(), record, repository, vtag);
-                if (values != null) {
-                    for (String value : values) {
-                        solrDoc.addField(indexField.getName(), value);
-                        valueAdded = true;
-                    }
-                }
+            for (IndexField field: collectFieldNodes(record, version, vtag)) {
+                List<String> values = valueEvaluator.eval(field.getValue(), record, repository, vtag);
+                solrDocumentBuilder.fields(field.getName(), values);
             }
 
             //
@@ -190,13 +201,7 @@ public class Indexer {
                             List<String> values = valueEvaluator.format(record, fieldType, dynField.extractContext(),
                                     dynField.getFormatter(), repository);
 
-                            if (values != null) { // while field will always be there, formatter or content extraction
-                                                  // can make it empty
-                                for (String value : values) {
-                                    solrDoc.addField(fieldName, value);
-                                    valueAdded = true;
-                                }
-                            }
+                            solrDocumentBuilder.fields(fieldName, values);
 
                             if (!dynField.getContinue()) {
                                 // stop on first match, unless continue attribute is true
@@ -207,7 +212,7 @@ public class Indexer {
                 }
             }
 
-            if (!valueAdded) {
+            if (solrDocumentBuilder.isEmptyDocument()) {
                 // No single field was added to the Solr document.
                 // In this case we do not add it to the index.
                 // Besides being somewhat logical, it should also be noted that if a record would not contain
@@ -218,7 +223,7 @@ public class Indexer {
                 // There can be a previous entry in the index which we should try to delete
                 solrShardMgr.getSolrClient(record.getId()).deleteById(getIndexId(record.getId(), vtag));
                 metrics.deletesById.inc();
-                
+
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s, vtag %2$s: no index fields produced output, " +
                             "removed from index if present", record.getId(), safeLoadTagName(vtag)));
@@ -227,17 +232,16 @@ public class Indexer {
                 continue;
             }
 
-
-            solrDoc.setField("lily.id", record.getId().toString());
-            solrDoc.setField("lily.key", getIndexId(record.getId(), vtag));
-            solrDoc.setField("lily.vtagId", vtag.toString());
-            solrDoc.setField("lily.vtag", typeManager.getFieldTypeById(vtag).getName().getName());
-            solrDoc.setField("lily.version", String.valueOf(version));
+            SolrInputDocument solrDoc = solrDocumentBuilder
+                .recordId(record.getId())
+                .vtag(vtag)
+                .version(version)
+                .build();
 
             // Can be useful during development
-            // if (log.isDebugEnabled()) {
-            //    log.debug("Constructed Solr doc: " + solrDoc);
-            //}
+            if (log.isDebugEnabled()) {
+                log.debug("Constructed Solr doc: " + solrDoc);
+            }
 
             solrShardMgr.getSolrClient(record.getId()).add(solrDoc);
             metrics.adds.inc();
@@ -247,6 +251,12 @@ public class Indexer {
                         safeLoadTagName(vtag), solrDoc));
             }
         }
+    }
+
+    private List<IndexField> collectFieldNodes(IdRecord record, long version, SchemaId vtag) {
+        List<IndexField> result = Lists.newArrayList();
+        getConf().getIndexFields().collectIndexFields(result, record, version, vtag);
+        return result;
     }
 
     private String evalName(DynamicIndexField dynField, DynamicIndexFieldMatch match, FieldType fieldType) {

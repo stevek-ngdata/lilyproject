@@ -30,6 +30,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.thirdparty.guava.common.collect.Maps;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
@@ -43,7 +44,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.indexer.engine.*;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.IndexUpdater;
+import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.SolrClientException;
 import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
@@ -59,6 +65,7 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
@@ -129,6 +136,7 @@ public class IndexerTest {
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
     private static RecordType lastRecordType;
+    private static Map<String, FieldType> fields = Maps.newHashMap();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -327,6 +335,64 @@ public class IndexerTest {
         lastRecordType.addFieldTypeEntry(vfield1.getId(), false);
         lastRecordType.addFieldTypeEntry(nvfield1.getId(), false);
         lastRecordType = typeManager.createRecordType(lastRecordType);
+
+        //
+        // Schema types for testing match
+        //
+        RecordType matchNs1AlphaRecordType = typeManager.newRecordType(new QName(NS, "Alpha"));
+        RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
+        RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
+        RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
+        for (int i = 0; i < 8; i++) {
+            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
+            fields.put("ns:match" + i, ns1Field);
+
+            matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
+            matchNs1BetaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
+            matchNs2AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
+            matchNs2BetaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
+
+        }
+    }
+
+    private static FieldType field(String name) {
+        return fields.get(name);
+    }
+
+    @Test
+    public void testMatch() throws Exception {
+        changeIndexUpdater("indexerconf_match.xml");
+        messageVerifier.init();
+
+        //
+        // Basic match testing
+        //
+        {
+            log.debug("Begin test match");
+            createMatchTestRecord(NS, "Alpha", "ns_alpha_");
+            createMatchTestRecord(NS, "Beta", "ns_beta_");
+            createMatchTestRecord(NS2, "Alpha", "ns2_alpha_");
+            createMatchTestRecord(NS2, "Beta", "ns2_beta_");
+
+            commitIndex();
+
+            //TODO: implement acutal solr query tests
+        }
+
+    }
+
+    private void createMatchTestRecord(String ns, String name, String prefix) throws Exception {
+        RecordBuilder builder = repository.recordBuilder();
+
+        builder.recordType(new QName(ns, name))
+            .field(new QName(NS, "match1"), prefix + "one")
+            .field(new QName(NS, "match2"), prefix + "two")
+            .field(new QName(NS, "match3"), prefix + "three")
+            .field(new QName(NS, "match4"), prefix + "four")
+            .field(new QName(NS, "match5"), prefix + "five")
+            .field(new QName(NS, "match6"), prefix + "six")
+            .field(new QName(NS, "match7"), prefix + "seven")
+            .field(new QName(NS, "match8"), prefix + "eight");
     }
 
     @Test

@@ -65,6 +65,7 @@ public class VTaggedRecord {
     private TypeManager typeManager;
 
     private Map<Scope, Set<FieldType>> updatedFieldsByScope;
+    private Map<Scope, Set<SchemaId>> updatedFieldsSchemaIdByScope;
 
     private FieldFilter fieldFilter;
 
@@ -217,6 +218,13 @@ public class VTaggedRecord {
         return updatedFieldsByScope;
     }
 
+    public Map<Scope, Set<SchemaId>> getUpdatedFieldTypeIdsByScope() throws RepositoryException, InterruptedException {
+        if (updatedFieldsSchemaIdByScope == null) {
+            updatedFieldsSchemaIdByScope = getFieldTypeIdsAndScope(recordEvent.getUpdatedFields());
+        }
+        return updatedFieldsSchemaIdByScope;
+    }
+
     public Map<Long, Set<SchemaId>> getVTagsByVersion() throws InterruptedException, RepositoryException {
         if (tagsByVersion == null) {
             tagsByVersion = idTagsByVersion(getVTags());
@@ -321,6 +329,30 @@ public class VTaggedRecord {
             }
             if (fieldFilter.accept(fieldType)) {
                 result.get(fieldType.getScope()).add(fieldType);
+            }
+        }
+
+        return result;
+    }
+
+    private Map<Scope, Set<SchemaId>> getFieldTypeIdsAndScope(Set<SchemaId> fieldIds)
+            throws RepositoryException, InterruptedException {
+
+        Map<Scope, Set<SchemaId>> result = new EnumMap<Scope, Set<SchemaId>>(Scope.class);
+        for (Scope scope : Scope.values()) {
+            result.put(scope, new HashSet<SchemaId>());
+        }
+
+        for (SchemaId fieldId : fieldIds) {
+            FieldType fieldType;
+            try {
+                fieldType = typeManager.getFieldTypeById(fieldId);
+            } catch (FieldTypeNotFoundException e) {
+                // A field whose field type does not exist: skip it
+                continue;
+            }
+            if (fieldFilter.accept(fieldType)) {
+                result.get(fieldType.getScope()).add(fieldId);
             }
         }
 

@@ -15,12 +15,18 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.google.common.base.Predicate;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.repo.SystemFields;
-
-import java.util.*;
 
 // TODO for safety should consider making some of the returned lists immutable
 
@@ -36,11 +42,11 @@ import java.util.*;
  */
 public class IndexerConf {
     private IndexRecordFilter recordFilter;
-    private List<IndexField> indexFields = new ArrayList<IndexField>();
+    private IndexFields indexFields;
     private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
-    private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
+    private List<IndexField> derefIndexFields = null;
     private List<DynamicIndexField> dynamicFields = new ArrayList<DynamicIndexField>();
-    private Map<SchemaId, List<IndexField>> derefIndexFieldsByField = new HashMap<SchemaId, List<IndexField>>();
+    private Map<SchemaId, List<IndexField>> derefIndexFieldsBySchemaId = null;
     private Set<SchemaId> vtags = new HashSet<SchemaId>();
     private Formatters formatters = new Formatters();
     private SystemFields systemFields;
@@ -59,7 +65,7 @@ public class IndexerConf {
         return recordFilter.getIndexCase(record);
     }
 
-    public List<IndexField> getIndexFields() {
+    public IndexFields getIndexFields() {
         return indexFields;
     }
 
@@ -67,27 +73,40 @@ public class IndexerConf {
         return recordFilter;
     }
 
-    protected void addIndexField(IndexField indexField) {
-        indexFields.add(indexField);
+    public void setIndexFields(IndexFields indexFields) {
+        this.indexFields = indexFields;
 
-        SchemaId fieldDep = indexField.getValue().getFieldDependency();
-        if (fieldDep != null)
-            repoFieldDependencies.add(fieldDep);
+        // update information about deref index fields
+        derefIndexFields.clear();
+        repoFieldDependencies.clear();
 
-        if (indexField.getValue() instanceof DerefValue) {
-            FieldType lastRealField = ((DerefValue)indexField.getValue()).getLastRealField();
-            if (lastRealField != null && !systemFields.isSystemField(lastRealField.getId())) {
-                derefIndexFields.add(indexField);
+        indexFields.visitAll(new Predicate<MappingNode>() {
+            @Override
+            public boolean apply(MappingNode node) {
+                if (node instanceof IndexField) {
+                    IndexField indexField = (IndexField)node;
+                    SchemaId fieldDep = indexField.getValue().getFieldDependency();
+                    if (fieldDep != null)
+                        repoFieldDependencies.add(fieldDep);
 
-                SchemaId fieldId = lastRealField.getId();
-                List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
-                if (fields == null) {
-                    fields = new ArrayList<IndexField>();
-                    derefIndexFieldsByField.put(fieldId, fields);
+                    if (indexField.getValue() instanceof DerefValue) {
+                        FieldType lastRealField = ((DerefValue)indexField.getValue()).getLastRealField();
+                        if (lastRealField != null && !systemFields.isSystemField(lastRealField.getId())) {
+                            derefIndexFields.add(indexField);
+
+                            SchemaId fieldId = lastRealField.getId();
+                            List<IndexField> fields = derefIndexFieldsBySchemaId.get(fieldId);
+                            if (fields == null) {
+                                fields = new ArrayList<IndexField>();
+                                derefIndexFieldsBySchemaId.put(fieldId, fields);
+                            }
+                            fields.add(indexField);
+                        }
+                    }
                 }
-                fields.add(indexField);
+                return true;
             }
-        }
+        });
     }
 
     protected void addDynamicIndexField(DynamicIndexField field) {
@@ -130,7 +149,7 @@ public class IndexerConf {
      * Returns all IndexFields which have a DerefValue pointing to the given field id, or null if there are none.
      */
     public List<IndexField> getDerefIndexFields(SchemaId fieldId) {
-        List<IndexField> result = derefIndexFieldsByField.get(fieldId);
+        List<IndexField> result = derefIndexFieldsBySchemaId.get(fieldId);
         return result == null ? Collections.<IndexField>emptyList() : result;
     }
 
@@ -152,4 +171,5 @@ public class IndexerConf {
     public void setSystemFields(SystemFields systemFields) {
         this.systemFields = systemFields;
     }
+
 }

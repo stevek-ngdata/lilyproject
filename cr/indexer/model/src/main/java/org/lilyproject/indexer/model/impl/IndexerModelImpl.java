@@ -21,7 +21,6 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import static org.apache.zookeeper.Watcher.Event.EventType.*;
 import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
@@ -31,6 +30,9 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.zookeeper.*;
 
 import javax.annotation.PreDestroy;
+
+import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+
 
 import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
 

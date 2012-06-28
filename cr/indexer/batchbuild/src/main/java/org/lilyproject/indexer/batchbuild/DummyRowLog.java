@@ -15,11 +15,17 @@
  */
 package org.lilyproject.indexer.batchbuild;
 
+import java.util.List;
+
 import org.apache.hadoop.hbase.client.Put;
 import org.lilyproject.rowlock.RowLock;
-import org.lilyproject.rowlog.api.*;
-
-import java.util.List;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogShard;
+import org.lilyproject.rowlog.api.RowLogShardList;
+import org.lilyproject.rowlog.api.RowLogSubscription;
 
 public class DummyRowLog implements RowLog {
     private final String failMessage;
@@ -93,4 +99,5 @@ public class DummyRowLog implements RowLog {
     public RowLogConfig getConfig() {
         throw new RuntimeException(failMessage);
     }
+
 }

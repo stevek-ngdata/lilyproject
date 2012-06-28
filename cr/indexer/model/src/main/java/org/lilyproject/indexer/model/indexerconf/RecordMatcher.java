@@ -1,12 +1,14 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
+import org.lilyproject.indexer.model.indexerconf.WildcardPattern;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Matches records based on certain conditions, i.e. a predicate on record objects.

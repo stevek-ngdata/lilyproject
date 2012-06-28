@@ -61,14 +61,10 @@
   <xs:element name="fields">
     <xs:complexType>
       <xs:sequence>
-        <xs:element maxOccurs="unbounded" minOccurs="0" name="field">
-          <xs:complexType>
-            <xs:attribute name="name" type="xs:string" use="required"/>
-            <xs:attribute name="value" type="xs:string" use="required"/>
-            <xs:attribute name="extractContent" type="xs:string" use="optional"/>
-            <xs:attribute name="formatter" type="xs:string" use="optional"/>
-          </xs:complexType>
-        </xs:element>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element minOccurs="0" ref="field"/>
+          <xs:element minOccurs="0" ref="match"/>
+        </xs:choice>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -96,7 +92,22 @@
   </xs:element>
   <xs:element name="field">
     <xs:complexType>
-      <xs:attribute name="name" type="xs:QName" use="required"/>
+      <xs:attribute name="name" type="xs:string" use="required"/>
+      <xs:attribute name="value" type="xs:string" use="required"/>
+      <xs:attribute name="extractContent" type="xs:string" use="optional"/>
+      <xs:attribute name="formatter" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="match">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element minOccurs="0" ref="field"/>
+          <xs:element minOccurs="0" ref="match"/>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attribute name="recordType" type="xs:string" use="optional"/>
+      <xs:attribute name="field" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
 </xs:schema>

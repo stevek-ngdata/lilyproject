@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
 import javax.xml.XMLConstants;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
@@ -33,6 +34,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.repository.api.FieldType;
@@ -73,7 +75,7 @@ public class IndexerConfBuilder {
             new LocalXPathExpression("/indexer/formatters/formatter");
 
     private static LocalXPathExpression INDEX_FIELDS =
-            new LocalXPathExpression("/indexer/fields/field");
+            new LocalXPathExpression("/indexer/fields");
 
     private static LocalXPathExpression DYNAMIC_INDEX_FIELDS =
             new LocalXPathExpression("/indexer/dynamicFields/dynamicField");
@@ -82,7 +84,7 @@ public class IndexerConfBuilder {
 
     private static final Splitter EQUAL_SIGN_SPLITTER = Splitter.on('=').trimResults().omitEmptyStrings();
 
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     private Document doc;
 
@@ -323,15 +325,47 @@ public class IndexerConfBuilder {
     }
 
     private void buildIndexFields() throws Exception {
-        List<Element> indexFields = INDEX_FIELDS.get().evalAsNativeElementList(doc);
-        for (Element indexFieldEl : indexFields) {
-            String name = DocumentHelper.getAttribute(indexFieldEl, "name", true);
-            validateName(name);
+        conf.setIndexFields(buildIndexFields(INDEX_FIELDS.get().evalAsNativeElement(doc)));
+    }
 
-            Value value = buildValue(indexFieldEl);
+    public IndexFields buildIndexFields(Element el) throws Exception {
+        IndexFields indexFields = new IndexFields();
+        addChildNodes(el, indexFields, "match", "field");
+        return indexFields;
+    }
 
-            IndexField indexField = new IndexField(name, value);
-            conf.addIndexField(indexField);
+    private MatchNode buildMatchNode(Element el) throws Exception {
+        RecordMatcher recordMatcher = parseRecordMatcher(el);
+        MatchNode matchNode = new MatchNode(recordMatcher);
+
+        addChildNodes(el, matchNode, "match", "field");
+        return matchNode;
+    }
+
+    private IndexField buildFieldNode(Element el) throws Exception {
+        String name = DocumentHelper.getAttribute(el, "name", true);
+        return new IndexField(name, buildValue(el));
+    }
+
+    public void addChildNodes(Element el, ContainerMappingNode parent, String... allowedTagNames) throws Exception {
+        Set<String> allowed = Sets.newHashSet(allowedTagNames);
+
+        for (Element childEl: DocumentHelper.getElementChildren(el)) {
+            String name = childEl.getTagName();
+
+            if (!allowed.contains(name)) {
+                throw new IndexerConfException(String.format("Unexpected tag name '%s' while parsing indexerconf", childEl.getTagName()));
+            }
+
+            if (name.equals("fields")) {
+                parent.addChildNode(buildIndexFields(childEl));
+            } else if (name.equals("match")) {
+                parent.addChildNode(buildMatchNode(childEl));
+            } else if (name.equals("field")) {
+                parent.addChildNode(buildFieldNode(childEl));
+            } else {
+                throw new IndexerConfException(String.format("Unexpected tag name '%s' while parsing indexerconf", childEl.getTagName()));
+            }
         }
     }
 
@@ -745,7 +779,7 @@ public class IndexerConfBuilder {
     }
 
     private static class MyErrorHandler implements ErrorHandler {
-        private StringBuilder builder = new StringBuilder();
+        private final StringBuilder builder = new StringBuilder();
 
         @Override
         public void warning(SAXParseException exception) throws SAXException {

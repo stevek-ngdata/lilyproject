@@ -34,7 +34,6 @@ import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.Repository;
@@ -52,7 +51,6 @@ import org.lilyproject.util.repo.VTaggedRecord;
 import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 import static org.lilyproject.util.repo.RecordEvent.Type.DELETE;
 import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
-
 
 //
 // About the exception handling strategy
@@ -168,7 +166,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
                 // After this we can go to update denormalized data
                 updateDenormalizedData(recordId, event, null, null, null);
-            } else {
+            } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
 
                 indexLocker.lock(recordId);
@@ -272,7 +270,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 // Handle changes to non-versioned fields
                 //
                 if (updatedFieldsByScope.get(Scope.NON_VERSIONED).size() > 0) {
-                    if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.NON_VERSIONED))) {
+                    if (indexer.getConf().getIndexFields().isIndexAffectedByUpdate(vtRecord, Scope.NON_VERSIONED)) {
                         indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
                         // After this we go to the treatment of changed vtag fields
                         if (log.isDebugEnabled()) {
@@ -294,8 +292,8 @@ public class IndexUpdater implements RowLogMessageListener {
                 // it would work as well if this code would not be here.
                 //
                 if (vtagsToIndex.isEmpty() && (event.getVersionCreated() != -1 || event.getVersionUpdated() != -1)) {
-                    if (atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED))
-                            || atLeastOneUsedInIndex(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE))) {
+                    if (indexer.getConf().getIndexFields().isIndexAffectedByUpdate(vtRecord, Scope.VERSIONED)
+                            || indexer.getConf().getIndexFields().isIndexAffectedByUpdate(vtRecord, Scope.VERSIONED_MUTABLE)) {
 
                         long version =
                                 event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();
@@ -352,6 +350,9 @@ public class IndexUpdater implements RowLogMessageListener {
                                         Map<Long, Set<SchemaId>> vtagsByVersion,
                                         Set<SchemaId> changedVTagFields)
             throws RepositoryException, InterruptedException, LinkIndexException {
+
+        // XYZ: Scan the deref_back_{index} table, for each (recordId, vtag, *) => fields
+        //      issue an "INDEX" event for every indexer, using the corresponding fields as "updatedFields"
 
         // This algorithm is designed to first collect all the reindex-work, and then to perform it.
         // Otherwise the same document would be indexed multiple times if it would become invalid
@@ -492,24 +493,24 @@ public class IndexUpdater implements RowLogMessageListener {
         long version = event.getVersionCreated() == -1 ? event.getVersionUpdated() : event.getVersionCreated();
 
         // Determine the relevant index fields
-        List<IndexField> indexFields;
+        List<IndexField> derefIndexFields;
         if (event.getType() == RecordEvent.Type.DELETE) {
-            indexFields = indexer.getConf().getDerefIndexFields();
+            derefIndexFields = indexer.getConf().getDerefIndexFields();
         } else {
-            indexFields = new ArrayList<IndexField>();
+            derefIndexFields = new ArrayList<IndexField>();
 
-            collectDerefIndexFields(updatedFieldsByScope.get(Scope.NON_VERSIONED), indexFields);
+            collectDerefIndexFields(updatedFieldsByScope.get(Scope.NON_VERSIONED), derefIndexFields);
 
             if (version != -1 && vtagsByVersion.get(version) != null) {
-                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED), indexFields);
-                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE), indexFields);
+                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED), derefIndexFields);
+                collectDerefIndexFields(updatedFieldsByScope.get(Scope.VERSIONED_MUTABLE), derefIndexFields);
             }
         }
 
         // For each indexField, determine the vtags of the referrer that we should consider.
         // In the context of this algorithm, a referrer is each record whose index might contain
         // denormalized data from the record of which we are now processing the change event.
-        for (IndexField indexField : indexFields) {
+        for (IndexField indexField : derefIndexFields) {
             DerefValue derefValue = (DerefValue) indexField.getValue();
             FieldType fieldType = derefValue.getLastRealField();
 
@@ -735,12 +736,4 @@ public class IndexUpdater implements RowLogMessageListener {
         }
     }
 
-    private boolean atLeastOneUsedInIndex(Set<FieldType> fieldTypes) {
-        for (FieldType type : fieldTypes) {
-            if (indexer.getConf().isIndexFieldDependency(type)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
