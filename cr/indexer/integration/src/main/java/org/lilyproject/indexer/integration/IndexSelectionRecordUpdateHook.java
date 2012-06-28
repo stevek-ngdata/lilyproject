@@ -62,10 +62,17 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
 
             Set<QName> names = indexesInfo.getRecordFilterFieldDependencies();
             for (QName name : names) {
-                FieldType type = fieldTypes.getFieldType(name);
-                Object oldValue = record.getField(name);
-                Object newValue = originalRecord.getField(name);
-                addField(type, oldValue, newValue, idxSel);
+                Object oldValue = null, newValue = null;
+                if (record.hasField(name)) {
+                    newValue = record.getField(name);
+                }
+                if (originalRecord.hasField(name)) {
+                    oldValue = originalRecord.getField(name);
+                }
+                if (oldValue != null || newValue != null) {
+                    FieldType type = fieldTypes.getFieldType(name);
+                    addField(type, oldValue, newValue, idxSel);
+                }
             }
         }
     }
@@ -87,9 +94,11 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
 
             Set<QName> names = indexesInfo.getRecordFilterFieldDependencies();
             for (QName name : names) {
-                FieldType type = fieldTypes.getFieldType(name);
-                Object newValue = newRecord.getField(name);
-                addField(type, null, newValue, idxSel);
+                if (newRecord.hasField(name)) {
+                    Object newValue = newRecord.getField(name);
+                    FieldType type = fieldTypes.getFieldType(name);
+                    addField(type, null, newValue, idxSel);
+                }
             }
         }
     }
@@ -110,9 +119,11 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
 
             Set<QName> names = indexesInfo.getRecordFilterFieldDependencies();
             for (QName name : names) {
-                FieldType type = fieldTypes.getFieldType(name);
-                Object oldValue = originalRecord.getField(name);
-                addField(type, oldValue, null, idxSel);
+                if (originalRecord.hasField(name)) {
+                    Object oldValue = originalRecord.getField(name);
+                    FieldType type = fieldTypes.getFieldType(name);
+                    addField(type, oldValue, null, idxSel);
+                }
             }
         }
     }

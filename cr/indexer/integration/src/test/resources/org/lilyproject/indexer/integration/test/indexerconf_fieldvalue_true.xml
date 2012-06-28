@@ -2,13 +2,13 @@
 <indexer xmlns:t="mqfeedtest">
   <recordFilter>
     <includes>
-      <include recordType="t:typeB" vtags="last"/>
-      <include recordType="t:typeC" vtags="last"/>
+      <include field="t:toggle=true" vtags="last"/>
     </includes>
   </recordFilter>
 
   <fields>
     <field name="field1" value="t:field1"/>
+    <field name="toggle" value="t:toggle"/>
   </fields>
 
 </indexer>

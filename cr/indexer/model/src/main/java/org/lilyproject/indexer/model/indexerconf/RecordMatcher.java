@@ -1,11 +1,10 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.SchemaId;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,9 +15,8 @@ public class RecordMatcher {
     private WildcardPattern recordTypeNamespace;
     private WildcardPattern recordTypeName;
 
-    private QName fieldName;
-    private SchemaId fieldId;
-    private String fieldValue;
+    private FieldType fieldType;
+    private Object fieldValue;
 
     /**
      * The variant properties the record should have. Evaluation rules: a key named
@@ -29,11 +27,11 @@ public class RecordMatcher {
      */
     private final Map<String, String> variantPropsPattern;
 
-    public RecordMatcher(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName, QName fieldName,
-            String fieldValue, Map<String, String> variantPropsPattern) {
+    public RecordMatcher(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName, FieldType fieldType,
+            Object fieldValue, Map<String, String> variantPropsPattern) {
         this.recordTypeNamespace = recordTypeNamespace;
         this.recordTypeName = recordTypeName;
-        this.fieldName = fieldName;
+        this.fieldType = fieldType;
         this.fieldValue = fieldValue;
         this.variantPropsPattern = variantPropsPattern;
     }
@@ -74,11 +72,8 @@ public class RecordMatcher {
             }
         }
 
-        if (fieldName != null) {
-            Object value = record.getField(fieldName);
-            if (fieldValue.equals(value)) {
-                return false;
-            }
+        if (fieldType != null) {
+            return record.hasField(fieldType.getName()) && fieldValue.equals(record.getField(fieldType.getName()));
         }
 
         return true;
@@ -86,7 +81,7 @@ public class RecordMatcher {
     }
 
     public Set<QName> getFieldDependencies() {
-        return fieldName != null ? Collections.singleton(fieldName) : Collections.<QName>emptySet();
+        return fieldType != null ? Collections.singleton(fieldType.getName()) : Collections.<QName>emptySet();
     }
 
     public boolean dependsOnRecordType() {

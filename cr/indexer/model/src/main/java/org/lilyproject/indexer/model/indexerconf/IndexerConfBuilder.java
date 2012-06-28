@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
-import javax.xml.stream.events.EndElement;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -44,8 +43,8 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.api.filter.RecordFilter;
 import org.lilyproject.util.location.LocationAttributes;
+import org.lilyproject.util.repo.FieldValueStringConverter;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.xml.DocumentHelper;
@@ -89,6 +88,8 @@ public class IndexerConfBuilder {
 
     private IndexerConf conf;
 
+    private Repository repository;
+
     private TypeManager typeManager;
 
     private SystemFields systemFields;
@@ -110,6 +111,7 @@ public class IndexerConfBuilder {
     private IndexerConf build(Document doc, Repository repository) throws IndexerConfException {
         validate(doc);
         this.doc = doc;
+        this.repository = repository;
         this.typeManager = repository.getTypeManager();
         this.systemFields = SystemFields.getInstance(repository.getTypeManager(), repository.getIdGenerator());
         this.conf = new IndexerConf();
@@ -183,41 +185,50 @@ public class IndexerConfBuilder {
     }
 
     private RecordMatcher parseRecordMatcher(Element element) throws Exception {
+        //
+        // Condition on record type
+        //
         WildcardPattern rtNamespacePattern = null;
         WildcardPattern rtNamePattern = null;
 
         String recordTypeAttr = DocumentHelper.getAttribute(element, "recordType", false);
         if (recordTypeAttr != null) {
-            // Should be of form {namespace-pattern}name-pattern.
-            if (!recordTypeAttr.startsWith("{")) {
-                throw new IndexerConfException("Record type pattern should be of the form " +
-                        "\"{namespace-pattern}name-pattern\", which the following is not: " + recordTypeAttr);
-            }
-
-            int closingBracePos = recordTypeAttr.indexOf("}");
-            if (closingBracePos == -1) {
-                throw new IndexerConfException("Record type pattern should be of the form " +
-                        "\"{namespace-pattern}name-pattern\", which the following is not: " + recordTypeAttr);
-            }
-
-            String namespaceExpr = recordTypeAttr.substring(1, closingBracePos);
-            String nameExpr = recordTypeAttr.substring(closingBracePos + 1);
-
-            // If the matchNamespace attr does not contain a wildcard expression, and its value
-            // happens to be an existing namespace prefix, than substitute the prefix for the full URI.
-            if (!WildcardPattern.isWildcardExpression(namespaceExpr)) {
-                String uri = element.lookupNamespaceURI(namespaceExpr);
-                if (uri != null)
-                    namespaceExpr = uri;
-            }
-            rtNamespacePattern = new WildcardPattern(namespaceExpr);
-            rtNamePattern = new WildcardPattern(nameExpr);
+            QName rtName = parseQName(recordTypeAttr, element);
+            rtNamespacePattern = new WildcardPattern(rtName.getNamespace());
+            rtNamePattern = new WildcardPattern(rtName.getName());
         }
 
+        //
+        // Condition on variant properties
+        //
         Map<String, String> varPropsPattern = parseVariantPropertiesPattern(element);
 
-        // TODO implement field-value filter
-        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, null, null, varPropsPattern);
+
+        //
+        // Condition on field
+        //
+        String fieldAttr = DocumentHelper.getAttribute(element, "field", false);
+        FieldType fieldType = null;
+        Object fieldValue = null;
+        if (fieldAttr != null) {
+            int eqPos = fieldAttr.indexOf('='); // we assume = is not a symbol occurring in the field name
+            if (eqPos == -1) {
+                throw new IndexerConfException("field test should be of the form \"namespace:name=value\", which " +
+                        "the following is not: " + fieldAttr + ", at " + LocationAttributes.getLocation(element));
+            }
+            QName fieldName = parseQName(fieldAttr.substring(0, eqPos), element);
+            fieldType = typeManager.getFieldTypeByName(fieldName);
+            String fieldValueString = fieldAttr.substring(eqPos + 1);
+            try {
+                fieldValue = FieldValueStringConverter.fromString(fieldValueString, fieldType.getValueType(),
+                        repository.getIdGenerator());
+            } catch (IllegalArgumentException e) {
+                throw new IndexerConfException("Invalid field value: " + fieldValueString);
+            }
+        }
+
+        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, fieldType, fieldValue,
+                varPropsPattern);
 
         return matcher;
     }
