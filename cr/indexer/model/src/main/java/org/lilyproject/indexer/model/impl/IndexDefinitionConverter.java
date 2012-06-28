@@ -16,11 +16,14 @@
 package org.lilyproject.indexer.model.impl;
 
 import net.iharder.Base64;
+
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.indexer.model.api.*;
 import org.lilyproject.util.json.JsonFormat;
+import org.lilyproject.util.json.JsonFormatException;
 import org.lilyproject.util.json.JsonUtil;
 
 import java.io.ByteArrayInputStream;
@@ -82,7 +85,10 @@ public class IndexDefinitionConverter {
             activeBatchBuild = new ActiveBatchBuildInfo();
             activeBatchBuild.setJobId(JsonUtil.getString(buildNode, "jobId"));
             activeBatchBuild.setSubmitTime(JsonUtil.getLong(buildNode, "submitTime"));
-            activeBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));
+            activeBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));            
+            activeBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
+                    JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
+            
         }
 
         BatchBuildInfo lastBatchBuild = null;
@@ -93,14 +99,25 @@ public class IndexDefinitionConverter {
             lastBatchBuild.setSubmitTime(JsonUtil.getLong(buildNode, "submitTime"));
             lastBatchBuild.setSuccess(JsonUtil.getBoolean(buildNode, "success"));
             lastBatchBuild.setJobState(JsonUtil.getString(buildNode, "jobState"));
-            lastBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));
+            lastBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));            
             ObjectNode countersNode = JsonUtil.getObject(buildNode, "counters");
             Iterator<String> it = countersNode.getFieldNames();
             while (it.hasNext()) {
                 String key = it.next();
                 long value = JsonUtil.getLong(countersNode, key);
                 lastBatchBuild.addCounter(key, value);
-            }
+            }            
+            lastBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
+                    JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
+            
+        }
+        byte[] batchIndexConfiguration = null;
+        if (node.get("batchIndexConfiguration") != null) {            
+            batchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "batchIndexConfiguration"));            
+        }
+        byte[] defaultBatchIndexConfiguration = null;
+        if (node.get("defaultBatchIndexConfiguration") != null) {            
+            defaultBatchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "defaultBatchIndexConfiguration"));            
         }
 
         index.setGeneralState(state);
@@ -112,6 +129,8 @@ public class IndexDefinitionConverter {
         index.setShardingConfiguration(shardingConfiguration);
         index.setActiveBatchBuildInfo(activeBatchBuild);
         index.setLastBatchBuildInfo(lastBatchBuild);
+        index.setBatchIndexConfiguration(batchIndexConfiguration);
+        index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
     }
 
     public byte[] toJsonBytes(IndexDefinition index) {
@@ -165,6 +184,7 @@ public class IndexDefinitionConverter {
             buildNode.put("jobId", buildInfo.getJobId());
             buildNode.put("submitTime", buildInfo.getSubmitTime());
             buildNode.put("trackingUrl", buildInfo.getTrackingUrl());
+            buildNode.put("batchIndexConfiguration", deserializeByteArray(buildInfo.getBatchIndexConfiguration()));
         }
 
         if (index.getLastBatchBuildInfo() != null) {
@@ -180,8 +200,37 @@ public class IndexDefinitionConverter {
             for (Map.Entry<String, Long> counter : buildInfo.getCounters().entrySet()) {
                 countersNode.put(counter.getKey(), counter.getValue());
             }
+            buildNode.put("batchIndexConfiguration", deserializeByteArray(buildInfo.getBatchIndexConfiguration()));
+        }
+        if (index.getBatchIndexConfiguration() != null) {
+            node.put("batchIndexConfiguration", this.deserializeByteArray(index.getBatchIndexConfiguration()));
+        }
+        if (index.getDefaultBatchIndexConfiguration() != null) {
+            node.put("defaultBatchIndexConfiguration", this.deserializeByteArray(index.getDefaultBatchIndexConfiguration()));
         }
 
         return node;
+    }
+    
+    private JsonNode deserializeByteArray (byte[] b) {
+        JsonNode node;
+        try {
+            node = JsonFormat.deserializeNonStd(new ByteArrayInputStream(b));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return node;
+    }
+    
+    private byte[] serializeJsonNode (JsonNode node) {
+        byte[] b;
+        try {
+            b = JsonFormat.serializeAsBytes(node);
+        } catch (JsonFormatException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return b;
     }
 }

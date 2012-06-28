@@ -1,0 +1,13 @@
+{
+    "scan" : {
+        "returnFields" : { 
+            "type" : "NONE"
+        },
+        "recordFilter" : {
+            "@class": "org.lilyproject.repository.api.filter.RecordIdPrefixFilter",
+            "recordId" : "USER.batch-index"
+        },
+        "caching" : 1024,
+        "cacheBlocks" : false
+    }
+}

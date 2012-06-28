@@ -15,6 +15,8 @@
  */
 package org.lilyproject.indexer.master;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -26,6 +28,7 @@ import net.iharder.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.codehaus.jackson.JsonNode;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
@@ -33,6 +36,8 @@ import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.ReturnFields;
+import org.lilyproject.tools.import_.json.RecordScanReader;
+import org.lilyproject.util.json.JsonFormat;
 
 public class BatchIndexBuilder {
     /**
@@ -41,7 +46,7 @@ public class BatchIndexBuilder {
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
             Repository repository, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
-            boolean enableLocking) throws Exception {
+            byte[] batchIndexConfiguration, boolean enableLocking) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
         Job job = new Job(conf, "BatchIndexBuild Job");
@@ -79,8 +84,9 @@ public class BatchIndexBuilder {
 
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
-
-        RecordScan recordScan = new RecordScan();
+        
+        JsonNode jsonNode = JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration)).get("scan");
+        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository);
         recordScan.setReturnFields(ReturnFields.NONE);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);

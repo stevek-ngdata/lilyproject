@@ -207,6 +207,11 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         } catch (IndexerConfException e) {
             throw new IndexValidityException("The indexer configuration is not XML well-formed or valid.", e);
         }
+        
+        if (index.getBatchIndexConfiguration() != null && index.getBatchBuildState() != 
+                IndexBatchBuildState.BUILD_REQUESTED) {
+            throw new IndexValidityException("The build state must be set to BUILD_REQUESTED when setting a batchIndexConfiguration");
+        }
     }
 
     @Override

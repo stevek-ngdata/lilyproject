@@ -2,7 +2,7 @@
 <indexer xmlns:bi="batchindex-test">
 
   <records>
-    <record matchNamespace="bi" matchName="rt1" vtags="last"/>
+    <record matchNamespace="bi" matchName="*" vtags="last"/>    
   </records>
 
   <fields>    

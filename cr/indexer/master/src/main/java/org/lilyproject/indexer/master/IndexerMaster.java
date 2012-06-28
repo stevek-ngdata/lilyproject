@@ -20,6 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.tika.io.IOUtils;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
 import org.lilyproject.indexer.engine.SolrClientConfig;
@@ -37,6 +38,8 @@ import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,9 +51,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The indexer master is active on only one Lily node and is responsible for
- * things such as launching index batch build jobs, assigning or removing
- * message queue subscriptions, and the like.
+ * The indexer master is active on only one Lily node and is responsible for things such as launching index batch build
+ * jobs, assigning or removing message queue subscriptions, and the like.
  */
 public class IndexerMaster {
     private final ZooKeeperItf zk;
@@ -93,11 +95,12 @@ public class IndexerMaster {
 
     private final String nodes;
 
+    private byte[] fullTableScanConf;
+
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
-            Configuration mapReduceConf,
-            Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString, int zkSessionTimeout,
-            RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
-            boolean enableLocking, String hostName, String nodes) {
+            Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
+            String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo,
+            SolrClientConfig solrClientConfig, boolean enableLocking, String hostName, String nodes) {
         this.zk = zk;
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -124,6 +127,15 @@ public class IndexerMaster {
             leaderElection = new LeaderElection(zk, "Indexer Master", "/lily/indexer/masters",
                     new MyLeaderElectionCallback());
         }
+
+        InputStream is = null;
+        try {
+            is = IndexerMaster.class.getResourceAsStream("full-table-scan-config.json");
+            this.fullTableScanConf = IOUtils.toByteArray(is);
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+
     }
 
     @PreDestroy
@@ -150,18 +162,15 @@ public class IndexerMaster {
         public void activateAsLeader() throws Exception {
             log.info("Starting up as indexer master.");
 
-            // Start these processes, but it is not until we have registered our
-            // model listener
+            // Start these processes, but it is not until we have registered our model listener
             // that these will receive work.
             eventWorker.start();
             jobStatusWatcher.start();
 
             Collection<IndexDefinition> indexes = indexerModel.getIndexes(listener);
 
-            // Rather than performing any work that might to be done for the
-            // indexes here,
-            // we push out fake events. This way there's only one place where
-            // these actions
+            // Rather than performing any work that might to be done for the indexes here,
+            // we push out fake events. This way there's only one place where these actions
             // need to be performed.
             for (IndexDefinition index : indexes) {
                 eventWorker.putEvent(new IndexerModelEvent(IndexerModelEventType.INDEX_UPDATED, index.getName()));
@@ -177,12 +186,9 @@ public class IndexerMaster {
 
             indexerModel.unregisterListener(listener);
 
-            // Argument false for shutdown: we do not interrupt the event worker
-            // thread: if there
-            // was something running there that is blocked until the ZK
-            // connection comes back up
-            // we want it to finish (e.g. a lock taken that should be released
-            // again)
+            // Argument false for shutdown: we do not interrupt the event worker thread: if there
+            // was something running there that is blocked until the ZK connection comes back up
+            // we want it to finish (e.g. a lock taken that should be released again)
             eventWorker.shutdown(false);
             jobStatusWatcher.shutdown(false);
 
@@ -210,16 +216,12 @@ public class IndexerMaster {
         try {
             String lock = indexerModel.lockIndex(indexName);
             try {
-                // Read current situation of record and assure it is still
-                // actual
+                // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsSubscriptionIdAssigned(index)) {
-                    // We assume we are the only process which creates
-                    // subscriptions which begin with the
-                    // prefix "IndexUpdater:". This way we are sure there are no
-                    // naming conflicts or conflicts
-                    // due to concurrent operations (e.g. someone deleting this
-                    // subscription right after we
+                    // We assume we are the only process which creates subscriptions which begin with the
+                    // prefix "IndexUpdater:". This way we are sure there are no naming conflicts or conflicts
+                    // due to concurrent operations (e.g. someone deleting this subscription right after we
                     // created it).
                     String subscriptionId = subscriptionId(index.getName());
                     rowLogConfMgr.addSubscription("mq", subscriptionId, RowLogSubscription.Type.Netty, 1);
@@ -239,8 +241,7 @@ public class IndexerMaster {
         try {
             String lock = indexerModel.lockIndex(indexName);
             try {
-                // Read current situation of record and assure it is still
-                // actual
+                // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 if (needsSubscriptionIdUnassigned(index)) {
                     rowLogConfMgr.removeSubscription("mq", index.getQueueSubscriptionId());
@@ -264,15 +265,17 @@ public class IndexerMaster {
         try {
             String lock = indexerModel.lockIndex(indexName);
             try {
-                // Read current situation of record and assure it is still
-                // actual
+                // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
+                byte[] batchIndexConfiguration = getBatchIndexConfiguration(index);
+                index.setBatchIndexConfiguration(null);
                 if (needsBatchBuildStart(index)) {
                     Job job = null;
                     boolean jobStarted;
                     try {
                         job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf, repository,
-                                zkConnectString, zkSessionTimeout, solrClientConfig, enableLocking);
+                                zkConnectString, zkSessionTimeout, solrClientConfig, batchIndexConfiguration,
+                                enableLocking);
                         jobStarted = true;
                     } catch (Throwable t) {
                         jobStarted = false;
@@ -284,6 +287,7 @@ public class IndexerMaster {
                         jobInfo.setSubmitTime(System.currentTimeMillis());
                         jobInfo.setJobId(job.getJobID().toString());
                         jobInfo.setTrackingUrl(job.getTrackingURL());
+                        jobInfo.setBatchIndexConfiguration(batchIndexConfiguration);
                         index.setActiveBatchBuildInfo(jobInfo);
 
                         index.setBatchBuildState(IndexBatchBuildState.BUILDING);
@@ -292,12 +296,12 @@ public class IndexerMaster {
 
                         log.info("Started index build job for index " + indexName + ", job ID =  " + jobInfo.getJobId());
                     } else {
-                        // The job failed to start. To test this case, configure
-                        // an incorrect jobtracker address.
+                        // The job failed to start. To test this case, configure an incorrect jobtracker address.
                         BatchBuildInfo jobInfo = new BatchBuildInfo();
                         jobInfo.setJobId("failed-" + System.currentTimeMillis());
                         jobInfo.setSubmitTime(System.currentTimeMillis());
                         jobInfo.setJobState("failed to start, check logs on " + hostName);
+                        jobInfo.setBatchIndexConfiguration(batchIndexConfiguration);
                         jobInfo.setSuccess(false);
 
                         index.setLastBatchBuildInfo(jobInfo);
@@ -315,9 +319,18 @@ public class IndexerMaster {
         }
     }
 
+    private byte[] getBatchIndexConfiguration(IndexDefinition index) {
+        if (index.getBatchIndexConfiguration() != null) {
+            return index.getBatchIndexConfiguration();
+        } else if (index.getDefaultBatchIndexConfiguration() != null) {
+            return index.getDefaultBatchIndexConfiguration();
+        } else {
+            return this.fullTableScanConf;
+        }
+    }
+
     private void prepareDeleteIndex(String indexName) {
-        // We do not have to take a lock on the index, since once in delete
-        // state the index cannot
+        // We do not have to take a lock on the index, since once in delete state the index cannot
         // be modified anymore by ordinary users.
         boolean canBeDeleted = false;
         try {
@@ -350,8 +363,7 @@ public class IndexerMaster {
                     indexerModel.updateIndexInternal(index);
                 }
             } else if (index.getGeneralState() == IndexGeneralState.DELETING) {
-                // Check if the build job is already finished, if so, allow
-                // delete
+                // Check if the build job is already finished, if so, allow delete
                 if (index.getActiveBatchBuildInfo() == null) {
                     canBeDeleted = true;
                 }
@@ -389,8 +401,7 @@ public class IndexerMaster {
         @Override
         public void process(IndexerModelEvent event) {
             try {
-                // Let the events be processed by another thread. Especially
-                // important since
+                // Let the events be processed by another thread. Especially important since
                 // we take ZkLock's in the event handlers (see ZkLock javadoc).
                 eventWorker.putEvent(event);
             } catch (InterruptedException e) {
@@ -457,12 +468,9 @@ public class IndexerMaster {
                         return;
                     }
 
-                    // Warn if the queue is getting large, but do not do this
-                    // just after we started, because
-                    // on initial startup a fake update event is added for every
-                    // defined index, which would lead
-                    // to this message always being printed on startup when more
-                    // than 10 indexes are defined.
+                    // Warn if the queue is getting large, but do not do this just after we started, because
+                    // on initial startup a fake update event is added for every defined index, which would lead
+                    // to this message always being printed on startup when more than 10 indexes are defined.
                     int queueSize = eventQueue.size();
                     if (queueSize >= 10 && (System.currentTimeMillis() - startedAt > 5000)) {
                         log.warn("EventWorker queue getting large, size = " + queueSize);
@@ -473,8 +481,7 @@ public class IndexerMaster {
                         try {
                             index = indexerModel.getIndex(event.getIndexName());
                         } catch (IndexNotFoundException e) {
-                            // ignore, index has meanwhile been deleted, we will
-                            // get another event for this
+                            // ignore, index has meanwhile been deleted, we will get another event for this
                         }
 
                         if (index != null) {
@@ -482,8 +489,7 @@ public class IndexerMaster {
                                     index.getGeneralState() == IndexGeneralState.DELETING) {
                                 prepareDeleteIndex(index.getName());
 
-                                // in case of delete, we do not need to handle
-                                // any other cases
+                                // in case of delete, we do not need to handle any other cases
                                 continue;
                             }
 
@@ -521,8 +527,7 @@ public class IndexerMaster {
          */
         private Map<String, String> runningJobs = new ConcurrentHashMap<String, String>(10, 0.75f, 2);
 
-        private boolean stop; // do not rely only on Thread.interrupt since some
-                              // libraries eat interruptions
+        private boolean stop; // do not rely only on Thread.interrupt since some libraries eat interruptions
 
         private Thread thread;
 
@@ -570,10 +575,8 @@ public class IndexerMaster {
                         }
 
                         if (jobClient == null) {
-                            // We only create the JobClient the first time we
-                            // need it, to avoid that the
-                            // repository fails to start up when there is no
-                            // JobTracker running.
+                            // We only create the JobClient the first time we need it, to avoid that the
+                            // repository fails to start up when there is no JobTracker running.
                             jobClient = getJobClient();
                         }
 
@@ -606,30 +609,25 @@ public class IndexerMaster {
 
         private void markJobComplete(String indexName, String jobId, boolean success, String jobState, Counters counters) {
             try {
-                // Lock internal bypasses the index-in-delete-state check, which
-                // does not matter (and might cause
+                // Lock internal bypasses the index-in-delete-state check, which does not matter (and might cause
                 // failure) in our case.
                 String lock = indexerModel.lockIndexInternal(indexName, false);
                 try {
-                    // Read current situation of record and assure it is still
-                    // actual
+                    // Read current situation of record and assure it is still actual
                     IndexDefinition index = indexerModel.getMutableIndex(indexName);
 
                     ActiveBatchBuildInfo activeJobInfo = index.getActiveBatchBuildInfo();
 
                     if (activeJobInfo == null) {
-                        // This might happen if we got some older update event
-                        // on the index right after we
+                        // This might happen if we got some older update event on the index right after we
                         // marked this job as finished.
                         log.error("Unexpected situation: index build job completed but index does not have an active" +
                                 " build job. Index: " + index.getName() + ", job: " + jobId + ". Ignoring this event.");
                         runningJobs.remove(indexName);
                         return;
                     } else if (!activeJobInfo.getJobId().equals(jobId)) {
-                        // I don't think this should ever occur: a new job will
-                        // never start before we marked
-                        // this one as finished, especially since we lock when
-                        // creating/updating indexes.
+                        // I don't think this should ever occur: a new job will never start before we marked
+                        // this one as finished, especially since we lock when creating/updating indexes.
                         log.error("Abnormal situation: index is associated with index build job " +
                                 activeJobInfo.getJobId() + " but expected job " + jobId + ". Will mark job as" +
                                 " done anyway.");
@@ -639,6 +637,7 @@ public class IndexerMaster {
                     jobInfo.setJobState(jobState);
                     jobInfo.setSuccess(success);
                     jobInfo.setJobId(jobId);
+                    jobInfo.setBatchIndexConfiguration(activeJobInfo.getBatchIndexConfiguration());
 
                     if (activeJobInfo != null) {
                         jobInfo.setSubmitTime(activeJobInfo.getSubmitTime());
