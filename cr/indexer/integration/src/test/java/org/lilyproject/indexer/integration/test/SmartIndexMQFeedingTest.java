@@ -240,7 +240,7 @@ public class SmartIndexMQFeedingTest {
         assertEquals(1, indexUpdaterB.getAndResetEventCount());
 
         assertEquals(0, solrClientA.getAndResetAddCount());
-        assertEquals(0, solrClientA.getAndResetDeleteCount()); // TODO we should have a delete here
+        assertEquals(1, solrClientA.getAndResetDeleteCount());
         assertEquals(1, solrClientB.getAndResetAddCount());
         assertEquals(1, solrClientB.getAndResetDeleteCount());
 

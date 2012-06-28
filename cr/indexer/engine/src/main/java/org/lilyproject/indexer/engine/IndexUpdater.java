@@ -151,8 +151,9 @@ public class IndexUpdater implements RowLogMessageListener {
                     index(recordId, event.getVtagsToIndex());
                 }
             } else if (event.getType().equals(DELETE)) {
-                // For deleted records, we cannot determine the record type, so we do not know if there was
-                // an applicable index case, so we always perform a delete.
+                // Record is deleted: delete its index entry. We do not check for a matching index case, since
+                // we can't (record is not available anymore), and besides IndexAwareMQFeeder takes care of sending us
+                // only relevant events.
                 indexLocker.lock(recordId);
                 try {
                     indexer.delete(recordId);
@@ -228,12 +229,19 @@ public class IndexUpdater implements RowLogMessageListener {
 
         if (indexCase == null) {
             // The record should not be indexed
-            // But data from this record might be denormalized into other index entries
-            // After this we go to update denormalized data
+
+            // The record might however have been previously indexed, therefore we need to perform a delete
+            // (note that IndexAwareMQFeeder only sends events to us if either the current or old record
+            //  state matched the inclusion rules)
+            indexer.delete(vtRecord.getId());
+
             if (log.isDebugEnabled()) {
-                log.debug(String.format("Record %1$s: no index case found, record will not be indexed.",
+                log.debug(String.format("Record %1$s: no index case found, record deleted from index.",
                         vtRecord.getId()));
             }
+
+            // The data from this record might be denormalized into other index entries
+            // After this we go to update denormalized data
         } else {
             Set<SchemaId> vtagsToIndex = new HashSet<SchemaId>();
 
