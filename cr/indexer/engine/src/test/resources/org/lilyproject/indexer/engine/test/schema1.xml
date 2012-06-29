@@ -156,14 +156,14 @@
     <dynamicField name="*_date" type="date" indexed="true" stored="true"/>
     
     <!-- fields used to test <match> -->
-    <field name="match1" type="text" indexed="true" stored="true" required="false"/>
-    <field name="match2" type="text" indexed="true" stored="true" required="false"/>
-    <field name="match3" type="text" indexed="true" stored="true" required="false"/>
-    <field name="match4" type="text" indexed="true" stored="true" required="false"/>
-    <field name="match5" type="text" indexed="true" stored="true" required="false"/>
-    <field name="match6" type="text" indexed="true" stored="true" required="false"/>
-    <field name="match7" type="text" indexed="true" stored="true" required="false"/>
-    <field name="match8" type="text" indexed="true" stored="true" required="false"/>
+    <field name="match1" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match2" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match3" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match4" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match5" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match6" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match7" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match8" type="string" indexed="true" stored="true" required="false"/>
   </fields>
 
   <!-- Field to use to determine and enforce document uniqueness.

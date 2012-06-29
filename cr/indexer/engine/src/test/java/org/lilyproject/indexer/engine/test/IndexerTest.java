@@ -343,7 +343,7 @@ public class IndexerTest {
         RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
         RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
-        for (int i = 0; i < 8; i++) {
+        for (int i = 1; i <= 8; i++) {
             FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
             fields.put("ns:match" + i, ns1Field);
 
@@ -353,6 +353,11 @@ public class IndexerTest {
             matchNs2BetaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
 
         }
+
+        typeManager.createRecordType(matchNs1AlphaRecordType);
+        typeManager.createRecordType(matchNs1BetaRecordType);
+        typeManager.createRecordType(matchNs2AlphaRecordType);
+        typeManager.createRecordType(matchNs2BetaRecordType);
     }
 
     private static FieldType field(String name) {
@@ -365,7 +370,7 @@ public class IndexerTest {
         messageVerifier.init();
 
         //
-        // Basic match testing
+        // Testing match conditions
         //
         {
             log.debug("Begin test match");
@@ -376,9 +381,25 @@ public class IndexerTest {
 
             commitIndex();
 
-            //TODO: implement acutal solr query tests
+            verifyResultCount("match2:ns2_alpha_two", 0);
+
+            verifyMatchCounts("match1", "one", 1, 1, 1, 1); // all (no matches)
+            verifyMatchCounts("match2", "two", 1, 1, 0, 0); // ns:*
+            verifyMatchCounts("match3", "three", 0, 0, 1, 1); // ns2:*
+            //verifyMatchCounts("match4", "four", 1, 0, 1, 0); // *:Alpha             //Uncomment after RecordMatch on namespace * is fixed
+            //verifyMatchCounts("match5", "five", 0, 1, 0, 1); // *:Beta
+            verifyMatchCounts("match6", "six", 1, 0, 0, 0); // ns:Alpha
+            verifyMatchCounts("match7", "seven", 0, 0, 0, 1); // ns2:Beta
+
         }
 
+    }
+
+    private void verifyMatchCounts(String fieldName, String number, int ns_a, int ns_b, int ns2_a, int ns2_b) throws Exception {
+        verifyResultCount(fieldName + ":" + "ns_alpha_" + number, ns_a);
+        verifyResultCount(fieldName + ":" + "ns_beta_" + number, ns_b);
+        verifyResultCount(fieldName + ":" + "ns2_alpha_" + number, ns2_a);
+        verifyResultCount(fieldName + ":" + "ns2_beta_" + number, ns2_b);
     }
 
     private void createMatchTestRecord(String ns, String name, String prefix) throws Exception {
@@ -393,6 +414,8 @@ public class IndexerTest {
             .field(new QName(NS, "match6"), prefix + "six")
             .field(new QName(NS, "match7"), prefix + "seven")
             .field(new QName(NS, "match8"), prefix + "eight");
+
+        builder.create();
     }
 
     @Test

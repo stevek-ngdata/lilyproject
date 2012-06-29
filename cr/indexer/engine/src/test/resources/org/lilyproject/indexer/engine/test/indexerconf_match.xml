@@ -2,10 +2,10 @@
 <indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2">
 
   <records>
-    <record matchNamespace="ns1" matchName="Alpha" matchVariant="*" vtags="live,nonversioned"/>
-    <record matchNamespace="ns1" matchName="Beta" matchVariant="*" vtags="live,nonversioned"/>
-    <record matchNamespace="ns2" matchName="Alpha" matchVariant="*" vtags="live,nonversioned"/>
-    <record matchNamespace="ns2" matchName="Beta" matchVariant="*" vtags="live,nonversioned"/>
+    <record matchNamespace="ns" matchName="Alpha" matchVariant="*" vtags="last"/>
+    <record matchNamespace="ns" matchName="Beta" matchVariant="*" vtags="last"/>
+    <record matchNamespace="ns2" matchName="Alpha" matchVariant="*" vtags="last"/>
+    <record matchNamespace="ns2" matchName="Beta" matchVariant="*" vtags="last"/>
   </records>
 
   <formatters default="default">

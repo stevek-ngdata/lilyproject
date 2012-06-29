@@ -1,7 +1,11 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.List;
+
 import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -47,6 +51,12 @@ public class MatchNode extends ContainerMappingNode {
             return childrenAffectedByUpdate(vtRecord, scope);
         } else {
             return false;
+        }
+    }
+
+    public void collectIndexFields(List<IndexField> indexFields, Record record, long version, SchemaId vtag) {
+        if (recordMatcher.matches(record)) {
+            super.collectIndexFields(indexFields, record, version, vtag);
         }
     }
 
