@@ -17,6 +17,7 @@ package org.lilyproject.indexer.model.indexerconf;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +26,11 @@ import java.util.Set;
 import com.google.common.base.Predicate;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.SystemFields;
+import org.lilyproject.util.repo.VTaggedRecord;
 
 // TODO for safety should consider making some of the returned lists immutable
 
@@ -44,9 +48,9 @@ public class IndexerConf {
     private IndexRecordFilter recordFilter;
     private IndexFields indexFields;
     private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
-    private List<IndexField> derefIndexFields = null;
+    private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
+    private Map<SchemaId, List<IndexField>> derefIndexFieldsBySchemaId = new HashMap<SchemaId, List<IndexField>>();
     private List<DynamicIndexField> dynamicFields = new ArrayList<DynamicIndexField>();
-    private Map<SchemaId, List<IndexField>> derefIndexFieldsBySchemaId = null;
     private Set<SchemaId> vtags = new HashSet<SchemaId>();
     private Formatters formatters = new Formatters();
     private SystemFields systemFields;
@@ -118,27 +122,6 @@ public class IndexerConf {
     }
 
     /**
-     * Checks if the supplied field type is used by one of the indexField's.
-     */
-    public boolean isIndexFieldDependency(FieldType fieldType) {
-        boolean staticFieldMatch = repoFieldDependencies.contains(fieldType.getId());
-
-        if (staticFieldMatch) {
-            return true;
-        }
-
-        // If there are lots of dynamic index fields, or lots of fields which are not indexed at all (thus
-        // leading to lots of invocations of this method), than maybe we need to review this for performance.
-        for (DynamicIndexField field : dynamicFields) {
-            if (field.matches(fieldType).match) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Returns all IndexField's which have a DerefValue.
      */
     public List<IndexField> getDerefIndexFields() {
@@ -170,6 +153,30 @@ public class IndexerConf {
 
     public void setSystemFields(SystemFields systemFields) {
         this.systemFields = systemFields;
+    }
+
+    public boolean changesAffectIndex(VTaggedRecord vtRecord, Scope scope) throws InterruptedException, RepositoryException {
+        Set<FieldType> changedFields = vtRecord.getUpdatedFieldsByScope().get(scope);
+
+        // Check static fields and dynamic fields
+        for (FieldType fieldType: changedFields) {
+            if (repoFieldDependencies.contains(fieldType.getId())) {
+                return true;
+            }
+
+            // If there are lots of dynamic index fields, or lots of fields which are not indexed at all (thus
+            // leading to lots of invocations of this method), than maybe we need to review this for performance.
+            for (DynamicIndexField field : dynamicFields) {
+                if (field.matches(fieldType).match) {
+                    return true;
+                }
+            }
+
+        }
+
+        // Check <fields>
+        return indexFields.isIndexAffectedByUpdate(vtRecord, scope);
+
     }
 
 }

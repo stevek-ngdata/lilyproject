@@ -269,15 +269,13 @@ public class IndexUpdater implements RowLogMessageListener {
                 //
                 // Handle changes to non-versioned fields
                 //
-                if (updatedFieldsByScope.get(Scope.NON_VERSIONED).size() > 0) {
-                    if (indexer.getConf().getIndexFields().isIndexAffectedByUpdate(vtRecord, Scope.NON_VERSIONED)) {
+                if (indexer.getConf().changesAffectIndex(vtRecord, Scope.NON_VERSIONED)) {
                         indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
                         // After this we go to the treatment of changed vtag fields
-                        if (log.isDebugEnabled()) {
-                            log.debug(
-                                    String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
-                                            vtRecord.getId()));
-                        }
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                                String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
+                                        vtRecord.getId()));
                     }
                 }
 
@@ -292,8 +290,8 @@ public class IndexUpdater implements RowLogMessageListener {
                 // it would work as well if this code would not be here.
                 //
                 if (vtagsToIndex.isEmpty() && (event.getVersionCreated() != -1 || event.getVersionUpdated() != -1)) {
-                    if (indexer.getConf().getIndexFields().isIndexAffectedByUpdate(vtRecord, Scope.VERSIONED)
-                            || indexer.getConf().getIndexFields().isIndexAffectedByUpdate(vtRecord, Scope.VERSIONED_MUTABLE)) {
+                    if (indexer.getConf().changesAffectIndex(vtRecord, Scope.VERSIONED)
+                            || indexer.getConf().changesAffectIndex(vtRecord, Scope.VERSIONED_MUTABLE)) {
 
                         long version =
                                 event.getVersionCreated() != -1 ? event.getVersionCreated() : event.getVersionUpdated();

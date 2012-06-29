@@ -330,7 +330,9 @@ public class IndexerConfBuilder {
 
     public IndexFields buildIndexFields(Element el) throws Exception {
         IndexFields indexFields = new IndexFields();
-        addChildNodes(el, indexFields, "match", "field");
+        if (el != null) {
+            addChildNodes(el, indexFields, "match", "field");
+        }
         return indexFields;
     }
 
