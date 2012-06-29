@@ -216,7 +216,6 @@ public class IndexUpdater implements RowLogMessageListener {
 
     private void handleRecordCreateUpdate(VTaggedRecord vtRecord) throws Exception {
         RecordEvent event = vtRecord.getRecordEvent();
-        Map<Scope, Set<FieldType>> updatedFieldsByScope = vtRecord.getUpdatedFieldsByScope();
         Map<Long, Set<SchemaId>> vtagsByVersion = vtRecord.getVTagsByVersion();
 
         // Determine the IndexCase:

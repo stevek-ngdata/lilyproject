@@ -175,7 +175,7 @@ public class Indexer {
         // re-evaluate all fields for each vtag.
         for (SchemaId vtag : vtags) {
 
-            SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(typeManager);
+            SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(typeManager, record.getId(), getIndexId(record.getId(), vtag), vtag, version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 
@@ -232,11 +232,7 @@ public class Indexer {
                 continue;
             }
 
-            SolrInputDocument solrDoc = solrDocumentBuilder
-                .recordId(record.getId())
-                .vtag(vtag)
-                .version(version)
-                .build();
+            SolrInputDocument solrDoc = solrDocumentBuilder.build();
 
             // Can be useful during development
             if (log.isDebugEnabled()) {

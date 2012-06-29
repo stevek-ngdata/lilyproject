@@ -16,11 +16,15 @@ public class SolrDocumentBuilder {
     private boolean emptyDocument = true;
 
     private RecordId recordId;
+    private String key;
     private SchemaId vtag;
     private long version;
 
-    public SolrDocumentBuilder(TypeManager typeManager) {
+    public SolrDocumentBuilder(TypeManager typeManager, RecordId recordId, String key, SchemaId vtag, long version) {
         this.typeManager = typeManager;
+        this.recordId = recordId;
+        this.key = key;
+        this.version = version;
     }
 
     public SolrDocumentBuilder fields(String fieldName, List<String> values) {
@@ -38,34 +42,13 @@ public class SolrDocumentBuilder {
         return emptyDocument;
     }
 
-    public SolrDocumentBuilder recordId(RecordId recordId) {
-        this.recordId = recordId;
-        return this;
-    }
-
-    public SolrDocumentBuilder vtag(SchemaId vtag) {
-        this.vtag = vtag;
-        return this;
-    }
-
-    public SolrDocumentBuilder version(long version) {
-        this.version = version;
-        return this;
-    }
-
     public SolrInputDocument build() throws InterruptedException, RepositoryException {
         solrDoc.setField("lily.id", recordId.toString());
-        solrDoc.setField("lily.key", getIndexId(recordId, vtag));
+        solrDoc.setField("lily.key", key);
         solrDoc.setField("lily.vtagId", vtag.toString());
         solrDoc.setField("lily.vtag", typeManager.getFieldTypeById(vtag).getName().getName());
         solrDoc.setField("lily.version", version);
         return solrDoc;
-    }
-
-    // Keep in sync with Indexer.java
-    // FIXME: remove duplication
-    protected String getIndexId(RecordId recordId, SchemaId vtag) {
-        return recordId + "-" + vtag.toString();
     }
 
 }
