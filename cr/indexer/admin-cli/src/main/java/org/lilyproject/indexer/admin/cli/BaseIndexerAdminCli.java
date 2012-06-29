@@ -103,6 +103,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
         
         defaultBatchIndexConfigurationOption = OptionBuilder
                 .withArgName("batchconfig.json")
+                .hasOptionalArg()
                 .withDescription("Default configuration for batch builds in this index. If no value is provided" +
                 		"then the default batch index configuration will be removed.")
                 .withLongOpt("default-batch-config")
