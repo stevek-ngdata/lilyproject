@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -71,6 +72,7 @@ import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -138,7 +140,9 @@ public class IndexerTest {
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
     private static RecordType lastRecordType;
+
     private static Map<String, FieldType> fields = Maps.newHashMap();
+    private Map<String, Integer> matchResultCounts = Maps.newHashMap();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -348,9 +352,8 @@ public class IndexerTest {
         RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
         RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
-        for (int i = 1; i <= 8; i++) {
-            FieldType ns1Field = typeManager
-                    .createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
+        for (int i = 1; i <= 4; i++) {
+            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
             fields.put("ns:match" + i, ns1Field);
 
             matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
@@ -388,62 +391,118 @@ public class IndexerTest {
         changeIndexUpdater("indexerconf_match.xml");
         messageVerifier.init();
 
-        //
-        // Testing match conditions
-        //
-        log.debug("Begin test match");
-        testMatch("match"); // versioned fields
-        testMatch("nvmatch"); // non-versioned fields
+        createMatchTestRecord(NS, "Alpha", "alpha");
+        createMatchTestRecord(NS, "Beta", "beta");
+        createMatchTestRecord(NS2, "Alpha", "gamma");
+        createMatchTestRecord(NS2, "Beta", "delta");
 
+        // Initialise a map containing all the expected result counts
+        // for each of the four records, once with the original value, and once with the updated value.
+        // Initially no records have updated values, so the last 4 digits are always zero.
+        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+
+        setExpectedCountsForMatch("nvmatch1", 1, 1, 1, 1, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("nvmatch2", 1, 1, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("nvmatch3", 1, 0, 1, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("nvmatch4", 1, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+
+        verifyMatchResultCounts();
+
+        // changes to versioned fields:
+        // there should be two solr documents per record: one with the original value, and one with the updated value
+        updateMatchTestRecords("match1");
+        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 1, 1, 1, 1);
+        setExpectedCountsForMatch("match2", 2, 2, 0, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("match3", 2, 0, 2, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("match4", 2, 0, 0, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch1", 2, 2, 2, 2, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch2", 2, 2, 0, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch3", 2, 0, 2, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch4", 2, 0, 0, 0, 0, 0, 0, 0);
+
+        verifyMatchResultCounts();
+        updateMatchTestRecords("match2");
+        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 1, 1, 0, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("match3");
+        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 1, 0, 1, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("match4");
+        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 1, 0, 0, 0);
+        verifyMatchResultCounts();
+
+        // changes to unversioned fields:
+        // there should be two solr documents per record, both with the updated value
+        updateMatchTestRecords("nvmatch1");
+        setExpectedCountsForMatch("nvmatch1", 0, 0, 0, 0, 2, 2, 2, 2);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("nvmatch2");
+        setExpectedCountsForMatch("nvmatch2", 0, 0, 0, 0, 2, 2, 0, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("nvmatch3");
+        setExpectedCountsForMatch("nvmatch3", 0, 0, 0, 0, 2, 0, 2, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("nvmatch4");
+        setExpectedCountsForMatch("nvmatch4", 0, 0, 0, 0, 2, 0, 0, 0);
+        verifyMatchResultCounts();
+
+        // TODO: test 'field' and variantProps matching
     }
 
-    private void testMatch(String prefix) throws Exception {
-        createMatchTestRecord(NS, "Alpha", "ns_alpha_");
-        createMatchTestRecord(NS, "Beta", "ns_beta_");
-        createMatchTestRecord(NS2, "Alpha", "ns2_alpha_");
-        createMatchTestRecord(NS2, "Beta", "ns2_beta_");
+    private void verifyMatchResultCounts() throws Exception{
+        List<String> results = Lists.newArrayList();
+        boolean allOk = true;
 
         commitIndex();
+        for (String condition: matchResultCounts.keySet()) {
+            Integer expected = matchResultCounts.get(condition);
+            long numFound = getQueryResponse(condition).getResults().getNumFound();
+            if (numFound == expected.longValue()) {
+                results.add("OK: " + condition + " => " + expected);
+            } else {
+                results.add("ERROR: " + condition + " => " + numFound + " in stead of " + expected);
+                allOk = false;
+            }
+        }
 
-        verifyMatchCounts(prefix + "1", "one", 1, 1, 1, 1); // all (no matches)
-        verifyMatchCounts(prefix + "2", "two", 1, 1, 0, 0); // ns:*
-        verifyMatchCounts(prefix + "3", "three", 0, 0, 1, 1); // ns2:*
-        verifyMatchCounts(prefix + "4", "four", 1, 0, 1, 0); // *:Alpha
-        verifyMatchCounts(prefix + "5", "five", 0, 1, 0, 1); // *:Beta
-        verifyMatchCounts(prefix + "6", "six", 1, 0, 0, 0); // ns:Alpha
-        verifyMatchCounts(prefix + "7", "seven", 0, 0, 0, 1); // ns2:Beta
-
+        if (!allOk) {
+            fail(Joiner.on("\n").join(results));
+        }
     }
 
-    private void verifyMatchCounts(String fieldName, String number, int ns_a, int ns_b, int ns2_a, int ns2_b)
-            throws Exception {
-        verifyResultCount(fieldName + ":" + "ns_alpha_" + number, ns_a);
-        verifyResultCount(fieldName + ":" + "ns_beta_" + number, ns_b);
-        verifyResultCount(fieldName + ":" + "ns2_alpha_" + number, ns2_a);
-        verifyResultCount(fieldName + ":" + "ns2_beta_" + number, ns2_b);
+    private void updateMatchTestRecords(String fieldToUpdate) throws InterruptedException, RepositoryException {
+        for (String id: new String[] { "alpha", "beta", "gamma", "delta" }) {
+            Record record = repository.read(repository.getIdGenerator().newRecordId(id));
+            record.setField(field("ns:" + fieldToUpdate).getName(), id+ "_" + fieldToUpdate + "_updated");
+            record.setField(previewTag.getName(), 1L);
+            repository.update(record);
+        }
     }
 
-    private void createMatchTestRecord(String ns, String name, String prefix) throws Exception {
+    private void setExpectedCountsForMatch(String indexField, int... counts) {
+        matchResultCounts.put(indexField + ":alpha_" + indexField + "_orig", counts[0]);
+        matchResultCounts.put(indexField + ":beta_" + indexField + "_orig", counts[1]);
+        matchResultCounts.put(indexField + ":gamma_" + indexField + "_orig", counts[2]);
+        matchResultCounts.put(indexField + ":delta_" + indexField + "_orig", counts[3]);
+        matchResultCounts.put(indexField + ":alpha_" + indexField + "_updated", counts[4]);
+        matchResultCounts.put(indexField + ":beta_" + indexField + "_updated", counts[5]);
+        matchResultCounts.put(indexField + ":gamma_" + indexField + "_updated", counts[6]);
+        matchResultCounts.put(indexField + ":delta_" + indexField + "_updated", counts[7]);
+    }
+
+    private void createMatchTestRecord(String ns, String name, String id) throws Exception {
         RecordBuilder builder = repository.recordBuilder();
 
         builder.recordType(new QName(ns, name))
-            .field(new QName(NS, "match1"), prefix + "one")
-            .field(new QName(NS, "match2"), prefix + "two")
-            .field(new QName(NS, "match3"), prefix + "three")
-            .field(new QName(NS, "match4"), prefix + "four")
-            .field(new QName(NS, "match5"), prefix + "five")
-            .field(new QName(NS, "match6"), prefix + "six")
-            .field(new QName(NS, "match7"), prefix + "seven")
-            .field(new QName(NS, "match8"), prefix + "eight")
+            .id(id);
 
-            .field(new QName(NS, "nvmatch1"), prefix + "one")
-            .field(new QName(NS, "nvmatch2"), prefix + "two")
-            .field(new QName(NS, "nvmatch3"), prefix + "three")
-            .field(new QName(NS, "nvmatch4"), prefix + "four")
-            .field(new QName(NS, "nvmatch5"), prefix + "five")
-            .field(new QName(NS, "nvmatch6"), prefix + "six")
-            .field(new QName(NS, "nvmatch7"), prefix + "seven")
-            .field(new QName(NS, "nvmatch8"), prefix + "eight");
+        for (int i = 1; i <= 4; i++) {
+            builder.field(new QName(NS, "match" + i), id + "_" + "match" + i + "_orig");
+            builder.field(new QName(NS, "nvmatch" + i), id + "_" + "nvmatch" + i + "_orig");
+        }
 
         builder.create();
     }
