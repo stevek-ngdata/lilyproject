@@ -340,8 +340,10 @@ public class IndexerTest {
         lastRecordType = typeManager.createRecordType(lastRecordType);
 
         //
-        // Schema types for testing match
+        // Schema types for testing <match> in indexerconf
         //
+
+        // versioned fields
         RecordType matchNs1AlphaRecordType = typeManager.newRecordType(new QName(NS, "Alpha"));
         RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
@@ -358,10 +360,23 @@ public class IndexerTest {
 
         }
 
+        // non-versioned fields
+        for (int i = 1; i <= 8; i++) {
+            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "nvmatch" + i), Scope.NON_VERSIONED));
+            fields.put("ns:nvmatch" + i, ns1Field);
+
+            matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+            matchNs1BetaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+            matchNs2AlphaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+            matchNs2BetaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+
+        }
+
         typeManager.createRecordType(matchNs1AlphaRecordType);
         typeManager.createRecordType(matchNs1BetaRecordType);
         typeManager.createRecordType(matchNs2AlphaRecordType);
         typeManager.createRecordType(matchNs2BetaRecordType);
+
     }
 
     private static FieldType field(String name) {
@@ -376,26 +391,27 @@ public class IndexerTest {
         //
         // Testing match conditions
         //
-        {
-            log.debug("Begin test match");
-            createMatchTestRecord(NS, "Alpha", "ns_alpha_");
-            createMatchTestRecord(NS, "Beta", "ns_beta_");
-            createMatchTestRecord(NS2, "Alpha", "ns2_alpha_");
-            createMatchTestRecord(NS2, "Beta", "ns2_beta_");
+        log.debug("Begin test match");
+        testMatch("match"); // versioned fields
+        testMatch("nvmatch"); // non-versioned fields
 
-            commitIndex();
+    }
 
-            verifyResultCount("match2:ns2_alpha_two", 0);
+    private void testMatch(String prefix) throws Exception {
+        createMatchTestRecord(NS, "Alpha", "ns_alpha_");
+        createMatchTestRecord(NS, "Beta", "ns_beta_");
+        createMatchTestRecord(NS2, "Alpha", "ns2_alpha_");
+        createMatchTestRecord(NS2, "Beta", "ns2_beta_");
 
-            verifyMatchCounts("match1", "one", 1, 1, 1, 1); // all (no matches)
-            verifyMatchCounts("match2", "two", 1, 1, 0, 0); // ns:*
-            verifyMatchCounts("match3", "three", 0, 0, 1, 1); // ns2:*
-            verifyMatchCounts("match4", "four", 1, 0, 1, 0); // *:Alpha
-            verifyMatchCounts("match5", "five", 0, 1, 0, 1); // *:Beta
-            verifyMatchCounts("match6", "six", 1, 0, 0, 0); // ns:Alpha
-            verifyMatchCounts("match7", "seven", 0, 0, 0, 1); // ns2:Beta
+        commitIndex();
 
-        }
+        verifyMatchCounts(prefix + "1", "one", 1, 1, 1, 1); // all (no matches)
+        verifyMatchCounts(prefix + "2", "two", 1, 1, 0, 0); // ns:*
+        verifyMatchCounts(prefix + "3", "three", 0, 0, 1, 1); // ns2:*
+        verifyMatchCounts(prefix + "4", "four", 1, 0, 1, 0); // *:Alpha
+        verifyMatchCounts(prefix + "5", "five", 0, 1, 0, 1); // *:Beta
+        verifyMatchCounts(prefix + "6", "six", 1, 0, 0, 0); // ns:Alpha
+        verifyMatchCounts(prefix + "7", "seven", 0, 0, 0, 1); // ns2:Beta
 
     }
 
@@ -411,14 +427,23 @@ public class IndexerTest {
         RecordBuilder builder = repository.recordBuilder();
 
         builder.recordType(new QName(ns, name))
-                .field(new QName(NS, "match1"), prefix + "one")
-                .field(new QName(NS, "match2"), prefix + "two")
-                .field(new QName(NS, "match3"), prefix + "three")
-                .field(new QName(NS, "match4"), prefix + "four")
-                .field(new QName(NS, "match5"), prefix + "five")
-                .field(new QName(NS, "match6"), prefix + "six")
-                .field(new QName(NS, "match7"), prefix + "seven")
-                .field(new QName(NS, "match8"), prefix + "eight");
+            .field(new QName(NS, "match1"), prefix + "one")
+            .field(new QName(NS, "match2"), prefix + "two")
+            .field(new QName(NS, "match3"), prefix + "three")
+            .field(new QName(NS, "match4"), prefix + "four")
+            .field(new QName(NS, "match5"), prefix + "five")
+            .field(new QName(NS, "match6"), prefix + "six")
+            .field(new QName(NS, "match7"), prefix + "seven")
+            .field(new QName(NS, "match8"), prefix + "eight")
+
+            .field(new QName(NS, "nvmatch1"), prefix + "one")
+            .field(new QName(NS, "nvmatch2"), prefix + "two")
+            .field(new QName(NS, "nvmatch3"), prefix + "three")
+            .field(new QName(NS, "nvmatch4"), prefix + "four")
+            .field(new QName(NS, "nvmatch5"), prefix + "five")
+            .field(new QName(NS, "nvmatch6"), prefix + "six")
+            .field(new QName(NS, "nvmatch7"), prefix + "seven")
+            .field(new QName(NS, "nvmatch8"), prefix + "eight");
 
         builder.create();
     }

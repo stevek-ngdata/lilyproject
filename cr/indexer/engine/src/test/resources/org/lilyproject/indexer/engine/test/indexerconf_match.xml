@@ -42,6 +42,34 @@
       <field name="match7" value="ns:match7"/>
     </match>
 
+    <!-- always indexed -->
+    <field name="match1" value="ns:nvmatch1"/>
+
+    <!-- match on ns only -->
+    <match recordType="ns:*">
+      <field name="match2" value="ns:nvmatch2"/>
+    </match>
+    <match recordType="ns2:*">
+      <field name="match3" value="ns:nvmatch3"/>
+    </match>
+
+    <!-- match on name only -->
+    <match recordType="*:Alpha">
+      <field name="match4" value="ns:nvmatch4"/>
+    </match>
+    <match recordType="*:Beta">
+      <field name="match5" value="ns:nvmatch5"/>
+    </match>
+
+    <!-- match on ns and name -->
+    <match recordType="ns:Alpha">
+      <field name="match6" value="ns:nvmatch6"/>
+    </match>
+
+    <match recordType="ns2:Beta">
+      <field name="match7" value="ns:nvmatch7"/>
+    </match>
+
   </fields>
 
 </indexer>
