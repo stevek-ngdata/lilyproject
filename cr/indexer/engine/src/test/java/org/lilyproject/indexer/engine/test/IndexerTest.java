@@ -390,8 +390,8 @@ public class IndexerTest {
             verifyMatchCounts("match1", "one", 1, 1, 1, 1); // all (no matches)
             verifyMatchCounts("match2", "two", 1, 1, 0, 0); // ns:*
             verifyMatchCounts("match3", "three", 0, 0, 1, 1); // ns2:*
-            //verifyMatchCounts("match4", "four", 1, 0, 1, 0); // *:Alpha             //Uncomment after RecordMatch on namespace * is fixed
-            //verifyMatchCounts("match5", "five", 0, 1, 0, 1); // *:Beta
+            verifyMatchCounts("match4", "four", 1, 0, 1, 0); // *:Alpha
+            verifyMatchCounts("match5", "five", 0, 1, 0, 1); // *:Beta
             verifyMatchCounts("match6", "six", 1, 0, 0, 0); // ns:Alpha
             verifyMatchCounts("match7", "seven", 0, 0, 0, 1); // ns2:Beta
 

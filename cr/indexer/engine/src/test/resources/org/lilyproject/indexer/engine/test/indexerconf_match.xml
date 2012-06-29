@@ -26,14 +26,12 @@
     </match>
 
     <!-- match on name only -->
-    <!-- FIXME: IndexerConfBuilder.parseQName complains about * namespace
     <match recordType="*:Alpha">
       <field name="match4" value="ns:match4"/>
     </match>
     <match recordType="*:Beta">
       <field name="match5" value="ns:match5"/>
     </match>
-     -->
 
     <!-- match on ns and name -->
     <match recordType="ns:Alpha">
