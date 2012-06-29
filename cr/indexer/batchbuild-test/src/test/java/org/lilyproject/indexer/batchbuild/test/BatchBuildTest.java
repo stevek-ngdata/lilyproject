@@ -37,7 +37,7 @@ import org.lilyproject.util.test.TestHomeUtil;
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
     private static File tmpDir;
-    private static int BUILD_TIMEOUT = 90000;
+    private static int BUILD_TIMEOUT = 120000;
 
     private FieldType ft1;
     private RecordType rt1;
