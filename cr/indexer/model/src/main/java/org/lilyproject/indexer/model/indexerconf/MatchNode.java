@@ -2,7 +2,7 @@ package org.lilyproject.indexer.model.indexerconf;
 
 import java.util.List;
 
-import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
@@ -30,19 +30,16 @@ public class MatchNode extends ContainerMappingNode {
     @Override
     public boolean isIndexAffectedByUpdate(VTaggedRecord vtRecord, Scope scope) throws InterruptedException,
             RepositoryException {
-        // If something changed which may affect the outcome of the match
-        // condition,
-        // we must reindex (immediately return true)
-
+        // If the matcher uses the record type and the record type changed, we must reindex.
         if (recordMatcher.dependsOnRecordType()) {
             if (vtRecord.getRecordEvent().getRecordTypeChanged()) {
                 return true;
             }
         }
 
-        for (QName fieldTypeName: recordMatcher.getFieldDependencies()) {
-            // FIXME: updatedFieldsByScope contains FieldType, not QName
-            if (vtRecord.getUpdatedFieldsByScope().get(scope).contains(fieldTypeName)) {
+        // If the matcher uses fields and any of the fields were changed, we must reindex.
+        for (FieldType ft: vtRecord.getUpdatedFieldsByScope().get(scope)) {
+            if (recordMatcher.getFieldDependencies().contains(ft.getName())) {
                 return true;
             }
         }
