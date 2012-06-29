@@ -193,7 +193,7 @@ public class IndexerConfBuilder {
 
         String recordTypeAttr = DocumentHelper.getAttribute(element, "recordType", false);
         if (recordTypeAttr != null) {
-            QName rtName = parseQName(recordTypeAttr, element);
+            QName rtName = parseQName(recordTypeAttr, element, true);
             rtNamespacePattern = new WildcardPattern(rtName.getNamespace());
             rtNamePattern = new WildcardPattern(rtName.getName());
         }
@@ -653,6 +653,25 @@ public class IndexerConfBuilder {
     }
 
     private QName parseQName(String qname, Element contextEl) throws IndexerConfException {
+        return parseQName(qname, contextEl, false);
+    }
+
+    private QName parseQName(String qname, Element contextEl, boolean prefixResolvingOptional)
+            throws IndexerConfException {
+        // The qualified name can either be specified in Lily-style ("{namespace}name") or
+        // in XML-style (prefix:name). In Lily-style, if the "namespace" matches a defined
+        // prefix, it is substituted.
+
+        if (qname.startsWith("{")) {
+            QName name = QName.fromString(qname);
+            String ns = contextEl.lookupNamespaceURI(name.getNamespace());
+            if (ns != null) {
+                return new QName(ns, name.getName());
+            } else {
+                return name;
+            }
+        }
+
         int colonPos = qname.indexOf(":");
         if (colonPos == -1) {
             throw new IndexerConfException(
@@ -663,8 +682,11 @@ public class IndexerConfBuilder {
         String localName = qname.substring(colonPos + 1);
 
         String uri = contextEl.lookupNamespaceURI(prefix);
-        if (uri == null) {
+        if (uri == null && !prefixResolvingOptional) {
             throw new IndexerConfException("Prefix does not resolve to a namespace: " + qname);
+        }
+        if (uri == null) {
+            uri = prefix;
         }
 
         return new QName(uri, localName);
