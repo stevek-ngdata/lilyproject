@@ -148,6 +148,8 @@ public class IndexDefinitionConverter {
         node.put("generalState", index.getGeneralState().toString());
         node.put("batchBuildState", index.getBatchBuildState().toString());
         node.put("updateState", index.getUpdateState().toString());
+        
+        node.put("zkDataVersion", index.getZkDataVersion());
 
         if (index.getQueueSubscriptionId() != null)
             node.put("queueSubscriptionId", index.getQueueSubscriptionId());
