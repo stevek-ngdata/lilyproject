@@ -143,7 +143,8 @@ public class IndexDefinitionConverter {
 
     public ObjectNode toJson(IndexDefinition index) {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
-
+        
+        node.put("name", index.getName());        
         node.put("generalState", index.getGeneralState().toString());
         node.put("batchBuildState", index.getBatchBuildState().toString());
         node.put("updateState", index.getUpdateState().toString());
