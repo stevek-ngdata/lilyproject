@@ -47,6 +47,9 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Option updateStateOption;
     protected Option buildStateOption;
     protected Option outputFileOption;
+    protected Option batchIndexConfigurationOption;
+    protected Option defaultBatchIndexConfigurationOption;
+    protected Option printBatchConfigurationOption;
 
     protected String indexName;
     protected Map<String, String> solrShards;
@@ -55,9 +58,12 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected IndexBatchBuildState buildState;
     protected byte[] indexerConfiguration;
     protected byte[] shardingConfiguration;
+    protected byte[] batchIndexConfiguration;
+    protected byte[] defaultBatchIndexConfiguration;
     protected WriteableIndexerModel model;
     private ZooKeeperItf zk;
     protected String outputFileName;
+    protected boolean printBatchConfiguration;
 
     public BaseIndexerAdminCli() {
         // Here we instantiate various options, but it is up to subclasses to decide which ones
@@ -94,6 +100,21 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Indexer configuration.")
                 .withLongOpt("indexer-config")
                 .create("c");
+        
+        defaultBatchIndexConfigurationOption = OptionBuilder
+                .withArgName("batchconfig.json")
+                .withDescription("Default configuration for batch builds in this index. If no value is provided" +
+                		"then the default batch index configuration will be removed.")
+                .withLongOpt("default-batch-config")
+                .create("dbi");
+                
+        batchIndexConfigurationOption = OptionBuilder
+                .withArgName("batchconfig.json")
+                .hasArg()
+                .withDescription("Configuration for the current batch build of this index. Build state must be set" +
+                		" to BUILD_REQUESTED")
+                .withLongOpt("batch-config")
+                .create("bi");
 
         generalStateOption = OptionBuilder
                 .withArgName("state")
@@ -123,6 +144,11 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Output file name")
                 .withLongOpt("output-file")
                 .create("o");
+        
+        printBatchConfigurationOption = OptionBuilder
+                .withDescription("Print the batch index configuration")
+                .withLongOpt("print-batch-conf")
+                .create("pbc");
     }
 
     @Override
@@ -337,6 +363,38 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 System.out.println("Use --" + forceOption.getLongOpt() + " to overwrite it.");
             }
         }
+        
+        if (cmd.hasOption(defaultBatchIndexConfigurationOption.getOpt())) {
+            String fileName = cmd.getOptionValue(defaultBatchIndexConfigurationOption.getOpt());
+            if (fileName != null) {
+                File configurationFile = new File(fileName);
+            
+                if (!configurationFile.exists()) {
+                    System.out.println("Specified default batch build configuration file not found:");
+                    System.out.println(configurationFile.getAbsolutePath());
+                    return 1;
+                }
+    
+                defaultBatchIndexConfiguration = FileUtils.readFileToByteArray(configurationFile);
+            } else {
+                defaultBatchIndexConfiguration = new byte[0] ;
+            }
+        }
+        
+        if (cmd.hasOption(batchIndexConfigurationOption.getOpt())) {
+            File configurationFile = new File(cmd.getOptionValue(
+                    batchIndexConfigurationOption.getOpt()));
+            
+            if (!configurationFile.exists()) {
+                System.out.println("Specified batch build configuration file not found:");
+                System.out.println(configurationFile.getAbsolutePath());
+                return 1;
+            }
+
+            batchIndexConfiguration = FileUtils.readFileToByteArray(configurationFile);
+        }
+        
+        printBatchConfiguration = cmd.hasOption(printBatchConfigurationOption.getOpt());
 
         return 0;
     }
