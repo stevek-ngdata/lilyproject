@@ -187,7 +187,7 @@ public class Indexer {
             //
             // 1: evaluate the static index fields
             //
-            for (IndexField field : collectFieldNodes(record, version, vtag)) {
+            for (IndexField field: collectIndexFields(record, version, vtag)) {
                 List<String> values = valueEvaluator.eval(field.getValue(), record, repository, vtag);
                 solrDocumentBuilder.fields(field.getName(), values);
             }
@@ -254,7 +254,7 @@ public class Indexer {
         }
     }
 
-    private List<IndexField> collectFieldNodes(IdRecord record, long version, SchemaId vtag) {
+    private List<IndexField> collectIndexFields(IdRecord record, long version, SchemaId vtag) {
         List<IndexField> result = Lists.newArrayList();
         getConf().getIndexFields().collectIndexFields(result, record, version, vtag);
         return result;

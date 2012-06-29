@@ -344,7 +344,7 @@ public class IndexerConfBuilder {
         return matchNode;
     }
 
-    private IndexField buildFieldNode(Element el) throws Exception {
+    private IndexField buildIndexField(Element el) throws Exception {
         String name = DocumentHelper.getAttribute(el, "name", true);
         return new IndexField(name, buildValue(el));
     }
@@ -364,7 +364,7 @@ public class IndexerConfBuilder {
             } else if (name.equals("match")) {
                 parent.addChildNode(buildMatchNode(childEl));
             } else if (name.equals("field")) {
-                parent.addChildNode(buildFieldNode(childEl));
+                parent.addChildNode(buildIndexField(childEl));
             } else {
                 throw new IndexerConfException(String.format("Unexpected tag name '%s' while parsing indexerconf", childEl.getTagName()));
             }
