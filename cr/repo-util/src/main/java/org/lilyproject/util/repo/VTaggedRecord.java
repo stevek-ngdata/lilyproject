@@ -66,6 +66,7 @@ public class VTaggedRecord {
 
     private Map<Scope, Set<FieldType>> updatedFieldsByScope;
     private Map<Scope, Set<SchemaId>> updatedFieldsSchemaIdByScope;
+    private Map<Scope, Set<QName>> updatedFieldsNameByScope;
 
     private FieldFilter fieldFilter;
 
@@ -225,6 +226,13 @@ public class VTaggedRecord {
         return updatedFieldsSchemaIdByScope;
     }
 
+    public Map<Scope, Set<QName>> getUpdatedFieldTypeNamesByScope() throws RepositoryException, InterruptedException {
+        if (updatedFieldsNameByScope == null) {
+            updatedFieldsNameByScope = getFieldTypeNamesAndScope(recordEvent.getUpdatedFields());
+        }
+        return updatedFieldsNameByScope;
+    }
+
     public Map<Long, Set<SchemaId>> getVTagsByVersion() throws InterruptedException, RepositoryException {
         if (tagsByVersion == null) {
             tagsByVersion = idTagsByVersion(getVTags());
@@ -314,6 +322,7 @@ public class VTaggedRecord {
     private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
 
+        // Could be written more elegantly using Multimaps.index, but we want to limit dependencies
         Map<Scope, Set<FieldType>> result = new EnumMap<Scope, Set<FieldType>>(Scope.class);
         for (Scope scope : Scope.values()) {
             result.put(scope, new HashSet<FieldType>());
@@ -337,24 +346,32 @@ public class VTaggedRecord {
 
     private Map<Scope, Set<SchemaId>> getFieldTypeIdsAndScope(Set<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
-
-        Map<Scope, Set<SchemaId>> result = new EnumMap<Scope, Set<SchemaId>>(Scope.class);
-        for (Scope scope : Scope.values()) {
-            result.put(scope, new HashSet<SchemaId>());
-        }
-
-        for (SchemaId fieldId : fieldIds) {
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeById(fieldId);
-            } catch (FieldTypeNotFoundException e) {
-                // A field whose field type does not exist: skip it
-                continue;
+        // could be written more elegantly with guava Maps.transformedMap, but we want to limit dependencies
+        Map<Scope, Set<SchemaId>> result = new HashMap<Scope, Set<SchemaId>>();
+        Map<Scope, Set<FieldType>> fieldTypesByScope = getFieldTypeAndScope(fieldIds);
+        for (Scope scope: fieldTypesByScope.keySet()) {
+            Set<SchemaId> schemaIds = new HashSet<SchemaId>();
+            for (FieldType t: fieldTypesByScope.get(scope)) {
+                schemaIds.add(t.getId());
             }
-            if (fieldFilter.accept(fieldType)) {
-                result.get(fieldType.getScope()).add(fieldId);
+            result.put(scope, schemaIds);
+        };
+
+        return result;
+    }
+
+    private Map<Scope, Set<QName>> getFieldTypeNamesAndScope(Set<SchemaId> fieldIds)
+            throws RepositoryException, InterruptedException {
+        // could be written more elegantly with guava Maps.transformedMap, but we want to limit dependencies
+        Map<Scope, Set<QName>> result = new HashMap<Scope, Set<QName>>();
+        Map<Scope, Set<FieldType>> fieldTypesByScope = getFieldTypeAndScope(fieldIds);
+        for (Scope scope: fieldTypesByScope.keySet()) {
+            Set<QName> schemaIds = new HashSet<QName>();
+            for (FieldType t: fieldTypesByScope.get(scope)) {
+                schemaIds.add(t.getName());
             }
-        }
+            result.put(scope, schemaIds);
+        };
 
         return result;
     }

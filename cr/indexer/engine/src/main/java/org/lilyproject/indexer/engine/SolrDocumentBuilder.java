@@ -24,6 +24,7 @@ public class SolrDocumentBuilder {
         this.typeManager = typeManager;
         this.recordId = recordId;
         this.key = key;
+        this.vtag = vtag;
         this.version = version;
     }
 
