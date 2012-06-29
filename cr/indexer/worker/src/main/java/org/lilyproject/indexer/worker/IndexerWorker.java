@@ -44,6 +44,7 @@ import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.engine.SolrShardManager;
+import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
