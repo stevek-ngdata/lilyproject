@@ -16,7 +16,6 @@
 package org.lilyproject.indexer.master;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -87,7 +86,7 @@ public class BatchIndexBuilder {
         
         JsonNode jsonNode = JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration)).get("scan");
         RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository);
-        recordScan.setReturnFields(ReturnFields.NONE);
+        recordScan.setReturnFields(ReturnFields.ALL);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);
 
@@ -95,7 +94,7 @@ public class BatchIndexBuilder {
         job.getConfiguration().set("hbase.zookeeper.property.clientPort",
                 hbaseConf.get("hbase.zookeeper.property.clientPort"));
 
-        LilyMapReduceUtil.initMapperJob(recordScan, zkConnectString, repository, job);
+        LilyMapReduceUtil.initMapperJob(recordScan, true, zkConnectString, repository, job);
 
         //
         // Provide Lily ZooKeeper props

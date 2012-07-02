@@ -21,23 +21,23 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordScanner;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.io.Closer;
 
 /**
  * A Hadoop RecordReader based on Lily RecordScanners. Used by {@link LilyScanInputFormat}.
  */
-public class LilyScanRecordReader extends RecordReader<RecordIdWritable, RecordWritable> {
+public class LilyScanIdRecordReader extends RecordReader<RecordIdWritable, IdRecordWritable> {
     private LilyClient lilyClient;
-    private RecordScanner scanner;
-    private Record currentRecord;
+    private IdRecordScanner scanner;
+    private IdRecord currentRecord;
     
     private RecordIdWritable recordId = new RecordIdWritable();
-    private RecordWritable record = new RecordWritable();
+    private IdRecordWritable record = new IdRecordWritable();
     
-    public LilyScanRecordReader(LilyClient lilyClient, RecordScanner scanner) {
+    public LilyScanIdRecordReader(LilyClient lilyClient, IdRecordScanner scanner) {
         this.lilyClient = lilyClient;
         this.scanner = scanner;        
     }
@@ -64,7 +64,7 @@ public class LilyScanRecordReader extends RecordReader<RecordIdWritable, RecordW
     }
 
     @Override
-    public RecordWritable getCurrentValue() throws IOException, InterruptedException {
+    public IdRecordWritable getCurrentValue() throws IOException, InterruptedException {
         record.setRecord(currentRecord);
         return record;
     }

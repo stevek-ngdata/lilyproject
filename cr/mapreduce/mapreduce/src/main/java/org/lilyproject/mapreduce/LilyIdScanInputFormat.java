@@ -23,17 +23,17 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.lilyproject.client.LilyClient;
+import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.RecordScan;
-import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 
 /**
  * A MapReduce InputFormat for Lily based on Lily scanners.
  */
-public class LilyScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWritable, RecordWritable> implements Configurable {    
+public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWritable, IdRecordWritable> implements Configurable {    
 
     @Override
-    public RecordReader<RecordIdWritable, RecordWritable> createRecordReader(InputSplit inputSplit,
+    public RecordReader<RecordIdWritable, IdRecordWritable> createRecordReader(InputSplit inputSplit,
             TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
 
         LilyClient lilyClient = null;
@@ -51,13 +51,13 @@ public class LilyScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWri
         scan.setRawStartRecordId(split.getStartRow());
         scan.setRawStopRecordId(split.getEndRow());
 
-        RecordScanner scanner = null;
+        IdRecordScanner scanner = null;
         try {
-            scanner = lilyClient.getRepository().getScanner(scan);
+            scanner = lilyClient.getRepository().getScannerWithIds(scan);
         } catch (RepositoryException e) {
             throw new IOException("Error setting up RecordScanner", e);
         }
 
-        return new LilyScanRecordReader(lilyClient, scanner);
+        return new LilyScanIdRecordReader(lilyClient, scanner);
     }
 }

@@ -97,7 +97,7 @@ public class BatchBuildTest {
 
         // Set the index
         lilyProxy.getLilyServerProxy().addIndexFromResource(INDEX_NAME,
-                "org/lilyproject/indexer/batchbuild/test/indexerconf.xml", 500);
+                "org/lilyproject/indexer/batchbuild/test/indexerconf.xml", 1000);
 
         WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
         String lock = model.lockIndex(INDEX_NAME);

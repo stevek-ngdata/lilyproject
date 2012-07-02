@@ -48,11 +48,12 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
+import org.lilyproject.mapreduce.IdRecordMapper;
+import org.lilyproject.mapreduce.IdRecordWritable;
 import org.lilyproject.mapreduce.RecordIdWritable;
-import org.lilyproject.mapreduce.RecordMapper;
-import org.lilyproject.mapreduce.RecordWritable;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.TypeManager;
@@ -70,7 +71,7 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-public class IndexingMapper extends RecordMapper<ImmutableBytesWritable, Result> {
+public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Result> {
     private IdGenerator idGenerator;
     private Indexer indexer;
     private MultiThreadedHttpConnectionManager connectionManager;
@@ -191,27 +192,28 @@ public class IndexingMapper extends RecordMapper<ImmutableBytesWritable, Result>
     }
 
     @Override
-    public void map(RecordIdWritable recordIdWritable, RecordWritable recordWritable, Context context)
+    public void map(RecordIdWritable recordIdWritable, IdRecordWritable recordWritable, Context context)
             throws IOException, InterruptedException {
-        executor.submit(new MappingTask(recordIdWritable.getRecordId(), context));
+        executor.submit(new MappingTask(recordWritable.getRecord(), context));
     }
 
     public class MappingTask implements Runnable {
-        private RecordId recordId;
+        private IdRecord idRecord;
         private Context context;
 
-        private MappingTask(RecordId recordId, Context context) {
-            this.recordId = recordId;
+        private MappingTask(IdRecord idRecord, Context context) {
+            this.idRecord = idRecord;
             this.context = context;
         }
 
         @Override
         public void run() {
             boolean locked = false;
+            RecordId recordId = idRecord.getId();
             try {
                 indexLocker.lock(recordId);
                 locked = true;
-                indexer.index(recordId);
+                indexer.index(idRecord);
             } catch (Throwable t) {
                 context.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS).increment(1);
 
