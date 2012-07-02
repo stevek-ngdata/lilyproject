@@ -352,7 +352,7 @@ public class IndexerTest {
         RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
         RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
-        for (int i = 1; i <= 4; i++) {
+        for (int i = 1; i <= 5; i++) {
             FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
             fields.put("ns:match" + i, ns1Field);
 
@@ -395,6 +395,8 @@ public class IndexerTest {
         createMatchTestRecord(NS, "Beta", "beta");
         createMatchTestRecord(NS2, "Alpha", "gamma");
         createMatchTestRecord(NS2, "Beta", "delta");
+
+        /******** Test recordType based match conditions ********/
 
         // Initialise a map containing all the expected result counts
         // for each of the four records, once with the original value, and once with the updated value.
@@ -449,7 +451,50 @@ public class IndexerTest {
         setExpectedCountsForMatch("nvmatch4", 0, 0, 0, 0, 2, 0, 0, 0);
         verifyMatchResultCounts();
 
-        // TODO: test 'field' and variantProps matching
+        /******** Test field value based match conditions ********/
+
+        // Unmatched fields should not appear in the index
+        repository.recordBuilder().id("matchfield_versioned")
+            .recordType(new QName(NS, "Alpha"))
+            .field(field("ns:match5").getName(), "Bienvenue").create();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .recordType(new QName(NS, "Alpha"))
+            .field(field("ns:nvmatch5").getName(), "Willkommen").create();
+
+        commitIndex();
+        verifyResultCount("match5:Bienvenue", 0);
+        verifyResultCount("nvmatch5:GutenTag", 0);
+
+        // When the match is met, existing fields should appear in the index
+        repository.recordBuilder().id("matchfield_versioned")
+            .field(field("ns:match1").getName(), "Paris").update();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .field(field("ns:nvmatch1").getName(), "Berlin").update();
+
+        commitIndex();
+        verifyResultCount("match5:Bienvenue", 1);
+        verifyResultCount("nvmatch5:Willkommen", 1);
+
+        // When matched fields change, the index should be updated
+        repository.recordBuilder().id("matchfield_versioned")
+            .field(field("ns:match5").getName(), "Baguette").update();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .field(field("ns:nvmatch5").getName(), "Roggenmischbrot").update();
+
+        commitIndex();
+        verifyResultCount("match5:Baguette", 1);
+        verifyResultCount("nvmatch5:Roggenmischbrot", 1);
+
+        // When the match condition is no longer met, the entries should disappear from the index
+        repository.recordBuilder().id("matchfield_versioned")
+            .field(field("ns:match1").getName(), "France").update();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .field(field("ns:nvmatch1").getName(), "Deutschland").update();
+
+        commitIndex();
+        verifyResultCount("nvmatch5:Baguette", 0);
+        verifyResultCount("nvmatch5:Roggenmischbrot", 0);
+
     }
 
     private void verifyMatchResultCounts() throws Exception{

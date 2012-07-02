@@ -160,10 +160,12 @@
     <field name="match2" type="string" indexed="true" stored="true" required="false"/>
     <field name="match3" type="string" indexed="true" stored="true" required="false"/>
     <field name="match4" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match5" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch1" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch2" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch3" type="string" indexed="true" stored="true" required="false"/>
     <field name="nvmatch4" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch5" type="string" indexed="true" stored="true" required="false"/>
   </fields>
 
   <!-- Field to use to determine and enforce document uniqueness.

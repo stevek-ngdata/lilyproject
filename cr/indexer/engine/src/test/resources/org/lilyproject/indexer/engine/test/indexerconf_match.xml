@@ -33,6 +33,10 @@
       <field name="match4" value="ns:match4"/>
     </match>
 
+    <!-- match on field -->
+    <match field="ns:match1=Paris">
+      <field name="match5" value="ns:match5"/>
+    </match>
 
     <!-- ==================== NON-VERSIONED =================== -->
     <!-- always indexed -->
@@ -52,6 +56,12 @@
     <match recordType="ns:Alpha">
       <field name="nvmatch4" value="ns:nvmatch4"/>
     </match>
+
+    <!-- match on field -->
+    <match field="ns:nvmatch1=Berlin">
+      <field name="nvmatch5" value="ns:nvmatch5"/>
+    </match>
+
 
   </fields>
 
