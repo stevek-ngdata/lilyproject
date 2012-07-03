@@ -139,6 +139,14 @@ public class IndexDefinition {
         return definition;
     }
 
+    public VariableLengthByteIndexFieldDefinition addVariableLengthByteField(String name) {
+        validateName(name);
+        final VariableLengthByteIndexFieldDefinition definition =
+                new VariableLengthByteIndexFieldDefinition(name);
+        add(definition);
+        return definition;
+    }
+
     public ByteIndexFieldDefinition addByteField(String name, int lengthInBytes) {
         validateName(name);
         ByteIndexFieldDefinition definition = new ByteIndexFieldDefinition(name, lengthInBytes);

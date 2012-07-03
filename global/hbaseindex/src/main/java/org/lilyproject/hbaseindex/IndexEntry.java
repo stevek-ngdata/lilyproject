@@ -70,8 +70,7 @@ public class IndexEntry {
 
     /**
      * Get the values to be serialized into a byte array, in index definition order. Missing fields are inserted as
-     * null
-     * values.
+     * null values.
      *
      * @return the values to be serialized into a byte array
      */

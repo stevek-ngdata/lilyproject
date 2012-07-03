@@ -1,7 +1,7 @@
 package org.lilyproject.indexer.engine;
 
+import java.io.Closeable;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
@@ -10,13 +10,11 @@ import org.lilyproject.repository.api.SchemaId;
 
 /**
  * A DerefMap allows to keep track of dependencies between indexed records (due to dereferencing) in the scope of a
- * given index.
+ * given (solr) index.
  *
  * @author Jan Van Besien
  */
 public interface DerefMap {
-
-    // TODO: and how to get an instance of a deref map?
 
     /**
      * An entry in the dereference map is a tuple of record id and version tag.
@@ -59,6 +57,12 @@ public interface DerefMap {
         }
     }
 
+    static interface DependantRecordIdsIterator extends Closeable {
+        boolean hasNext() throws IOException;
+
+        RecordId next() throws IOException;
+    }
+
     /**
      * Find the set of record ids (and corresponding version tags) on which a given record (in a given version tag)
      * depends.
@@ -67,7 +71,7 @@ public interface DerefMap {
      * @param vtag     vtag of the record to find dependencies for
      * @return the record ids and vtags on which the given record depends
      */
-    Set<Entry> findDependencies(final RecordId recordId, final SchemaId vtag);
+    Set<Entry> findDependencies(final RecordId recordId, final SchemaId vtag) throws IOException;
 
     /**
      * Update the set of dependencies for a given record in a given vtag. Conceptually the existing set of
@@ -77,8 +81,7 @@ public interface DerefMap {
      * @param dependantRecordId record id of the record to update dependencies for
      * @param dependantVtagId   vtag of the record to update dependencies for
      * @param newDependencies   record ids and vtags on which the given record depends, mapped on all the fields of
-     *                          this
-     *                          record on which the dependant depends
+     *                          this record on which the dependant depends
      */
     void updateDependencies(final RecordId dependantRecordId, final SchemaId dependantVtagId,
                             Multimap<Entry, SchemaId> newDependencies)
@@ -87,11 +90,9 @@ public interface DerefMap {
     /**
      * Find all record ids which depend on a given field of a given record in a given vtag.
      *
-     * TODO: what if the record entry or field itself is not found in the derefmap?
-     *
      * @param recordEntry the record entry in the deref map to find dependant record ids for
      * @param field       the field of the given record via which the dependendant records need to be found
-     * @return
+     * @return iterator
      */
-    Iterator<RecordId> findRecordIdsWhichDependOn(final Entry recordEntry, SchemaId field);
+    DependantRecordIdsIterator findDependantsOf(final Entry recordEntry, SchemaId field) throws IOException;
 }
