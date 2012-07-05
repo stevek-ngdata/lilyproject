@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
+import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField.DynamicIndexFieldMatch;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
@@ -247,6 +248,7 @@ public class Indexer {
         }
     }
 
+    // FIXME: merge with SolrDocumentBuilder.resolve(NameTemplate()?
     private String evalName(DynamicIndexField dynField, DynamicIndexFieldMatch match, FieldType fieldType) {
         // Calculate the name, then add the value
         Map<String, Object> nameContext = new HashMap<String, Object>();
@@ -275,7 +277,7 @@ public class Indexer {
         if (match.namespaceMatch != null) {
             nameContext.put("namespaceMatch", match.namespaceMatch);
         }
-        String fieldName = dynField.getNameTemplate().format(nameContext);
+        String fieldName = dynField.getNameTemplate().format(new DefaultNameTemplateResolver(nameContext));
         return fieldName;
     }
 
@@ -378,4 +380,5 @@ public class Indexer {
             throw new RuntimeException("Error checking if we own index lock for record " + recordId);
         }
     }
+
 }

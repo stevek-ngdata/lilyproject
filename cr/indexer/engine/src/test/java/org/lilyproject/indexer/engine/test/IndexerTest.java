@@ -394,12 +394,44 @@ public class IndexerTest {
         changeIndexUpdater("indexerconf_match.xml");
         messageVerifier.init();
 
+        //
+        // Test ForEach
+        //
+
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "10")
+                .field(nvfield2.getName(), "louche")
+                .create();
+
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "belgium")))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "schuimspaan")
+                .create();
+
+        commitIndex();
+
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485"))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "29485")
+                .create();
+
+        commitIndex();
+
+        verifyResultCount("product_description_france_string:louche", 1);
+        verifyResultCount("product_price_france_string:10", 1);
+
         createMatchTestRecord(NS, "Alpha", "alpha");
         createMatchTestRecord(NS, "Beta", "beta");
         createMatchTestRecord(NS2, "Alpha", "gamma");
         createMatchTestRecord(NS2, "Beta", "delta");
 
-        /******** Test recordType based match conditions ********/
+        //
+        // Test Match
+        //
 
         // Initialise a map containing all the expected result counts
         // for each of the four records, once with the original value, and once with the updated value.
@@ -2479,7 +2511,7 @@ public class IndexerTest {
                 assertTrue(dimensions.containsKey("my lang"));
                 assertEquals("some lang", dimensions.get("my lang"));
             } else {
-                throw new IllegalStateException("unexpected index field" + indexField.getName());
+                throw new IllegalStateException("unexpected index field " + indexField.getName().getTemplate());
             }
         }
     }

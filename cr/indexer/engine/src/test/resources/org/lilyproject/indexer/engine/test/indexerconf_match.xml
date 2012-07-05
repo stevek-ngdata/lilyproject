@@ -14,7 +14,7 @@
 
   <fields>
 
-    <!-- ==================== VERSIONED =================== -->
+    <!-- ==================== <match> using versioned fields =================== -->
     <!-- always indexed -->
     <field name="match1" value="ns:match1"/>
 
@@ -38,7 +38,7 @@
       <field name="match5" value="ns:match5"/>
     </match>
 
-    <!-- ==================== NON-VERSIONED =================== -->
+    <!-- ==================== <match> using non-versioned fields =================== -->
     <!-- always indexed -->
     <field name="nvmatch1" value="ns:nvmatch1"/>
 
@@ -62,6 +62,22 @@
       <field name="nvmatch5" value="ns:nvmatch5"/>
     </match>
 
+    <!-- ==================== <foreach> =================== -->
+    <!-- using +variant and @vprop -->
+    <forEach value="+country">
+      <field name="product_description_${@vprop:country}" value="ns:nvfield1"/>
+      <field name="product_price_${@vprop:country}_string" value="ns:nvfield2"/>
+    </forEach>
+
+    <!-- using -variant and a schema field -->
+    <forEach value="-country">
+      <field name="product_code_${ns:vfield2}_string" value="ns:nvfield1"/>
+    </forEach>
+
+    <!-- using master and a system field -->
+    <forEach value="master">
+      <field name="product_id_${sys:id}_string" value="ns:nvfield1"/>
+    </forEach>
 
   </fields>
 

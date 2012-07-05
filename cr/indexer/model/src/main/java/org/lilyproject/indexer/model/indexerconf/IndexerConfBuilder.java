@@ -196,7 +196,7 @@ public class IndexerConfBuilder {
 
         String recordTypeAttr = DocumentHelper.getAttribute(element, "recordType", false);
         if (recordTypeAttr != null) {
-            QName rtName = parseQName(recordTypeAttr, element, true);
+            QName rtName = ConfUtil.parseQName(recordTypeAttr, element, true);
             rtNamespacePattern = new WildcardPattern(rtName.getNamespace());
             rtNamePattern = new WildcardPattern(rtName.getName());
         }
@@ -219,7 +219,7 @@ public class IndexerConfBuilder {
                 throw new IndexerConfException("field test should be of the form \"namespace:name=value\", which " +
                         "the following is not: " + fieldAttr + ", at " + LocationAttributes.getLocation(element));
             }
-            QName fieldName = parseQName(fieldAttr.substring(0, eqPos), element);
+            QName fieldName = ConfUtil.parseQName(fieldAttr.substring(0, eqPos), element);
             fieldType = typeManager.getFieldTypeByName(fieldName);
             String fieldValueString = fieldAttr.substring(eqPos + 1);
             try {
@@ -332,7 +332,7 @@ public class IndexerConfBuilder {
     public IndexFields buildIndexFields(Element el) throws Exception {
         IndexFields indexFields = new IndexFields();
         if (el != null) {
-            addChildNodes(el, indexFields, "match", "field");
+            addChildNodes(el, indexFields, "match", "field", "forEach");
         }
         return indexFields;
     }
@@ -341,15 +341,26 @@ public class IndexerConfBuilder {
         RecordMatcher recordMatcher = parseRecordMatcher(el);
         MatchNode matchNode = new MatchNode(recordMatcher);
 
-        addChildNodes(el, matchNode, "match", "field");
+        addChildNodes(el, matchNode, "match", "field", "forEach");
         return matchNode;
     }
 
     private IndexField buildIndexField(Element el) throws Exception {
-        String name = DocumentHelper.getAttribute(el, "name", true);
+        String nameAttr = DocumentHelper.getAttribute(el, "name", true);
         String valueExpr = DocumentHelper.getAttribute(el, "value", true);
 
+        // TODO: add a NameTemplateValidator - NOTE: NameTemplateValidator should
+        // validate within the scope of a Value (its valuetype determines what can be used in the template).
+        NameTemplate name = new NameTemplateParser().parse(nameAttr);
+
         return new IndexField(name, buildValue(el, valueExpr));
+    }
+
+    private ForEachNode buildForEachNode(Element el) throws Exception {
+        String valueExpr = DocumentHelper.getAttribute(el, "value", true);
+
+        List<Follow> follows = parseFollows(el, valueExpr, new String[] { valueExpr, null });
+        return new ForEachNode(systemFields, follows.get(0));
     }
 
     public void addChildNodes(Element el, ContainerMappingNode parent, String... allowedTagNames) throws Exception {
@@ -368,6 +379,8 @@ public class IndexerConfBuilder {
                 parent.addChildNode(buildMatchNode(childEl));
             } else if (name.equals("field")) {
                 parent.addChildNode(buildIndexField(childEl));
+            } else if (name.equals("forEach")) {
+                parent.addChildNode(buildForEachNode(childEl));
             } else {
                 throw new IndexerConfException(String.format("Unexpected tag name '%s' while parsing indexerconf", childEl.getTagName()));
             }
@@ -442,7 +455,12 @@ public class IndexerConfBuilder {
             booleanVariables.add("list");
             booleanVariables.add("multiValue");
 
-            NameTemplate name = new NameTemplate(nameAttr, variables, booleanVariables);
+            NameTemplate name;
+            try {
+                name = new NameTemplateParser().parse(fieldEl, nameAttr, new DefaultNameTemplateValidator(variables, booleanVariables));
+            } catch (NameTemplateException nte) {
+                throw new IndexerConfException("Error in name template: " + nameAttr + " at " + LocationAttributes.getLocationString(fieldEl), nte);
+            }
 
             boolean extractContent = DocumentHelper.getBooleanAttribute(fieldEl, "extractContent", false);
 
@@ -462,7 +480,7 @@ public class IndexerConfBuilder {
     }
 
     private void validateName(String name) throws IndexerConfException {
-        //FIXME: seems like s useful validation, but not called any more?
+        //FIXME: seems like a useful validation, but not called any more?
         if (name.startsWith("lily.")) {
             throw new IndexerConfException("names starting with 'lily.' are reserved for internal uses. Name: " + name);
         }
@@ -496,7 +514,7 @@ public class IndexerConfBuilder {
             //
             // A plain field
             //
-            value = new FieldValue(getFieldType(valueExpr, fieldEl), extractContent, formatter);
+            value = new FieldValue(ConfUtil.getFieldType(valueExpr, fieldEl, systemFields, typeManager), extractContent, formatter);
         }
 
         if (extractContent &&
@@ -614,18 +632,18 @@ public class IndexerConfBuilder {
         //
         QName targetFieldName;
         try {
-            targetFieldName = parseQName(derefParts[derefParts.length - 1], fieldEl);
+            targetFieldName = ConfUtil.parseQName(derefParts[derefParts.length - 1], fieldEl);
         } catch (IndexerConfException e) {
             throw new IndexerConfException("Dereference expression does not end on a valid field name. " +
                     "Expression: '" + valueExpr + "' at " + LocationAttributes.getLocationString(fieldEl), e);
         }
-        return getFieldType(targetFieldName);
+        return ConfUtil.getFieldType(targetFieldName, systemFields, typeManager);
     }
 
     private boolean processFieldDeref(Element fieldEl, String valueExpr, List<Follow> follows, String derefPart)
             throws IndexerConfException, InterruptedException, RepositoryException {
         boolean lastFollowIsRecord;
-        FieldType followField = getFieldType(derefPart, fieldEl);
+        FieldType followField = ConfUtil.getFieldType(derefPart, fieldEl, systemFields, typeManager);
 
         String type = followField.getValueType().getBaseName();
         if (type.equals("LIST")) {
@@ -713,62 +731,6 @@ public class IndexerConfBuilder {
         follows.add(new ForwardVariantFollow(dimensions));
     }
 
-    private QName parseQName(String qname, Element contextEl) throws IndexerConfException {
-        return parseQName(qname, contextEl, false);
-    }
-
-    private QName parseQName(String qname, Element contextEl, boolean prefixResolvingOptional)
-            throws IndexerConfException {
-        // The qualified name can either be specified in Lily-style ("{namespace}name") or
-        // in XML-style (prefix:name). In Lily-style, if the "namespace" matches a defined
-        // prefix, it is substituted.
-
-        if (qname.startsWith("{")) {
-            QName name = QName.fromString(qname);
-            String ns = contextEl.lookupNamespaceURI(name.getNamespace());
-            if (ns != null) {
-                return new QName(ns, name.getName());
-            } else {
-                return name;
-            }
-        }
-
-        int colonPos = qname.indexOf(":");
-        if (colonPos == -1) {
-            throw new IndexerConfException(
-                    "Field name is not a qualified name, it should include a namespace prefix: " + qname);
-        }
-
-        String prefix = qname.substring(0, colonPos);
-        String localName = qname.substring(colonPos + 1);
-
-        String uri = contextEl.lookupNamespaceURI(prefix);
-        if (uri == null && !prefixResolvingOptional) {
-            throw new IndexerConfException("Prefix does not resolve to a namespace: " + qname);
-        }
-        if (uri == null) {
-            uri = prefix;
-        }
-
-        return new QName(uri, localName);
-    }
-
-    private FieldType getFieldType(String qname, Element contextEl) throws IndexerConfException, InterruptedException,
-            RepositoryException {
-        QName parsedQName = parseQName(qname, contextEl);
-        return getFieldType(parsedQName);
-    }
-
-    private FieldType getFieldType(QName qname) throws IndexerConfException, InterruptedException,
-            RepositoryException {
-
-        if (systemFields.isSystemField(qname)) {
-            return systemFields.get(qname);
-        }
-
-        return typeManager.getFieldTypeByName(qname);
-    }
-
     private void validate(Document document) throws IndexerConfException {
         try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -838,4 +800,5 @@ public class IndexerConfBuilder {
             builder.append("] ").append(exception.getMessage());
         }
     }
+
 }

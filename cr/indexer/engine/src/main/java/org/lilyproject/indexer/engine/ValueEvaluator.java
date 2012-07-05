@@ -225,7 +225,7 @@ public class ValueEvaluator {
 
     private List<IndexValue> evalFieldValue(FieldValue value, RecordContext recordContext, Repository repository)
             throws RepositoryException, InterruptedException {
-        return getValue(recordContext.last(), value.getFieldType(), null, repository);
+        return getValue(recordContext.last().record, value.getFieldType(), null, repository);
     }
 
     /**
@@ -269,7 +269,7 @@ public class ValueEvaluator {
         FieldType fieldType = deref.getTargetFieldType();
 
         List<FollowRecord> records = new ArrayList<FollowRecord>();
-        records.add(new FollowRecord(recordContext.lastReal(), recordContext.last()));
+        records.add(recordContext.last()); // Start with the current record
 
         for (Follow follow : deref.getFollows()) {
             List<FollowRecord> linkedRecords = new ArrayList<FollowRecord>();
@@ -309,7 +309,7 @@ public class ValueEvaluator {
             return addContext(records);
         } else if (follow instanceof RecordFieldFollow) {
             List<Record> records = evalRecordFieldFollow((RecordFieldFollow) follow, record, repository, vtag);
-            return addContext(records, record.record);
+            return addContext(records, record.contextRecord);
         } else if (follow instanceof VariantFollow) {
             List<Record> records = evalVariantFollow((VariantFollow) follow, record, repository, vtag);
             return addContext(records);

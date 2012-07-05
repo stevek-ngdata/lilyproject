@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
@@ -41,7 +40,7 @@ public class ForEachNode extends ContainerMappingNode {
 
         if (follow instanceof LinkFieldFollow) {
             fieldType = ((LinkFieldFollow)follow).getFieldType();
-        } else if (follow instanceof LinkFieldFollow) {
+        } else if (follow instanceof RecordFieldFollow) {
             fieldType = ((RecordFieldFollow)follow).getFieldType();
         } else {
             fieldType = null;
@@ -73,39 +72,40 @@ public class ForEachNode extends ContainerMappingNode {
         }
 
         if (follow instanceof RecordFieldFollow) {
-            collectFromRecords(indexUpdateBuilder, record, version, vtag, (List<Record>)indexUpdateBuilder.evalFollow(follow), true);
+            collectFromRecords(indexUpdateBuilder, record, version, vtag, (List<Record>)indexUpdateBuilder.evalFollow(follow));
         } else {
-            collectFromLinks(indexUpdateBuilder, record, version, vtag, (List<Link>)indexUpdateBuilder.evalFollow(follow));
+            collectFromLinks(indexUpdateBuilder, record, version, vtag, (List<FollowRecord>)indexUpdateBuilder.evalFollow(follow));
         }
     }
 
-    private void collectFromRecords(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<Record> records, boolean embedded)
+    private void collectFromRecords(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<Record> records)
             throws InterruptedException, RepositoryException {
         for (Record childRecord: records) {
-            if (embedded) {
-                indexUpdateBuilder.getRecordContext().pushEmbedded(childRecord);
-            } else {
-                indexUpdateBuilder.getRecordContext().push(childRecord);
-            }
+            RecordContext ctx = indexUpdateBuilder.getRecordContext();
+            ctx.push(new FollowRecord(childRecord, ctx.last().contextRecord));
             for (MappingNode child : getChildren()) {
                 child.collectIndexUpdate(indexUpdateBuilder, childRecord, version, vtag);
             }
-            indexUpdateBuilder.getRecordContext().pop();
+            ctx.pop();
         }
     }
 
-    private void collectFromLinks(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<Link> links)
+    private void collectFromLinks(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<FollowRecord> links)
             throws InterruptedException, RepositoryException {
-        if (links.size() == 0) return;
+        if (links == null || links.size() == 0)
+            return;
 
         Repository repository = indexUpdateBuilder.getRepository();
         List<RecordId> recordIds = new ArrayList<RecordId>(links.size());
-        for (Link link: links) {
-            recordIds.add(link.resolve(record, repository.getIdGenerator()));
+        for (FollowRecord followRecord: links) {
+            RecordContext ctx = indexUpdateBuilder.getRecordContext();
+            ctx.push(followRecord);
+            for (MappingNode child : getChildren()) {
+                child.collectIndexUpdate(indexUpdateBuilder, followRecord.record, version, vtag);
+            }
+            ctx.pop();
         }
 
-        List<Record> records = repository.read(recordIds);
-        collectFromRecords(indexUpdateBuilder, record, version, vtag, records, false);
     }
 
 }

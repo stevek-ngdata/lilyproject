@@ -25,11 +25,11 @@ import org.lilyproject.util.repo.VTaggedRecord;
 
 public class IndexField implements MappingNode {
 
-    private final String name;
+    private final NameTemplate name;
     private final Value value;
 
-    public IndexField(String name, Value value) {
-        this.name = name;
+    public IndexField(NameTemplate nameTemplate, Value value) {
+        this.name = nameTemplate;
         this.value = value;
     }
 
@@ -37,7 +37,7 @@ public class IndexField implements MappingNode {
         return value;
     }
 
-    public String getName() {
+    public NameTemplate getName() {
         return name;
     }
 
@@ -54,7 +54,7 @@ public class IndexField implements MappingNode {
 
     @Override
     public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException {
-        indexUpdateBuilder.addField(name, indexUpdateBuilder.eval(value));
+        indexUpdateBuilder.addField(name.format(value, indexUpdateBuilder.getNameResolver()), indexUpdateBuilder.eval(value));
     }
 
 }

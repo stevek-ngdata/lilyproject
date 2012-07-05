@@ -17,4 +17,6 @@ public interface IndexUpdateBuilder {
 
     public List evalFollow(Follow follow) throws RepositoryException, InterruptedException;
 
+    public NameTemplateResolver getNameResolver();
+
 }

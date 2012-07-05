@@ -18,10 +18,15 @@ package org.lilyproject.indexer.engine;
 import java.util.List;
 
 import org.apache.solr.common.SolrInputDocument;
+import org.lilyproject.indexer.model.indexerconf.FieldTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.IndexUpdateBuilder;
+import org.lilyproject.indexer.model.indexerconf.LiteralTemplatePart;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.RecordContext;
+import org.lilyproject.indexer.model.indexerconf.TemplatePart;
 import org.lilyproject.indexer.model.indexerconf.Value;
+import org.lilyproject.indexer.model.indexerconf.VariantPropertyTemplatePart;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
@@ -34,6 +39,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private final Repository repository;
     private final TypeManager typeManager;
     private final ValueEvaluator valueEvaluator;
+    private final NameTemplateResolver nameTemplateResolver;
 
     private final SolrInputDocument solrDoc = new SolrInputDocument();
     private boolean emptyDocument = true;
@@ -54,7 +60,9 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
         this.vtag = vtag;
         this.version = version;
 
-        recordContext = new RecordContext(record);
+        this.nameTemplateResolver = new FieldNameTemplateResolver();
+
+        this.recordContext = new RecordContext(record);
     }
 
     public boolean isEmptyDocument() {
@@ -82,7 +90,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     @Override
     public List evalFollow(Follow follow) throws RepositoryException, InterruptedException {
-        return valueEvaluator.evalFollow(follow, recordContext.newFollow(), repository, vtag);
+        return valueEvaluator.evalFollow(follow, recordContext.last(), repository, vtag);
     }
 
     @Override
@@ -98,6 +106,30 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     @Override
     public RecordContext getRecordContext() {
         return recordContext;
+    }
+
+    @Override
+    public NameTemplateResolver getNameResolver() {
+        return nameTemplateResolver;
+    }
+
+    private class FieldNameTemplateResolver implements NameTemplateResolver {
+
+        @Override
+        public Object resolve(TemplatePart part) {
+            if (part instanceof FieldTemplatePart) {
+                // FIXME: handle system fields as well?
+                return recordContext.last().record.getField(((FieldTemplatePart)part).getField());
+            } else if (part instanceof VariantPropertyTemplatePart) {
+                VariantPropertyTemplatePart vpPart = (VariantPropertyTemplatePart)part;
+                return recordContext.last().contextRecord.getId().getVariantProperties().get(vpPart.getName());
+            } else if (part instanceof LiteralTemplatePart) {
+                return ((LiteralTemplatePart)part).getString();
+            } else {
+                throw new RuntimeException("Unsupported TemplatePart type " + part.getClass().getName());
+            }
+        }
+
     }
 
 }

@@ -6,39 +6,22 @@ import org.lilyproject.repository.api.Record;
 
 public class RecordContext {
 
-    // FIXME: replace with Stack<FollowRecord>
-    private Stack<Record> contextRecords = new Stack<Record>();
-    private Stack<Record> records = new Stack<Record>();
+    private Stack<FollowRecord> followRecords = new Stack<FollowRecord>();
 
     public RecordContext(Record root) {
-        push(root);
+        push(new FollowRecord(root,root));
     }
 
-    public void push(Record record) {
-        contextRecords.push(record);
-        records.push(record);
-    }
-
-    public void pushEmbedded(Record record) {
-        contextRecords.push(last());
-        records.push(record);
+    public void push(FollowRecord record) {
+        followRecords.push(record);
     }
 
     public void pop() {
-        contextRecords.pop();
-        records.pop();
+        followRecords.pop();
     }
 
-    public Record lastReal() {
-        return contextRecords.peek();
-    }
-
-    public Record last() {
-        return records.peek();
-    }
-
-    public FollowRecord newFollow() {
-        return new FollowRecord(last(), lastReal());
+    public FollowRecord last() {
+        return followRecords.peek();
     }
 
 }
