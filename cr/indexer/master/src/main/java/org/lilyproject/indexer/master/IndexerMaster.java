@@ -15,26 +15,6 @@
  */
 package org.lilyproject.indexer.master;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.*;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.zookeeper.KeeperException;
-import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
-import org.lilyproject.indexer.engine.SolrClientConfig;
-import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.util.LilyInfo;
-import org.lilyproject.util.Logs;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.*;
-
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,6 +25,47 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobInProgress;
+import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.Task;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.zookeeper.KeeperException;
+import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
+import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
+import org.lilyproject.indexer.model.api.BatchBuildInfo;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexNotFoundException;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+import org.lilyproject.indexer.model.api.IndexerModelEvent;
+import org.lilyproject.indexer.model.api.IndexerModelEventType;
+import org.lilyproject.indexer.model.api.IndexerModelListener;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.util.LilyInfo;
+import org.lilyproject.util.Logs;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.zookeeper.LeaderElection;
+import org.lilyproject.util.zookeeper.LeaderElectionCallback;
+import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 /**
  * The indexer master is active on only one Lily node and is responsible for things such as launching
@@ -89,10 +110,11 @@ public class IndexerMaster {
 
     private final String nodes;
 
-    public IndexerMaster(ZooKeeperItf zk , WriteableIndexerModel indexerModel, Configuration mapReduceConf,
-            Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString, int zkSessionTimeout,
-            RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
-            boolean enableLocking, String hostName, String nodes) {
+    public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Configuration mapReduceConf,
+                         Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString,
+                         int zkSessionTimeout,
+                         RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
+                         boolean enableLocking, String hostName, String nodes) {
         this.zk = zk;
         this.indexerModel = indexerModel;
         this.mapReduceConf = mapReduceConf;
@@ -190,7 +212,8 @@ public class IndexerMaster {
 
     private boolean needsBatchBuildStart(IndexDefinition index) {
         return !index.getGeneralState().isDeleteState() &&
-                index.getBatchBuildState() == IndexBatchBuildState.BUILD_REQUESTED && index.getActiveBatchBuildInfo() == null;
+                index.getBatchBuildState() == IndexBatchBuildState.BUILD_REQUESTED &&
+                index.getActiveBatchBuildInfo() == null;
     }
 
     private void assignSubscription(String indexName) {
@@ -271,7 +294,8 @@ public class IndexerMaster {
 
                         indexerModel.updateIndexInternal(index);
 
-                        log.info("Started index build job for index " + indexName + ", job ID =  " + jobInfo.getJobId());
+                        log.info(
+                                "Started index build job for index " + indexName + ", job ID =  " + jobInfo.getJobId());
                     } else {
                         // The job failed to start. To test this case, configure an incorrect jobtracker address.
                         BatchBuildInfo jobInfo = new BatchBuildInfo();
@@ -338,21 +362,32 @@ public class IndexerMaster {
             log.error("Error preparing deletion of index " + indexName, t);
         }
 
-        if (canBeDeleted){
+        if (canBeDeleted) {
             deleteIndex(indexName);
         }
     }
 
     private void deleteIndex(String indexName) {
-        boolean success = false;
+        // delete model
+        boolean failedToDeleteIndex = false;
         try {
             indexerModel.deleteIndex(indexName);
-            success = true;
         } catch (Throwable t) {
-            log.error("Failed to delete index.", t);
+            log.error("Failed to delete index " + indexName, t);
+            failedToDeleteIndex = true;
         }
 
-        if (!success) {
+        // delete the corresponding DerefMap
+        try {
+            DerefMapHbaseImpl.delete(indexName, hbaseConf);
+        } catch (IOException e) {
+            log.error("Failed to delete DerefMap for index " + indexName, e);
+            failedToDeleteIndex = true;
+        } catch (org.lilyproject.hbaseindex.IndexNotFoundException e) {
+            // ignore, the index was already deleted
+        }
+
+        if (failedToDeleteIndex) {
             try {
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 index.setGeneralState(IndexGeneralState.DELETE_FAILED);
@@ -472,7 +507,8 @@ public class IndexerMaster {
                             }
 
                             if (index.getActiveBatchBuildInfo() != null) {
-                                jobStatusWatcher.assureWatching(index.getName(), index.getActiveBatchBuildInfo().getJobId());
+                                jobStatusWatcher
+                                        .assureWatching(index.getName(), index.getActiveBatchBuildInfo().getJobId());
                             }
                         }
                     }
@@ -552,7 +588,8 @@ public class IndexerMaster {
                         } else if (job.isComplete()) {
                             String jobState = jobStateToString(job.getJobState());
                             boolean success = job.isSuccessful();
-                            markJobComplete(jobEntry.getKey(), jobEntry.getValue(), success, jobState, job.getCounters());
+                            markJobComplete(jobEntry.getKey(), jobEntry.getValue(), success, jobState,
+                                    job.getCounters());
                         }
                     }
                 } catch (InterruptedException e) {
@@ -565,12 +602,14 @@ public class IndexerMaster {
 
         public synchronized void assureWatching(String indexName, String jobName) {
             if (stop) {
-                throw new RuntimeException("Job Status Watcher is stopped, should not be asked to monitor jobs anymore.");
+                throw new RuntimeException(
+                        "Job Status Watcher is stopped, should not be asked to monitor jobs anymore.");
             }
             runningJobs.put(indexName, jobName);
         }
 
-        private void markJobComplete(String indexName, String jobId, boolean success, String jobState, Counters counters) {
+        private void markJobComplete(String indexName, String jobId, boolean success, String jobState,
+                                     Counters counters) {
             try {
                 // Lock internal bypasses the index-in-delete-state check, which does not matter (and might cause
                 // failure) in our case.
@@ -607,10 +646,14 @@ public class IndexerMaster {
                     }
 
                     if (counters != null) {
-                        jobInfo.addCounter(getCounterKey(Task.Counter.MAP_INPUT_RECORDS), counters.getCounter(Task.Counter.MAP_INPUT_RECORDS));
-                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS), counters.getCounter(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS));
-                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.NUM_FAILED_MAPS), counters.getCounter(JobInProgress.Counter.NUM_FAILED_MAPS));
-                        jobInfo.addCounter(getCounterKey(IndexBatchBuildCounters.NUM_FAILED_RECORDS), counters.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS));
+                        jobInfo.addCounter(getCounterKey(Task.Counter.MAP_INPUT_RECORDS),
+                                counters.getCounter(Task.Counter.MAP_INPUT_RECORDS));
+                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS),
+                                counters.getCounter(JobInProgress.Counter.TOTAL_LAUNCHED_MAPS));
+                        jobInfo.addCounter(getCounterKey(JobInProgress.Counter.NUM_FAILED_MAPS),
+                                counters.getCounter(JobInProgress.Counter.NUM_FAILED_MAPS));
+                        jobInfo.addCounter(getCounterKey(IndexBatchBuildCounters.NUM_FAILED_RECORDS),
+                                counters.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS));
                     }
 
                     index.setLastBatchBuildInfo(jobInfo);

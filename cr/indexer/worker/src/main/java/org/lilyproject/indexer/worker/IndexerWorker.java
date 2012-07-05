@@ -197,7 +197,7 @@ public class IndexerWorker {
                             httpClient, solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
-            DerefMap derefMap = new DerefMapHbaseImpl(index.getName(), hbaseConf, repository.getIdGenerator());
+            DerefMap derefMap = DerefMapHbaseImpl.create(index.getName(), hbaseConf, repository.getIdGenerator());
             Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
                     indexerMetrics, derefMap);
 

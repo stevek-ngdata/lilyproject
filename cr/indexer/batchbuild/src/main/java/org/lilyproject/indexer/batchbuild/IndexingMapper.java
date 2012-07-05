@@ -148,7 +148,7 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
 
             indexLocker = new IndexLocker(zk, enableLocking);
 
-            final DerefMap derefMap = new DerefMapHbaseImpl(indexName, conf, repository.getIdGenerator());
+            final DerefMap derefMap = DerefMapHbaseImpl.create(indexName, conf, repository.getIdGenerator());
             indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
                     new IndexerMetrics(indexName), derefMap);
 

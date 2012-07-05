@@ -57,25 +57,19 @@ public class DerefMapHbaseImpl implements DerefMap {
     private IdGenerator idGenerator;
 
     /**
-     * Construct a DerefMap for a given index. If this is the first time the DerefMap is constructed for this index,
-     * the forward and backward index tables will be created.
-     *
-     * @param indexName          name of the index
-     * @param hbaseConfiguration hbase configuration
-     * @param idGenerator        id generator
-     * @throws IndexNotFoundException
-     * @throws IOException
-     * @throws InterruptedException
+     * Private constructor. Clients should use static factory methods {@link #delete(String,
+     * org.apache.hadoop.conf.Configuration)} and {@link #create(String, org.apache.hadoop.conf.Configuration,
+     * org.lilyproject.repository.api.IdGenerator)}
      */
-    public DerefMapHbaseImpl(final String indexName, final Configuration hbaseConfiguration,
-                             final IdGenerator idGenerator)
+    private DerefMapHbaseImpl(final String indexName, final Configuration hbaseConfiguration,
+                              final IdGenerator idGenerator)
             throws IndexNotFoundException, IOException, InterruptedException {
 
         this.idGenerator = idGenerator;
 
         final IndexManager indexManager = new IndexManager(hbaseConfiguration);
 
-        IndexDefinition forwardIndexDef = new IndexDefinition("deref-forward-" + indexName);
+        IndexDefinition forwardIndexDef = new IndexDefinition(forwardIndexName(indexName));
         // For the record ID we use a variable length byte array field of which the first two bytes are fixed length
         // The first byte is actually the record identifier byte.
         // The second byte really is the first byte of the record id. We put this in the fixed length part
@@ -85,13 +79,52 @@ public class DerefMapHbaseImpl implements DerefMap {
         forwardIndexDef.addByteField("dependant_vtag", SCHEMA_ID_BYTE_LENGTH);
         forwardDerefIndex = indexManager.getIndex(forwardIndexDef);
 
-        IndexDefinition backwardIndexDef = new IndexDefinition("deref-backward-" + indexName);
+        IndexDefinition backwardIndexDef = new IndexDefinition(backwardIndexName(indexName));
         // Same remark as in the forward index.
         backwardIndexDef.addVariableLengthByteField("depending_masterrecordid", 2);
         backwardIndexDef.addByteField("depending_vtag", SCHEMA_ID_BYTE_LENGTH);
         backwardDerefIndex = indexManager.getIndex(backwardIndexDef);
     }
 
+    /**
+     * Create a DerefMap for a given index. If this is the first time the DerefMap is constructed for this index,
+     * the forward and backward index tables will be created.
+     *
+     * @param indexName          name of the index
+     * @param hbaseConfiguration hbase configuration
+     * @param idGenerator        id generator
+     * @throws IndexNotFoundException
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static DerefMap create(final String indexName, final Configuration hbaseConfiguration,
+                                  final IdGenerator idGenerator)
+            throws IndexNotFoundException, IOException, InterruptedException {
+        return new DerefMapHbaseImpl(indexName, hbaseConfiguration, idGenerator);
+    }
+
+    /**
+     * Delete a DerefMap. This will delete the corresponding hbase tables.
+     *
+     * @param indexName          name of the index to delete
+     * @param hbaseConfiguration hbase configuration
+     * @throws IOException
+     * @throws IndexNotFoundException if the index doesn't exist (maybe it was already deleted?)
+     */
+    public static void delete(final String indexName, final Configuration hbaseConfiguration)
+            throws IOException, IndexNotFoundException {
+        final IndexManager manager = new IndexManager(hbaseConfiguration);
+        manager.deleteIndex(forwardIndexName(indexName));
+        manager.deleteIndex(backwardIndexName(indexName));
+    }
+
+    private static String forwardIndexName(String indexName) {
+        return "deref-forward-" + indexName;
+    }
+
+    private static String backwardIndexName(String indexName) {
+        return "deref-backward-" + indexName;
+    }
 
     @Override
     public void updateDependencies(RecordId dependantRecordId, SchemaId dependantVtagId,
