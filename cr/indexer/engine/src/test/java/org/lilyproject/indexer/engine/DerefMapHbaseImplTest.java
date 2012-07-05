@@ -92,7 +92,7 @@ public class DerefMapHbaseImplTest {
         assertEquals(1, found.size());
         assertEquals(depending, found.iterator().next().getRecordId());
 
-        // check that the dependant is found as only dependency of the depending via the dependingField
+        // check that the dependant is found as only dependant of the depending via the dependingField
         final DerefMap.DependantRecordIdsIterator dependants =
                 derefMap.findDependantsOf(new DerefMap.DependingRecord(depending, dummyVtag), dependingField);
         assertTrue(dependants.hasNext());
@@ -118,7 +118,7 @@ public class DerefMapHbaseImplTest {
         assertEquals(1, foundAfterUpdate.size());
         assertEquals(dependingAfterUpdate, foundAfterUpdate.iterator().next().getRecordId());
 
-        // check that the dependant is found as only dependency of the dependingAfterUpdate via the dependingField
+        // check that the dependant is found as only dependant of the dependingAfterUpdate via the dependingField
         final DerefMap.DependantRecordIdsIterator dependantsAfterUpdate =
                 derefMap.findDependantsOf(
                         new DerefMap.DependingRecord(dependingAfterUpdate, dummyVtag), dependingField);
@@ -149,7 +149,7 @@ public class DerefMapHbaseImplTest {
         assertEquals(1, found.size());
         assertEquals(depending.getMaster(), found.iterator().next().getRecordId());
 
-        // check that the dependant is found as only dependency of the depending via the dependingField
+        // check that the dependant is found as only dependant of the depending via the dependingField
         DerefMap.DependantRecordIdsIterator dependants =
                 derefMap.findDependantsOf(new DerefMap.DependingRecord(depending, dummyVtag), dependingField);
         assertTrue(dependants.hasNext());
@@ -206,7 +206,76 @@ public class DerefMapHbaseImplTest {
                 dependingField).hasNext());
     }
 
-    // TODO: test multiple dependencies, various updates,
+    @Test
+    public void multipleDependencies() throws Exception {
+        final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId dependingField = ids.getSchemaId(UUID.randomUUID());
+        final RecordId dependant = ids.newRecordId("dependant");
+        final RecordId depending1 = ids.newRecordId("depending1");
+        final RecordId depending2 = ids.newRecordId("depending2");
+
+        // the dependant depends on the dependingField of the depending1 and depending2
+        final HashMultimap<DerefMap.Entry, SchemaId> dependencies = HashMultimap.create();
+        dependencies.put(new DerefMap.Entry(new DerefMap.DependingRecord(depending1, dummyVtag)), dependingField);
+        dependencies.put(new DerefMap.Entry(new DerefMap.DependingRecord(depending2, dummyVtag)), dependingField);
+        derefMap.updateDependencies(dependant, dummyVtag, dependencies);
+
+        // consistency check
+        final Set<DerefMap.DependingRecord> found = derefMap.findDependencies(dependant, dummyVtag);
+        assertEquals(2, found.size());
+
+        // check that the dependant is found as only dependant of the depending1 via the dependingField
+        final DerefMap.DependantRecordIdsIterator dependantsOf1 =
+                derefMap.findDependantsOf(new DerefMap.DependingRecord(depending1, dummyVtag), dependingField);
+        assertTrue(dependantsOf1.hasNext());
+        assertEquals(dependant, dependantsOf1.next());
+        assertFalse(dependantsOf1.hasNext());
+
+        // check that the dependant is also found as only dependant of the depending2 via the dependingField
+        final DerefMap.DependantRecordIdsIterator dependantsOf2 =
+                derefMap.findDependantsOf(new DerefMap.DependingRecord(depending2, dummyVtag), dependingField);
+        assertTrue(dependantsOf2.hasNext());
+        assertEquals(dependant, dependantsOf2.next());
+        assertFalse(dependantsOf2.hasNext());
+    }
+
+    @Test
+    public void multipleDependants() throws Exception {
+        final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId dependingField = ids.getSchemaId(UUID.randomUUID());
+        final RecordId dependant1 = ids.newRecordId("dependant1");
+        final RecordId dependant2 = ids.newRecordId("dependant2");
+        final RecordId depending = ids.newRecordId("depending");
+
+        // the dependant1 and dependant2 depend on the dependingField of the depending
+        final HashMultimap<DerefMap.Entry, SchemaId> dependencies = HashMultimap.create();
+        dependencies.put(new DerefMap.Entry(new DerefMap.DependingRecord(depending, dummyVtag)), dependingField);
+        derefMap.updateDependencies(dependant1, dummyVtag, dependencies);
+        derefMap.updateDependencies(dependant2, dummyVtag, dependencies);
+
+        // consistency check dependant1
+        final Set<DerefMap.DependingRecord> dependenciesOf1 = derefMap.findDependencies(dependant1, dummyVtag);
+        assertEquals(1, dependenciesOf1.size());
+        assertEquals(depending.getMaster(), dependenciesOf1.iterator().next().getRecordId());
+
+        // consistency check dependant2
+        final Set<DerefMap.DependingRecord> dependenciesOf2 = derefMap.findDependencies(dependant1, dummyVtag);
+        assertEquals(1, dependenciesOf2.size());
+        assertEquals(depending.getMaster(), dependenciesOf2.iterator().next().getRecordId());
+
+        // check that both dependant1 and dependant2 are found as dependants of the depending
+        final DerefMap.DependantRecordIdsIterator dependants =
+                derefMap.findDependantsOf(new DerefMap.DependingRecord(depending, dummyVtag), dependingField);
+        assertTrue(dependants.hasNext());
+        final RecordId firstFoundDependant = dependants.next();
+        assertTrue(dependants.hasNext());
+        final RecordId secondFoundDependant = dependants.next();
+        assertFalse(dependants.hasNext());
+
+        // check that the two found dependants are dependant1 and dependant2 (order doesn't matter)
+        assertTrue((dependant1.equals(firstFoundDependant) && dependant2.equals(secondFoundDependant)) ||
+                (dependant2.equals(firstFoundDependant) && dependant1.equals(secondFoundDependant)));
+    }
 
     @Test
     public void serializeFields() throws Exception {
