@@ -13,7 +13,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
@@ -45,9 +44,7 @@ public class DerefMapHbaseImplTest {
         repository = repoSetup.getRepository();
         ids = repository.getIdGenerator();
 
-        IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
-
-        derefMap = new DerefMapHbaseImpl("test", indexManager, ids);
+        derefMap = new DerefMapHbaseImpl("test", repoSetup.getHadoopConf(), ids);
     }
 
     @AfterClass

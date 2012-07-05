@@ -44,6 +44,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.indexer.engine.DerefMap;
+import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
@@ -191,8 +193,9 @@ public class IndexerTest {
     public static void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
+        DerefMap derefMap = new DerefMapHbaseImpl("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics("test"));
+                new IndexerMetrics("test"), derefMap);
 
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
                 indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
@@ -344,7 +347,8 @@ public class IndexerTest {
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
         RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
         for (int i = 1; i <= 8; i++) {
-            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
+            FieldType ns1Field = typeManager
+                    .createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
             fields.put("ns:match" + i, ns1Field);
 
             matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
@@ -395,7 +399,8 @@ public class IndexerTest {
 
     }
 
-    private void verifyMatchCounts(String fieldName, String number, int ns_a, int ns_b, int ns2_a, int ns2_b) throws Exception {
+    private void verifyMatchCounts(String fieldName, String number, int ns_a, int ns_b, int ns2_a, int ns2_b)
+            throws Exception {
         verifyResultCount(fieldName + ":" + "ns_alpha_" + number, ns_a);
         verifyResultCount(fieldName + ":" + "ns_beta_" + number, ns_b);
         verifyResultCount(fieldName + ":" + "ns2_alpha_" + number, ns2_a);
@@ -406,14 +411,14 @@ public class IndexerTest {
         RecordBuilder builder = repository.recordBuilder();
 
         builder.recordType(new QName(ns, name))
-            .field(new QName(NS, "match1"), prefix + "one")
-            .field(new QName(NS, "match2"), prefix + "two")
-            .field(new QName(NS, "match3"), prefix + "three")
-            .field(new QName(NS, "match4"), prefix + "four")
-            .field(new QName(NS, "match5"), prefix + "five")
-            .field(new QName(NS, "match6"), prefix + "six")
-            .field(new QName(NS, "match7"), prefix + "seven")
-            .field(new QName(NS, "match8"), prefix + "eight");
+                .field(new QName(NS, "match1"), prefix + "one")
+                .field(new QName(NS, "match2"), prefix + "two")
+                .field(new QName(NS, "match3"), prefix + "three")
+                .field(new QName(NS, "match4"), prefix + "four")
+                .field(new QName(NS, "match5"), prefix + "five")
+                .field(new QName(NS, "match6"), prefix + "six")
+                .field(new QName(NS, "match7"), prefix + "seven")
+                .field(new QName(NS, "match8"), prefix + "eight");
 
         builder.create();
     }

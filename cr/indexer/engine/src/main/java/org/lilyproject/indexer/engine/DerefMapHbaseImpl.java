@@ -19,6 +19,7 @@ import com.gotometrics.orderly.StructBuilder;
 import com.gotometrics.orderly.StructRowKey;
 import com.gotometrics.orderly.Termination;
 import com.gotometrics.orderly.VariableLengthByteArrayRowKey;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseindex.Index;
@@ -55,34 +56,40 @@ public class DerefMapHbaseImpl implements DerefMap {
 
     private IdGenerator idGenerator;
 
-    // TODO: good idea? construct with name of the index? it also means the tables are created when first used?
-    // TODO: in general, need to think about how this will be instanciated and managed..
-    public DerefMapHbaseImpl(final String indexName, final IndexManager indexManager, final IdGenerator idGenerator)
-            throws IndexNotFoundException, IOException,
-            InterruptedException {
-//        metrics = new LinkIndexMetrics("linkIndex");
+    /**
+     * Construct a DerefMap for a given index. If this is the first time the DerefMap is constructed for this index,
+     * the forward and backward index tables will be created.
+     *
+     * @param indexName          name of the index
+     * @param hbaseConfiguration hbase configuration
+     * @param idGenerator        id generator
+     * @throws IndexNotFoundException
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public DerefMapHbaseImpl(final String indexName, final Configuration hbaseConfiguration,
+                             final IdGenerator idGenerator)
+            throws IndexNotFoundException, IOException, InterruptedException {
 
         this.idGenerator = idGenerator;
 
-        {
-            IndexDefinition indexDef = new IndexDefinition("deref-forward-" + indexName);
-            // For the record ID we use a variable length byte array field of which the first two bytes are fixed length
-            // The first byte is actually the record identifier byte.
-            // The second byte really is the first byte of the record id. We put this in the fixed length part
-            // (safely because a record id should at least be a single byte long) because this prevents BCD encoding
-            // on the first byte, thus making it easier to configure table splitting based on the original input.
-            indexDef.addVariableLengthByteField("dependant_recordid", 2);
-            indexDef.addByteField("dependant_vtag", SCHEMA_ID_BYTE_LENGTH);
-            forwardDerefIndex = indexManager.getIndex(indexDef);
-        }
+        final IndexManager indexManager = new IndexManager(hbaseConfiguration);
 
-        {
-            IndexDefinition indexDef = new IndexDefinition("deref-backward-" + indexName);
-            // Same remark as in the forward index.
-            indexDef.addVariableLengthByteField("depending_masterrecordid", 2);
-            indexDef.addByteField("depending_vtag", SCHEMA_ID_BYTE_LENGTH);
-            backwardDerefIndex = indexManager.getIndex(indexDef);
-        }
+        IndexDefinition forwardIndexDef = new IndexDefinition("deref-forward-" + indexName);
+        // For the record ID we use a variable length byte array field of which the first two bytes are fixed length
+        // The first byte is actually the record identifier byte.
+        // The second byte really is the first byte of the record id. We put this in the fixed length part
+        // (safely because a record id should at least be a single byte long) because this prevents BCD encoding
+        // on the first byte, thus making it easier to configure table splitting based on the original input.
+        forwardIndexDef.addVariableLengthByteField("dependant_recordid", 2);
+        forwardIndexDef.addByteField("dependant_vtag", SCHEMA_ID_BYTE_LENGTH);
+        forwardDerefIndex = indexManager.getIndex(forwardIndexDef);
+
+        IndexDefinition backwardIndexDef = new IndexDefinition("deref-backward-" + indexName);
+        // Same remark as in the forward index.
+        backwardIndexDef.addVariableLengthByteField("depending_masterrecordid", 2);
+        backwardIndexDef.addByteField("depending_vtag", SCHEMA_ID_BYTE_LENGTH);
+        backwardDerefIndex = indexManager.getIndex(backwardIndexDef);
     }
 
 

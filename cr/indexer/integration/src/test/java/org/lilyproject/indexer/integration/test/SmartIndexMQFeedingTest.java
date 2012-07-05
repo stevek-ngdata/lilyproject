@@ -1,5 +1,10 @@
 package org.lilyproject.indexer.integration.test;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import com.google.common.collect.Lists;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
@@ -9,7 +14,16 @@ import org.apache.tika.io.IOUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.engine.*;
+import org.lilyproject.indexer.engine.DerefMap;
+import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.IndexUpdater;
+import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.SolrClient;
+import org.lilyproject.indexer.engine.SolrClientException;
+import org.lilyproject.indexer.engine.SolrShardManager;
 import org.lilyproject.indexer.integration.IndexAwareMQFeeder;
 import org.lilyproject.indexer.integration.IndexSelectionRecordUpdateHook;
 import org.lilyproject.indexer.model.api.IndexDefinition;
@@ -20,17 +34,24 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.indexer.model.util.IndexesInfo;
 import org.lilyproject.indexer.model.util.IndexesInfoImpl;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.rowlog.api.*;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogMessageListener;
+import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
+import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -187,13 +208,14 @@ public class SmartIndexMQFeedingTest {
     }
 
     private static TrackingIndexUpdater createIndexUpdater(String subscriptionId, String confName,
-            SolrShardManager solrShardManager) throws Exception {
+                                                           SolrShardManager solrShardManager) throws Exception {
         IndexerConf INDEXER_CONF = IndexerConfBuilder.build(SmartIndexMQFeedingTest.class.getResourceAsStream(confName),
                 repository);
 
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
+        DerefMap derefMap = new DerefMapHbaseImpl("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics("test"));
+                new IndexerMetrics("test"), derefMap);
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, null, indexLocker, repoSetup.getMq(),
                 new IndexUpdaterMetrics("test"));
@@ -287,7 +309,7 @@ public class SmartIndexMQFeedingTest {
         assertEquals(1, indexUpdaterB.events());
         assertEquals(1, solrClientB.adds());
         assertEquals(1, solrClientB.deletes()); // when record type changes, applicable vtags might change
-                                                // so indexer first deletes existing entries
+        // so indexer first deletes existing entries
 
         record.setField(new QName("mqfeedtest", "field1"), "value3");
         record = repository.update(record);
@@ -497,7 +519,8 @@ public class SmartIndexMQFeedingTest {
         }
 
         @Override
-        public UpdateResponse commit(boolean waitFlush, boolean waitSearcher) throws SolrClientException, InterruptedException {
+        public UpdateResponse commit(boolean waitFlush, boolean waitSearcher)
+                throws SolrClientException, InterruptedException {
             return null;
         }
 

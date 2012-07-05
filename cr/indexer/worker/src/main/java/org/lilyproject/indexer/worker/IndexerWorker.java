@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -37,6 +36,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.indexer.engine.DerefMap;
+import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
@@ -87,6 +88,8 @@ public class IndexerWorker {
 
     private Repository repository;
 
+    private Configuration hbaseConf;
+
     private LinkIndex linkIndex;
 
     private ZooKeeperItf zk;
@@ -114,16 +117,16 @@ public class IndexerWorker {
     private HttpClient httpClient;
 
     private MultiThreadedHttpConnectionManager connectionManager;
-
     private final Log log = LogFactory.getLog(getClass());
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
-            Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
-            SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings)
+                         Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
+                         SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
         this.rowLog = rowLog;
+        this.hbaseConf = hbaseConf;
         this.linkIndex = new LinkIndex(new IndexManager(hbaseConf), repository);
         this.zk = zk;
         this.rowLogConfMgr = rowLogConfMgr;
@@ -137,7 +140,7 @@ public class IndexerWorker {
         connectionManager = new MultiThreadedHttpConnectionManager();
         connectionManager.getParams().setDefaultMaxConnectionsPerHost(settings.getSolrMaxConnectionsPerHost());
         connectionManager.getParams().setMaxTotalConnections(settings.getSolrMaxTotalConnections());
-      	httpClient = new HttpClient(connectionManager);
+        httpClient = new HttpClient(connectionManager);
 
         eventWorkerThread = new Thread(new EventWorker(), "IndexerWorkerEventWorker");
         eventWorkerThread.start();
@@ -189,12 +192,14 @@ public class IndexerWorker {
 
             checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
 
-            SolrShardManager solrShardMgr = new SolrShardManagerImpl(index.getName(), index.getSolrShards(), shardSelector,
-                    httpClient, solrClientConfig, true);
+            SolrShardManager solrShardMgr =
+                    new SolrShardManagerImpl(index.getName(), index.getSolrShards(), shardSelector,
+                            httpClient, solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
+            DerefMap derefMap = new DerefMapHbaseImpl(index.getName(), hbaseConf, repository.getIdGenerator());
             Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
-                    indexerMetrics);
+                    indexerMetrics, derefMap);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,
@@ -310,7 +315,8 @@ public class IndexerWorker {
         private IndexUpdaterMetrics updaterMetrics;
 
         public IndexUpdaterHandle(IndexDefinition indexDef, List<RemoteListenerHandler> listenerHandlers,
-                SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics, IndexUpdaterMetrics updaterMetrics) {
+                                  SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics,
+                                  IndexUpdaterMetrics updaterMetrics) {
             this.indexDef = indexDef;
             this.listenerHandlers = listenerHandlers;
             this.solrShardMgr = solrShardMgr;

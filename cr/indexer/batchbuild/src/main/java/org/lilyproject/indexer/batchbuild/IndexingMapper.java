@@ -15,6 +15,14 @@
  */
 package org.lilyproject.indexer.batchbuild;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import net.iharder.Base64;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
@@ -28,14 +36,26 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.client.HBaseConnections;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.engine.*;
+import org.lilyproject.indexer.engine.DerefMap;
+import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.engine.SolrShardManager;
+import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseTypeManager;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
@@ -46,15 +66,9 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.getRecordTable;
 
 public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> {
     private IdGenerator idGenerator;
@@ -81,13 +95,14 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             idGenerator = new IdGeneratorImpl();
 
             String zkConnectString = jobConf.get("org.lilyproject.indexer.batchbuild.zooKeeperConnectString");
-            int zkSessionTimeout = getIntProp("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", null, jobConf);
+            int zkSessionTimeout =
+                    getIntProp("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", null, jobConf);
             zk = ZkUtil.connect(zkConnectString, zkSessionTimeout);
             hbaseTableFactory = new HBaseTableFactoryImpl(conf);
             TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
 
             RowLog wal = new DummyRowLog("The write ahead log should not be called from within MapReduce jobs.");
-            
+
             BlobManager blobManager = LilyClient.getBlobManager(zk, new HBaseConnections());
             RowLocker rowLocker = new HBaseRowLocker(getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
                     RecordColumn.LOCK.bytes, 10000);
@@ -128,16 +143,19 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
             SolrShardManager solrShardMgr = new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient,
                     solrConfig);
 
-            boolean enableLocking = Boolean.parseBoolean(jobConf.get("org.lilyproject.indexer.batchbuild.enableLocking"));
+            boolean enableLocking =
+                    Boolean.parseBoolean(jobConf.get("org.lilyproject.indexer.batchbuild.enableLocking"));
 
             indexLocker = new IndexLocker(zk, enableLocking);
 
+            final DerefMap derefMap = new DerefMapHbaseImpl(indexName, conf, repository.getIdGenerator());
             indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
-                    new IndexerMetrics(indexName));
+                    new IndexerMetrics(indexName), derefMap);
 
             int workers = getIntProp("org.lilyproject.indexer.batchbuild.threads", 5, jobConf);
-            
-            executor = new ThreadPoolExecutor(workers, workers, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(1000));
+
+            executor = new ThreadPoolExecutor(workers, workers, 10, TimeUnit.SECONDS,
+                    new ArrayBlockingQueue<Runnable>(1000));
             executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
         } catch (Exception e) {
@@ -205,7 +223,8 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
                 context.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS).increment(1);
 
                 // Avoid printing a complete stack trace for common errors.
-                if (t instanceof SolrServerException && t.getMessage().equals("java.net.ConnectException: Connection refused")) {
+                if (t instanceof SolrServerException &&
+                        t.getMessage().equals("java.net.ConnectException: Connection refused")) {
                     log.error("Failure indexing record " + recordId + ": Solr connection refused.");
                 } else {
                     log.error("Failure indexing record " + recordId, t);

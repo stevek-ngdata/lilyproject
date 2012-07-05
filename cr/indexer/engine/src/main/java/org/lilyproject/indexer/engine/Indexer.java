@@ -59,11 +59,12 @@ public class Indexer {
     private IndexLocker indexLocker;
     private ValueEvaluator valueEvaluator;
     private IndexerMetrics metrics;
+    private DerefMap derefMap;
 
     private Log log = LogFactory.getLog(getClass());
 
     public Indexer(String indexName, IndexerConf conf, Repository repository, SolrShardManager solrShardMgr,
-            IndexLocker indexLocker, IndexerMetrics metrics) {
+                   IndexLocker indexLocker, IndexerMetrics metrics, DerefMap derefMap) {
         this.indexName = indexName;
         this.conf = conf;
         this.repository = repository;
@@ -72,6 +73,7 @@ public class Indexer {
         this.typeManager = repository.getTypeManager();
         this.valueEvaluator = new ValueEvaluator(conf);
         this.metrics = metrics;
+        this.derefMap = derefMap;
     }
 
     public IndexerConf getConf() {
@@ -144,7 +146,8 @@ public class Indexer {
 
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s, version %2$s: does not exist, deleted index" +
-                            " entries for vtags %3$s", recordId, entry.getKey(), vtagSetToNameString(entry.getValue())));
+                            " entries for vtags %3$s", recordId, entry.getKey(),
+                            vtagSetToNameString(entry.getValue())));
                 }
             } else {
                 index(version, entry.getKey(), entry.getValue());
@@ -155,10 +158,10 @@ public class Indexer {
     /**
      * The actual indexing: maps record fields to index fields, and send to Solr.
      *
-     * @param record the correct version of the record, which has the versionTag applied to it
+     * @param record  the correct version of the record, which has the versionTag applied to it
      * @param version version of the record, for the nonversioned case this is 0 so is not necessarily the same as
      *                record.getVersion().
-     * @param vtags the version tags under which to index
+     * @param vtags   the version tags under which to index
      */
     protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws ShardSelectorException,
             RepositoryException, InterruptedException, SolrClientException {
@@ -175,14 +178,16 @@ public class Indexer {
         // re-evaluate all fields for each vtag.
         for (SchemaId vtag : vtags) {
 
-            SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(typeManager, record.getId(), getIndexId(record.getId(), vtag), vtag, version);
+            SolrDocumentBuilder solrDocumentBuilder =
+                    new SolrDocumentBuilder(typeManager, record.getId(), getIndexId(record.getId(), vtag), vtag,
+                            version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 
             //
             // 1: evaluate the static index fields
             //
-            for (IndexField field: collectFieldNodes(record, version, vtag)) {
+            for (IndexField field : collectFieldNodes(record, version, vtag)) {
                 List<String> values = valueEvaluator.eval(field.getValue(), record, repository, vtag);
                 solrDocumentBuilder.fields(field.getName(), values);
             }
@@ -308,12 +313,12 @@ public class Indexer {
     public void delete(RecordId recordId) throws SolrClientException, ShardSelectorException,
             InterruptedException {
         verifyLock(recordId);
-        solrShardMgr.getSolrClient(recordId).deleteByQuery("lily.id:" + ClientUtils.escapeQueryChars(recordId.toString()));
+        solrShardMgr.getSolrClient(recordId)
+                .deleteByQuery("lily.id:" + ClientUtils.escapeQueryChars(recordId.toString()));
         metrics.deletesByQuery.inc();
     }
 
     /**
-     *
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      */
     public void delete(RecordId recordId, SchemaId vtag) throws SolrClientException, ShardSelectorException,
