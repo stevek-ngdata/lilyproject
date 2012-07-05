@@ -36,6 +36,7 @@ import org.lilyproject.indexer.model.api.IndexGeneralState;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
 import org.restlet.representation.StringRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,10 +81,21 @@ public class IndexResource {
     public IndexDefinition put(@PathParam("name") String indexName, ObjectNode json) throws Exception {
     	IndexDefinition index = model.getMutableIndex(indexName);
     	
-        IndexGeneralState generalState = json.has("generalState") ? IndexGeneralState.valueOf(json.get("generalState").getTextValue()):null;
-        IndexUpdateState updateState = json.has("updateState") ? IndexUpdateState.valueOf(json.get("updateState").getTextValue()):null;
-        IndexBatchBuildState buildState = json.has("buildState") ? IndexBatchBuildState.valueOf(json.get("buildState").getTextValue()):null;
-
+        IndexGeneralState generalState = json.has("generalState") ? IndexGeneralState.valueOf(json.get("generalState")
+                .getTextValue()):null;
+        IndexUpdateState updateState = json.has("updateState") ? IndexUpdateState.valueOf(json.get("updateState")
+                .getTextValue()):null;
+        IndexBatchBuildState buildState = json.has("batchBuildState") ? IndexBatchBuildState.valueOf(json.get("batchBuildState")
+                .getTextValue()):null;
+        // adding this for backwards compatibility.
+        buildState = json.has("buildState") && buildState == null ? IndexBatchBuildState.valueOf(json.get("buildState")
+                .getTextValue()):buildState;
+        
+        
+        byte[] defaultBatchIndexConfiguration = json.has("defaultBatchIndexConfiguration") ? 
+                JsonFormat.serializeAsBytes(json.get("defaultBatchIndexConfiguration")) : null;
+        byte[] batchIndexConfiguration = json.has("batchIndexConfiguration") ? 
+                JsonFormat.serializeAsBytes(json.get("batchIndexConfiguration")) : null;
 
     	String lock = model.lockIndex(indexName);
         try {
@@ -102,6 +114,16 @@ public class IndexResource {
 
             if (buildState != null && buildState != index.getBatchBuildState()) {
                 index.setBatchBuildState(buildState);
+                changes = true;
+            }
+            
+            if (json.has("defaultBatchIndexConfiguration") && !ObjectUtils.safeEquals(defaultBatchIndexConfiguration, index.getDefaultBatchIndexConfiguration())) {
+                index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
+                changes = true;
+            }
+            
+            if (batchIndexConfiguration != null) {
+                index.setBatchIndexConfiguration(batchIndexConfiguration);
                 changes = true;
             }
 

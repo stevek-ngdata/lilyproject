@@ -72,4 +72,13 @@ public interface IndexDefinition {
     ActiveBatchBuildInfo getActiveBatchBuildInfo();
 
     void setActiveBatchBuildInfo(ActiveBatchBuildInfo info);
+    
+    /**
+     * The JSON configuration for the batch indexer
+     */
+    byte[] getBatchIndexConfiguration ();
+    void setBatchIndexConfiguration(byte[] batchIndexConfiguration);
+    
+    byte[] getDefaultBatchIndexConfiguration();
+    void setDefaultBatchIndexConfiguration(byte[] defaultBatchIndexConfiguration);
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<indexer xmlns:bi="batchindex-test">
+
+  <records>
+    <record matchNamespace="bi" matchName="*" vtags="last"/>    
+  </records>
+
+  <fields>    
+    <field name="field1" value="bi:field1"/>
+  </fields>
+</indexer>

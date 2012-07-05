@@ -15,37 +15,6 @@
  */
 package org.lilyproject.indexer.batchbuild;
 
-import net.iharder.Base64;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.lilyproject.client.HBaseConnections;
-import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.engine.*;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
-import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
-import org.lilyproject.indexer.model.sharding.ShardSelector;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.*;
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.rowlock.HBaseRowLocker;
-import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.util.hbase.HBaseTableFactory;
-import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.ZkUtil;
-import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -54,10 +23,39 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
+import net.iharder.Base64;
 
-public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> {
-    private IdGenerator idGenerator;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.lilyproject.client.LilyClient;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.engine.SolrShardManager;
+import org.lilyproject.indexer.model.indexerconf.IndexerConf;
+import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
+import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
+import org.lilyproject.indexer.model.sharding.ShardSelector;
+import org.lilyproject.mapreduce.IdRecordMapper;
+import org.lilyproject.mapreduce.IdRecordWritable;
+import org.lilyproject.mapreduce.LilyMapReduceUtil;
+import org.lilyproject.mapreduce.RecordIdWritable;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.zookeeper.ZkUtil;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Result> {
     private Indexer indexer;
     private MultiThreadedHttpConnectionManager connectionManager;
     private IndexLocker indexLocker;
@@ -65,7 +63,6 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
     private Repository repository;
     private ThreadPoolExecutor executor;
     private Log log = LogFactory.getLog(getClass());
-    private HBaseTableFactory hbaseTableFactory;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -73,25 +70,13 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
 
         try {
             Configuration jobConf = context.getConfiguration();
-
-            Configuration conf = HBaseConfiguration.create();
-            conf.set("hbase.zookeeper.quorum", jobConf.get("hbase.zookeeper.quorum"));
-            conf.set("hbase.zookeeper.property.clientPort", jobConf.get("hbase.zookeeper.property.clientPort"));
-
-            idGenerator = new IdGeneratorImpl();
-
+            
+            LilyClient lilyClient = LilyMapReduceUtil.getLilyClient(jobConf);            
+            repository = lilyClient.getRepository();  
+            
             String zkConnectString = jobConf.get("org.lilyproject.indexer.batchbuild.zooKeeperConnectString");
             int zkSessionTimeout = getIntProp("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", null, jobConf);
             zk = ZkUtil.connect(zkConnectString, zkSessionTimeout);
-            hbaseTableFactory = new HBaseTableFactoryImpl(conf);
-            TypeManager typeManager = new HBaseTypeManager(idGenerator, conf, zk, hbaseTableFactory);
-
-            RowLog wal = new DummyRowLog("The write ahead log should not be called from within MapReduce jobs.");
-            
-            BlobManager blobManager = LilyClient.getBlobManager(zk, new HBaseConnections());
-            RowLocker rowLocker = new HBaseRowLocker(getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
-                    RecordColumn.LOCK.bytes, 10000);
-            repository = new HBaseRepository(typeManager, idGenerator, wal, hbaseTableFactory, blobManager, rowLocker);
 
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), repository);
@@ -177,30 +162,28 @@ public class IndexingMapper extends TableMapper<ImmutableBytesWritable, Result> 
     }
 
     @Override
-    public void map(ImmutableBytesWritable key, Result value, Context context)
+    public void map(RecordIdWritable recordIdWritable, IdRecordWritable recordWritable, Context context)
             throws IOException, InterruptedException {
-
-        executor.submit(new MappingTask(context.getCurrentKey().get(), context));
+        executor.submit(new MappingTask(recordWritable.getRecord(), context));
     }
 
     public class MappingTask implements Runnable {
-        private byte[] key;
+        private IdRecord idRecord;
         private Context context;
 
-        private MappingTask(byte[] key, Context context) {
-            this.key = key;
+        private MappingTask(IdRecord idRecord, Context context) {
+            this.idRecord = idRecord;
             this.context = context;
         }
 
         @Override
         public void run() {
-            RecordId recordId = null;
             boolean locked = false;
+            RecordId recordId = idRecord.getId();
             try {
-                recordId = idGenerator.fromBytes(key);
                 indexLocker.lock(recordId);
                 locked = true;
-                indexer.index(recordId);
+                indexer.index(idRecord);
             } catch (Throwable t) {
                 context.getCounter(IndexBatchBuildCounters.NUM_FAILED_RECORDS).increment(1);
 

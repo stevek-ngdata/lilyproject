@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -27,9 +26,19 @@ import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.hadoop.conf.Configuration;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.*;
-import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.IORecordException;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordBuilder;
+import org.lilyproject.repository.api.RecordException;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.avro.AvroConverter;
+import org.lilyproject.repository.avro.AvroGenericException;
+import org.lilyproject.repository.avro.AvroLily;
+import org.lilyproject.repository.avro.AvroRepositoryException;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
@@ -49,7 +58,7 @@ public class RemoteRepository extends BaseRepository {
         // true flag to getRecordTable: we don't let the remote side create the record table if it
         // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
         super(typeManager, blobManager, idGenerator,
-                LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true));
+                LilyHBaseSchema.getRecordTable(new HBaseTableFactoryImpl(hbaseConf), true), null);
 
         this.converter = converter;
 
@@ -118,134 +127,6 @@ public class RemoteRepository extends BaseRepository {
     }
 
     @Override
-    public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
-        return read(recordId, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
-        return read(recordId, null, fieldNames);
-    }
-    
-    @Override
-    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames) throws RepositoryException, InterruptedException {
-        return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public List<Record> read(List<RecordId> recordIds, QName... fieldNames) throws RepositoryException, InterruptedException {
-        ArgumentValidator.notNull(recordIds, "recordIds");
-        if (recordIds == null)
-            return new ArrayList<Record>();
-        try {
-            List<ByteBuffer> avroRecordIds = new ArrayList<ByteBuffer>();
-            for (RecordId recordId : recordIds) {
-                avroRecordIds.add(converter.convert(recordId));
-            }
-            List<AvroQName> avroFieldNames = null;
-            if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
-                for (QName fieldName : fieldNames) {
-                    avroFieldNames.add(converter.convert(fieldName));
-                }
-            }
-            return converter.convertAvroRecords(lilyProxy.readRecords(avroRecordIds, avroFieldNames));
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw handleAvroRemoteException(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredRecordThrowable(e);
-        }
-    }
-
-    @Override
-    public Record read(RecordId recordId, Long version, List<QName> fieldNames) throws RepositoryException, InterruptedException {
-        return read(recordId, version, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public Record read(RecordId recordId, Long version, QName... fieldNames) throws RepositoryException, InterruptedException {
-        try {
-            List<AvroQName> avroFieldNames = null;
-            if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
-                for (QName fieldName : fieldNames) {
-                    avroFieldNames.add(converter.convert(fieldName));
-                }
-            }
-            return converter.convertRecord(lilyProxy.read(converter.convert(recordId),
-                    converter.convertVersion(version), avroFieldNames));
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw handleAvroRemoteException(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredRecordThrowable(e);
-        }
-    }
-
-    @Override
-    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames) throws RepositoryException, InterruptedException {
-        return readVersions(recordId, fromVersion, toVersion, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-    
-    @Override
-    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames) throws RepositoryException, InterruptedException {
-        try {
-            List<AvroQName> avroFieldNames = null;
-            if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
-                for (QName fieldName : fieldNames) {
-                    avroFieldNames.add(converter.convert(fieldName));
-                }
-            }
-            return converter.convertAvroRecords(lilyProxy.readVersions(converter.convert(recordId), converter.convertVersion(fromVersion), converter.convertVersion(toVersion), avroFieldNames));
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw handleAvroRemoteException(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredRecordThrowable(e);
-        }
-    }
-
-    @Override
-    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
-    throws RepositoryException, InterruptedException {
-        return readVersions(recordId, versions, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-        
-    @Override
-    public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
-    throws RepositoryException, InterruptedException {
-        try {
-            List<AvroQName> avroFieldNames = null;
-            if (fieldNames != null) {
-                avroFieldNames = new ArrayList<AvroQName>(fieldNames.length);
-                for (QName fieldName : fieldNames) {
-                    avroFieldNames.add(converter.convert(fieldName));
-                }
-            }
-            return converter.convertAvroRecords(lilyProxy.readSpecificVersions(converter.convert(recordId), versions, avroFieldNames));
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw handleAvroRemoteException(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredRecordThrowable(e);
-        }
-    }
-    
-    @Override
     public Record update(Record record) throws RepositoryException, InterruptedException {
         return update(record, false, true);
     }
@@ -303,29 +184,6 @@ public class RemoteRepository extends BaseRepository {
     public Set<RecordId> getVariants(RecordId recordId) throws RepositoryException, InterruptedException {
         try {
             return converter.convertAvroRecordIds(lilyProxy.getVariants(converter.convert(recordId)));
-        } catch (AvroRepositoryException e) {
-            throw converter.convert(e);
-        } catch (AvroGenericException e) {
-            throw converter.convert(e);
-        } catch (AvroRemoteException e) {
-            throw handleAvroRemoteException(e);
-        } catch (UndeclaredThrowableException e) {
-            throw handleUndeclaredRecordThrowable(e);
-        }
-    }
-    
-    @Override
-    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException {
-        try {
-            List<AvroSchemaId> avroFieldIds = null;
-            if (fieldIds != null) {
-                avroFieldIds = new ArrayList<AvroSchemaId>(fieldIds.size());
-                for (SchemaId fieldId : fieldIds) {
-                    avroFieldIds.add(converter.convert(fieldId));
-                }
-            }
-            return converter.convertIdRecord(lilyProxy.readWithIds(converter.convert(recordId),
-                    converter.convertVersion(version), avroFieldIds));
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
