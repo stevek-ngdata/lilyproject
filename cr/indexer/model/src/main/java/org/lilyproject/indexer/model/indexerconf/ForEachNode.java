@@ -15,13 +15,10 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
@@ -71,32 +68,14 @@ public class ForEachNode extends ContainerMappingNode {
             }
         }
 
-        if (follow instanceof RecordFieldFollow) {
-            collectFromRecords(indexUpdateBuilder, record, version, vtag, (List<Record>)indexUpdateBuilder.evalFollow(follow));
-        } else {
-            collectFromLinks(indexUpdateBuilder, record, version, vtag, (List<FollowRecord>)indexUpdateBuilder.evalFollow(follow));
-        }
+        collectFromRecords(indexUpdateBuilder, record, version, vtag, indexUpdateBuilder.evalFollow(follow));
     }
 
-    private void collectFromRecords(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<Record> records)
-            throws InterruptedException, RepositoryException {
-        for (Record childRecord: records) {
-            RecordContext ctx = indexUpdateBuilder.getRecordContext();
-            ctx.push(new FollowRecord(childRecord, ctx.last().contextRecord));
-            for (MappingNode child : getChildren()) {
-                child.collectIndexUpdate(indexUpdateBuilder, childRecord, version, vtag);
-            }
-            ctx.pop();
-        }
-    }
-
-    private void collectFromLinks(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<FollowRecord> links)
+    private void collectFromRecords(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<FollowRecord> links)
             throws InterruptedException, RepositoryException {
         if (links == null || links.size() == 0)
             return;
 
-        Repository repository = indexUpdateBuilder.getRepository();
-        List<RecordId> recordIds = new ArrayList<RecordId>(links.size());
         for (FollowRecord followRecord: links) {
             RecordContext ctx = indexUpdateBuilder.getRecordContext();
             ctx.push(followRecord);

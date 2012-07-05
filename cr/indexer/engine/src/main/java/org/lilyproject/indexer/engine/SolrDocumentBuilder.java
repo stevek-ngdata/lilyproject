@@ -20,6 +20,7 @@ import java.util.List;
 import org.apache.solr.common.SolrInputDocument;
 import org.lilyproject.indexer.model.indexerconf.FieldTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.Follow;
+import org.lilyproject.indexer.model.indexerconf.FollowRecord;
 import org.lilyproject.indexer.model.indexerconf.IndexUpdateBuilder;
 import org.lilyproject.indexer.model.indexerconf.LiteralTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
@@ -89,7 +90,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     }
 
     @Override
-    public List evalFollow(Follow follow) throws RepositoryException, InterruptedException {
+    public List<FollowRecord> evalFollow(Follow follow) throws RepositoryException, InterruptedException {
         return valueEvaluator.evalFollow(follow, recordContext.last(), repository, vtag);
     }
 

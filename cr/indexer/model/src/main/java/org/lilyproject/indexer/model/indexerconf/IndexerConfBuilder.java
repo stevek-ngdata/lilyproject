@@ -360,7 +360,9 @@ public class IndexerConfBuilder {
         String valueExpr = DocumentHelper.getAttribute(el, "value", true);
 
         List<Follow> follows = parseFollows(el, valueExpr, new String[] { valueExpr, null });
-        return new ForEachNode(systemFields, follows.get(0));
+        ForEachNode forEachNode = new ForEachNode(systemFields, follows.get(0));
+        addChildNodes(el, forEachNode, "field", "match", "forEach");
+        return forEachNode;
     }
 
     public void addChildNodes(Element el, ContainerMappingNode parent, String... allowedTagNames) throws Exception {

@@ -15,7 +15,7 @@ public interface IndexUpdateBuilder {
 
     public List<String> eval(Value value) throws RepositoryException, InterruptedException;
 
-    public List evalFollow(Follow follow) throws RepositoryException, InterruptedException;
+    public List<FollowRecord> evalFollow(Follow follow) throws RepositoryException, InterruptedException;
 
     public NameTemplateResolver getNameResolver();
 

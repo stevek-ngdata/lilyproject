@@ -401,14 +401,15 @@ public class IndexerTest {
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
                 .recordType(new QName(NS, "Alpha"))
-                .field(nvfield1.getName(), "10")
-                .field(nvfield2.getName(), "louche")
+                .field(nvfield1.getName(), "louche")
+                .field(nvfield2.getName(), "10")
                 .create();
 
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "belgium")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "schuimspaan")
+                .field(nvfield2.getName(), "11")
                 .create();
 
         commitIndex();
@@ -2451,20 +2452,20 @@ public class IndexerTest {
 
         final List<IndexField> derefIndexFields = INDEXER_CONF.getDerefIndexFields();
         for (IndexField indexField : derefIndexFields) {
-            if ("cc_less_variant_spaces".equals(indexField.getName())) {
+            if ("cc_less_variant_spaces".equals(indexField.getName().getTemplate())) {
                 final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
                 assertEquals(1, dimensions.size());
                 assertTrue(dimensions.contains("my branch"));
-            } else if ("cc_less_variant_spaces_twice".equals(indexField.getName())) {
+            } else if ("cc_less_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
                 final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
                 assertEquals(2, dimensions.size());
                 assertTrue(dimensions.contains("my branch"));
                 assertTrue(dimensions.contains("some lang"));
-            } else if ("cc_more_variant_spaces".equals(indexField.getName())) {
+            } else if ("cc_more_variant_spaces".equals(indexField.getName().getTemplate())) {
                 final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
@@ -2472,7 +2473,7 @@ public class IndexerTest {
                 assertEquals(1, dimensions.size());
                 assertTrue(dimensions.containsKey("my branch"));
                 assertNull(dimensions.get("my branch"));
-            } else if ("cc_more_variant_spaces_twice".equals(indexField.getName())) {
+            } else if ("cc_more_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
                 final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
@@ -2482,7 +2483,7 @@ public class IndexerTest {
                 assertNull(dimensions.get("my branch"));
                 assertTrue(dimensions.containsKey("some lang"));
                 assertNull(dimensions.get("some lang"));
-            } else if ("cc_more_variant_spaces_value".equals(indexField.getName())) {
+            } else if ("cc_more_variant_spaces_value".equals(indexField.getName().getTemplate())) {
                 final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
@@ -2490,7 +2491,7 @@ public class IndexerTest {
                 assertEquals(1, dimensions.size());
                 assertTrue(dimensions.containsKey("branch"));
                 assertEquals("some value", dimensions.get("branch"));
-            } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName())) {
+            } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName().getTemplate())) {
                 final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
@@ -2500,7 +2501,7 @@ public class IndexerTest {
                 assertEquals("some value", dimensions.get("branch"));
                 assertTrue(dimensions.containsKey("lang"));
                 assertEquals("some lang", dimensions.get("lang"));
-            } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName())) {
+            } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName().getTemplate())) {
                 final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
