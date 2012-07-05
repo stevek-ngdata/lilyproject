@@ -18,25 +18,30 @@ package org.lilyproject.indexer.model.indexerconf;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.SchemaId;
 
-public interface Value {
-    /**
-     * Returns the field that is used from the record when evaluating this value. It is the value that is taken
-     * from the current record, thus in the case of a dereference it is the first link field, not the field value
-     * taken from the target document.
-     */
-    SchemaId getFieldDependency();
+/**
+ * FollowValues are used when a dereferencing value ends with a 'variant follow' (master, -prop*, (+prop|+prop=value)* )
+ * They are not used for LinkFieldFollow and RecordFieldFollow (those are handled using 'FieldValue' objects)
+ */
+public class FollowValue extends BaseValue {
+    private Follow follow;
 
-    /**
-     * Name of the formatter to use for this value, or null if no specific one.
-     */
-    String getFormatter();
+    protected FollowValue(Follow follow, boolean extractContent, String formatter) {
+        super(extractContent, formatter);
+        this.follow = follow;
+    }
 
-    boolean extractContent();
+    public FieldType getFieldType() {
+        return null;
+    }
 
-    /**
-     * Get the FieldType of the field from which the actual data is taken, thus in case
-     * of a dereference the last field in the chain.
-     */
-    public abstract FieldType getTargetFieldType();
+    @Override
+    public SchemaId getFieldDependency() {
+        return null;
+    }
+
+    @Override
+    public FieldType getTargetFieldType() {
+        return null;
+    }
 
 }

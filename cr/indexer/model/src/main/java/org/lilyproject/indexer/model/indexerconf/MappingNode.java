@@ -15,7 +15,6 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import java.util.List;
 
 import com.google.common.base.Predicate;
 import org.lilyproject.repository.api.Record;
@@ -33,9 +32,9 @@ public interface MappingNode {
             RepositoryException;
 
     /**
-     * Collect only the indexfields which need to go into the index.
+     * Traverse the MappingNode hierarchy and report context records and data to index to the indexUpdateBuilder.
      */
-    public abstract void collectIndexFields(List<IndexField> indexFields, Record record, long version, SchemaId vtag);
+    public abstract void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException;
 
     /**
      * Evaluate the predicate for this node. If predicate.apply returns true, descend into children

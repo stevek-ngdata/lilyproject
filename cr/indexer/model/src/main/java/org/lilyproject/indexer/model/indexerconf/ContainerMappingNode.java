@@ -47,9 +47,9 @@ public abstract class ContainerMappingNode implements MappingNode {
     }
 
     @Override
-    public void collectIndexFields(List<IndexField> indexFields, Record record, long version, SchemaId vtag) {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException {
         for (MappingNode child: getChildren()) {
-            child.collectIndexFields(indexFields, record, version, vtag);
+            child.collectIndexUpdate(indexUpdateBuilder, record, version, vtag);
         }
     }
 
@@ -60,7 +60,5 @@ public abstract class ContainerMappingNode implements MappingNode {
             }
         }
     }
-
-
 
 }

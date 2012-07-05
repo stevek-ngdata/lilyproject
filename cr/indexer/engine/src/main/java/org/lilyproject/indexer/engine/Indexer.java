@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.util.ClientUtils;
@@ -29,7 +28,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField.DynamicIndexFieldMatch;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
-import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.repository.api.FieldType;
@@ -178,19 +176,14 @@ public class Indexer {
         // re-evaluate all fields for each vtag.
         for (SchemaId vtag : vtags) {
 
-            SolrDocumentBuilder solrDocumentBuilder =
-                    new SolrDocumentBuilder(typeManager, record.getId(), getIndexId(record.getId(), vtag), vtag,
-                            version);
+            SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(repository, valueEvaluator, record, getIndexId(record.getId(), vtag), vtag, version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 
             //
             // 1: evaluate the static index fields
             //
-            for (IndexField field: collectIndexFields(record, version, vtag)) {
-                List<String> values = valueEvaluator.eval(field.getValue(), record, repository, vtag);
-                solrDocumentBuilder.fields(field.getName(), values);
-            }
+            conf.getIndexFields().collectIndexUpdate(solrDocumentBuilder, record, version, vtag);
 
             //
             // 2: evaluate dynamic index fields
@@ -206,7 +199,7 @@ public class Indexer {
                             List<String> values = valueEvaluator.format(record, fieldType, dynField.extractContext(),
                                     dynField.getFormatter(), repository);
 
-                            solrDocumentBuilder.fields(fieldName, values);
+                            solrDocumentBuilder.addField(fieldName, values);
 
                             if (!dynField.getContinue()) {
                                 // stop on first match, unless continue attribute is true
@@ -252,12 +245,6 @@ public class Indexer {
                         safeLoadTagName(vtag), solrDoc));
             }
         }
-    }
-
-    private List<IndexField> collectIndexFields(IdRecord record, long version, SchemaId vtag) {
-        List<IndexField> result = Lists.newArrayList();
-        getConf().getIndexFields().collectIndexFields(result, record, version, vtag);
-        return result;
     }
 
     private String evalName(DynamicIndexField dynField, DynamicIndexFieldMatch match, FieldType fieldType) {

@@ -15,7 +15,6 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import java.util.List;
 
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
@@ -66,9 +65,9 @@ public class MatchNode extends ContainerMappingNode {
         }
     }
 
-    public void collectIndexFields(List<IndexField> indexFields, Record record, long version, SchemaId vtag) {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException  {
         if (recordMatcher.matches(record)) {
-            super.collectIndexFields(indexFields, record, version, vtag);
+            super.collectIndexUpdate(indexUpdateBuilder, record, version, vtag);
         }
     }
 

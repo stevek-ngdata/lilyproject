@@ -15,7 +15,6 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import java.util.List;
 
 import com.google.common.base.Predicate;
 import org.lilyproject.repository.api.Record;
@@ -54,8 +53,8 @@ public class IndexField implements MappingNode {
     }
 
     @Override
-    public void collectIndexFields(List<IndexField> indexFields, Record record, long version, SchemaId vtag) {
-        indexFields.add(this);
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException {
+        indexUpdateBuilder.addField(name, indexUpdateBuilder.eval(value));
     }
 
 }

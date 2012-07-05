@@ -15,7 +15,8 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.SchemaId;
 
 public class FieldValue extends BaseValue {
     private FieldType fieldType;
@@ -38,4 +39,5 @@ public class FieldValue extends BaseValue {
     public FieldType getTargetFieldType() {
         return fieldType;
     }
+
 }
