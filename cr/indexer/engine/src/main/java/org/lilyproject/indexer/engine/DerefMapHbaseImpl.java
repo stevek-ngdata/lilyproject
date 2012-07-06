@@ -29,6 +29,7 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.hbaseindex.Query;
 import org.lilyproject.hbaseindex.QueryResult;
+import org.lilyproject.indexer.model.indexerconf.DerefMap;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
@@ -209,7 +210,7 @@ public class DerefMapHbaseImpl implements DerefMap {
     }
 
     /**
-     * From a multimap with {@link org.lilyproject.indexer.engine.DerefMap.Entry}s and fields, keep only the
+     * From a multimap with {@link Entry}s and fields, keep only the
      * information about dependencies.
      *
      * @param newDependencies input
@@ -327,7 +328,7 @@ public class DerefMapHbaseImpl implements DerefMap {
     }
 
     /**
-     * Serializes a list of {@link org.lilyproject.indexer.engine.DerefMap.Dependency}s into a byte array for
+     * Serializes a list of {@link Dependency}s into a byte array for
      * usage in the forward index table. It uses a variable length byte array encoding schema.
      *
      * @param dependencies list of dependencies to serialize
