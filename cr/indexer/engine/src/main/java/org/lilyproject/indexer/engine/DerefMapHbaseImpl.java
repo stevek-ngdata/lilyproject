@@ -29,7 +29,6 @@ import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.hbaseindex.Query;
 import org.lilyproject.hbaseindex.QueryResult;
-import org.lilyproject.indexer.model.indexerconf.DerefMap;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
