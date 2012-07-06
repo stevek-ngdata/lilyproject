@@ -274,8 +274,8 @@ public class IndexUpdater implements RowLogMessageListener {
                 // Handle changes to non-versioned fields
                 //
                 if (indexer.getConf().changesAffectIndex(vtRecord, Scope.NON_VERSIONED)) {
-                        indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
-                        // After this we go to the treatment of changed vtag fields
+                    indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
+                    // After this we go to the treatment of changed vtag fields
                     if (log.isDebugEnabled()) {
                         log.debug(
                                 String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
@@ -387,7 +387,7 @@ public class IndexUpdater implements RowLogMessageListener {
         findRelevantIndexFieldsForVTagChanges(changedVTagFields, indexFieldsAndVTags);
 
         //
-        // Now search the referrers, that is: for each link field, find out which records point to the current record
+        // Now search the referrers, that is: for each deref field, find out which records point to the current record
         // in a certain versioned view (= a certain vtag)
         //
 
