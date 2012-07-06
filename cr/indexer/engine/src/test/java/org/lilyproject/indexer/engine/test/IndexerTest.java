@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.lilyproject.indexer.model.indexerconf.DerefMap;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
@@ -45,7 +47,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.indexer.engine.DerefMap;
 import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;

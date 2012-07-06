@@ -23,6 +23,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.lilyproject.indexer.model.indexerconf.DerefMap;
+
 import net.iharder.Base64;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
@@ -36,7 +38,6 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.client.HBaseConnections;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.engine.DerefMap;
 import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.Indexer;
