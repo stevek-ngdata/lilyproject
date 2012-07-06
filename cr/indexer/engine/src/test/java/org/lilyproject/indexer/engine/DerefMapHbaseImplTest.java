@@ -5,10 +5,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import junit.framework.Assert;
 import org.apache.hadoop.thirdparty.guava.common.collect.ImmutableSet;
+import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -23,6 +23,7 @@ import org.lilyproject.util.io.Closer;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 /**
  * @author Jan Van Besien
@@ -61,7 +62,8 @@ public class DerefMapHbaseImplTest {
         final SchemaId dummyField = ids.getSchemaId(UUID.randomUUID());
         final RecordId id1 = ids.newRecordId("id1");
 
-        final HashMultimap<DerefMap.Entry, SchemaId> empty = HashMultimap.create();
+        final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> empty =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
         derefMap.updateDependencies(id1, dummyVtag, empty);
 
         // consistency check
@@ -83,8 +85,10 @@ public class DerefMapHbaseImplTest {
         final RecordId dependencyAfterUpdate = ids.newRecordId("dependencyAfterUpdate");
 
         // the dependant depends on the dependencyField of the dependency
-        final HashMultimap<DerefMap.Entry, SchemaId> dependencies = HashMultimap.create();
-        dependencies.put(new DerefMap.Entry(new DerefMap.Dependency(dependency, dummyVtag)), dependencyField);
+        final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency, dummyVtag)),
+                Sets.newHashSet(dependencyField));
         derefMap.updateDependencies(dependant, dummyVtag, dependencies);
 
         // consistency check
@@ -104,13 +108,14 @@ public class DerefMapHbaseImplTest {
                 .hasNext());
 
         // check that nothing is found as dependency of the dependency via another field than the dependencyField
-        assertFalse(
-                derefMap.findDependantsOf(new DerefMap.Dependency(dependant, dummyVtag), anotherField).hasNext());
+        assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(dependant, dummyVtag), anotherField).hasNext());
 
         // now update the dependency to be from the dependant to the dependencyAfterUpdate (via the same field)
-        final HashMultimap<DerefMap.Entry, SchemaId> updatedDependencies = HashMultimap.create();
+        final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> updatedDependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
         updatedDependencies
-                .put(new DerefMap.Entry(new DerefMap.Dependency(dependencyAfterUpdate, dummyVtag)), dependencyField);
+                .put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependencyAfterUpdate, dummyVtag)),
+                        Sets.newHashSet(dependencyField));
         derefMap.updateDependencies(dependant, dummyVtag, updatedDependencies);
 
         // consistency check
@@ -134,14 +139,14 @@ public class DerefMapHbaseImplTest {
     @Test
     public void oneDependencyWithMoreDimensionedVariants() throws Exception {
         final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
-        final SchemaId dependencyField = ids.getSchemaId(UUID.randomUUID());
         final RecordId dependant = ids.newRecordId("master", ImmutableMap.of("bar", "x"));
         final RecordId dependency = ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "y"));
 
         // the dependant depends on the dependencyField of the dependency via a "+foo" dereferencing rule
-        final HashMultimap<DerefMap.Entry, SchemaId> dependencies = HashMultimap.create();
-        dependencies.put(new DerefMap.Entry(new DerefMap.Dependency(dependency, dummyVtag), ImmutableSet.of("foo")),
-                dependencyField);
+        final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency, dummyVtag),
+                ImmutableSet.of("foo")), Sets.<SchemaId>newHashSet());
         derefMap.updateDependencies(dependant, dummyVtag, dependencies);
 
         // consistency check
@@ -149,9 +154,9 @@ public class DerefMapHbaseImplTest {
         assertEquals(1, found.size());
         assertEquals(dependency.getMaster(), found.iterator().next().getRecordId());
 
-        // check that the dependant is found as only dependant of the dependency via the dependencyField
+        // check that the dependant is found as only dependant of the dependency (without specifying a field)
         DerefMap.DependantRecordIdsIterator dependants =
-                derefMap.findDependantsOf(new DerefMap.Dependency(dependency, dummyVtag), dependencyField);
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency, dummyVtag), null);
         assertTrue(dependants.hasNext());
         assertEquals(dependant, dependants.next());
         assertFalse(dependants.hasNext());
@@ -162,7 +167,7 @@ public class DerefMapHbaseImplTest {
         final RecordId shouldTriggerOurDependant =
                 ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "another-value"));
         dependants = derefMap.findDependantsOf(new DerefMap.Dependency(shouldTriggerOurDependant, dummyVtag),
-                dependencyField);
+                null);
         assertTrue(dependants.hasNext());
         assertEquals(dependant, dependants.next());
         assertFalse(dependants.hasNext());
@@ -170,40 +175,61 @@ public class DerefMapHbaseImplTest {
         // doesn't have the foo property
         final RecordId shouldNotTriggerOurDependant1 = ids.newRecordId("master", ImmutableMap.of("bar", "x"));
         assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(shouldNotTriggerOurDependant1, dummyVtag),
-                dependencyField).hasNext());
+                null).hasNext());
 
         // doesn't have the bar property
         final RecordId shouldNotTriggerOurDependant2 = ids.newRecordId("master", ImmutableMap.of("foo", "x"));
         assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(shouldNotTriggerOurDependant2, dummyVtag),
-                dependencyField).hasNext());
+                null).hasNext());
 
         // wrong value for the bar property
         final RecordId shouldNotTriggerOurDependant3 =
                 ids.newRecordId("master", ImmutableMap.of("bar", "y", "foo", "another-value"));
         assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(shouldNotTriggerOurDependant3, dummyVtag),
-                dependencyField).hasNext());
+                null).hasNext());
 
         // additional unmatched property
         final RecordId shouldNotTriggerOurDependant4 =
                 ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "another-value", "baz", "z"));
         assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(shouldNotTriggerOurDependant4, dummyVtag),
-                dependencyField).hasNext());
+                null).hasNext());
 
         // another master
         final RecordId shouldNotTriggerOurDependant5 =
                 ids.newRecordId("another-master", ImmutableMap.of("bar", "x", "foo", "another-value"));
         assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(shouldNotTriggerOurDependant5, dummyVtag),
-                dependencyField).hasNext());
+                null).hasNext());
 
         // wrong properties
         final RecordId shouldNotTriggerOurDependant6 = ids.newRecordId("master", ImmutableMap.of("a", "b", "c", "d"));
         assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(shouldNotTriggerOurDependant6, dummyVtag),
-                dependencyField).hasNext());
+                null).hasNext());
 
         // no properties
         final RecordId shouldNotTriggerOurDependant7 = ids.newRecordId("master", ImmutableMap.<String, String>of());
         assertFalse(derefMap.findDependantsOf(new DerefMap.Dependency(shouldNotTriggerOurDependant7, dummyVtag),
-                dependencyField).hasNext());
+                null).hasNext());
+    }
+
+    /**
+     * Simulates what would happen in case of a dereference expression like n:link1=>n:link2=>n:field.
+     */
+    public void chainOfDependencies() throws Exception {
+        fail("todo");
+    }
+
+    /**
+     * Simulates what would happen in case of a dereference expression like n:link1=>n:link2=>n:link3.
+     */
+    public void chainOfDependenciesWhichDoesNotEndInField() throws Exception {
+        fail("todo");
+    }
+
+    /**
+     * Simulates what would happen in case of a dereference expression like +prop1=>n:link1=>+prop2=>n:field.
+     */
+    public void chainOfDependenciesIncludingMoreDimensionedVariantProperties() throws Exception {
+        fail("todo");
     }
 
     @Test
@@ -215,9 +241,14 @@ public class DerefMapHbaseImplTest {
         final RecordId dependency2 = ids.newRecordId("dependency2");
 
         // the dependant depends on the dependencyField of the dependency1 and dependency2
-        final HashMultimap<DerefMap.Entry, SchemaId> dependencies = HashMultimap.create();
-        dependencies.put(new DerefMap.Entry(new DerefMap.Dependency(dependency1, dummyVtag)), dependencyField);
-        dependencies.put(new DerefMap.Entry(new DerefMap.Dependency(dependency2, dummyVtag)), dependencyField);
+        final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        dependencies
+                .put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency1, dummyVtag)),
+                        Sets.newHashSet(dependencyField));
+        dependencies
+                .put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency2, dummyVtag)),
+                        Sets.newHashSet(dependencyField));
         derefMap.updateDependencies(dependant, dummyVtag, dependencies);
 
         // consistency check
@@ -248,8 +279,10 @@ public class DerefMapHbaseImplTest {
         final RecordId dependency = ids.newRecordId("dependency");
 
         // the dependant1 and dependant2 depend on the dependencyField of the dependency
-        final HashMultimap<DerefMap.Entry, SchemaId> dependencies = HashMultimap.create();
-        dependencies.put(new DerefMap.Entry(new DerefMap.Dependency(dependency, dummyVtag)), dependencyField);
+        final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency, dummyVtag)),
+                Sets.newHashSet(dependencyField));
         derefMap.updateDependencies(dependant1, dummyVtag, dependencies);
         derefMap.updateDependencies(dependant2, dummyVtag, dependencies);
 

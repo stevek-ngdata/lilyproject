@@ -3,9 +3,9 @@ package org.lilyproject.indexer.engine;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Multimap;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ArgumentValidator;
@@ -74,7 +74,7 @@ public interface DerefMap {
     /**
      * An entry in the dereference map, used when updating information in the dereference map.
      */
-    final static class Entry {
+    final static class DependencyEntry {
 
         /**
          * Identification of the record on which we depend. Note that if we want to express a dependency on all records
@@ -89,11 +89,11 @@ public interface DerefMap {
          */
         private final Set<String> moreDimensionedVariants;
 
-        public Entry(Dependency dependency) {
+        public DependencyEntry(Dependency dependency) {
             this(dependency, Collections.<String>emptySet());
         }
 
-        public Entry(Dependency dependency, Set<String> moreDimensionedVariants) {
+        public DependencyEntry(Dependency dependency, Set<String> moreDimensionedVariants) {
             ArgumentValidator.notNull(dependency, "dependency");
             ArgumentValidator.notNull(moreDimensionedVariants, "moreDimensionedVariants");
 
@@ -114,7 +114,7 @@ public interface DerefMap {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            Entry entry = (Entry) o;
+            DependencyEntry entry = (DependencyEntry) o;
 
             if (dependency != null ? !dependency.equals(entry.dependency) : entry.dependency != null)
                 return false;
@@ -139,9 +139,9 @@ public interface DerefMap {
     }
 
     /**
-     * Update the set of dependencies for a given record in a given vtag. Conceptually the existing set of
-     * dependencies is replaced with the new provided set. In reality, the implementation might make incremental
-     * updates.
+     * Update the set of dependencies on specific fields of specific records for a given dependant record in a given
+     * vtag. The set of fields for a certain dependency is allowed to be empty, in which case the dependency is simply
+     * towards the whole record rather than to a specific field.
      *
      * @param dependantRecordId record id of the record to update dependencies for
      * @param dependantVtagId   vtag of the record to update dependencies for
@@ -149,13 +149,16 @@ public interface DerefMap {
      *                          this record on which the dependant depends
      */
     void updateDependencies(final RecordId dependantRecordId, final SchemaId dependantVtagId,
-                            Multimap<Entry, SchemaId> newDependencies) throws IOException;
+                            Map<DependencyEntry, Set<SchemaId>> newDependencies) throws IOException;
 
     /**
-     * Find all record ids which depend on a given field of a given record in a given vtag.
+     * Find all record ids which depend on a given field of a given record in a given vtag. The given field can be
+     * <code>null</code>, which translates to "find all record ids which depend on a given record". That is because
+     * sometimes a dereference expression leads to a dependency on a particular field, sometimes directly on the whole
+     * record (e.g. +foo).
      *
      * @param dependency the record to find dependant record ids for
-     * @param field      the field of the given record via which the dependendant records need to be found
+     * @param field      the field of the given dependency which is dereferenced in the dependant
      * @return iterator
      */
     DependantRecordIdsIterator findDependantsOf(final Dependency dependency, SchemaId field)

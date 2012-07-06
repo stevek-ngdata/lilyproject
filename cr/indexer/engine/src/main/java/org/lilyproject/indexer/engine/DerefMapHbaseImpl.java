@@ -12,7 +12,6 @@ import java.util.SortedMap;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Multimap;
 import com.gotometrics.orderly.FixedByteArrayRowKey;
 import com.gotometrics.orderly.StringRowKey;
 import com.gotometrics.orderly.StructBuilder;
@@ -128,13 +127,17 @@ public class DerefMapHbaseImpl implements DerefMap {
 
     @Override
     public void updateDependencies(RecordId dependantRecordId, SchemaId dependantVtagId,
-                                   Multimap<Entry, SchemaId> newDependencies) throws IOException {
+                                   Map<DependencyEntry, Set<SchemaId>> newDependencyEntries)
+            throws IOException {
         final Set<Dependency> existingEntries = findDependencies(dependantRecordId, dependantVtagId);
 
+        // the same as newDependencyEntries but ignoring the information about more dimensioned variant props
+        final Collection<Dependency> newDependencies = toSetOfDependencies(newDependencyEntries.keySet());
+
         // Figure out what changed
-        final Set<Dependency> removedDependencies =
-                figureOutRemovedDependencies(newDependencies, existingEntries);
-        final Collection<Entry> addedEntries = figureOutAddedEntries(newDependencies, existingEntries);
+        final Set<Dependency> removedDependencies = figureOutRemovedDependencies(newDependencies, existingEntries);
+        final Collection<DependencyEntry> addedDependencies =
+                figureOutAddedDependencies(newDependencyEntries.keySet(), existingEntries);
 
         // IMPORTANT implementation note: the order in which changes are applied is not arbitrary. It is such that if
         // the process would fail in between, there will never be left any state in the backward index which would not
@@ -151,49 +154,47 @@ public class DerefMapHbaseImpl implements DerefMap {
         forwardDerefIndex.addEntry(fwdEntry);
 
         // add added to bwd idx
-        for (Entry added : addedEntries) {
+        for (DependencyEntry added : addedDependencies) {
             final Dependency dependency = added.getDependency();
-            final Collection<SchemaId> fields = newDependencies.get(added);
+            final Set<SchemaId> fields = newDependencyEntries.get(added);
             final IndexEntry backwardEntry =
                     createBackwardEntry(dependency, dependantRecordId, fields, added.getMoreDimensionedVariants());
             backwardDerefIndex.addEntry(backwardEntry);
         }
     }
 
-    private Set<Dependency> figureOutRemovedDependencies(Multimap<Entry, SchemaId> newDependencies,
-                                                         Set<Dependency> existingEntries) {
+    private Set<Dependency> figureOutRemovedDependencies(Collection<Dependency> newDependencies,
+                                                         Set<Dependency> existingDependencies) {
         final Set<Dependency> removed = new HashSet<Dependency>();
 
         // add all existing
-        removed.addAll(existingEntries);
+        removed.addAll(existingDependencies);
 
         // remove all new
-        for (Entry newDependency : newDependencies.keys()) {
-            removed.remove(newDependency.getDependency());
-        }
+        removed.removeAll(newDependencies);
 
         return removed;
     }
 
-    private Collection<Entry> figureOutAddedEntries(Multimap<Entry, SchemaId> newDependencies,
-                                                    Set<Dependency> existingEntries) {
-        final Map<Dependency, Entry> added = new HashMap<Dependency, Entry>();
+    private Collection<DependencyEntry> figureOutAddedDependencies(Set<DependencyEntry> newDependencyEntries,
+                                                                   Set<Dependency> existingDependencies) {
+        final Map<Dependency, DependencyEntry> added = new HashMap<Dependency, DependencyEntry>();
 
         // add all new
-        for (Entry newEntry : newDependencies.keys()) {
-            added.put(newEntry.getDependency(), newEntry);
+        for (DependencyEntry newMoreDimensionedDependency : newDependencyEntries) {
+            added.put(newMoreDimensionedDependency.getDependency(), newMoreDimensionedDependency);
         }
 
         // remove all existing
-        for (Dependency existing : existingEntries) {
-            added.remove(existing);
+        for (Dependency existingDependency : existingDependencies) {
+            added.remove(existingDependency);
         }
 
         return added.values();
     }
 
     private IndexEntry createForwardEntry(RecordId dependantRecordId, SchemaId dependantVtagId,
-                                          Multimap<Entry, SchemaId> newDependencies) throws IOException {
+                                          Collection<Dependency> newDependencies) throws IOException {
         final IndexEntry fwdEntry = new IndexEntry(forwardDerefIndex.getDefinition());
         fwdEntry.addField("dependant_recordid", dependantRecordId.toBytes());
         fwdEntry.addField("dependant_vtag", dependantVtagId.getBytes());
@@ -202,30 +203,30 @@ public class DerefMapHbaseImpl implements DerefMap {
         fwdEntry.setIdentifier(DUMMY_IDENTIFIER);
 
         // the data contains the dependencies of the dependant (master record ids and vtags)
-        final Collection<Dependency> dependencies = toDependencies(newDependencies);
-        fwdEntry.addData(DEPENDENCIES_KEY, serializeDependenciesForward(dependencies));
+        fwdEntry.addData(DEPENDENCIES_KEY, serializeDependenciesForward(newDependencies));
 
         return fwdEntry;
     }
 
     /**
-     * From a multimap with {@link Entry}s and fields, keep only the
-     * information about dependencies.
+     * From a set with {@link org.lilyproject.indexer.engine.DerefMap.DependencyEntry}s, keep only the information
+     * about
+     * dependencies.
      *
      * @param newDependencies input
      * @return only the information about dependencies is retained
      */
-    private Collection<Dependency> toDependencies(Multimap<Entry, SchemaId> newDependencies) {
-        return Collections2.transform(newDependencies.keySet(), new Function<Entry, Dependency>() {
+    private Collection<Dependency> toSetOfDependencies(Set<DependencyEntry> newDependencies) {
+        return Collections2.transform(newDependencies, new Function<DependencyEntry, Dependency>() {
             @Override
-            public Dependency apply(Entry input) {
+            public Dependency apply(DependencyEntry input) {
                 return input.getDependency();
             }
         });
     }
 
-    private IndexEntry createBackwardEntry(Dependency dependency,
-                                           RecordId dependantRecordId, Collection<SchemaId> fields,
+    private IndexEntry createBackwardEntry(Dependency dependency, RecordId dependantRecordId,
+                                           Set<SchemaId> fields,
                                            Set<String> moreDimensionedVariantProperties) throws IOException {
         final IndexEntry bwdEntry = new IndexEntry(backwardDerefIndex.getDefinition());
         bwdEntry.addField("dependency_masterrecordid", dependency.getRecordId().getMaster().toBytes());
@@ -234,13 +235,11 @@ public class DerefMapHbaseImpl implements DerefMap {
         // the identifier is the dependant which depends on the dependency
         bwdEntry.setIdentifier(dependantRecordId.toBytes());
 
-        // NOTE: the data fields are null when creating an entry for removal
-
-        // the data contains the fields via which the dependant depends on the dependency
+        // the fields which the dependant uses of the dependency (null if used for deleting the entry)
         if (fields != null)
             bwdEntry.addData(FIELDS_KEY, serializeFields(fields));
 
-        // and the data also contains the variant properties pattern
+        // the variant properties pattern (null if used for deleting the entry)
         if (moreDimensionedVariantProperties != null)
             bwdEntry.addData(VARIANT_PROPERTIES_PATTERN_KEY,
                     serializeVariantPropertiesPattern(
@@ -400,6 +399,9 @@ public class DerefMapHbaseImpl implements DerefMap {
         final Iterator<SchemaId> iterator = fields.iterator();
         int idx = 0;
         while (iterator.hasNext()) {
+
+            // TODO: NPE because the field is null. actually the field shoul dnot be null but the collection should be empty -> not use multimap but map <key -> set> in which the set can be empty...
+
             final byte[] bytes = iterator.next().getBytes();
             assert SCHEMA_ID_BYTE_LENGTH == bytes.length;
             System.arraycopy(bytes, 0, serialized, idx * SCHEMA_ID_BYTE_LENGTH, SCHEMA_ID_BYTE_LENGTH);
@@ -473,10 +475,16 @@ public class DerefMapHbaseImpl implements DerefMap {
         final RecordId dependencyRecordId;
         final SchemaId queriedField;
 
+        /**
+         * @param queryResult        the query result to filter
+         * @param dependencyRecordId the dependency record, used to match the variant property pattern with
+         * @param queriedField       the queried field, used to match with the field information stored in the deref
+         *                           map (the queried field is allowed to be <code>null</code> in order to only match
+         *                           results that express dependencies that do not go to a field)
+         */
         DependantRecordIdsIteratorImpl(QueryResult queryResult, RecordId dependencyRecordId, SchemaId queriedField) {
             ArgumentValidator.notNull(queryResult, "queryResult");
             ArgumentValidator.notNull(dependencyRecordId, "dependencyRecordId");
-            ArgumentValidator.notNull(queriedField, "queriedField");
 
             this.queryResult = queryResult;
             this.dependencyRecordId = dependencyRecordId;
@@ -503,7 +511,7 @@ public class DerefMapHbaseImpl implements DerefMap {
                 final VariantPropertiesPattern variantPropertiesPattern =
                         deserializeVariantPropertiesPattern(queryResult.getData(VARIANT_PROPERTIES_PATTERN_KEY));
 
-                if (dependencyFields.contains(queriedField) &&
+                if ((queriedField != null ? dependencyFields.contains(queriedField) : dependencyFields.isEmpty()) &&
                         variantPropertiesPattern.matches(dependencyRecordId.getVariantProperties())) {
                     return idGenerator.fromBytes(nextIdentifier);
                 }
