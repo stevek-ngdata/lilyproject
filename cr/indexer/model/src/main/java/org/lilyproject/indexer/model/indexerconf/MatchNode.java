@@ -19,7 +19,6 @@ package org.lilyproject.indexer.model.indexerconf;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -65,9 +64,10 @@ public class MatchNode extends ContainerMappingNode {
         }
     }
 
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException  {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException  {
+        Record record = indexUpdateBuilder.getRecordContext().last().record;
         if (recordMatcher.matches(record)) {
-            super.collectIndexUpdate(indexUpdateBuilder, record, version, vtag);
+            super.collectIndexUpdate(indexUpdateBuilder);
         }
     }
 

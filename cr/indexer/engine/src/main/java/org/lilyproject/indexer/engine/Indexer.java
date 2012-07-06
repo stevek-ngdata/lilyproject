@@ -186,7 +186,7 @@ public class Indexer {
             //
             // 1: evaluate the static index fields
             //
-            conf.getIndexFields().collectIndexUpdate(solrDocumentBuilder, record, version, vtag);
+            conf.getIndexFields().collectIndexUpdate(solrDocumentBuilder);
 
             //
             // 2: evaluate dynamic index fields

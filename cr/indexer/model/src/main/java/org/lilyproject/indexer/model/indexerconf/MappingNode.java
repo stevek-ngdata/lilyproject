@@ -17,9 +17,7 @@ package org.lilyproject.indexer.model.indexerconf;
 
 
 import com.google.common.base.Predicate;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -34,7 +32,7 @@ public interface MappingNode {
     /**
      * Traverse the MappingNode hierarchy and report context records and data to index to the indexUpdateBuilder.
      */
-    public abstract void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException;
+    public abstract void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException;
 
     /**
      * Evaluate the predicate for this node. If predicate.apply returns true, descend into children

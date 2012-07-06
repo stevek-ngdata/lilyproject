@@ -18,9 +18,7 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.util.List;
 
 import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VTaggedRecord;
@@ -60,18 +58,18 @@ public class ForEachNode extends ContainerMappingNode {
     }
 
     @Override
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag)
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder)
             throws InterruptedException, RepositoryException {
         if (fieldType != null && !systemFields.isSystemField(fieldType.getName())) {
-            if (!record.hasField(fieldType.getName())) {
+            if (!indexUpdateBuilder.getRecordContext().last().record.hasField(fieldType.getName())) {
                 return;
             }
         }
 
-        collectFromRecords(indexUpdateBuilder, record, version, vtag, indexUpdateBuilder.evalFollow(follow));
+        collectFromRecords(indexUpdateBuilder, indexUpdateBuilder.evalFollow(follow));
     }
 
-    private void collectFromRecords(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag, List<FollowRecord> links)
+    private void collectFromRecords(IndexUpdateBuilder indexUpdateBuilder, List<FollowRecord> links)
             throws InterruptedException, RepositoryException {
         if (links == null || links.size() == 0)
             return;
@@ -80,7 +78,7 @@ public class ForEachNode extends ContainerMappingNode {
             RecordContext ctx = indexUpdateBuilder.getRecordContext();
             ctx.push(followRecord);
             for (MappingNode child : getChildren()) {
-                child.collectIndexUpdate(indexUpdateBuilder, followRecord.record, version, vtag);
+                child.collectIndexUpdate(indexUpdateBuilder);
             }
             ctx.pop();
         }

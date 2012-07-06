@@ -19,9 +19,7 @@ import java.util.List;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -47,9 +45,9 @@ public abstract class ContainerMappingNode implements MappingNode {
     }
 
     @Override
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
         for (MappingNode child: getChildren()) {
-            child.collectIndexUpdate(indexUpdateBuilder, record, version, vtag);
+            child.collectIndexUpdate(indexUpdateBuilder);
         }
     }
 

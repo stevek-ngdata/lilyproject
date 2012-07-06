@@ -17,9 +17,7 @@ package org.lilyproject.indexer.model.indexerconf;
 
 
 import com.google.common.base.Predicate;
-import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -53,7 +51,7 @@ public class IndexField implements MappingNode {
     }
 
     @Override
-    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder, Record record, long version, SchemaId vtag) throws InterruptedException, RepositoryException {
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
         indexUpdateBuilder.addField(name.format(value, indexUpdateBuilder.getNameResolver()), indexUpdateBuilder.eval(value));
     }
 
