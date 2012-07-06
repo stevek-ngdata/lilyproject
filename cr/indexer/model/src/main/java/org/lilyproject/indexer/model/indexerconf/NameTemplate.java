@@ -48,5 +48,12 @@ public class NameTemplate {
         return template;
     }
 
+    public List<TemplatePart> getParts() {
+        return parts;
+    }
+
+    public void setParts(List<TemplatePart> parts) {
+        this.parts = parts;
+    }
 
 }

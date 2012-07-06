@@ -459,7 +459,11 @@ public class IndexerConfBuilder {
 
             NameTemplate name;
             try {
-                name = new NameTemplateParser().parse(fieldEl, nameAttr, new DefaultNameTemplateValidator(variables, booleanVariables));
+                Set<Class> supportedPartTypes = new HashSet<Class>();
+                supportedPartTypes.add(LiteralTemplatePart.class);
+                supportedPartTypes.add(VariableTemplatePart.class);
+                supportedPartTypes.add(ConditionalTemplatePart.class);
+                name = new NameTemplateParser().parse(fieldEl, nameAttr, new DefaultNameTemplateValidator(supportedPartTypes, variables, booleanVariables));
             } catch (NameTemplateException nte) {
                 throw new IndexerConfException("Error in name template: " + nameAttr + " at " + LocationAttributes.getLocationString(fieldEl), nte);
             }

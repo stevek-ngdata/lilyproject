@@ -16,8 +16,12 @@
 package org.lilyproject.indexer.engine;
 
 import java.util.List;
+import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.solr.common.SolrInputDocument;
+import org.lilyproject.indexer.engine.DerefMap.Entry;
 import org.lilyproject.indexer.model.indexerconf.FieldTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.FollowRecord;
@@ -46,6 +50,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private boolean emptyDocument = true;
 
     private RecordContext recordContext;
+    private Multimap<Entry, SchemaId> dependencies = HashMultimap.create();
 
     private RecordId recordId;
     private String key;
@@ -131,6 +136,15 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
             }
         }
 
+    }
+
+    @Override
+    public void addDependency(RecordId dependencyId, Set<String> moreDimensions, SchemaId field) {
+        dependencies.put(DerefMapUtil.newEntry(dependencyId, vtag, moreDimensions), field);
+    }
+
+    public Multimap<Entry, SchemaId> getDependencies() {
+        return dependencies;
     }
 
 }

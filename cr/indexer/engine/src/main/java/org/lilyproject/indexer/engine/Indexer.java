@@ -15,6 +15,7 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
-import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateResolver;
+import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField.DynamicIndexFieldMatch;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
@@ -90,9 +91,10 @@ public class Indexer {
      * <p>This method requires you obtained the {@link IndexLocker} for the record.
      *
      * @param recordId
+     * @throws IOException
      */
     public void index(RecordId recordId) throws RepositoryException, SolrClientException,
-            ShardSelectorException, InterruptedException {
+            ShardSelectorException, InterruptedException, IOException {
 
         VTaggedRecord vtRecord = new VTaggedRecord(recordId, repository);
         IdRecord record = vtRecord.getRecord();
@@ -117,7 +119,7 @@ public class Indexer {
      *                     but this should only contain appropriate vtags as defined by the IndexCase for this record.
      */
     protected void index(VTaggedRecord vtRecord, Set<SchemaId> vtagsToIndex)
-            throws RepositoryException, ShardSelectorException, InterruptedException, SolrClientException {
+            throws RepositoryException, ShardSelectorException, InterruptedException, SolrClientException, IOException {
 
         RecordId recordId = vtRecord.getId();
 
@@ -163,7 +165,7 @@ public class Indexer {
      * @param vtags   the version tags under which to index
      */
     protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws ShardSelectorException,
-            RepositoryException, InterruptedException, SolrClientException {
+            RepositoryException, InterruptedException, SolrClientException, IOException {
 
         verifyLock(record.getId());
 
@@ -238,6 +240,8 @@ public class Indexer {
                 log.debug("Constructed Solr doc: " + solrDoc);
             }
 
+            derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
+
             solrShardMgr.getSolrClient(record.getId()).add(solrDoc);
             metrics.adds.inc();
 
@@ -277,7 +281,7 @@ public class Indexer {
         if (match.namespaceMatch != null) {
             nameContext.put("namespaceMatch", match.namespaceMatch);
         }
-        String fieldName = dynField.getNameTemplate().format(new DefaultNameTemplateResolver(nameContext));
+        String fieldName = dynField.getNameTemplate().format(new DynamicFieldNameTemplateResolver(nameContext));
         return fieldName;
     }
 

@@ -3,11 +3,11 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DefaultNameTemplateResolver implements NameTemplateResolver {
+public class DynamicFieldNameTemplateResolver implements NameTemplateResolver {
 
     private Map<String, Object> values = new HashMap<String, Object>();
 
-    public DefaultNameTemplateResolver(Map<String, Object> values) {
+    public DynamicFieldNameTemplateResolver(Map<String, Object> values) {
         this.values = values;
     }
 

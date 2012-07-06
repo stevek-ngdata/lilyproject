@@ -697,9 +697,10 @@ public class IndexUpdater implements RowLogMessageListener {
 
     /**
      * Index a record for all the specified vtags.
+     * @throws IOException
      */
     private void index(RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,
-            SolrClientException, ShardSelectorException, IndexLockException {
+            SolrClientException, ShardSelectorException, IndexLockException, IOException {
         boolean lockObtained = false;
         try {
             indexLocker.lock(recordId);

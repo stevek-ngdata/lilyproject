@@ -59,15 +59,12 @@ public class NameTemplateParser {
                     String trueValue = exprMatcher.group(2);
                     String falseValue = exprMatcher.group(3) != null ? exprMatcher.group(3) : "";
 
-                    parts.add(buildConditionTemplatePart(el, template, condition, trueValue, falseValue, validator));
+                    parts.add(new ConditionalTemplatePart(condition, trueValue, falseValue));
                 } else if (atVariantPropMatcher.matches()){
                     parts.add(new VariantPropertyTemplatePart(atVariantPropMatcher.group(1)));
                 } else if (fieldMatcher.matches()){
                     parts.add(buildFieldTemplatePart(el, template, expr));
                 } else {
-                    if (validator != null) {
-                        validator.validateVariable(expr);
-                    }
                     parts.add(new VariableTemplatePart(expr));
                 }
 
@@ -84,14 +81,6 @@ public class NameTemplateParser {
     private TemplatePart buildFieldTemplatePart(Element el, String template, String expr) throws IndexerConfException {
         QName field = ConfUtil.parseQName(expr, el);
         return new FieldTemplatePart(field);
-    }
-
-    private TemplatePart buildConditionTemplatePart(Element el, String template, String condition, String trueValue,
-            String falseValue, NameTemplateValidator validator) throws NameTemplateException {
-        if (validator != null) {
-            validator.validateCondition(condition, trueValue, falseValue);
-        }
-        return new ConditionalTemplatePart(condition, trueValue, falseValue);
     }
 
 }

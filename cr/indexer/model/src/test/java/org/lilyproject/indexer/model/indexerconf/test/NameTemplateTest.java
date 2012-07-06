@@ -21,13 +21,16 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 import org.junit.Test;
-import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateResolver;
+import org.lilyproject.indexer.model.indexerconf.ConditionalTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateValidator;
+import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
+import org.lilyproject.indexer.model.indexerconf.LiteralTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.NameTemplate;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateParser;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateValidator;
+import org.lilyproject.indexer.model.indexerconf.VariableTemplatePart;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -123,7 +126,7 @@ public class NameTemplateTest {
     }
 
     private NameTemplateValidator getDefaultValidator() {
-        return new DefaultNameTemplateValidator(defaultContext().keySet(), defaultBooleanVariables());
+        return new DefaultNameTemplateValidator(templatePartTypes(), defaultContext().keySet(), defaultBooleanVariables());
     }
 
     private Set<String> defaultBooleanVariables() {
@@ -131,7 +134,7 @@ public class NameTemplateTest {
     }
 
     public NameTemplateResolver getResolver() {
-        return new DefaultNameTemplateResolver(defaultContext());
+        return new DynamicFieldNameTemplateResolver(defaultContext());
     }
 
     private Map<String, Object> defaultContext() {
@@ -140,5 +143,13 @@ public class NameTemplateTest {
         context.put("bool1", Boolean.TRUE);
         context.put("bool2", Boolean.FALSE);
         return context;
+    }
+
+    private Set<Class> templatePartTypes() {
+        Set<Class> result = Sets.newHashSet();
+        result.add(LiteralTemplatePart.class);
+        result.add(VariableTemplatePart.class);
+        result.add(ConditionalTemplatePart.class);
+        return result;
     }
 }
