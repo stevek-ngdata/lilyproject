@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import org.lilyproject.indexer.model.indexerconf.DerefMap;
-
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
@@ -211,7 +209,7 @@ public class DerefMapHbaseImpl implements DerefMap {
     }
 
     /**
-     * From a multimap with {@link org.lilyproject.indexer.model.indexerconf.DerefMap.Entry}s and fields, keep only the
+     * From a multimap with {@link org.lilyproject.indexer.engine.DerefMap.Entry}s and fields, keep only the
      * information
      * about depending records.
      *
@@ -330,7 +328,7 @@ public class DerefMapHbaseImpl implements DerefMap {
     }
 
     /**
-     * Serializes a list of {@link org.lilyproject.indexer.model.indexerconf.DerefMap.DependingRecord}s into a byte array for
+     * Serializes a list of {@link org.lilyproject.indexer.engine.DerefMap.DependingRecord}s into a byte array for
      * usage
      * in the
      * forward index table. It uses a variable length byte array encoding schema.
