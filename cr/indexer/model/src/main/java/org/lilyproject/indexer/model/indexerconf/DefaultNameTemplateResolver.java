@@ -16,15 +16,29 @@ public class DefaultNameTemplateResolver implements NameTemplateResolver {
         if (part instanceof ConditionalTemplatePart) {
             ConditionalTemplatePart cPart = (ConditionalTemplatePart)part;
 
-            //FIXME: throw NTVE if conditional doesn't point to a Boolean
-            if ((Boolean)values.get(cPart.getConditional())) {
+            Object condVal = values.get(cPart.getConditional());
+            if (condVal == null) {
+                throw new NameTemplateEvaluationException("Variable does not evaluate to a value: " + cPart.getConditional());
+            }
+
+            if (!(condVal instanceof Boolean)) {
+                throw new NameTemplateEvaluationException("Variable is not a boolean: " + cPart.getConditional());
+            }
+
+
+            if ((Boolean)condVal) {
                 return cPart.getTrueString();
             } else {
                 return cPart.getFalseString();
             }
         } else if (part instanceof VariableTemplatePart) {
             VariableTemplatePart varPart = (VariableTemplatePart) part;
-            return values.get(varPart.getVariable());
+            Object value = values.get(varPart.getVariable());
+            if (value == null) {
+                throw new NameTemplateEvaluationException("Variable does not evaluate to a value: " + varPart.getVariable());
+
+            }
+            return value;
         } else if (part instanceof LiteralTemplatePart) {
             return ((LiteralTemplatePart)part).getString();
         } else {

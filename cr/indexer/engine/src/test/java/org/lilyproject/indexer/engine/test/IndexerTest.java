@@ -355,7 +355,7 @@ public class IndexerTest {
         RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
         RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 8; i++) {
             FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
             fields.put("ns:match" + i, ns1Field);
 

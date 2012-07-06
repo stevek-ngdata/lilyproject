@@ -17,13 +17,17 @@ package org.lilyproject.indexer.model.indexerconf.test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
+import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateResolver;
+import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateValidator;
 import org.lilyproject.indexer.model.indexerconf.NameTemplate;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateParser;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateValidator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -38,7 +42,7 @@ public class NameTemplateTest {
     @Test
     public void testLiteral() throws Exception {
         NameTemplate template = new NameTemplateParser().parse("foobar");
-        assertEquals("foobar", template.format(null));
+        assertEquals("foobar", template.format(getResolver()));
     }
 
     @Test
@@ -118,12 +122,23 @@ public class NameTemplateTest {
         }
     }
 
+    private NameTemplateValidator getDefaultValidator() {
+        return new DefaultNameTemplateValidator(defaultContext().keySet(), defaultBooleanVariables());
+    }
+
+    private Set<String> defaultBooleanVariables() {
+        return Sets.newHashSet("bool1", "bool2");
+    }
+
     public NameTemplateResolver getResolver() {
+        return new DefaultNameTemplateResolver(defaultContext());
+    }
+
+    private Map<String, Object> defaultContext() {
         Map<String, Object> context = new HashMap<String, Object>();
         context.put("var1", "hello");
         context.put("bool1", Boolean.TRUE);
         context.put("bool2", Boolean.FALSE);
-
-        return new DefaultNameTemplateResolver(context);
+        return context;
     }
 }
