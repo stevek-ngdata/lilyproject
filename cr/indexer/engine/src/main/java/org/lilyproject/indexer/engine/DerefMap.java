@@ -20,9 +20,9 @@ public interface DerefMap {
 
     /**
      * Description of a record on which is being depended. It contains the record id and the vtag of the record on
-     * which is depended (i.e. the depending record).
+     * which is depended (i.e. the dependency).
      */
-    final static class DependingRecord {
+    final static class Dependency {
 
         /**
          * The record id on which we have a dependency.
@@ -34,7 +34,7 @@ public interface DerefMap {
          */
         private final SchemaId vtag;
 
-        public DependingRecord(RecordId recordId, SchemaId vtag) {
+        public Dependency(RecordId recordId, SchemaId vtag) {
             ArgumentValidator.notNull(recordId, "recordId");
             ArgumentValidator.notNull(vtag, "vtag");
 
@@ -55,7 +55,7 @@ public interface DerefMap {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            DependingRecord that = (DependingRecord) o;
+            Dependency that = (Dependency) o;
 
             if (recordId != null ? !recordId.equals(that.recordId) : that.recordId != null) return false;
             if (vtag != null ? !vtag.equals(that.vtag) : that.vtag != null) return false;
@@ -81,7 +81,7 @@ public interface DerefMap {
          * with a certain variant property set (with any value), this/these particular variant property/properties
          * have to be stripped of the record id, and have to be added to the set of more dimensioned variants.
          */
-        private final DependingRecord dependingRecord;
+        private final Dependency dependency;
 
         /**
          * A set of variant properties that specify the variant properties that have to be added to the record id (with
@@ -89,20 +89,20 @@ public interface DerefMap {
          */
         private final Set<String> moreDimensionedVariants;
 
-        public Entry(DependingRecord dependingRecord) {
-            this(dependingRecord, Collections.<String>emptySet());
+        public Entry(Dependency dependency) {
+            this(dependency, Collections.<String>emptySet());
         }
 
-        public Entry(DependingRecord dependingRecord, Set<String> moreDimensionedVariants) {
-            ArgumentValidator.notNull(dependingRecord, "dependingRecord");
+        public Entry(Dependency dependency, Set<String> moreDimensionedVariants) {
+            ArgumentValidator.notNull(dependency, "dependency");
             ArgumentValidator.notNull(moreDimensionedVariants, "moreDimensionedVariants");
 
-            this.dependingRecord = dependingRecord;
+            this.dependency = dependency;
             this.moreDimensionedVariants = Collections.unmodifiableSet(moreDimensionedVariants);
         }
 
-        public DependingRecord getDependingRecord() {
-            return dependingRecord;
+        public Dependency getDependency() {
+            return dependency;
         }
 
         public Set<String> getMoreDimensionedVariants() {
@@ -116,8 +116,7 @@ public interface DerefMap {
 
             Entry entry = (Entry) o;
 
-            if (dependingRecord != null ? !dependingRecord.equals(entry.dependingRecord) :
-                    entry.dependingRecord != null)
+            if (dependency != null ? !dependency.equals(entry.dependency) : entry.dependency != null)
                 return false;
             if (moreDimensionedVariants != null ? !moreDimensionedVariants.equals(entry.moreDimensionedVariants) :
                     entry.moreDimensionedVariants != null) return false;
@@ -127,7 +126,7 @@ public interface DerefMap {
 
         @Override
         public int hashCode() {
-            int result = dependingRecord != null ? dependingRecord.hashCode() : 0;
+            int result = dependency != null ? dependency.hashCode() : 0;
             result = 31 * result + (moreDimensionedVariants != null ? moreDimensionedVariants.hashCode() : 0);
             return result;
         }
@@ -155,10 +154,10 @@ public interface DerefMap {
     /**
      * Find all record ids which depend on a given field of a given record in a given vtag.
      *
-     * @param dependingRecord the record to find dependant record ids for
-     * @param field           the field of the given record via which the dependendant records need to be found
+     * @param dependency the record to find dependant record ids for
+     * @param field      the field of the given record via which the dependendant records need to be found
      * @return iterator
      */
-    DependantRecordIdsIterator findDependantsOf(final DependingRecord dependingRecord, SchemaId field)
+    DependantRecordIdsIterator findDependantsOf(final Dependency dependency, SchemaId field)
             throws IOException;
 }
