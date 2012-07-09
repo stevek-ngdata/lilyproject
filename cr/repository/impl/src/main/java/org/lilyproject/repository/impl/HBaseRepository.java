@@ -885,9 +885,17 @@ public class HBaseRepository extends BaseRepository {
     public void delete(RecordId recordId) throws RepositoryException {
         delete(recordId, null);
     }
-
     @Override
     public Record delete(RecordId recordId, List<MutationCondition> conditions)
+            throws RepositoryException {
+        return delete(recordId, conditions, null);
+    }
+    @Override
+    public void delete(Record record) throws RepositoryException {
+        delete(record.getId(), null, record.getAttributes());
+    }
+    
+    private  Record delete(RecordId recordId, List<MutationCondition> conditions, Map<String,String> attributes)
             throws RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
@@ -928,6 +936,7 @@ public class HBaseRepository extends BaseRepository {
 
             RecordEvent recordEvent = new RecordEvent();
             recordEvent.setType(Type.DELETE);
+            recordEvent.setAttributes(attributes);
             RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
             if (!rowLocker.put(put, rowLock)) {
                 throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");

@@ -125,6 +125,21 @@ public class RemoteRepository extends BaseRepository {
             throw handleUndeclaredRecordThrowable(e);
         }
     }
+    
+    @Override
+    public void delete(Record record) throws RepositoryException, InterruptedException {
+        try {
+            lilyProxy.delete(converter.convert(record), null);
+        } catch (AvroRepositoryException e) {
+            throw converter.convert(e);
+        } catch (AvroGenericException e) {
+            throw converter.convert(e);
+        } catch (AvroRemoteException e) {
+            throw handleAvroRemoteException(e);
+        } catch (UndeclaredThrowableException e) {
+            throw handleUndeclaredRecordThrowable(e);
+        }
+    }
 
     @Override
     public Record update(Record record) throws RepositoryException, InterruptedException {

@@ -51,23 +51,10 @@ public class RecordEventTest {
     public void testRecordEventAttributes() throws Exception{
         final Map<String,String> attr = new HashMap<String,String>();
         attr.put("one", "one");
-        attr.put("two", "two");
-        RowLogMessageListener messageVerifier = new RowLogMessageListener() {
-            
-            @Override
-            public boolean processMessage(RowLogMessage message) throws InterruptedException {
-                try {
-                    RecordEvent recordEvent = new RecordEvent(message.getPayload(), idGenerator);
-                    Assert.assertEquals(attr, recordEvent.getAttributes());
-                } catch (IOException e) {
-                    Assert.fail(e.getMessage());
-                } catch (RowLogException e) {
-                    Assert.fail(e.getMessage());
-                }
-                
-                return true;
-            }
-        };
+        attr.put("two", "two");        
+        
+        
+        CountingMessageVerifier messageVerifier = new CountingMessageVerifier();
         
         RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
         rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 1);
@@ -76,12 +63,14 @@ public class RecordEventTest {
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
         
         // test create
+        messageVerifier.setExpectedAttributes(attr);
         Record record = repository.newRecord();
         record.setRecordType(rt1.getName());
         record.setField(field1.getName(), "something");
         record.setAttributes(attr);        
         record = repository.create(record);
         Assert.assertTrue(record.getAttributes().isEmpty());
+        Assert.assertEquals(1, messageVerifier.getMessageCount());
         
         // test update
         attr.clear();
@@ -89,12 +78,21 @@ public class RecordEventTest {
         record.setField(field1.getName(), "something else");
         record.setAttributes(attr);
         repository.update(record);
+        Assert.assertEquals(2, messageVerifier.getMessageCount());
         
         // test read : attr empty
         record = repository.read(record.getId(), field1.getName());
         Assert.assertTrue(record.getAttributes().isEmpty());
         
-        // delete won't be tested since attributes can't be passed on a delete        
+        
+        
+        // test delete
+        attr.clear();
+        attr.put("delete", "deletevalue");
+        record.setField(field1.getName(), "something else");
+        record.setAttributes(attr);
+        repository.delete(record);
+        Assert.assertEquals(3, messageVerifier.getMessageCount());
     }
     
     private static void setupSchema () throws Exception{
@@ -105,6 +103,33 @@ public class RecordEventTest {
         rt1 = typeManager.newRecordType(new QName(NS, "NVRecordType1"));
         rt1 = typeManager.createRecordType(rt1);
 
+    }
+    
+    private class CountingMessageVerifier implements RowLogMessageListener {
+        private int messageCounter = 0;
+        private Map<String,String> attr;
+        @Override
+        public boolean processMessage(RowLogMessage message) throws InterruptedException {
+            try {
+                RecordEvent recordEvent = new RecordEvent(message.getPayload(), idGenerator);
+                Assert.assertEquals(attr, recordEvent.getAttributes());
+                messageCounter++;
+            } catch (IOException e) {
+                Assert.fail(e.getMessage());
+            } catch (RowLogException e) {
+                Assert.fail(e.getMessage());
+            }
+            
+            return true;
+        }
+        
+        public void setExpectedAttributes(Map<String,String> attr) {
+            this.attr = attr;
+        }
+        
+        public int getMessageCount() {
+            return this.messageCounter;
+        }
     }
 
 }
