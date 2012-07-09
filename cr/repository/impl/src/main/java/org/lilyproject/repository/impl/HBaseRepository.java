@@ -252,6 +252,8 @@ public class HBaseRepository extends BaseRepository {
 
                 calculateRecordChanges(newRecord, dummyOriginalRecord, version, put, recordEvent, referencedBlobs,
                         unReferencedBlobs, false, fieldTypes);
+                
+                recordEvent.setAttributes(record.getAttributes());
 
                 // Make sure the record type changed flag stays false for a newly
                 // created record
@@ -394,6 +396,7 @@ public class HBaseRepository extends BaseRepository {
                     return conditionsResponse;
                 }
 
+                recordEvent.setAttributes(record.getAttributes());
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
                 putRowWithWalProcessing(recordId, rowLock, put, recordEvent);

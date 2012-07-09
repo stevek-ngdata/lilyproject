@@ -30,6 +30,8 @@ public class RecordImpl implements Record, Cloneable {
     private Long version;
     private ResponseStatus responseStatus;
     
+    private Map<String,String> attributes;
+    
     private String defaultNamespace = null;
     
     /**
@@ -464,4 +466,20 @@ public class RecordImpl implements Record, Cloneable {
     public boolean hasField(String fieldName) throws RecordException {
         return hasField(resolveNamespace(fieldName));
     }
+
+    @Override
+    public Map<String, String> getAttributes() {
+        if (this.attributes == null) {
+            this.attributes = new HashMap<String, String>();
+        }
+        return this.attributes;
+    }
+
+    @Override
+    public void setAttributes(Map<String, String> attributes) {
+        this.attributes = attributes;
+        
+    }
+    
+    
 }
