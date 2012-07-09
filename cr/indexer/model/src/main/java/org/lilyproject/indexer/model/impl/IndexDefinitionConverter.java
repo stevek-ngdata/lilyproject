@@ -85,9 +85,12 @@ public class IndexDefinitionConverter {
             activeBatchBuild = new ActiveBatchBuildInfo();
             activeBatchBuild.setJobId(JsonUtil.getString(buildNode, "jobId"));
             activeBatchBuild.setSubmitTime(JsonUtil.getLong(buildNode, "submitTime"));
-            activeBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));            
-            activeBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
-                    JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
+            activeBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));       
+            // no likely that this attribute isn't available but check for it just in case
+            if (buildNode.has("batchIndexConfiguration")) {
+                activeBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
+                        JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
+            }
             
         }
 
@@ -106,9 +109,12 @@ public class IndexDefinitionConverter {
                 String key = it.next();
                 long value = JsonUtil.getLong(countersNode, key);
                 lastBatchBuild.addCounter(key, value);
-            }            
-            lastBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
-                    JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
+            }
+            // this attribute isn't available after doing an upgrade so check 
+            if (buildNode.has("batchIndexConfiguration")) {
+                lastBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
+                        JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
+            }
             
         }
         byte[] batchIndexConfiguration = null;
