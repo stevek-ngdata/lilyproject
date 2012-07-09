@@ -511,7 +511,7 @@ public class DerefMapHbaseImpl implements DerefMap {
                 final VariantPropertiesPattern variantPropertiesPattern =
                         deserializeVariantPropertiesPattern(queryResult.getData(VARIANT_PROPERTIES_PATTERN_KEY));
 
-                if ((queriedField != null ? dependencyFields.contains(queriedField) : dependencyFields.isEmpty()) &&
+                if ((queriedField == null || dependencyFields.contains(queriedField)) &&
                         variantPropertiesPattern.matches(dependencyRecordId.getVariantProperties())) {
                     return idGenerator.fromBytes(nextIdentifier);
                 }

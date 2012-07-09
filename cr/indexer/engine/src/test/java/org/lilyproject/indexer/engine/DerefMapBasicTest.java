@@ -2,6 +2,7 @@ package org.lilyproject.indexer.engine;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.apache.hadoop.thirdparty.guava.common.collect.ImmutableSet;
 import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.IdGenerator;
@@ -55,9 +57,6 @@ public class DerefMapBasicTest {
     public static void tearDownAfterClass() throws Exception {
         Closer.close(repoSetup);
     }
-
-    // TODO: this tests the deref map directly but we might also need a test which checks if it gets updated correctly due
-    // to normal indexer behavior
 
     @Test
     public void emptyDependencies() throws Exception {
@@ -217,13 +216,74 @@ public class DerefMapBasicTest {
     /**
      * Simulates what would happen in case of a dereference expression like n:link1=>n:link2=>n:field.
      */
+    @Test
     public void chainOfDependencies() throws Exception {
-        fail("todo");
+        final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId linkField1 = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId linkField2 = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId field = ids.getSchemaId(UUID.randomUUID());
+        final RecordId dependant = ids.newRecordId("dependant");
+        final RecordId dependency1 = ids.newRecordId("dependency1");
+        final RecordId dependency2 = ids.newRecordId("dependency2");
+
+        // scenario: dependant has linkField1 -> dependency1 which has linkField2 -> dependency2 which has field "field"
+        final Map<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        // 1) dependant depends on dependency1 from which it uses linkField2
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency1, dummyVtag)),
+                Sets.newHashSet(linkField2));
+        // 1) dependant depends on dependency2 from which it uses field
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency2, dummyVtag)),
+                Sets.newHashSet(field));
+        derefMap.updateDependencies(dependant, dummyVtag, dependencies);
+
+        // consistency check
+        final Set<DerefMap.Dependency> found = derefMap.findDependencies(dependant, dummyVtag);
+        assertEquals(2, found.size());
+
+        // check that the dependant is found as only dependant of the dependencies via the corresponding fields
+        DerefMap.DependantRecordIdsIterator viaDependency1AndLinkField1 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency1, dummyVtag), linkField1);
+        assertFalse(viaDependency1AndLinkField1.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency2AndLinkField1 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency2, dummyVtag), linkField1);
+        assertFalse(viaDependency2AndLinkField1.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency1AndLinkField2 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency1, dummyVtag), linkField2);
+        assertTrue(viaDependency1AndLinkField2.hasNext());
+        assertEquals(dependant, viaDependency1AndLinkField2.next());
+        assertFalse(viaDependency1AndLinkField2.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency2AndLinkField2 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency2, dummyVtag), linkField2);
+        assertFalse(viaDependency2AndLinkField2.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency2AndField =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency2, dummyVtag), field);
+        assertTrue(viaDependency2AndField.hasNext());
+        assertEquals(dependant, viaDependency2AndField.next());
+        assertFalse(viaDependency2AndField.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency1WithoutSpecifyingField =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency1, dummyVtag), null);
+        assertTrue(viaDependency1WithoutSpecifyingField.hasNext());
+        assertEquals(dependant, viaDependency1WithoutSpecifyingField.next());
+        assertFalse(viaDependency1WithoutSpecifyingField.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency2WithoutSpecifyingField =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency2, dummyVtag), null);
+        assertTrue(viaDependency2WithoutSpecifyingField.hasNext());
+        assertEquals(dependant, viaDependency2WithoutSpecifyingField.next());
+        assertFalse(viaDependency2WithoutSpecifyingField.hasNext());
     }
 
     /**
      * Simulates what would happen in case of a dereference expression like n:link1=>n:link2=>n:link3.
      */
+    @Ignore
+    @Test
     public void chainOfDependenciesWhichDoesNotEndInField() throws Exception {
         fail("todo");
     }
@@ -231,6 +291,8 @@ public class DerefMapBasicTest {
     /**
      * Simulates what would happen in case of a dereference expression like +prop1=>n:link1=>+prop2=>n:field.
      */
+    @Ignore
+    @Test
     public void chainOfDependenciesIncludingMoreDimensionedVariantProperties() throws Exception {
         fail("todo");
     }
