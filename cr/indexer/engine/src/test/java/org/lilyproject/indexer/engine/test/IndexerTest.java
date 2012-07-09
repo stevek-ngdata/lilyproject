@@ -2262,6 +2262,51 @@ public class IndexerTest {
             }
         }
     }
+    
+    @Test
+    public void testNoIndex() throws Exception {
+        //
+        // Create schema
+        //
+        FieldType stringField = typeManager.createFieldType(typeManager.getValueType("STRING"),
+                new QName(NS, "noindex_string"), Scope.NON_VERSIONED);
+
+        RecordType rt1  = typeManager.recordTypeBuilder()
+                .name(new QName(NS, "NoIndexAttribute"))
+                .field(stringField.getId(), false)
+                .create();
+        
+        changeIndexUpdater("indexerconf_noindex_configuration.xml");
+        
+        Record record = repository.recordBuilder()
+                .recordType(rt1.getName())
+                .field(stringField.getName(), "noindex-field-test")
+                .build();
+        record.getAttributes().put("lily.mq", "false");
+        record = repository.create(record);        
+        commitIndex();
+        
+        // Assert not indexed
+        verifyResultCount("nia_string:noindex-field-test", 0);
+        
+        record.setField(stringField.getName(), "index-field-test");
+        record.setAttributes(null);
+        record = repository.update(record);        
+        commitIndex();
+        
+        // Assert indexed
+        verifyResultCount("nia_string:index-field-test", 1);
+        
+        record.setField(stringField.getName(), "updated-changes-noindex");
+        record.getAttributes().put("lily.mq", "false");
+        record = repository.update(record);
+        commitIndex();
+        
+        // Assert changes not indexed
+        verifyResultCount("nia_string:updated-changes-noindex", 0);
+        verifyResultCount("nia_string:index-field-test", 1);
+        
+    }
 
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
         byte[] mswordblob = readResource(resource);
