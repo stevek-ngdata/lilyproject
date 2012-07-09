@@ -300,14 +300,11 @@ public class DerefMapBasicTest {
         // 2) dependant depends on dependency2 from which it uses linkField3 which points to dependency3
         dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency2, dummyVtag)),
                 Sets.newHashSet(linkField3));
-        // 3) dependant depends on the whole record dependency3 (via linkField3)
-        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency3, dummyVtag)),
-                Sets.<SchemaId>newHashSet());
         derefMap.updateDependencies(dependant, dummyVtag, dependencies);
 
         // consistency check
         final Set<DerefMap.Dependency> found = derefMap.findDependencies(dependant, dummyVtag);
-        assertEquals(3, found.size());
+        assertEquals(2, found.size());
 
         // check that the dependant is found as only dependant of the dependencies via the corresponding fields
         DerefMap.DependantRecordIdsIterator viaDependency1AndLinkField2 =
@@ -321,12 +318,6 @@ public class DerefMapBasicTest {
         assertTrue(viaDependency2AndLinkField3.hasNext());
         assertEquals(dependant, viaDependency2AndLinkField3.next());
         assertFalse(viaDependency2AndLinkField3.hasNext());
-
-        DerefMap.DependantRecordIdsIterator viaDependency3 =
-                derefMap.findDependantsOf(new DerefMap.Dependency(dependency3, dummyVtag), null);
-        assertTrue(viaDependency3.hasNext());
-        assertEquals(dependant, viaDependency3.next());
-        assertFalse(viaDependency3.hasNext());
     }
 
     /**
