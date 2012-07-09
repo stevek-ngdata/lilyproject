@@ -267,7 +267,7 @@ public class RecordEvent {
             gen.writeEndArray();
         }
         
-        if (attributes != null) {
+        if (attributes != null && attributes.size() > 0) {
             gen.writeObjectFieldStart("attributes");
             for(String key : attributes.keySet()) {
                 gen.writeStringField(key, attributes.get(key));
