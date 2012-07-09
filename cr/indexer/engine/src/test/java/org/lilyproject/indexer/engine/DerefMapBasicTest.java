@@ -232,7 +232,7 @@ public class DerefMapBasicTest {
         // 1) dependant depends on dependency1 from which it uses linkField2
         dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency1, dummyVtag)),
                 Sets.newHashSet(linkField2));
-        // 1) dependant depends on dependency2 from which it uses field
+        // 2) dependant depends on dependency2 from which it uses field
         dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency2, dummyVtag)),
                 Sets.newHashSet(field));
         derefMap.updateDependencies(dependant, dummyVtag, dependencies);
@@ -282,10 +282,53 @@ public class DerefMapBasicTest {
     /**
      * Simulates what would happen in case of a dereference expression like n:link1=>n:link2=>n:link3.
      */
-    @Ignore
     @Test
     public void chainOfDependenciesWhichDoesNotEndInField() throws Exception {
-        fail("todo");
+        final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId linkField1 = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId linkField2 = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId linkField3 = ids.getSchemaId(UUID.randomUUID());
+        final RecordId dependant = ids.newRecordId("dependant");
+        final RecordId dependency1 = ids.newRecordId("dependency1");
+        final RecordId dependency2 = ids.newRecordId("dependency2");
+        final RecordId dependency3 = ids.newRecordId("dependency3");
+
+        // scenario: dependant has linkField1 -> dependency1 which has linkField2 -> dependency2 which has linkField3 -> dependency3
+        final Map<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        // 1) dependant depends on dependency1 from which it uses linkField2
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency1, dummyVtag)),
+                Sets.newHashSet(linkField2));
+        // 2) dependant depends on dependency2 from which it uses linkField3 which points to dependency3
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency2, dummyVtag)),
+                Sets.newHashSet(linkField3));
+        // 3) dependant depends on the whole record dependency3 (via linkField3)
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency3, dummyVtag)),
+                Sets.<SchemaId>newHashSet());
+        derefMap.updateDependencies(dependant, dummyVtag, dependencies);
+
+        // consistency check
+        final Set<DerefMap.Dependency> found = derefMap.findDependencies(dependant, dummyVtag);
+        assertEquals(3, found.size());
+
+        // check that the dependant is found as only dependant of the dependencies via the corresponding fields
+        DerefMap.DependantRecordIdsIterator viaDependency1AndLinkField2 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency1, dummyVtag), linkField2);
+        assertTrue(viaDependency1AndLinkField2.hasNext());
+        assertEquals(dependant, viaDependency1AndLinkField2.next());
+        assertFalse(viaDependency1AndLinkField2.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency2AndLinkField3 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency2, dummyVtag), linkField3);
+        assertTrue(viaDependency2AndLinkField3.hasNext());
+        assertEquals(dependant, viaDependency2AndLinkField3.next());
+        assertFalse(viaDependency2AndLinkField3.hasNext());
+
+        DerefMap.DependantRecordIdsIterator viaDependency3 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(dependency3, dummyVtag), null);
+        assertTrue(viaDependency3.hasNext());
+        assertEquals(dependant, viaDependency3.next());
+        assertFalse(viaDependency3.hasNext());
     }
 
     /**
