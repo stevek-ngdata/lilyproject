@@ -12,7 +12,6 @@ import org.apache.hadoop.thirdparty.guava.common.collect.ImmutableSet;
 import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.repository.api.IdGenerator;
@@ -25,7 +24,6 @@ import org.lilyproject.util.io.Closer;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 
 /**
  * This tests the functionality of the {@link DerefMapHbaseImpl}. Note there is also a {@link DerefMapIndexTest} which
@@ -334,10 +332,54 @@ public class DerefMapBasicTest {
     /**
      * Simulates what would happen in case of a dereference expression like +prop1=>n:link1=>+prop2=>n:field.
      */
-    @Ignore
     @Test
     public void chainOfDependenciesIncludingMoreDimensionedVariantProperties() throws Exception {
-        fail("todo");
+        final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId linkField1 = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId field = ids.getSchemaId(UUID.randomUUID());
+        final RecordId dependant = ids.newRecordId("dependant");
+        final RecordId dependantWithProp1 = ids.newRecordId("dependant", ImmutableMap.of("prop1", "x"));
+        final RecordId dependency1 = ids.newRecordId("dependency1");
+        final RecordId dependency1WithProp2 = ids.newRecordId("dependency1", ImmutableMap.of("prop2", "y"));
+
+        // scenario: dependant depends on all dependant +prop1 records. One such a record (dependantWithProp1) exists
+        // with a linkField1 pointing to dependency1. Via the +prop2 rule, we end up with all dependency1 + prop2
+        // records, of which there is one instance (dependency1WithProp2). Of this instance, we use the field "field".
+        final Map<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        // 1) dependant depends on all similar with prop1, of which it uses linkField1
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependant, dummyVtag),
+                ImmutableSet.of("prop1")), Sets.newHashSet(linkField1));
+        // 2) dependant depends on dependency1WithProp2 (and all similar with prop2) from which it uses field "field"
+        dependencies.put(new DerefMap.DependencyEntry(new DerefMap.Dependency(dependency1WithProp2, dummyVtag),
+                ImmutableSet.of("prop2")), Sets.newHashSet(field));
+        derefMap.updateDependencies(dependant, dummyVtag, dependencies);
+
+        // consistency check
+        final Set<DerefMap.Dependency> found = derefMap.findDependencies(dependant, dummyVtag);
+        assertEquals(2, found.size());
+
+        // check that the dependant is found as only dependant of the dependencies via the corresponding fields (in a few scenarios)
+
+        // scenario1: as if a dependency1 with prop2=value is being created
+        final RecordId someRecordLikeDependency1WithProp2 =
+                ids.newRecordId("dependency1", ImmutableMap.of("prop2", "value"));
+        DerefMap.DependantRecordIdsIterator scenario1 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(someRecordLikeDependency1WithProp2, dummyVtag),
+                        field);
+        assertTrue(scenario1.hasNext());
+        assertEquals(dependant, scenario1.next());
+        assertFalse(scenario1.hasNext());
+
+        // scenario2: as if a new record like dependant is created with prop1=value
+        final RecordId someRecordLikeDependantWithProp1 =
+                ids.newRecordId("dependant", ImmutableMap.of("prop1", "value"));
+        DerefMap.DependantRecordIdsIterator scenario2 =
+                derefMap.findDependantsOf(new DerefMap.Dependency(someRecordLikeDependantWithProp1, dummyVtag),
+                        linkField1);
+        assertTrue(scenario2.hasNext());
+        assertEquals(dependant, scenario2.next());
+        assertFalse(scenario2.hasNext());
     }
 
     @Test
