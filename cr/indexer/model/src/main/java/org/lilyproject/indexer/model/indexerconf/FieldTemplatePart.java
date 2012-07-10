@@ -1,24 +1,18 @@
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.FieldType;
+
 
 public class FieldTemplatePart implements TemplatePart {
 
-    private QName field;
-    private SchemaId fieldId;
+    private FieldType fieldType;
 
-    public FieldTemplatePart(QName field, SchemaId fieldId) {
-        this.field = field;
-        this.fieldId = fieldId;
+    public FieldTemplatePart(FieldType fieldType) {
+        this.fieldType = fieldType;
     }
 
-    public QName getField() {
-        return field;
-    }
-
-    public SchemaId getFieldId() {
-        return fieldId;
+    public FieldType getFieldType() {
+        return fieldType;
     }
 
 }

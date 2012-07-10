@@ -83,7 +83,7 @@ public class NameTemplateParser {
     private TemplatePart buildFieldTemplatePart(Element el, String template, String expr) throws IndexerConfException, InterruptedException, RepositoryException {
         QName field = ConfUtil.parseQName(expr, el);
         FieldType fieldType = ConfUtil.getFieldType(field, systemFields, repository.getTypeManager());
-        return new FieldTemplatePart(field, fieldType.getId());
+        return new FieldTemplatePart(fieldType);
     }
 
 }

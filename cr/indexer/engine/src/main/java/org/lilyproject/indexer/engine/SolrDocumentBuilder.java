@@ -17,12 +17,17 @@ package org.lilyproject.indexer.engine;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.apache.solr.common.SolrInputDocument;
-import org.lilyproject.indexer.engine.DerefMap.Entry;
+import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
 import org.lilyproject.indexer.model.indexerconf.Dep;
 import org.lilyproject.indexer.model.indexerconf.FieldTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.IndexUpdateBuilder;
@@ -54,7 +59,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private boolean emptyDocument = true;
 
     private Stack<RecordContext> contexts;
-    private Multimap<Entry, SchemaId> dependencies = HashMultimap.create();
+    private LoadingCache<DependencyEntry, Set<SchemaId>> dependencies;
 
     private RecordId recordId;
     private String key;
@@ -74,6 +79,15 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
         this.contexts = new Stack<RecordContext>();
         this.push(record, new Dep(this.recordId, Collections.<String>emptySet()));
+
+        this.dependencies = CacheBuilder.newBuilder().build(new CacheLoader<DependencyEntry, Set<SchemaId>>() {
+
+            @Override
+            public Set<SchemaId> load(DependencyEntry arg0) throws Exception {
+                return Sets.newHashSet();
+            }
+
+        });
     }
 
     public boolean isEmptyDocument() {
@@ -126,7 +140,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
             RecordContext ctx = contexts.peek();
             //TODO: add dependencies caused by resolving name template variables
             if (part instanceof FieldTemplatePart) {
-                QName fieldName = ((FieldTemplatePart)part).getField();
+                QName fieldName = ((FieldTemplatePart)part).getFieldType().getName();
                 if (ctx.record.hasField(fieldName)) {
                     return ctx.record.getField(fieldName);
                 } else {
@@ -147,11 +161,15 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     @Override
     public void addDependency(SchemaId field) {
         RecordContext ctx = contexts.peek();
-        dependencies.put(DerefMapUtil.newEntry(ctx.dep.id, vtag, ctx.dep.vprops), field);
+        try {
+            dependencies.get(DerefMapUtil.newEntry(ctx.dep.id, vtag, ctx.dep.vprops)).add(field);
+        } catch (ExecutionException ee) {
+            throw new RuntimeException("Failed to update dependencies");
+        }
     }
 
-    public Multimap<Entry, SchemaId> getDependencies() {
-        return dependencies;
+    public Map<DependencyEntry, Set<SchemaId>> getDependencies() {
+        return dependencies.asMap();
     }
 
     @Override
@@ -186,7 +204,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
             // collect dependencies introducted by any 'FieldTemplateParts'
             for (TemplatePart part: nameTemplate.getParts()) {
                 if (part instanceof FieldTemplatePart) {
-                    addDependency(((FieldTemplatePart)part).getFieldId());
+                    addDependency(((FieldTemplatePart)part).getFieldType().getId());
                 }
             }
 
