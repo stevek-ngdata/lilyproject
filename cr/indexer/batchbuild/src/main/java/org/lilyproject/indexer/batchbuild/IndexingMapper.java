@@ -51,7 +51,6 @@ import org.lilyproject.mapreduce.IdRecordMapper;
 import org.lilyproject.mapreduce.IdRecordWritable;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
 import org.lilyproject.mapreduce.RecordIdWritable;
-import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
@@ -123,7 +122,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
             indexLocker = new IndexLocker(zk, enableLocking);
 
-            final DerefMap derefMap = new DerefMapHbaseImpl(indexName, LilyClient.getHBaseConfiguration(zk), repository.getIdGenerator());
+            final DerefMap derefMap = DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk), repository.getIdGenerator());
             indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
                     new IndexerMetrics(indexName), derefMap);
 

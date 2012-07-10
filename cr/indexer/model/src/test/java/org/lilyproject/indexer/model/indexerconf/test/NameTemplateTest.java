@@ -15,60 +15,73 @@
  */
 package org.lilyproject.indexer.model.indexerconf.test;
 
-import org.junit.Test;
-import org.lilyproject.indexer.model.indexerconf.NameTemplate;
-import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.Sets;
+import org.junit.Test;
+import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateResolver;
+import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateValidator;
+import org.lilyproject.indexer.model.indexerconf.NameTemplate;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateParser;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateValidator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+
+/**
+ * Broken during refactoring
+ * Should be able to fix this if we move helper methods like IndexerConfBuilder.parseQName() to a shared component
+ */
 public class NameTemplateTest {
+
     @Test
     public void testLiteral() throws Exception {
-        NameTemplate template = new NameTemplate("foobar");
-        assertEquals("foobar", template.format(null));
+        NameTemplate template = new NameTemplateParser().parse("foobar");
+        assertEquals("foobar", template.format(getResolver()));
     }
 
     @Test
     public void testVar() throws Exception {
-        NameTemplate template = new NameTemplate("${var1}");
-        assertEquals("hello", template.format(getContext()));
+        NameTemplate template = new NameTemplateParser().parse("${var1}");
+        assertEquals("hello", template.format(getResolver()));
     }
 
     @Test
     public void testEmbeddedVar() throws Exception {
-        NameTemplate template = new NameTemplate("prefix_${var1}_suffix");
-        assertEquals("prefix_hello_suffix", template.format(getContext()));
+        NameTemplate template = new NameTemplateParser().parse("prefix_${var1}_suffix");
+        assertEquals("prefix_hello_suffix", template.format(getResolver()));
     }
 
     @Test
     public void testCond() throws Exception {
-        NameTemplate template = new NameTemplate("${bool1?yes:no}");
-        assertEquals("yes", template.format(getContext()));
+        NameTemplate template = new NameTemplateParser().parse("${bool1?yes:no}");
+        assertEquals("yes", template.format(getResolver()));
 
-        template = new NameTemplate("${bool2?yes:no}");
-        assertEquals("no", template.format(getContext()));
+        template = new NameTemplateParser().parse("${bool2?yes:no}");
+        assertEquals("no", template.format(getResolver()));
 
-        template = new NameTemplate("${bool2?yes}");
-        assertEquals("", template.format(getContext()));
+        template = new NameTemplateParser().parse("${bool2?yes}");
+        assertEquals("", template.format(getResolver()));
 
-        template = new NameTemplate("${bool1?yes}");
-        assertEquals("yes", template.format(getContext()));
+        template = new NameTemplateParser().parse("${bool1?yes}");
+        assertEquals("yes", template.format(getResolver()));
 
-        template = new NameTemplate("${var1?yes:no}");
+        template = new NameTemplateParser().parse("${var1?yes:no}");
         try {
-            assertEquals("no", template.format(getContext()));
+            assertEquals("no", template.format(getResolver()));
             fail("Expected exception");
         } catch (NameTemplateEvaluationException e) {
             // expected
         }
 
-        template = new NameTemplate("${nonexisting?yes:no}");
+        template = new NameTemplateParser().parse("${nonexisting?yes:no}");
         try {
-            assertEquals("no", template.format(getContext()));
+            assertEquals("no", template.format(getResolver()));
             fail("Expected exception");
         } catch (NameTemplateEvaluationException e) {
             // expected
@@ -77,39 +90,51 @@ public class NameTemplateTest {
 
     @Test
     public void testCondEmbedded() throws Exception {
-        NameTemplate template = new NameTemplate("prefix_${bool1?yes:no}_suffix");
-        assertEquals("prefix_yes_suffix", template.format(getContext()));
+        NameTemplate template = new NameTemplateParser().parse("prefix_${bool1?yes:no}_suffix");
+        assertEquals("prefix_yes_suffix", template.format(getResolver()));
     }
 
     @Test
     public void testIncompleteExpr() throws Exception {
-        NameTemplate template = new NameTemplate("${");
-        assertEquals("${", template.format(getContext()));
+        NameTemplate template = new NameTemplateParser().parse("${");
+        assertEquals("${", template.format(getResolver()));
 
-        template = new NameTemplate("x${x${x");
-        assertEquals("x${x${x", template.format(getContext()));
+        template = new NameTemplateParser().parse("x${x${x");
+        assertEquals("x${x${x", template.format(getResolver()));
 
-        template = new NameTemplate("x${}");
-        assertEquals("x${}", template.format(getContext()));
+        template = new NameTemplateParser().parse("x${}");
+        assertEquals("x${}", template.format(getResolver()));
 
-        template = new NameTemplate("x${?}");
+        template = new NameTemplateParser().parse("x${?}");
         try {
-            assertEquals("x${?}", template.format(getContext()));
+            assertEquals("x${?}", template.format(getResolver()));
             fail("expected exception");
         } catch (NameTemplateEvaluationException e) {
             // expected
         }
 
-        template = new NameTemplate("x${a?}");
+        template = new NameTemplateParser().parse("x${a?}");
         try {
-            assertEquals("x${a?}", template.format(getContext()));
+            assertEquals("x${a?}", template.format(getResolver()));
             fail("expected exception");
         } catch (NameTemplateEvaluationException e) {
             // expected
         }
     }
 
-    public Map<String, Object> getContext() {
+    private NameTemplateValidator getDefaultValidator() {
+        return new DefaultNameTemplateValidator(defaultContext().keySet(), defaultBooleanVariables());
+    }
+
+    private Set<String> defaultBooleanVariables() {
+        return Sets.newHashSet("bool1", "bool2");
+    }
+
+    public NameTemplateResolver getResolver() {
+        return new DefaultNameTemplateResolver(defaultContext());
+    }
+
+    private Map<String, Object> defaultContext() {
         Map<String, Object> context = new HashMap<String, Object>();
         context.put("var1", "hello");
         context.put("bool1", Boolean.TRUE);

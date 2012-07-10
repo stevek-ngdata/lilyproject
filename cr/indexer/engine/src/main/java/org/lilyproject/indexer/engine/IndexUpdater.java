@@ -27,8 +27,13 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
+import org.lilyproject.indexer.model.indexerconf.Follow;
+import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
+import org.lilyproject.indexer.model.indexerconf.LinkFieldFollow;
+import org.lilyproject.indexer.model.indexerconf.MasterFollow;
+import org.lilyproject.indexer.model.indexerconf.VariantFollow;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexException;
@@ -269,8 +274,8 @@ public class IndexUpdater implements RowLogMessageListener {
                 // Handle changes to non-versioned fields
                 //
                 if (indexer.getConf().changesAffectIndex(vtRecord, Scope.NON_VERSIONED)) {
-                        indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
-                        // After this we go to the treatment of changed vtag fields
+                    indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
+                    // After this we go to the treatment of changed vtag fields
                     if (log.isDebugEnabled()) {
                         log.debug(
                                 String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
@@ -382,7 +387,7 @@ public class IndexUpdater implements RowLogMessageListener {
         findRelevantIndexFieldsForVTagChanges(changedVTagFields, indexFieldsAndVTags);
 
         //
-        // Now search the referrers, that is: for each link field, find out which records point to the current record
+        // Now search the referrers, that is: for each deref field, find out which records point to the current record
         // in a certain versioned view (= a certain vtag)
         //
 
@@ -407,31 +412,31 @@ public class IndexUpdater implements RowLogMessageListener {
 
             // Run over the version tags
             for (SchemaId referrerVtag : referrerVTags) {
-                List<DerefValue.Follow> follows = derefValue.getCrossRecordFollows();
+                List<Follow> follows = derefValue.getCrossRecordFollows();
 
                 Set<RecordId> referrers = new HashSet<RecordId>();
                 referrers.add(recordId);
 
                 for (int i = follows.size() - 1; i >= 0; i--) {
                     searchedFollowCount++;
-                    DerefValue.Follow follow = follows.get(i);
+                    Follow follow = follows.get(i);
 
                     Set<RecordId> newReferrers = new HashSet<RecordId>();
 
-                    if (follow instanceof DerefValue.LinkFieldFollow) {
-                        final DerefValue.LinkFieldFollow linkFollowField = (DerefValue.LinkFieldFollow) follow;
+                    if (follow instanceof LinkFieldFollow) {
+                        final LinkFieldFollow linkFollowField = (LinkFieldFollow) follow;
                         newReferrers.addAll(searchReferrersLinkFieldFollow(referrerVtag, referrers, linkFollowField));
-                    } else if (follow instanceof DerefValue.VariantFollow) {
-                        DerefValue.VariantFollow varFollow = (DerefValue.VariantFollow) follow;
+                    } else if (follow instanceof VariantFollow) {
+                        VariantFollow varFollow = (VariantFollow) follow;
                         newReferrers.addAll(searchReferrersVariantFollow(referrers, varFollow));
-                    } else if (follow instanceof DerefValue.ForwardVariantFollow) {
-                        final DerefValue.ForwardVariantFollow forwardVarFollow =
-                                (DerefValue.ForwardVariantFollow) follow;
+                    } else if (follow instanceof ForwardVariantFollow) {
+                        final ForwardVariantFollow forwardVarFollow =
+                                (ForwardVariantFollow) follow;
                         newReferrers.addAll(searchReferrersForwardVariantFollow(referrers, forwardVarFollow));
-                    } else if (follow instanceof DerefValue.MasterFollow) {
+                    } else if (follow instanceof MasterFollow) {
                         newReferrers.addAll(searchReferrersMasterFollow(referrers));
                     } else {
-                        throw new RuntimeException("Unexpected implementation of DerefValue.Follow: " +
+                        throw new RuntimeException("Unexpected implementation of Follow: " +
                                 follow.getClass().getName());
                     }
 
@@ -547,7 +552,7 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     private Set<RecordId> searchReferrersLinkFieldFollow(SchemaId referrerVtag, Set<RecordId> referrers,
-                                                         DerefValue.LinkFieldFollow linkFollowField)
+                                                         LinkFieldFollow linkFollowField)
             throws LinkIndexException {
         final SchemaId fieldId = linkFollowField.getOwnerFieldType().getId();
 
@@ -559,7 +564,7 @@ public class IndexUpdater implements RowLogMessageListener {
         return result;
     }
 
-    private Set<RecordId> searchReferrersVariantFollow(Set<RecordId> referrers, DerefValue.VariantFollow varFollow)
+    private Set<RecordId> searchReferrersVariantFollow(Set<RecordId> referrers, VariantFollow varFollow)
             throws RepositoryException, InterruptedException {
         final HashSet<RecordId> result = new HashSet<RecordId>();
 
@@ -610,7 +615,7 @@ public class IndexUpdater implements RowLogMessageListener {
     }
 
     private Set<RecordId> searchReferrersForwardVariantFollow(Set<RecordId> referrers,
-                                                              DerefValue.ForwardVariantFollow forwardVarFollow)
+                                                              ForwardVariantFollow forwardVarFollow)
             throws RepositoryException, InterruptedException {
         final HashSet<RecordId> result = new HashSet<RecordId>();
 
@@ -660,17 +665,17 @@ public class IndexUpdater implements RowLogMessageListener {
         return result;
     }
 
-    private boolean hasAllDefinedDimensions(RecordId referrer, DerefValue.ForwardVariantFollow forwardVarFollow) {
+    private boolean hasAllDefinedDimensions(RecordId referrer, ForwardVariantFollow forwardVarFollow) {
         return haveAllDefinedDimensions(referrer.getVariantProperties(), forwardVarFollow);
     }
 
     private boolean haveAllDefinedDimensions(Map<String, String> variantProperties,
-                                             DerefValue.ForwardVariantFollow forwardVarFollow) {
+                                             ForwardVariantFollow forwardVarFollow) {
         return variantProperties.keySet().containsAll(forwardVarFollow.getDimensions().keySet());
     }
 
     private boolean hasSameValueForValuedDimensions(RecordId referrer,
-                                                    DerefValue.ForwardVariantFollow forwardVarFollow) {
+                                                    ForwardVariantFollow forwardVarFollow) {
         return referrer.getVariantProperties().entrySet()
                 .containsAll(forwardVarFollow.getValuedDimensions().entrySet());
     }

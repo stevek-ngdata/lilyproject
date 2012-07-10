@@ -2,10 +2,10 @@
 <indexer xmlns:ns="org.lilyproject.indexer.test" xmlns:ns2="org.lilyproject.indexer.test.2">
 
   <records>
-    <record matchNamespace="ns" matchName="Alpha" matchVariant="*" vtags="last"/>
-    <record matchNamespace="ns" matchName="Beta" matchVariant="*" vtags="last"/>
-    <record matchNamespace="ns2" matchName="Alpha" matchVariant="*" vtags="last"/>
-    <record matchNamespace="ns2" matchName="Beta" matchVariant="*" vtags="last"/>
+    <record matchNamespace="ns" matchName="Alpha" matchVariant="*" vtags="last,preview"/>
+    <record matchNamespace="ns" matchName="Beta" matchVariant="*" vtags="last,preview"/>
+    <record matchNamespace="ns2" matchName="Alpha" matchVariant="*" vtags="last,preview"/>
+    <record matchNamespace="ns2" matchName="Beta" matchVariant="*" vtags="last,preview"/>
   </records>
 
   <formatters default="default">
@@ -14,6 +14,7 @@
 
   <fields>
 
+    <!-- ==================== <match> using versioned fields =================== -->
     <!-- always indexed -->
     <field name="match1" value="ns:match1"/>
 
@@ -21,28 +22,62 @@
     <match recordType="ns:*">
       <field name="match2" value="ns:match2"/>
     </match>
-    <match recordType="ns2:*">
+
+    <!-- match on name only -->
+    <match recordType="*:Alpha">
       <field name="match3" value="ns:match3"/>
     </match>
 
-    <!-- match on name only -->
-    <!-- FIXME: IndexerConfBuilder.parseQName complains about * namespace
-    <match recordType="*:Alpha">
+    <!-- match on ns and name -->
+    <match recordType="ns:Alpha">
       <field name="match4" value="ns:match4"/>
     </match>
-    <match recordType="*:Beta">
+
+    <!-- match on field -->
+    <match field="ns:match1=Paris">
       <field name="match5" value="ns:match5"/>
     </match>
-     -->
+
+    <!-- ==================== <match> using non-versioned fields =================== -->
+    <!-- always indexed -->
+    <field name="nvmatch1" value="ns:nvmatch1"/>
+
+    <!-- match on ns only -->
+    <match recordType="ns:*">
+      <field name="nvmatch2" value="ns:nvmatch2"/>
+    </match>
+
+    <!-- match on name only -->
+    <match recordType="*:Alpha">
+      <field name="nvmatch3" value="ns:nvmatch3"/>
+    </match>
 
     <!-- match on ns and name -->
     <match recordType="ns:Alpha">
-      <field name="match6" value="ns:match6"/>
+      <field name="nvmatch4" value="ns:nvmatch4"/>
     </match>
 
-    <match recordType="ns2:Beta">
-      <field name="match7" value="ns:match7"/>
+    <!-- match on field -->
+    <match field="ns:nvmatch1=Berlin">
+      <field name="nvmatch5" value="ns:nvmatch5"/>
     </match>
+
+    <!-- ==================== <foreach> =================== -->
+    <!-- using +variant and @vprop -->
+    <forEach value="+country">
+      <field name="product_description_${@vprop:country}_string" value="ns:nv_field1"/>
+      <field name="product_price_${@vprop:country}_string" value="ns:nv_field2"/>
+    </forEach>
+
+    <!-- using -variant and a schema field -->
+    <forEach value="-country">
+      <field name="product_code_${ns:nv_field2}_string" value="ns:nv_field1"/>
+    </forEach>
+
+    <!-- using master and a system field -->
+    <forEach value="master">
+      <field name="product_id_${sys:id}_string" value="ns:nv_field1"/>
+    </forEach>
 
   </fields>
 

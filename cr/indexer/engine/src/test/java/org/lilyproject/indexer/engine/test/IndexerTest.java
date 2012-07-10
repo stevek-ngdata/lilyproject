@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -54,10 +55,13 @@ import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClientException;
 import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
+import org.lilyproject.indexer.model.indexerconf.Follow;
+import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
+import org.lilyproject.indexer.model.indexerconf.VariantFollow;
 import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Blob;
@@ -71,6 +75,7 @@ import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
@@ -138,7 +143,9 @@ public class IndexerTest {
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
     private static RecordType lastRecordType;
+
     private static Map<String, FieldType> fields = Maps.newHashMap();
+    private Map<String, Integer> matchResultCounts = Maps.newHashMap();
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -193,7 +200,7 @@ public class IndexerTest {
     public static void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        DerefMap derefMap = new DerefMapHbaseImpl("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
+        DerefMap derefMap = DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 
@@ -340,15 +347,16 @@ public class IndexerTest {
         lastRecordType = typeManager.createRecordType(lastRecordType);
 
         //
-        // Schema types for testing match
+        // Schema types for testing <match> and <foreach>
         //
+
+        // versioned fields
         RecordType matchNs1AlphaRecordType = typeManager.newRecordType(new QName(NS, "Alpha"));
         RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
         RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
         for (int i = 1; i <= 8; i++) {
-            FieldType ns1Field = typeManager
-                    .createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
+            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
             fields.put("ns:match" + i, ns1Field);
 
             matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
@@ -358,10 +366,23 @@ public class IndexerTest {
 
         }
 
+        // non-versioned fields
+        for (int i = 1; i <= 8; i++) {
+            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "nvmatch" + i), Scope.NON_VERSIONED));
+            fields.put("ns:nvmatch" + i, ns1Field);
+
+            matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+            matchNs1BetaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+            matchNs2AlphaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+            matchNs2BetaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
+
+        }
+
         typeManager.createRecordType(matchNs1AlphaRecordType);
         typeManager.createRecordType(matchNs1BetaRecordType);
         typeManager.createRecordType(matchNs2AlphaRecordType);
         typeManager.createRecordType(matchNs2BetaRecordType);
+
     }
 
     private static FieldType field(String name) {
@@ -369,12 +390,12 @@ public class IndexerTest {
     }
 
     @Test
-    public void testMatch() throws Exception {
+    public void testMatchAndForEach() throws Exception {
         changeIndexUpdater("indexerconf_match.xml");
         messageVerifier.init();
 
         //
-        // Testing match conditions
+        // Test ForEach
         //
         {
             log.debug("Begin test match");
@@ -386,43 +407,194 @@ public class IndexerTest {
             createMatchTestRecord(NS2, "Beta", "ns2_beta_");
             // re-enable messageVerifier
             messageVerifier.init();
-
-            commitIndex();
-
-            verifyResultCount("match2:ns2_alpha_two", 0);
-
-            verifyMatchCounts("match1", "one", 1, 1, 1, 1); // all (no matches)
-            verifyMatchCounts("match2", "two", 1, 1, 0, 0); // ns:*
-            verifyMatchCounts("match3", "three", 0, 0, 1, 1); // ns2:*
-            //verifyMatchCounts("match4", "four", 1, 0, 1, 0); // *:Alpha             //Uncomment after RecordMatch on namespace * is fixed
-            //verifyMatchCounts("match5", "five", 0, 1, 0, 1); // *:Beta
-            verifyMatchCounts("match6", "six", 1, 0, 0, 0); // ns:Alpha
-            verifyMatchCounts("match7", "seven", 0, 0, 0, 1); // ns2:Beta
-
         }
 
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "louche")
+                .field(nvfield2.getName(), "10")
+                .create();
+
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "belgium")))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "schuimspaan")
+                .field(nvfield2.getName(), "11")
+                .create();
+
+        commitIndex();
+
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485"))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "29485")
+                .create();
+
+        commitIndex();
+
+        verifyResultCount("product_description_france_string:louche", 1);
+        verifyResultCount("product_price_france_string:10", 1);
+
+        createMatchTestRecord(NS, "Alpha", "alpha");
+        createMatchTestRecord(NS, "Beta", "beta");
+        createMatchTestRecord(NS2, "Alpha", "gamma");
+        createMatchTestRecord(NS2, "Beta", "delta");
+
+        //
+        // Test Match
+        //
+
+        // Initialise a map containing all the expected result counts
+        // for each of the four records, once with the original value, and once with the updated value.
+        // Initially no records have updated values, so the last 4 digits are always zero.
+        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+
+        setExpectedCountsForMatch("nvmatch1", 1, 1, 1, 1, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("nvmatch2", 1, 1, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("nvmatch3", 1, 0, 1, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("nvmatch4", 1, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+
+        verifyMatchResultCounts();
+
+        // changes to versioned fields:
+        // there should be two solr documents per record: one with the original value, and one with the updated value
+        updateMatchTestRecords("match1");
+        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 1, 1, 1, 1);
+        setExpectedCountsForMatch("match2", 2, 2, 0, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("match3", 2, 0, 2, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("match4", 2, 0, 0, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch1", 2, 2, 2, 2, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch2", 2, 2, 0, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch3", 2, 0, 2, 0, 0, 0, 0, 0);
+        setExpectedCountsForMatch("nvmatch4", 2, 0, 0, 0, 0, 0, 0, 0);
+
+        verifyMatchResultCounts();
+        updateMatchTestRecords("match2");
+        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 1, 1, 0, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("match3");
+        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 1, 0, 1, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("match4");
+        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 1, 0, 0, 0);
+        verifyMatchResultCounts();
+
+        // changes to unversioned fields:
+        // there should be two solr documents per record, both with the updated value
+        updateMatchTestRecords("nvmatch1");
+        setExpectedCountsForMatch("nvmatch1", 0, 0, 0, 0, 2, 2, 2, 2);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("nvmatch2");
+        setExpectedCountsForMatch("nvmatch2", 0, 0, 0, 0, 2, 2, 0, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("nvmatch3");
+        setExpectedCountsForMatch("nvmatch3", 0, 0, 0, 0, 2, 0, 2, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords("nvmatch4");
+        setExpectedCountsForMatch("nvmatch4", 0, 0, 0, 0, 2, 0, 0, 0);
+        verifyMatchResultCounts();
+
+        /******** Test field value based match conditions ********/
+
+        // Unmatched fields should not appear in the index
+        repository.recordBuilder().id("matchfield_versioned")
+            .recordType(new QName(NS, "Alpha"))
+            .field(field("ns:match5").getName(), "Bienvenue").create();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .recordType(new QName(NS, "Alpha"))
+            .field(field("ns:nvmatch5").getName(), "Willkommen").create();
+
+        commitIndex();
+        verifyResultCount("match5:Bienvenue", 0);
+        verifyResultCount("nvmatch5:GutenTag", 0);
+
+        // When the match is met, existing fields should appear in the index
+        repository.recordBuilder().id("matchfield_versioned")
+            .field(field("ns:match1").getName(), "Paris").update();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .field(field("ns:nvmatch1").getName(), "Berlin").update();
+
+        commitIndex();
+        verifyResultCount("match5:Bienvenue", 1);
+        verifyResultCount("nvmatch5:Willkommen", 1);
+
+        // When matched fields change, the index should be updated
+        repository.recordBuilder().id("matchfield_versioned")
+            .field(field("ns:match5").getName(), "Baguette").update();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .field(field("ns:nvmatch5").getName(), "Roggenmischbrot").update();
+
+        commitIndex();
+        verifyResultCount("match5:Baguette", 1);
+        verifyResultCount("nvmatch5:Roggenmischbrot", 1);
+
+        // When the match condition is no longer met, the entries should disappear from the index
+        repository.recordBuilder().id("matchfield_versioned")
+            .field(field("ns:match1").getName(), "France").update();
+        repository.recordBuilder().id("matchfield_nonversioned")
+            .field(field("ns:nvmatch1").getName(), "Deutschland").update();
+
+        commitIndex();
+        verifyResultCount("nvmatch5:Baguette", 0);
+        verifyResultCount("nvmatch5:Roggenmischbrot", 0);
+
     }
 
-    private void verifyMatchCounts(String fieldName, String number, int ns_a, int ns_b, int ns2_a, int ns2_b)
-            throws Exception {
-        verifyResultCount(fieldName + ":" + "ns_alpha_" + number, ns_a);
-        verifyResultCount(fieldName + ":" + "ns_beta_" + number, ns_b);
-        verifyResultCount(fieldName + ":" + "ns2_alpha_" + number, ns2_a);
-        verifyResultCount(fieldName + ":" + "ns2_beta_" + number, ns2_b);
+    private void verifyMatchResultCounts() throws Exception{
+        List<String> results = Lists.newArrayList();
+        boolean allOk = true;
+
+        commitIndex();
+        for (String condition: matchResultCounts.keySet()) {
+            Integer expected = matchResultCounts.get(condition);
+            long numFound = getQueryResponse(condition).getResults().getNumFound();
+            if (numFound == expected.longValue()) {
+                results.add("OK: " + condition + " => " + expected);
+            } else {
+                results.add("ERROR: " + condition + " => " + numFound + " in stead of " + expected);
+                allOk = false;
+            }
+        }
+
+        if (!allOk) {
+            fail(Joiner.on("\n").join(results));
+        }
     }
 
-    private void createMatchTestRecord(String ns, String name, String prefix) throws Exception {
+    private void updateMatchTestRecords(String fieldToUpdate) throws InterruptedException, RepositoryException {
+        for (String id: new String[] { "alpha", "beta", "gamma", "delta" }) {
+            Record record = repository.read(repository.getIdGenerator().newRecordId(id));
+            record.setField(field("ns:" + fieldToUpdate).getName(), id+ "_" + fieldToUpdate + "_updated");
+            record.setField(previewTag.getName(), 1L);
+            repository.update(record);
+        }
+    }
+
+    private void setExpectedCountsForMatch(String indexField, int... counts) {
+        matchResultCounts.put(indexField + ":alpha_" + indexField + "_orig", counts[0]);
+        matchResultCounts.put(indexField + ":beta_" + indexField + "_orig", counts[1]);
+        matchResultCounts.put(indexField + ":gamma_" + indexField + "_orig", counts[2]);
+        matchResultCounts.put(indexField + ":delta_" + indexField + "_orig", counts[3]);
+        matchResultCounts.put(indexField + ":alpha_" + indexField + "_updated", counts[4]);
+        matchResultCounts.put(indexField + ":beta_" + indexField + "_updated", counts[5]);
+        matchResultCounts.put(indexField + ":gamma_" + indexField + "_updated", counts[6]);
+        matchResultCounts.put(indexField + ":delta_" + indexField + "_updated", counts[7]);
+    }
+
+    private void createMatchTestRecord(String ns, String name, String id) throws Exception {
         RecordBuilder builder = repository.recordBuilder();
 
         builder.recordType(new QName(ns, name))
-                .field(new QName(NS, "match1"), prefix + "one")
-                .field(new QName(NS, "match2"), prefix + "two")
-                .field(new QName(NS, "match3"), prefix + "three")
-                .field(new QName(NS, "match4"), prefix + "four")
-                .field(new QName(NS, "match5"), prefix + "five")
-                .field(new QName(NS, "match6"), prefix + "six")
-                .field(new QName(NS, "match7"), prefix + "seven")
-                .field(new QName(NS, "match8"), prefix + "eight");
+            .id(id);
+
+        for (int i = 1; i <= 4; i++) {
+            builder.field(new QName(NS, "match" + i), id + "_" + "match" + i + "_orig");
+            builder.field(new QName(NS, "nvmatch" + i), id + "_" + "nvmatch" + i + "_orig");
+        }
 
         builder.create();
     }
@@ -2291,67 +2463,67 @@ public class IndexerTest {
 
         final List<IndexField> derefIndexFields = INDEXER_CONF.getDerefIndexFields();
         for (IndexField indexField : derefIndexFields) {
-            if ("cc_less_variant_spaces".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+            if ("cc_less_variant_spaces".equals(indexField.getName().getTemplate())) {
+                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
-                final Set<String> dimensions = ((DerefValue.VariantFollow) follows.get(0)).getDimensions();
+                final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
                 assertEquals(1, dimensions.size());
                 assertTrue(dimensions.contains("my branch"));
-            } else if ("cc_less_variant_spaces_twice".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+            } else if ("cc_less_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
+                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
-                final Set<String> dimensions = ((DerefValue.VariantFollow) follows.get(0)).getDimensions();
+                final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
                 assertEquals(2, dimensions.size());
                 assertTrue(dimensions.contains("my branch"));
                 assertTrue(dimensions.contains("some lang"));
-            } else if ("cc_more_variant_spaces".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+            } else if ("cc_more_variant_spaces".equals(indexField.getName().getTemplate())) {
+                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
+                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
                 assertEquals(1, dimensions.size());
                 assertTrue(dimensions.containsKey("my branch"));
                 assertNull(dimensions.get("my branch"));
-            } else if ("cc_more_variant_spaces_twice".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+            } else if ("cc_more_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
+                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
+                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
                 assertEquals(2, dimensions.size());
                 assertTrue(dimensions.containsKey("my branch"));
                 assertNull(dimensions.get("my branch"));
                 assertTrue(dimensions.containsKey("some lang"));
                 assertNull(dimensions.get("some lang"));
-            } else if ("cc_more_variant_spaces_value".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+            } else if ("cc_more_variant_spaces_value".equals(indexField.getName().getTemplate())) {
+                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
+                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
                 assertEquals(1, dimensions.size());
                 assertTrue(dimensions.containsKey("branch"));
                 assertEquals("some value", dimensions.get("branch"));
-            } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+            } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName().getTemplate())) {
+                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
+                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
                 assertEquals(2, dimensions.size());
                 assertTrue(dimensions.containsKey("branch"));
                 assertEquals("some value", dimensions.get("branch"));
                 assertTrue(dimensions.containsKey("lang"));
                 assertEquals("some lang", dimensions.get("lang"));
-            } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+            } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName().getTemplate())) {
+                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
                 assertEquals(1, follows.size());
                 final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
+                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
                 assertEquals(2, dimensions.size());
                 assertTrue(dimensions.containsKey("my branch"));
                 assertEquals("some value", dimensions.get("my branch"));
                 assertTrue(dimensions.containsKey("my lang"));
                 assertEquals("some lang", dimensions.get("my lang"));
             } else {
-                throw new IllegalStateException("unexpected index field" + indexField.getName());
+                throw new IllegalStateException("unexpected index field " + indexField.getName().getTemplate());
             }
         }
     }

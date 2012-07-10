@@ -163,7 +163,7 @@ public abstract class BaseIndexMQFeedingTest {
                 repository);
 
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        DerefMap derefMap = new DerefMapHbaseImpl("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
+        DerefMap derefMap = DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 

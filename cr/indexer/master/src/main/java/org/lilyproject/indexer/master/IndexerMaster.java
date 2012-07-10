@@ -15,31 +15,11 @@
  */
 package org.lilyproject.indexer.master;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.*;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.tika.io.IOUtils;
-import org.apache.zookeeper.KeeperException;
-import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
-import org.lilyproject.indexer.engine.SolrClientConfig;
-import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.repository.api.Repository;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.util.LilyInfo;
-import org.lilyproject.util.Logs;
-import org.lilyproject.util.io.Closer;
-import org.lilyproject.util.zookeeper.*;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,6 +29,48 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobInProgress;
+import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.Task;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.tika.io.IOUtils;
+import org.apache.zookeeper.KeeperException;
+import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
+import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
+import org.lilyproject.indexer.model.api.BatchBuildInfo;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexNotFoundException;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+import org.lilyproject.indexer.model.api.IndexerModelEvent;
+import org.lilyproject.indexer.model.api.IndexerModelEventType;
+import org.lilyproject.indexer.model.api.IndexerModelListener;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.util.LilyInfo;
+import org.lilyproject.util.Logs;
+import org.lilyproject.util.io.Closer;
+import org.lilyproject.util.zookeeper.LeaderElection;
+import org.lilyproject.util.zookeeper.LeaderElectionCallback;
+import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
 
 /**
  * The indexer master is active on only one Lily node and is responsible for things such as launching index batch build
@@ -95,12 +117,14 @@ public class IndexerMaster {
 
     private final String nodes;
 
+
     private byte[] fullTableScanConf;
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
             Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
             String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo,
             SolrClientConfig solrClientConfig, boolean enableLocking, String hostName, String nodes) {
+
         this.zk = zk;
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -119,7 +143,7 @@ public class IndexerMaster {
 
     @PostConstruct
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
-        List<String> masterNodes = Collections.EMPTY_LIST;
+        List<String> masterNodes = Collections.<String>emptyList();
         if (!nodes.isEmpty()) {
             masterNodes = Arrays.asList(nodes.split(","));
         }
@@ -208,8 +232,8 @@ public class IndexerMaster {
 
     private boolean needsBatchBuildStart(IndexDefinition index) {
         return !index.getGeneralState().isDeleteState() &&
-                index.getBatchBuildState() == IndexBatchBuildState.BUILD_REQUESTED
-                && index.getActiveBatchBuildInfo() == null;
+                index.getBatchBuildState() == IndexBatchBuildState.BUILD_REQUESTED &&
+                index.getActiveBatchBuildInfo() == null;
     }
 
     private void assignSubscription(String indexName) {
@@ -294,7 +318,8 @@ public class IndexerMaster {
 
                         indexerModel.updateIndexInternal(index);
 
-                        log.info("Started index build job for index " + indexName + ", job ID =  " + jobInfo.getJobId());
+                        log.info(
+                                "Started index build job for index " + indexName + ", job ID =  " + jobInfo.getJobId());
                     } else {
                         // The job failed to start. To test this case, configure an incorrect jobtracker address.
                         BatchBuildInfo jobInfo = new BatchBuildInfo();
@@ -378,15 +403,26 @@ public class IndexerMaster {
     }
 
     private void deleteIndex(String indexName) {
-        boolean success = false;
+        // delete model
+        boolean failedToDeleteIndex = false;
         try {
             indexerModel.deleteIndex(indexName);
-            success = true;
         } catch (Throwable t) {
-            log.error("Failed to delete index.", t);
+            log.error("Failed to delete index " + indexName, t);
+            failedToDeleteIndex = true;
         }
 
-        if (!success) {
+        // delete the corresponding DerefMap
+        try {
+            DerefMapHbaseImpl.delete(indexName, hbaseConf);
+        } catch (IOException e) {
+            log.error("Failed to delete DerefMap for index " + indexName, e);
+            failedToDeleteIndex = true;
+        } catch (org.lilyproject.hbaseindex.IndexNotFoundException e) {
+            // ignore, the index was already deleted
+        }
+
+        if (failedToDeleteIndex) {
             try {
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
                 index.setGeneralState(IndexGeneralState.DELETE_FAILED);
@@ -506,8 +542,8 @@ public class IndexerMaster {
                             }
 
                             if (index.getActiveBatchBuildInfo() != null) {
-                                jobStatusWatcher.assureWatching(index.getName(), index.getActiveBatchBuildInfo()
-                                        .getJobId());
+                                jobStatusWatcher
+                                        .assureWatching(index.getName(), index.getActiveBatchBuildInfo().getJobId());
                             }
                         }
                     }
@@ -607,7 +643,8 @@ public class IndexerMaster {
             runningJobs.put(indexName, jobName);
         }
 
-        private void markJobComplete(String indexName, String jobId, boolean success, String jobState, Counters counters) {
+        private void markJobComplete(String indexName, String jobId, boolean success, String jobState,
+                                     Counters counters) {
             try {
                 // Lock internal bypasses the index-in-delete-state check, which does not matter (and might cause
                 // failure) in our case.

@@ -38,4 +38,5 @@ public interface Value {
      * of a dereference the last field in the chain.
      */
     public abstract FieldType getTargetFieldType();
+
 }

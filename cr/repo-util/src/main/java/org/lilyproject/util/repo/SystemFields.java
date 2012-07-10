@@ -15,10 +15,25 @@
  */
 package org.lilyproject.util.repo;
 
-import org.lilyproject.repository.api.*;
-
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeNotFoundException;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 
 /**
  * The idea behind SystemFields is to make system properties of records addressable as normal fields,
@@ -196,6 +211,20 @@ public class SystemFields {
                     return result;
                 }
             },
+            new SystemField("id", "STRING", false) {
+                @Override
+                public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
+                        InterruptedException {
+                    return record.getId();
+                }
+            },
+            new SystemField("link", "LINK", false) {
+                @Override
+                public Object eval(Record record, TypeManager typeManager) throws RepositoryException,
+                        InterruptedException {
+                    return new Link(record.getId());
+                }
+            }
     };
 
     private static SystemFields INSTANCE;

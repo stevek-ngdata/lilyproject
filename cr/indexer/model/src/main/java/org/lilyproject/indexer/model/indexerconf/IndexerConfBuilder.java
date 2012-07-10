@@ -17,6 +17,7 @@ package org.lilyproject.indexer.model.indexerconf;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -195,7 +196,7 @@ public class IndexerConfBuilder {
 
         String recordTypeAttr = DocumentHelper.getAttribute(element, "recordType", false);
         if (recordTypeAttr != null) {
-            QName rtName = parseQName(recordTypeAttr, element, true);
+            QName rtName = ConfUtil.parseQName(recordTypeAttr, element, true);
             rtNamespacePattern = new WildcardPattern(rtName.getNamespace());
             rtNamePattern = new WildcardPattern(rtName.getName());
         }
@@ -218,7 +219,7 @@ public class IndexerConfBuilder {
                 throw new IndexerConfException("field test should be of the form \"namespace:name=value\", which " +
                         "the following is not: " + fieldAttr + ", at " + LocationAttributes.getLocation(element));
             }
-            QName fieldName = parseQName(fieldAttr.substring(0, eqPos), element);
+            QName fieldName = ConfUtil.parseQName(fieldAttr.substring(0, eqPos), element);
             fieldType = typeManager.getFieldTypeByName(fieldName);
             String fieldValueString = fieldAttr.substring(eqPos + 1);
             try {
@@ -331,7 +332,7 @@ public class IndexerConfBuilder {
     public IndexFields buildIndexFields(Element el) throws Exception {
         IndexFields indexFields = new IndexFields();
         if (el != null) {
-            addChildNodes(el, indexFields, "match", "field");
+            addChildNodes(el, indexFields, "match", "field", "forEach");
         }
         return indexFields;
     }
@@ -340,13 +341,28 @@ public class IndexerConfBuilder {
         RecordMatcher recordMatcher = parseRecordMatcher(el);
         MatchNode matchNode = new MatchNode(recordMatcher);
 
-        addChildNodes(el, matchNode, "match", "field");
+        addChildNodes(el, matchNode, "match", "field", "forEach");
         return matchNode;
     }
 
-    private IndexField buildFieldNode(Element el) throws Exception {
-        String name = DocumentHelper.getAttribute(el, "name", true);
-        return new IndexField(name, buildValue(el));
+    private IndexField buildIndexField(Element el) throws Exception {
+        String nameAttr = DocumentHelper.getAttribute(el, "name", true);
+        String valueExpr = DocumentHelper.getAttribute(el, "value", true);
+
+        // TODO: add a NameTemplateValidator - NOTE: NameTemplateValidator should
+        // validate within the scope of a Value (its valuetype determines what can be used in the template).
+        NameTemplate name = new NameTemplateParser().parse(nameAttr);
+
+        return new IndexField(name, buildValue(el, valueExpr));
+    }
+
+    private ForEachNode buildForEachNode(Element el) throws Exception {
+        String valueExpr = DocumentHelper.getAttribute(el, "value", true);
+
+        List<Follow> follows = parseFollows(el, valueExpr, new String[] { valueExpr, null });
+        ForEachNode forEachNode = new ForEachNode(systemFields, follows.get(0));
+        addChildNodes(el, forEachNode, "field", "match", "forEach");
+        return forEachNode;
     }
 
     public void addChildNodes(Element el, ContainerMappingNode parent, String... allowedTagNames) throws Exception {
@@ -364,7 +380,9 @@ public class IndexerConfBuilder {
             } else if (name.equals("match")) {
                 parent.addChildNode(buildMatchNode(childEl));
             } else if (name.equals("field")) {
-                parent.addChildNode(buildFieldNode(childEl));
+                parent.addChildNode(buildIndexField(childEl));
+            } else if (name.equals("forEach")) {
+                parent.addChildNode(buildForEachNode(childEl));
             } else {
                 throw new IndexerConfException(String.format("Unexpected tag name '%s' while parsing indexerconf", childEl.getTagName()));
             }
@@ -439,7 +457,12 @@ public class IndexerConfBuilder {
             booleanVariables.add("list");
             booleanVariables.add("multiValue");
 
-            NameTemplate name = new NameTemplate(nameAttr, variables, booleanVariables);
+            NameTemplate name;
+            try {
+                name = new NameTemplateParser().parse(fieldEl, nameAttr, new DefaultNameTemplateValidator(variables, booleanVariables));
+            } catch (NameTemplateException nte) {
+                throw new IndexerConfException("Error in name template: " + nameAttr + " at " + LocationAttributes.getLocationString(fieldEl), nte);
+            }
 
             boolean extractContent = DocumentHelper.getBooleanAttribute(fieldEl, "extractContent", false);
 
@@ -459,14 +482,13 @@ public class IndexerConfBuilder {
     }
 
     private void validateName(String name) throws IndexerConfException {
+        //FIXME: seems like a useful validation, but not called any more?
         if (name.startsWith("lily.")) {
             throw new IndexerConfException("names starting with 'lily.' are reserved for internal uses. Name: " + name);
         }
     }
 
-    private Value buildValue(Element fieldEl) throws Exception {
-        String valueExpr = DocumentHelper.getAttribute(fieldEl, "value", true);
-
+    private Value buildValue(Element fieldEl, String valueExpr) throws Exception {
         Value value;
 
         boolean extractContent = DocumentHelper.getBooleanAttribute(fieldEl, "extractContent", false);
@@ -494,7 +516,7 @@ public class IndexerConfBuilder {
             //
             // A plain field
             //
-            value = new FieldValue(getFieldType(valueExpr, fieldEl), extractContent, formatter);
+            value = new FieldValue(ConfUtil.getFieldType(valueExpr, fieldEl, systemFields, typeManager), extractContent, formatter);
         }
 
         if (extractContent &&
@@ -507,16 +529,40 @@ public class IndexerConfBuilder {
     }
 
     private Value buildDerefValue(Element fieldEl, String valueExpr, boolean extractContent, String formatter)
-            throws IndexerConfException, InterruptedException, RepositoryException {
+            throws Exception {
 
         final String[] derefParts = parseDerefParts(fieldEl, valueExpr);
+        final List<Follow> follows = parseFollows(fieldEl, valueExpr, derefParts);
+        final Value value = buildValue(fieldEl, derefParts[derefParts.length - 1]);
+
+        // If the last follow is a RecordFieldFollow, we check that the Value isn't something which requires a real Record
+        Follow lastFollow = follows.get(follows.size() - 1);
+        if (lastFollow instanceof RecordFieldFollow) {
+            SchemaId fieldDependency = value.getFieldDependency();
+            if (systemFields.isSystemField(fieldDependency)) {
+                checkSystemFieldUsage(fieldEl, valueExpr, fieldDependency, new QName(SystemFields.NS, "id"));
+                checkSystemFieldUsage(fieldEl, valueExpr, fieldDependency, new QName(SystemFields.NS, "link"));
+            }
+        }
+
         final FieldType fieldType = constructDerefFieldType(fieldEl, valueExpr, derefParts);
+        final DerefValue deref = new DerefValue(follows, value, fieldType, extractContent, formatter);
 
-        final DerefValue deref = new DerefValue(fieldType, extractContent, formatter);
+        deref.init(typeManager);
+        return deref;
+    }
 
-        //
-        // Run over all children except the last
-        //
+    private void checkSystemFieldUsage(Element fieldEl, String valueExpr, SchemaId fieldDependency, QName field)
+            throws FieldTypeNotFoundException, IndexerConfException {
+        if (fieldDependency.equals(systemFields.get(field))) {
+            throw new IndexerConfException("In dereferencing, " + field + " cannot follow on record-type field." +
+                    " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
+
+        }
+    }
+
+    private List<Follow> parseFollows(Element fieldEl, String valueExpr, String[] derefParts) throws Exception {
+        List<Follow> follows = new ArrayList<Follow>();
         boolean lastFollowIsRecord = false;
         for (int i = 0; i < derefParts.length - 1; i++) {
             String derefPart = derefParts[i];
@@ -529,7 +575,7 @@ public class IndexerConfBuilder {
             //  - a link to a more-dimensioned variant
 
             if (derefPart.contains(":")) { // It's a field name
-                lastFollowIsRecord = processFieldDeref(fieldEl, valueExpr, deref, derefPart);
+                lastFollowIsRecord = processFieldDeref(fieldEl, valueExpr, follows, derefPart);
             } else if (derefPart.equals("master")) { // Link to master variant
                 if (lastFollowIsRecord) {
                     throw new IndexerConfException("In dereferencing, master cannot follow on record-type field." +
@@ -537,7 +583,7 @@ public class IndexerConfBuilder {
                 }
                 lastFollowIsRecord = false;
 
-                deref.addMasterFollow();
+                follows.add(new MasterFollow());
             } else if (derefPart.trim().startsWith("-")) {  // Link to less dimensioned variant
                 if (lastFollowIsRecord) {
                     throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
@@ -545,7 +591,7 @@ public class IndexerConfBuilder {
                 }
                 lastFollowIsRecord = false;
 
-                processLessDimensionedVariantsDeref(fieldEl, valueExpr, deref, derefPart);
+                processLessDimensionedVariantsDeref(fieldEl, valueExpr, follows, derefPart);
             } else if (derefPart.trim().startsWith("+")) {  // Link to more dimensioned variant
                 if (lastFollowIsRecord) {
                     throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
@@ -553,12 +599,11 @@ public class IndexerConfBuilder {
                 }
                 lastFollowIsRecord = false;
 
-                processMoreDimensionedVariantsDeref(fieldEl, valueExpr, deref, derefPart);
+                processMoreDimensionedVariantsDeref(fieldEl, valueExpr, follows, derefPart);
             }
         }
 
-        deref.init(typeManager);
-        return deref;
+        return follows;
     }
 
     private String[] parseDerefParts(Element fieldEl, String valueExpr) throws IndexerConfException {
@@ -589,18 +634,18 @@ public class IndexerConfBuilder {
         //
         QName targetFieldName;
         try {
-            targetFieldName = parseQName(derefParts[derefParts.length - 1], fieldEl);
+            targetFieldName = ConfUtil.parseQName(derefParts[derefParts.length - 1], fieldEl);
         } catch (IndexerConfException e) {
             throw new IndexerConfException("Dereference expression does not end on a valid field name. " +
                     "Expression: '" + valueExpr + "' at " + LocationAttributes.getLocationString(fieldEl), e);
         }
-        return getFieldType(targetFieldName);
+        return ConfUtil.getFieldType(targetFieldName, systemFields, typeManager);
     }
 
-    private boolean processFieldDeref(Element fieldEl, String valueExpr, DerefValue deref, String derefPart)
+    private boolean processFieldDeref(Element fieldEl, String valueExpr, List<Follow> follows, String derefPart)
             throws IndexerConfException, InterruptedException, RepositoryException {
         boolean lastFollowIsRecord;
-        FieldType followField = getFieldType(derefPart, fieldEl);
+        FieldType followField = ConfUtil.getFieldType(derefPart, fieldEl, systemFields, typeManager);
 
         String type = followField.getValueType().getBaseName();
         if (type.equals("LIST")) {
@@ -608,10 +653,10 @@ public class IndexerConfBuilder {
         }
 
         if (type.equals("RECORD")) {
-            deref.addRecordFieldFollow(followField);
+            follows.add(new RecordFieldFollow(followField));
             lastFollowIsRecord = true;
         } else if (type.equals("LINK")) {
-            deref.addLinkFieldFollow(followField);
+            follows.add(new LinkFieldFollow(followField));
             lastFollowIsRecord = false;
         } else {
             throw new IndexerConfException("Dereferencing is not possible on field of type " +
@@ -622,7 +667,7 @@ public class IndexerConfBuilder {
         return lastFollowIsRecord;
     }
 
-    private void processLessDimensionedVariantsDeref(Element fieldEl, String valueExpr, DerefValue deref,
+    private void processLessDimensionedVariantsDeref(Element fieldEl, String valueExpr, List<Follow> follows,
                                                      String derefPart) throws IndexerConfException {
         // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
         boolean validConfig = true;
@@ -645,10 +690,10 @@ public class IndexerConfBuilder {
                     "at " + LocationAttributes.getLocation(fieldEl));
         }
 
-        deref.addVariantFollow(dimensions);
+        follows.add(new VariantFollow(dimensions));
     }
 
-    private void processMoreDimensionedVariantsDeref(Element fieldEl, String valueExpr, DerefValue deref,
+    private void processMoreDimensionedVariantsDeref(Element fieldEl, String valueExpr, List<Follow> follows,
                                                      String derefPart) throws IndexerConfException {
         // The variant dimension is specified in a syntax like "+var1=boo,+var2"
         boolean validConfig = true;
@@ -685,63 +730,7 @@ public class IndexerConfBuilder {
                     "at " + LocationAttributes.getLocation(fieldEl));
         }
 
-        deref.addForwardVariantFollow(dimensions);
-    }
-
-    private QName parseQName(String qname, Element contextEl) throws IndexerConfException {
-        return parseQName(qname, contextEl, false);
-    }
-
-    private QName parseQName(String qname, Element contextEl, boolean prefixResolvingOptional)
-            throws IndexerConfException {
-        // The qualified name can either be specified in Lily-style ("{namespace}name") or
-        // in XML-style (prefix:name). In Lily-style, if the "namespace" matches a defined
-        // prefix, it is substituted.
-
-        if (qname.startsWith("{")) {
-            QName name = QName.fromString(qname);
-            String ns = contextEl.lookupNamespaceURI(name.getNamespace());
-            if (ns != null) {
-                return new QName(ns, name.getName());
-            } else {
-                return name;
-            }
-        }
-
-        int colonPos = qname.indexOf(":");
-        if (colonPos == -1) {
-            throw new IndexerConfException(
-                    "Field name is not a qualified name, it should include a namespace prefix: " + qname);
-        }
-
-        String prefix = qname.substring(0, colonPos);
-        String localName = qname.substring(colonPos + 1);
-
-        String uri = contextEl.lookupNamespaceURI(prefix);
-        if (uri == null && !prefixResolvingOptional) {
-            throw new IndexerConfException("Prefix does not resolve to a namespace: " + qname);
-        }
-        if (uri == null) {
-            uri = prefix;
-        }
-
-        return new QName(uri, localName);
-    }
-
-    private FieldType getFieldType(String qname, Element contextEl) throws IndexerConfException, InterruptedException,
-            RepositoryException {
-        QName parsedQName = parseQName(qname, contextEl);
-        return getFieldType(parsedQName);
-    }
-
-    private FieldType getFieldType(QName qname) throws IndexerConfException, InterruptedException,
-            RepositoryException {
-
-        if (systemFields.isSystemField(qname)) {
-            return systemFields.get(qname);
-        }
-
-        return typeManager.getFieldTypeByName(qname);
+        follows.add(new ForwardVariantFollow(dimensions));
     }
 
     private void validate(Document document) throws IndexerConfException {
@@ -813,4 +802,5 @@ public class IndexerConfBuilder {
             builder.append("] ").append(exception.getMessage());
         }
     }
+
 }
