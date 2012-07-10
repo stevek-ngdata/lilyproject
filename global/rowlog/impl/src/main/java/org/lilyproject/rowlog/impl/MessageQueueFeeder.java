@@ -15,26 +15,19 @@
  */
 package org.lilyproject.rowlog.impl;
 
-import java.io.IOException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
-import org.lilyproject.util.repo.RecordEvent;
 
 public class MessageQueueFeeder implements RowLogMessageListener {
     private Log log = LogFactory.getLog(getClass());
     private RowLog messageQueue = null;
-    private IdGenerator idGenerator = null;
     
     public MessageQueueFeeder(RowLog messageQueueRowLog) {
         this.messageQueue = messageQueueRowLog;
-        this.idGenerator = new IdGeneratorImpl();
     }
     
     @Override
@@ -46,16 +39,7 @@ public class MessageQueueFeeder implements RowLogMessageListener {
         // or when an new update happens on the same record and the remaining messages are being processed first.
         for (int i = 0; i < 50; i++) {
             try {
-                boolean feedSubscription = true;
-                try {
-                    RecordEvent recordEvent = new RecordEvent(message.getPayload(), idGenerator);
-                    feedSubscription = !"false".equals(recordEvent.getAttributes().get("lily.mq"));
-                } catch (IOException e) {
-                    feedSubscription = true;
-                    log.warn("Could not read recordEvent for determining attributes." + e);
-                }
-                if (feedSubscription)
-                    messageQueue.putMessage(message.getRowKey(), message.getData(), message.getPayload(), null);
+                messageQueue.putMessage(message.getRowKey(), message.getData(), message.getPayload(), null);
                 return true;
             } catch (RowLogException e) {
                 lastException = e;
