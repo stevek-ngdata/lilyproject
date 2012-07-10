@@ -29,6 +29,8 @@ public class IndexDefinitionImpl implements IndexDefinition {
     private String queueSubscriptionId;
     private byte[] configuration;
     private byte[] shardingConfiguration;
+    private byte[] defaultBatchIndexConfiguration;
+    private byte[] batchIndexConfiguration;
     private Map<String, String> solrShards = Collections.emptyMap();
     private int zkDataVersion = -1;
     private BatchBuildInfo lastBatchBuildInfo;
@@ -163,5 +165,21 @@ public class IndexDefinitionImpl implements IndexDefinition {
     private void checkIfMutable() {
         if (immutable)
             throw new RuntimeException("This IndexDefinition is immutable");
+    }
+
+    public byte[] getDefaultBatchIndexConfiguration() {
+        return defaultBatchIndexConfiguration;
+    }
+
+    public void setDefaultBatchIndexConfiguration(byte[] defaultBatchIndexConfiguration) {
+        this.defaultBatchIndexConfiguration = defaultBatchIndexConfiguration;
+    }
+
+    public byte[] getBatchIndexConfiguration() {
+        return batchIndexConfiguration;
+    }
+
+    public void setBatchIndexConfiguration(byte[] batchIndexConfiguration) {
+        this.batchIndexConfiguration = batchIndexConfiguration;
     }
 }

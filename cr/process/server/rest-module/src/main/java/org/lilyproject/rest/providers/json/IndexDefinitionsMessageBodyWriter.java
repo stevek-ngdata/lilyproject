@@ -27,8 +27,12 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.JsonNodeFactory;
 import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.impl.IndexDefinitionConverter;
+import org.lilyproject.util.json.JsonFormat;
 
 /**
  * MessageBodyWriter for writing Collection<IndexDefinition> instances  
@@ -56,7 +60,13 @@ public class IndexDefinitionsMessageBodyWriter implements MessageBodyWriter<Coll
 			Type genericType, Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
 			throws IOException, WebApplicationException {
-		//TODO: fine-tune output
-		new ObjectMapper().writeValue(outputStream, indices);
+	    ArrayNode array = JsonNodeFactory.instance.arrayNode();
+	    IndexDefinitionConverter converter = IndexDefinitionConverter.INSTANCE;
+	    
+	    for (IndexDefinition index : indices) {
+	        array.add(converter.toJson(index));
+	    }
+	    
+	    IOUtils.write(JsonFormat.serializeAsBytes(array), outputStream);		
 	}
 }

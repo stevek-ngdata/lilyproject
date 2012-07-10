@@ -99,6 +99,15 @@ public class RecordReader implements EntityReader<Record> {
                 }
             }
         }
+        
+        ObjectNode attributes = getObject(node, "attributes", null);
+        if (attributes != null) {
+            Iterator<Map.Entry<String, JsonNode>> it = attributes.getFields();
+            while(it.hasNext()) {                
+                Map.Entry<String, JsonNode> entry = it.next();
+                record.getAttributes().put(entry.getKey(), entry.getValue().getTextValue());
+            }
+        }
 
         return record;
     }

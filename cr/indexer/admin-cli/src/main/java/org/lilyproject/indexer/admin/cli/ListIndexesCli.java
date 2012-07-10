@@ -17,10 +17,14 @@ package org.lilyproject.indexer.admin.cli;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.joda.time.DateTime;
 import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.util.json.JsonFormat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +40,10 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
     }
 
     @Override
-    public List<Option> getOptions() {
-        return super.getOptions();
+    public List<Option> getOptions() {        
+        List<Option> options = super.getOptions();
+        options.add(this.printBatchConfigurationOption);
+        return options;
     }
 
     @Override
@@ -62,6 +68,8 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
             for (Map.Entry<String, String> shard : index.getSolrShards().entrySet()) {
                 System.out.println("    + " + shard.getKey() + ": " + shard.getValue());
             }
+            if (this.printBatchConfiguration)
+                System.out.println("  + Default batch build config : " + prettyPrintBatchConf(index.getDefaultBatchIndexConfiguration(), 4));
 
             ActiveBatchBuildInfo activeBatchBuild = index.getActiveBatchBuildInfo();
             if (activeBatchBuild != null) {
@@ -69,6 +77,8 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Hadoop Job ID: " + activeBatchBuild.getJobId());
                 System.out.println("    + Submitted at: " + new DateTime(activeBatchBuild.getSubmitTime()).toString());
                 System.out.println("    + Tracking URL: " + activeBatchBuild.getTrackingUrl());
+                if (this.printBatchConfiguration)
+                    System.out.println("    + Batch build config : " + prettyPrintBatchConf(activeBatchBuild.getBatchIndexConfiguration(), 6));
             }
 
             BatchBuildInfo lastBatchBuild = index.getLastBatchBuildInfo();
@@ -84,6 +94,8 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
                 System.out.println("    + Launched map tasks: " + counters.get(COUNTER_TOTAL_LAUNCHED_MAPS));
                 System.out.println("    + Failed map tasks: " + counters.get(COUNTER_NUM_FAILED_MAPS));
                 System.out.println("    + Index failures: " + counters.get(COUNTER_NUM_FAILED_RECORDS));
+                if (this.printBatchConfiguration )
+                    System.out.println("    + Batch build config : " + prettyPrintBatchConf(lastBatchBuild.getBatchIndexConfiguration(), 6));
             }
         }
 
@@ -100,6 +112,20 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
         }
 
         return result.toString();
+    }
+    
+    private String prettyPrintBatchConf (byte[] conf, int extraIndent) throws Exception{
+        if (conf == null) {
+            return "null";
+        }
+        JsonNode node = JsonFormat.deserializeNonStd(conf);
+        char[] padding = new char[extraIndent];
+        Arrays.fill(padding, ' ');
+        StringBuffer output = new StringBuffer();
+        output.append("\n");
+        output.append(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(node));
+        
+        return output.toString().replaceAll("\n", "\n" + new String(padding));
     }
 
     private static final String COUNTER_MAP_INPUT_RECORDS = "org.apache.hadoop.mapred.Task$Counter:MAP_INPUT_RECORDS";

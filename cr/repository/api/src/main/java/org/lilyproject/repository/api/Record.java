@@ -332,4 +332,21 @@ public interface Record {
      * @throws RecordException when the QName cannot be resolved
      */
     boolean hasField(String fieldName) throws RecordException;
+    
+    /**
+     * Gets attributes found on the Record. These attributes are transient. The are will not be found in a cloned 
+     * version of the record and will not be persisted anywhere. Attributes will be available when the record is 
+     * serialized to JSON. Attributes will get passed to the RecordEvent object on create & update operations of the
+     * repository. 
+     * 
+     * @return A map of Strings containing attributes.
+     */
+    Map<String, String> getAttributes();
+    
+    /**
+     * Sets attributes
+     * @param A map of Strings containing attributes
+     */
+    void setAttributes(Map<String,String> attributes);
+    
 }

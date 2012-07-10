@@ -86,6 +86,19 @@ public class RecordAsBytesConverter {
         output.writeVInt(record.getFieldsToDelete().size());
         for (QName name : record.getFieldsToDelete()) {
             writeQName(name, output);
+        }    
+        
+        
+        // Write transient attributes
+        if (record.getAttributes() != null) {
+            output.writeVInt(record.getAttributes().size());
+            for (String key : record.getAttributes().keySet()) {
+                String value = record.getAttributes().get(key);                
+                output.writeUTF(key);
+                output.writeUTF(value);
+            }
+        } else {
+            output.writeVInt(0);
         }
 
         // Write response status or null
@@ -133,6 +146,15 @@ public class RecordAsBytesConverter {
         size = input.readVInt();
         for (int i = 0; i < size; i++) {
             record.getFieldsToDelete().add(readQName(input));
+        }
+        
+        // Read transient attributes
+        size = input.readVInt();
+        for (int i = 0; i < size; i++) {
+            String key = input.readUTF();
+            String value = input.readUTF();
+            
+            record.getAttributes().put(key,value);
         }
         
         // Read response status or null

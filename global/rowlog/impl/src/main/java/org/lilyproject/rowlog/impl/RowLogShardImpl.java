@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -150,9 +149,14 @@ public class RowLogShardImpl implements RowLogShard {
             //if (minimalTimestamp != null)
             //    scan.setTimeRange(minimalTimestamp, Long.MAX_VALUE);
             scan.addColumn(MESSAGES_CF, MESSAGE_COLUMN);
-            // Add a filter to stop the scan as soon as we encounter a KV from another subscription, otherwise
-            // we would end up scanning over a whole lot of deletion tombstones.
-            scan.setFilter(new PrefixFilter(rowPrefix));
+            // Set stop row for the scanner. This avoids the scanner to return entries belonging to the
+            // next subscription. In case of rowlog sharding, it also avoids opening a scanner on the next
+            // region just to find there is no interesting data there (which would be the case if we stop
+            // the scanning using a PrefixFilter).
+            byte[] stopRowPrefix = new byte[rowPrefix.length];
+            System.arraycopy(rowPrefix, 0, stopRowPrefix, 0, rowPrefix.length);
+            stopRowPrefix[stopRowPrefix.length - 1]++; // increasing END_OF_SUBSCRIPTION_NAME_MARKER, can't overflow
+            scan.setStopRow(stopRowPrefix);
 
             ResultScanner scanner = table.getScanner(scan);
 
@@ -162,6 +166,7 @@ public class RowLogShardImpl implements RowLogShard {
                     break;
 
                 byte[] rowKey = result.getRow();
+                // This check should be unnecessary because the scan should only return relevant messages
                 if (!Bytes.startsWith(rowKey, rowPrefix)) {
                     break; // There were no messages for this subscription
                 }
