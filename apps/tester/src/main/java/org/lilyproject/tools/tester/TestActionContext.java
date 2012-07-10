@@ -32,9 +32,11 @@ public class TestActionContext {
     public final Metrics metrics;
     public final PrintStream errorStream;
     public final Namespaces nameSpaces;
+    public final RoundRobinPrefixGenerator roundRobinPrefixGenerator;
 
     public TestActionContext(Map<QName, TestRecordType> recordTypes, Map<QName, TestFieldType> fieldTypes,
-            Namespaces nameSpaces, RecordSpaces records, Repository repository, Metrics metrics, PrintStream errorStream) {
+                             Namespaces nameSpaces, RecordSpaces records, Repository repository, Metrics metrics,
+                             PrintStream errorStream, RoundRobinPrefixGenerator roundRobinPrefixGenerator) {
         ArgumentValidator.notNull(recordTypes, "recordTypes");
         ArgumentValidator.notNull(fieldTypes, "fieldTypes");
         ArgumentValidator.notNull(nameSpaces, "nameSpaces");
@@ -49,5 +51,6 @@ public class TestActionContext {
         this.repository = repository;
         this.metrics = metrics;
         this.errorStream = errorStream;
+        this.roundRobinPrefixGenerator = roundRobinPrefixGenerator;
     }
 }
