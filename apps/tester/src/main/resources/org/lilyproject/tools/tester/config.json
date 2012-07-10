@@ -221,6 +221,10 @@
             Note that the maximumRuntime of the whole test is only checked once per iteration.
             If is therefore possible that a test will run longer than the given maximumRuntime.
    * recordType : The record type the action of performed upon.
+   * recordIdPrefixNbrOfChars: Not required if you want auto generated UUID record ids. If you want timestamp based
+                               record ids, than this is the amount of characters in the user record id (a string) which
+                               are reserved for a round robin number (useful for region splitting). The whole record id
+                               is constructed with the pattern [prefix][timestamp-in-ms][mac-address].
    * source : The record space to use as source for the action.
    * destination : The record space to use as destination for the action.
    * pattern : (Only applicable for Update action)
@@ -238,6 +242,7 @@
       name: "create1",
       action: "create",
       recordType: "tester$RTSub",
+      recordIdPrefixNbrOfChars: 3,
       count: 5,
       time: -1,
       destination: "subRecords"

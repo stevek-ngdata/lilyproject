@@ -15,6 +15,10 @@
  */
 package org.lilyproject.tools.tester;
 
+import java.io.IOException;
+import java.net.NetworkInterface;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.codehaus.jackson.JsonNode;
@@ -31,13 +35,31 @@ public class CreateAction extends AbstractTestAction implements TestAction {
 
     private TestRecordType recordTypeToCreate;
 
+    private static byte[] macAddress;
+
+    static {
+        try {
+            for (Iterator<NetworkInterface> iterator =
+                         Collections.list(NetworkInterface.getNetworkInterfaces()).iterator();
+                 iterator.hasNext() && macAddress == null; ) {
+                macAddress = iterator.next().getHardwareAddress();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("failed to initialize localhost mac address", e);
+        }
+
+        if (macAddress == null) {
+            throw new IllegalStateException("failed to initialize localhost mac address");
+        }
+    }
+
     public CreateAction(JsonNode actionNode, TestActionContext testActionContext) throws JsonFormatException,
             org.lilyproject.tools.import_.json.JsonFormatException {
         super(actionNode, testActionContext);
         recordTypeToCreate = testActionContext.recordTypes.get(QNameConverter.fromJson(
                 JsonUtil.getString(actionNode, "recordType"), testActionContext.nameSpaces));
     }
-    
+
     @Override
     protected void runAction() {
         ActionResult result = createRecord(recordTypeToCreate);
@@ -51,12 +73,15 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         double duration = 0;
         Record record;
         try {
-            record = testActionContext.repository.newRecord();
+            if (testActionContext.roundRobinPrefixGenerator == null)
+                record = testActionContext.repository.newRecord();
+            else
+                record = testActionContext.repository.newRecord(createPrefixedRecordId());
         } catch (RecordException e) {
             reportError("Error preparing create record.", e);
             return new ActionResult(false, null, 0);
         }
-        
+
         // Prepare record by generating values for the fields
         record.setRecordType(recordTypeToCreate.getRecordType().getName());
         List<TestFieldType> fieldTypesToCreate = recordTypeToCreate.getFieldTypes();
@@ -79,7 +104,7 @@ public class CreateAction extends AbstractTestAction implements TestAction {
             createDuration = System.nanoTime() - before;
             success = true;
         } catch (Throwable t) {
-            createDuration = System.nanoTime() - before; 
+            createDuration = System.nanoTime() - before;
             reportError("Error creating record.", t);
             success = false;
         }
@@ -87,7 +112,18 @@ public class CreateAction extends AbstractTestAction implements TestAction {
         duration += createDuration;
         return new ActionResult(success, record, duration);
     }
-    
+
+    private RecordId createPrefixedRecordId() {
+        final StringBuilder recordId = new StringBuilder();
+        recordId.append(testActionContext.roundRobinPrefixGenerator.next());
+        recordId.append(System.currentTimeMillis());
+        for (byte part : macAddress) {
+            recordId.append(String.format("%02X", part));
+        }
+
+        return testActionContext.repository.getIdGenerator().newRecordId(recordId.toString());
+    }
+
     @Override
     public ActionResult linkFieldAction(TestFieldType testFieldType, RecordId recordId) {
         String linkedRecordSource = testFieldType.getLinkedRecordSource();
@@ -108,11 +144,12 @@ public class CreateAction extends AbstractTestAction implements TestAction {
             } catch (org.lilyproject.tools.import_.json.JsonFormatException e) {
                 throw new RuntimeException("Error creating link field", e);
             }
-                ActionResult result = createRecord(linkedRecordType);
-                report(result.success, result.duration, "linkCreate."+linkedRecordType.getRecordType().getName().getName());
-                if (!result.success)
-                    return new ActionResult(false, null, 0);
-                return new ActionResult(true, new Link(((Record)result.object).getId()), result.duration);
+            ActionResult result = createRecord(linkedRecordType);
+            report(result.success, result.duration,
+                    "linkCreate." + linkedRecordType.getRecordType().getName().getName());
+            if (!result.success)
+                return new ActionResult(false, null, 0);
+            return new ActionResult(true, new Link(((Record) result.object).getId()), result.duration);
         }
         // Generate a link that possibly (most likely) points to a non-existing record
         return new ActionResult(true, testFieldType.generateLink(), 0);
