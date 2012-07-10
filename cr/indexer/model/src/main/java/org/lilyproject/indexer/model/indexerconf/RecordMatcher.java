@@ -19,10 +19,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.lilyproject.indexer.model.indexerconf.WildcardPattern;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.SchemaId;
 
 
 /**
@@ -99,6 +99,10 @@ public class RecordMatcher {
 
     public Set<QName> getFieldDependencies() {
         return fieldType != null ? Collections.singleton(fieldType.getName()) : Collections.<QName>emptySet();
+    }
+
+    public Set<SchemaId> getFieldDependencyIds() {
+        return fieldType != null ? Collections.singleton(fieldType.getId()) : Collections.<SchemaId>emptySet();
     }
 
     public boolean dependsOnRecordType() {

@@ -15,24 +15,28 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Stack;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.solr.common.SolrInputDocument;
 import org.lilyproject.indexer.engine.DerefMap.Entry;
+import org.lilyproject.indexer.model.indexerconf.Dep;
 import org.lilyproject.indexer.model.indexerconf.FieldTemplatePart;
-import org.lilyproject.indexer.model.indexerconf.Follow;
-import org.lilyproject.indexer.model.indexerconf.FollowRecord;
 import org.lilyproject.indexer.model.indexerconf.IndexUpdateBuilder;
 import org.lilyproject.indexer.model.indexerconf.LiteralTemplatePart;
+import org.lilyproject.indexer.model.indexerconf.NameTemplate;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.RecordContext;
 import org.lilyproject.indexer.model.indexerconf.TemplatePart;
 import org.lilyproject.indexer.model.indexerconf.Value;
 import org.lilyproject.indexer.model.indexerconf.VariantPropertyTemplatePart;
 import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
@@ -49,7 +53,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private final SolrInputDocument solrDoc = new SolrInputDocument();
     private boolean emptyDocument = true;
 
-    private RecordContext recordContext;
+    private Stack<RecordContext> contexts;
     private Multimap<Entry, SchemaId> dependencies = HashMultimap.create();
 
     private RecordId recordId;
@@ -68,7 +72,8 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
         this.nameTemplateResolver = new FieldNameTemplateResolver();
 
-        this.recordContext = new RecordContext(record);
+        this.contexts = new Stack<RecordContext>();
+        this.push(record, new Dep(this.recordId, Collections.<String>emptySet()));
     }
 
     public boolean isEmptyDocument() {
@@ -91,12 +96,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     @Override
     public List<String> eval(Value value) throws RepositoryException, InterruptedException {
-        return valueEvaluator.eval(value, recordContext, repository, vtag);
-    }
-
-    @Override
-    public List<FollowRecord> evalFollow(Follow follow) throws RepositoryException, InterruptedException {
-        return valueEvaluator.evalFollow(follow, recordContext.last(), repository, vtag);
+        return valueEvaluator.eval(value, this);
     }
 
     @Override
@@ -111,11 +111,11 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     @Override
     public RecordContext getRecordContext() {
-        return recordContext;
+        return contexts.peek();
     }
 
     @Override
-    public NameTemplateResolver getNameResolver() {
+    public NameTemplateResolver getFieldNameResolver() {
         return nameTemplateResolver;
     }
 
@@ -123,28 +123,75 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
         @Override
         public Object resolve(TemplatePart part) {
+            RecordContext ctx = contexts.peek();
+            //TODO: add dependencies caused by resolving name template variables
             if (part instanceof FieldTemplatePart) {
-                // FIXME: handle system fields as well?
-                return recordContext.last().record.getField(((FieldTemplatePart)part).getField());
+                QName fieldName = ((FieldTemplatePart)part).getField();
+                if (ctx.record.hasField(fieldName)) {
+                    return ctx.record.getField(fieldName);
+                } else {
+                    throw new NameTemplateEvaluationException("Error evaluating name template: Record does not have field " + fieldName);
+                }
             } else if (part instanceof VariantPropertyTemplatePart) {
                 VariantPropertyTemplatePart vpPart = (VariantPropertyTemplatePart)part;
-                return recordContext.last().contextRecord.getId().getVariantProperties().get(vpPart.getName());
+                return contexts.peek().contextRecord.getId().getVariantProperties().get(vpPart.getName());
             } else if (part instanceof LiteralTemplatePart) {
                 return ((LiteralTemplatePart)part).getString();
             } else {
-                throw new RuntimeException("Unsupported TemplatePart type " + part.getClass().getName());
+                throw new NameTemplateEvaluationException("Unsupported TemplatePart type " + part.getClass().getName());
             }
         }
 
     }
 
     @Override
-    public void addDependency(RecordId dependencyId, Set<String> moreDimensions, SchemaId field) {
-        dependencies.put(DerefMapUtil.newEntry(dependencyId, vtag, moreDimensions), field);
+    public void addDependency(SchemaId field) {
+        RecordContext ctx = contexts.peek();
+        dependencies.put(DerefMapUtil.newEntry(ctx.dep.id, vtag, ctx.dep.vprops), field);
     }
 
     public Multimap<Entry, SchemaId> getDependencies() {
         return dependencies;
+    }
+
+    @Override
+    public void push(Record record, Dep dep) {
+        this.contexts.push(new RecordContext(record, dep));
+    }
+
+    @Override
+    public void push(Record record, Record contextRecord, Dep dep) {
+        this.contexts.push(new RecordContext(record, contextRecord, dep));
+    }
+
+    @Override
+    public RecordContext pop() {
+        return this.contexts.pop();
+    }
+
+    @Override
+    public SchemaId getVTag() {
+        return vtag;
+    }
+
+    @Override
+    public String evalIndexFieldName(NameTemplate nameTemplate) {
+        if (getRecordContext().record != null) {
+            try {
+                return nameTemplate.format(getFieldNameResolver());
+            } catch (NameTemplateEvaluationException ntve) {
+                return null;
+            }
+        } else {
+            // collect dependencies introducted by any 'FieldTemplateParts'
+            for (TemplatePart part: nameTemplate.getParts()) {
+                if (part instanceof FieldTemplatePart) {
+                    addDependency(((FieldTemplatePart)part).getFieldId());
+                }
+            }
+
+            return null;
+        }
     }
 
 }

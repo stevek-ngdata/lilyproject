@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.repo.SystemFields;
 import org.w3c.dom.Element;
 
@@ -15,7 +17,7 @@ public class NameTemplateParser {
     private static Pattern varPattern = Pattern.compile("\\$\\{([^\\}]+)\\}");
     private static Pattern exprPattern = Pattern.compile("([^\\?]+)\\?([^:]+)(?::(.+))?");
     private static Pattern variantPropertyPattern = Pattern.compile("@vprop:([^:]+)");
-    private static Pattern fieldPattern = Pattern.compile("([^:]+):([^:])?");
+    private static Pattern fieldPattern = Pattern.compile("([^:]+):([^:]+)?");
 
     // used for parsing qnames
     private Repository repository;
@@ -30,16 +32,16 @@ public class NameTemplateParser {
         this.systemFields = systemFields;
     }
 
-    public NameTemplate parse(String template) throws IndexerConfException, NameTemplateException {
+    public NameTemplate parse(String template) throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
         return parse(template, null);
     }
 
-    public NameTemplate parse(String template, NameTemplateValidator validator) throws IndexerConfException, NameTemplateException {
+    public NameTemplate parse(String template, NameTemplateValidator validator) throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
         return parse(null, template, validator);
     }
 
     // FIXME: Not very clean that this can throw IndexerConfException
-    public NameTemplate parse(Element el, String template, NameTemplateValidator validator) throws IndexerConfException, NameTemplateException {
+    public NameTemplate parse(Element el, String template, NameTemplateValidator validator) throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
         List<TemplatePart> parts = new ArrayList<TemplatePart>();
         int pos = 0;
         Matcher matcher = varPattern.matcher(template);
@@ -78,9 +80,10 @@ public class NameTemplateParser {
         return new NameTemplate(template, parts);
     }
 
-    private TemplatePart buildFieldTemplatePart(Element el, String template, String expr) throws IndexerConfException {
+    private TemplatePart buildFieldTemplatePart(Element el, String template, String expr) throws IndexerConfException, InterruptedException, RepositoryException {
         QName field = ConfUtil.parseQName(expr, el);
-        return new FieldTemplatePart(field);
+        FieldType fieldType = ConfUtil.getFieldType(field, systemFields, repository.getTypeManager());
+        return new FieldTemplatePart(field, fieldType.getId());
     }
 
 }

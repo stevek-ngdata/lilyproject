@@ -1,9 +1,8 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 import java.util.List;
-import java.util.Set;
 
-import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
@@ -15,13 +14,17 @@ public interface IndexUpdateBuilder {
     public Repository getRepository();
 
     public RecordContext getRecordContext();
+    public void push(Record record, Dep dep);
+    public void push(Record record, Record contextRecord, Dep dep);
+    public RecordContext pop();
+    public void addDependency(SchemaId field);
 
     public List<String> eval(Value value) throws RepositoryException, InterruptedException;
 
-    public List<FollowRecord> evalFollow(Follow follow) throws RepositoryException, InterruptedException;
+    public NameTemplateResolver getFieldNameResolver();
 
-    public NameTemplateResolver getNameResolver();
+    public SchemaId getVTag();
 
-    public void addDependency(RecordId id, Set<String> moreDimensions, SchemaId field);
+    public String evalIndexFieldName(NameTemplate nameTemplate);
 
 }

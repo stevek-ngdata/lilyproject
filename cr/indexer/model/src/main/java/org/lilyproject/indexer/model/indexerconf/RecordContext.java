@@ -1,27 +1,23 @@
 package org.lilyproject.indexer.model.indexerconf;
 
-import java.util.Stack;
-
 import org.lilyproject.repository.api.Record;
 
 public class RecordContext {
 
-    private Stack<FollowRecord> followRecords = new Stack<FollowRecord>();
+    public Record contextRecord;
+    public Record record;
+    public Dep dep;
 
-    public RecordContext(Record root) {
-        push(new FollowRecord(root,root));
+    public RecordContext(Record record, Dep dep) {
+        this.contextRecord = record;
+        this.record = record;
+        this.dep = dep;
     }
 
-    public void push(FollowRecord record) {
-        followRecords.push(record);
-    }
-
-    public void pop() {
-        followRecords.pop();
-    }
-
-    public FollowRecord last() {
-        return followRecords.peek();
+    public RecordContext(Record record, Record contextRecord, Dep dep) {
+        this.record = record;
+        this.contextRecord = contextRecord;
+        this.dep = dep;
     }
 
 }

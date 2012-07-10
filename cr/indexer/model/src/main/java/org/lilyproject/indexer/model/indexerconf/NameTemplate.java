@@ -33,10 +33,6 @@ public class NameTemplate {
      * format without a context value (for testing!)
      */
     public String format(NameTemplateResolver resolver) throws NameTemplateEvaluationException {
-        return format(null, resolver);
-    }
-
-    public String format(Value value, NameTemplateResolver resolver) throws NameTemplateEvaluationException {
         StringBuilder result = new StringBuilder();
         for (TemplatePart part : parts) {
             result.append(resolver.resolve(part));

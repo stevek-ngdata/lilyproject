@@ -351,7 +351,7 @@ public class IndexerConfBuilder {
 
         // TODO: add a NameTemplateValidator - NOTE: NameTemplateValidator should
         // validate within the scope of a Value (its valuetype determines what can be used in the template).
-        NameTemplate name = new NameTemplateParser().parse(nameAttr);
+        NameTemplate name = new NameTemplateParser(repository, systemFields).parse(el, nameAttr, null);
 
         return new IndexField(name, buildValue(el, valueExpr));
     }

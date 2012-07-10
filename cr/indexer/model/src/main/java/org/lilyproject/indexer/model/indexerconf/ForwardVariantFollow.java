@@ -1,6 +1,7 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -34,6 +35,15 @@ public class ForwardVariantFollow implements Follow {
                 return input != null;
             }
         });
+    }
+
+    public Set<String> getFreeDimensions() {
+        return Maps.filterValues(dimensions, new Predicate<String>() {
+            @Override
+            public boolean apply(@Nullable String input) {
+                return input == null;
+            }
+        }).keySet();
     }
 }
 

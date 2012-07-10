@@ -16,6 +16,8 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 
+import java.util.List;
+
 import com.google.common.base.Predicate;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
@@ -23,11 +25,11 @@ import org.lilyproject.util.repo.VTaggedRecord;
 
 public class IndexField implements MappingNode {
 
-    private final NameTemplate name;
+    private final NameTemplate nameTemplate;
     private final Value value;
 
     public IndexField(NameTemplate nameTemplate, Value value) {
-        this.name = nameTemplate;
+        this.nameTemplate = nameTemplate;
         this.value = value;
     }
 
@@ -36,7 +38,7 @@ public class IndexField implements MappingNode {
     }
 
     public NameTemplate getName() {
-        return name;
+        return nameTemplate;
     }
 
     @Override
@@ -52,7 +54,14 @@ public class IndexField implements MappingNode {
 
     @Override
     public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
-        indexUpdateBuilder.addField(name.format(value, indexUpdateBuilder.getNameResolver()), indexUpdateBuilder.eval(value));
+        // We must evaluate both name and values (even if there is no context record - to make sure
+        // all dependencies are added.
+        String formattedName = indexUpdateBuilder.evalIndexFieldName(nameTemplate);
+        List<String> values = indexUpdateBuilder.eval(value);
+
+        if (formattedName != null) {
+            indexUpdateBuilder.addField(formattedName, values);
+        }
     }
 
 }
