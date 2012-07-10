@@ -70,71 +70,79 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
                 if (recordEvent == null) {
                     recordEvent = new RecordEvent(message.getPayload(), repository.getIdGenerator());
                 }
+                
+                // Check the attributes on the recordEvent to make sure that the event should be processed.
+                boolean isRecordProcessable = !"false".equals(recordEvent.getAttributes().get("lily.mq"));
+                if (!isRecordProcessable) {
+                    // The record should not be processed so we will clear the subscriptions                 
+                    subscriptions.clear();
+                } else {
 
-                //
-                // Create the 'old' and 'new' Record instances.
-                //
-                // The RecordEvent contains the fields & record type info needed by the filters of the different
-                // indexes, this is taken care of by IndexSelectionRecordUpdateHook.
-                //
-                // Of course, it can happen that indexerconfs have been changed, or new indexes have been added,
-                // since the event was created, and then this information will be missing. We could check for that
-                // and in case of doubt send the event to the index anyway. This approach however also has the
-                // disadvantage that, in case there are a lot of outstanding events in the queue, that they
-                // might be sent to indexes that only expect a low update rate. Besides, it also complicates the
-                // code. So we go for the simple approach: when the indexerconfs change, there is a transition
-                // period to be expected, and one might need to rebuild indexes.
-                //
-                RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
-                Record newRecord = repository.newRecord(recordId);
-                Record oldRecord = repository.newRecord(recordId);
-
-                RecordEvent.IndexSelection idxSel = recordEvent.getIndexSelection();
-                if (idxSel != null) {
-                    TypeManager typeManager = repository.getTypeManager();
-
-                    if (idxSel.getFieldChanges() != null) {
-                        for (RecordEvent.FieldChange fieldChange : idxSel.getFieldChanges()) {
-                            FieldType fieldType = typeManager.getFieldTypeById(fieldChange.getId());
-                            QName name = fieldType.getName();
-
-                            if (fieldChange.getNewValue() != null) {
-                                Object value = fieldType.getValueType().read(fieldChange.getNewValue());
-                                newRecord.setField(name, value);
-                            }
-
-                            if (fieldChange.getOldValue() != null) {
-                                Object value = fieldType.getValueType().read(fieldChange.getOldValue());
-                                oldRecord.setField(name, value);
+                    //
+                    // Create the 'old' and 'new' Record instances.
+                    //
+                    // The RecordEvent contains the fields & record type info needed by the filters of the different
+                    // indexes, this is taken care of by IndexSelectionRecordUpdateHook.
+                    //
+                    // Of course, it can happen that indexerconfs have been changed, or new indexes have been added,
+                    // since the event was created, and then this information will be missing. We could check for that
+                    // and in case of doubt send the event to the index anyway. This approach however also has the
+                    // disadvantage that, in case there are a lot of outstanding events in the queue, that they
+                    // might be sent to indexes that only expect a low update rate. Besides, it also complicates the
+                    // code. So we go for the simple approach: when the indexerconfs change, there is a transition
+                    // period to be expected, and one might need to rebuild indexes.
+                    //
+                    RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
+                    Record newRecord = repository.newRecord(recordId);
+                    Record oldRecord = repository.newRecord(recordId);
+    
+                    RecordEvent.IndexSelection idxSel = recordEvent.getIndexSelection();
+                    if (idxSel != null) {
+                        TypeManager typeManager = repository.getTypeManager();
+    
+                        if (idxSel.getFieldChanges() != null) {
+                            for (RecordEvent.FieldChange fieldChange : idxSel.getFieldChanges()) {
+                                FieldType fieldType = typeManager.getFieldTypeById(fieldChange.getId());
+                                QName name = fieldType.getName();
+    
+                                if (fieldChange.getNewValue() != null) {
+                                    Object value = fieldType.getValueType().read(fieldChange.getNewValue());
+                                    newRecord.setField(name, value);
+                                }
+    
+                                if (fieldChange.getOldValue() != null) {
+                                    Object value = fieldType.getValueType().read(fieldChange.getOldValue());
+                                    oldRecord.setField(name, value);
+                                }
                             }
                         }
+    
+                        if (idxSel.getNewRecordType() != null) {
+                            newRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getNewRecordType(), null).getName());
+                        }
+    
+                        if (idxSel.getOldRecordType() != null) {
+                            oldRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getOldRecordType(), null).getName());
+                        }
                     }
-
-                    if (idxSel.getNewRecordType() != null) {
-                        newRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getNewRecordType(), null).getName());
-                    }
-
-                    if (idxSel.getOldRecordType() != null) {
-                        oldRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getOldRecordType(), null).getName());
-                    }
-                }
-
-                //
-                // And now, the actual subscription filtering
-                //
-                for (IndexInfo indexInfo : indexInfos) {
-                    // If the filter of the indexerconf matches either the old or new record state,
-                    // then the index needs to process this event
-                    boolean relevantIndex = false;
-                    IndexRecordFilter filter = indexInfo.getIndexerConf().getRecordFilter();
-                    if (filter.getIndexCase(oldRecord) != null || filter.getIndexCase(newRecord) != null) {
-                        relevantIndex = true;
-                    }
-
-                    // If not relevant, remove it from the list of subscriptions
-                    if (!relevantIndex) {
-                        String subscriptionId = indexInfo.getIndexDefinition().getQueueSubscriptionId();
-                        removeSubscription(subscriptions, subscriptionId);
+    
+                    //
+                    // And now, the actual subscription filtering
+                    //
+                    for (IndexInfo indexInfo : indexInfos) {
+                        // If the filter of the indexerconf matches either the old or new record state,
+                        // then the index needs to process this event
+                        boolean relevantIndex = false;
+                        IndexRecordFilter filter = indexInfo.getIndexerConf().getRecordFilter();
+                        if (filter.getIndexCase(oldRecord) != null || filter.getIndexCase(newRecord) != null) {
+                            relevantIndex = true;
+                        }
+    
+                        // If not relevant, remove it from the list of subscriptions
+                        if (!relevantIndex) {
+                            String subscriptionId = indexInfo.getIndexDefinition().getQueueSubscriptionId();
+                            removeSubscription(subscriptions, subscriptionId);
+                        }
                     }
                 }
             } catch (Exception e) {
