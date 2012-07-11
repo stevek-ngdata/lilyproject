@@ -531,12 +531,12 @@ public class DerefMapBasicTest {
 
         derefMap.updateDependencies(a, tag1, Collections.singletonMap(new DependencyEntry(b), fields));
 
+        // TODO: query on tag1
         assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(b, field)));
-        assertEquals(Sets.newHashSet(), asRecordIds(derefMap.findDependantsOf(b, field)));
 
         derefMap.updateDependencies(a, tag2, Collections.singletonMap(new DependencyEntry(b), fields));
 
-        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(b, field)));
+        // TODO: query on tag2
         assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(b, field)));
     }
 
