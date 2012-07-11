@@ -82,6 +82,7 @@ public class DerefMapHbaseImpl implements DerefMap {
         // Same remark as in the forward index.
         backwardIndexDef.addVariableLengthByteField("dependency_masterrecordid", 2);
         backwardIndexDef.addByteField("dependency_vtag", SCHEMA_ID_BYTE_LENGTH);
+        backwardIndexDef.addVariableLengthByteField("variant_properties_pattern");
         backwardDerefIndex = indexManager.getIndex(backwardIndexDef);
     }
 
@@ -129,13 +130,11 @@ public class DerefMapHbaseImpl implements DerefMap {
     public void updateDependencies(RecordId dependantRecordId, SchemaId dependantVtagId,
                                    Map<DependencyEntry, Set<SchemaId>> newDependencyEntries)
             throws IOException {
-        final Set<Dependency> existingEntries = findDependencies(dependantRecordId, dependantVtagId);
-
-        // the same as newDependencyEntries but ignoring the information about more dimensioned variant props
-        final Collection<Dependency> newDependencies = toSetOfDependencies(newDependencyEntries.keySet());
+        final Set<DependencyEntry> existingEntries = findDependencies(dependantRecordId, dependantVtagId);
 
         // Figure out what changed
-        final Set<Dependency> removedDependencies = figureOutRemovedDependencies(newDependencies, existingEntries);
+        final Set<DependencyEntry> removedDependencies =
+                figureOutRemovedDependencies(newDependencyEntries.keySet(), existingEntries);
         final Collection<DependencyEntry> addedDependencies =
                 figureOutAddedDependencies(newDependencyEntries.keySet(), existingEntries);
 
@@ -144,13 +143,16 @@ public class DerefMapHbaseImpl implements DerefMap {
         // be found via the forward index.
 
         // delete removed from bwd index
-        for (Dependency removed : removedDependencies) {
-            final IndexEntry backwardEntry = createBackwardEntry(removed, dependantRecordId, null, null);
+        for (DependencyEntry removed : removedDependencies) {
+            final Dependency dependency = removed.getDependency();
+            final IndexEntry backwardEntry =
+                    createBackwardEntry(dependency, dependantRecordId, null, removed.getMoreDimensionedVariants());
             backwardDerefIndex.removeEntry(backwardEntry);
         }
 
         // update fwd index (added and removed at the same time, it is a single row)
-        final IndexEntry fwdEntry = createForwardEntry(dependantRecordId, dependantVtagId, newDependencies);
+        final IndexEntry fwdEntry =
+                createForwardEntry(dependantRecordId, dependantVtagId, newDependencyEntries.keySet());
         forwardDerefIndex.addEntry(fwdEntry);
 
         // add added to bwd idx
@@ -163,9 +165,9 @@ public class DerefMapHbaseImpl implements DerefMap {
         }
     }
 
-    private Set<Dependency> figureOutRemovedDependencies(Collection<Dependency> newDependencies,
-                                                         Set<Dependency> existingDependencies) {
-        final Set<Dependency> removed = new HashSet<Dependency>();
+    private Set<DependencyEntry> figureOutRemovedDependencies(Collection<DependencyEntry> newDependencies,
+                                                              Set<DependencyEntry> existingDependencies) {
+        final Set<DependencyEntry> removed = new HashSet<DependencyEntry>();
 
         // add all existing
         removed.addAll(existingDependencies);
@@ -177,24 +179,20 @@ public class DerefMapHbaseImpl implements DerefMap {
     }
 
     private Collection<DependencyEntry> figureOutAddedDependencies(Set<DependencyEntry> newDependencyEntries,
-                                                                   Set<Dependency> existingDependencies) {
-        final Map<Dependency, DependencyEntry> added = new HashMap<Dependency, DependencyEntry>();
+                                                                   Set<DependencyEntry> existingDependencies) {
+        final Set<DependencyEntry> added = new HashSet<DerefMap.DependencyEntry>();
 
         // add all new
-        for (DependencyEntry newMoreDimensionedDependency : newDependencyEntries) {
-            added.put(newMoreDimensionedDependency.getDependency(), newMoreDimensionedDependency);
-        }
+        added.addAll(newDependencyEntries);
 
         // remove all existing
-        for (Dependency existingDependency : existingDependencies) {
-            added.remove(existingDependency);
-        }
+        added.removeAll(existingDependencies);
 
-        return added.values();
+        return added;
     }
 
     private IndexEntry createForwardEntry(RecordId dependantRecordId, SchemaId dependantVtagId,
-                                          Collection<Dependency> newDependencies) throws IOException {
+                                          Collection<DependencyEntry> newDependencies) throws IOException {
         final IndexEntry fwdEntry = new IndexEntry(forwardDerefIndex.getDefinition());
         fwdEntry.addField("dependant_recordid", dependantRecordId.toBytes());
         fwdEntry.addField("dependant_vtag", dependantVtagId.getBytes());
@@ -228,9 +226,16 @@ public class DerefMapHbaseImpl implements DerefMap {
     private IndexEntry createBackwardEntry(Dependency dependency, RecordId dependantRecordId,
                                            Set<SchemaId> fields,
                                            Set<String> moreDimensionedVariantProperties) throws IOException {
+
+        final byte[] serializedVariantPropertiesPattern = serializeVariantPropertiesPattern(
+                createVariantPropertiesPattern(dependency.getRecordId().getVariantProperties(),
+                        moreDimensionedVariantProperties));
+
+
         final IndexEntry bwdEntry = new IndexEntry(backwardDerefIndex.getDefinition());
         bwdEntry.addField("dependency_masterrecordid", dependency.getRecordId().getMaster().toBytes());
         bwdEntry.addField("dependency_vtag", dependency.getVtag().getBytes());
+        bwdEntry.addField("variant_properties_pattern", serializedVariantPropertiesPattern);
 
         // the identifier is the dependant which depends on the dependency
         bwdEntry.setIdentifier(dependantRecordId.toBytes());
@@ -239,13 +244,9 @@ public class DerefMapHbaseImpl implements DerefMap {
         if (fields != null)
             bwdEntry.addData(FIELDS_KEY, serializeFields(fields));
 
-        // the variant properties pattern (null if used for deleting the entry)
-        if (moreDimensionedVariantProperties != null)
-            bwdEntry.addData(VARIANT_PROPERTIES_PATTERN_KEY,
-                    serializeVariantPropertiesPattern(
-                            createVariantPropertiesPattern(
-                                    dependency.getRecordId().getVariantProperties(),
-                                    moreDimensionedVariantProperties)));
+        // we add the variant properties in the data as well, for easy access during querying
+        // TODO: provide a mechanism to get access to the index fields in the query (hbase-index)?
+        bwdEntry.addData(VARIANT_PROPERTIES_PATTERN_KEY, serializedVariantPropertiesPattern);
 
         return bwdEntry;
     }
@@ -332,17 +333,21 @@ public class DerefMapHbaseImpl implements DerefMap {
      * @param dependencies list of dependencies to serialize
      * @return byte array with the serialized format
      */
-    byte[] serializeDependenciesForward(Collection<Dependency> dependencies) throws IOException {
+    byte[] serializeDependenciesForward(Collection<DependencyEntry> dependencies) throws IOException {
         final StructRowKey singleEntryRowKey = entrySerializationRowKey();
 
         // calculate length
         int totalLength = 0;
         final Map<Object[], Integer> entriesWithSerializedLength = new HashMap<Object[], Integer>();
-        for (Dependency dependency : dependencies) {
+        for (DependencyEntry dependencyEntry : dependencies) {
             final Object[] toSerialize = {
                     // we store the master record id, because that is how they are stored in the backward table
-                    dependency.getRecordId().getMaster().toBytes(),
-                    dependency.getVtag().getBytes()};
+                    dependencyEntry.getDependency().getRecordId().getMaster().toBytes(),
+                    dependencyEntry.getDependency().getVtag().getBytes(),
+                    serializeVariantPropertiesPattern(createVariantPropertiesPattern(
+                            dependencyEntry.getDependency().getRecordId().getVariantProperties(),
+                            dependencyEntry.getMoreDimensionedVariants()))
+            };
             final int serializedLength = singleEntryRowKey.getSerializedLength(toSerialize);
             entriesWithSerializedLength.put(toSerialize, serializedLength);
             totalLength += serializedLength;
@@ -361,18 +366,24 @@ public class DerefMapHbaseImpl implements DerefMap {
         return serialized;
     }
 
-    public Set<Dependency> deserializeDependenciesForward(byte[] serialized) throws IOException {
+    public Set<DependencyEntry> deserializeDependenciesForward(byte[] serialized) throws IOException {
         final StructRowKey singleEntryRowKey = entrySerializationRowKey();
 
-        final Set<Dependency> result = new HashSet<Dependency>();
+        final Set<DependencyEntry> result = new HashSet<DependencyEntry>();
 
         final ImmutableBytesWritable bw = new ImmutableBytesWritable(serialized);
 
         while (bw.getSize() > 0) {
             final Object[] deserializedEntry = (Object[]) singleEntryRowKey.deserialize(bw);
-            result.add(new Dependency(
-                    idGenerator.fromBytes((byte[]) deserializedEntry[0]),
-                    idGenerator.getSchemaId((byte[]) deserializedEntry[1])));
+            final VariantPropertiesPattern variantPropertiesPattern =
+                    deserializeVariantPropertiesPattern((byte[]) deserializedEntry[2]);
+
+            result.add(new DependencyEntry(
+                    new Dependency(
+                            idGenerator.newRecordId(idGenerator.fromBytes((byte[]) deserializedEntry[0]),
+                                    variantPropertiesPattern.getConcreteProperties()),
+                            idGenerator.getSchemaId((byte[]) deserializedEntry[1])),
+                    variantPropertiesPattern.getPatternProperties()));
         }
         return result;
     }
@@ -382,6 +393,7 @@ public class DerefMapHbaseImpl implements DerefMap {
         final StructRowKey singleEntryRowKey = new StructBuilder()
                 .add(new VariableLengthByteArrayRowKey()) // dependency master record id
                 .add(new FixedByteArrayRowKey(SCHEMA_ID_BYTE_LENGTH)) // dependency vtag
+                .add(new VariableLengthByteArrayRowKey()) // variant property pattern
                 .toRowKey();
         singleEntryRowKey.setTermination(Termination.MUST);
         return singleEntryRowKey;
@@ -399,9 +411,6 @@ public class DerefMapHbaseImpl implements DerefMap {
         final Iterator<SchemaId> iterator = fields.iterator();
         int idx = 0;
         while (iterator.hasNext()) {
-
-            // TODO: NPE because the field is null. actually the field shoul dnot be null but the collection should be empty -> not use multimap but map <key -> set> in which the set can be empty...
-
             final byte[] bytes = iterator.next().getBytes();
             assert SCHEMA_ID_BYTE_LENGTH == bytes.length;
             System.arraycopy(bytes, 0, serialized, idx * SCHEMA_ID_BYTE_LENGTH, SCHEMA_ID_BYTE_LENGTH);
@@ -429,12 +438,12 @@ public class DerefMapHbaseImpl implements DerefMap {
      * @param vtag     vtag of the record to find dependencies for
      * @return the record ids and vtags on which the given record depends
      */
-    Set<Dependency> findDependencies(RecordId recordId, SchemaId vtag) throws IOException {
+    Set<DependencyEntry> findDependencies(RecordId recordId, SchemaId vtag) throws IOException {
         final Query query = new Query();
         query.addEqualsCondition("dependant_recordid", recordId.toBytes());
         query.addEqualsCondition("dependant_vtag", vtag.getBytes());
 
-        final Set<Dependency> result;
+        final Set<DependencyEntry> result;
 
         final QueryResult queryResult = forwardDerefIndex.performQuery(query);
         if (queryResult.next() != null) {
@@ -447,7 +456,7 @@ public class DerefMapHbaseImpl implements DerefMap {
             }
 
         } else {
-            result = new HashSet<Dependency>();
+            result = new HashSet<DependencyEntry>();
         }
 
         // Not closed in finally block: avoid HBase contact when there could be connection problems.
@@ -613,6 +622,31 @@ public class DerefMapHbaseImpl implements DerefMap {
         @Override
         public int hashCode() {
             return pattern != null ? pattern.hashCode() : 0;
+        }
+
+        @Override
+        public String toString() {
+            return "VariantPropertiesPattern{" +
+                    "pattern=" + pattern +
+                    '}';
+        }
+
+        public Map<String, String> getConcreteProperties() {
+            final HashMap<String, String> result = new HashMap<String, String>();
+            for (Map.Entry<String, String> patternEntry : pattern.entrySet()) {
+                if (patternEntry.getValue() != null)
+                    result.put(patternEntry.getKey(), patternEntry.getValue());
+            }
+            return result;
+        }
+
+        public Set<String> getPatternProperties() {
+            final Set<String> result = new HashSet<String>();
+            for (Map.Entry<String, String> patternEntry : pattern.entrySet()) {
+                if (patternEntry.getValue() == null)
+                    result.add(patternEntry.getKey());
+            }
+            return result;
         }
     }
 
