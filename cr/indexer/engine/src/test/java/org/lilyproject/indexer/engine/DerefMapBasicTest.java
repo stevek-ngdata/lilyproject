@@ -17,6 +17,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.indexer.engine.DerefMap.Dependency;
+import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
+import org.lilyproject.indexer.engine.test.DerefMapIndexTest;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
@@ -546,6 +549,27 @@ public class DerefMapBasicTest {
             Set<RecordId> recordIds = asRecordIds(derefMap.findDependantsOf(var2Dep, null));
             assertEquals("Iteration " + i, Sets.newHashSet(var1), recordIds);
         }
+    }
+
+    @Test
+    public void twoVTagsDependingOnOneRecord() throws Exception {
+        final SchemaId tag1 = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId tag2 = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId field = ids.getSchemaId(UUID.randomUUID());
+        final Set<SchemaId> fields = Sets.newHashSet(field);
+
+        final RecordId a = ids.newRecordId();
+        final RecordId b = ids.newRecordId();
+
+        Dependency btag1Dep = new Dependency(b, tag1);
+        Dependency btag2Dep = new Dependency(b, tag2);
+        derefMap.updateDependencies(a, tag1, Collections.singletonMap(new DependencyEntry(btag1Dep), fields));
+        derefMap.updateDependencies(a, tag1, Collections.singletonMap(new DependencyEntry(btag2Dep), fields));
+
+        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(btag1Dep, field)));
+
+        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(btag2Dep, field)));
+
     }
 
     private Set<RecordId> asRecordIds(DerefMap.DependantRecordIdsIterator iter) throws IOException {
