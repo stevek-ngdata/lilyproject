@@ -27,7 +27,6 @@ import com.google.common.collect.Multimap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.engine.DerefMap.DependantRecordIdsIterator;
-import org.lilyproject.indexer.engine.DerefMap.Dependency;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.linkindex.LinkIndex;
@@ -102,7 +101,8 @@ public class IndexUpdater implements RowLogMessageListener {
      * @param rowLog this should be the message queue
      */
     public IndexUpdater(Indexer indexer, Repository repository,
-                        LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics, DerefMap derefMap)
+                        LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics,
+                        DerefMap derefMap)
             throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
@@ -356,24 +356,28 @@ public class IndexUpdater implements RowLogMessageListener {
         log.debug("changed vtag fields: " + changedVTagFields);
 
         log.debug("updating denormalized data for " + recordId);
-        for (SchemaId vtag: allVTags) {
+        for (SchemaId vtag : allVTags) {
             if ((changedVTagFields != null && changedVTagFields.contains(vtag)) || updatedFieldsByScope == null) {
                 // changed vtags or delete: reindex regardless of fields
-                DependantRecordIdsIterator dependants = derefMap.findDependantsOf(new Dependency(recordId, vtag), null);
+                DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, null);
                 if (log.isDebugEnabled()) {
-                    log.debug("changed vtag: dependants of " + recordId + ": " + depIds(derefMap.findDependantsOf(new Dependency(recordId, vtag), null)));
+                    log.debug("changed vtag: dependants of " + recordId + ": " +
+                            depIds(derefMap.findDependantsOf(recordId, null)));
                 }
                 while (dependants.hasNext()) {
                     referrersAndVTags.put(dependants.next(), vtag);
                 }
             } else {
                 // vtag didn't change, but some fields did change:
-                for (Scope scope: updatedFieldsByScope.keySet()) {
-                    for (FieldType field: updatedFieldsByScope.get(scope)) {
-                        DependantRecordIdsIterator dependants = derefMap.findDependantsOf(new Dependency(recordId, vtag), null);
+                for (Scope scope : updatedFieldsByScope.keySet()) {
+                    for (FieldType field : updatedFieldsByScope.get(scope)) {
+                        DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, null);
                         if (log.isDebugEnabled()) {
-                            log.debug("changed field_all: dependants of " + recordId + ": " + depIds(derefMap.findDependantsOf(new Dependency(recordId, vtag), null)));
-                            log.debug("changed field_only: dependants of " + recordId + " with field " + field.getName() + ": " + depIds(derefMap.findDependantsOf(new Dependency(recordId, vtag), field.getId())));
+                            log.debug("changed field_all: dependants of " + recordId + ": " +
+                                    depIds(derefMap.findDependantsOf(recordId, null)));
+                            log.debug(
+                                    "changed field_only: dependants of " + recordId + " with field " + field.getName() +
+                                            ": " + depIds(derefMap.findDependantsOf(recordId, field.getId())));
                         }
                         while (dependants.hasNext()) {
                             referrersAndVTags.put(dependants.next(), vtag);
@@ -394,7 +398,7 @@ public class IndexUpdater implements RowLogMessageListener {
         // Now add an index message to each of the found referrers, their actual indexing
         // will be triggered by the message queue.
         //
-        for (RecordId referrer: referrersAndVTags.keySet()) {
+        for (RecordId referrer : referrersAndVTags.keySet()) {
 
             RecordEvent payload = new RecordEvent();
             payload.setType(INDEX);
@@ -426,6 +430,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
     /**
      * Index a record for all the specified vtags.
+     *
      * @throws IOException
      */
     private void index(RecordId recordId, Set<SchemaId> vtagsToIndex) throws RepositoryException, InterruptedException,

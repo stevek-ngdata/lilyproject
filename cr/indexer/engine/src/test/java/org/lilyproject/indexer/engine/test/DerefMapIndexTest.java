@@ -36,7 +36,6 @@ import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.indexer.engine.DerefMap;
 import org.lilyproject.indexer.engine.DerefMap.DependantRecordIdsIterator;
-import org.lilyproject.indexer.engine.DerefMap.Dependency;
 import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
@@ -335,7 +334,8 @@ public class DerefMapIndexTest {
         RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
         RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
         for (int i = 1; i <= 8; i++) {
-            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
+            FieldType ns1Field = typeManager
+                    .createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
             fields.put("ns:match" + i, ns1Field);
 
             matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
@@ -347,7 +347,8 @@ public class DerefMapIndexTest {
 
         // non-versioned fields
         for (int i = 1; i <= 8; i++) {
-            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "nvmatch" + i), Scope.NON_VERSIONED));
+            FieldType ns1Field = typeManager.createFieldType(
+                    typeManager.newFieldType("STRING", new QName(NS, "nvmatch" + i), Scope.NON_VERSIONED));
             fields.put("ns:nvmatch" + i, ns1Field);
 
             matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
@@ -367,21 +368,6 @@ public class DerefMapIndexTest {
     private static FieldType field(String name) {
         return fields.get(name);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     private void commitIndex() throws Exception {
@@ -548,10 +534,10 @@ public class DerefMapIndexTest {
         // (empty)
         // 00-1 points to 00-2, but doesn't use any fields of 00-2
         repository.recordBuilder().id("deref-00-1")
-            .recordType(new QName(NS, "NVRecordType1"))
-            .field(nvfield1.getName(), "blub1")
-            .field(nvLinkField1.getName(), new Link(id("deref-00-2")))
-            .create();
+                .recordType(new QName(NS, "NVRecordType1"))
+                .field(nvfield1.getName(), "blub1")
+                .field(nvLinkField1.getName(), new Link(id("deref-00-2")))
+                .create();
         assertEquals(dependencySet(id("deref-00-2"), nvfield2.getId()), idSet());
 
         // <field value="n:nvlink=>n:nvstring1"/>
@@ -565,10 +551,10 @@ public class DerefMapIndexTest {
         // R1     | R2         |          | n:nvstring1
         // 02-2 does not have n:nvstring1, but it should be in the index anyway, in case that field is added
         repository.recordBuilder().id("deref-02-1")
-            .recordType(new QName(NS, "NVRecordType1"))
-            .field(nvfield1.getName(), "blub1")
-            .field(nvLinkField1.getName(), new Link(id("deref-02-2")))
-            .create();
+                .recordType(new QName(NS, "NVRecordType1"))
+                .field(nvfield1.getName(), "blub1")
+                .field(nvLinkField1.getName(), new Link(id("deref-02-2")))
+                .create();
         assertEquals(dependencySet(id("deref-02-2"), nvfield1.getId()), idSet(id("deref-02-1")));
         assertEquals(dependencySet(id("deref-02-2"), nvfield2.getId()), idSet()); // we're not interested in nvfield2
 
@@ -586,13 +572,13 @@ public class DerefMapIndexTest {
         // 03-1   | 03-2.prop2=y | prop2    | n:nvlink2
         // 03-1   | 03-2.prop2=y |          | n:nvlink2 # not needed because of previous line
         repository.recordBuilder().id("deref-03-1", Collections.singletonMap("prop1", "x"))
-            .recordType(new QName(NS, "NVRecordType1"))
-            .field(nvLinkField1.getName(), idGenerator.newRecordId("deref-03-2"))
-            .create();
+                .recordType(new QName(NS, "NVRecordType1"))
+                .field(nvLinkField1.getName(), idGenerator.newRecordId("deref-03-2"))
+                .create();
         repository.recordBuilder().id("deref-03-2", Collections.singletonMap("prop2", "y"))
-            .recordType(new QName(NS, "NVRecordType1"))
-            .field(nvLinkField1.getName(), idGenerator.newRecordId("deref-03-3"))
-            .create();
+                .recordType(new QName(NS, "NVRecordType1"))
+                .field(nvLinkField1.getName(), idGenerator.newRecordId("deref-03-3"))
+                .create();
         assertEquals(dependencySet(id("deref-03-2", "prop2", "y"), nvLinkField2.getId()), idSet(id("03-1")));
 
         // Expression: +prop1,+prop2=x=>n:nvlink1=>+prop3=>n:nvlink2
@@ -634,16 +620,15 @@ public class DerefMapIndexTest {
             throw new IllegalArgumentException("Bad number of arguments");
         }
         Map<String, String> variantProps = Maps.newHashMap();
-        for (int i = 0; i < props.length; i+=2) {
-            variantProps.put(props[i], props[i+1]);
+        for (int i = 0; i < props.length; i += 2) {
+            variantProps.put(props[i], props[i + 1]);
         }
 
         return idGenerator.newRecordId(id, variantProps);
     }
 
     private Set<RecordId> dependencySet(RecordId id, SchemaId fieldId) throws Exception {
-        Dependency dependency = new Dependency(id, lastTag.getId());
-        DependantRecordIdsIterator reverse = derefMap.findDependantsOf(dependency, fieldId);
+        DependantRecordIdsIterator reverse = derefMap.findDependantsOf(id, fieldId);
         Set<RecordId> result = Sets.newHashSet();
         while (reverse.hasNext()) {
             result.add(reverse.next());

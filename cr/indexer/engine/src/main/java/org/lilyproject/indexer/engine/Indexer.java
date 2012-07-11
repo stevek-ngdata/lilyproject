@@ -110,7 +110,7 @@ public class Indexer {
         index(vtRecord, idRecord);
     }
 
-    private void index (VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
+    private void index(VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
         IndexCase indexCase = conf.getIndexCase(record);
         if (indexCase == null) {
@@ -178,7 +178,8 @@ public class Indexer {
      *                record.getVersion().
      * @param vtags   the version tags under which to index
      */
-    protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws ShardSelectorException, RepositoryException, InterruptedException, SolrClientException, IOException {
+    protected void index(IdRecord record, long version, Set<SchemaId> vtags)
+            throws ShardSelectorException, RepositoryException, InterruptedException, SolrClientException, IOException {
         verifyLock(record.getId());
 
         // Note that it is important the the indexFields are evaluated in order, since multiple
@@ -191,7 +192,9 @@ public class Indexer {
         // re-evaluate all fields for each vtag.
         for (SchemaId vtag : vtags) {
 
-            SolrDocumentBuilder solrDocumentBuilder = new SolrDocumentBuilder(repository, valueEvaluator, record, getIndexId(record.getId(), vtag), vtag, version);
+            SolrDocumentBuilder solrDocumentBuilder =
+                    new SolrDocumentBuilder(repository, valueEvaluator, record, getIndexId(record.getId(), vtag), vtag,
+                            version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 
@@ -270,12 +273,12 @@ public class Indexer {
     }
 
     private void logDependencies(RecordId recordId, Map<DependencyEntry, Set<SchemaId>> dependencies) {
-        for (DependencyEntry entry: dependencies.keySet()) {
+        for (DependencyEntry entry : dependencies.keySet()) {
             StringBuffer line = new StringBuffer();
             line.append(recordId).append(" | ")
-                .append(entry.getDependency().getRecordId())
-                .append("|").append(entry.getMoreDimensionedVariants())
-                .append("|").append(dependencies.get(entry));
+                    .append(entry.getDependency())
+                    .append("|").append(entry.getMoreDimensionedVariants())
+                    .append("|").append(dependencies.get(entry));
             log.debug(line.toString());
         }
     }
