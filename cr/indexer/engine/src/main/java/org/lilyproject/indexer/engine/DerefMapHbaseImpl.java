@@ -235,7 +235,6 @@ public class DerefMapHbaseImpl implements DerefMap {
         final IndexEntry bwdEntry = new IndexEntry(backwardDerefIndex.getDefinition());
         bwdEntry.addField("dependency_masterrecordid", dependency.getRecordId().getMaster().toBytes());
         bwdEntry.addField("dependency_vtag", dependency.getVtag().getBytes());
-        // TODO: add here for unique key
         bwdEntry.addField("variant_properties_pattern", serializedVariantPropertiesPattern);
 
         // the identifier is the dependant which depends on the dependency
@@ -245,7 +244,8 @@ public class DerefMapHbaseImpl implements DerefMap {
         if (fields != null)
             bwdEntry.addData(FIELDS_KEY, serializeFields(fields));
 
-        // TODO: add here for access in query
+        // we add the variant properties in the data as well, for easy access during querying
+        // TODO: provide a mechanism to get access to the index fields in the query (hbase-index)?
         bwdEntry.addData(VARIANT_PROPERTIES_PATTERN_KEY, serializedVariantPropertiesPattern);
 
         return bwdEntry;
@@ -411,9 +411,6 @@ public class DerefMapHbaseImpl implements DerefMap {
         final Iterator<SchemaId> iterator = fields.iterator();
         int idx = 0;
         while (iterator.hasNext()) {
-
-            // TODO: NPE because the field is null. actually the field shoul dnot be null but the collection should be empty -> not use multimap but map <key -> set> in which the set can be empty...
-
             final byte[] bytes = iterator.next().getBytes();
             assert SCHEMA_ID_BYTE_LENGTH == bytes.length;
             System.arraycopy(bytes, 0, serialized, idx * SCHEMA_ID_BYTE_LENGTH, SCHEMA_ID_BYTE_LENGTH);
