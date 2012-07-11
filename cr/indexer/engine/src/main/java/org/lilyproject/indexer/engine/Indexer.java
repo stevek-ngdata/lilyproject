@@ -101,6 +101,18 @@ public class Indexer {
         IdRecord record = vtRecord.getRecord();
 
         IndexCase indexCase = conf.getIndexCase(record);
+        index(vtRecord, record);
+    }
+    
+    public void index(IdRecord idRecord) throws RepositoryException, SolrClientException,
+            ShardSelectorException, InterruptedException {
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, null, repository);
+        index(vtRecord, idRecord);
+    }
+    
+    private void index (VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
+            ShardSelectorException, InterruptedException {
+        IndexCase indexCase = conf.getIndexCase(record);
         if (indexCase == null) {
             return;
         }
@@ -110,6 +122,7 @@ public class Indexer {
 
         index(vtRecord, vtagsToIndex);
     }
+    
 
     /**
      * Indexes a record for a set of vtags.
@@ -165,9 +178,7 @@ public class Indexer {
      *                record.getVersion().
      * @param vtags   the version tags under which to index
      */
-    protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws ShardSelectorException,
-            RepositoryException, InterruptedException, SolrClientException, IOException {
-
+    protected void index(IdRecord record, long version, Set<SchemaId> vtags) throws ShardSelectorException, RepositoryException, InterruptedException, SolrClientException, IOException {
         verifyLock(record.getId());
 
         // Note that it is important the the indexFields are evaluated in order, since multiple

@@ -146,6 +146,9 @@
     <field name="cfd_case3" type="text" indexed="true" stored="true" required="false"/>
     <field name="cfd_case4" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
     <field name="cfd_case5" type="text" indexed="true" stored="true" required="false"/>
+    
+    <!-- No index attribute tests -->
+    <field name="nia_string" type="text" indexed="true" stored="true" required="false"/>
 
     <dynamicField name="*_string" type="text" indexed="true" stored="true"/>
     <dynamicField name="*_string_mv" type="text" indexed="true" stored="true" multiValued="true"/>

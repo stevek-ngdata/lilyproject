@@ -15,7 +15,11 @@
  */
 package org.lilyproject.indexer.master;
 
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +29,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -39,6 +44,7 @@ import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.tika.io.IOUtils;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
 import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
@@ -54,6 +60,7 @@ import org.lilyproject.indexer.model.api.IndexerModelEvent;
 import org.lilyproject.indexer.model.api.IndexerModelEventType;
 import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.LilyInfo;
@@ -64,12 +71,10 @@ import org.lilyproject.util.zookeeper.LeaderElectionCallback;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 /**
- * The indexer master is active on only one Lily node and is responsible for things such as launching
- * index batch build jobs, assigning or removing message queue subscriptions, and the like.
+ * The indexer master is active on only one Lily node and is responsible for things such as launching index batch build
+ * jobs, assigning or removing message queue subscriptions, and the like.
  */
 public class IndexerMaster {
     private final ZooKeeperItf zk;
@@ -78,9 +83,9 @@ public class IndexerMaster {
 
     private final Configuration mapReduceConf;
 
-    private final Configuration mapReduceJobConf;
-
     private final Configuration hbaseConf;
+
+    private final Configuration mapReduceJobConf;
 
     private final String zkConnectString;
 
@@ -106,17 +111,23 @@ public class IndexerMaster {
 
     private LilyInfo lilyInfo;
 
+    private Repository repository;
+
     private final Log log = LogFactory.getLog(getClass());
 
     private final String nodes;
 
-    public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Configuration mapReduceConf,
-                         Configuration mapReduceJobConf, Configuration hbaseConf, String zkConnectString,
-                         int zkSessionTimeout,
-                         RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo, SolrClientConfig solrClientConfig,
-                         boolean enableLocking, String hostName, String nodes) {
+
+    private byte[] fullTableScanConf;
+
+    public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
+            Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
+            String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo,
+            SolrClientConfig solrClientConfig, boolean enableLocking, String hostName, String nodes) {
+
         this.zk = zk;
         this.indexerModel = indexerModel;
+        this.repository = repository;
         this.mapReduceConf = mapReduceConf;
         this.mapReduceJobConf = mapReduceJobConf;
         this.hbaseConf = hbaseConf;
@@ -132,7 +143,7 @@ public class IndexerMaster {
 
     @PostConstruct
     public void start() throws LeaderElectionSetupException, IOException, InterruptedException, KeeperException {
-        List<String> masterNodes = Collections.EMPTY_LIST;
+        List<String> masterNodes = Collections.<String>emptyList();
         if (!nodes.isEmpty()) {
             masterNodes = Arrays.asList(nodes.split(","));
         }
@@ -140,6 +151,15 @@ public class IndexerMaster {
             leaderElection = new LeaderElection(zk, "Indexer Master", "/lily/indexer/masters",
                     new MyLeaderElectionCallback());
         }
+
+        InputStream is = null;
+        try {
+            is = IndexerMaster.class.getResourceAsStream("full-table-scan-config.json");
+            this.fullTableScanConf = IOUtils.toByteArray(is);
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+
     }
 
     @PreDestroy
@@ -271,12 +291,15 @@ public class IndexerMaster {
             try {
                 // Read current situation of record and assure it is still actual
                 IndexDefinition index = indexerModel.getMutableIndex(indexName);
+                byte[] batchIndexConfiguration = getBatchIndexConfiguration(index);
+                index.setBatchIndexConfiguration(null);
                 if (needsBatchBuildStart(index)) {
                     Job job = null;
                     boolean jobStarted;
                     try {
-                        job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf,
-                                zkConnectString, zkSessionTimeout, solrClientConfig, enableLocking);
+                        job = BatchIndexBuilder.startBatchBuildJob(index, mapReduceJobConf, hbaseConf, repository,
+                                zkConnectString, zkSessionTimeout, solrClientConfig, batchIndexConfiguration,
+                                enableLocking);
                         jobStarted = true;
                     } catch (Throwable t) {
                         jobStarted = false;
@@ -288,6 +311,7 @@ public class IndexerMaster {
                         jobInfo.setSubmitTime(System.currentTimeMillis());
                         jobInfo.setJobId(job.getJobID().toString());
                         jobInfo.setTrackingUrl(job.getTrackingURL());
+                        jobInfo.setBatchIndexConfiguration(batchIndexConfiguration);
                         index.setActiveBatchBuildInfo(jobInfo);
 
                         index.setBatchBuildState(IndexBatchBuildState.BUILDING);
@@ -302,6 +326,7 @@ public class IndexerMaster {
                         jobInfo.setJobId("failed-" + System.currentTimeMillis());
                         jobInfo.setSubmitTime(System.currentTimeMillis());
                         jobInfo.setJobState("failed to start, check logs on " + hostName);
+                        jobInfo.setBatchIndexConfiguration(batchIndexConfiguration);
                         jobInfo.setSuccess(false);
 
                         index.setLastBatchBuildInfo(jobInfo);
@@ -316,6 +341,16 @@ public class IndexerMaster {
             }
         } catch (Throwable t) {
             log.error("Error trying to start index build job for index " + indexName, t);
+        }
+    }
+
+    private byte[] getBatchIndexConfiguration(IndexDefinition index) {
+        if (index.getBatchIndexConfiguration() != null) {
+            return index.getBatchIndexConfiguration();
+        } else if (index.getDefaultBatchIndexConfiguration() != null) {
+            return index.getDefaultBatchIndexConfiguration();
+        } else {
+            return this.fullTableScanConf;
         }
     }
 
@@ -639,6 +674,7 @@ public class IndexerMaster {
                     jobInfo.setJobState(jobState);
                     jobInfo.setSuccess(success);
                     jobInfo.setJobId(jobId);
+                    jobInfo.setBatchIndexConfiguration(activeJobInfo.getBatchIndexConfiguration());
 
                     if (activeJobInfo != null) {
                         jobInfo.setSubmitTime(activeJobInfo.getSubmitTime());
@@ -681,21 +717,21 @@ public class IndexerMaster {
         private String jobStateToString(int jobState) {
             String result = "unknown";
             switch (jobState) {
-                case JobStatus.FAILED:
-                    result = "failed";
-                    break;
-                case JobStatus.KILLED:
-                    result = "killed";
-                    break;
-                case JobStatus.PREP:
-                    result = "prep";
-                    break;
-                case JobStatus.RUNNING:
-                    result = "running";
-                    break;
-                case JobStatus.SUCCEEDED:
-                    result = "succeeded";
-                    break;
+            case JobStatus.FAILED:
+                result = "failed";
+                break;
+            case JobStatus.KILLED:
+                result = "killed";
+                break;
+            case JobStatus.PREP:
+                result = "prep";
+                break;
+            case JobStatus.RUNNING:
+                result = "running";
+                break;
+            case JobStatus.SUCCEEDED:
+                result = "succeeded";
+                break;
             }
             return result;
         }

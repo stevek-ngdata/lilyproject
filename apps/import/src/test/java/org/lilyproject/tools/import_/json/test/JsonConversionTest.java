@@ -15,15 +15,25 @@
  */
 package org.lilyproject.tools.import_.json.test;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,18 +57,15 @@ import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.NamespacesImpl;
+import org.lilyproject.tools.import_.json.RecordReader;
 import org.lilyproject.tools.import_.json.RecordScanReader;
 import org.lilyproject.tools.import_.json.RecordScanWriter;
+import org.lilyproject.tools.import_.json.RecordWriter;
 import org.lilyproject.tools.import_.json.WriteOptions;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import com.google.common.collect.Lists;
 
 public class JsonConversionTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
@@ -309,7 +316,6 @@ public class JsonConversionTest {
         assertEquals(null, node.get("recordFilter").get("variantProperties").get("branch").getTextValue());
     }
 
-
     @Test
     public void testScanRecordFilterList() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
@@ -384,5 +390,26 @@ public class JsonConversionTest {
         JsonNode nodeWithPrefixes = new ObjectMapper().readTree(dataWithPrefixes);
         assertNotNull(nodeWithPrefixes.get("namespaces"));
         assertTrue(nodeWithPrefixes.get("recordFilter").get("field").getTextValue().endsWith("$stringField"));
+    }
+
+    @Test
+    public void testRecordAttributes() throws Exception {
+        Record record = repository.newRecord();
+        record.getAttributes().put("one", "onevalue");
+
+        ObjectNode recordNode = RecordWriter.INSTANCE.toJson(record, null, repository);
+        ObjectNode attributes = (ObjectNode) recordNode.get("attributes");
+        for (String key : record.getAttributes().keySet()) {
+            Assert.assertEquals(record.getAttributes().get(key), attributes.get(key).asText());
+        }
+
+        attributes.put("write", "something new");
+
+        record = RecordReader.INSTANCE.fromJson(recordNode, repository);
+        Iterator<Entry<String, JsonNode>> it = attributes.getFields();
+        while (it.hasNext()) {
+            Entry<String,JsonNode> attr = it.next();
+            Assert.assertEquals(attr.getValue().asText(), record.getAttributes().get(attr.getKey()));
+        }
     }
 }

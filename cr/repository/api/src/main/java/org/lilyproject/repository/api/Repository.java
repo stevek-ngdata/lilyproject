@@ -385,6 +385,13 @@ public interface Repository extends Closeable {
      */
     Record delete(RecordId recordId, List<MutationCondition> conditions)
             throws RepositoryException, InterruptedException;
+    
+    /**
+     * Delete a {@link Record} from the repository.
+     *
+     * @param The record to delete. The provided record will be consulted for recordId and attributes.
+     */
+    void delete(Record record) throws RepositoryException, InterruptedException;
 
     /**
      * Returns the IdGenerator service.

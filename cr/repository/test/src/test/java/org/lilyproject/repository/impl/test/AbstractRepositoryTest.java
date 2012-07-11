@@ -2470,6 +2470,58 @@ public abstract class AbstractRepositoryTest {
         //      will work always, it sometimes will work? Needs more investigation.
         //assertNull(repository.getScanner(scan).next());
     }
+    
+    /**
+     * Tests if record type is set when different settings of returnFields is used.
+     * @throws Exception
+     */
+    @Test
+    public void testScanWithReturnFieldsRecordType() throws Exception {
+        String ns = "ReturnFieldsScan-RecordType";
+        FieldType f1 = typeManager.createFieldType("STRING", new QName(ns, "f1"), Scope.NON_VERSIONED);
+        FieldType f2 = typeManager.createFieldType("STRING", new QName(ns, "f2"), Scope.NON_VERSIONED);
+        FieldType f3 = typeManager.createFieldType("STRING", new QName(ns, "f3"), Scope.NON_VERSIONED);
+        FieldType f4 = typeManager.createFieldType("STRING", new QName(ns, "f4"), Scope.NON_VERSIONED);
+
+        RecordType rt = typeManager.recordTypeBuilder().defaultNamespace(ns).name("rt")
+                .fieldEntry().use(f1).add()
+                .fieldEntry().use(f2).add()
+                .fieldEntry().use(f3).add()
+                .fieldEntry().use(f4).add()
+                .create();
+
+        repository.recordBuilder()
+                .recordType(rt.getName())
+                .field(f1.getName(), "A")
+                .field(f2.getName(), "B")
+                .field(f3.getName(), "C")
+                .create();
+
+
+        // Test ALL filter
+        RecordScan scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rt.getName()));
+        scan.setReturnFields(new ReturnFields(ReturnFields.Type.ALL));
+        Record record = repository.getScanner(scan).next();
+        assertNotNull(record.getRecordTypeName());
+        assertEquals(ns, record.getRecordTypeName().getNamespace());
+
+        // Test NONE filter
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rt.getName()));
+        scan.setReturnFields(new ReturnFields(ReturnFields.Type.NONE));
+        record = repository.getScanner(scan).next();
+        assertNotNull(record.getRecordTypeName());
+        assertEquals(ns, record.getRecordTypeName().getNamespace());
+
+        // Test ENUM filter
+        scan = new RecordScan();
+        scan.setRecordFilter(new RecordTypeFilter(rt.getName()));
+        scan.setReturnFields(new ReturnFields(f1.getName(), f2.getName()));
+        record = repository.getScanner(scan).next();
+        assertNotNull(record.getRecordTypeName());
+        assertEquals(ns, record.getRecordTypeName().getNamespace());
+    }
 
     @Test
     public void testPrefixScans() throws Exception {

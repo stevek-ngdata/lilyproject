@@ -397,6 +397,17 @@ public class IndexerTest {
         //
         // Test ForEach
         //
+        {
+            log.debug("Begin test match");
+            // disabling since we are not verifying these create messages
+            messageVerifier.disable();
+            createMatchTestRecord(NS, "Alpha", "ns_alpha_");
+            createMatchTestRecord(NS, "Beta", "ns_beta_");
+            createMatchTestRecord(NS2, "Alpha", "ns2_alpha_");
+            createMatchTestRecord(NS2, "Beta", "ns2_beta_");
+            // re-enable messageVerifier
+            messageVerifier.init();
+        }
 
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))

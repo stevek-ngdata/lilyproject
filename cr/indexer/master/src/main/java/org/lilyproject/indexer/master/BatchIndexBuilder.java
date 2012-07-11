@@ -15,40 +15,40 @@
  */
 package org.lilyproject.indexer.master;
 
-import net.iharder.Base64;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.lilyproject.indexer.batchbuild.IndexingMapper;
-import org.lilyproject.indexer.batchbuild.hbasemr_patched.TableMapReduceUtil;
-import org.lilyproject.indexer.engine.SolrClientConfig;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.util.hbase.LilyHBaseSchema.RecordCf;
-
-import static org.lilyproject.util.hbase.LilyHBaseSchema.*;
-
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
 import java.util.Map;
 
+import net.iharder.Base64;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.codehaus.jackson.JsonNode;
+import org.lilyproject.indexer.batchbuild.IndexingMapper;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.mapreduce.LilyMapReduceUtil;
+import org.lilyproject.repository.api.RecordScan;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.ReturnFields;
+import org.lilyproject.tools.import_.json.RecordScanReader;
+import org.lilyproject.util.json.JsonFormat;
+
 public class BatchIndexBuilder {
     /**
-     *
+     * 
      * @return the ID of the started job
      */
-    public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf,
-            Configuration hbaseConf, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
-            boolean enableLocking) throws Exception {
+    public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
+            Repository repository, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
+            byte[] batchIndexConfiguration, boolean enableLocking) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
-        Job job = new Job(conf);
+        Job job = new Job(conf, "BatchIndexBuild Job");
 
         //
         // Find and set the MapReduce job jar.
@@ -61,6 +61,7 @@ public class BatchIndexBuilder {
         }
 
         job.getConfiguration().set("mapred.jar", jobJar);
+        job.setMapperClass(mapperClass);
 
         //
         // Pass information about the index to be built
@@ -82,43 +83,36 @@ public class BatchIndexBuilder {
 
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
+        
+        JsonNode jsonNode = JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration)).get("scan");
+        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository);
+        recordScan.setReturnFields(ReturnFields.ALL);
+        recordScan.setCacheBlocks(false);
+        recordScan.setCaching(1024);
 
-        //
-        // Define the HBase scanner
-        //
-        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-        // See also BaseRepository#REAL_RECORDS_FILTER
-        SingleColumnValueFilter realRecordsFilter = new SingleColumnValueFilter(RecordCf.DATA.bytes,
-                RecordColumn.DELETED.bytes, CompareFilter.CompareOp.NOT_EQUAL, Bytes.toBytes(true));
-        realRecordsFilter.setFilterIfMissing(true);
-        filterList.addFilter(realRecordsFilter);
-        Scan scan = new Scan();
-        scan.setFilter(filterList);
-        scan.addColumn(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-
-        TableMapReduceUtil.initTableMapperJob(Table.RECORD.name, scan,
-                IndexingMapper.class, null, null, job);
-
-        //
-        // Provide properties to connect to HBase
-        //
         job.getConfiguration().set("hbase.zookeeper.quorum", hbaseConf.get("hbase.zookeeper.quorum"));
-        job.getConfiguration().set("hbase.zookeeper.property.clientPort", hbaseConf.get("hbase.zookeeper.property.clientPort"));
+        job.getConfiguration().set("hbase.zookeeper.property.clientPort",
+                hbaseConf.get("hbase.zookeeper.property.clientPort"));
+
+        LilyMapReduceUtil.initMapperJob(recordScan, true, zkConnectString, repository, job);
 
         //
         // Provide Lily ZooKeeper props
         //
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperConnectString", zkConnectString);
-        job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", String.valueOf(zkSessionTimeout));
+        job.getConfiguration().set("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout",
+                String.valueOf(zkSessionTimeout));
 
         //
         // Solr options
         //
         if (solrConfig.getRequestWriter() != null) {
-            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.requestwriter", solrConfig.getRequestWriter());
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.requestwriter",
+                    solrConfig.getRequestWriter());
         }
         if (solrConfig.getResponseParser() != null) {
-            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.responseparser", solrConfig.getResponseParser());
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.responseparser",
+                    solrConfig.getResponseParser());
         }
 
         //
@@ -138,8 +132,7 @@ public class BatchIndexBuilder {
         ClassLoader loader = my_class.getClassLoader();
         String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
         try {
-            for(Enumeration itr = loader.getResources(class_file);
-                itr.hasMoreElements();) {
+            for (Enumeration itr = loader.getResources(class_file); itr.hasMoreElements();) {
                 URL url = (URL) itr.nextElement();
                 if ("jar".equals(url.getProtocol())) {
                     String toReturn = url.getPath();

@@ -15,6 +15,16 @@
  */
 package org.lilyproject.util.repo;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
@@ -24,14 +34,6 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Represents the payload of an event about a create-update-delete operation on the repository.
@@ -49,6 +51,7 @@ public class RecordEvent {
     /** For index-type events: affected vtags */
     private Set<SchemaId> vtagsToIndex;
     private IndexSelection indexSelection;
+    private Map<String, String> attributes;
 
     public enum Type {
         CREATE("repo:record-created"),
@@ -123,6 +126,16 @@ public class RecordEvent {
                 }
                 while (jp.nextToken() != JsonToken.END_ARRAY) {
                     addVTagToIndex(idGenerator.getSchemaId(jp.getBinaryValue()));
+                }            
+            } else if (fieldName.equals("attributes")) {
+                if (current != JsonToken.START_OBJECT) {
+                    throw new RuntimeException("Attributes is not a JSON object");
+                }
+                this.attributes = new HashMap<String, String>();
+                while (jp.nextToken() != JsonToken.END_OBJECT) {
+                    String key = jp.getCurrentName();
+                    String value = jp.getText();
+                    attributes.put(key, value);
                 }
             } else if (fieldName.equals("indexSelection")) {
                 this.indexSelection = new IndexSelection(jp, idGenerator);
@@ -200,6 +213,25 @@ public class RecordEvent {
         }
         vtagsToIndex.add(vtag);
     }
+    
+    /**
+     * Transient attributes passed on from the Record during create/update operations
+     * @return A map of Strings containing attributes.
+     */ 
+    public Map<String,String> getAttributes() {
+        if (this.attributes == null) {
+            this.attributes = new HashMap<String,String>();
+        }
+        return this.attributes;
+    }
+    
+    /**
+     * Sets attributes
+     * @param A map of Strings containing attributes.
+     */
+    public void setAttributes(Map<String,String> attributes) {
+        this.attributes = attributes;
+    }
 
     public IndexSelection getIndexSelection() {
         return indexSelection;
@@ -246,6 +278,14 @@ public class RecordEvent {
                 gen.writeBinary(vtag.getBytes());
             }
             gen.writeEndArray();
+        }
+        
+        if (attributes != null && attributes.size() > 0) {
+            gen.writeObjectFieldStart("attributes");
+            for(String key : attributes.keySet()) {
+                gen.writeStringField(key, attributes.get(key));
+            }
+            gen.writeEndObject();
         }
 
         if (indexSelection != null) {
@@ -311,6 +351,9 @@ public class RecordEvent {
 
         if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))
             return false;
+        
+        if(!ObjectUtils.safeEquals(other.attributes, this.attributes))
+            return false;
 
         // TODO implement equals for IndexSelection
 
@@ -326,6 +369,7 @@ public class RecordEvent {
         result = 31 * result + (recordTypeChanged ? 1 : 0);
         result = 31 * result + (indexName != null ? indexName.hashCode() : 0);
         result = 31 * result + (vtagsToIndex != null ? vtagsToIndex.hashCode() : 0);
+        result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
         return result;
     }
 

@@ -207,4 +207,16 @@ public class UnmodifiableRecord implements Record, Cloneable {
     public boolean hasField(String fieldName) throws RecordException {
         return delegate.hasField(fieldName);
     }
+
+    @Override
+    public Map<String, String> getAttributes() {
+        return delegate.getAttributes();
+    }
+
+    @Override
+    public void setAttributes(Map<String, String> attributes) {
+        throw new RuntimeException(MSG);
+    }
+    
+    
 }

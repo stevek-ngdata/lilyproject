@@ -43,6 +43,7 @@
     <module>master</module>
     <module>batchbuild</module>
     <module>integration</module>
+    <module>batchbuild-test</module>
   </modules>
 
   <build>

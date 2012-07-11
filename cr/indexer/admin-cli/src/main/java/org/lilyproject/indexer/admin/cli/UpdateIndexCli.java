@@ -46,7 +46,9 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
         options.add(updateStateOption);
         options.add(buildStateOption);
         options.add(forceOption);
-
+        options.add(defaultBatchIndexConfigurationOption);
+        options.add(batchIndexConfigurationOption);
+        
         return options;
     }
 
@@ -99,6 +101,21 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
             if (buildState != null && buildState != index.getBatchBuildState()) {
                 index.setBatchBuildState(buildState);
+                changes = true;
+            }
+            
+            if (defaultBatchIndexConfiguration != null && !ObjectUtils.safeEquals(defaultBatchIndexConfiguration, index.getDefaultBatchIndexConfiguration())) {
+                if (defaultBatchIndexConfiguration.length == 0) {
+                    index.setDefaultBatchIndexConfiguration(null);
+                } else {
+                    index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
+                }
+                
+                changes = true;
+            }
+            
+            if (batchIndexConfiguration != null) {
+                index.setBatchIndexConfiguration(batchIndexConfiguration);
                 changes = true;
             }
 

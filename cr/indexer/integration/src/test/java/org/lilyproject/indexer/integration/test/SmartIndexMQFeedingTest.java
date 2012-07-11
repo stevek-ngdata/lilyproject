@@ -15,110 +15,31 @@
  */
 package org.lilyproject.indexer.integration.test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import static org.junit.Assert.assertEquals;
 
-import com.google.common.collect.Lists;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.response.UpdateResponse;
-import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.params.SolrParams;
-import org.apache.tika.io.IOUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.indexer.engine.DerefMap;
-import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
-import org.lilyproject.indexer.engine.IndexLocker;
-import org.lilyproject.indexer.engine.IndexUpdater;
-import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
-import org.lilyproject.indexer.engine.Indexer;
-import org.lilyproject.indexer.engine.IndexerMetrics;
-import org.lilyproject.indexer.engine.SolrClient;
-import org.lilyproject.indexer.engine.SolrClientException;
-import org.lilyproject.indexer.engine.SolrShardManager;
-import org.lilyproject.indexer.integration.IndexAwareMQFeeder;
-import org.lilyproject.indexer.integration.IndexSelectionRecordUpdateHook;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-import org.lilyproject.indexer.model.api.WriteableIndexerModel;
-import org.lilyproject.indexer.model.impl.IndexerModelImpl;
-import org.lilyproject.indexer.model.indexerconf.IndexerConf;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.indexer.model.sharding.ShardSelectorException;
-import org.lilyproject.indexer.model.util.IndexesInfo;
-import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.RecordType;
-import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.Scope;
-import org.lilyproject.repository.api.TypeManager;
-import org.lilyproject.repository.spi.RecordUpdateHook;
-import org.lilyproject.repotestfw.RepositorySetup;
-import org.lilyproject.rowlog.api.RowLog;
-import org.lilyproject.rowlog.api.RowLogConfigurationManager;
-import org.lilyproject.rowlog.api.RowLogMessage;
-import org.lilyproject.rowlog.api.RowLogMessageListener;
-import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogSubscription;
-import org.lilyproject.util.repo.PrematureRepository;
-import org.lilyproject.util.repo.PrematureRepositoryImpl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import com.google.common.collect.Lists;
 
 /**
  * Tests the functionality related to intelligent feeding of the MQ: rather than dispatching
  * each record change event to each subscription (= each indexer), the messages are only
  * put on the Q for the subscriptions that need them.
  */
-public class SmartIndexMQFeedingTest {
-    private static WriteableIndexerModel indexerModel;
-    private static RowLogConfigurationManager rowLogConfMgr;
-    private static IndexesInfo indexesInfo;
-    private static Repository repository;
-    private static TypeManager typeManager;
-
-    private static List<MySolrShardManager> solrShardManagers = new ArrayList<MySolrShardManager>();
-    private static List<MySolrClient> solrClients = new ArrayList<MySolrClient>();
-    private static List<TrackingIndexUpdater> indexUpdaters = new ArrayList<TrackingIndexUpdater>();
-
-    private final static RepositorySetup repoSetup = new RepositorySetup() {
-        @Override
-        public RowLogMessageListener createMQFeeder(RowLog mq) {
-            if (indexesInfo == null) {
-                throw new RuntimeException("Expected IndexesInfo to be available at this point.");
-            }
-            return new IndexAwareMQFeeder(mq, getRepository(), indexesInfo);
-        }
-    };
-
+public class SmartIndexMQFeedingTest extends BaseIndexMQFeedingTest{
+    
     @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
-                "org.lilyproject.rowlog.impl.RowLogImpl");
-
-        repoSetup.setupCore();
-
-        indexerModel = new IndexerModelImpl(repoSetup.getZk());
-        PrematureRepository prematureRepository = new PrematureRepositoryImpl();
-
-        indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepository);
-        RecordUpdateHook hook = new IndexSelectionRecordUpdateHook(indexesInfo);
-
-        repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
-
-        repoSetup.setupRepository(true);
-        repoSetup.setupMessageQueue(false, true);
-
-        prematureRepository.setRepository(repoSetup.getRepository());
-
-        rowLogConfMgr = repoSetup.getRowLogConfManager();
-
+    public static void setupBeforeClass () throws Exception{
+        BaseIndexMQFeedingTest.baseSetup();
+        setupSchema();
+    }
+    
+    public  static void setupSchema()  throws Exception{
         //
         // Define schema
         //
@@ -137,21 +58,21 @@ public class SmartIndexMQFeedingTest {
                 .scope(Scope.NON_VERSIONED)
                 .createOrUpdate();
 
-        RecordType rtA = typeManager.recordTypeBuilder()
+        typeManager.recordTypeBuilder()
                 .defaultNamespace("mqfeedtest")
                 .name("typeA")
                 .field(field1.getId(), true)
                 .field(toggle.getId(), false)
                 .createOrUpdate();
 
-        RecordType rtB = typeManager.recordTypeBuilder()
+        typeManager.recordTypeBuilder()
                 .defaultNamespace("mqfeedtest")
                 .name("typeB")
                 .field(field1.getId(), true)
                 .field(toggle.getId(), false)
                 .createOrUpdate();
 
-        RecordType rtC = typeManager.recordTypeBuilder()
+        typeManager.recordTypeBuilder()
                 .defaultNamespace("mqfeedtest")
                 .name("typeC")
                 .field(field1.getId(), true)
@@ -461,104 +382,5 @@ public class SmartIndexMQFeedingTest {
         assertEquals(0, solrClientTrue.adds());
         assertEquals(0, indexUpdaterFalse.events());
         assertEquals(0, solrClientFalse.deletes());
-    }
-
-    private static class TrackingIndexUpdater implements RowLogMessageListener {
-        private final IndexUpdater delegate;
-        private int eventCount = 0;
-
-        public TrackingIndexUpdater(IndexUpdater delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public boolean processMessage(RowLogMessage message) throws InterruptedException {
-            eventCount++;
-            return delegate.processMessage(message);
-        }
-
-        public int events() {
-            int result = eventCount;
-            eventCount = 0;
-            return result;
-        }
-    }
-
-    private static class MySolrShardManager implements SolrShardManager {
-        private MySolrClient solrClient = new MySolrClient();
-
-        @Override
-        public SolrClient getSolrClient(RecordId recordId) throws ShardSelectorException {
-            return solrClient;
-        }
-
-        public MySolrClient getSolrClient() {
-            return solrClient;
-        }
-    }
-
-    private static class MySolrClient implements SolrClient {
-        private int addCount = 0;
-        private int deleteCount = 0;
-
-        @Override
-        public String getDescription() {
-            return null;
-        }
-
-        @Override
-        public UpdateResponse add(SolrInputDocument doc) throws SolrClientException, InterruptedException {
-            addCount++;
-            return null;
-        }
-
-        @Override
-        public UpdateResponse add(Collection<SolrInputDocument> docs) throws SolrClientException, InterruptedException {
-            return null;
-        }
-
-        @Override
-        public UpdateResponse deleteById(String id) throws SolrClientException, InterruptedException {
-            return null;
-        }
-
-        @Override
-        public UpdateResponse deleteById(List<String> ids) throws SolrClientException, InterruptedException {
-            return null;
-        }
-
-        @Override
-        public UpdateResponse deleteByQuery(String query) throws SolrClientException, InterruptedException {
-            deleteCount++;
-            return null;
-        }
-
-        @Override
-        public UpdateResponse commit(boolean waitFlush, boolean waitSearcher)
-                throws SolrClientException, InterruptedException {
-            return null;
-        }
-
-        @Override
-        public UpdateResponse commit() throws SolrClientException, InterruptedException {
-            return null;
-        }
-
-        @Override
-        public QueryResponse query(SolrParams params) throws SolrClientException, InterruptedException {
-            return null;
-        }
-
-        public int adds() {
-            int result = addCount;
-            addCount = 0;
-            return result;
-        }
-
-        public int deletes() {
-            int result = deleteCount;
-            deleteCount = 0;
-            return result;
-        }
     }
 }

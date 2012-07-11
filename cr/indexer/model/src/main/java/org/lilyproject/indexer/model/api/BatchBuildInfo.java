@@ -28,6 +28,7 @@ public class BatchBuildInfo {
     private String jobState;
     private boolean immutable;
     private String trackingUrl;
+    private byte[] batchIndexConfiguration;
     private Map<String, Long> counters = new HashMap<String, Long>();
 
     public String getJobId() {
@@ -133,5 +134,13 @@ public class BatchBuildInfo {
         result = 31 * result + (trackingUrl != null ? trackingUrl.hashCode() : 0);
         result = 31 * result + (counters != null ? counters.hashCode() : 0);
         return result;
+    }
+
+    public byte[] getBatchIndexConfiguration() {
+        return batchIndexConfiguration;
+    }
+
+    public void setBatchIndexConfiguration(byte[] batchIndexConfiguration) {
+        this.batchIndexConfiguration = batchIndexConfiguration;
     }
 }

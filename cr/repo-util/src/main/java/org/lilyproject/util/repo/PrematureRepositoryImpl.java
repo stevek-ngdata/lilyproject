@@ -199,6 +199,12 @@ public class PrematureRepositoryImpl implements PrematureRepository {
     }
 
     @Override
+    public void delete(Record record) throws RepositoryException, InterruptedException {
+        waitOnRepo();
+        delegate.delete(record);
+    }
+
+    @Override
     public IdGenerator getIdGenerator() {
         waitOnRepo();
         return delegate.getIdGenerator();

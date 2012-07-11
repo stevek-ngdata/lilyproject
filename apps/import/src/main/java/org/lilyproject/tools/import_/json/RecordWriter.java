@@ -93,6 +93,14 @@ public class RecordWriter implements EntityWriter<Record> {
                 }
             }
         }
+        
+        Map<String, String> attributes = record.getAttributes();
+        if (attributes.size() > 0) {
+            ObjectNode attributesNode = recordNode.putObject("attributes");
+            for (String key : attributes.keySet()) {
+                attributesNode.put(key, attributes.get(key));
+            }            
+        }
 
         return recordNode;
     }
