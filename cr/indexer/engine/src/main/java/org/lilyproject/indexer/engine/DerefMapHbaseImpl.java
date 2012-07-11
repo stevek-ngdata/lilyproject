@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.gotometrics.orderly.FixedByteArrayRowKey;
 import com.gotometrics.orderly.StringRowKey;
 import com.gotometrics.orderly.StructBuilder;
@@ -83,6 +81,7 @@ public class DerefMapHbaseImpl implements DerefMap {
         backwardIndexDef.addVariableLengthByteField("dependency_masterrecordid", 2);
         backwardIndexDef.addByteField("dependency_vtag", SCHEMA_ID_BYTE_LENGTH);
         backwardIndexDef.addVariableLengthByteField("variant_properties_pattern");
+        backwardIndexDef.addByteField("dependant_vtag", SCHEMA_ID_BYTE_LENGTH);
         backwardDerefIndex = indexManager.getIndex(backwardIndexDef);
     }
 
@@ -145,8 +144,8 @@ public class DerefMapHbaseImpl implements DerefMap {
         // delete removed from bwd index
         for (DependencyEntry removed : removedDependencies) {
             final Dependency dependency = removed.getDependency();
-            final IndexEntry backwardEntry =
-                    createBackwardEntry(dependency, dependantRecordId, null, removed.getMoreDimensionedVariants());
+            final IndexEntry backwardEntry = createBackwardEntry(dependency, dependantRecordId, dependantVtagId, null,
+                    removed.getMoreDimensionedVariants());
             backwardDerefIndex.removeEntry(backwardEntry);
         }
 
@@ -159,8 +158,8 @@ public class DerefMapHbaseImpl implements DerefMap {
         for (DependencyEntry added : addedDependencies) {
             final Dependency dependency = added.getDependency();
             final Set<SchemaId> fields = newDependencyEntries.get(added);
-            final IndexEntry backwardEntry =
-                    createBackwardEntry(dependency, dependantRecordId, fields, added.getMoreDimensionedVariants());
+            final IndexEntry backwardEntry = createBackwardEntry(dependency, dependantRecordId, dependantVtagId, fields,
+                    added.getMoreDimensionedVariants());
             backwardDerefIndex.addEntry(backwardEntry);
         }
     }
@@ -206,26 +205,9 @@ public class DerefMapHbaseImpl implements DerefMap {
         return fwdEntry;
     }
 
-    /**
-     * From a set with {@link org.lilyproject.indexer.engine.DerefMap.DependencyEntry}s, keep only the information
-     * about
-     * dependencies.
-     *
-     * @param newDependencies input
-     * @return only the information about dependencies is retained
-     */
-    private Collection<Dependency> toSetOfDependencies(Set<DependencyEntry> newDependencies) {
-        return Collections2.transform(newDependencies, new Function<DependencyEntry, Dependency>() {
-            @Override
-            public Dependency apply(DependencyEntry input) {
-                return input.getDependency();
-            }
-        });
-    }
-
-    private IndexEntry createBackwardEntry(Dependency dependency, RecordId dependantRecordId,
-                                           Set<SchemaId> fields,
-                                           Set<String> moreDimensionedVariantProperties) throws IOException {
+    private IndexEntry createBackwardEntry(Dependency dependency, RecordId dependantRecordId, SchemaId dependantVtagId,
+                                           Set<SchemaId> fields, Set<String> moreDimensionedVariantProperties)
+            throws IOException {
 
         final byte[] serializedVariantPropertiesPattern = serializeVariantPropertiesPattern(
                 createVariantPropertiesPattern(dependency.getRecordId().getVariantProperties(),
@@ -236,6 +218,7 @@ public class DerefMapHbaseImpl implements DerefMap {
         bwdEntry.addField("dependency_masterrecordid", dependency.getRecordId().getMaster().toBytes());
         bwdEntry.addField("dependency_vtag", dependency.getVtag().getBytes());
         bwdEntry.addField("variant_properties_pattern", serializedVariantPropertiesPattern);
+        bwdEntry.addField("dependant_vtag", dependantVtagId.getBytes());
 
         // the identifier is the dependant which depends on the dependency
         bwdEntry.setIdentifier(dependantRecordId.toBytes());
