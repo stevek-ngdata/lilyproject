@@ -103,15 +103,15 @@ public class Indexer {
         IndexCase indexCase = conf.getIndexCase(record);
         index(vtRecord, record);
     }
-    
+
     public void index(IdRecord idRecord) throws RepositoryException, SolrClientException,
-            ShardSelectorException, InterruptedException {
+            ShardSelectorException, InterruptedException, IOException {
         VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, null, repository);
         index(vtRecord, idRecord);
     }
-    
+
     private void index (VTaggedRecord vtRecord, IdRecord record) throws RepositoryException, SolrClientException,
-            ShardSelectorException, InterruptedException {
+            ShardSelectorException, InterruptedException, IOException {
         IndexCase indexCase = conf.getIndexCase(record);
         if (indexCase == null) {
             return;
@@ -122,7 +122,7 @@ public class Indexer {
 
         index(vtRecord, vtagsToIndex);
     }
-    
+
 
     /**
      * Indexes a record for a set of vtags.
