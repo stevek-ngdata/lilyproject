@@ -163,6 +163,7 @@
 
    <!-- Your own fields -->
    <field name="field1" type="string" indexed="true" stored="true" required="false"/>   
+   <field name="derefField" type="string" indexed="true" stored="true" required="false"/>   
  </fields>
 
  <!-- Lily requires the uniqueKey to be set to lily.key -->

@@ -29,6 +29,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
+import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
@@ -84,11 +85,15 @@ public class BatchIndexBuilder {
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
         
-        JsonNode jsonNode = JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration)).get("scan");
-        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(jsonNode, repository);
+        JsonNode batchConfigurationNode = JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration));
+        RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"), repository);
         recordScan.setReturnFields(ReturnFields.ALL);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);
+        
+        if (batchConfigurationNode.has("clearDerefMap") && batchConfigurationNode.get("clearDerefMap").asBoolean(false)) {
+            DerefMapHbaseImpl.delete(index.getName(), hbaseConf);
+        }
 
         job.getConfiguration().set("hbase.zookeeper.quorum", hbaseConf.get("hbase.zookeeper.quorum"));
         job.getConfiguration().set("hbase.zookeeper.property.clientPort",

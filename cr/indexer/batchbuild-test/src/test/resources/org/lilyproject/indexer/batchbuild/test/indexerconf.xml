@@ -7,5 +7,6 @@
 
   <fields>    
     <field name="field1" value="bi:field1"/>
+    <field name="derefField" value="bi:linkField=>bi:field1"/>
   </fields>
 </indexer>
