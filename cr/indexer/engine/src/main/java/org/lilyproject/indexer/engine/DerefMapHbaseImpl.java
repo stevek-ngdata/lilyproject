@@ -78,8 +78,8 @@ public class DerefMapHbaseImpl implements DerefMap {
         IndexDefinition backwardIndexDef = new IndexDefinition(backwardIndexName(indexName));
         // Same remark as in the forward index.
         backwardIndexDef.addVariableLengthByteField("dependency_masterrecordid", 2);
-        backwardIndexDef.addVariableLengthByteField("variant_properties_pattern");
         backwardIndexDef.addByteField("dependant_vtag", SCHEMA_ID_BYTE_LENGTH);
+        backwardIndexDef.addVariableLengthByteField("variant_properties_pattern");
         backwardDerefIndex = indexManager.getIndex(backwardIndexDef);
     }
 
@@ -214,8 +214,8 @@ public class DerefMapHbaseImpl implements DerefMap {
 
         final IndexEntry bwdEntry = new IndexEntry(backwardDerefIndex.getDefinition());
         bwdEntry.addField("dependency_masterrecordid", dependency.getMaster().toBytes());
-        bwdEntry.addField("variant_properties_pattern", serializedVariantPropertiesPattern);
         bwdEntry.addField("dependant_vtag", dependantVtagId.getBytes());
+        bwdEntry.addField("variant_properties_pattern", serializedVariantPropertiesPattern);
 
         // the identifier is the dependant which depends on the dependency
         bwdEntry.setIdentifier(dependantRecordId.toBytes());
@@ -442,17 +442,24 @@ public class DerefMapHbaseImpl implements DerefMap {
     }
 
     @Override
-    public DependantRecordIdsIterator findDependantsOf(RecordId dependency, SchemaId field)
+    public DependantRecordIdsIterator findDependantsOf(RecordId dependency, SchemaId field, SchemaId vtag)
             throws IOException {
         final RecordId master = dependency.getMaster();
 
         final Query query = new Query();
         query.addEqualsCondition("dependency_masterrecordid", master.toBytes());
+        if (vtag != null)
+            query.addEqualsCondition("dependant_vtag", vtag.getBytes());
 
         final QueryResult queryResult = backwardDerefIndex.performQuery(query);
         return new DependantRecordIdsIteratorImpl(queryResult, dependency, field);
     }
 
+    @Override
+    public DependantRecordIdsIterator findDependantsOf(RecordId dependency, SchemaId field)
+            throws IOException {
+        return findDependantsOf(dependency, field, null);
+    }
 
     final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator {
         final QueryResult queryResult;

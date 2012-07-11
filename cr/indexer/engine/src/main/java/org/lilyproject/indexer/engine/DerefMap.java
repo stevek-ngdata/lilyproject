@@ -105,10 +105,15 @@ public interface DerefMap {
      * record (e.g. +foo).
      *
      * @param dependency the record to find dependant record ids for
-     * @param field      the field of the given dependency which is dereferenced in the dependant, >code>null</code> to
+     * @param field      the field of the given dependency which is dereferenced in the dependant, <code>null</code> to
      *                   ignore
+     * @param vtag       vtag of the dependant you are interested in, <code>null</code> to ignore
      * @return iterator
      */
+    DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field, SchemaId vtag)
+            throws IOException;
+
     DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field)
             throws IOException;
+
 }
