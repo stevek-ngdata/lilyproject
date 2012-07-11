@@ -561,14 +561,18 @@ public class DerefMapBasicTest {
         final RecordId a = ids.newRecordId();
         final RecordId b = ids.newRecordId();
 
-        Dependency btag1Dep = new Dependency(b, tag1);
-        Dependency btag2Dep = new Dependency(b, tag2);
-        derefMap.updateDependencies(a, tag1, Collections.singletonMap(new DependencyEntry(btag1Dep), fields));
-        derefMap.updateDependencies(a, tag1, Collections.singletonMap(new DependencyEntry(btag2Dep), fields));
+        Dependency bTag1 = new Dependency(b, tag1);
+        Dependency bTag2 = new Dependency(b, tag2);
+        derefMap.updateDependencies(a, tag1, Collections.singletonMap(new DependencyEntry(bTag1), fields));
 
-        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(btag1Dep, field)));
+        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(bTag1, field)));
+        assertEquals(Sets.newHashSet(), asRecordIds(derefMap.findDependantsOf(bTag2, field)));
 
-        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(btag2Dep, field)));
+        derefMap.updateDependencies(a, tag2, Collections.singletonMap(new DependencyEntry(bTag1), fields));
+
+        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(bTag1, field)));
+        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(bTag2, field)));
+
 
     }
 
