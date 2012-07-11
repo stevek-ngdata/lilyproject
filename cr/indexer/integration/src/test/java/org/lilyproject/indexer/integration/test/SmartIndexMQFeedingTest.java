@@ -15,8 +15,7 @@
  */
 package org.lilyproject.indexer.integration.test;
 
-import static org.junit.Assert.assertEquals;
-
+import com.google.common.collect.Lists;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.repository.api.FieldType;
@@ -24,7 +23,7 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Scope;
 
-import com.google.common.collect.Lists;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests the functionality related to intelligent feeding of the MQ: rather than dispatching
@@ -32,14 +31,14 @@ import com.google.common.collect.Lists;
  * put on the Q for the subscriptions that need them.
  */
 public class SmartIndexMQFeedingTest extends BaseIndexMQFeedingTest{
-    
+
     @BeforeClass
     public static void setupBeforeClass () throws Exception{
         BaseIndexMQFeedingTest.baseSetup();
         setupSchema();
     }
-    
-    public  static void setupSchema()  throws Exception{
+
+    public static void setupSchema()  throws Exception{
         //
         // Define schema
         //
@@ -79,88 +78,6 @@ public class SmartIndexMQFeedingTest extends BaseIndexMQFeedingTest{
                 .field(toggle.getId(), false)
                 .createOrUpdate();
 
-    }
-
-    private static void setupTwoIndexes(List<String> confNames) throws Exception {
-        // Remove old indexes & subscriptions, if any
-        for (IndexDefinition indexDef : indexerModel.getIndexes()) {
-            indexerModel.deleteIndex(indexDef.getName());
-        }
-
-        // Remove rowlog subscriptions
-        for (RowLogSubscription subscription : rowLogConfMgr.getSubscriptions("MQ")) {
-            rowLogConfMgr.removeSubscription("MQ", subscription.getId());
-            RowLogMessageListenerMapping.INSTANCE.remove(subscription.getId());
-        }
-
-        solrShardManagers.clear();
-        solrClients.clear();
-        indexUpdaters.clear();
-
-        waitForIndexesInfoUpdate(0);
-        waitForRowLog(0);
-
-        // Define the new indexes
-        for (int i = 0; i < confNames.size(); i++) {
-            String confName = confNames.get(i);
-            IndexDefinition indexDef = indexerModel.newIndex("index" + i);
-            indexDef.setConfiguration(IOUtils.toByteArray(SmartIndexMQFeedingTest.class.getResourceAsStream(confName)));
-            indexDef.setQueueSubscriptionId("IndexUpdater" + i);
-            indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere" + i + "/"));
-            indexerModel.addIndex(indexDef);
-
-            solrShardManagers.add(new MySolrShardManager());
-            solrClients.add(solrShardManagers.get(i).getSolrClient());
-
-            indexUpdaters.add(createIndexUpdater("IndexUpdater" + i, confName, solrShardManagers.get(i)));
-
-            rowLogConfMgr.addSubscription("MQ", "IndexUpdater" + i, RowLogSubscription.Type.VM, 1);
-        }
-
-        waitForIndexesInfoUpdate(confNames.size());
-        waitForRowLog(confNames.size());
-    }
-
-    private static void waitForIndexesInfoUpdate(int expectedCount) throws InterruptedException {
-        // IndexesInfo will be updated asynchronously: wait for that to happen
-        long now = System.currentTimeMillis();
-        while (indexesInfo.getIndexInfos().size() != expectedCount) {
-            if (System.currentTimeMillis() - now > 10000) {
-                fail("IndexesInfo was not updated within the expected timeout.");
-            }
-            Thread.sleep(100);
-        }
-    }
-
-    private static void waitForRowLog(int expectedCount) throws InterruptedException {
-        RowLog mq = repoSetup.getMq();
-        long now = System.currentTimeMillis();
-        while (mq.getSubscriptions().size() != expectedCount) {
-            if (System.currentTimeMillis() - now > 10000) {
-                fail("RowLog was not updated within the expected timeout.");
-            }
-            Thread.sleep(100);
-        }
-    }
-
-    private static TrackingIndexUpdater createIndexUpdater(String subscriptionId, String confName,
-                                                           SolrShardManager solrShardManager) throws Exception {
-        IndexerConf INDEXER_CONF = IndexerConfBuilder.build(SmartIndexMQFeedingTest.class.getResourceAsStream(confName),
-                repository);
-
-        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        DerefMap derefMap = DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
-        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics("test"), derefMap);
-
-        IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, null, indexLocker, repoSetup.getMq(),
-                new IndexUpdaterMetrics("test"), derefMap);
-
-        TrackingIndexUpdater trackingIndexUpdater = new TrackingIndexUpdater(indexUpdater);
-
-        RowLogMessageListenerMapping.INSTANCE.put(subscriptionId, trackingIndexUpdater);
-
-        return trackingIndexUpdater;
     }
 
     @Test

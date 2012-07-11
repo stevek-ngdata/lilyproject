@@ -1,7 +1,5 @@
 package org.lilyproject.indexer.integration.test;
 
-import static org.junit.Assert.fail;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,6 +45,8 @@ import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.PrematureRepository;
 import org.lilyproject.util.repo.PrematureRepositoryImpl;
 
+import static org.junit.Assert.fail;
+
 /**
  * Tests the functionality related to intelligent feeding of the MQ: rather than dispatching
  * each record change event to each subscription (= each indexer), the messages are only
@@ -72,7 +72,7 @@ public abstract class BaseIndexMQFeedingTest {
             return new IndexAwareMQFeeder(mq, getRepository(), indexesInfo);
         }
     };
-    
+
     public static void baseSetup() throws Exception {
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
                 "org.lilyproject.rowlog.impl.RowLogImpl");
@@ -94,7 +94,7 @@ public abstract class BaseIndexMQFeedingTest {
 
         rowLogConfMgr = repoSetup.getRowLogConfManager();
     }
-    
+
     protected static void setupTwoIndexes(List<String> confNames) throws Exception {
         // Remove old indexes & subscriptions, if any
         for (IndexDefinition indexDef : indexerModel.getIndexes()) {
@@ -168,7 +168,7 @@ public abstract class BaseIndexMQFeedingTest {
                 new IndexerMetrics("test"), derefMap);
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, null, indexLocker, repoSetup.getMq(),
-                new IndexUpdaterMetrics("test"));
+                new IndexUpdaterMetrics("test"), derefMap);
 
         TrackingIndexUpdater trackingIndexUpdater = new TrackingIndexUpdater(indexUpdater);
 
@@ -177,7 +177,7 @@ public abstract class BaseIndexMQFeedingTest {
         return trackingIndexUpdater;
     }
 
-    
+
     protected static class TrackingIndexUpdater implements RowLogMessageListener {
         private final IndexUpdater delegate;
         private int eventCount = 0;
