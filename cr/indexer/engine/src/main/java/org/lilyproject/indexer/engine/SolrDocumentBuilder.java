@@ -162,7 +162,9 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     public void addDependency(SchemaId field) {
         RecordContext ctx = contexts.peek();
         try {
-            dependencies.get(DerefMapUtil.newEntry(ctx.dep.id, vtag, ctx.dep.vprops)).add(field);
+            if (!ctx.dep.id.equals(recordId)) { // avoid adding unnecesary self-references
+                dependencies.get(DerefMapUtil.newEntry(ctx.dep.id, vtag, ctx.dep.vprops)).add(field);
+            }
         } catch (ExecutionException ee) {
             throw new RuntimeException("Failed to update dependencies");
         }

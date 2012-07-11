@@ -1,5 +1,7 @@
 package org.lilyproject.indexer.engine;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,11 +11,16 @@ import java.util.UUID;
 import com.google.common.collect.ImmutableMap;
 import junit.framework.Assert;
 import org.apache.hadoop.thirdparty.guava.common.collect.ImmutableSet;
+import org.apache.hadoop.thirdparty.guava.common.collect.Maps;
 import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
+import org.lilyproject.indexer.engine.DerefMap.DependantRecordIdsIterator;
+import org.lilyproject.indexer.engine.DerefMap.Dependency;
+import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
+import org.lilyproject.indexer.engine.test.DerefMapIndexTest;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
@@ -409,6 +416,71 @@ public class DerefMapBasicTest {
         assertTrue(dependantsOf2.hasNext());
         assertEquals(dependant, dependantsOf2.next());
         assertFalse(dependantsOf2.hasNext());
+    }
+
+    @Test
+    public void multipleVariantsDependingOnMaster() throws Exception {
+        final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
+        final SchemaId dependencyField = ids.getSchemaId(UUID.randomUUID());
+
+        final RecordId master = ids.newRecordId("myrecord");
+        final RecordId v1variant = ids.newRecordId("myrecord", Collections.singletonMap("v1", "x"));
+        final RecordId v1v2variant = ids.newRecordId("myrecord", map("v1","x","v2","y"));
+
+        final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> dependencies =
+                new HashMap<DerefMap.DependencyEntry, Set<SchemaId>>();
+        DerefMap.Dependency masterDependency = new DerefMap.Dependency(master, dummyVtag);
+        dependencies.put(new DerefMap.DependencyEntry(masterDependency),
+                Sets.newHashSet(dependencyField));
+        derefMap.updateDependencies(v1variant, dummyVtag, dependencies);
+        derefMap.updateDependencies(v1v2variant, dummyVtag, dependencies);
+
+        Set<RecordId> recordIds = asRecordIds(derefMap.findDependantsOf(masterDependency, null));
+        assertEquals(recordIds, Sets.newHashSet(v1variant, v1v2variant));
+    }
+
+    @Test
+    public void resultIndependentOfOrder() throws Exception {
+
+        for (int i = 0; i < 10; i++) {
+            final SchemaId dummyVtag = ids.getSchemaId(UUID.randomUUID());
+            final SchemaId dependencyField = ids.getSchemaId(UUID.randomUUID());
+
+            final RecordId master = ids.newRecordId();
+            final RecordId var1 = ids.newRecordId(master, Collections.singletonMap("prop1", "x"));
+            final RecordId var2 = ids.newRecordId(master, map("prop1","x","prop2","y"));
+
+            final DerefMap.Dependency masterDep = new Dependency(master, dummyVtag);
+            final DerefMap.Dependency var1Dep = new Dependency(var1, dummyVtag);
+            final DerefMap.Dependency var2Dep = new Dependency(var2, dummyVtag);
+
+            Set<SchemaId> fields = Sets.newHashSet(dependencyField);
+            Map<DependencyEntry, Set<SchemaId>> dependencies = Maps.newHashMap();
+            dependencies.put(new DerefMap.DependencyEntry(masterDep), fields);
+            dependencies.put(new DerefMap.DependencyEntry(var2Dep), fields);
+            derefMap.updateDependencies(var1, dummyVtag, dependencies);
+
+            for (int j = 0; j < 10; j++) {
+                Set<RecordId> recordIds = asRecordIds(derefMap.findDependantsOf(var2Dep, null));
+                assertEquals("Iteration " + i + "." + j, Sets.newHashSet(var1), recordIds);
+            }
+        }
+    }
+
+    private Set<RecordId> asRecordIds(DependantRecordIdsIterator iter) throws IOException {
+        Set<RecordId> result = Sets.newHashSet();
+        while (iter.hasNext()) {
+            result.add(iter.next());
+        }
+        return result;
+    }
+
+    private Map<String, String> map(String... keyOrValue) {
+        Map<String,String> map = Maps.newHashMap();
+        for (int i = 0; i < keyOrValue.length; i+=2) {
+            map.put(keyOrValue[i], keyOrValue[i+1]);
+        }
+        return map;
     }
 
     @Test

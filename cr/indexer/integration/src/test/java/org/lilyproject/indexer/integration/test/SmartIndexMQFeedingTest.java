@@ -233,7 +233,7 @@ public class SmartIndexMQFeedingTest {
                 new IndexerMetrics("test"), derefMap);
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, null, indexLocker, repoSetup.getMq(),
-                new IndexUpdaterMetrics("test"));
+                new IndexUpdaterMetrics("test"), derefMap);
 
         TrackingIndexUpdater trackingIndexUpdater = new TrackingIndexUpdater(indexUpdater);
 

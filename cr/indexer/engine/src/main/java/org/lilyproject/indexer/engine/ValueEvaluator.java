@@ -293,7 +293,7 @@ public class ValueEvaluator {
             FieldType fieldType = ((LinkFieldFollow)follow).getFieldType();
             indexUpdateBuilder.addDependency(fieldType.getId());
 
-            // FIXME: it's more efficient to read all records at once (see ForEachNode for duplicated coded)
+            // FIXME: it's more efficient to read all records at once (see ForEachNode for duplicated code)
             // but make sure missing records are also treated (handled here via null linkedRecord in case of RecordNotFoundException
             if (ctx.record != null) {
                 List links = flatList(ctx.record, fieldType);

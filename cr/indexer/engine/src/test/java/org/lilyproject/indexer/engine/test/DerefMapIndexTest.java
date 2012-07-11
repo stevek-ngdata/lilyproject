@@ -184,7 +184,7 @@ public class DerefMapIndexTest {
                 new IndexerMetrics("test"), derefMap);
 
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
-                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
+                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap));
     }
 
     private static void setupSchema() throws Exception {

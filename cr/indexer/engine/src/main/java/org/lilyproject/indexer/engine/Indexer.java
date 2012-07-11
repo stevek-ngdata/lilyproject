@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
+import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
 import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField.DynamicIndexFieldMatch;
@@ -228,8 +229,11 @@ public class Indexer {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Record %1$s, vtag %2$s: no index fields produced output, " +
                             "removed from index if present", record.getId(), safeLoadTagName(vtag)));
-                }
 
+                    log.debug("Updating dependencies:");
+                    logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
+                }
+                derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
                 continue;
             }
 
@@ -238,6 +242,8 @@ public class Indexer {
             // Can be useful during development
             if (log.isDebugEnabled()) {
                 log.debug("Constructed Solr doc: " + solrDoc);
+                log.debug("Updating dependencies for " + record.getId());
+                logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
             }
 
             derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
@@ -249,6 +255,17 @@ public class Indexer {
                 log.debug(String.format("Record %1$s, vtag %2$s: indexed, doc = %3$s", record.getId(),
                         safeLoadTagName(vtag), solrDoc));
             }
+        }
+    }
+
+    private void logDependencies(RecordId recordId, Map<DependencyEntry, Set<SchemaId>> dependencies) {
+        for (DependencyEntry entry: dependencies.keySet()) {
+            StringBuffer line = new StringBuffer();
+            line.append(recordId).append(" | ")
+                .append(entry.getDependency().getRecordId())
+                .append("|").append(entry.getMoreDimensionedVariants())
+                .append("|").append(dependencies.get(entry));
+            log.debug(line.toString());
         }
     }
 
