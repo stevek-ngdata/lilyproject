@@ -110,6 +110,7 @@
       </xs:sequence>
       <xs:attribute name="recordType" type="xs:string" use="optional"/>
       <xs:attribute name="field" type="xs:string" use="optional"/>
+      <xs:attribute name="matchVariant" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="forEach">
