@@ -19,59 +19,6 @@ import org.lilyproject.util.ArgumentValidator;
 public interface DerefMap {
 
     /**
-     * Description of a record on which is being depended. It contains the record id and the vtag of the record on
-     * which is depended (i.e. the dependency).
-     */
-    final static class Dependency {
-
-        /**
-         * The record id on which we have a dependency.
-         */
-        private final RecordId recordId;
-
-        /**
-         * The vtag of the record on which we have a dependency.
-         */
-        private final SchemaId vtag;
-
-        public Dependency(RecordId recordId, SchemaId vtag) {
-            ArgumentValidator.notNull(recordId, "recordId");
-            ArgumentValidator.notNull(vtag, "vtag");
-
-            this.recordId = recordId;
-            this.vtag = vtag;
-        }
-
-        public RecordId getRecordId() {
-            return recordId;
-        }
-
-        public SchemaId getVtag() {
-            return vtag;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Dependency that = (Dependency) o;
-
-            if (recordId != null ? !recordId.equals(that.recordId) : that.recordId != null) return false;
-            if (vtag != null ? !vtag.equals(that.vtag) : that.vtag != null) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = recordId != null ? recordId.hashCode() : 0;
-            result = 31 * result + (vtag != null ? vtag.hashCode() : 0);
-            return result;
-        }
-    }
-
-    /**
      * An entry in the dereference map, used when updating information in the dereference map.
      */
     final static class DependencyEntry {
@@ -81,7 +28,7 @@ public interface DerefMap {
          * with a certain variant property set (with any value), this/these particular variant property/properties
          * have to be stripped of the record id, and have to be added to the set of more dimensioned variants.
          */
-        private final Dependency dependency;
+        private final RecordId dependency;
 
         /**
          * A set of variant properties that specify the variant properties that have to be added to the record id (with
@@ -89,11 +36,11 @@ public interface DerefMap {
          */
         private final Set<String> moreDimensionedVariants;
 
-        public DependencyEntry(Dependency dependency) {
+        public DependencyEntry(RecordId dependency) {
             this(dependency, Collections.<String>emptySet());
         }
 
-        public DependencyEntry(Dependency dependency, Set<String> moreDimensionedVariants) {
+        public DependencyEntry(RecordId dependency, Set<String> moreDimensionedVariants) {
             ArgumentValidator.notNull(dependency, "dependency");
             ArgumentValidator.notNull(moreDimensionedVariants, "moreDimensionedVariants");
 
@@ -101,7 +48,7 @@ public interface DerefMap {
             this.moreDimensionedVariants = Collections.unmodifiableSet(moreDimensionedVariants);
         }
 
-        public Dependency getDependency() {
+        public RecordId getDependency() {
             return dependency;
         }
 
@@ -158,10 +105,15 @@ public interface DerefMap {
      * record (e.g. +foo).
      *
      * @param dependency the record to find dependant record ids for
-     * @param field      the field of the given dependency which is dereferenced in the dependant, >code>null</code> to
+     * @param field      the field of the given dependency which is dereferenced in the dependant, <code>null</code> to
      *                   ignore
+     * @param vtag       vtag of the dependant you are interested in, <code>null</code> to ignore
      * @return iterator
      */
-    DependantRecordIdsIterator findDependantsOf(final Dependency dependency, SchemaId field)
+    DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field, SchemaId vtag)
             throws IOException;
+
+    DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field)
+            throws IOException;
+
 }

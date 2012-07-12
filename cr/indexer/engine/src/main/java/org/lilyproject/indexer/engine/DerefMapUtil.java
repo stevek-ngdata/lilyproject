@@ -17,10 +17,8 @@ package org.lilyproject.indexer.engine;
 
 import java.util.Set;
 
-import org.lilyproject.indexer.engine.DerefMap.Dependency;
 import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
 import org.lilyproject.repository.api.RecordId;
-import org.lilyproject.repository.api.SchemaId;
 
 public class DerefMapUtil {
 
@@ -28,12 +26,11 @@ public class DerefMapUtil {
         // prevent construction
     }
 
-    static public DependencyEntry newEntry(RecordId id, SchemaId vtag, Set<String> moreDimensions) {
-        Dependency dep = new Dependency(id, vtag);
+    static public DependencyEntry newEntry(RecordId id, Set<String> moreDimensions) {
         if (moreDimensions == null) {
-            return new DependencyEntry(dep);
+            return new DependencyEntry(id);
         } else {
-            return new DependencyEntry(dep, moreDimensions);
+            return new DependencyEntry(id, moreDimensions);
         }
     }
 
