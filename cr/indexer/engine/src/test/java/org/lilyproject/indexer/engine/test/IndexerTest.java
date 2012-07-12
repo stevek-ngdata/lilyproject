@@ -121,7 +121,9 @@ public class IndexerTest {
     private static FieldType nvLinkField2;
 
     private static FieldType vfield1;
+    private static FieldType vfield2;
     private static FieldType vLinkField1;
+    private static FieldType vLinkField2;
 
     private static FieldType vStringMvField;
     private static FieldType vLongField;
@@ -269,13 +271,7 @@ public class IndexerTest {
         nvLinkField2 = typeManager.createFieldType(nvLinkField2);
 
         nvRecordType1 = typeManager.newRecordType(new QName(NS, "NVRecordType1"));
-        nvRecordType1.addFieldTypeEntry(nvfield1.getId(), false);
-        nvRecordType1.addFieldTypeEntry(nvfield2.getId(), false);
-        nvRecordType1.addFieldTypeEntry(liveTag.getId(), false);
-        nvRecordType1.addFieldTypeEntry(latestTag.getId(), false);
-        nvRecordType1.addFieldTypeEntry(previewTag.getId(), false);
-        nvRecordType1.addFieldTypeEntry(nvLinkField1.getId(), false);
-        nvRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
+        addNvFieldTypes(nvRecordType1);
         nvRecordType1 = typeManager.createRecordType(nvRecordType1);
 
         //
@@ -285,9 +281,17 @@ public class IndexerTest {
         vfield1 = typeManager.newFieldType(stringValueType, vfield1Name, Scope.VERSIONED);
         vfield1 = typeManager.createFieldType(vfield1);
 
+        QName vfield2Name = new QName(NS2, "v_field2");
+        vfield2 = typeManager.newFieldType(stringValueType, vfield2Name, Scope.VERSIONED);
+        vfield2 = typeManager.createFieldType(vfield2);
+
         QName vlinkField1Name = new QName(NS2, "v_linkfield1");
         vLinkField1 = typeManager.newFieldType(linkValueType, vlinkField1Name, Scope.VERSIONED);
         vLinkField1 = typeManager.createFieldType(vLinkField1);
+
+        QName vlinkField2Name = new QName(NS2, "v_linkfield2");
+        vLinkField2 = typeManager.newFieldType(linkValueType, vlinkField2Name, Scope.VERSIONED);
+        vLinkField2 = typeManager.createFieldType(vLinkField2);
 
         QName vStringMvFieldName = new QName(NS2, "v_string_mv_field");
         vStringMvField = typeManager.newFieldType(stringMvValueType, vStringMvFieldName, Scope.VERSIONED);
@@ -322,20 +326,7 @@ public class IndexerTest {
         vIntHierField = typeManager.createFieldType(vIntHierField);
 
         vRecordType1 = typeManager.newRecordType(new QName(NS2, "VRecordType1"));
-        vRecordType1.addFieldTypeEntry(vfield1.getId(), false);
-        vRecordType1.addFieldTypeEntry(liveTag.getId(), false);
-        vRecordType1.addFieldTypeEntry(latestTag.getId(), false);
-        vRecordType1.addFieldTypeEntry(previewTag.getId(), false);
-        vRecordType1.addFieldTypeEntry(vLinkField1.getId(), false);
-        vRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
-        vRecordType1.addFieldTypeEntry(vStringMvField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vLongField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vBlobField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vBlobMvHierField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vBlobNestedField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vDateTimeField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vDateField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vIntHierField.getId(), false);
+        addVFieldTypes(vRecordType1);
         vRecordType1 = typeManager.createRecordType(vRecordType1);
 
         //
@@ -349,44 +340,40 @@ public class IndexerTest {
         //
         // Schema types for testing <match> and <foreach>
         //
-
-        // versioned fields
-        RecordType matchNs1AlphaRecordType = typeManager.newRecordType(new QName(NS, "Alpha"));
-        RecordType matchNs1BetaRecordType = typeManager.newRecordType(new QName(NS, "Beta"));
-        RecordType matchNs2AlphaRecordType = typeManager.newRecordType(new QName(NS2, "Alpha"));
-        RecordType matchNs2BetaRecordType = typeManager.newRecordType(new QName(NS2, "Beta"));
-        for (int i = 1; i <= 8; i++) {
-            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "match" + i), Scope.VERSIONED));
-            fields.put("ns:match" + i, ns1Field);
-
-            matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
-            matchNs1BetaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
-            matchNs2AlphaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
-            matchNs2BetaRecordType.addFieldTypeEntry(field("ns:match" + i).getId(), false);
-
+        for (QName name: new QName[] { new QName(NS, "Alpha"), new QName(NS, "Beta"), new QName(NS2, "Alpha"), new QName(NS2, "Beta")}) {
+            RecordType recordType = typeManager.newRecordType(name);
+            addNvFieldTypes(recordType);
+            addVFieldTypes(recordType);
+            typeManager.createRecordType(recordType);
         }
-
-        // non-versioned fields
-        for (int i = 1; i <= 8; i++) {
-            FieldType ns1Field = typeManager.createFieldType(typeManager.newFieldType("STRING", new QName(NS, "nvmatch" + i), Scope.NON_VERSIONED));
-            fields.put("ns:nvmatch" + i, ns1Field);
-
-            matchNs1AlphaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
-            matchNs1BetaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
-            matchNs2AlphaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
-            matchNs2BetaRecordType.addFieldTypeEntry(field("ns:nvmatch" + i).getId(), false);
-
-        }
-
-        typeManager.createRecordType(matchNs1AlphaRecordType);
-        typeManager.createRecordType(matchNs1BetaRecordType);
-        typeManager.createRecordType(matchNs2AlphaRecordType);
-        typeManager.createRecordType(matchNs2BetaRecordType);
 
     }
 
-    private static FieldType field(String name) {
-        return fields.get(name);
+    private static void addVFieldTypes(RecordType recordType) {
+        recordType.addFieldTypeEntry(vfield1.getId(), false);
+        recordType.addFieldTypeEntry(liveTag.getId(), false);
+        recordType.addFieldTypeEntry(latestTag.getId(), false);
+        recordType.addFieldTypeEntry(previewTag.getId(), false);
+        recordType.addFieldTypeEntry(vLinkField1.getId(), false);
+        recordType.addFieldTypeEntry(nvLinkField2.getId(), false);
+        recordType.addFieldTypeEntry(vStringMvField.getId(), false);
+        recordType.addFieldTypeEntry(vLongField.getId(), false);
+        recordType.addFieldTypeEntry(vBlobField.getId(), false);
+        recordType.addFieldTypeEntry(vBlobMvHierField.getId(), false);
+        recordType.addFieldTypeEntry(vBlobNestedField.getId(), false);
+        recordType.addFieldTypeEntry(vDateTimeField.getId(), false);
+        recordType.addFieldTypeEntry(vDateField.getId(), false);
+        recordType.addFieldTypeEntry(vIntHierField.getId(), false);
+    }
+
+    private static void addNvFieldTypes(RecordType recordType) {
+        recordType.addFieldTypeEntry(nvfield1.getId(), false);
+        recordType.addFieldTypeEntry(nvfield2.getId(), false);
+        recordType.addFieldTypeEntry(liveTag.getId(), false);
+        recordType.addFieldTypeEntry(latestTag.getId(), false);
+        recordType.addFieldTypeEntry(previewTag.getId(), false);
+        recordType.addFieldTypeEntry(nvLinkField1.getId(), false);
+        recordType.addFieldTypeEntry(nvLinkField2.getId(), false);
     }
 
     @Test
@@ -437,7 +424,6 @@ public class IndexerTest {
     @Test
     public void testMatch() throws Exception {
         changeIndexUpdater("indexerconf_match.xml");
-        messageVerifier.init();
 
         //
         // Test Match
@@ -456,103 +442,106 @@ public class IndexerTest {
             messageVerifier.init();
         }
 
-        // Initialise a map containing all the expected result counts
-        // for each of the four records, once with the original value, and once with the updated value.
-        // Initially no records have updated values, so the last 4 digits are always zero.
-        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 0, 0, 0, 0); // all
-        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 0, 0, 0, 0); // ns:*
-        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 0, 0, 0, 0); // *:Alpha
-        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+        // Initialise a map containing all the expected result counts (2, since we have 'last' and 'preview')
+        setExpectedCountsForMatch("nvmatch1", 2, 2, 2, 2, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("nvmatch2", 2, 2, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("nvmatch3", 2, 0, 2, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("nvmatch4", 2, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
 
-        setExpectedCountsForMatch("nvmatch1", 1, 1, 1, 1, 0, 0, 0, 0); // all
-        setExpectedCountsForMatch("nvmatch2", 1, 1, 0, 0, 0, 0, 0, 0); // ns:*
-        setExpectedCountsForMatch("nvmatch3", 1, 0, 1, 0, 0, 0, 0, 0); // *:Alpha
-        setExpectedCountsForMatch("nvmatch4", 1, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+        setExpectedCountsForMatch("match1", 2, 2, 2, 2, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("match2", 2, 2, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("match3", 2, 0, 2, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("match4", 2, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
 
         verifyMatchResultCounts();
 
-        // changes to versioned fields:
-        // there should be two solr documents per record: one with the original value, and one with the updated value
-        updateMatchTestRecords("match1");
-        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 1, 1, 1, 1);
-        setExpectedCountsForMatch("match2", 2, 2, 0, 0, 0, 0, 0, 0);
-        setExpectedCountsForMatch("match3", 2, 0, 2, 0, 0, 0, 0, 0);
-        setExpectedCountsForMatch("match4", 2, 0, 0, 0, 0, 0, 0, 0);
-        setExpectedCountsForMatch("nvmatch1", 2, 2, 2, 2, 0, 0, 0, 0);
-        setExpectedCountsForMatch("nvmatch2", 2, 2, 0, 0, 0, 0, 0, 0);
-        setExpectedCountsForMatch("nvmatch3", 2, 0, 2, 0, 0, 0, 0, 0);
-        setExpectedCountsForMatch("nvmatch4", 2, 0, 0, 0, 0, 0, 0, 0);
-
+        // Update non-versioned fields
+        updateMatchTestRecords(nvfield1.getName(), "nvmatch1");
+        setExpectedCountsForMatch("nvmatch1", 1, 1, 1, 1, 1, 1, 1, 1);
         verifyMatchResultCounts();
-        updateMatchTestRecords("match2");
-        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 1, 1, 0, 0);
+        updateMatchTestRecords(nvfield1.getName(), "nvmatch2");
+        setExpectedCountsForMatch("nvmatch2", 1, 1, 0, 0, 1, 1, 0, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords("match3");
-        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 1, 0, 1, 0);
+        updateMatchTestRecords(nvfield1.getName(), "nvmatch3");
+        setExpectedCountsForMatch("nvmatch3", 1, 0, 1, 0, 1, 0, 1, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords("match4");
-        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 1, 0, 0, 0);
+        updateMatchTestRecords(nvfield1.getName(), "nvmatch4");
+        setExpectedCountsForMatch("nvmatch4", 1, 0, 0, 0, 1, 0, 0, 0);
         verifyMatchResultCounts();
 
-        // changes to unversioned fields:
-        // there should be two solr documents per record, both with the updated value
-        updateMatchTestRecords("nvmatch1");
-        setExpectedCountsForMatch("nvmatch1", 0, 0, 0, 0, 2, 2, 2, 2);
+        // Update versioned fields
+        updateMatchTestRecords(vfield1.getName(), "match1");
+        setExpectedCountsForMatch("match1", 0, 0, 0, 0, 2, 2, 2, 2);
         verifyMatchResultCounts();
-        updateMatchTestRecords("nvmatch2");
-        setExpectedCountsForMatch("nvmatch2", 0, 0, 0, 0, 2, 2, 0, 0);
+        updateMatchTestRecords(vfield1.getName(), "match2");
+        setExpectedCountsForMatch("match2", 0, 0, 0, 0, 2, 2, 0, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords("nvmatch3");
-        setExpectedCountsForMatch("nvmatch3", 0, 0, 0, 0, 2, 0, 2, 0);
+        updateMatchTestRecords(vfield1.getName(), "match3");
+        setExpectedCountsForMatch("match3", 0, 0, 0, 0, 2, 0, 2, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords("nvmatch4");
-        setExpectedCountsForMatch("nvmatch4", 0, 0, 0, 0, 2, 0, 0, 0);
+        updateMatchTestRecords(vfield1.getName(), "match4");
+        setExpectedCountsForMatch("match4", 0, 0, 0, 0, 2, 0, 0, 0);
         verifyMatchResultCounts();
 
-        /******** Test field value based match conditions ********/
-
-        // Unmatched fields should not appear in the index
-        repository.recordBuilder().id("matchfield_versioned")
+        //
+        // Test match on field conditions (has field, field equals) using non versioned fields
+        //
+        repository.recordBuilder().id("match_nvfield")
             .recordType(new QName(NS, "Alpha"))
-            .field(field("ns:match5").getName(), "Bienvenue").create();
-        repository.recordBuilder().id("matchfield_nonversioned")
+            .field(nvfield1.getName(), "jupiter")
+            .field(nvfield2.getName(), "pancake")
+            .field(previewTag.getName(), 1)
+            .create();
+
+        verifyResultCount("nvmatch5:jupiter", 2); // vfield2 is present
+        verifyResultCount("nvmatch6:jupiter", 2); // vfield2=specialvalue
+
+        repository.recordBuilder().id("match_nvfield")
+            .field(nvfield1.getName(), "waffle")
+            .update();
+        commitIndex();
+
+        verifyResultCount("nvmatch5:jupiter", 2); // vfield2 is present
+        verifyResultCount("nvmatch6:jupiter", 0); // vfield2=specialvalue
+
+        Record record = repository.read(repository.getIdGenerator().newRecordId("match_nvfield"));
+        record.delete(nvfield2.getName(), true);
+
+        commitIndex();
+        verifyResultCount("nvmatch5:jupiter", 0); // vfield2 is present
+        verifyResultCount("nvmatch6:jupiter", 0); // vfield2=specialvalue
+
+        //
+        // Test match on field conditions (has field, field equals) using non versioned fields
+        //
+        repository.recordBuilder().id("match_vfield")
             .recordType(new QName(NS, "Alpha"))
-            .field(field("ns:nvmatch5").getName(), "Willkommen").create();
+            .field(vfield1.getName(), "apollo")
+            .field(vfield2.getName(), "bacon")
+            .field(previewTag.getName(), 1)
+            .create();
+
+        verifyResultCount("match5:apollo", 2); // vfield2 is present
+        verifyResultCount("match6:apollo", 2); // vfield2=specialvalue
+
+        repository.recordBuilder().id("match_vfield")
+            .field(vfield1.getName(), "eggs")
+            .update();
+        commitIndex();
+
+        verifyResultCount("match5:apollo", 2); // vfield2 is present in preview and last
+        verifyResultCount("match6:apollo", 1); // vfield2=specialvalue (version tagged with preview still matches)
+
+        record = repository.read(repository.getIdGenerator().newRecordId("match_vfield"));
+        record.delete(vfield2.getName(), true);
 
         commitIndex();
-        verifyResultCount("match5:Bienvenue", 0);
-        verifyResultCount("nvmatch5:GutenTag", 0);
+        verifyResultCount("match5:apollo", 1); // vfield2 is present
+        verifyResultCount("match6:apollo", 1); // vfield2=specialvalue
 
-        // When the match is met, existing fields should appear in the index
-        repository.recordBuilder().id("matchfield_versioned")
-            .field(field("ns:match1").getName(), "Paris").update();
-        repository.recordBuilder().id("matchfield_nonversioned")
-            .field(field("ns:nvmatch1").getName(), "Berlin").update();
-
-        commitIndex();
-        verifyResultCount("match5:Bienvenue", 1);
-        verifyResultCount("nvmatch5:Willkommen", 1);
-
-        // When matched fields change, the index should be updated
-        repository.recordBuilder().id("matchfield_versioned")
-            .field(field("ns:match5").getName(), "Baguette").update();
-        repository.recordBuilder().id("matchfield_nonversioned")
-            .field(field("ns:nvmatch5").getName(), "Roggenmischbrot").update();
-
-        commitIndex();
-        verifyResultCount("match5:Baguette", 1);
-        verifyResultCount("nvmatch5:Roggenmischbrot", 1);
-
-        // When the match condition is no longer met, the entries should disappear from the index
-        repository.recordBuilder().id("matchfield_versioned")
-            .field(field("ns:match1").getName(), "France").update();
-        repository.recordBuilder().id("matchfield_nonversioned")
-            .field(field("ns:nvmatch1").getName(), "Deutschland").update();
-
-        commitIndex();
-        verifyResultCount("nvmatch5:Baguette", 0);
-        verifyResultCount("nvmatch5:Roggenmischbrot", 0);
-
+        //
+        // TODO: match on variant properties
+        //
     }
 
     private void verifyMatchResultCounts() throws Exception{
@@ -576,12 +565,13 @@ public class IndexerTest {
         }
     }
 
-    private void updateMatchTestRecords(String fieldToUpdate) throws InterruptedException, RepositoryException {
+    private void updateMatchTestRecords(QName lilyField, String solrField) throws InterruptedException, RepositoryException {
         for (String id: new String[] { "alpha", "beta", "gamma", "delta" }) {
-            Record record = repository.read(repository.getIdGenerator().newRecordId(id));
-            record.setField(field("ns:" + fieldToUpdate).getName(), id+ "_" + fieldToUpdate + "_updated");
-            record.setField(previewTag.getName(), 1L);
-            repository.update(record);
+            repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId(id))
+                .field(lilyField, id+ "_" + solrField + "_updated")
+                .field(previewTag.getName(), 1L)
+                .update();
         }
     }
 
@@ -603,8 +593,9 @@ public class IndexerTest {
             .id(id);
 
         for (int i = 1; i <= 4; i++) {
-            builder.field(new QName(NS, "match" + i), id + "_" + "match" + i + "_orig");
-            builder.field(new QName(NS, "nvmatch" + i), id + "_" + "nvmatch" + i + "_orig");
+            builder.field(vfield1.getName(), id + "_" + "match" + i + "_orig");
+            builder.field(nvfield1.getName(), id + "_" + "nvmatch" + i + "_orig");
+            builder.field(previewTag.getName(), 1);
         }
 
         builder.create();
