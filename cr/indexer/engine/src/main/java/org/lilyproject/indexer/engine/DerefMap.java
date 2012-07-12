@@ -115,7 +115,9 @@ public interface DerefMap {
      * Find all record ids which depend on a given field of a given record (in any vtag). The field can be
      * <code>null</code> if you want to ignore filtering on the field.
      * </p>
-     * This method is identical to calling #findDependantsOf(dependency, field, null)
+     * This method is identical to calling {@link DerefMap#findDependantsOf(org.lilyproject.repository.api.RecordId,
+     * org.lilyproject.repository.api.SchemaId, org.lilyproject.repository.api.SchemaId)} with <code>null</code> as
+     * vtag.
      *
      * @param dependency the record to find dependant record ids for
      * @param field      the field of the given dependency which is dereferenced in the dependant, <code>null</code> to
