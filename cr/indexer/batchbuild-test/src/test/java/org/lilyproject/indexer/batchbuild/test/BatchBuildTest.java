@@ -3,7 +3,6 @@ package org.lilyproject.indexer.batchbuild.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -38,6 +37,7 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.solrtestfw.SolrProxy;
@@ -103,7 +103,7 @@ public class BatchBuildTest {
         TypeManager typeManager = lilyProxy.getLilyServerProxy().getClient().getRepository().getTypeManager();
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("batchindex-test", "field1"),
                 Scope.NON_VERSIONED);
-        FieldType ft2 =typeManager.createFieldType("LINK", new QName("batchindex-test", "linkField"), Scope.NON_VERSIONED); 
+        FieldType ft2 =typeManager.createFieldType("LINK", new QName("batchindex-test", "linkField"), Scope.NON_VERSIONED);
         typeManager.recordTypeBuilder()
                 .defaultNamespace("batchindex-test")
                 .name("rt1")
@@ -189,7 +189,7 @@ public class BatchBuildTest {
 
     /**
      * Test if the default batch index conf setting works
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -198,9 +198,9 @@ public class BatchBuildTest {
         SolrProxy solrProxy = lilyProxy.getSolrProxy();
 
         WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
-        
+
         byte[] defaultConf = getResourceAsByteArray("defaultBatchIndexConf-test2.json");
-        setBatchIndexConf(defaultConf, null, false);        
+        setBatchIndexConf(defaultConf, null, false);
 
         String assertId = "batch-index-test2";
         //
@@ -227,13 +227,13 @@ public class BatchBuildTest {
         Assert.assertEquals("USER." + "batch-index-test2", response.getResults().get(0).getFieldValue("lily.id"));
         // check that  the last used batch index conf = default
         IndexDefinition index = model.getMutableIndex(INDEX_NAME);
-        
+
         Assert.assertEquals(JsonFormat.deserialize(defaultConf), JsonFormat.deserialize(index.getLastBatchBuildInfo().getBatchIndexConfiguration()));
     }
 
     /**
      * Test setting a custom batch index conf.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -241,9 +241,9 @@ public class BatchBuildTest {
         Repository repository = lilyProxy.getLilyServerProxy().getClient().getRepository();
         SolrProxy solrProxy = lilyProxy.getSolrProxy();
         WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
-        
+
         byte[] defaultConf = getResourceAsByteArray("defaultBatchIndexConf-test2.json");
-        setBatchIndexConf(defaultConf, null, false);     
+        setBatchIndexConf(defaultConf, null, false);
 
         String assertId1 = "batch-index-custom-test3";
         String assertId2 = "batch-index-test3";
@@ -282,7 +282,7 @@ public class BatchBuildTest {
         repository.update(recordToChange1);
         repository.update(recordToChange2);
 
-        byte[] batchConf = getResourceAsByteArray("batchIndexConf-test3.json");          
+        byte[] batchConf = getResourceAsByteArray("batchIndexConf-test3.json");
         setBatchIndexConf(defaultConf, batchConf, true);
 
         boolean indexSuccess = false;
@@ -298,7 +298,7 @@ public class BatchBuildTest {
                     boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
                     indexSuccess = successFlag && (amountFailed == null || amountFailed == 0L);
                 } else if (definition.getBatchBuildState() == IndexBatchBuildState.BUILDING) {
-                    Assert.assertEquals(JsonFormat.deserialize(batchConf), 
+                    Assert.assertEquals(JsonFormat.deserialize(batchConf),
                             JsonFormat.deserialize(definition.getActiveBatchBuildInfo().getBatchIndexConfiguration()));
                 }
             }
@@ -340,13 +340,13 @@ public class BatchBuildTest {
 
     /**
      * This test should cause a failure when adding a custom batchindex conf without setting a buildrequest
-     * 
+     *
      * @throws Exception
      */
     @Test(expected = org.lilyproject.indexer.model.api.IndexValidityException.class)
     public void testCustomBatchIndexConf_NoBuild() throws Exception {
-        setBatchIndexConf(getResourceAsByteArray("defaultBatchIndexConf-test2.json"), 
-                getResourceAsByteArray("batchIndexConf-test3.json"), false);        
+        setBatchIndexConf(getResourceAsByteArray("defaultBatchIndexConf-test2.json"),
+                getResourceAsByteArray("batchIndexConf-test3.json"), false);
     }
 
     private byte[] getResourceAsByteArray(String name) throws IOException {
@@ -358,12 +358,12 @@ public class BatchBuildTest {
             IOUtils.closeQuietly(is);
         }
     }
-    
+
     @Test
     public void testClearDerefMap() throws Exception {
         Repository repository = lilyProxy.getLilyServerProxy().getClient().getRepository();
-        DerefMap derefMap = DerefMapHbaseImpl.create(INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), repository.getIdGenerator());        
-        
+        DerefMap derefMap = DerefMapHbaseImpl.create(INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), repository.getIdGenerator());
+
         Record linkedRecord = repository.recordBuilder()
             .id("deref-test-linkedrecord")
             .recordType(rt1.getName())
@@ -376,25 +376,26 @@ public class BatchBuildTest {
             .field(ft1.getName(), "deref test main")
             .field(ft2.getName(), new Link(linkedRecord.getId()))
             .create();
-        
-        DerefMap.DependantRecordIdsIterator it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId());
+
+        SchemaId vtag = repository.getTypeManager().getFieldTypeByName(VersionTag.LAST).getId();
+        DerefMap.DependantRecordIdsIterator it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
         Assert.assertTrue(!it.hasNext());
-        
+
         setBatchIndexConf(getResourceAsByteArray("batchIndexConf-testClearDerefmap-false.json"), null, false);
         buildAndCommit();
-        
+
         QueryResponse response = lilyProxy.getSolrProxy().getSolrServer().query(new SolrQuery("field1:deref\\ test\\ main"));
         Assert.assertEquals(1, response.getResults().size());
-        
-        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId());
+
+        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
         Assert.assertTrue(it.hasNext());
-        
+
         setBatchIndexConf(getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), null, false);
         buildAndCommit();
-        
-        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId());
+
+        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
         Assert.assertTrue(!it.hasNext());
-        
+
     }
 
     private void buildAndCommit() throws Exception {
@@ -405,21 +406,21 @@ public class BatchBuildTest {
             Assert.fail("Batch build did not end after " + BUILD_TIMEOUT + " millis");
         }
     }
-    
-    private static void setBatchIndexConf (byte[] defaultConf, byte[] customConf, boolean buildNow) 
-            throws IndexValidityException, KeeperException, InterruptedException, ZkConnectException, 
+
+    private static void setBatchIndexConf (byte[] defaultConf, byte[] customConf, boolean buildNow)
+            throws IndexValidityException, KeeperException, InterruptedException, ZkConnectException,
             IndexModelException, IndexNotFoundException, ZkLockException, IndexUpdateException,
             IndexConcurrentModificationException{
         WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
-        String lock = model.lockIndex(INDEX_NAME);        
-        
+        String lock = model.lockIndex(INDEX_NAME);
+
         try {
-            IndexDefinition index = model.getMutableIndex(INDEX_NAME);  
+            IndexDefinition index = model.getMutableIndex(INDEX_NAME);
             if (defaultConf != null)
                 index.setDefaultBatchIndexConfiguration(defaultConf);
             if (customConf != null)
                 index.setBatchIndexConfiguration(customConf);
-            if (buildNow) 
+            if (buildNow)
                 index.setBatchBuildState(IndexBatchBuildState.BUILD_REQUESTED);
 
             model.updateIndex(index, lock);
