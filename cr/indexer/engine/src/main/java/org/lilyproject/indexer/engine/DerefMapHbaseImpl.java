@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
+import com.google.common.collect.Sets;
 import com.gotometrics.orderly.StringRowKey;
 import com.gotometrics.orderly.StructBuilder;
 import com.gotometrics.orderly.StructRowKey;
@@ -437,8 +438,8 @@ public class DerefMapHbaseImpl implements DerefMap {
     }
 
     @Override
-    public DependantRecordIdsIterator findDependantsOf(RecordId dependency, SchemaId field, SchemaId vtag)
-            throws IOException {
+    public DependantRecordIdsIterator findDependantsOf(RecordId dependency, Set<SchemaId> fields,
+                                                       SchemaId vtag) throws IOException {
         final RecordId master = dependency.getMaster();
 
         final Query query = new Query();
@@ -447,34 +448,40 @@ public class DerefMapHbaseImpl implements DerefMap {
             query.addEqualsCondition("dependant_vtag", vtag.getBytes());
 
         final QueryResult queryResult = backwardDerefIndex.performQuery(query);
-        return new DependantRecordIdsIteratorImpl(queryResult, dependency, field);
+        return new DependantRecordIdsIteratorImpl(queryResult, dependency, fields);
     }
 
     @Override
-    public DependantRecordIdsIterator findDependantsOf(RecordId dependency, SchemaId field)
-            throws IOException {
-        return findDependantsOf(dependency, field, null);
+    public DependantRecordIdsIterator findDependantsOf(RecordId dependency, SchemaId field,
+                                                       SchemaId vtag) throws IOException {
+        return findDependantsOf(dependency, field == null ? null : Sets.newHashSet(field), vtag);
+    }
+
+    @Override
+    public DependantRecordIdsIterator findDependantsOf(RecordId dependency) throws IOException {
+        return findDependantsOf(dependency, (Set<SchemaId>) null, null);
     }
 
     final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator {
         final QueryResult queryResult;
         final RecordId dependencyRecordId;
-        final SchemaId queriedField;
+        final Set<SchemaId> queriedFields;
 
         /**
          * @param queryResult        the query result to filter
          * @param dependencyRecordId the dependency record, used to match the variant property pattern with
-         * @param queriedField       the queried field, used to match with the field information stored in the deref
-         *                           map (the queried field is allowed to be <code>null</code> in order to only match
+         * @param queriedFields      the queried fields, used to match with the field information stored in the deref
+         *                           map (the queried fields is allowed to be <code>null</code> in order to only match
          *                           results that express dependencies that do not go to a field)
          */
-        DependantRecordIdsIteratorImpl(QueryResult queryResult, RecordId dependencyRecordId, SchemaId queriedField) {
+        DependantRecordIdsIteratorImpl(QueryResult queryResult, RecordId dependencyRecordId,
+                                       Set<SchemaId> queriedFields) {
             ArgumentValidator.notNull(queryResult, "queryResult");
             ArgumentValidator.notNull(dependencyRecordId, "dependencyRecordId");
 
             this.queryResult = queryResult;
             this.dependencyRecordId = dependencyRecordId;
-            this.queriedField = queriedField;
+            this.queriedFields = queriedFields;
         }
 
         @Override
@@ -498,7 +505,7 @@ public class DerefMapHbaseImpl implements DerefMap {
                         deserializeVariantPropertiesPattern(
                                 (byte[]) queryResult.getIndexField("variant_properties_pattern"));
 
-                if ((queriedField == null || dependencyFields.contains(queriedField)) &&
+                if ((queriedFields == null || containsAtLeastOneElementOf(dependencyFields, queriedFields)) &&
                         variantPropertiesPattern.matches(dependencyRecordId.getVariantProperties())) {
                     return idGenerator.fromBytes(nextIdentifier);
                 }
@@ -507,6 +514,10 @@ public class DerefMapHbaseImpl implements DerefMap {
             return null; // query result exhausted
         }
 
+        private <T> boolean containsAtLeastOneElementOf(Set<T> set, Set<T> elements) {
+            set.retainAll(elements);
+            return !set.isEmpty();
+        }
 
         @Override
         public boolean hasNext() throws IOException {

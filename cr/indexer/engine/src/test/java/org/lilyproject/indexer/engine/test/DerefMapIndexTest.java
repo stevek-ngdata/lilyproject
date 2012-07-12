@@ -628,7 +628,7 @@ public class DerefMapIndexTest {
     }
 
     private Set<RecordId> dependencySet(RecordId id, SchemaId fieldId) throws Exception {
-        DependantRecordIdsIterator reverse = derefMap.findDependantsOf(id, fieldId);
+        DependantRecordIdsIterator reverse = derefMap.findDependantsOf(id, fieldId, null);
         Set<RecordId> result = Sets.newHashSet();
         while (reverse.hasNext()) {
             result.add(reverse.next());
