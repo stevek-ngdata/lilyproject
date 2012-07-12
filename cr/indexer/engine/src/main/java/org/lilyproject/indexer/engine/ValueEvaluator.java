@@ -301,9 +301,11 @@ public class ValueEvaluator {
                     RecordId linkedRecordId = link.resolve(ctx.contextRecord, idGenerator);
                     Record linkedRecord = null;
                     try {
-                        linkedRecord = repository.read(linkedRecordId);
+                        linkedRecord = VersionTag.getIdRecord(linkedRecordId, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
                     } catch (RecordNotFoundException rnfe) {
-                        // ok
+                        // ok, continue with null value
+                    } catch (VersionNotFoundException e) {
+                        // ok, continue with null value
                     }
                     indexUpdateBuilder.push(linkedRecord, new Dep(linkedRecordId, Collections.<String>emptySet()));
                     evalDerefValue(deref, fieldNum + 1, indexUpdateBuilder, values);
@@ -398,11 +400,17 @@ public class ValueEvaluator {
             Dep newDep = ctx.dep.plus(idGenerator, dimensions);
             // now find all the records of this newly defined variant
             final ArrayList<Record> result = scanVariants(indexUpdateBuilder, newDep);
-
-            for (Record record: result) {
-                indexUpdateBuilder.push(record, newDep);
+            if (result == null || result.size() == 0) {
+                //if there are no records, we must continue with evalDeref with a 'null' record!
+                indexUpdateBuilder.push(null, newDep);
                 evalDerefValue(deref, fieldNum + 1, indexUpdateBuilder, values);
                 indexUpdateBuilder.pop();
+            } else {
+                for (Record record: result) {
+                    indexUpdateBuilder.push(record, newDep);
+                    evalDerefValue(deref, fieldNum + 1, indexUpdateBuilder, values);
+                    indexUpdateBuilder.pop();
+                }
             }
         }
     }

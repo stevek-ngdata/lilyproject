@@ -969,10 +969,10 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("v_deref3:fig", 2);
-            verifyResultCount("v_deref2:fig", 1);
-            verifyResultCount("v_deref4:banana", 1);
-            verifyResultCount("v_deref5:coconut", 1);
+            verifyResultCount("v_deref3:fig", 2);       //master=>v_field1 (record3 and record4)
+            verifyResultCount("v_deref2:fig", 1);       //-branch,-lang=>v_field1 (record4)
+            verifyResultCount("v_deref4:banana", 1);    //-branch=>v_field1 (record4)
+            verifyResultCount("v_deref5:coconut", 1);   //+branch=>v_field1 (record3)
 
             // remove the live tag from record1
             log.debug("Begin test V7");
