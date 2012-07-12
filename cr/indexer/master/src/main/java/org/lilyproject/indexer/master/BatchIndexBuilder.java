@@ -67,6 +67,7 @@ public class BatchIndexBuilder {
         //
         // Pass information about the index to be built
         //
+        job.getConfiguration().set("org.lilyproject.indexer.batchbuild.indexname", index.getName());
         String indexerConfString = Base64.encodeBytes(index.getConfiguration(), Base64.GZIP);
         job.getConfiguration().set("org.lilyproject.indexer.batchbuild.indexerconf", indexerConfString);
 

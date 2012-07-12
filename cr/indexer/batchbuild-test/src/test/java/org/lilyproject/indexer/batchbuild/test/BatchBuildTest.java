@@ -375,10 +375,9 @@ public class BatchBuildTest {
             .recordType(rt1.getName())
             .field(ft1.getName(), "deref test main")
             .field(ft2.getName(), new Link(linkedRecord.getId()))
-            .create();        
-                
-        DerefMap.Dependency dep = new DerefMap.Dependency(linkedRecord.getId(), repository.getTypeManager().getFieldTypeByName(VersionTag.LAST).getId());
-        DerefMap.DependantRecordIdsIterator it = derefMap.findDependantsOf(dep, ft2.getId());
+            .create();
+        
+        DerefMap.DependantRecordIdsIterator it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId());
         Assert.assertTrue(!it.hasNext());
         
         setBatchIndexConf(getResourceAsByteArray("batchIndexConf-testClearDerefmap-false.json"), null, false);
@@ -387,14 +386,15 @@ public class BatchBuildTest {
         QueryResponse response = lilyProxy.getSolrProxy().getSolrServer().query(new SolrQuery("field1:deref\\ test\\ main"));
         Assert.assertEquals(1, response.getResults().size());
         
-        it = derefMap.findDependantsOf(dep, ft2.getId());
+        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId());
         Assert.assertTrue(it.hasNext());
         
         setBatchIndexConf(getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), null, false);
         buildAndCommit();
         
-        it = derefMap.findDependantsOf(dep, ft2.getId());
+        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId());
         Assert.assertTrue(!it.hasNext());
+        
     }
 
     private void buildAndCommit() throws Exception {

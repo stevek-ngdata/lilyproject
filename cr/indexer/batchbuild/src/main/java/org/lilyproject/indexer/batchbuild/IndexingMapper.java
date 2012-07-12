@@ -111,8 +111,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             SolrClientConfig solrConfig = new SolrClientConfig();
             solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
             solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
-
-            String indexName = "batchjob"; // we should pass on the real index name.
+            
+            String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
 
             SolrShardManager solrShardMgr = new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient,
                     solrConfig);
