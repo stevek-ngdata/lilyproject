@@ -770,12 +770,12 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref1:cucumber", 1);
-            verifyResultCount("nv_deref2:cucumber", 1);
-            verifyResultCount("nv_deref3:cucumber", 2);
-            verifyResultCount("nv_deref5:broccoli", 1);
-            verifyResultCount("nv_deref6:broccoli", 2);
-            verifyResultCount("nv_deref7:broccoli", 1);
+            verifyResultCount("nv_deref1:cucumber", 1); // record2 nv:linkField1 points to record1
+            verifyResultCount("nv_deref2:cucumber", 1); // record4 -branch,-lang produces record1
+            verifyResultCount("nv_deref3:cucumber", 2); // record3 master and record4 master produces record1
+            verifyResultCount("nv_deref5:broccoli", 1); // record3 +branch points produces record4
+            verifyResultCount("nv_deref6:broccoli", 2); // record1(last AND nvTag) +branch,+lang produces record4
+            verifyResultCount("nv_deref7:broccoli", 1); // record3 +branch=dev produces record4
 
             // Update record1, check if index of the others is updated
             log.debug("Begin test NV9");
@@ -784,13 +784,13 @@ public class IndexerTest {
             record1 = repository.update(record1);
 
             commitIndex();
-            verifyResultCount("nv_deref1:tomato", 1);
-            verifyResultCount("nv_deref2:tomato", 1);
-            verifyResultCount("nv_deref3:tomato", 2);
-            verifyResultCount("nv_deref1:cucumber", 0);
-            verifyResultCount("nv_deref2:cucumber", 0);
-            verifyResultCount("nv_deref3:cucumber", 0);
-            verifyResultCount("nv_deref4:eggplant", 1);
+            verifyResultCount("nv_deref1:tomato", 1); // record2 nv:linkField1 points to record1
+            verifyResultCount("nv_deref2:tomato", 1); // record4 -branch,-lang produces record1
+            verifyResultCount("nv_deref3:tomato", 2); // record3 master and record4 master produces record1
+            verifyResultCount("nv_deref1:cucumber", 0); // old value should be removed from index (non versioned field!)
+            verifyResultCount("nv_deref2:cucumber", 0); // old value should be removed from index (non versioned field!)
+            verifyResultCount("nv_deref3:cucumber", 0); // old value should be removed from index (non versioned field!)
+            verifyResultCount("nv_deref4:eggplant", 1); // record4 -branch produces record3
 
             // Update record3, index for record4 should be updated
             log.debug("Begin test NV10");
@@ -799,21 +799,21 @@ public class IndexerTest {
             repository.update(record3);
 
             commitIndex();
-            verifyResultCount("nv_deref4:courgette", 1);
-            verifyResultCount("nv_deref4:eggplant", 0);
+            verifyResultCount("nv_deref4:courgette", 1); // record4 -branch points to record3 (new value)
+            verifyResultCount("nv_deref4:eggplant", 0); // old value should be removed from index (non versioned field!)
 
             // Update record4, index for record3 and record1 should be updated
             log.debug("Begin test NV10.1");
-            record4.setField(nvfield1.getName(), "courgette");
+            record4.setField(nvfield1.getName(), "courgette"); //FIXME: 2nd courgette; use something else here
             expectEvent(UPDATE, record4.getId(), nvfield1.getId());
             repository.update(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref5:courgette", 1);
-            verifyResultCount("nv_deref5:broccoli", 0);
-            verifyResultCount("nv_deref6:courgette", 2);
-            verifyResultCount("nv_deref6:broccoli", 0);
-            verifyResultCount("nv_deref7:courgette", 1);
+            verifyResultCount("nv_deref5:courgette", 1); // record3 +branch produces record4
+            verifyResultCount("nv_deref5:broccoli", 0);  // old value should be removed from index
+            verifyResultCount("nv_deref6:courgette", 2); // record1(last and nvtag) +branch,+lang produces record6
+            verifyResultCount("nv_deref6:broccoli", 0);  // TODO
+            verifyResultCount("nv_deref7:courgette", 1); // TODO
             verifyResultCount("nv_deref7:broccoli", 0);
 
             // Delete record 3: index for record 4 should be updated
@@ -969,10 +969,10 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("v_deref3:fig", 2);
-            verifyResultCount("v_deref2:fig", 1);
-            verifyResultCount("v_deref4:banana", 1);
-            verifyResultCount("v_deref5:coconut", 1);
+            verifyResultCount("v_deref3:fig", 2);       //master=>v_field1 (record3 and record4)
+            verifyResultCount("v_deref2:fig", 1);       //-branch,-lang=>v_field1 (record4)
+            verifyResultCount("v_deref4:banana", 1);    //-branch=>v_field1 (record4)
+            verifyResultCount("v_deref5:coconut", 1);   //+branch=>v_field1 (record3)
 
             // remove the live tag from record1
             log.debug("Begin test V7");

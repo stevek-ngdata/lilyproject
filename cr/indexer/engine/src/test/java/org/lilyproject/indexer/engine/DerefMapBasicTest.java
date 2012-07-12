@@ -75,7 +75,7 @@ public class DerefMapBasicTest {
         final Set<DerefMap.DependencyEntry> found = derefMap.findDependencies(id1, dummyVtag);
         assertTrue(found.isEmpty());
 
-        final DerefMap.DependantRecordIdsIterator dependants = derefMap.findDependantsOf(id1, dummyField);
+        final DerefMap.DependantRecordIdsIterator dependants = derefMap.findDependantsOf(id1, dummyField, dummyVtag);
         assertFalse(dependants.hasNext());
     }
 
@@ -100,17 +100,23 @@ public class DerefMapBasicTest {
         assertEquals(dependency, found.iterator().next().getDependency());
 
         // check that the dependant is found as only dependant of the dependency via the dependencyField
-        final DerefMap.DependantRecordIdsIterator dependants =
-                derefMap.findDependantsOf(dependency, dependencyField);
+        DerefMap.DependantRecordIdsIterator dependants =
+                derefMap.findDependantsOf(dependency, dependencyField, dummyVtag);
+        assertTrue(dependants.hasNext());
+        assertEquals(dependant, dependants.next());
+        assertFalse(dependants.hasNext());
+
+        // idem but with a set of fields among which the dependencyField
+        dependants = derefMap.findDependantsOf(dependency, Sets.newHashSet(dependencyField, anotherField), dummyVtag);
         assertTrue(dependants.hasNext());
         assertEquals(dependant, dependants.next());
         assertFalse(dependants.hasNext());
 
         // check that nothing is found as dependency of the dependant
-        assertFalse(derefMap.findDependantsOf(dependant, dependencyField).hasNext());
+        assertFalse(derefMap.findDependantsOf(dependant, dependencyField, dummyVtag).hasNext());
 
         // check that nothing is found as dependency of the dependency via another field than the dependencyField
-        assertFalse(derefMap.findDependantsOf(dependency, anotherField).hasNext());
+        assertFalse(derefMap.findDependantsOf(dependency, anotherField, dummyVtag).hasNext());
 
         // now update the dependency to be from the dependant to the dependencyAfterUpdate (via the same field)
         final HashMap<DerefMap.DependencyEntry, Set<SchemaId>> updatedDependencies =
@@ -126,13 +132,13 @@ public class DerefMapBasicTest {
 
         // check that the dependant is found as only dependant of the dependencyAfterUpdate via the dependencyField
         final DerefMap.DependantRecordIdsIterator dependantsAfterUpdate =
-                derefMap.findDependantsOf(dependencyAfterUpdate, dependencyField);
+                derefMap.findDependantsOf(dependencyAfterUpdate, dependencyField, dummyVtag);
         assertTrue(dependantsAfterUpdate.hasNext());
         assertEquals(dependant, dependantsAfterUpdate.next());
         assertFalse(dependantsAfterUpdate.hasNext());
 
         // check that nothing is found any longer as dependency on the previous dependency (from before the update)
-        assertFalse(derefMap.findDependantsOf(dependency, dependencyField).hasNext());
+        assertFalse(derefMap.findDependantsOf(dependency, dependencyField, dummyVtag).hasNext());
     }
 
     @Test
@@ -156,8 +162,7 @@ public class DerefMapBasicTest {
         assertEquals(Sets.newHashSet("foo"), foundDependencyEntry.getMoreDimensionedVariants());
 
         // check that the dependant is found as only dependant of the dependency (without specifying a field)
-        DerefMap.DependantRecordIdsIterator dependants =
-                derefMap.findDependantsOf(dependency, null);
+        DerefMap.DependantRecordIdsIterator dependants = derefMap.findDependantsOf(dependency);
         assertTrue(dependants.hasNext());
         assertEquals(dependant, dependants.next());
         assertFalse(dependants.hasNext());
@@ -167,41 +172,41 @@ public class DerefMapBasicTest {
 
         final RecordId shouldTriggerOurDependant =
                 ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "another-value"));
-        dependants = derefMap.findDependantsOf(shouldTriggerOurDependant, null);
+        dependants = derefMap.findDependantsOf(shouldTriggerOurDependant);
         assertTrue(dependants.hasNext());
         assertEquals(dependant, dependants.next());
         assertFalse(dependants.hasNext());
 
         // doesn't have the foo property
         final RecordId shouldNotTriggerOurDependant1 = ids.newRecordId("master", ImmutableMap.of("bar", "x"));
-        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant1, null).hasNext());
+        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant1).hasNext());
 
         // doesn't have the bar property
         final RecordId shouldNotTriggerOurDependant2 = ids.newRecordId("master", ImmutableMap.of("foo", "x"));
-        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant2, null).hasNext());
+        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant2).hasNext());
 
         // wrong value for the bar property
         final RecordId shouldNotTriggerOurDependant3 =
                 ids.newRecordId("master", ImmutableMap.of("bar", "y", "foo", "another-value"));
-        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant3, null).hasNext());
+        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant3).hasNext());
 
         // additional unmatched property
         final RecordId shouldNotTriggerOurDependant4 =
                 ids.newRecordId("master", ImmutableMap.of("bar", "x", "foo", "another-value", "baz", "z"));
-        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant4, null).hasNext());
+        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant4).hasNext());
 
         // another master
         final RecordId shouldNotTriggerOurDependant5 =
                 ids.newRecordId("another-master", ImmutableMap.of("bar", "x", "foo", "another-value"));
-        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant5, null).hasNext());
+        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant5).hasNext());
 
         // wrong properties
         final RecordId shouldNotTriggerOurDependant6 = ids.newRecordId("master", ImmutableMap.of("a", "b", "c", "d"));
-        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant6, null).hasNext());
+        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant6).hasNext());
 
         // no properties
         final RecordId shouldNotTriggerOurDependant7 = ids.newRecordId("master", ImmutableMap.<String, String>of());
-        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant7, null).hasNext());
+        assertFalse(derefMap.findDependantsOf(shouldNotTriggerOurDependant7).hasNext());
     }
 
     /**
@@ -232,37 +237,37 @@ public class DerefMapBasicTest {
 
         // check that the dependant is found as only dependant of the dependencies via the corresponding fields
         DerefMap.DependantRecordIdsIterator viaDependency1AndLinkField1 =
-                derefMap.findDependantsOf(dependency1, linkField1);
+                derefMap.findDependantsOf(dependency1, linkField1, dummyVtag);
         assertFalse(viaDependency1AndLinkField1.hasNext());
 
         DerefMap.DependantRecordIdsIterator viaDependency2AndLinkField1 =
-                derefMap.findDependantsOf(dependency2, linkField1);
+                derefMap.findDependantsOf(dependency2, linkField1, dummyVtag);
         assertFalse(viaDependency2AndLinkField1.hasNext());
 
         DerefMap.DependantRecordIdsIterator viaDependency1AndLinkField2 =
-                derefMap.findDependantsOf(dependency1, linkField2);
+                derefMap.findDependantsOf(dependency1, linkField2, dummyVtag);
         assertTrue(viaDependency1AndLinkField2.hasNext());
         assertEquals(dependant, viaDependency1AndLinkField2.next());
         assertFalse(viaDependency1AndLinkField2.hasNext());
 
         DerefMap.DependantRecordIdsIterator viaDependency2AndLinkField2 =
-                derefMap.findDependantsOf(dependency2, linkField2);
+                derefMap.findDependantsOf(dependency2, linkField2, dummyVtag);
         assertFalse(viaDependency2AndLinkField2.hasNext());
 
         DerefMap.DependantRecordIdsIterator viaDependency2AndField =
-                derefMap.findDependantsOf(dependency2, field);
+                derefMap.findDependantsOf(dependency2, field, dummyVtag);
         assertTrue(viaDependency2AndField.hasNext());
         assertEquals(dependant, viaDependency2AndField.next());
         assertFalse(viaDependency2AndField.hasNext());
 
         DerefMap.DependantRecordIdsIterator viaDependency1WithoutSpecifyingField =
-                derefMap.findDependantsOf(dependency1, null);
+                derefMap.findDependantsOf(dependency1);
         assertTrue(viaDependency1WithoutSpecifyingField.hasNext());
         assertEquals(dependant, viaDependency1WithoutSpecifyingField.next());
         assertFalse(viaDependency1WithoutSpecifyingField.hasNext());
 
         DerefMap.DependantRecordIdsIterator viaDependency2WithoutSpecifyingField =
-                derefMap.findDependantsOf(dependency2, null);
+                derefMap.findDependantsOf(dependency2);
         assertTrue(viaDependency2WithoutSpecifyingField.hasNext());
         assertEquals(dependant, viaDependency2WithoutSpecifyingField.next());
         assertFalse(viaDependency2WithoutSpecifyingField.hasNext());
@@ -299,13 +304,13 @@ public class DerefMapBasicTest {
 
         // check that the dependant is found as only dependant of the dependencies via the corresponding fields
         DerefMap.DependantRecordIdsIterator viaDependency1AndLinkField2 =
-                derefMap.findDependantsOf(dependency1, linkField2);
+                derefMap.findDependantsOf(dependency1, linkField2, dummyVtag);
         assertTrue(viaDependency1AndLinkField2.hasNext());
         assertEquals(dependant, viaDependency1AndLinkField2.next());
         assertFalse(viaDependency1AndLinkField2.hasNext());
 
         DerefMap.DependantRecordIdsIterator viaDependency2AndLinkField3 =
-                derefMap.findDependantsOf(dependency2, linkField3);
+                derefMap.findDependantsOf(dependency2, linkField3, dummyVtag);
         assertTrue(viaDependency2AndLinkField3.hasNext());
         assertEquals(dependant, viaDependency2AndLinkField3.next());
         assertFalse(viaDependency2AndLinkField3.hasNext());
@@ -347,7 +352,7 @@ public class DerefMapBasicTest {
         final RecordId someRecordLikeDependency1WithProp2 =
                 ids.newRecordId("dependency1", ImmutableMap.of("prop2", "value"));
         DerefMap.DependantRecordIdsIterator scenario1 =
-                derefMap.findDependantsOf(someRecordLikeDependency1WithProp2, field);
+                derefMap.findDependantsOf(someRecordLikeDependency1WithProp2, field, dummyVtag);
         assertTrue(scenario1.hasNext());
         assertEquals(dependant, scenario1.next());
         assertFalse(scenario1.hasNext());
@@ -356,7 +361,7 @@ public class DerefMapBasicTest {
         final RecordId someRecordLikeDependantWithProp1 =
                 ids.newRecordId("dependant", ImmutableMap.of("prop1", "value"));
         DerefMap.DependantRecordIdsIterator scenario2 =
-                derefMap.findDependantsOf(someRecordLikeDependantWithProp1, linkField1);
+                derefMap.findDependantsOf(someRecordLikeDependantWithProp1, linkField1, dummyVtag);
         assertTrue(scenario2.hasNext());
         assertEquals(dependant, scenario2.next());
         assertFalse(scenario2.hasNext());
@@ -383,14 +388,14 @@ public class DerefMapBasicTest {
 
         // check that the dependant is found as only dependant of the dependency1 via the dependencyField
         final DerefMap.DependantRecordIdsIterator dependantsOf1 =
-                derefMap.findDependantsOf(dependency1, dependencyField);
+                derefMap.findDependantsOf(dependency1, dependencyField, dummyVtag);
         assertTrue(dependantsOf1.hasNext());
         assertEquals(dependant, dependantsOf1.next());
         assertFalse(dependantsOf1.hasNext());
 
         // check that the dependant is also found as only dependant of the dependency2 via the dependencyField
         final DerefMap.DependantRecordIdsIterator dependantsOf2 =
-                derefMap.findDependantsOf(dependency2, dependencyField);
+                derefMap.findDependantsOf(dependency2, dependencyField, dummyVtag);
         assertTrue(dependantsOf2.hasNext());
         assertEquals(dependant, dependantsOf2.next());
         assertFalse(dependantsOf2.hasNext());
@@ -411,7 +416,7 @@ public class DerefMapBasicTest {
         derefMap.updateDependencies(v1variant, dummyVtag, dependencies);
         derefMap.updateDependencies(v1v2variant, dummyVtag, dependencies);
 
-        Set<RecordId> recordIds = asRecordIds(derefMap.findDependantsOf(master, null));
+        Set<RecordId> recordIds = asRecordIds(derefMap.findDependantsOf(master));
         assertEquals(recordIds, Sets.newHashSet(v1variant, v1v2variant));
     }
 
@@ -443,7 +448,7 @@ public class DerefMapBasicTest {
 
         // check that both dependant1 and dependant2 are found as dependants of the dependency
         final DerefMap.DependantRecordIdsIterator dependants =
-                derefMap.findDependantsOf(dependency, dependencyField);
+                derefMap.findDependantsOf(dependency, dependencyField, dummyVtag);
         assertTrue(dependants.hasNext());
         final RecordId firstFoundDependant = dependants.next();
         assertTrue(dependants.hasNext());
@@ -514,7 +519,7 @@ public class DerefMapBasicTest {
 
             derefMap.updateDependencies(var1, dummyVtag, dependencies);
 
-            Set<RecordId> recordIds = asRecordIds(derefMap.findDependantsOf(var2, null));
+            Set<RecordId> recordIds = asRecordIds(derefMap.findDependantsOf(var2));
             assertEquals("Iteration " + i, Sets.newHashSet(var1), recordIds);
         }
     }
@@ -532,9 +537,11 @@ public class DerefMapBasicTest {
         derefMap.updateDependencies(a, tag1, Collections.singletonMap(new DependencyEntry(b), fields));
 
         assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(b, field, tag1)));
+        assertEquals(Sets.newHashSet(), asRecordIds(derefMap.findDependantsOf(b, field, tag2)));
 
         derefMap.updateDependencies(a, tag2, Collections.singletonMap(new DependencyEntry(b), fields));
 
+        assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(b, field, tag1)));
         assertEquals(Sets.newHashSet(a), asRecordIds(derefMap.findDependantsOf(b, field, tag2)));
     }
 

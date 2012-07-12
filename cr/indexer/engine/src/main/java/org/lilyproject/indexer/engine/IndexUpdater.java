@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import org.apache.commons.logging.Log;
@@ -359,10 +361,10 @@ public class IndexUpdater implements RowLogMessageListener {
         for (SchemaId vtag : allVTags) {
             if ((changedVTagFields != null && changedVTagFields.contains(vtag)) || updatedFieldsByScope == null) {
                 // changed vtags or delete: reindex regardless of fields
-                DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, null);
+                DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId);
                 if (log.isDebugEnabled()) {
                     log.debug("changed vtag: dependants of " + recordId + ": " +
-                            depIds(derefMap.findDependantsOf(recordId, null)));
+                            depIds(derefMap.findDependantsOf(recordId)));
                 }
                 while (dependants.hasNext()) {
                     referrersAndVTags.put(dependants.next(), vtag);
@@ -370,18 +372,10 @@ public class IndexUpdater implements RowLogMessageListener {
             } else {
                 // vtag didn't change, but some fields did change:
                 for (Scope scope : updatedFieldsByScope.keySet()) {
-                    for (FieldType field : updatedFieldsByScope.get(scope)) {
-                        DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, null);
-                        if (log.isDebugEnabled()) {
-                            log.debug("changed field_all: dependants of " + recordId + ": " +
-                                    depIds(derefMap.findDependantsOf(recordId, null)));
-                            log.debug(
-                                    "changed field_only: dependants of " + recordId + " with field " + field.getName() +
-                                            ": " + depIds(derefMap.findDependantsOf(recordId, field.getId())));
-                        }
-                        while (dependants.hasNext()) {
-                            referrersAndVTags.put(dependants.next(), vtag);
-                        }
+                    final Set<SchemaId> fields = toFields(updatedFieldsByScope.get(scope));
+                    final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, fields, vtag);
+                    while (dependants.hasNext()) {
+                        referrersAndVTags.put(dependants.next(), vtag);
                     }
                 }
             }
@@ -419,6 +413,14 @@ public class IndexUpdater implements RowLogMessageListener {
         }
     }
 
+    private Set<SchemaId> toFields(Set<FieldType> fieldTypes) {
+        return new HashSet<SchemaId>(Collections2.transform(fieldTypes, new Function<FieldType, SchemaId>() {
+            @Override
+            public SchemaId apply(FieldType input) {
+                return input.getId();
+            }
+        }));
+    }
 
     private List<RecordId> depIds(DependantRecordIdsIterator dependants) throws IOException {
         List<RecordId> recordIds = Lists.newArrayList();

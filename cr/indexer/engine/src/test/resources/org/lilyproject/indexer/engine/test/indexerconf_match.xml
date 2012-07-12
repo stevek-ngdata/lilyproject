@@ -57,10 +57,31 @@
       <field name="nvmatch4" value="ns:nvmatch4"/>
     </match>
 
-    <!-- match on field -->
+    <!-- match on field presence -->
+    <!--  todo
     <match field="ns:nvmatch1=Berlin">
       <field name="nvmatch5" value="ns:nvmatch5"/>
     </match>
+     -->
+
+    <!-- match on field equals -->
+    <match field="ns:nvmatch1=Berlin">
+      <field name="nvmatch5" value="ns:nvmatch5"/>
+    </match>
+
+    <!-- match on variant property presence -->
+    <!--  todo
+    <match field="ns:nvmatch1=Berlin">
+      <field name="nvmatch5" value="ns:nvmatch5"/>
+    </match>
+    -->
+
+    <!-- match on variant property equals -->
+    <!-- todo
+    <match field="ns:nvmatch1=Berlin">
+      <field name="nvmatch5" value="ns:nvmatch5"/>
+    </match>
+    -->
 
     <!-- ==================== <foreach> =================== -->
     <!-- using +variant and @vprop -->

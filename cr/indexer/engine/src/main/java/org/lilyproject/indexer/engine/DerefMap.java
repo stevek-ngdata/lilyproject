@@ -99,32 +99,30 @@ public interface DerefMap {
                             Map<DependencyEntry, Set<SchemaId>> newDependencies) throws IOException;
 
     /**
-     * Find all record ids which depend on a given field of a given record in a given vtag. Both the field and the vtag
-     * can be <code>null</code> if you want to ignore filtering on the field and/or vtag.
+     * Find all record ids which depend on one of the given fields of a given record in a given vtag. Both the set of
+     * fields and the vtag can be <code>null</code> if you want to ignore filtering on the fields and/or vtag.
      *
      * @param dependency the record to find dependant record ids for
-     * @param field      the field of the given dependency which is dereferenced in the dependant, <code>null</code> to
-     *                   ignore
+     * @param fields     the field (on of the fields in the set) of the given dependency which is dereferenced in the
+     *                   dependant, <code>null</code> to ignore
      * @param vtag       vtag of the dependant you are interested in, <code>null</code> to ignore
      * @return iterator
+     */
+    DependantRecordIdsIterator findDependantsOf(final RecordId dependency, Set<SchemaId> fields, SchemaId vtag)
+            throws IOException;
+
+    /**
+     * Same as {@link #findDependantsOf(org.lilyproject.repository.api.RecordId, java.util.Set,
+     * org.lilyproject.repository.api.SchemaId)} but with a single field in stead of a set of fields.
      */
     DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field, SchemaId vtag)
             throws IOException;
 
     /**
-     * Find all record ids which depend on a given field of a given record (in any vtag). The field can be
-     * <code>null</code> if you want to ignore filtering on the field.
-     * </p>
-     * This method is identical to calling {@link DerefMap#findDependantsOf(org.lilyproject.repository.api.RecordId,
-     * org.lilyproject.repository.api.SchemaId, org.lilyproject.repository.api.SchemaId)} with <code>null</code> as
-     * vtag.
-     *
-     * @param dependency the record to find dependant record ids for
-     * @param field      the field of the given dependency which is dereferenced in the dependant, <code>null</code> to
-     *                   ignore
-     * @return iterator
+     * Same as {@link #findDependantsOf(org.lilyproject.repository.api.RecordId, java.util.Set,
+     * org.lilyproject.repository.api.SchemaId)} but with <code>null</code> as fields and vtag.
      */
-    DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field)
+    DependantRecordIdsIterator findDependantsOf(final RecordId dependency)
             throws IOException;
 
 }

@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import net.iharder.Base64;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.logging.Log;
@@ -73,10 +72,10 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
         try {
             Configuration jobConf = context.getConfiguration();
-            
-            LilyClient lilyClient = LilyMapReduceUtil.getLilyClient(jobConf);            
-            repository = lilyClient.getRepository();  
-            
+
+            LilyClient lilyClient = LilyMapReduceUtil.getLilyClient(jobConf);
+            repository = lilyClient.getRepository();
+
             String zkConnectString = jobConf.get("org.lilyproject.indexer.batchbuild.zooKeeperConnectString");
             int zkSessionTimeout =
                     getIntProp("org.lilyproject.indexer.batchbuild.zooKeeperSessionTimeout", null, jobConf);
@@ -111,7 +110,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             SolrClientConfig solrConfig = new SolrClientConfig();
             solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
             solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
-            
+
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
 
             SolrShardManager solrShardMgr = new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient,
