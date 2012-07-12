@@ -42,6 +42,11 @@ public class StaticQueryResult implements QueryResult {
     }
 
     @Override
+    public Object getIndexField(String fieldName) throws IOException {
+        throw new UnsupportedOperationException("not supported");
+    }
+
+    @Override
     public byte[] getData(String qualifier) {
         return null;
     }

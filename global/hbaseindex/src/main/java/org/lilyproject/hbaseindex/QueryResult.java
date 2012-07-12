@@ -41,6 +41,14 @@ public interface QueryResult extends Closeable {
     String getDataAsString(String qualifier);
 
     /**
+     * Decode an index field (for example one which was not specified in the query) from the result.
+     *
+     * @param fieldName name of the index field to read
+     * @return the decoded index field (the actual type depends on the index field definition)
+     */
+    Object getIndexField(String fieldName) throws IOException;
+
+    /**
      * Closes this query result and releases resources associated with it (e.g.
      * underlying HBase scanner).
      */

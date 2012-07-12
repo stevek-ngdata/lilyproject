@@ -15,12 +15,21 @@
  */
 package org.lilyproject.hbaseindex;
 
+import java.io.IOException;
+
+import com.gotometrics.orderly.StructIterator;
+import com.gotometrics.orderly.StructRowKey;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
 abstract class BaseQueryResult implements QueryResult {
+    protected IndexDefinition definition;
     protected Result currentResult;
     protected QueryResult currentQResult;
+
+    protected BaseQueryResult(IndexDefinition definition) {
+        this.definition = definition;
+    }
 
     @Override
     public byte[] getData(byte[] qualifier) {
@@ -42,4 +51,36 @@ abstract class BaseQueryResult implements QueryResult {
     public String getDataAsString(String qualifier) {
         return Bytes.toString(getData(Bytes.toBytes(qualifier)));
     }
+
+    @Override
+    public Object getIndexField(String fieldName) throws IOException {
+        if (currentResult != null) {
+            return decodeIndexFieldFrom(fieldName, currentResult.getRow());
+        } else if (currentQResult != null) {
+            return currentQResult.getIndexField(fieldName);
+        } else {
+            throw new RuntimeException("QueryResult.getIndexField() is being called but there is no current result.");
+        }
+    }
+
+    private Object decodeIndexFieldFrom(String fieldName, byte[] rowKey) throws IOException {
+        final StructRowKey structRowKey = definition.asStructRowKey();
+        structRowKey.iterateOver(rowKey);
+
+        final StructIterator iterator = structRowKey.iterator();
+
+        int fieldPosition = definition.getFieldPosition(fieldName);
+
+        if (fieldPosition == -1)
+            throw new MalformedQueryException("field [" + fieldName + "] is not part of the index");
+
+        // skip all fields up to fieldPosition
+        for (int i = 0; i < fieldPosition; i++) {
+            iterator.skip();
+        }
+
+        // return the requested field
+        return iterator.next();
+    }
+
 }

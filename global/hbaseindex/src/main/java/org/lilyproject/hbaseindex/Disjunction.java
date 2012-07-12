@@ -15,15 +15,15 @@
  */
 package org.lilyproject.hbaseindex;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.io.IOException;
+
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A QueryResult which is the disjunction (= OR operation) of two other QueryResults.
  *
  * <p>The supplied QueryResults should adhere to the same requirements as for
- * {@link Conjunction}s. 
+ * {@link Conjunction}s.
  */
 public class Disjunction extends BaseQueryResult {
     private QueryResult result1;
@@ -33,6 +33,7 @@ public class Disjunction extends BaseQueryResult {
     private boolean init = false;
 
     public Disjunction(QueryResult result1, QueryResult result2) {
+        super(null);
         this.result1 = result1;
         this.result2 = result2;
     }

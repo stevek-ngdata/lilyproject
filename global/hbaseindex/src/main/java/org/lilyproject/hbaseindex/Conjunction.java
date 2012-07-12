@@ -15,9 +15,9 @@
  */
 package org.lilyproject.hbaseindex;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.io.IOException;
+
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Merge-joins two QueryResults into one, in other words: an AND
@@ -46,6 +46,7 @@ public class Conjunction extends BaseQueryResult {
     private QueryResult result2;
 
     public Conjunction(QueryResult result1, QueryResult result2) {
+        super(null);
         this.result1 = result1;
         this.result2 = result2;
     }

@@ -39,7 +39,6 @@ public class DerefMapHbaseImpl implements DerefMap {
     private static final byte[] DEPENDENCIES_KEY = Bytes.toBytes("dependencies");
 
     private static final byte[] FIELDS_KEY = Bytes.toBytes("fields");
-    private static final byte[] VARIANT_PROPERTIES_PATTERN_KEY = Bytes.toBytes("pattern");
 
     private final static int SCHEMA_ID_BYTE_LENGTH = 16; // see SchemaIdImpl
 
@@ -223,10 +222,6 @@ public class DerefMapHbaseImpl implements DerefMap {
         // the fields which the dependant uses of the dependency (null if used for deleting the entry)
         if (fields != null)
             bwdEntry.addData(FIELDS_KEY, serializeFields(fields));
-
-        // we add the variant properties in the data as well, for easy access during querying
-        // TODO: provide a mechanism to get access to the index fields in the query (hbase-index)?
-        bwdEntry.addData(VARIANT_PROPERTIES_PATTERN_KEY, serializedVariantPropertiesPattern);
 
         return bwdEntry;
     }
@@ -500,7 +495,8 @@ public class DerefMapHbaseImpl implements DerefMap {
 
                 final Set<SchemaId> dependencyFields = deserializeFields(queryResult.getData(FIELDS_KEY));
                 final VariantPropertiesPattern variantPropertiesPattern =
-                        deserializeVariantPropertiesPattern(queryResult.getData(VARIANT_PROPERTIES_PATTERN_KEY));
+                        deserializeVariantPropertiesPattern(
+                                (byte[]) queryResult.getIndexField("variant_properties_pattern"));
 
                 if ((queriedField == null || dependencyFields.contains(queriedField)) &&
                         variantPropertiesPattern.matches(dependencyRecordId.getVariantProperties())) {

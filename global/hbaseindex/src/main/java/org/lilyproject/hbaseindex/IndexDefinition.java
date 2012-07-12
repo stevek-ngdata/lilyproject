@@ -186,6 +186,24 @@ public class IndexDefinition {
     }
 
     /**
+     * Get the position of a given field in the index definition.
+     *
+     * @param fieldName name of the field to look for
+     * @return position in the index, or -1 if the field is not part of the index
+     */
+    public int getFieldPosition(String fieldName) {
+        int pos = 0;
+        for (IndexFieldDefinition field : fields) {
+            if (field.getName().equals(fieldName)) {
+                return pos;
+            }
+            pos++;
+        }
+
+        return -1;
+    }
+
+    /**
      * Check if the index definition would support storing the given field with the given value.
      *
      * @param fieldName  name of the field to be stored in the index
