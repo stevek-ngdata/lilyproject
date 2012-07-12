@@ -99,10 +99,8 @@ public interface DerefMap {
                             Map<DependencyEntry, Set<SchemaId>> newDependencies) throws IOException;
 
     /**
-     * Find all record ids which depend on a given field of a given record in a given vtag. The given field can be
-     * <code>null</code>, which translates to "find all record ids which depend on a given record". That is because
-     * sometimes a dereference expression leads to a dependency on a particular field, sometimes directly on the whole
-     * record (e.g. +foo).
+     * Find all record ids which depend on a given field of a given record in a given vtag. Both the field and the vtag
+     * can be <code>null</code> if you want to ignore filtering on the field and/or vtag.
      *
      * @param dependency the record to find dependant record ids for
      * @param field      the field of the given dependency which is dereferenced in the dependant, <code>null</code> to
@@ -113,6 +111,19 @@ public interface DerefMap {
     DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field, SchemaId vtag)
             throws IOException;
 
+    /**
+     * Find all record ids which depend on a given field of a given record (in any vtag). The field can be
+     * <code>null</code> if you want to ignore filtering on the field.
+     * </p>
+     * This method is identical to calling {@link DerefMap#findDependantsOf(org.lilyproject.repository.api.RecordId,
+     * org.lilyproject.repository.api.SchemaId, org.lilyproject.repository.api.SchemaId)} with <code>null</code> as
+     * vtag.
+     *
+     * @param dependency the record to find dependant record ids for
+     * @param field      the field of the given dependency which is dereferenced in the dependant, <code>null</code> to
+     *                   ignore
+     * @return iterator
+     */
     DependantRecordIdsIterator findDependantsOf(final RecordId dependency, SchemaId field)
             throws IOException;
 
