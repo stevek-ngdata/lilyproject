@@ -390,24 +390,18 @@ public class IndexerTest {
     }
 
     @Test
-    public void testMatchAndForEach() throws Exception {
+    public void testForEach() throws Exception {
         changeIndexUpdater("indexerconf_match.xml");
         messageVerifier.init();
 
         //
         // Test ForEach
         //
-        {
-            log.debug("Begin test match");
-            // disabling since we are not verifying these create messages
-            messageVerifier.disable();
-            createMatchTestRecord(NS, "Alpha", "ns_alpha_");
-            createMatchTestRecord(NS, "Beta", "ns_beta_");
-            createMatchTestRecord(NS2, "Alpha", "ns2_alpha_");
-            createMatchTestRecord(NS2, "Beta", "ns2_beta_");
-            // re-enable messageVerifier
-            messageVerifier.init();
-        }
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485"))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "29485")
+                .create();
 
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
@@ -425,25 +419,42 @@ public class IndexerTest {
 
         commitIndex();
 
-        repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId("product29485"))
-                .recordType(new QName(NS, "Alpha"))
-                .field(nvfield1.getName(), "29485")
-                .create();
-
-        commitIndex();
-
         verifyResultCount("product_description_france_string:louche", 1);
         verifyResultCount("product_price_france_string:10", 1);
 
-        createMatchTestRecord(NS, "Alpha", "alpha");
-        createMatchTestRecord(NS, "Beta", "beta");
-        createMatchTestRecord(NS2, "Alpha", "gamma");
-        createMatchTestRecord(NS2, "Beta", "delta");
+        // update the price in the france:
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .field(nvfield2.getName(), "12")
+                .update();
+
+        commitIndex();
+
+        verifyResultCount("product_price_france_string:12", 1);
+
+    }
+
+    @Test
+    public void testMatch() throws Exception {
+        changeIndexUpdater("indexerconf_match.xml");
+        messageVerifier.init();
 
         //
         // Test Match
         //
+
+        {
+            log.debug("Begin test match");
+            // disabling since we are not verifying these create messages
+            messageVerifier.disable();
+            createMatchTestRecord(NS, "Alpha", "alpha");
+            createMatchTestRecord(NS, "Beta", "beta");
+            createMatchTestRecord(NS2, "Alpha", "gamma");
+            createMatchTestRecord(NS2, "Beta", "delta");
+
+            // re-enable messageVerifier
+            messageVerifier.init();
+        }
 
         // Initialise a map containing all the expected result counts
         // for each of the four records, once with the original value, and once with the updated value.
