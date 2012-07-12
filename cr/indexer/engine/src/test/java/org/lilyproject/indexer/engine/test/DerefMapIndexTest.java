@@ -595,8 +595,8 @@ public class DerefMapIndexTest {
         // 04-1   | 04-1.prop2=x | prop1    | n:nvlink1
         // 04-1   | 04-2         | prop2    | n:nvlink2
 
-        // <forEach match="+prop1">
-        //   <forEach matbarch="+prop2">
+        // <forEach expr="+prop1">
+        //   <forEach expr="+prop2">
         //     <field value="n:nvstring1"/>
         // 05-1
         //   ...

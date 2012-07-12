@@ -85,18 +85,18 @@
 
     <!-- ==================== <foreach> =================== -->
     <!-- using +variant and @vprop -->
-    <forEach value="+country">
+    <forEach expr="+country">
       <field name="product_description_${@vprop:country}_string" value="ns:nv_field1"/>
       <field name="product_price_${@vprop:country}_string" value="ns:nv_field2"/>
     </forEach>
 
     <!-- using -variant and a schema field -->
-    <forEach value="-country">
+    <forEach expr="-country">
       <field name="product_code_${ns:nv_field2}_string" value="ns:nv_field1"/>
     </forEach>
 
     <!-- using master and a system field -->
-    <forEach value="master">
+    <forEach expr="master">
       <field name="product_id_${sys:id}_string" value="ns:nv_field1"/>
     </forEach>
 

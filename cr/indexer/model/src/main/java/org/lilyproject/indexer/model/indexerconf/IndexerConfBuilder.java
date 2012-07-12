@@ -357,7 +357,7 @@ public class IndexerConfBuilder {
     }
 
     private ForEachNode buildForEachNode(Element el) throws Exception {
-        String valueExpr = DocumentHelper.getAttribute(el, "value", true);
+        String valueExpr = DocumentHelper.getAttribute(el, "expr", true);
 
         List<Follow> follows = parseFollows(el, valueExpr, new String[] { valueExpr, null });
         ForEachNode forEachNode = new ForEachNode(systemFields, follows.get(0));
