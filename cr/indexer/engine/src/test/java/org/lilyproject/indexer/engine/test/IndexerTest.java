@@ -340,10 +340,22 @@ public class IndexerTest {
         //
         // Schema types for testing <match> and <foreach>
         //
+        for (int i = 1; i <= 6; i++) {
+            typeManager.fieldTypeBuilder().name(new QName(NS, "nvmatch" + i))
+                .scope(Scope.NON_VERSIONED)
+                .type("STRING").create();
+            typeManager.fieldTypeBuilder().name(new QName(NS2, "match" + i))
+                .scope(Scope.VERSIONED)
+                .type("STRING").create();
+        }
         for (QName name: new QName[] { new QName(NS, "Alpha"), new QName(NS, "Beta"), new QName(NS2, "Alpha"), new QName(NS2, "Beta")}) {
             RecordType recordType = typeManager.newRecordType(name);
             addNvFieldTypes(recordType);
             addVFieldTypes(recordType);
+            for (int i = 1; i <= 6 ; i++ ) {
+                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nvmatch" + i)).getId(), false);
+                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "match" + i)).getId(), false);
+            }
             typeManager.createRecordType(recordType);
         }
 
@@ -409,7 +421,7 @@ public class IndexerTest {
         verifyResultCount("product_description_france_string:louche", 1);
         verifyResultCount("product_price_france_string:10", 1);
 
-        // update the price in the france:
+        // update the price in france:
         repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
                 .field(nvfield2.getName(), "12")
@@ -456,60 +468,64 @@ public class IndexerTest {
         verifyMatchResultCounts();
 
         // Update non-versioned fields
-        updateMatchTestRecords(nvfield1.getName(), "nvmatch1");
-        setExpectedCountsForMatch("nvmatch1", 1, 1, 1, 1, 1, 1, 1, 1);
+        updateMatchTestRecords(new QName(NS, "nvmatch1"), "nvmatch1");
+        setExpectedCountsForMatch("nvmatch1", 0, 0, 0, 0, 2, 2, 2, 2);
         verifyMatchResultCounts();
-        updateMatchTestRecords(nvfield1.getName(), "nvmatch2");
-        setExpectedCountsForMatch("nvmatch2", 1, 1, 0, 0, 1, 1, 0, 0);
+        updateMatchTestRecords(new QName(NS, "nvmatch2"), "nvmatch2");
+        setExpectedCountsForMatch("nvmatch2", 0, 0, 0, 0, 2, 2, 0, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords(nvfield1.getName(), "nvmatch3");
-        setExpectedCountsForMatch("nvmatch3", 1, 0, 1, 0, 1, 0, 1, 0);
+        updateMatchTestRecords(new QName(NS, "nvmatch3"), "nvmatch3");
+        setExpectedCountsForMatch("nvmatch3", 0, 0, 0, 0, 2, 0, 2, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords(nvfield1.getName(), "nvmatch4");
-        setExpectedCountsForMatch("nvmatch4", 1, 0, 0, 0, 1, 0, 0, 0);
+        updateMatchTestRecords(new QName(NS, "nvmatch4"), "nvmatch4");
+        setExpectedCountsForMatch("nvmatch4", 0, 0, 0, 0, 2, 0, 0, 0);
         verifyMatchResultCounts();
 
         // Update versioned fields
-        updateMatchTestRecords(vfield1.getName(), "match1");
-        setExpectedCountsForMatch("match1", 0, 0, 0, 0, 2, 2, 2, 2);
+        updateMatchTestRecords(new QName(NS2, "match1"), "match1");
+        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 1, 1, 1, 1);
         verifyMatchResultCounts();
-        updateMatchTestRecords(vfield1.getName(), "match2");
-        setExpectedCountsForMatch("match2", 0, 0, 0, 0, 2, 2, 0, 0);
+        updateMatchTestRecords(new QName(NS2, "match2"), "match2");
+        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 1, 1, 0, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords(vfield1.getName(), "match3");
-        setExpectedCountsForMatch("match3", 0, 0, 0, 0, 2, 0, 2, 0);
+        updateMatchTestRecords(new QName(NS2, "match3"), "match3");
+        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 1, 0, 1, 0);
         verifyMatchResultCounts();
-        updateMatchTestRecords(vfield1.getName(), "match4");
-        setExpectedCountsForMatch("match4", 0, 0, 0, 0, 2, 0, 0, 0);
+        updateMatchTestRecords(new QName(NS2, "match4"), "match4");
+        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 1, 0, 0, 0);
         verifyMatchResultCounts();
 
         //
-        // Test match on field conditions (has field, field equals) using non versioned fields
+        // Test match on field conditions using non versioned fields
+        // Note: the lines marked with /*hasfield*/ test for a feature we don't support yet, hence commented out
         //
         repository.recordBuilder().id("match_nvfield")
             .recordType(new QName(NS, "Alpha"))
             .field(nvfield1.getName(), "jupiter")
             .field(nvfield2.getName(), "pancake")
-            .field(previewTag.getName(), 1)
+            .field(previewTag.getName(), new Long(0))
             .create();
 
-        verifyResultCount("nvmatch5:jupiter", 2); // vfield2 is present
-        verifyResultCount("nvmatch6:jupiter", 2); // vfield2=specialvalue
+        commitIndex();
+
+        /*hasfield*/// verifyResultCount("nvmatch5:jupiter", 2); // vfield2 is present
+        verifyResultCount("nvmatch6:jupiter", 2); // nvfield2=specialvalue
 
         repository.recordBuilder().id("match_nvfield")
             .field(nvfield1.getName(), "waffle")
             .update();
-        commitIndex();
-
-        verifyResultCount("nvmatch5:jupiter", 2); // vfield2 is present
-        verifyResultCount("nvmatch6:jupiter", 0); // vfield2=specialvalue
-
-        Record record = repository.read(repository.getIdGenerator().newRecordId("match_nvfield"));
-        record.delete(nvfield2.getName(), true);
 
         commitIndex();
-        verifyResultCount("nvmatch5:jupiter", 0); // vfield2 is present
-        verifyResultCount("nvmatch6:jupiter", 0); // vfield2=specialvalue
+
+        verifyResultCount("nvmatch6:jupiter", 0); // nvfield2=specialvalue
+
+        /*hasfield*/// verifyResultCount("nvmatch5:jupiter", 2); // nvfield2 is present
+        /*hasfield*/// Record record = repository.read(repository.getIdGenerator().newRecordId("match_nvfield"));
+        /*hasfield*/// record.delete(nvfield2.getName(), true);
+
+        /*hasfield*/// commitIndex();
+        /*hasfield*/// verifyResultCount("nvmatch5:jupiter", 0); // nvfield2 is present
+        /*hasfield*/// verifyResultCount("nvmatch6:jupiter", 0); // nvfield2=specialvalue
 
         //
         // Test match on field conditions (has field, field equals) using non versioned fields
@@ -518,30 +534,77 @@ public class IndexerTest {
             .recordType(new QName(NS, "Alpha"))
             .field(vfield1.getName(), "apollo")
             .field(vfield2.getName(), "bacon")
-            .field(previewTag.getName(), 1)
+            .field(previewTag.getName(), new Long(1))
             .create();
 
-        verifyResultCount("match5:apollo", 2); // vfield2 is present
+        commitIndex();
+        /*hasfield*/// verifyResultCount("match5:apollo", 2); // vfield2 is present
         verifyResultCount("match6:apollo", 2); // vfield2=specialvalue
 
         repository.recordBuilder().id("match_vfield")
             .field(vfield1.getName(), "eggs")
             .update();
+
         commitIndex();
 
-        verifyResultCount("match5:apollo", 2); // vfield2 is present in preview and last
+        /*hasfield*/// verifyResultCount("match5:apollo", 2); // vfield2 is present in preview and last
         verifyResultCount("match6:apollo", 1); // vfield2=specialvalue (version tagged with preview still matches)
 
-        record = repository.read(repository.getIdGenerator().newRecordId("match_vfield"));
-        record.delete(vfield2.getName(), true);
+        /*hasfield*/// record = repository.read(repository.getIdGenerator().newRecordId("match_vfield"));
+        /*hasfield*/// record.delete(vfield2.getName(), true);
 
-        commitIndex();
-        verifyResultCount("match5:apollo", 1); // vfield2 is present
-        verifyResultCount("match6:apollo", 1); // vfield2=specialvalue
+        /*hasfield*/// commitIndex();
+        /*hasfield*/// verifyResultCount("match5:apollo", 1); // vfield2 is present
+        /*hasfield*/// verifyResultCount("match6:apollo", 1); // vfield2=specialvalue
 
         //
         // TODO: match on variant properties
         //
+        for (String lang : new String[] { "en", "fr" }) {
+            repository.recordBuilder().id("match_varprops_cupid", vprops("lang", lang))
+                .recordType(new QName(NS, "Alpha"))
+                .field(vfield1.getName(), "cupido_"+lang+"_nobranch")
+                .create();
+
+            repository.recordBuilder().id("match_varprops_merc", vprops("lang", lang))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "mercurius_"+lang+"_nobranch")
+                .create();
+
+            for (String branch: new String[] { "dev", "prod" }) {
+                repository.recordBuilder().id("match_varprops_cupid", vprops("lang", lang, "branch", branch))
+                    .recordType(new QName(NS, "Alpha"))
+                    .field(vfield1.getName(), "cupido_"+lang+"_"+branch)
+                    .create();
+                repository.recordBuilder().id("match_varprops_merc", vprops("lang", lang, "branch", branch))
+                    .recordType(new QName(NS, "Alpha"))
+                    .field(nvfield1.getName(), "mercurius_"+lang+"_"+branch)
+                    .create();
+            }
+        }
+        commitIndex();
+
+        verifyResultCount("match7:cupido_en_nobranch", 0);
+        verifyResultCount("match7:cupido_en_dev", 1);
+        verifyResultCount("match7:cupido_en_prod", 1);
+        verifyResultCount("match7:cupido_fr_nobranch", 0);
+        verifyResultCount("match7:cupido_fr_dev", 0);
+        verifyResultCount("match7:cupido_fr_prod", 0);
+
+        verifyResultCount("nvmatch7:mercurius_en_nobranch", 0);
+        verifyResultCount("nvmatch7:mercurius_en_dev", 1);
+        verifyResultCount("nvmatch7:mercurius_en_prod", 1);
+        verifyResultCount("nvmatch7:mercurius_fr_nobranch", 0);
+        verifyResultCount("nvmatch7:mercurius_fr_dev", 0);
+        verifyResultCount("nvmatch7:mercurius_fr_prod", 0);
+    }
+
+    private Map<String, String> vprops(String ... args) {
+        Map<String, String> result = Maps.newHashMap();
+        for (int i=0; i < args.length; i+= 2) {
+            result.put(args[i], args[i+1]);
+        }
+        return result;
     }
 
     private void verifyMatchResultCounts() throws Exception{
@@ -570,7 +633,7 @@ public class IndexerTest {
             repository.recordBuilder()
                 .id(repository.getIdGenerator().newRecordId(id))
                 .field(lilyField, id+ "_" + solrField + "_updated")
-                .field(previewTag.getName(), 1L)
+                .field(previewTag.getName(), new Long(1))
                 .update();
         }
     }
@@ -593,10 +656,10 @@ public class IndexerTest {
             .id(id);
 
         for (int i = 1; i <= 4; i++) {
-            builder.field(vfield1.getName(), id + "_" + "match" + i + "_orig");
-            builder.field(nvfield1.getName(), id + "_" + "nvmatch" + i + "_orig");
-            builder.field(previewTag.getName(), 1);
+            builder.field(new QName(NS2, "match" + i), id + "_" + "match" + i + "_orig");
+            builder.field(new QName(NS, "nvmatch" + i), id + "_" + "nvmatch" + i + "_orig");
         }
+        builder.field(previewTag.getName(), new Long(1));
 
         builder.create();
     }
@@ -2594,7 +2657,7 @@ public class IndexerTest {
                 System.out.println(result.getFirstValue("lily.key"));
             }
         }
-        assertEquals(count, response.getResults().getNumFound());
+        assertEquals("The query result for '" + query + "' contains the wrong number of documents.", count, response.getResults().getNumFound());
     }
 
     private void verifyFieldValues(String query, String fieldName, String... expectedValues)

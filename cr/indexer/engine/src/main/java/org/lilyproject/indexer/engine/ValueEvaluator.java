@@ -433,9 +433,14 @@ public class ValueEvaluator {
         final IdRecordScanner scanner = repository.getScannerWithIds(scan);
         IdRecord next;
         while ((next = scanner.next()) != null) {
-            final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
-            if (record != null)
+            try {
+                final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
                 result.add(record);
+            } catch (RecordNotFoundException rnfe) {
+                // ok
+            } catch (VersionNotFoundException vnfe) {
+                // ok
+            }
         }
 
         scanner.close();

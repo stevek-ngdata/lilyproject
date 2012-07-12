@@ -16,66 +16,70 @@
 
     <!-- ==================== <match> using versioned fields =================== -->
     <!-- always indexed -->
-    <field name="match1" value="ns:field1"/>
+    <field name="match1" value="ns2:match1"/>
 
     <!-- match on ns only -->
     <match recordType="ns:*">
-      <field name="match2" value="ns:field1"/>
+      <field name="match2" value="ns2:match2"/>
     </match>
 
     <!-- match on name only -->
     <match recordType="*:Alpha">
-      <field name="match3" value="ns:field1"/>
+      <field name="match3" value="ns2:match3"/>
     </match>
 
     <!-- match on ns and name -->
     <match recordType="ns:Alpha">
-      <field name="match4" value="ns:field1"/>
+      <field name="match4" value="ns2:match4"/>
     </match>
 
-    <!-- match on field -->
-    <match field="ns:field2">
-      <field name="match5" value="ns:field1"/>
+    <!-- match on field presence-->
+    <!-- not supported
+    <match field="ns2:v_field2">
+      <field name="match5" value="ns2:match5"/>
     </match>
+    -->
 
-    <match field="ns:field2=bacon">
-      <field name="match6" value="ns:field1"/>
+    <match field="ns2:v_field2=bacon">
+      <field name="match6" value="ns2:v_field1"/>
     </match>
 
     <!-- ==================== <match> using non-versioned fields =================== -->
     <!-- always indexed -->
-    <field name="nvmatch1" value="ns:nvfield1"/>
+    <field name="nvmatch1" value="ns:nvmatch1"/>
 
     <!-- match on ns only -->
     <match recordType="ns:*">
-      <field name="nvmatch2" value="ns:nvfield1"/>
+      <field name="nvmatch2" value="ns:nvmatch2"/>
     </match>
 
     <!-- match on name only -->
     <match recordType="*:Alpha">
-      <field name="nvmatch3" value="ns:nvfield1"/>
+      <field name="nvmatch3" value="ns:nvmatch3"/>
     </match>
 
     <!-- match on ns and name -->
     <match recordType="ns:Alpha">
-      <field name="nvmatch4" value="ns:nvfield1"/>
+      <field name="nvmatch4" value="ns:nvmatch4"/>
     </match>
 
     <!-- match on field presence -->
-    <match field="ns:nvfield2">
-      <field name="nvmatch5" value="ns:nvfield1"/>
+    <!-- not supported
+    <match field="ns:nv_field2">
+      <field name="nvmatch5" value="ns:nvmatch5"/>
     </match>
+    -->
 
     <!-- match on field equals -->
-    <match field="ns:nvfield2=pancake">
-      <field name="nvmatch6" value="ns:nvfield1"/>
+    <match field="ns:nv_field2=pancake">
+      <field name="nvmatch6" value="ns:nv_field1"/>
     </match>
 
     <!-- ==================== <match> using variant properties =================== -->
     <!-- match on variant property presence -->
-    <match matchVariant="lang=en,branch=dev">
-      <field name="nvmatch7" value="ns:nvfield1"/>
-      <field name="match7" value="ns:field1"/>
+    <match matchVariant="lang=en,branch">
+      <field name="nvmatch7" value="ns:nv_field1"/>
+      <field name="match7" value="ns2:v_field1"/>
     </match>
 
     <!-- ==================== <foreach> =================== -->

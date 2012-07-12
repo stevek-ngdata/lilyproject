@@ -37,6 +37,7 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.api.VersionNotFoundException;
 import org.lilyproject.repository.api.filter.RecordVariantFilter;
 import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VTaggedRecord;
@@ -100,8 +101,10 @@ public class ForEachNode extends ContainerMappingNode {
                     RecordId linkedRecordId = link.resolve(ctx.contextRecord, idGenerator);
                     Record linkedRecord = null;
                     try {
-                        linkedRecord = repository.read(linkedRecordId);
+                        linkedRecord = VersionTag.getIdRecord(linkedRecordId, indexUpdateBuilder.getVTag(), repository);
                     } catch (RecordNotFoundException rnfe) {
+                        // ok
+                    } catch (VersionNotFoundException vnfe) {
                         // ok
                     }
                     indexUpdateBuilder.push(linkedRecord, new Dep(linkedRecordId, Collections.<String>emptySet()));
@@ -126,8 +129,10 @@ public class ForEachNode extends ContainerMappingNode {
             Dep masterDep = new Dep(ctx.dep.id.getMaster(), Collections.<String>emptySet());
             Record record = null;
             try {
-                record = indexUpdateBuilder.getRepository().read(masterDep.id);
+                record = VersionTag.getIdRecord(masterDep.id, indexUpdateBuilder.getVTag(), repository);
             } catch (RecordNotFoundException rnfe) {
+                // OK, continue with 'null' record
+            } catch (VersionNotFoundException vnfe) {
                 // OK, continue with 'null' record
             }
             indexUpdateBuilder.push(record, masterDep);
@@ -137,8 +142,10 @@ public class ForEachNode extends ContainerMappingNode {
             Dep dep = ctx.dep.minus(idGenerator, ((VariantFollow)follow).getDimensions());
             Record record = null;
             try {
-                record = indexUpdateBuilder.getRepository().read(dep.id);
+                record = VersionTag.getIdRecord(dep.id, indexUpdateBuilder.getVTag(), repository);
             } catch (RecordNotFoundException rnfe) {
+                // OK, continue with 'null' record
+            } catch (VersionNotFoundException vnfe) {
                 // OK, continue with 'null' record
             }
             indexUpdateBuilder.push(record, dep);
@@ -217,9 +224,14 @@ public class ForEachNode extends ContainerMappingNode {
         final IdRecordScanner scanner = repository.getScannerWithIds(scan);
         IdRecord next;
         while ((next = scanner.next()) != null) {
-            final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
-            if (record != null)
+            try {
+                final Record record = VersionTag.getIdRecord(next, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
                 result.add(record);
+            } catch (RecordNotFoundException rnfe) {
+                //ok
+            } catch (VersionNotFoundException vnfe) {
+                //ok
+            }
         }
 
         scanner.close();
