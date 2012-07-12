@@ -164,7 +164,7 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     public void addDependency(SchemaId field) {
         RecordContext ctx = contexts.peek();
         try {
-            if (!ctx.dep.id.equals(recordId)) { // avoid adding unnecesary self-references
+            if (!ctx.dep.vprops.isEmpty() || !ctx.dep.id.equals(recordId)) { // avoid adding unnecesary self-references
                 dependencies.get(DerefMapUtil.newEntry(ctx.dep.id, ctx.dep.vprops)).add(field);
             }
         } catch (ExecutionException ee) {
