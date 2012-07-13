@@ -1,6 +1,17 @@
 package org.lilyproject.indexer.model.indexerconf;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Link;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordNotFoundException;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.util.repo.VersionTag;
 
 public class LinkFieldFollow implements Follow {
     private FieldType fieldType;
@@ -27,5 +38,35 @@ public class LinkFieldFollow implements Follow {
     public void setOwnerFieldType(FieldType ownerFieldType) {
         this.ownerFieldType = ownerFieldType;
     }
+
+    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback) throws RepositoryException, InterruptedException {
+        if (!indexUpdateBuilder.getSystemFields().isSystemField(fieldType.getName())) {
+            indexUpdateBuilder.addDependency(fieldType.getId());
+        }
+        IdGenerator idGenerator = indexUpdateBuilder.getRepository().getIdGenerator();
+
+        RecordContext ctx = indexUpdateBuilder.getRecordContext();
+
+        // FIXME: it's more efficient to read all records at once
+        // but make sure missing records are also treated (handled here via null linkedRecord in case of RecordNotFoundException
+        if (ctx.record != null) {
+            List links = IndexerUtils.flatList(ctx.record, fieldType);
+            for (Link link: (List<Link>)links) {
+                RecordId linkedRecordId = link.resolve(ctx.contextRecord, idGenerator);
+                Record linkedRecord = null;
+                try {
+                    linkedRecord = VersionTag.getIdRecord(linkedRecordId, indexUpdateBuilder.getVTag(), indexUpdateBuilder.getRepository());
+                } catch (RecordNotFoundException rnfe) {
+                    // ok, continue with null value
+                } catch (VersionNotFoundException e) {
+                    // ok, continue with null value
+                }
+                indexUpdateBuilder.push(linkedRecord, new Dep(linkedRecordId, Collections.<String>emptySet()));
+                callback.call();
+                indexUpdateBuilder.pop();
+            }
+        }
+    }
+
 
 }

@@ -47,10 +47,12 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.util.repo.SystemFields;
 
 public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
     private final Repository repository;
+    private final SystemFields systemFields;
     private final TypeManager typeManager;
     private final ValueEvaluator valueEvaluator;
     private final NameTemplateResolver nameTemplateResolver;
@@ -66,9 +68,10 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private SchemaId vtag;
     private long version;
 
-    public SolrDocumentBuilder(Repository repository, ValueEvaluator valueEvaluator, IdRecord record, String key,
+    public SolrDocumentBuilder(Repository repository, SystemFields systemFields, ValueEvaluator valueEvaluator, IdRecord record, String key,
                                SchemaId vtag, long version) {
         this.repository = repository;
+        this.systemFields = systemFields;
         this.typeManager = repository.getTypeManager();
         this.valueEvaluator = valueEvaluator;
         this.recordId = record.getId();
@@ -214,6 +217,11 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
             return null;
         }
+    }
+
+    @Override
+    public SystemFields getSystemFields() {
+        return systemFields;
     }
 
 }

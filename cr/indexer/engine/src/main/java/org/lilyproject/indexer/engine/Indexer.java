@@ -43,6 +43,7 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.api.VersionNotFoundException;
+import org.lilyproject.util.repo.SystemFields;
 import org.lilyproject.util.repo.VTaggedRecord;
 
 
@@ -56,6 +57,7 @@ public class Indexer {
     private IndexerConf conf;
     private Repository repository;
     private TypeManager typeManager;
+    private SystemFields systemFields;
     private SolrShardManager solrShardMgr;
     private IndexLocker indexLocker;
     private ValueEvaluator valueEvaluator;
@@ -72,6 +74,7 @@ public class Indexer {
         this.solrShardMgr = solrShardMgr;
         this.indexLocker = indexLocker;
         this.typeManager = repository.getTypeManager();
+        this.systemFields = SystemFields.getInstance(typeManager, repository.getIdGenerator());
         this.valueEvaluator = new ValueEvaluator(conf);
         this.metrics = metrics;
         this.derefMap = derefMap;
@@ -193,7 +196,7 @@ public class Indexer {
         for (SchemaId vtag : vtags) {
 
             SolrDocumentBuilder solrDocumentBuilder =
-                    new SolrDocumentBuilder(repository, valueEvaluator, record, getIndexId(record.getId(), vtag), vtag,
+                    new SolrDocumentBuilder(repository, systemFields, valueEvaluator, record, getIndexId(record.getId(), vtag), vtag,
                             version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
