@@ -55,6 +55,11 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-derefmap-indexfilter</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-cli-fw</artifactId>
     </dependency>
 
@@ -168,34 +173,34 @@ chdir /d %CWD%
             </parameter>
           </beforeJavaHook>
           <!--<classPathPrefix>-->
-            <!--<parameter>-->
-              <!--<platform>unix</platform>-->
-              <!--<mode>dev</mode>-->
-              <!--<value>-->
-                <!--${basedir}/target/hadoopwebapps:${basedir}/../../cr/hbase-ext/target/lily-hbase-ext-${project.version}.jar:-->
-              <!--</value>-->
-            <!--</parameter>-->
-            <!--<parameter>-->
-              <!--<platform>unix</platform>-->
-              <!--<mode>dist</mode>-->
-              <!--<value>-->
-                <!--$LILY_HOME/tmp/hadoopwebapps:$LILY_HOME/lib/org/lilyproject/lily-hbase-ext/${project.version}/lily-hbase-ext-${project.version}.jar:-->
-              <!--</value>-->
-            <!--</parameter>-->
-            <!--<parameter>-->
-              <!--<platform>windows</platform>-->
-              <!--<mode>dev</mode>-->
-              <!--<value>-->
-                <!--${basedir}/target/hadoopwebapps;${basedir}\..\..\cr\hbase-ext\target\lily-hbase-ext-${project.version}.jar;-->
-              <!--</value>-->
-            <!--</parameter>-->
-            <!--<parameter>-->
-              <!--<platform>windows</platform>-->
-              <!--<mode>dist</mode>-->
-              <!--<value>-->
-                <!--%LILY_HOME%/tmp/hadoopwebapps;$LILY_HOME\lib\org\lilyproject\lily-hbase-ext\${project.version}\lily-hbase-ext-${project.version}.jar;-->
-              <!--</value>-->
-            <!--</parameter>-->
+          <!--<parameter>-->
+          <!--<platform>unix</platform>-->
+          <!--<mode>dev</mode>-->
+          <!--<value>-->
+          <!--${basedir}/target/hadoopwebapps:${basedir}/../../cr/hbase-ext/target/lily-hbase-ext-${project.version}.jar:-->
+          <!--</value>-->
+          <!--</parameter>-->
+          <!--<parameter>-->
+          <!--<platform>unix</platform>-->
+          <!--<mode>dist</mode>-->
+          <!--<value>-->
+          <!--$LILY_HOME/tmp/hadoopwebapps:$LILY_HOME/lib/org/lilyproject/lily-hbase-ext/${project.version}/lily-hbase-ext-${project.version}.jar:-->
+          <!--</value>-->
+          <!--</parameter>-->
+          <!--<parameter>-->
+          <!--<platform>windows</platform>-->
+          <!--<mode>dev</mode>-->
+          <!--<value>-->
+          <!--${basedir}/target/hadoopwebapps;${basedir}\..\..\cr\hbase-ext\target\lily-hbase-ext-${project.version}.jar;-->
+          <!--</value>-->
+          <!--</parameter>-->
+          <!--<parameter>-->
+          <!--<platform>windows</platform>-->
+          <!--<mode>dist</mode>-->
+          <!--<value>-->
+          <!--%LILY_HOME%/tmp/hadoopwebapps;$LILY_HOME\lib\org\lilyproject\lily-hbase-ext\${project.version}\lily-hbase-ext-${project.version}.jar;-->
+          <!--</value>-->
+          <!--</parameter>-->
           <!--</classPathPrefix>-->
         </configuration>
         <executions>

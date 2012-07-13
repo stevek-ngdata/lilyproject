@@ -15,9 +15,6 @@
  */
 package org.lilyproject.indexer.master;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -29,7 +26,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -47,7 +43,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.tika.io.IOUtils;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters;
-import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
 import org.lilyproject.indexer.model.api.BatchBuildInfo;
@@ -70,6 +66,9 @@ import org.lilyproject.util.zookeeper.LeaderElection;
 import org.lilyproject.util.zookeeper.LeaderElectionCallback;
 import org.lilyproject.util.zookeeper.LeaderElectionSetupException;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
+
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 
 /**
@@ -121,9 +120,10 @@ public class IndexerMaster {
     private byte[] fullTableScanConf;
 
     public IndexerMaster(ZooKeeperItf zk, WriteableIndexerModel indexerModel, Repository repository,
-            Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
-            String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr, LilyInfo lilyInfo,
-            SolrClientConfig solrClientConfig, boolean enableLocking, String hostName, String nodes) {
+                         Configuration mapReduceConf, Configuration mapReduceJobConf, Configuration hbaseConf,
+                         String zkConnectString, int zkSessionTimeout, RowLogConfigurationManager rowLogConfMgr,
+                         LilyInfo lilyInfo,
+                         SolrClientConfig solrClientConfig, boolean enableLocking, String hostName, String nodes) {
 
         this.zk = zk;
         this.indexerModel = indexerModel;
@@ -717,21 +717,21 @@ public class IndexerMaster {
         private String jobStateToString(int jobState) {
             String result = "unknown";
             switch (jobState) {
-            case JobStatus.FAILED:
-                result = "failed";
-                break;
-            case JobStatus.KILLED:
-                result = "killed";
-                break;
-            case JobStatus.PREP:
-                result = "prep";
-                break;
-            case JobStatus.RUNNING:
-                result = "running";
-                break;
-            case JobStatus.SUCCEEDED:
-                result = "succeeded";
-                break;
+                case JobStatus.FAILED:
+                    result = "failed";
+                    break;
+                case JobStatus.KILLED:
+                    result = "killed";
+                    break;
+                case JobStatus.PREP:
+                    result = "prep";
+                    break;
+                case JobStatus.RUNNING:
+                    result = "running";
+                    break;
+                case JobStatus.SUCCEEDED:
+                    result = "succeeded";
+                    break;
             }
             return result;
         }

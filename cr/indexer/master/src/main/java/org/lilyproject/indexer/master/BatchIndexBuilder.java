@@ -30,7 +30,7 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.codehaus.jackson.JsonNode;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.indexer.batchbuild.IndexingMapper;
-import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.mapreduce.LilyMapReduceUtil;
@@ -42,12 +42,16 @@ import org.lilyproject.util.json.JsonFormat;
 
 public class BatchIndexBuilder {
     /**
+<<<<<<< HEAD
      *
+=======
+>>>>>>> e0932a933af399648d5c66c1c976a9ec1716163f
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
-            Repository repository, String zkConnectString, int zkSessionTimeout, SolrClientConfig solrConfig,
-            byte[] batchIndexConfiguration, boolean enableLocking) throws Exception {
+                                         Repository repository, String zkConnectString, int zkSessionTimeout,
+                                         SolrClientConfig solrConfig,
+                                         byte[] batchIndexConfiguration, boolean enableLocking) throws Exception {
 
         Configuration conf = new Configuration(mapReduceConf);
         Job job = new Job(conf, "BatchIndexBuild Job");
@@ -87,13 +91,16 @@ public class BatchIndexBuilder {
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
 
-        JsonNode batchConfigurationNode = JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration));
+
+        JsonNode batchConfigurationNode =
+                JsonFormat.deserializeNonStd(new ByteArrayInputStream(batchIndexConfiguration));
         RecordScan recordScan = RecordScanReader.INSTANCE.fromJson(batchConfigurationNode.get("scan"), repository);
         recordScan.setReturnFields(ReturnFields.ALL);
         recordScan.setCacheBlocks(false);
         recordScan.setCaching(1024);
 
-        if (batchConfigurationNode.has("clearDerefMap") && batchConfigurationNode.get("clearDerefMap").asBoolean(false)) {
+        if (batchConfigurationNode.has("clearDerefMap") &&
+                batchConfigurationNode.get("clearDerefMap").asBoolean(false)) {
             try {
                 DerefMapHbaseImpl.delete(index.getName(), hbaseConf);
             } catch (IndexNotFoundException e) {
@@ -143,7 +150,7 @@ public class BatchIndexBuilder {
         ClassLoader loader = my_class.getClassLoader();
         String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
         try {
-            for (Enumeration itr = loader.getResources(class_file); itr.hasMoreElements();) {
+            for (Enumeration itr = loader.getResources(class_file); itr.hasMoreElements(); ) {
                 URL url = (URL) itr.nextElement();
                 if ("jar".equals(url.getProtocol())) {
                     String toReturn = url.getPath();

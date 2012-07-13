@@ -46,7 +46,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.derefmap.DerefMap;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
@@ -108,7 +109,7 @@ public class IndexerTest {
     private static IdGenerator idGenerator;
     private static SolrShardManagerImpl solrShardManager;
     private static LinkIndex linkIndex;
-    private static DerefMapHbaseImpl derefMap;
+    private static DerefMap derefMap;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -208,7 +209,7 @@ public class IndexerTest {
         if (derefMap != null) {
             DerefMapHbaseImpl.delete("test", hbaseConf);
         }
-        derefMap = (DerefMapHbaseImpl)DerefMapHbaseImpl.create("test", hbaseConf, repository.getIdGenerator());
+        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 
@@ -348,19 +349,22 @@ public class IndexerTest {
         //
         for (int i = 1; i <= 6; i++) {
             typeManager.fieldTypeBuilder().name(new QName(NS, "nvmatch" + i))
-                .scope(Scope.NON_VERSIONED)
-                .type("STRING").create();
+                    .scope(Scope.NON_VERSIONED)
+                    .type("STRING").create();
             typeManager.fieldTypeBuilder().name(new QName(NS2, "match" + i))
-                .scope(Scope.VERSIONED)
-                .type("STRING").create();
+                    .scope(Scope.VERSIONED)
+                    .type("STRING").create();
         }
-        for (QName name: new QName[] { new QName(NS, "Alpha"), new QName(NS, "Beta"), new QName(NS2, "Alpha"), new QName(NS2, "Beta")}) {
+        for (QName name : new QName[]{new QName(NS, "Alpha"), new QName(NS, "Beta"), new QName(NS2, "Alpha"),
+                new QName(NS2, "Beta")}) {
             RecordType recordType = typeManager.newRecordType(name);
             addNvFieldTypes(recordType);
             addVFieldTypes(recordType);
-            for (int i = 1; i <= 6 ; i++ ) {
-                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nvmatch" + i)).getId(), false);
-                recordType.addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "match" + i)).getId(), false);
+            for (int i = 1; i <= 6; i++) {
+                recordType
+                        .addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nvmatch" + i)).getId(), false);
+                recordType
+                        .addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "match" + i)).getId(), false);
             }
             typeManager.createRecordType(recordType);
         }
@@ -409,14 +413,16 @@ public class IndexerTest {
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .id(repository.getIdGenerator()
+                        .newRecordId("product29485", Collections.singletonMap("country", "france")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "louche")
                 .field(nvfield2.getName(), "10")
                 .create();
 
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "belgium")))
+                .id(repository.getIdGenerator()
+                        .newRecordId("product29485", Collections.singletonMap("country", "belgium")))
                 .recordType(new QName(NS, "Alpha"))
                 .field(nvfield1.getName(), "schuimspaan")
                 .field(nvfield2.getName(), "11")
@@ -429,7 +435,8 @@ public class IndexerTest {
 
         // update the price in france:
         repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .id(repository.getIdGenerator()
+                        .newRecordId("product29485", Collections.singletonMap("country", "france")))
                 .field(nvfield2.getName(), "12")
                 .update();
 
@@ -464,12 +471,12 @@ public class IndexerTest {
         setExpectedCountsForMatch("nvmatch1", 2, 2, 2, 2, 0, 0, 0, 0); // all
         setExpectedCountsForMatch("nvmatch2", 2, 2, 0, 0, 0, 0, 0, 0); // ns:*
         setExpectedCountsForMatch("nvmatch3", 2, 0, 2, 0, 0, 0, 0, 0); // *:Alpha
-        setExpectedCountsForMatch("nvmatch4", 2, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+        setExpectedCountsForMatch("nvmatch4", 2, 0, 0, 0, 0, 0, 0, 0); // ns:Alpha
 
         setExpectedCountsForMatch("match1", 2, 2, 2, 2, 0, 0, 0, 0); // all
         setExpectedCountsForMatch("match2", 2, 2, 0, 0, 0, 0, 0, 0); // ns:*
         setExpectedCountsForMatch("match3", 2, 0, 2, 0, 0, 0, 0, 0); // *:Alpha
-        setExpectedCountsForMatch("match4", 2, 0, 0, 0, 0, 0, 0 ,0); // ns:Alpha
+        setExpectedCountsForMatch("match4", 2, 0, 0, 0, 0, 0, 0, 0); // ns:Alpha
 
         verifyMatchResultCounts();
 
@@ -506,11 +513,11 @@ public class IndexerTest {
         // Note: the lines marked with /*hasfield*/ test for a feature we don't support yet, hence commented out
         //
         repository.recordBuilder().id("match_nvfield")
-            .recordType(new QName(NS, "Alpha"))
-            .field(nvfield1.getName(), "jupiter")
-            .field(nvfield2.getName(), "pancake")
-            .field(previewTag.getName(), new Long(0))
-            .create();
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "jupiter")
+                .field(nvfield2.getName(), "pancake")
+                .field(previewTag.getName(), new Long(0))
+                .create();
 
         commitIndex();
 
@@ -518,8 +525,8 @@ public class IndexerTest {
         verifyResultCount("nvmatch6:jupiter", 2); // nvfield2=specialvalue
 
         repository.recordBuilder().id("match_nvfield")
-            .field(nvfield1.getName(), "waffle")
-            .update();
+                .field(nvfield1.getName(), "waffle")
+                .update();
 
         commitIndex();
 
@@ -537,19 +544,19 @@ public class IndexerTest {
         // Test match on field conditions (has field, field equals) using non versioned fields
         //
         repository.recordBuilder().id("match_vfield")
-            .recordType(new QName(NS, "Alpha"))
-            .field(vfield1.getName(), "apollo")
-            .field(vfield2.getName(), "bacon")
-            .field(previewTag.getName(), new Long(1))
-            .create();
+                .recordType(new QName(NS, "Alpha"))
+                .field(vfield1.getName(), "apollo")
+                .field(vfield2.getName(), "bacon")
+                .field(previewTag.getName(), new Long(1))
+                .create();
 
         commitIndex();
         /*hasfield*/// verifyResultCount("match5:apollo", 2); // vfield2 is present
         verifyResultCount("match6:apollo", 2); // vfield2=specialvalue
 
         repository.recordBuilder().id("match_vfield")
-            .field(vfield1.getName(), "eggs")
-            .update();
+                .field(vfield1.getName(), "eggs")
+                .update();
 
         commitIndex();
 
@@ -566,26 +573,26 @@ public class IndexerTest {
         //
         // TODO: match on variant properties
         //
-        for (String lang : new String[] { "en", "fr" }) {
+        for (String lang : new String[]{"en", "fr"}) {
             repository.recordBuilder().id("match_varprops_cupid", vprops("lang", lang))
-                .recordType(new QName(NS, "Alpha"))
-                .field(vfield1.getName(), "cupido_"+lang+"_nobranch")
-                .create();
+                    .recordType(new QName(NS, "Alpha"))
+                    .field(vfield1.getName(), "cupido_" + lang + "_nobranch")
+                    .create();
 
             repository.recordBuilder().id("match_varprops_merc", vprops("lang", lang))
-                .recordType(new QName(NS, "Alpha"))
-                .field(nvfield1.getName(), "mercurius_"+lang+"_nobranch")
-                .create();
+                    .recordType(new QName(NS, "Alpha"))
+                    .field(nvfield1.getName(), "mercurius_" + lang + "_nobranch")
+                    .create();
 
-            for (String branch: new String[] { "dev", "prod" }) {
+            for (String branch : new String[]{"dev", "prod"}) {
                 repository.recordBuilder().id("match_varprops_cupid", vprops("lang", lang, "branch", branch))
-                    .recordType(new QName(NS, "Alpha"))
-                    .field(vfield1.getName(), "cupido_"+lang+"_"+branch)
-                    .create();
+                        .recordType(new QName(NS, "Alpha"))
+                        .field(vfield1.getName(), "cupido_" + lang + "_" + branch)
+                        .create();
                 repository.recordBuilder().id("match_varprops_merc", vprops("lang", lang, "branch", branch))
-                    .recordType(new QName(NS, "Alpha"))
-                    .field(nvfield1.getName(), "mercurius_"+lang+"_"+branch)
-                    .create();
+                        .recordType(new QName(NS, "Alpha"))
+                        .field(nvfield1.getName(), "mercurius_" + lang + "_" + branch)
+                        .create();
             }
         }
         commitIndex();
@@ -605,20 +612,20 @@ public class IndexerTest {
         verifyResultCount("nvmatch7:mercurius_fr_prod", 0);
     }
 
-    private Map<String, String> vprops(String ... args) {
+    private Map<String, String> vprops(String... args) {
         Map<String, String> result = Maps.newHashMap();
-        for (int i=0; i < args.length; i+= 2) {
-            result.put(args[i], args[i+1]);
+        for (int i = 0; i < args.length; i += 2) {
+            result.put(args[i], args[i + 1]);
         }
         return result;
     }
 
-    private void verifyMatchResultCounts() throws Exception{
+    private void verifyMatchResultCounts() throws Exception {
         List<String> results = Lists.newArrayList();
         boolean allOk = true;
 
         commitIndex();
-        for (String condition: matchResultCounts.keySet()) {
+        for (String condition : matchResultCounts.keySet()) {
             Integer expected = matchResultCounts.get(condition);
             long numFound = getQueryResponse(condition).getResults().getNumFound();
             if (numFound == expected.longValue()) {
@@ -634,13 +641,14 @@ public class IndexerTest {
         }
     }
 
-    private void updateMatchTestRecords(QName lilyField, String solrField) throws InterruptedException, RepositoryException {
-        for (String id: new String[] { "alpha", "beta", "gamma", "delta" }) {
+    private void updateMatchTestRecords(QName lilyField, String solrField)
+            throws InterruptedException, RepositoryException {
+        for (String id : new String[]{"alpha", "beta", "gamma", "delta"}) {
             repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId(id))
-                .field(lilyField, id+ "_" + solrField + "_updated")
-                .field(previewTag.getName(), new Long(1))
-                .update();
+                    .id(repository.getIdGenerator().newRecordId(id))
+                    .field(lilyField, id + "_" + solrField + "_updated")
+                    .field(previewTag.getName(), new Long(1))
+                    .update();
         }
     }
 
@@ -659,7 +667,7 @@ public class IndexerTest {
         RecordBuilder builder = repository.recordBuilder();
 
         builder.recordType(new QName(ns, name))
-            .id(id);
+                .id(id);
 
         for (int i = 1; i <= 4; i++) {
             builder.field(new QName(NS2, "match" + i), id + "_" + "match" + i + "_orig");
@@ -2669,7 +2677,8 @@ public class IndexerTest {
                 System.out.println(result.getFirstValue("lily.key"));
             }
         }
-        assertEquals("The query result for '" + query + "' contains the wrong number of documents.", count, response.getResults().getNumFound());
+        assertEquals("The query result for '" + query + "' contains the wrong number of documents.", count,
+                response.getResults().getNumFound());
     }
 
     private void verifyFieldValues(String query, String fieldName, String... expectedValues)

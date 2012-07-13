@@ -27,7 +27,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.apache.solr.common.SolrInputDocument;
-import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
+import org.lilyproject.indexer.derefmap.DependencyEntry;
+import org.lilyproject.indexer.derefmap.DerefMapUtil;
 import org.lilyproject.indexer.model.indexerconf.Dep;
 import org.lilyproject.indexer.model.indexerconf.FieldTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.IndexUpdateBuilder;
@@ -68,7 +69,8 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private SchemaId vtag;
     private long version;
 
-    public SolrDocumentBuilder(Repository repository, SystemFields systemFields, ValueEvaluator valueEvaluator, IdRecord record, String key,
+    public SolrDocumentBuilder(Repository repository, SystemFields systemFields, ValueEvaluator valueEvaluator,
+                               IdRecord record, String key,
                                SchemaId vtag, long version) {
         this.repository = repository;
         this.systemFields = systemFields;

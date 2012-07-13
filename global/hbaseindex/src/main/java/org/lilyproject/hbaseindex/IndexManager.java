@@ -15,11 +15,15 @@
  */
 package org.lilyproject.hbaseindex;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -28,9 +32,6 @@ import org.lilyproject.util.hbase.HBaseAdminFactory;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LocalHTable;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 /**
  * Starting point for all the index and query functionality.
@@ -61,7 +62,7 @@ public class IndexManager {
     /**
      * Creates a new index.
      *
-     * @throws IndexExistsException if an index with the same name already exists
+     * @throws IndexExistsException   if an index with the same name already exists
      * @throws IndexNotFoundException very unlikely to occur here
      */
     public synchronized Index getIndex(IndexDefinition indexDef) throws IOException, InterruptedException,
@@ -74,10 +75,11 @@ public class IndexManager {
         byte[] jsonData = serialize(indexDef);
 
         HTableDescriptor tableDescr = new HTableDescriptor(indexDef.getName());
-        HColumnDescriptor family = new HColumnDescriptor(Index.DATA_FAMILY, 1, HColumnDescriptor.DEFAULT_COMPRESSION,
-                HColumnDescriptor.DEFAULT_IN_MEMORY, HColumnDescriptor.DEFAULT_BLOCKCACHE,
-                HColumnDescriptor.DEFAULT_BLOCKSIZE, HColumnDescriptor.DEFAULT_TTL,
-                HColumnDescriptor.DEFAULT_BLOOMFILTER, HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
+        HColumnDescriptor family =
+                new HColumnDescriptor(IndexDefinition.DATA_FAMILY, 1, HColumnDescriptor.DEFAULT_COMPRESSION,
+                        HColumnDescriptor.DEFAULT_IN_MEMORY, HColumnDescriptor.DEFAULT_BLOCKCACHE,
+                        HColumnDescriptor.DEFAULT_BLOCKSIZE, HColumnDescriptor.DEFAULT_TTL,
+                        HColumnDescriptor.DEFAULT_BLOOMFILTER, HColumnDescriptor.DEFAULT_REPLICATION_SCOPE);
         tableDescr.addFamily(family);
 
         // Store definition of index in a custom attribute on the table
@@ -117,7 +119,7 @@ public class IndexManager {
             table = new LocalHTable(hbaseConf, name);
         } catch (RuntimeException e) {
             if (e.getCause() != null && e.getCause() instanceof TableNotFoundException) {
-                throw new IndexNotFoundException(name);                
+                throw new IndexNotFoundException(name);
             } else {
                 throw e;
             }

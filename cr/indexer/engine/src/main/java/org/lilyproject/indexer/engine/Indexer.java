@@ -26,7 +26,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
-import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
+import org.lilyproject.indexer.derefmap.DependencyEntry;
+import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField;
 import org.lilyproject.indexer.model.indexerconf.DynamicIndexField.DynamicIndexFieldMatch;
@@ -196,7 +197,8 @@ public class Indexer {
         for (SchemaId vtag : vtags) {
 
             SolrDocumentBuilder solrDocumentBuilder =
-                    new SolrDocumentBuilder(repository, systemFields, valueEvaluator, record, getIndexId(record.getId(), vtag), vtag,
+                    new SolrDocumentBuilder(repository, systemFields, valueEvaluator, record,
+                            getIndexId(record.getId(), vtag), vtag,
                             version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
