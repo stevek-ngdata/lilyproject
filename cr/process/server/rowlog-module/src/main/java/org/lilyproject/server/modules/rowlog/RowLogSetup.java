@@ -118,7 +118,7 @@ public class RowLogSetup {
         }
 
         // Link index updater disabled by default since this task can now be done my the derefMap
-        boolean linkIdxEnabled = rowLogConf.getChild("linkqIndexUpdater").getAttributeAsBoolean("enabled", false);
+        boolean linkIdxEnabled = rowLogConf.getChild("linkIndexUpdater").getAttributeAsBoolean("enabled", false);
         if (linkIdxEnabled) {
             if (!confMgr.subscriptionExists("wal", "LinkIndexUpdater")) {
                 // If the subscription already exists, this method will silently return
