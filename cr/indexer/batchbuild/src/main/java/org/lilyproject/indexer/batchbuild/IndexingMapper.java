@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import net.iharder.Base64;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.logging.Log;
@@ -62,9 +63,10 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
     private MultiThreadedHttpConnectionManager connectionManager;
     private IndexLocker indexLocker;
     private ZooKeeperItf zk;
+    private LilyClient lilyClient;
     private Repository repository;
     private ThreadPoolExecutor executor;
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -72,8 +74,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
         try {
             Configuration jobConf = context.getConfiguration();
-
-            LilyClient lilyClient = LilyMapReduceUtil.getLilyClient(jobConf);
+log.info("Starting lily client");
+            lilyClient = LilyMapReduceUtil.getLilyClient(jobConf);
             repository = lilyClient.getRepository();
 
             String zkConnectString = jobConf.get("org.lilyproject.indexer.batchbuild.zooKeeperConnectString");
@@ -163,6 +165,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
         Closer.close(connectionManager);
         Closer.close(repository);
+        log.info("Shutdown lily client");
+        Closer.close(lilyClient);
         super.cleanup(context);
         Closer.close(zk);
     }
@@ -174,8 +178,8 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
     }
 
     public class MappingTask implements Runnable {
-        private IdRecord idRecord;
-        private Context context;
+        private final IdRecord idRecord;
+        private final Context context;
 
         private MappingTask(IdRecord idRecord, Context context) {
             this.idRecord = idRecord;

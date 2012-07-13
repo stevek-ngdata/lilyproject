@@ -3,6 +3,8 @@ package org.lilyproject.indexer.batchbuild.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -12,13 +14,16 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
+import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.zookeeper.KeeperException;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.engine.DerefMap;
 import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
@@ -31,6 +36,7 @@ import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.indexer.model.api.IndexValidityException;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
+import org.lilyproject.lilyservertestfw.LilyServerProxy;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
@@ -41,6 +47,8 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.solrtestfw.SolrProxy;
+import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.repo.VersionTag;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -49,8 +57,16 @@ import org.lilyproject.util.zookeeper.ZkLockException;
 
 public class BatchBuildTest {
     private static LilyProxy lilyProxy;
+    private static LilyClient lilyClient;
+    private static Repository repository;
+    private static TypeManager typeManager;
+    private static SolrServer solrServer;
+    private static SolrProxy solrProxy;
+    private static LilyServerProxy lilyServerProxy;
+    private static HBaseAdmin hbaseAdmin;
+    private static WriteableIndexerModel model;
     private static File tmpDir;
-    private static int BUILD_TIMEOUT = 120000;
+    private static int BUILD_TIMEOUT = 240000;
 
     private FieldType ft1;
     private FieldType ft2;
@@ -95,12 +111,18 @@ public class BatchBuildTest {
             setProperty("lily.lilyproxy.restoretemplatedir", oldRestoreTemplate);
         }
 
+        solrProxy = lilyProxy.getSolrProxy();
+        solrServer = solrProxy.getSolrServer();
+        lilyServerProxy = lilyProxy.getLilyServerProxy();
+        lilyClient = lilyServerProxy.getClient();
+        repository = lilyClient.getRepository();
+
         // Set the solr schema
         InputStream is = BatchBuildTest.class.getResourceAsStream("solrschema.xml");
-        lilyProxy.getSolrProxy().changeSolrSchema(IOUtils.toByteArray(is));
+        solrProxy.changeSolrSchema(IOUtils.toByteArray(is));
         IOUtils.closeQuietly(is);
 
-        TypeManager typeManager = lilyProxy.getLilyServerProxy().getClient().getRepository().getTypeManager();
+        typeManager = repository.getTypeManager();
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("batchindex-test", "field1"),
                 Scope.NON_VERSIONED);
         FieldType ft2 =typeManager.createFieldType("LINK", new QName("batchindex-test", "linkField"), Scope.NON_VERSIONED);
@@ -111,20 +133,37 @@ public class BatchBuildTest {
                 .fieldEntry().use(ft2).add()
                 .create();
 
-        // Set the index
-        lilyProxy.getLilyServerProxy().addIndexFromResource(INDEX_NAME,
-                "org/lilyproject/indexer/batchbuild/test/indexerconf.xml", 1000);
 
-        WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
-        String lock = model.lockIndex(INDEX_NAME);
-        try {
-            IndexDefinition index = model.getMutableIndex("batchtest");
-            index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
-            model.updateIndex(index, lock);
+        hbaseAdmin = HBaseAdminFactory.get(LilyClient.getHBaseConfiguration(lilyServerProxy.getZooKeeper()));
 
-        } finally {
-            model.unlockIndex(lock);
-        }
+        model = lilyServerProxy.getIndexerModel();
+        //String lock = model.lockIndex(INDEX_NAME);
+
+        is =  BatchBuildTest.class.getResourceAsStream("indexerconf.xml");
+        byte[] indexerConfiguration = IOUtils.toByteArray(is);
+        IOUtils.closeQuietly(is);
+
+        IndexDefinition index = model.newIndex(INDEX_NAME);
+        Map<String, String> solrShards = new HashMap<String, String>();
+        solrShards.put("shard1", "http://localhost:8983/solr");
+        index.setSolrShards(solrShards);
+        index.setConfiguration(indexerConfiguration);
+        index.setUpdateState(IndexUpdateState.DO_NOT_SUBSCRIBE);
+        model.addIndex(index);
+
+    }
+
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception{
+        Closer.close(repository);
+        Closer.close(lilyClient);
+        Closer.close(solrServer);
+        Closer.close(solrProxy);
+        Closer.close(lilyServerProxy);
+        Closer.close(hbaseAdmin);
+
+        lilyProxy.stop();
+
     }
 
     private static String setProperty(String name, String value) {
@@ -156,20 +195,15 @@ public class BatchBuildTest {
 
     @Before
     public void setup() throws Exception {
-        Repository repository = lilyProxy.getLilyServerProxy().getClient().getRepository();
-        TypeManager typeManager = repository.getTypeManager();
-
         this.ft1 = typeManager.getFieldTypeByName(new QName("batchindex-test", "field1"));
         this.ft2 = typeManager.getFieldTypeByName(new QName("batchindex-test", "linkField"));
         this.rt1 = typeManager.getRecordTypeByName(new QName("batchindex-test", "rt1"), null);
+
 
     }
 
     @Test
     public void testBatchIndex() throws Exception {
-        Repository repository = lilyProxy.getLilyServerProxy().getClient().getRepository();
-        SolrProxy solrProxy = lilyProxy.getSolrProxy();
-
         String assertId = "batch-index-test";
         //
         // First create some content
@@ -182,7 +216,7 @@ public class BatchBuildTest {
 
         this.buildAndCommit();
 
-        QueryResponse response = solrProxy.getSolrServer().query(new SolrQuery("field1:test1*"));
+        QueryResponse response = solrServer.query(new SolrQuery("field1:test1*"));
         Assert.assertEquals(1, response.getResults().size());
         Assert.assertEquals("USER." + assertId, response.getResults().get(0).getFieldValue("lily.id"));
     }
@@ -194,11 +228,6 @@ public class BatchBuildTest {
      */
     @Test
     public void testDefaultBatchIndexConf() throws Exception {
-        Repository repository = lilyProxy.getLilyServerProxy().getClient().getRepository();
-        SolrProxy solrProxy = lilyProxy.getSolrProxy();
-
-        WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
-
         byte[] defaultConf = getResourceAsByteArray("defaultBatchIndexConf-test2.json");
         setBatchIndexConf(defaultConf, null, false);
 
@@ -222,7 +251,7 @@ public class BatchBuildTest {
         this.buildAndCommit();
 
         // Check if 1 record and not 2 are in the index
-        QueryResponse response = solrProxy.getSolrServer().query(new SolrQuery("field1:test2*"));
+        QueryResponse response = solrServer.query(new SolrQuery("field1:test2*"));
         Assert.assertEquals(1, response.getResults().size());
         Assert.assertEquals("USER." + "batch-index-test2", response.getResults().get(0).getFieldValue("lily.id"));
         // check that  the last used batch index conf = default
@@ -238,12 +267,10 @@ public class BatchBuildTest {
      */
     @Test
     public void testCustomBatchIndexConf() throws Exception {
-        Repository repository = lilyProxy.getLilyServerProxy().getClient().getRepository();
-        SolrProxy solrProxy = lilyProxy.getSolrProxy();
-        WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
-
+        Assert.assertTrue(hbaseAdmin.isMasterRunning());
         byte[] defaultConf = getResourceAsByteArray("defaultBatchIndexConf-test2.json");
         setBatchIndexConf(defaultConf, null, false);
+        Assert.assertTrue(hbaseAdmin.isMasterRunning());
 
         String assertId1 = "batch-index-custom-test3";
         String assertId2 = "batch-index-test3";
@@ -269,8 +296,11 @@ public class BatchBuildTest {
                 .create();
 
         // Index everything with the default conf
+
         this.buildAndCommit();
-        SolrDocumentList results = solrProxy.getSolrServer().query(new SolrQuery("field1:test3*").
+        Assert.assertTrue(hbaseAdmin.isMasterRunning());
+
+        SolrDocumentList results = solrServer.query(new SolrQuery("field1:test3*").
                 addSortField("lily.id", ORDER.asc)).getResults();
         Assert.assertEquals(2, results.size());
         Assert.assertEquals("USER." + assertId1, results.get(0).getFieldValue("lily.id"));
@@ -284,36 +314,12 @@ public class BatchBuildTest {
 
         byte[] batchConf = getResourceAsByteArray("batchIndexConf-test3.json");
         setBatchIndexConf(defaultConf, batchConf, true);
+        Assert.assertTrue(hbaseAdmin.isMasterRunning());
 
-        boolean indexSuccess = false;
-        try {
-            // Now wait until its finished
-            long tryUntil = System.currentTimeMillis() + BUILD_TIMEOUT;
-            while (System.currentTimeMillis() < tryUntil) {
-                Thread.sleep(100);
-                IndexDefinition definition = model.getIndex(INDEX_NAME);
-                if (definition.getBatchBuildState() == IndexBatchBuildState.INACTIVE) {
-                    Long amountFailed = definition.getLastBatchBuildInfo().getCounters()
-                            .get(COUNTER_NUM_FAILED_RECORDS);
-                    boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
-                    indexSuccess = successFlag && (amountFailed == null || amountFailed == 0L);
-                } else if (definition.getBatchBuildState() == IndexBatchBuildState.BUILDING) {
-                    Assert.assertEquals(JsonFormat.deserialize(batchConf),
-                            JsonFormat.deserialize(definition.getActiveBatchBuildInfo().getBatchIndexConfiguration()));
-                }
-            }
-        } catch (Exception e) {
-            throw new Exception("Error checking if batch index job ended.", e);
-        }
-
-        if (!indexSuccess) {
-            Assert.fail("Batch build did not end after " + BUILD_TIMEOUT + " millis");
-        } else {
-            lilyProxy.getSolrProxy().getSolrServer().commit();
-        }
+        waitForIndexAndCommit(BUILD_TIMEOUT);
 
         // Check if 1 record and not 2 are in the index
-        QueryResponse response = solrProxy.getSolrServer().query(new SolrQuery("field1:test3\\ index\\ run2"));
+        QueryResponse response = solrServer.query(new SolrQuery("field1:test3\\ index\\ run2"));
         Assert.assertEquals(1, response.getResults().size());
         Assert.assertEquals("USER." + assertId1, response.getResults().get(0).getFieldValue("lily.id"));
         // check that the last used batch index conf = default
@@ -325,10 +331,14 @@ public class BatchBuildTest {
         recordToChange2.setField(ft1.getName(), "test3 index run3");
         repository.update(recordToChange1);
         repository.update(recordToChange2);
-
+        System.out.println("It runs now");
+        Assert.assertTrue(hbaseAdmin.isMasterRunning());
         // Now rebuild the index and see if the default indexer has kicked in
         this.buildAndCommit();
-        response = solrProxy.getSolrServer().query(new SolrQuery("field1:test3\\ index\\ run3").
+
+        System.out.println("here it stops");
+        Assert.assertTrue(hbaseAdmin.isMasterRunning());
+        response = solrServer.query(new SolrQuery("field1:test3\\ index\\ run3").
                 addSortField("lily.id", ORDER.asc));
         Assert.assertEquals(2, response.getResults().size());
         Assert.assertEquals("USER." + assertId1, response.getResults().get(0).getFieldValue("lily.id"));
@@ -361,8 +371,7 @@ public class BatchBuildTest {
 
     @Test
     public void testClearDerefMap() throws Exception {
-        Repository repository = lilyProxy.getLilyServerProxy().getClient().getRepository();
-        DerefMap derefMap = DerefMapHbaseImpl.create(INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), repository.getIdGenerator());
+        DerefMap derefMap = DerefMapHbaseImpl.create(INDEX_NAME, LilyClient.getHBaseConfiguration(lilyServerProxy.getZooKeeper()), repository.getIdGenerator());
 
         Record linkedRecord = repository.recordBuilder()
             .id("deref-test-linkedrecord")
@@ -377,41 +386,81 @@ public class BatchBuildTest {
             .field(ft2.getName(), new Link(linkedRecord.getId()))
             .create();
 
-        SchemaId vtag = repository.getTypeManager().getFieldTypeByName(VersionTag.LAST).getId();
-        DerefMap.DependantRecordIdsIterator it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
-        Assert.assertTrue(!it.hasNext());
+        SchemaId vtag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
+        DerefMap.DependantRecordIdsIterator it = null;
+
+        try {
+            it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
+            Assert.assertTrue(!it.hasNext());
+        } finally {
+            it.close();
+        }
 
         setBatchIndexConf(getResourceAsByteArray("batchIndexConf-testClearDerefmap-false.json"), null, false);
+
         buildAndCommit();
 
-        QueryResponse response = lilyProxy.getSolrProxy().getSolrServer().query(new SolrQuery("field1:deref\\ test\\ main"));
+        QueryResponse response = solrServer.query(new SolrQuery("field1:deref\\ test\\ main"));
         Assert.assertEquals(1, response.getResults().size());
 
-        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
-        Assert.assertTrue(it.hasNext());
+        try {
+            it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
+            Assert.assertTrue(it.hasNext());
+        } finally {
+            it.close();
+        }
 
-        setBatchIndexConf(getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), null, false);
-        buildAndCommit();
+        setBatchIndexConf(null,getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), true);
+        waitForIndexAndCommit(BUILD_TIMEOUT);
 
-        it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
-        Assert.assertTrue(!it.hasNext());
-
+        try {
+            it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
+            Assert.assertTrue(!it.hasNext());
+        } finally {
+            it.close();
+        }
     }
 
     private void buildAndCommit() throws Exception {
-        boolean success = lilyProxy.getLilyServerProxy().batchBuildIndex(INDEX_NAME, BUILD_TIMEOUT);
+        boolean success = lilyServerProxy.batchBuildIndex(INDEX_NAME, BUILD_TIMEOUT);
         if (success) {
-            lilyProxy.getSolrProxy().getSolrServer().commit();
+            solrServer.commit();
         } else {
             Assert.fail("Batch build did not end after " + BUILD_TIMEOUT + " millis");
         }
+    }
+
+    private void waitForIndexAndCommit(long timeout) throws Exception {
+        boolean indexSuccess = false;
+        try {
+            // Now wait until its finished
+            long tryUntil = System.currentTimeMillis() + timeout;
+            while (System.currentTimeMillis() < tryUntil) {
+                Thread.sleep(100);
+                IndexDefinition definition = model.getIndex(INDEX_NAME);
+                if (definition.getBatchBuildState() == IndexBatchBuildState.INACTIVE) {
+                    Long amountFailed = definition.getLastBatchBuildInfo().getCounters()
+                            .get(COUNTER_NUM_FAILED_RECORDS);
+                    boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
+                    indexSuccess = successFlag && (amountFailed == null || amountFailed == 0L);
+                }
+            }
+        } catch (Exception e) {
+            throw new Exception("Error checking if batch index job ended.", e);
+        }
+
+        if (!indexSuccess) {
+            Assert.fail("Batch build did not end after " + BUILD_TIMEOUT + " millis");
+        } else {
+            solrServer.commit();
+        }
+
     }
 
     private static void setBatchIndexConf (byte[] defaultConf, byte[] customConf, boolean buildNow)
             throws IndexValidityException, KeeperException, InterruptedException, ZkConnectException,
             IndexModelException, IndexNotFoundException, ZkLockException, IndexUpdateException,
             IndexConcurrentModificationException{
-        WriteableIndexerModel model = lilyProxy.getLilyServerProxy().getIndexerModel();
         String lock = model.lockIndex(INDEX_NAME);
 
         try {
