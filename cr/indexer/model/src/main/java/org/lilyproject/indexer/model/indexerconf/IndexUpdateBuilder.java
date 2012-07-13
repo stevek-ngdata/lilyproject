@@ -6,12 +6,14 @@ import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.util.repo.SystemFields;
 
 public interface IndexUpdateBuilder {
 
     public void addField(String fieldName, List<String> value) throws InterruptedException, RepositoryException;
 
     public Repository getRepository();
+    public SystemFields getSystemFields();
 
     public RecordContext getRecordContext();
     public void push(Record record, Dep dep);

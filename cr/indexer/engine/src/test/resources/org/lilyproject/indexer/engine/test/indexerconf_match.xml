@@ -16,26 +16,32 @@
 
     <!-- ==================== <match> using versioned fields =================== -->
     <!-- always indexed -->
-    <field name="match1" value="ns:match1"/>
+    <field name="match1" value="ns2:match1"/>
 
     <!-- match on ns only -->
     <match recordType="ns:*">
-      <field name="match2" value="ns:match2"/>
+      <field name="match2" value="ns2:match2"/>
     </match>
 
     <!-- match on name only -->
     <match recordType="*:Alpha">
-      <field name="match3" value="ns:match3"/>
+      <field name="match3" value="ns2:match3"/>
     </match>
 
     <!-- match on ns and name -->
     <match recordType="ns:Alpha">
-      <field name="match4" value="ns:match4"/>
+      <field name="match4" value="ns2:match4"/>
     </match>
 
-    <!-- match on field -->
-    <match field="ns:match1=Paris">
-      <field name="match5" value="ns:match5"/>
+    <!-- match on field presence-->
+    <!-- not supported
+    <match field="ns2:v_field2">
+      <field name="match5" value="ns2:match5"/>
+    </match>
+    -->
+
+    <match field="ns2:v_field2=bacon">
+      <field name="match6" value="ns2:v_field1"/>
     </match>
 
     <!-- ==================== <match> using non-versioned fields =================== -->
@@ -58,45 +64,38 @@
     </match>
 
     <!-- match on field presence -->
-    <!--  todo
-    <match field="ns:nvmatch1=Berlin">
+    <!-- not supported
+    <match field="ns:nv_field2">
       <field name="nvmatch5" value="ns:nvmatch5"/>
     </match>
-     -->
+    -->
 
     <!-- match on field equals -->
-    <match field="ns:nvmatch1=Berlin">
-      <field name="nvmatch5" value="ns:nvmatch5"/>
+    <match field="ns:nv_field2=pancake">
+      <field name="nvmatch6" value="ns:nv_field1"/>
     </match>
 
+    <!-- ==================== <match> using variant properties =================== -->
     <!-- match on variant property presence -->
-    <!--  todo
-    <match field="ns:nvmatch1=Berlin">
-      <field name="nvmatch5" value="ns:nvmatch5"/>
+    <match matchVariant="lang=en,branch">
+      <field name="nvmatch7" value="ns:nv_field1"/>
+      <field name="match7" value="ns2:v_field1"/>
     </match>
-    -->
-
-    <!-- match on variant property equals -->
-    <!-- todo
-    <match field="ns:nvmatch1=Berlin">
-      <field name="nvmatch5" value="ns:nvmatch5"/>
-    </match>
-    -->
 
     <!-- ==================== <foreach> =================== -->
     <!-- using +variant and @vprop -->
-    <forEach value="+country">
+    <forEach expr="+country">
       <field name="product_description_${@vprop:country}_string" value="ns:nv_field1"/>
       <field name="product_price_${@vprop:country}_string" value="ns:nv_field2"/>
     </forEach>
 
-    <!-- using -variant and a schema field -->
-    <forEach value="-country">
+    <!-- using -variant and a repo field -->
+    <forEach expr="-country">
       <field name="product_code_${ns:nv_field2}_string" value="ns:nv_field1"/>
     </forEach>
 
     <!-- using master and a system field -->
-    <forEach value="master">
+    <forEach expr="master">
       <field name="product_id_${sys:id}_string" value="ns:nv_field1"/>
     </forEach>
 

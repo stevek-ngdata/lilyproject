@@ -122,7 +122,7 @@
           <xs:element minOccurs="0" ref="forEach"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="value" type="xs:string" use="optional"/>
+      <xs:attribute name="expr" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
 </xs:schema>

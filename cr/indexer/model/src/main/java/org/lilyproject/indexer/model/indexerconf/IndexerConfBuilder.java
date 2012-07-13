@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.dom.DOMSource;
@@ -35,6 +34,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -84,6 +84,8 @@ public class IndexerConfBuilder {
     private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
 
     private static final Splitter EQUAL_SIGN_SPLITTER = Splitter.on('=').trimResults().omitEmptyStrings();
+
+    private static final Splitter DEREF_SIGN_SPLITTER = Splitter.on("=>").trimResults().omitEmptyStrings();
 
     private final Log log = LogFactory.getLog(getClass());
 
@@ -357,10 +359,15 @@ public class IndexerConfBuilder {
     }
 
     private ForEachNode buildForEachNode(Element el) throws Exception {
-        String valueExpr = DocumentHelper.getAttribute(el, "value", true);
+        String expr = DocumentHelper.getAttribute(el, "expr", true);
 
-        List<Follow> follows = parseFollows(el, valueExpr, new String[] { valueExpr, null });
-        ForEachNode forEachNode = new ForEachNode(systemFields, follows.get(0));
+        Follow follow = null;
+        try {
+            follow = parseFollow(el, expr);
+        } catch (Exception e) {
+            throw new IndexerConfException("Failed to process forEach element at " + LocationAttributes.getLocationString(el), e);
+        }
+        ForEachNode forEachNode = new ForEachNode(systemFields, follow);
         addChildNodes(el, forEachNode, "field", "match", "forEach");
         return forEachNode;
     }
@@ -539,9 +546,26 @@ public class IndexerConfBuilder {
         final List<Follow> follows = parseFollows(fieldEl, valueExpr, derefParts);
         final Value value = buildValue(fieldEl, derefParts[derefParts.length - 1]);
 
+        boolean lastFollowIsRecord = false;
+        for (Follow follow: follows) {
+            if (lastFollowIsRecord) {
+                if (follow instanceof VariantFollow ||
+                        follow instanceof ForwardVariantFollow ||
+                        follow instanceof MasterFollow) {
+                    String locationString = LocationAttributes.getLocationString(fieldEl);
+                    throw new IndexerConfException("In deref expressions, a variant(+/-/master) follow" +
+                    		" cannot follow after a record field. Location: " + locationString);
+                }
+            }
+            if (follow instanceof RecordFieldFollow) {
+                lastFollowIsRecord = true;
+            } else {
+                lastFollowIsRecord = false;
+            }
+        }
+
         // If the last follow is a RecordFieldFollow, we check that the Value isn't something which requires a real Record
-        Follow lastFollow = follows.get(follows.size() - 1);
-        if (lastFollow instanceof RecordFieldFollow) {
+        if (lastFollowIsRecord) {
             SchemaId fieldDependency = value.getFieldDependency();
             if (systemFields.isSystemField(fieldDependency)) {
                 checkSystemFieldUsage(fieldEl, valueExpr, fieldDependency, new QName(SystemFields.NS, "id"));
@@ -567,54 +591,46 @@ public class IndexerConfBuilder {
 
     private List<Follow> parseFollows(Element fieldEl, String valueExpr, String[] derefParts) throws Exception {
         List<Follow> follows = new ArrayList<Follow>();
-        boolean lastFollowIsRecord = false;
-        for (int i = 0; i < derefParts.length - 1; i++) {
-            String derefPart = derefParts[i];
 
-            // A deref expression can navigate through 5 kinds of 'links':
-            //  - a link stored in a link field (detected based on presence of a colon)
-            //  - a nested record
-            //  - a link to the master variant (if it's the literal string 'master')
-            //  - a link to a less-dimensioned variant
-            //  - a link to a more-dimensioned variant
+        try {
+            for (int i = 0; i < derefParts.length - 1; i++) {
+                String derefPart = derefParts[i];
 
-            if (derefPart.contains(":")) { // It's a field name
-                lastFollowIsRecord = processFieldDeref(fieldEl, valueExpr, follows, derefPart);
-            } else if (derefPart.equals("master")) { // Link to master variant
-                if (lastFollowIsRecord) {
-                    throw new IndexerConfException("In dereferencing, master cannot follow on record-type field." +
-                            " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
-                }
-                lastFollowIsRecord = false;
+                // A deref expression can navigate through 5 kinds of 'links':
+                //  - a link stored in a link field (detected based on presence of a colon)
+                //  - a nested record
+                //  - a link to the master variant (if it's the literal string 'master')
+                //  - a link to a less-dimensioned variant
+                //  - a link to a more-dimensioned variant
 
-                follows.add(new MasterFollow());
-            } else if (derefPart.trim().startsWith("-")) {  // Link to less dimensioned variant
-                if (lastFollowIsRecord) {
-                    throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
-                            " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
-                }
-                lastFollowIsRecord = false;
-
-                processLessDimensionedVariantsDeref(fieldEl, valueExpr, follows, derefPart);
-            } else if (derefPart.trim().startsWith("+")) {  // Link to more dimensioned variant
-                if (lastFollowIsRecord) {
-                    throw new IndexerConfException("In dereferencing, variant cannot follow on record-type field." +
-                            " Deref expression: '" + valueExpr + "' at " + LocationAttributes.getLocation(fieldEl));
-                }
-                lastFollowIsRecord = false;
-
-                processMoreDimensionedVariantsDeref(fieldEl, valueExpr, follows, derefPart);
+                follows.add(parseFollow(fieldEl, derefPart));
             }
+        } catch (Exception e) {
+            throw new IndexerConfException("Failed to parse deref expression at " + LocationAttributes.getLocationString(fieldEl));
         }
 
         return follows;
+    }
+
+    private Follow parseFollow(Element fieldEl, String derefPart) throws IndexerConfException, InterruptedException, RepositoryException {
+        if (derefPart.contains(":")) { // It's a field name
+            return processFieldDeref(fieldEl, derefPart);
+        } else if (derefPart.equals("master")) { // Link to master variant
+            return new MasterFollow();
+        } else if (derefPart.trim().startsWith("-")) {  // Link to less dimensioned variant
+            return processLessDimensionedVariantsDeref(derefPart);
+        } else if (derefPart.trim().startsWith("+")) {  // Link to more dimensioned variant
+            return processMoreDimensionedVariantsDeref(derefPart);
+        } else {
+            throw new IndexerConfException("I don't know how handle the part '" + derefPart + "'");
+        }
     }
 
     private String[] parseDerefParts(Element fieldEl, String valueExpr) throws IndexerConfException {
         //
         // Split, normalize, validate the input
         //
-        String[] derefParts = valueExpr.split(Pattern.quote("=>"));
+        String[] derefParts = Iterables.toArray(DEREF_SIGN_SPLITTER.split(valueExpr), String.class);
         for (int i = 0; i < derefParts.length; i++) {
             String trimmed = derefParts[i].trim();
             if (trimmed.length() == 0) {
@@ -646,9 +662,8 @@ public class IndexerConfBuilder {
         return ConfUtil.getFieldType(targetFieldName, systemFields, typeManager);
     }
 
-    private boolean processFieldDeref(Element fieldEl, String valueExpr, List<Follow> follows, String derefPart)
+    private Follow processFieldDeref(Element fieldEl, String derefPart)
             throws IndexerConfException, InterruptedException, RepositoryException {
-        boolean lastFollowIsRecord;
         FieldType followField = ConfUtil.getFieldType(derefPart, fieldEl, systemFields, typeManager);
 
         String type = followField.getValueType().getBaseName();
@@ -657,22 +672,16 @@ public class IndexerConfBuilder {
         }
 
         if (type.equals("RECORD")) {
-            follows.add(new RecordFieldFollow(followField));
-            lastFollowIsRecord = true;
+            return new RecordFieldFollow(followField);
         } else if (type.equals("LINK")) {
-            follows.add(new LinkFieldFollow(followField));
-            lastFollowIsRecord = false;
+            return new LinkFieldFollow(followField);
         } else {
             throw new IndexerConfException("Dereferencing is not possible on field of type " +
-                    followField.getValueType().getName() + ". Field: '" + derefPart +
-                    "', deref expression '" + valueExpr + "' at " +
-                    LocationAttributes.getLocation(fieldEl));
+                    followField.getValueType().getName() + ". Field: '" + derefPart);
         }
-        return lastFollowIsRecord;
     }
 
-    private void processLessDimensionedVariantsDeref(Element fieldEl, String valueExpr, List<Follow> follows,
-                                                     String derefPart) throws IndexerConfException {
+    private Follow processLessDimensionedVariantsDeref(String derefPart) throws IndexerConfException {
         // The variant dimensions are specified in a syntax like "-var1,-var2,-var3"
         boolean validConfig = true;
         Set<String> dimensions = new HashSet<String>();
@@ -689,16 +698,13 @@ public class IndexerConfBuilder {
             validConfig = false;
 
         if (!validConfig) {
-            throw new IndexerConfException("Invalid specification of variants to follow: '" +
-                    derefPart + "', deref expression: '" + valueExpr + "' " +
-                    "at " + LocationAttributes.getLocation(fieldEl));
+            throw new IndexerConfException("Invalid specification of variants to follow: '" + derefPart);
         }
 
-        follows.add(new VariantFollow(dimensions));
+        return new VariantFollow(dimensions);
     }
 
-    private void processMoreDimensionedVariantsDeref(Element fieldEl, String valueExpr, List<Follow> follows,
-                                                     String derefPart) throws IndexerConfException {
+    private Follow processMoreDimensionedVariantsDeref(String derefPart) throws IndexerConfException {
         // The variant dimension is specified in a syntax like "+var1=boo,+var2"
         boolean validConfig = true;
         Map<String, String> dimensions = new HashMap<String, String>();
@@ -729,12 +735,10 @@ public class IndexerConfBuilder {
             validConfig = false;
 
         if (!validConfig) {
-            throw new IndexerConfException("Invalid specification of variants to follow: '" +
-                    derefPart + "', deref expression: '" + valueExpr + "' " +
-                    "at " + LocationAttributes.getLocation(fieldEl));
+            throw new IndexerConfException("Invalid specification of variants to follow: '" + derefPart);
         }
 
-        follows.add(new ForwardVariantFollow(dimensions));
+        return new ForwardVariantFollow(dimensions);
     }
 
     private void validate(Document document) throws IndexerConfException {
