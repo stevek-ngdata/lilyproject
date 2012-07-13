@@ -31,6 +31,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.thirdparty.guava.common.collect.Maps;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -45,7 +46,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.hbaseindex.IndexManager;
-import org.lilyproject.indexer.engine.DerefMap;
 import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
@@ -108,6 +108,7 @@ public class IndexerTest {
     private static IdGenerator idGenerator;
     private static SolrShardManagerImpl solrShardManager;
     private static LinkIndex linkIndex;
+    private static DerefMapHbaseImpl derefMap;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -202,7 +203,12 @@ public class IndexerTest {
     public static void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
         IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        DerefMap derefMap = DerefMapHbaseImpl.create("test", repoSetup.getHadoopConf(), repository.getIdGenerator());
+
+        Configuration hbaseConf = repoSetup.getHadoopConf();
+        if (derefMap != null) {
+            DerefMapHbaseImpl.delete("test", hbaseConf);
+        }
+        derefMap = (DerefMapHbaseImpl)DerefMapHbaseImpl.create("test", hbaseConf, repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 
@@ -662,6 +668,13 @@ public class IndexerTest {
         builder.field(previewTag.getName(), new Long(1));
 
         builder.create();
+    }
+
+    @Test
+    public void changeIndexUpdaterMultipleTimes() throws Exception {
+        changeIndexUpdater("indexerconf1.xml");
+        changeIndexUpdater("indexerconf1.xml");
+        changeIndexUpdater("indexerconf1.xml");
     }
 
     @Test
