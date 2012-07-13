@@ -18,6 +18,8 @@ package org.lilyproject.hbaseindex;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lilyproject.hbaseindex.filter.IndexFilter;
+
 /**
  * Description of query.
  *
@@ -29,13 +31,18 @@ import java.util.List;
  * be on the last used field. A query does not need to use all fields
  * defined in the index, but you have to use them 'left to right'.
  *
+ * <p>A query can also have an optional {@link IndexFilter}
+ * to do some additional filtering on the results, based on the fields and data
+ * stored in the index.
+ *
  * <p>The structural validity of the query will be checked once the
  * query is supplied to {@link Index#performQuery}, not while adding
- * the individual conditions. 
+ * the individual conditions.
  */
 public class Query {
     private List<EqualsCondition> eqConditions = new ArrayList<EqualsCondition>();
     private RangeCondition rangeCondition;
+    private IndexFilter indexFilter;
 
     public static final Object MIN_VALUE = new Object() {
         @Override
@@ -58,7 +65,7 @@ public class Query {
      * does not matter.
      *
      * @param fieldName matching the name of the field in the {@link IndexDefinition}
-     * @param value value of the correct type, or null
+     * @param value     value of the correct type, or null
      */
     public void addEqualsCondition(String fieldName, Object value) {
         eqConditions.add(new EqualsCondition(fieldName, value));
@@ -72,22 +79,27 @@ public class Query {
         rangeCondition = new RangeCondition(fieldName, fromValue, toValue, true, true);
     }
 
+    public void setIndexFilter(IndexFilter indexFilter) {
+        this.indexFilter = indexFilter;
+    }
+
     /**
      * Sets the range condition.
      *
      * <p>The fromValue and toValue can be:
      * <ul>
-     *   <li>a value of the correct type, corresponding to the index definition
-     *   <li>null, which searches from or to null. Thus supplying null does NOT mean
-     *       that there is no lower or upper bound on the range.
-     *   <li>{@link #MIN_VALUE} or {@link #MAX_VALUE}, which are values that are
-     *       smaller or larger than any other value.
+     * <li>a value of the correct type, corresponding to the index definition
+     * <li>null, which searches from or to null. Thus supplying null does NOT mean
+     * that there is no lower or upper bound on the range.
+     * <li>{@link #MIN_VALUE} or {@link #MAX_VALUE}, which are values that are
+     * smaller or larger than any other value.
      * </ul>
+     *
      * @param lowerBoundInclusive true means >= fromValue, false means > fromValue
      * @param upperBoundInclusive true means <= toValue, false means < toValue
      */
     public void setRangeCondition(String fieldName, Object fromValue, Object toValue, boolean lowerBoundInclusive,
-            boolean upperBoundInclusive) {
+                                  boolean upperBoundInclusive) {
         rangeCondition = new RangeCondition(fieldName, fromValue, toValue, lowerBoundInclusive, upperBoundInclusive);
     }
 
@@ -106,6 +118,10 @@ public class Query {
 
     public RangeCondition getRangeCondition() {
         return rangeCondition;
+    }
+
+    public IndexFilter getIndexFilter() {
+        return indexFilter;
     }
 
     public static class EqualsCondition {
@@ -134,7 +150,7 @@ public class Query {
         private boolean upperBoundInclusive;
 
         public RangeCondition(String name, Object fromValue, Object toValue, boolean lowerBoundInclusive,
-                boolean upperBoundInclusive) {
+                              boolean upperBoundInclusive) {
             this.name = name;
             this.fromValue = fromValue;
             this.toValue = toValue;

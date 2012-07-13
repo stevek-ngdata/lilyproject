@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import net.iharder.Base64;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.logging.Log;
@@ -34,8 +33,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.engine.DerefMap;
-import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.derefmap.DerefMap;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
@@ -74,7 +73,7 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
         try {
             Configuration jobConf = context.getConfiguration();
-log.info("Starting lily client");
+            log.info("Starting lily client");
             lilyClient = LilyMapReduceUtil.getLilyClient(jobConf);
             repository = lilyClient.getRepository();
 
@@ -123,7 +122,8 @@ log.info("Starting lily client");
 
             indexLocker = new IndexLocker(zk, enableLocking);
 
-            final DerefMap derefMap = DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk), repository.getIdGenerator());
+            final DerefMap derefMap = DerefMapHbaseImpl.create(indexName, LilyClient.getHBaseConfiguration(zk),
+                    repository.getIdGenerator());
             indexer = new Indexer(indexName, indexerConf, repository, solrShardMgr, indexLocker,
                     new IndexerMetrics(indexName), derefMap);
 

@@ -24,8 +24,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.engine.DerefMap;
-import org.lilyproject.indexer.engine.DerefMapHbaseImpl;
+import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
+import org.lilyproject.indexer.derefmap.DerefMap;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.model.api.IndexBatchBuildState;
 import org.lilyproject.indexer.model.api.IndexConcurrentModificationException;
 import org.lilyproject.indexer.model.api.IndexDefinition;
@@ -73,7 +74,8 @@ public class BatchBuildTest {
     private RecordType rt1;
 
     private final static String INDEX_NAME = "batchtest";
-    private static final String COUNTER_NUM_FAILED_RECORDS = "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
+    private static final String COUNTER_NUM_FAILED_RECORDS =
+            "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -125,7 +127,8 @@ public class BatchBuildTest {
         typeManager = repository.getTypeManager();
         FieldType ft1 = typeManager.createFieldType("STRING", new QName("batchindex-test", "field1"),
                 Scope.NON_VERSIONED);
-        FieldType ft2 =typeManager.createFieldType("LINK", new QName("batchindex-test", "linkField"), Scope.NON_VERSIONED);
+        FieldType ft2 =
+                typeManager.createFieldType("LINK", new QName("batchindex-test", "linkField"), Scope.NON_VERSIONED);
         typeManager.recordTypeBuilder()
                 .defaultNamespace("batchindex-test")
                 .name("rt1")
@@ -139,7 +142,7 @@ public class BatchBuildTest {
         model = lilyServerProxy.getIndexerModel();
         //String lock = model.lockIndex(INDEX_NAME);
 
-        is =  BatchBuildTest.class.getResourceAsStream("indexerconf.xml");
+        is = BatchBuildTest.class.getResourceAsStream("indexerconf.xml");
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         IOUtils.closeQuietly(is);
 
@@ -154,7 +157,7 @@ public class BatchBuildTest {
     }
 
     @AfterClass
-    public static void tearDownAfterClass() throws Exception{
+    public static void tearDownAfterClass() throws Exception {
         Closer.close(repository);
         Closer.close(lilyClient);
         Closer.close(solrServer);
@@ -257,7 +260,8 @@ public class BatchBuildTest {
         // check that  the last used batch index conf = default
         IndexDefinition index = model.getMutableIndex(INDEX_NAME);
 
-        Assert.assertEquals(JsonFormat.deserialize(defaultConf), JsonFormat.deserialize(index.getLastBatchBuildInfo().getBatchIndexConfiguration()));
+        Assert.assertEquals(JsonFormat.deserialize(defaultConf), JsonFormat.deserialize(
+                index.getLastBatchBuildInfo().getBatchIndexConfiguration()));
     }
 
     /**
@@ -371,23 +375,25 @@ public class BatchBuildTest {
 
     @Test
     public void testClearDerefMap() throws Exception {
-        DerefMap derefMap = DerefMapHbaseImpl.create(INDEX_NAME, LilyClient.getHBaseConfiguration(lilyServerProxy.getZooKeeper()), repository.getIdGenerator());
+        DerefMap derefMap = DerefMapHbaseImpl
+                .create(INDEX_NAME, LilyClient.getHBaseConfiguration(lilyServerProxy.getZooKeeper()),
+                        repository.getIdGenerator());
 
         Record linkedRecord = repository.recordBuilder()
-            .id("deref-test-linkedrecord")
-            .recordType(rt1.getName())
-            .field(ft1.getName(), "deref test linkedrecord")
-            .create();
+                .id("deref-test-linkedrecord")
+                .recordType(rt1.getName())
+                .field(ft1.getName(), "deref test linkedrecord")
+                .create();
 
         Record record = repository.recordBuilder()
-            .id("deref-test-main")
-            .recordType(rt1.getName())
-            .field(ft1.getName(), "deref test main")
-            .field(ft2.getName(), new Link(linkedRecord.getId()))
-            .create();
+                .id("deref-test-main")
+                .recordType(rt1.getName())
+                .field(ft1.getName(), "deref test main")
+                .field(ft2.getName(), new Link(linkedRecord.getId()))
+                .create();
 
         SchemaId vtag = typeManager.getFieldTypeByName(VersionTag.LAST).getId();
-        DerefMap.DependantRecordIdsIterator it = null;
+        DependantRecordIdsIterator it = null;
 
         try {
             it = derefMap.findDependantsOf(linkedRecord.getId(), ft1.getId(), vtag);
@@ -410,7 +416,7 @@ public class BatchBuildTest {
             it.close();
         }
 
-        setBatchIndexConf(null,getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), true);
+        setBatchIndexConf(null, getResourceAsByteArray("batchIndexConf-testClearDerefmap-true.json"), true);
         waitForIndexAndCommit(BUILD_TIMEOUT);
 
         try {
@@ -457,10 +463,10 @@ public class BatchBuildTest {
 
     }
 
-    private static void setBatchIndexConf (byte[] defaultConf, byte[] customConf, boolean buildNow)
+    private static void setBatchIndexConf(byte[] defaultConf, byte[] customConf, boolean buildNow)
             throws IndexValidityException, KeeperException, InterruptedException, ZkConnectException,
             IndexModelException, IndexNotFoundException, ZkLockException, IndexUpdateException,
-            IndexConcurrentModificationException{
+            IndexConcurrentModificationException {
         String lock = model.lockIndex(INDEX_NAME);
 
         try {

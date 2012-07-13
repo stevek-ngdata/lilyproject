@@ -34,7 +34,7 @@ abstract class BaseQueryResult implements QueryResult {
     @Override
     public byte[] getData(byte[] qualifier) {
         if (currentResult != null) {
-            return currentResult.getValue(Index.DATA_FAMILY, qualifier);
+            return currentResult.getValue(IndexDefinition.DATA_FAMILY, qualifier);
         } else if (currentQResult != null) {
             return currentQResult.getData(qualifier);
         } else {
