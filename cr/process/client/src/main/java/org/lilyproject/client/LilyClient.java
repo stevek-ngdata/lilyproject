@@ -109,15 +109,16 @@ public class LilyClient implements Closeable {
         for (ServerNode node : servers) {
             Closer.close(node.repository);
         }
-        
-        
 
         if (managedZk && zk != null) {
             zk.close();
         }
 
-        LocalHTable.closeAllPools();
-        
+        // Close pools related to the Configuration objects managed by this LilyClient instance
+        for (Configuration config : hbaseConnections.getConfigurations()) {
+            LocalHTable.closePool(config);
+        }
+
         // Close HBase connections created by [only] this LilyClient instance.
         // This will almost always contain only one connection, if not we would need a more
         // advanced connection mgmt so that these connections don't stay open for the lifetime
