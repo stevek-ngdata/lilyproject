@@ -18,7 +18,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
-import org.lilyproject.indexer.engine.test.DerefMapIndexTest;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
@@ -31,8 +30,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * This tests the functionality of the {@link DerefMapHbaseImpl}. Note there is also a {@link DerefMapIndexTest} which
- * tests it in real indexing scenario's.
+ * This tests the functionality of the {@link DerefMapHbaseImpl}.
  *
  * @author Jan Van Besien
  */
