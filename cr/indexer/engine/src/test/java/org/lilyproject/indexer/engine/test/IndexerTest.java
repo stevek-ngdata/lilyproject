@@ -835,27 +835,28 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref1:cucumber", 1); // record2 nv:linkField1 points to record1
-            verifyResultCount("nv_deref2:cucumber", 1); // record4 -branch,-lang produces record1
-            verifyResultCount("nv_deref3:cucumber", 2); // record3 master and record4 master produces record1
-            verifyResultCount("nv_deref5:broccoli", 1); // record3 +branch points produces record4
-            verifyResultCount("nv_deref6:broccoli", 2); // record1(last AND nvTag) +branch,+lang produces record4
-            verifyResultCount("nv_deref7:broccoli", 1); // record3 +branch=dev produces record4
+            verifyResultCount("nv_deref1:cucumber", 1); // record2[nv:linkField1] = record1
+            verifyResultCount("nv_deref2:cucumber", 1); // record4{-branch,-lang} = record1
+            verifyResultCount("nv_deref3:cucumber", 2); // record3{master} and record4{master} = record1
+            verifyResultCount("nv_deref4:eggplant", 1); // record4{-branch} = record3
+            verifyResultCount("nv_deref5:broccoli", 1); // record3{+branch} = record4
+            verifyResultCount("nv_deref6:broccoli", 2); // record1{+branch,+lang} = record4 (2 tags!)
+            verifyResultCount("nv_deref7:broccoli", 1); // record3{+branch=dev} = record4
 
-            // Update record1, check if index of the others is updated
+            // Update record1, check if the others are updated in the index
             log.debug("Begin test NV9");
             record1.setField(nvfield1.getName(), "tomato");
             expectEvent(UPDATE, record1.getId(), nvfield1.getId());
             record1 = repository.update(record1);
 
             commitIndex();
-            verifyResultCount("nv_deref1:tomato", 1); // record2 nv:linkField1 points to record1
-            verifyResultCount("nv_deref2:tomato", 1); // record4 -branch,-lang produces record1
-            verifyResultCount("nv_deref3:tomato", 2); // record3 master and record4 master produces record1
+            verifyResultCount("nv_deref1:tomato", 1); // record2[ns:nvLinkField1] = record1
+            verifyResultCount("nv_deref2:tomato", 1); // record4{-branch,-lang} = record1
+            verifyResultCount("nv_deref3:tomato", 2); // record3{master} and record4{master} = record1
             verifyResultCount("nv_deref1:cucumber", 0); // old value should be removed from index (non versioned field!)
             verifyResultCount("nv_deref2:cucumber", 0); // old value should be removed from index (non versioned field!)
             verifyResultCount("nv_deref3:cucumber", 0); // old value should be removed from index (non versioned field!)
-            verifyResultCount("nv_deref4:eggplant", 1); // record4 -branch produces record3
+            verifyResultCount("nv_deref4:eggplant", 1); // record4(-branch) = record3
 
             // Update record3, index for record4 should be updated
             log.debug("Begin test NV10");
@@ -864,22 +865,23 @@ public class IndexerTest {
             repository.update(record3);
 
             commitIndex();
-            verifyResultCount("nv_deref4:courgette", 1); // record4 -branch points to record3 (new value)
+            verifyResultCount("nv_deref4:courgette", 1); // record4(-branch) = record3
             verifyResultCount("nv_deref4:eggplant", 0); // old value should be removed from index (non versioned field!)
 
             // Update record4, index for record3 and record1 should be updated
             log.debug("Begin test NV10.1");
-            record4.setField(nvfield1.getName(), "courgette"); //FIXME: 2nd courgette; use something else here
+            record4.setField(nvfield1.getName(), "cauliflower"); //FIXME: 2nd courgette; use something else here
             expectEvent(UPDATE, record4.getId(), nvfield1.getId());
             repository.update(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref5:courgette", 1); // record3 +branch produces record4
-            verifyResultCount("nv_deref5:broccoli", 0);  // old value should be removed from index
-            verifyResultCount("nv_deref6:courgette", 2); // record1(last and nvtag) +branch,+lang produces record6
-            verifyResultCount("nv_deref6:broccoli", 0);  // TODO
-            verifyResultCount("nv_deref7:courgette", 1); // TODO
-            verifyResultCount("nv_deref7:broccoli", 0);
+            verifyResultCount("nv_deref5:cauliflower", 1); // record3{+branch} produces record4
+            verifyResultCount("nv_deref5:broccoli", 0);    // old value should be removed from index
+            verifyResultCount("nv_deref5:courgette", 0);   // sanity check, nothing could match
+            verifyResultCount("nv_deref6:cauliflower", 2); // record1{+branch,+lang} = record4 (2 vtags!)
+            verifyResultCount("nv_deref6:broccoli", 0);    // old value should be removed from index
+            verifyResultCount("nv_deref7:cauliflower", 1); // record3{+branch=dev} = record4
+            verifyResultCount("nv_deref7:broccoli", 0);    // old value should be removed from index
 
             // Delete record 3: index for record 4 should be updated
             log.debug("Begin test NV11");
@@ -888,7 +890,7 @@ public class IndexerTest {
             repository.delete(record3.getId());
 
             commitIndex();
-            verifyResultCount("nv_deref4:courgette", 0);
+            verifyResultCount("nv_deref4:cauliflower", 0);
             verifyResultCount("nv_deref3:tomato", 1);
             verifyResultCount("lily.id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 0);
 
@@ -2393,28 +2395,25 @@ public class IndexerTest {
             verifyResultCount("+cfd_case4:languedoc", 1);
             verifyResultCount("+cfd_case4:champagne", 0);
 
-            // perform another update
-            /* FIXME this test does not work yet
+            // perform another update */
             log.debug("Begin test V641");
 
             repository
                     .recordBuilder()
-                    .recordId(recordId2)
+                    .id(recordId2)
                     .recordType(recordType.getName())
                     .field(recordListField.getName(),
                             Arrays.asList(repository
                                     .recordBuilder()
-                                    .recordId(recordId3)
                                     .recordType(recordType.getName())
                                     .field(linkField.getName(), new Link(recordId3))
-                                    .newRecord()))
+                                    .build()))
                     .update();
 
             commitIndex();
 
             verifyResultCount("+cfd_case4:sampanje", 1);
             verifyResultCount("+cfd_case4:languedoc", 0);
-            */
         }
 
         //
