@@ -21,40 +21,40 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-indexer-derefmap-indexfilter</artifactId>
-  <name>Lily: Indexer: Deref map index filter</name>
-  <description>This package encapsulates all of the deref map code which is used to configure the index filter (which
-    configures an hbase filter used by the lily-hbaseindex library for performing queries on the deref map).
+  <artifactId>lily-hbaseindex-base</artifactId>
+  <name>Lily: HBase Index: Base</name>
+  <description>Base classes for the hbase index library, including those that need to be on the hbase classpath
+    when using the index filters.
   </description>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily-indexer</artifactId>
+    <artifactId>lily</artifactId>
     <version>2.0-SNAPSHOT</version>
-    <relativePath>../</relativePath>
+    <relativePath>../..</relativePath>
   </parent>
 
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-api</artifactId>
+      <artifactId>lily-util</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-id-impl</artifactId>
+      <artifactId>lily-hbase-util</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hbaseindex-base</artifactId>
+      <groupId>com.gotometrics.orderly</groupId>
+      <artifactId>orderly</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
