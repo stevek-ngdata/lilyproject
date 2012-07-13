@@ -1,6 +1,9 @@
-package org.lilyproject.indexer.engine;
+package org.lilyproject.indexer.derefmap;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +25,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseindex.Index;
 import org.lilyproject.hbaseindex.IndexDefinition;
 import org.lilyproject.hbaseindex.IndexEntry;
+import org.lilyproject.hbaseindex.IndexFilter;
 import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.hbaseindex.IndexNotFoundException;
 import org.lilyproject.hbaseindex.Query;
@@ -30,6 +34,7 @@ import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ArgumentValidator;
+import org.lilyproject.util.ByteArrayKey;
 import org.lilyproject.util.io.Closer;
 
 /**
@@ -281,18 +286,24 @@ public class DerefMapHbaseImpl implements DerefMap {
         return serialized;
     }
 
-    public VariantPropertiesPattern deserializeVariantPropertiesPattern(byte[] serialized) throws IOException {
+    public VariantPropertiesPattern deserializeVariantPropertiesPattern(byte[] serialized) {
         final StringRowKey stringRowKey = createTerminatedStringRowKey();
 
         final Map<String, String> pattern = new HashMap<String, String>();
 
         final ImmutableBytesWritable bw = new ImmutableBytesWritable(serialized);
 
-        while (bw.getSize() > 0) {
-            final String name = (String) stringRowKey.deserialize(bw);
-            final String value = (String) stringRowKey.deserialize(bw); // potentially null
-            pattern.put(name, value);
+        try {
+            while (bw.getSize() > 0) {
+                final String name;
+                name = (String) stringRowKey.deserialize(bw);
+                final String value = (String) stringRowKey.deserialize(bw); // potentially null
+                pattern.put(name, value);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("index inconsistency?", e);
         }
+
         return new VariantPropertiesPattern(pattern);
     }
 
@@ -447,8 +458,9 @@ public class DerefMapHbaseImpl implements DerefMap {
         if (vtag != null)
             query.addEqualsCondition("dependant_vtag", vtag.getBytes());
 
-        final QueryResult queryResult = backwardDerefIndex.performQuery(query);
-        return new DependantRecordIdsIteratorImpl(queryResult, dependency, fields);
+        query.setIndexFilter(new DerefMapIndexFilter(dependency.getVariantProperties(), fields));
+
+        return new DependantRecordIdsIteratorImpl(backwardDerefIndex.performQuery(query));
     }
 
     @Override
@@ -464,24 +476,11 @@ public class DerefMapHbaseImpl implements DerefMap {
 
     final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator {
         final QueryResult queryResult;
-        final RecordId dependencyRecordId;
-        final Set<SchemaId> queriedFields;
 
-        /**
-         * @param queryResult        the query result to filter
-         * @param dependencyRecordId the dependency record, used to match the variant property pattern with
-         * @param queriedFields      the queried fields, used to match with the field information stored in the deref
-         *                           map (the queried fields is allowed to be <code>null</code> in order to only match
-         *                           results that express dependencies that do not go to a field)
-         */
-        DependantRecordIdsIteratorImpl(QueryResult queryResult, RecordId dependencyRecordId,
-                                       Set<SchemaId> queriedFields) {
+        DependantRecordIdsIteratorImpl(QueryResult queryResult) {
             ArgumentValidator.notNull(queryResult, "queryResult");
-            ArgumentValidator.notNull(dependencyRecordId, "dependencyRecordId");
 
             this.queryResult = queryResult;
-            this.dependencyRecordId = dependencyRecordId;
-            this.queriedFields = queriedFields;
         }
 
         @Override
@@ -492,31 +491,13 @@ public class DerefMapHbaseImpl implements DerefMap {
         RecordId next = null;
 
         private RecordId getNextFromQueryResult() throws IOException {
-            // TODO: we could optimize the implementation somehow to make this filtering happen on region server... (but how to integrate that with hbase index library in a generic fashion?)
+            // the identifier is the record id of the record that depends on the queried record
 
-            byte[] nextIdentifier = null;
-            while ((nextIdentifier = queryResult.next()) != null) {
-                // the identifier is the record id of the record that depends on the queried record
-                // but we only include it if the dependency is via the specified field AND if the variant properties
-                // are matching
-
-                final Set<SchemaId> dependencyFields = deserializeFields(queryResult.getData(FIELDS_KEY));
-                final VariantPropertiesPattern variantPropertiesPattern =
-                        deserializeVariantPropertiesPattern(
-                                (byte[]) queryResult.getIndexField("variant_properties_pattern"));
-
-                if ((queriedFields == null || containsAtLeastOneElementOf(dependencyFields, queriedFields)) &&
-                        variantPropertiesPattern.matches(dependencyRecordId.getVariantProperties())) {
-                    return idGenerator.fromBytes(nextIdentifier);
-                }
-            }
-
-            return null; // query result exhausted
-        }
-
-        private <T> boolean containsAtLeastOneElementOf(Set<T> set, Set<T> elements) {
-            set.retainAll(elements);
-            return !set.isEmpty();
+            final byte[] nextIdentifier = queryResult.next();
+            if (nextIdentifier == null)
+                return null;
+            else
+                return idGenerator.fromBytes(nextIdentifier);
         }
 
         @Override
@@ -548,7 +529,109 @@ public class DerefMapHbaseImpl implements DerefMap {
                 }
             }
         }
+    }
 
+    // TODO: classpath reorganisation...
+
+    private static class DerefMapIndexFilter extends IndexFilter {
+
+        private Set<SchemaId> queriedFields;
+
+        private Map<String, String> dependencyRecordVariantProperties;
+
+        private DerefMapIndexFilter() {
+            // hadoop serialization
+        }
+
+        /**
+         * @param dependencyRecordVariantProperties
+         *                      the dependency record variant properties, used to match the variant property pattern
+         *                      with
+         * @param queriedFields the queried fields, used to match with the field information stored in the deref
+         *                      map (the queried fields is allowed to be <code>null</code> in order to only match
+         *                      results that express dependencies that do not go to a field)
+         */
+        private DerefMapIndexFilter(Map<String, String> dependencyRecordVariantProperties,
+                                    Set<SchemaId> queriedFields) {
+            super(Sets.newHashSet(new ByteArrayKey(FIELDS_KEY)), Sets.newHashSet("variant_properties_pattern"));
+
+            this.queriedFields = queriedFields;
+            this.dependencyRecordVariantProperties = dependencyRecordVariantProperties;
+        }
+
+        @Override
+        public boolean filterData(ByteArrayKey dataQualifier, byte[] data, int offset, int length) {
+            if (queriedFields == null) {
+                return false;
+            } else {
+                if (Arrays.equals(dataQualifier.getKey(), FIELDS_KEY)) {
+                    final Set<SchemaId> dependencyFields = deserializeFields(data);
+
+                    if (!containsAtLeastOneElementOf(dependencyFields, queriedFields)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        @Override
+        public boolean filterField(String name, Object value) {
+            if ("variant_properties_pattern".equals(name)) {
+                final VariantPropertiesPattern variantPropertiesPattern =
+                        deserializeVariantPropertiesPattern((byte[]) value);
+
+                if (!variantPropertiesPattern.matches(dependencyRecordVariantProperties)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public void write(DataOutput out) throws IOException {
+            super.write(out);
+
+            out.writeInt(queriedFields.size());
+            for (SchemaId queriedField : queriedFields) {
+                final byte[] bytes = queriedField.getBytes();
+                out.writeInt(bytes.length);
+                out.write(bytes);
+            }
+
+            out.write(dependencyRecordVariantProperties.size());
+            for (Map.Entry<String, String> entry : dependencyRecordVariantProperties.entrySet()) {
+                out.writeUTF(entry.getKey());
+                out.writeUTF(entry.getValue());
+            }
+        }
+
+        @Override
+        public void readFields(DataInput in) throws IOException {
+            super.readFields(in);
+
+            final int queriedFieldsLength = in.readInt();
+            queriedFields = new HashSet<SchemaId>(queriedFieldsLength);
+            for (int i = 0; i < queriedFieldsLength; i++) {
+                final int l = in.readInt();
+                final byte[] bytes = new byte[l];
+                in.readFully(bytes);
+                queriedFields.add(idGenerator.getSchemaId(bytes));
+            }
+
+            final int dependencyRecordVariantPropertiesLength = in.readInt();
+            dependencyRecordVariantProperties = new HashMap<String, String>();
+            for (int i = 0; i < dependencyRecordVariantPropertiesLength; i++) {
+                dependencyRecordVariantProperties.put(in.readUTF(), in.readUTF());
+            }
+        }
+    }
+
+    private <T> boolean containsAtLeastOneElementOf(Set<T> set, Set<T> elements) {
+        set.retainAll(elements);
+        return !set.isEmpty();
     }
 
     final static class VariantPropertiesPattern {
@@ -564,7 +647,7 @@ public class DerefMapHbaseImpl implements DerefMap {
             this.pattern = pattern;
         }
 
-        private boolean matches(SortedMap<String, String> dependancyRecordVariantProperties) {
+        private boolean matches(Map<String, String> dependancyRecordVariantProperties) {
             if (dependancyRecordVariantProperties.size() != pattern.size()) {
                 return false;
             } else {

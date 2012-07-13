@@ -1,4 +1,4 @@
-package org.lilyproject.indexer.engine;
+package org.lilyproject.indexer.derefmap;
 
 import java.io.IOException;
 import java.util.Collections;

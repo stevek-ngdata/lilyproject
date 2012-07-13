@@ -15,6 +15,9 @@
  */
 package org.lilyproject.hbaseindex;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +30,8 @@ import com.gotometrics.orderly.Order;
 import com.gotometrics.orderly.RowKey;
 import com.gotometrics.orderly.StructBuilder;
 import com.gotometrics.orderly.StructRowKey;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.Writable;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
@@ -41,11 +46,17 @@ import org.lilyproject.util.ArgumentValidator;
  * {@link IndexManager#getIndex}. After creation, the definition of an index
  * cannot be modified.
  */
-public class IndexDefinition {
-    private final String name;
-    private final List<IndexFieldDefinition> fields = new ArrayList<IndexFieldDefinition>();
+public class IndexDefinition implements Writable {
+    public static final byte[] DATA_FAMILY = Bytes.toBytes("data");
+
+    private String name;
+    private List<IndexFieldDefinition> fields = new ArrayList<IndexFieldDefinition>();
     private final Map<String, IndexFieldDefinition> fieldsByName = new HashMap<String, IndexFieldDefinition>();
     private IndexFieldDefinition identifierIndexFieldDefinition;
+
+    public IndexDefinition() {
+        // for hadoop serialization
+    }
 
     public IndexDefinition(String name) {
         ArgumentValidator.notNull(name, "name");
@@ -270,4 +281,64 @@ public class IndexDefinition {
         result = 31 * result + (identifierIndexFieldDefinition != null ? identifierIndexFieldDefinition.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+/*
+    private final String name;
+    private final List<IndexFieldDefinition> fields = new ArrayList<IndexFieldDefinition>();
+    private final Map<String, IndexFieldDefinition> fieldsByName = new HashMap<String, IndexFieldDefinition>();
+    private IndexFieldDefinition identifierIndexFieldDefinition;
+
+ */
+        out.writeUTF(name);
+        out.writeInt(fields.size());
+        for (IndexFieldDefinition field : fields) {
+            out.writeUTF(field.getClass().getName());
+            field.write(out);
+        }
+        out.writeUTF(identifierIndexFieldDefinition.getClass().getName());
+        identifierIndexFieldDefinition.write(out);
+
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        name = in.readUTF();
+        final int fieldsSize = in.readInt();
+        fields = new ArrayList<IndexFieldDefinition>(fieldsSize);
+        for (int i = 0; i < fieldsSize; i++) {
+            final String indexFieldDefinitionClassName = in.readUTF();
+            final IndexFieldDefinition indexFieldDefinition =
+                    (IndexFieldDefinition) tryInstantiateClass(indexFieldDefinitionClassName);
+            indexFieldDefinition.readFields(in);
+            fields.add(indexFieldDefinition);
+        }
+
+        final String identifierIndexFieldDefinitionClassName = in.readUTF();
+        identifierIndexFieldDefinition =
+                (IndexFieldDefinition) tryInstantiateClass(identifierIndexFieldDefinitionClassName);
+        identifierIndexFieldDefinition.readFields(in);
+        refreshFieldsByName();
+    }
+
+    private Object tryInstantiateClass(String className) throws IOException {
+        try {
+            return Class.forName(className).newInstance();
+        } catch (InstantiationException e) {
+            throw new IOException(e);
+        } catch (IllegalAccessException e) {
+            throw new IOException(e);
+        } catch (ClassNotFoundException e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void refreshFieldsByName() {
+        this.fieldsByName.clear();
+        for (IndexFieldDefinition field : fields) {
+            fieldsByName.put(field.getName(), field);
+        }
+    }
+
 }

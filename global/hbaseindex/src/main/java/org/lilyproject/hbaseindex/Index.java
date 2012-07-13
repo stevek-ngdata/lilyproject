@@ -34,7 +34,7 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.lilyproject.hbaseindex.filter.IndexFilterHbaseImpl;
 import org.lilyproject.util.ArgumentValidator;
 import org.lilyproject.util.ByteArrayKey;
 
@@ -47,11 +47,8 @@ public class Index {
     private HTableInterface htable;
     private IndexDefinition definition;
 
-    protected static final byte[] DATA_FAMILY = Bytes.toBytes("data");
     private static final byte[] DUMMY_QUALIFIER = new byte[]{0};
     private static final byte[] DUMMY_VALUE = new byte[]{0};
-
-    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     protected Index(HTableInterface htable, IndexDefinition definition) {
         this.htable = htable;
@@ -99,11 +96,11 @@ public class Index {
         Map<ByteArrayKey, byte[]> data = entry.getData();
         if (data.size() > 0) {
             for (Map.Entry<ByteArrayKey, byte[]> item : data.entrySet()) {
-                put.add(DATA_FAMILY, item.getKey().getKey(), item.getValue());
+                put.add(IndexDefinition.DATA_FAMILY, item.getKey().getKey(), item.getValue());
             }
         } else {
             // HBase does not allow to create a row without columns, so add a dummy column
-            put.add(DATA_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
+            put.add(IndexDefinition.DATA_FAMILY, DUMMY_QUALIFIER, DUMMY_VALUE);
         }
         return put;
     }
@@ -269,20 +266,23 @@ public class Index {
         CompareOp op = rangeCondSet && !upperBoundInclusive ? CompareOp.LESS : CompareOp.LESS_OR_EQUAL;
         Filter toFilter = new RowFilter(op, new BinaryPrefixComparator(toKey));
 
+        FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+        if (query.getIndexFilter() != null)
+            filters.addFilter(new IndexFilterHbaseImpl(query.getIndexFilter(), definition));
+
         if (rangeCondSet && !rangeCond.isLowerBoundInclusive()) {
             // TODO: optimize the performance hit caused by the extra filter
             //  Once the greater filter on the fromKey returns true, it will remain true because
             //  row keys are sorted. The RowFilter will however keep doing the check again and again
             //  on each new row key. We need a new filter in HBase, something like the opposite of the
             //  WhileMatchFilter.
-            FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
             filters.addFilter(new RowFilter(CompareOp.GREATER, new BinaryPrefixComparator(fromKey)));
             filters.addFilter(new WhileMatchFilter(toFilter));
-            scan.setFilter(filters);
         } else {
-            scan.setFilter(new WhileMatchFilter(toFilter));
+            filters.addFilter(new WhileMatchFilter(toFilter));
         }
 
+        scan.setFilter(filters);
         scan.setCaching(30);
 
         return new ScannerQueryResult(htable.getScanner(scan), definition);

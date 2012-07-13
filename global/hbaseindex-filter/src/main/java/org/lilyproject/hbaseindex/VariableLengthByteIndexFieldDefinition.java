@@ -15,6 +15,10 @@
  */
 package org.lilyproject.hbaseindex;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import com.gotometrics.orderly.RowKey;
 import com.gotometrics.orderly.Termination;
 import com.gotometrics.orderly.VariableLengthByteArrayRowKey;
@@ -28,7 +32,11 @@ import org.codehaus.jackson.node.ObjectNode;
  */
 public class VariableLengthByteIndexFieldDefinition extends IndexFieldDefinition {
 
-    private final int fixedPrefixLength;
+    private int fixedPrefixLength;
+
+    public VariableLengthByteIndexFieldDefinition() {
+        // hadoop serialization
+    }
 
     public VariableLengthByteIndexFieldDefinition(String name, ObjectNode jsonObject) {
         this(name, jsonObject.get("fixedPrefixLength") != null ? jsonObject.get("fixedPrefixLength").getIntValue() : 0);
@@ -65,4 +73,15 @@ public class VariableLengthByteIndexFieldDefinition extends IndexFieldDefinition
         return object;
     }
 
+    @Override
+    public void write(DataOutput out) throws IOException {
+        super.write(out);
+        out.writeInt(fixedPrefixLength);
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        super.readFields(in);
+        fixedPrefixLength = in.readInt();
+    }
 }

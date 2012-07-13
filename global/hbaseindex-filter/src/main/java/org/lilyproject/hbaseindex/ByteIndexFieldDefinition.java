@@ -15,6 +15,10 @@
  */
 package org.lilyproject.hbaseindex;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import com.gotometrics.orderly.FixedByteArrayRowKey;
 import com.gotometrics.orderly.RowKey;
 import com.gotometrics.orderly.Termination;
@@ -26,7 +30,11 @@ import org.codehaus.jackson.node.ObjectNode;
  * cut off, otherwise it will be padded with zeros.
  */
 public class ByteIndexFieldDefinition extends IndexFieldDefinition {
-    private final int length;
+    private int length;
+
+    public ByteIndexFieldDefinition() {
+        // hadoop serialization
+    }
 
     public ByteIndexFieldDefinition(String name, int length) {
         super(name);
@@ -63,4 +71,15 @@ public class ByteIndexFieldDefinition extends IndexFieldDefinition {
         return object;
     }
 
+    @Override
+    public void write(DataOutput out) throws IOException {
+        super.write(out);
+        out.writeInt(length);
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        super.readFields(in);
+        length = in.readInt();
+    }
 }

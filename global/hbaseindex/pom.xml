@@ -62,6 +62,11 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-hbaseindex-base</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-hadoop-test-fw</artifactId>
     </dependency>
 

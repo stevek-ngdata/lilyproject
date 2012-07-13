@@ -27,6 +27,11 @@ import org.codehaus.jackson.node.ObjectNode;
  * better suited for range queries than equals queries.
  */
 public class FloatIndexFieldDefinition extends IndexFieldDefinition {
+
+    public FloatIndexFieldDefinition() {
+        // hadoop serialization
+    }
+
     public FloatIndexFieldDefinition(String name) {
         super(name);
     }

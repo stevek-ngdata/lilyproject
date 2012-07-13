@@ -15,24 +15,28 @@
  */
 package org.lilyproject.hbaseindex;
 
-import com.gotometrics.orderly.IntegerRowKey;
+import com.gotometrics.orderly.LongRowKey;
 import com.gotometrics.orderly.RowKey;
 import com.gotometrics.orderly.Termination;
 import org.codehaus.jackson.node.ObjectNode;
 
-public class IntegerIndexFieldDefinition extends IndexFieldDefinition {
-    public IntegerIndexFieldDefinition(String name) {
+public class LongIndexFieldDefinition extends IndexFieldDefinition {
+
+    public LongIndexFieldDefinition() {
+        // hadoop serialization
+    }
+
+    public LongIndexFieldDefinition(String name) {
         super(name);
     }
 
-    public IntegerIndexFieldDefinition(String name, ObjectNode jsonObject) {
+    public LongIndexFieldDefinition(String name, ObjectNode jsonObject) {
         super(name, jsonObject);
     }
 
     @Override
     RowKey asRowKey() {
-        final
-        IntegerRowKey rowKey = new IntegerRowKey();
+        final LongRowKey rowKey = new LongRowKey();
         rowKey.setOrder(this.getOrder());
         return rowKey;
     }

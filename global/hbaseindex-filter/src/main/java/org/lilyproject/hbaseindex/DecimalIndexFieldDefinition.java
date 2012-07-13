@@ -22,6 +22,10 @@ import org.codehaus.jackson.node.ObjectNode;
 
 public class DecimalIndexFieldDefinition extends IndexFieldDefinition {
 
+    public DecimalIndexFieldDefinition() {
+        // hadoop serialization
+    }
+
     public DecimalIndexFieldDefinition(String name) {
         super(name);
     }

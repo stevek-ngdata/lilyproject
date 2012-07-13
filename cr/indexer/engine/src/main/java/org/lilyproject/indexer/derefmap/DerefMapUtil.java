@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.indexer.engine;
+package org.lilyproject.indexer.derefmap;
 
 import java.util.Set;
 
-import org.lilyproject.indexer.engine.DerefMap.DependencyEntry;
 import org.lilyproject.repository.api.RecordId;
 
 public class DerefMapUtil {

@@ -15,8 +15,13 @@
  */
 package org.lilyproject.hbaseindex;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import com.gotometrics.orderly.Order;
 import com.gotometrics.orderly.RowKey;
+import org.apache.hadoop.io.Writable;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.util.ArgumentValidator;
@@ -24,9 +29,13 @@ import org.lilyproject.util.ArgumentValidator;
 /**
  * Defines a field that is part of an {@link IndexDefinition}.
  */
-public abstract class IndexFieldDefinition {
-    private final String name;
+public abstract class IndexFieldDefinition implements Writable {
+    private String name;
     private Order order;
+
+    protected IndexFieldDefinition() {
+        // hadoop serialization
+    }
 
     public IndexFieldDefinition(String name) {
         this(name, Order.ASCENDING);
@@ -95,5 +104,17 @@ public abstract class IndexFieldDefinition {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (order != null ? order.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeUTF(name);
+        out.writeUTF(order.name());
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        name = in.readUTF();
+        order = Order.valueOf(in.readUTF());
     }
 }
