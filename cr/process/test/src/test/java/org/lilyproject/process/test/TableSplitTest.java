@@ -150,6 +150,15 @@ public class TableSplitTest {
 
         FileUtils.writeStringToFile(new File(generalConfDir, "tables.xml"), tablesXml, "UTF-8");
 
+        // Write configuration to enable the linkindex
+        File rowlogConfDir = new File(confDir, "rowlog");
+        FileUtils.forceMkdir(rowlogConfDir);
+
+        String rowlogXml = "<rowlog xmlns:conf='http://kauriproject.org/configuration' conf:inherit='deep'>" +
+                "<linkIndexUpdater enabled='true'/></rowlog>";
+
+        FileUtils.writeStringToFile(new File(rowlogConfDir, "rowlog.xml"), rowlogXml, "UTF-8");
+
         return confDir;
     }
 
