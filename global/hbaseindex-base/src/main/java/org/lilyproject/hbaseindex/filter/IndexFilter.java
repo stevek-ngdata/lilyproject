@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.hadoop.io.Writable;
-import org.lilyproject.util.ByteArrayKey;
 
 /**
  * Allows additional filtering on query results based on the fields and data stored in the index.
@@ -19,7 +18,7 @@ public abstract class IndexFilter implements Writable {
     /**
      * The data qualifiers on which we want the filtering to be triggered.
      */
-    private Set<ByteArrayKey> filteredDataQualifiers;
+    private Set<byte[]> filteredDataQualifiers;
 
     /**
      * The names of the index fields on which we want the filtering to be triggered.
@@ -30,7 +29,7 @@ public abstract class IndexFilter implements Writable {
         // hadoop serialization
     }
 
-    protected IndexFilter(Set<ByteArrayKey> filteredDataQualifiers, Set<String> fields) {
+    protected IndexFilter(Set<byte[]> filteredDataQualifiers, Set<String> fields) {
         this.filteredDataQualifiers = filteredDataQualifiers;
         this.fields = fields;
     }
@@ -44,7 +43,7 @@ public abstract class IndexFilter implements Writable {
      * @param length        length of the data in the buffer
      * @return true if the result needs to be skipped (filtered), false otherwise
      */
-    public abstract boolean filterData(ByteArrayKey dataQualifier, byte[] data, int offset, int length);
+    public abstract boolean filterData(byte[] dataQualifier, byte[] data, int offset, int length);
 
     /**
      * Filter the query result based on the value of one of the index fields (typically one of the fields not used in
@@ -57,7 +56,7 @@ public abstract class IndexFilter implements Writable {
      */
     public abstract boolean filterField(String name, Object value);
 
-    public Set<ByteArrayKey> getFilteredDataQualifiers() {
+    public Set<byte[]> getFilteredDataQualifiers() {
         return filteredDataQualifiers;
     }
 
@@ -68,9 +67,9 @@ public abstract class IndexFilter implements Writable {
     @Override
     public void write(DataOutput out) throws IOException {
         out.writeInt(filteredDataQualifiers.size());
-        for (ByteArrayKey dataQualifier : filteredDataQualifiers) {
-            out.writeInt(dataQualifier.getKey().length);
-            out.write(dataQualifier.getKey());
+        for (byte[] dataQualifier : filteredDataQualifiers) {
+            out.writeInt(dataQualifier.length);
+            out.write(dataQualifier);
         }
         out.writeInt(fields.size());
         for (String field : fields) {
@@ -82,13 +81,13 @@ public abstract class IndexFilter implements Writable {
     public void readFields(DataInput in) throws IOException {
         final int dataQualifiersSize = in.readInt();
 
-        filteredDataQualifiers = new HashSet<ByteArrayKey>(dataQualifiersSize);
+        filteredDataQualifiers = new HashSet<byte[]>(dataQualifiersSize);
 
         for (int i = 0; i < dataQualifiersSize; i++) {
             final int len = in.readInt();
             final byte[] buf = new byte[len];
             in.readFully(buf);
-            filteredDataQualifiers.add(new ByteArrayKey(buf));
+            filteredDataQualifiers.add(buf);
         }
 
         final int fieldsSize = in.readInt();

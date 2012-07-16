@@ -11,7 +11,6 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.lilyproject.hbaseindex.IndexDefinition;
 import org.lilyproject.hbaseindex.IndexFieldDefinition;
-import org.lilyproject.util.ByteArrayKey;
 
 /**
  * Actual implementation of {@link IndexFilter} as an HBase filter.
@@ -36,9 +35,9 @@ public class IndexFilterHbaseImpl extends FilterBase {
     @Override
     public ReturnCode filterKeyValue(KeyValue keyValue) {
         // for all data qualifiers that we are interested in
-        for (ByteArrayKey dataQualifier : indexFilter.getFilteredDataQualifiers()) {
+        for (byte[] dataQualifier : indexFilter.getFilteredDataQualifiers()) {
             // check if the key value is about one of those data qualifiers
-            if (keyValue.matchingColumn(IndexDefinition.DATA_FAMILY, dataQualifier.getKey())) {
+            if (keyValue.matchingColumn(IndexDefinition.DATA_FAMILY, dataQualifier)) {
                 // if it is, apply the filter
                 if (indexFilter.filterData(dataQualifier, keyValue.getBuffer(), keyValue.getValueOffset(),
                         keyValue.getValueLength())) {

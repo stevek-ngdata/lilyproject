@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,7 +15,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.hbaseindex.filter.IndexFilter;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.util.ByteArrayKey;
 
 /**
  * Index filter (hbase-index) used when filtering results from a query on the dereference map.
@@ -45,18 +45,18 @@ public class DerefMapIndexFilter extends IndexFilter {
      */
     DerefMapIndexFilter(Map<String, String> dependencyRecordVariantProperties,
                         Set<SchemaId> queriedFields) {
-        super(Sets.newHashSet(new ByteArrayKey(FIELDS_KEY)), Sets.newHashSet("variant_properties_pattern"));
+        super(Collections.singleton(FIELDS_KEY), Sets.newHashSet("variant_properties_pattern"));
 
         this.queriedFields = queriedFields;
         this.dependencyRecordVariantProperties = dependencyRecordVariantProperties;
     }
 
     @Override
-    public boolean filterData(ByteArrayKey dataQualifier, byte[] data, int offset, int length) {
+    public boolean filterData(byte[] dataQualifier, byte[] data, int offset, int length) {
         if (queriedFields == null) {
             return false;
         } else {
-            if (Arrays.equals(dataQualifier.getKey(), FIELDS_KEY)) {
+            if (Arrays.equals(dataQualifier, FIELDS_KEY)) {
                 final Set<SchemaId> dependencyFields = this.serializationUtil.deserializeFields(data, offset, length);
 
                 if (!containsAtLeastOneElementOf(dependencyFields, queriedFields)) {

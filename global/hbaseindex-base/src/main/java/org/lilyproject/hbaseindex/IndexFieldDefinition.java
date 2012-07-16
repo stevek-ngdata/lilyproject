@@ -19,12 +19,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import com.google.common.base.Preconditions;
 import com.gotometrics.orderly.Order;
 import com.gotometrics.orderly.RowKey;
 import org.apache.hadoop.io.Writable;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.util.ArgumentValidator;
 
 /**
  * Defines a field that is part of an {@link IndexDefinition}.
@@ -59,7 +59,7 @@ public abstract class IndexFieldDefinition implements Writable {
     }
 
     public void setOrder(Order order) {
-        ArgumentValidator.notNull(order, "order");
+        Preconditions.checkNotNull(order, "Null argument: order");
         this.order = order;
     }
 

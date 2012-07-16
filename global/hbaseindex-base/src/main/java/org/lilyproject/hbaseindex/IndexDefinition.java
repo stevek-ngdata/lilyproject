@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
 import com.gotometrics.orderly.Order;
 import com.gotometrics.orderly.RowKey;
 import com.gotometrics.orderly.StructBuilder;
@@ -35,7 +36,6 @@ import org.apache.hadoop.io.Writable;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.util.ArgumentValidator;
 
 /**
  * Defines the structure of an index.
@@ -59,7 +59,8 @@ public class IndexDefinition implements Writable {
     }
 
     public IndexDefinition(String name) {
-        ArgumentValidator.notNull(name, "name");
+        Preconditions.checkNotNull(name, "Null argument: name");
+
         this.name = name;
         setIdentifierOrder(Order.ASCENDING);
     }
@@ -94,7 +95,7 @@ public class IndexDefinition implements Writable {
     }
 
     public void setIdentifierOrder(Order identifierOrder) {
-        ArgumentValidator.notNull(identifierOrder, "identifierOrder");
+        Preconditions.checkNotNull(identifierOrder, "Null argument: identifierOrder");
         this.identifierIndexFieldDefinition = new VariableLengthByteIndexFieldDefinition("identifier");
         this.identifierIndexFieldDefinition.setOrder(identifierOrder);
     }
@@ -172,7 +173,7 @@ public class IndexDefinition implements Writable {
     }
 
     private void validateName(String name) {
-        ArgumentValidator.notNull(name, "name");
+        Preconditions.checkNotNull(name, "Null argument: name");
         if (fieldsByName.containsKey(name)) {
             throw new IllegalArgumentException("Field name already exists in this IndexDefinition: " + name);
         }
