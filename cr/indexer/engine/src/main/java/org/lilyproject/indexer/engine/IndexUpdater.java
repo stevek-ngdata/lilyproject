@@ -95,6 +95,11 @@ public class IndexUpdater implements RowLogMessageListener {
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
     private RowLog rowLog;
+
+    /**
+     * Deref map used to update denormalized data. It is <code>null</code> in case the indexer configuration doesn't
+     * contain dereference expressions.
+     */
     private DerefMap derefMap;
 
     private Log log = LogFactory.getLog(getClass());
@@ -169,7 +174,8 @@ public class IndexUpdater implements RowLogMessageListener {
                 }
 
                 // After this we can go to update denormalized data
-                updateDenormalizedData(recordId, event, null, null, null);
+                if (derefMap != null)
+                    updateDenormalizedData(recordId, event, null, null, null);
             } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
 
@@ -194,9 +200,10 @@ public class IndexUpdater implements RowLogMessageListener {
                     indexLocker.unlockLogFailure(recordId);
                 }
 
-                updateDenormalizedData(recordId, event, vtRecord.getUpdatedFieldsByScope(),
-                        vtRecord.getVTagsByVersion(),
-                        vtRecord.getModifiedVTags());
+                if (derefMap != null)
+                    updateDenormalizedData(recordId, event, vtRecord.getUpdatedFieldsByScope(),
+                            vtRecord.getVTagsByVersion(),
+                            vtRecord.getModifiedVTags());
             }
 
         } catch (InterruptedException e) {

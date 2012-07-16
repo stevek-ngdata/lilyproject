@@ -63,6 +63,11 @@ public class Indexer {
     private IndexLocker indexLocker;
     private ValueEvaluator valueEvaluator;
     private IndexerMetrics metrics;
+
+    /**
+     * Deref map used to store dependencies introduced via dereference expressions. It is <code>null</code> in case the
+     * indexer configuration doesn't contain dereference expressions.
+     */
     private DerefMap derefMap;
 
     private Log log = LogFactory.getLog(getClass());
@@ -252,7 +257,9 @@ public class Indexer {
                     log.debug("Updating dependencies:");
                     logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
                 }
-                derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
+
+                if (derefMap != null)
+                    derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
                 continue;
             }
 
@@ -265,7 +272,8 @@ public class Indexer {
                 logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
             }
 
-            derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
+            if (derefMap != null)
+                derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
 
             solrShardMgr.getSolrClient(record.getId()).add(solrDoc);
             metrics.adds.inc();

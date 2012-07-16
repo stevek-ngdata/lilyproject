@@ -88,13 +88,13 @@ public class IndexerConf {
             @Override
             public boolean apply(MappingNode node) {
                 if (node instanceof IndexField) {
-                    IndexField indexField = (IndexField)node;
+                    IndexField indexField = (IndexField) node;
                     SchemaId fieldDep = indexField.getValue().getFieldDependency();
                     if (fieldDep != null)
                         repoFieldDependencies.add(fieldDep);
 
                     if (indexField.getValue() instanceof DerefValue) {
-                        FieldType lastRealField = ((DerefValue)indexField.getValue()).getLastRealField();
+                        FieldType lastRealField = ((DerefValue) indexField.getValue()).getLastRealField();
                         if (lastRealField != null && !systemFields.isSystemField(lastRealField.getId())) {
                             derefIndexFields.add(indexField);
 
@@ -128,6 +128,10 @@ public class IndexerConf {
         return derefIndexFields;
     }
 
+    public boolean containsDerefExpressions() {
+        return !derefIndexFields.isEmpty();
+    }
+
     /**
      * Returns all IndexFields which have a DerefValue pointing to the given field id, or null if there are none.
      */
@@ -155,11 +159,12 @@ public class IndexerConf {
         this.systemFields = systemFields;
     }
 
-    public boolean changesAffectIndex(VTaggedRecord vtRecord, Scope scope) throws InterruptedException, RepositoryException {
+    public boolean changesAffectIndex(VTaggedRecord vtRecord, Scope scope)
+            throws InterruptedException, RepositoryException {
         Set<FieldType> changedFields = vtRecord.getUpdatedFieldsByScope().get(scope);
 
         // Check static fields and dynamic fields
-        for (FieldType fieldType: changedFields) {
+        for (FieldType fieldType : changedFields) {
             if (repoFieldDependencies.contains(fieldType.getId())) {
                 return true;
             }
