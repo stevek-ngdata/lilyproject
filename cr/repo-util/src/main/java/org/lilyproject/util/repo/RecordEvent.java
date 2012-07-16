@@ -227,7 +227,7 @@ public class RecordEvent {
     
     /**
      * Sets attributes
-     * @param A map of Strings containing attributes.
+     * @param attributes A map of Strings containing attributes.
      */
     public void setAttributes(Map<String,String> attributes) {
         this.attributes = attributes;
