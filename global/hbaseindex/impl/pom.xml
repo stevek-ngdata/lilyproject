@@ -21,36 +21,65 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-hbaseindex-base</artifactId>
-  <name>Lily: HBase Index: Base</name>
-  <description>Base classes for the hbase index library, including those that need to be on the hbase classpath
-    when using the index filters.
-  </description>
+  <artifactId>lily-hbaseindex-impl</artifactId>
+  <name>Lily: HBase Index: Impl</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily</artifactId>
+    <artifactId>lily-hbaseindex</artifactId>
     <version>2.0-SNAPSHOT</version>
-    <relativePath>../..</relativePath>
+    <relativePath>../</relativePath>
   </parent>
+
+  <build>
+  </build>
 
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-client</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.gotometrics.orderly</groupId>
-      <artifactId>orderly</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
     </dependency>
+
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-util</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-hbase-util</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-hbaseindex-base</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-hadoop-test-fw</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.gotometrics.orderly</groupId>
+      <artifactId>orderly</artifactId>
+    </dependency>
+
   </dependencies>
 
 </project>

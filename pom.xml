@@ -91,8 +91,6 @@
     <module>cr/mapreduce</module>
 
     <module>global/hbaseindex</module>
-    <module>global/hbaseindex-perftest</module>
-    <module>global/hbaseindex-base</module>
     <module>global/rowlog</module>
     <module>global/rowlock</module>
     <module>global/util</module>
@@ -245,6 +243,11 @@
       <dependency>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-hbaseindex-base</artifactId>
+        <version>2.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lilyproject</groupId>
+        <artifactId>lily-hbaseindex-impl</artifactId>
         <version>2.0-SNAPSHOT</version>
       </dependency>
       <dependency>

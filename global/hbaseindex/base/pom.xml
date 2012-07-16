@@ -21,12 +21,15 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-indexer-deref-map</artifactId>
-  <name>Lily: Indexer: Deref map</name>
+  <artifactId>lily-hbaseindex-base</artifactId>
+  <name>Lily: HBase Index: Base</name>
+  <description>Base classes for the hbase index library, including those that need to be on the hbase classpath
+    when using the index filters.
+  </description>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily-indexer</artifactId>
+    <artifactId>lily-hbaseindex</artifactId>
     <version>2.0-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
@@ -34,19 +37,20 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-api</artifactId>
+      <artifactId>lily-hbase-client</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-id-impl</artifactId>
+      <groupId>com.gotometrics.orderly</groupId>
+      <artifactId>orderly</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

@@ -19,9 +19,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+  <properties>
+  </properties>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-hbaseindex</artifactId>
+  <packaging>pom</packaging>
+
   <name>Lily: HBase Index</name>
 
   <parent>
@@ -31,55 +36,13 @@
     <relativePath>../..</relativePath>
   </parent>
 
+  <modules>
+    <module>base</module>
+    <module>impl</module>
+    <module>perftest</module>
+  </modules>
+
   <build>
   </build>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hbase-client</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-core-asl</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hbase-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hbaseindex-base</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hadoop-test-fw</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.gotometrics.orderly</groupId>
-      <artifactId>orderly</artifactId>
-    </dependency>
-
-  </dependencies>
 
 </project>
