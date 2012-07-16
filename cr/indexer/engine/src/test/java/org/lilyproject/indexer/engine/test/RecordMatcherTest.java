@@ -15,7 +15,10 @@
  */
 package org.lilyproject.indexer.engine.test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.thirdparty.guava.common.collect.ImmutableSet;
+import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,12 +37,16 @@ import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class RecordMatcherTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();
     private static Repository repository;
     private static TypeManager typeManager;
+
+    private static FieldType vtag1;
+    private static FieldType vtag2;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -49,36 +56,38 @@ public class RecordMatcherTest {
         repository = repoSetup.getRepository();
         typeManager = repository.getTypeManager();
 
-        FieldType ft1 = typeManager.createFieldType("STRING", new QName("ns", "field1"), Scope.NON_VERSIONED);
+        FieldType stringField = typeManager.createFieldType("STRING", new QName("ns", "string"), Scope.NON_VERSIONED);
+        FieldType booleanField = typeManager.createFieldType("BOOLEAN", new QName("ns", "bool"), Scope.NON_VERSIONED);
+        FieldType intField = typeManager.createFieldType("INTEGER", new QName("ns", "int"), Scope.NON_VERSIONED);
 
         typeManager.recordTypeBuilder()
                 .defaultNamespace("ns1")
                 .name("typeA")
-                .field(ft1.getId(), false)
+                .field(stringField.getId(), false)
                 .create();
 
         typeManager.recordTypeBuilder()
                 .defaultNamespace("ns1")
                 .name("typeB")
-                .field(ft1.getId(), false)
+                .field(stringField.getId(), false)
                 .create();
 
         typeManager.recordTypeBuilder()
                 .defaultNamespace("ns2")
                 .name("typeA")
-                .field(ft1.getId(), false)
+                .field(stringField.getId(), false)
                 .create();
 
         typeManager.recordTypeBuilder()
                 .defaultNamespace("ns2")
                 .name("typeB")
-                .field(ft1.getId(), false)
+                .field(stringField.getId(), false)
                 .create();
 
-        FieldType case1 = typeManager.createFieldType("LONG", new QName("org.lilyproject.vtag", "case1"),
+        vtag1 = typeManager.createFieldType("LONG", new QName("org.lilyproject.vtag", "vtag1"),
                 Scope.NON_VERSIONED);
 
-        FieldType case2 = typeManager.createFieldType("LONG", new QName("org.lilyproject.vtag", "case2"),
+        vtag2 = typeManager.createFieldType("LONG", new QName("org.lilyproject.vtag", "vtag2"),
                 Scope.NON_VERSIONED);
     }
 
@@ -88,26 +97,38 @@ public class RecordMatcherTest {
     }
 
     @Test
-    public void testRecordTypeNameWildcard() throws Exception {
+    public void testRecordType() throws Exception {
         String conf = makeIndexerConf(
                 "xmlns:ns1='ns1'",
-                Lists.newArrayList("recordType='ns1:*' vtags='case1'"),
+                Lists.newArrayList(
+                        "recordType='ns1:typeA' vtags='vtag1'",
+                        "recordType='{ns1}typeB' vtags='vtag2'"),
                 Collections.<String>emptyList()
         );
 
         IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
-        Record recordNs1TypeA = repository.recordBuilder()
-                .id("record")
-                .recordType(new QName("ns1", "typeA"))
-                .field(new QName("ns", "field1"), "value1")
-                .build();
+        Record recordTypeA = newRecordOfType(new QName("ns1", "typeA"));
+        Record recordTypeB = newRecordOfType(new QName("ns1", "typeB"));
 
-        Record recordNs2TypeA = repository.recordBuilder()
-                .id("record")
-                .recordType(new QName("ns2", "typeA"))
-                .field(new QName("ns", "field1"), "value1")
-                .build();
+        assertEquals(ImmutableSet.of(vtag1.getId()),
+                idxConf.getRecordFilter().getIndexCase(recordTypeA).getVersionTags());
+        assertEquals(ImmutableSet.of(vtag2.getId()),
+                idxConf.getRecordFilter().getIndexCase(recordTypeB).getVersionTags());
+    }
+
+    @Test
+    public void testRecordTypeNameWildcard() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1'",
+                Lists.newArrayList("recordType='ns1:*' vtags='vtag1'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
+        Record recordNs2TypeA = newRecordOfType(new QName("ns2", "typeA"));
 
         assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeA));
         assertNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeA));
@@ -118,42 +139,18 @@ public class RecordMatcherTest {
         String conf = makeIndexerConf(
                 "xmlns:ns1='ns1'",
                 Lists.newArrayList(
-                        "recordType='*:typeB' vtags='case1'",
-                        "recordType='{*}typeC' vtags='case2'"),
+                        "recordType='*:typeB' vtags='vtag1'",
+                        "recordType='{*}typeC' vtags='vtag2'"),
                 Collections.<String>emptyList()
         );
 
         IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
 
-        Record recordNs1TypeB = repository.recordBuilder()
-                .id("record")
-                .recordType(new QName("ns1", "typeB"))
-                .field(new QName("ns", "field1"), "value1")
-                .build();
-
-        Record recordNs2TypeB = repository.recordBuilder()
-                .id("record")
-                .recordType(new QName("ns2", "typeB"))
-                .field(new QName("ns", "field1"), "value1")
-                .build();
-
-        Record recordNs1TypeC = repository.recordBuilder()
-                .id("record")
-                .recordType(new QName("ns1", "typeC"))
-                .field(new QName("ns", "field1"), "value1")
-                .build();
-
-        Record recordNs2TypeC = repository.recordBuilder()
-                .id("record")
-                .recordType(new QName("ns2", "typeC"))
-                .field(new QName("ns", "field1"), "value1")
-                .build();
-
-        Record recordNs1TypeA = repository.recordBuilder()
-                .id("record")
-                .recordType(new QName("ns1", "typeA"))
-                .field(new QName("ns", "field1"), "value1")
-                .build();
+        Record recordNs1TypeB = newRecordOfType(new QName("ns1", "typeB"));
+        Record recordNs2TypeB = newRecordOfType(new QName("ns2", "typeB"));
+        Record recordNs1TypeC = newRecordOfType(new QName("ns1", "typeC"));
+        Record recordNs2TypeC = newRecordOfType(new QName("ns2", "typeC"));
+        Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
 
         assertNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeA));
 
@@ -162,6 +159,208 @@ public class RecordMatcherTest {
 
         assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeC));
         assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeC));
+    }
+
+    @Test
+    public void testEqualsFieldCondition() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList(
+                        "field='ns:string=zeus' vtags='vtag1'",
+                        "field='ns:bool=true' vtags='vtag2'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        //
+        // Test string field
+        //
+        Record zeus = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "zeus")
+                .field(new QName("ns", "bool"), Boolean.TRUE)
+                .field(new QName("ns", "int"), 5)
+                .build();
+
+        Record hera = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "hera")
+                .field(new QName("ns", "int"), 10)
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(hera));
+        assertEquals(ImmutableSet.of(vtag1.getId()), idxConf.getRecordFilter().getIndexCase(zeus).getVersionTags());
+
+        //
+        // Test boolean field
+        //
+        Record trueRecord = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "bool"), Boolean.TRUE)
+                .build();
+
+        Record falseRecord = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "bool"), Boolean.FALSE)
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(falseRecord));
+        assertEquals(ImmutableSet.of(vtag2.getId()),
+                idxConf.getRecordFilter().getIndexCase(trueRecord).getVersionTags());
+    }
+
+    @Test
+    public void testNotEqualsFieldCondition() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("field='ns:bool!=true' vtags='vtag1'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        Record trueRecord = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "bool"), Boolean.TRUE)
+                .build();
+
+        Record falseRecord = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "bool"), Boolean.FALSE)
+                .build();
+
+        Record nullRecord = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(trueRecord));
+
+        // false and null field value are both treated as being not equal to true
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(falseRecord));
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(nullRecord));
+    }
+
+    @Test
+    public void testVariantProperties() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList(
+                        "variant='prop1,prop2=artemis' vtags='vtag1'",
+                        "variant='prop1,prop2,*' vtags='vtag2'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        //
+        // Record with exactly two properties should be matched by first rule
+        //
+        Record recordProp1Prop2 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1", "prop2", "artemis"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "something")
+                .build();
+
+        assertEquals(Sets.newHashSet(vtag1.getId()),
+                idxConf.getRecordFilter().getIndexCase(recordProp1Prop2).getVersionTags());
+
+        //
+        // Record with more properties than prop1 & prop2 should be matched by second rule
+        //
+        Record recordProp1Prop2Prop3 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1", "prop2", "artemis", "prop3", "val3"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "something")
+                .build();
+
+        assertEquals(Sets.newHashSet(vtag2.getId()),
+                idxConf.getRecordFilter().getIndexCase(recordProp1Prop2Prop3).getVersionTags());
+
+        //
+        // Record with one prop should not be matched by any rules
+        //
+        Record recordProp1 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "something")
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(recordProp1));
+    }
+
+    @Test
+    public void testExcludes() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1'",
+                Lists.newArrayList("recordType='*:typeA' vtags='vtag1'"),
+                Lists.newArrayList("recordType='ns2:*'")
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        Record recordNs1TypeA = newRecordOfType(new QName("ns1", "typeA"));
+        Record recordNs2TypeA = newRecordOfType(new QName("ns2", "typeA"));
+
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordNs1TypeA));
+        assertNull(idxConf.getRecordFilter().getIndexCase(recordNs2TypeA));
+    }
+
+    @Test
+    public void testAllCombined() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("recordType='ns1:typeA' variant='prop1=val1' field='ns:int=10' vtags='vtag1'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        Record record1 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "int"), new Integer(10))
+                .build();
+
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(record1));
+
+        Record record2 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "int"), new Integer(11))
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(record2));
+
+        Record record3 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeB"))
+                .field(new QName("ns", "int"), new Integer(10))
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(record3));
+
+        Record record4 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val2"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "int"), new Integer(10))
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(record4));
+    }
+
+    private Record newRecordOfType(QName recordType) throws Exception {
+        return repository.recordBuilder()
+                .id("record")
+                .recordType(recordType)
+                .build();
     }
 
     private String makeIndexerConf(String namespaces, List<String> includes, List<String> excludes) {

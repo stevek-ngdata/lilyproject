@@ -29,10 +29,13 @@ import org.lilyproject.repository.api.SchemaId;
  * Matches records based on certain conditions, i.e. a predicate on record objects.
  */
 public class RecordMatcher {
+    public enum FieldComparator {EQUAL, NOT_EQUAL};
+
     private WildcardPattern recordTypeNamespace;
     private WildcardPattern recordTypeName;
 
     private FieldType fieldType;
+    private FieldComparator fieldComparator;
     private Object fieldValue;
 
     /**
@@ -45,10 +48,11 @@ public class RecordMatcher {
     private final Map<String, String> variantPropsPattern;
 
     public RecordMatcher(WildcardPattern recordTypeNamespace, WildcardPattern recordTypeName, FieldType fieldType,
-            Object fieldValue, Map<String, String> variantPropsPattern) {
+            FieldComparator fieldComparator, Object fieldValue, Map<String, String> variantPropsPattern) {
         this.recordTypeNamespace = recordTypeNamespace;
         this.recordTypeName = recordTypeName;
         this.fieldType = fieldType;
+        this.fieldComparator = fieldComparator != null ? fieldComparator : FieldComparator.EQUAL;
         this.fieldValue = fieldValue;
         this.variantPropsPattern = variantPropsPattern;
     }
@@ -90,7 +94,14 @@ public class RecordMatcher {
         }
 
         if (fieldType != null) {
-            return record.hasField(fieldType.getName()) && fieldValue.equals(record.getField(fieldType.getName()));
+            if (fieldComparator == FieldComparator.EQUAL) {
+                return record.hasField(fieldType.getName()) && fieldValue.equals(record.getField(fieldType.getName()));
+            } else if (fieldComparator == FieldComparator.NOT_EQUAL) {
+                // not-equal should evaluate to true if field value is null
+                return !record.hasField(fieldType.getName()) || !fieldValue.equals(record.getField(fieldType.getName()));
+            } else {
+                throw new RuntimeException("Unexpected comparison operator: " + fieldComparator);
+            }
         }
 
         return true;

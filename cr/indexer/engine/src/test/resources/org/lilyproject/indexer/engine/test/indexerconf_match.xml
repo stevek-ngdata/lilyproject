@@ -77,7 +77,7 @@
 
     <!-- ==================== <match> using variant properties =================== -->
     <!-- match on variant property presence -->
-    <match matchVariant="lang=en,branch">
+    <match variant="lang=en,branch">
       <field name="nvmatch7" value="ns:nv_field1"/>
       <field name="match7" value="ns2:v_field1"/>
     </match>

@@ -179,10 +179,10 @@ public class IndexerConfBuilder {
 
             String vtagsSpec = DocumentHelper.getAttribute(caseEl, "vtags", false);
 
-            Map<String, String> varPropsPattern = parseVariantPropertiesPattern(caseEl);
+            Map<String, String> varPropsPattern = parseVariantPropertiesPattern(caseEl, "matchVariant");
             Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
 
-            RecordMatcher recordMatcher = new RecordMatcher(matchNamespace, matchName, null, null, varPropsPattern);
+            RecordMatcher recordMatcher = new RecordMatcher(matchNamespace, matchName, null, null, null, varPropsPattern);
             recordFilter.addInclude(recordMatcher, new IndexCase(vtags));
         }
 
@@ -206,22 +206,32 @@ public class IndexerConfBuilder {
         //
         // Condition on variant properties
         //
-        Map<String, String> varPropsPattern = parseVariantPropertiesPattern(element);
-
+        Map<String, String> varPropsPattern = parseVariantPropertiesPattern(element, "variant");
 
         //
         // Condition on field
         //
         String fieldAttr = DocumentHelper.getAttribute(element, "field", false);
         FieldType fieldType = null;
+        RecordMatcher.FieldComparator comparator = null;
         Object fieldValue = null;
         if (fieldAttr != null) {
             int eqPos = fieldAttr.indexOf('='); // we assume = is not a symbol occurring in the field name
             if (eqPos == -1) {
-                throw new IndexerConfException("field test should be of the form \"namespace:name=value\", which " +
+                throw new IndexerConfException("field test should be of the form \"namespace:name(=|!=)value\", which " +
                         "the following is not: " + fieldAttr + ", at " + LocationAttributes.getLocation(element));
             }
-            QName fieldName = ConfUtil.parseQName(fieldAttr.substring(0, eqPos), element);
+
+            // not-equals support (simplistic parsing approach, doesn't need anything more complex for now)
+            String namePart = fieldAttr.substring(0, eqPos);
+            if (namePart.endsWith("!")) {
+                namePart = namePart.substring(0, namePart.length() - 1);
+                comparator = RecordMatcher.FieldComparator.NOT_EQUAL;
+            } else {
+                comparator = RecordMatcher.FieldComparator.EQUAL;
+            }
+
+            QName fieldName = ConfUtil.parseQName(namePart, element);
             fieldType = typeManager.getFieldTypeByName(fieldName);
             String fieldValueString = fieldAttr.substring(eqPos + 1);
             try {
@@ -232,7 +242,7 @@ public class IndexerConfBuilder {
             }
         }
 
-        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, fieldType, fieldValue,
+        RecordMatcher matcher = new RecordMatcher(rtNamespacePattern, rtNamePattern, fieldType, comparator, fieldValue,
                 varPropsPattern);
 
         return matcher;
@@ -281,8 +291,8 @@ public class IndexerConfBuilder {
         }
     }
 
-    private Map<String, String> parseVariantPropertiesPattern(Element caseEl) throws Exception {
-        String variant = DocumentHelper.getAttribute(caseEl, "matchVariant", false);
+    private Map<String, String> parseVariantPropertiesPattern(Element caseEl, String attrName) throws Exception {
+        String variant = DocumentHelper.getAttribute(caseEl, attrName, false);
 
         Map<String, String> varPropsPattern = new HashMap<String, String>();
 
@@ -295,9 +305,9 @@ public class IndexerConfBuilder {
                 String propName = prop.substring(0, eqPos);
                 String propValue = prop.substring(eqPos + 1);
                 if (propName.equals("*")) {
-                    throw new IndexerConfException(String.format("Error in matchVariant attribute: the character '*' " +
-                            "can only be used as wildcard, not as variant dimension name, attribute = %1$s, at: %2$s",
-                            variant, LocationAttributes.getLocation(caseEl)));
+                    throw new IndexerConfException(String.format("Error in " + attrName +
+                            " attribute: the character '*' can only be used as wildcard, not as variant dimension " +
+                            "name, attribute = %1$s, at: %2$s", variant, LocationAttributes.getLocation(caseEl)));
                 }
                 varPropsPattern.put(propName, propValue);
             } else {
