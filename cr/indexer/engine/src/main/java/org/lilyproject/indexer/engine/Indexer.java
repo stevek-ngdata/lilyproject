@@ -126,12 +126,17 @@ public class Indexer {
             return;
         }
 
-        Set<SchemaId> vtagsToIndex = new HashSet<SchemaId>();
-        setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
+        index(vtRecord, retainExistingVtagsOnly(indexCase.getVersionTags(), vtRecord));
+    }
+
+    void index(IdRecord idRecord, Set<SchemaId> vtags)
+            throws RepositoryException, IOException, ShardSelectorException, SolrClientException, InterruptedException {
+        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, null, repository);
+
+        Set<SchemaId> vtagsToIndex = retainExistingVtagsOnly(vtags, vtRecord);
 
         index(vtRecord, vtagsToIndex);
     }
-
 
     /**
      * Indexes a record for a set of vtags.
@@ -383,12 +388,19 @@ public class Indexer {
         return result;
     }
 
-    protected void setIndexAllVTags(Set<SchemaId> vtagsToIndex, IndexCase indexCase, VTaggedRecord vtRecord)
+    /**
+     * From the given vtags, retain only those that exist on the record.
+     *
+     * @param vtags    vtags to start with
+     * @param vtRecord record to check vtag existence on
+     * @return vtags of the orignal set that actually exist on the record
+     */
+    protected Set<SchemaId> retainExistingVtagsOnly(Set<SchemaId> vtags, VTaggedRecord vtRecord)
             throws InterruptedException, RepositoryException {
-        Set<SchemaId> tmp = new HashSet<SchemaId>();
-        tmp.addAll(indexCase.getVersionTags());
-        tmp.retainAll(vtRecord.getVTags().keySet()); // only keep the vtags which exist in the document
-        vtagsToIndex.addAll(tmp);
+        final Set<SchemaId> result = new HashSet<SchemaId>();
+        result.addAll(vtags);
+        result.retainAll(vtRecord.getVTags().keySet()); // only keep the vtags which exist in the document
+        return result;
     }
 
     protected String getIndexId(RecordId recordId, SchemaId vtag) {
@@ -429,4 +441,18 @@ public class Indexer {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Indexer indexer = (Indexer) o;
+
+        return !(indexName != null ? !indexName.equals(indexer.indexName) : indexer.indexName != null);
+    }
+
+    @Override
+    public int hashCode() {
+        return indexName != null ? indexName.hashCode() : 0;
+    }
 }

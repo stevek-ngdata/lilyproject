@@ -251,11 +251,11 @@ public class IndexUpdater implements RowLogMessageListener {
             // The data from this record might be denormalized into other index entries
             // After this we go to update denormalized data
         } else {
-            Set<SchemaId> vtagsToIndex = new HashSet<SchemaId>();
+            final Set<SchemaId> vtagsToIndex;
 
             if (event.getType().equals(CREATE)) {
                 // New record: just index everything
-                indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
+                vtagsToIndex = indexer.retainExistingVtagsOnly(indexCase.getVersionTags(), vtRecord);
                 // After this we go to the indexing
 
             } else if (event.getRecordTypeChanged()) {
@@ -271,7 +271,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 }
 
                 // Reindex all needed vtags
-                indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
+                vtagsToIndex = indexer.retainExistingVtagsOnly(indexCase.getVersionTags(), vtRecord);
 
                 // After this we go to the indexing
             } else { // a normal update
@@ -280,13 +280,15 @@ public class IndexUpdater implements RowLogMessageListener {
                 // Handle changes to non-versioned fields
                 //
                 if (indexer.getConf().changesAffectIndex(vtRecord, Scope.NON_VERSIONED)) {
-                    indexer.setIndexAllVTags(vtagsToIndex, indexCase, vtRecord);
+                    vtagsToIndex = indexer.retainExistingVtagsOnly(indexCase.getVersionTags(), vtRecord);
                     // After this we go to the treatment of changed vtag fields
                     if (log.isDebugEnabled()) {
                         log.debug(
                                 String.format("Record %1$s: non-versioned fields changed, will reindex all vtags.",
                                         vtRecord.getId()));
                     }
+                } else {
+                    vtagsToIndex = new HashSet<SchemaId>();
                 }
 
                 //
