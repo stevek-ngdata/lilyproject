@@ -21,71 +21,35 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
-  <artifactId>lily-linkindex</artifactId>
-  <name>Lily: Link Index</name>
+  <artifactId>lily-hbaseindex-base</artifactId>
+  <name>Lily: HBase Index: Base</name>
+  <description>Base classes for the hbase index library, including those that need to be on the hbase classpath
+    when using the index filters.
+  </description>
 
   <parent>
     <groupId>org.lilyproject</groupId>
-    <artifactId>lily</artifactId>
+    <artifactId>lily-hbaseindex</artifactId>
     <version>2.0-SNAPSHOT</version>
-    <relativePath>../..</relativePath>
+    <relativePath>../</relativePath>
   </parent>
-
-  <build>
-  </build>
 
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hbaseindex-impl</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repo-util</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
       <artifactId>lily-hbase-client</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hadoop-test-fw</artifactId>
+      <groupId>com.gotometrics.orderly</groupId>
+      <artifactId>orderly</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-impl</artifactId>
-      <scope>test</scope>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-rowlog-impl</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repo-test-fw</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
   </dependencies>
 
