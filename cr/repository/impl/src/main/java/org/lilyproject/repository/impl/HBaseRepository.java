@@ -257,8 +257,10 @@ public class HBaseRepository extends BaseRepository {
 
                 calculateRecordChanges(newRecord, dummyOriginalRecord, version, put, recordEvent, referencedBlobs,
                         unReferencedBlobs, false, fieldTypes);
-                
-                recordEvent.setAttributes(record.getAttributes());
+
+                if (record.hasAttributes()) {
+                    recordEvent.setAttributes(record.getAttributes());
+                }
 
                 // Make sure the record type changed flag stays false for a newly
                 // created record
@@ -402,7 +404,10 @@ public class HBaseRepository extends BaseRepository {
                     return conditionsResponse;
                 }
 
-                recordEvent.setAttributes(record.getAttributes());
+                if (record.hasAttributes()) {
+                    recordEvent.setAttributes(record.getAttributes());
+                }
+
                 // Reserve blobs so no other records can use them
                 reserveBlobs(record.getId(), referencedBlobs);
                 putRowWithWalProcessing(recordId, rowLock, put, recordEvent);
@@ -898,7 +903,7 @@ public class HBaseRepository extends BaseRepository {
     }
     @Override
     public void delete(Record record) throws RepositoryException {
-        delete(record.getId(), null, record.getAttributes());
+        delete(record.getId(), null, record.hasAttributes() ? record.getAttributes() : null);
     }
     
     private  Record delete(RecordId recordId, List<MutationCondition> conditions, Map<String,String> attributes)

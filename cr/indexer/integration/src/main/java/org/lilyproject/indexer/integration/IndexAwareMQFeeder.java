@@ -68,7 +68,7 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
         }
 
         // Don't feed MQ if attribute lily.mq=false is set
-        if ("false".equals(recordEvent.getAttributes().get("lily.mq"))) {
+        if (recordEvent.hasAttributes() && "false".equals(recordEvent.getAttributes().get("lily.mq"))) {
             return true;
         }
 

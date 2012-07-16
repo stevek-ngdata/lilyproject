@@ -90,7 +90,7 @@ public class RecordAsBytesConverter {
         
         
         // Write transient attributes
-        if (record.getAttributes() != null) {
+        if (record.hasAttributes()) {
             output.writeVInt(record.getAttributes().size());
             for (String key : record.getAttributes().keySet()) {
                 String value = record.getAttributes().get(key);                

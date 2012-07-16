@@ -31,6 +31,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.util.ByteArrayBuilder;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
@@ -51,6 +52,7 @@ public class RecordEvent {
     /** For index-type events: affected vtags */
     private Set<SchemaId> vtagsToIndex;
     private IndexSelection indexSelection;
+    /** A copy of the attributes supplied via {@link Record#setAttributes(Map)}. */
     private Map<String, String> attributes;
 
     public enum Type {
@@ -223,6 +225,10 @@ public class RecordEvent {
             this.attributes = new HashMap<String,String>();
         }
         return this.attributes;
+    }
+
+    public boolean hasAttributes() {
+        return attributes != null && attributes.size() > 0;
     }
     
     /**

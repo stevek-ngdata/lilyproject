@@ -476,10 +476,13 @@ public class RecordImpl implements Record, Cloneable {
     }
 
     @Override
+    public boolean hasAttributes() {
+        return attributes != null && attributes.size() > 0;
+    }
+
+    @Override
     public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
-        
     }
-    
     
 }

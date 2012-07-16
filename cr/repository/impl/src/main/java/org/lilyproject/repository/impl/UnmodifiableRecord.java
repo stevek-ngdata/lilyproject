@@ -210,7 +210,12 @@ public class UnmodifiableRecord implements Record, Cloneable {
 
     @Override
     public Map<String, String> getAttributes() {
-        return delegate.getAttributes();
+        return Collections.unmodifiableMap(delegate.getAttributes());
+    }
+
+    @Override
+    public boolean hasAttributes() {
+        return delegate.hasAttributes();
     }
 
     @Override
