@@ -12,7 +12,6 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -236,10 +235,8 @@ public class BatchBuildTest {
 
         waitForIndexAndCommit(BUILD_TIMEOUT);
 
-        System.out.println(solrServer.query(new SolrQuery("*:*")));
-
         // Check if 1 record and not 2 are in the index
-        QueryResponse response = solrServer.query(new SolrQuery("field1:\"test3 index run2\""));
+        QueryResponse response = solrServer.query(new SolrQuery("field1:test3\\ index\\ run2"));
         assertEquals(1, response.getResults().size());
         assertEquals("USER." + assertId1, response.getResults().get(0).getFieldValue("lily.id"));
         // check that the last used batch index conf = default
@@ -370,7 +367,7 @@ public class BatchBuildTest {
                                 definition.getLastBatchBuildInfo().getJobId() + ", job url = " +
                                 definition.getLastBatchBuildInfo().getTrackingUrl());
                     } else {
-                        return;
+                        break;
                     }
                 }
             }
