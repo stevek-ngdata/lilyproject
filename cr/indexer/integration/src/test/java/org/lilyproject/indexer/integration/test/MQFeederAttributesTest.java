@@ -12,16 +12,16 @@ import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Scope;
 
-public class MQFeederAttributesTest extends BaseIndexMQFeedingTest{
+public class MQFeederAttributesTest extends BaseIndexMQFeedingTest {
     private static String NS = "org.lilyproject.indexer.integration.test.attr";
    
     @BeforeClass
-    public static void setupBeforeClass () throws Exception{
+    public static void setupBeforeClass() throws Exception {
         BaseIndexMQFeedingTest.baseSetup();
         setupSchema();
     }
     
-    public  static void setupSchema()  throws Exception{
+    public  static void setupSchema() throws Exception {
         //
         // Define schema
         //

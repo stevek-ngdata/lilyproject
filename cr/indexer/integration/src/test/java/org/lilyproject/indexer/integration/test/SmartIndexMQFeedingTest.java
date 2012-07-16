@@ -30,15 +30,15 @@ import static org.junit.Assert.assertEquals;
  * each record change event to each subscription (= each indexer), the messages are only
  * put on the Q for the subscriptions that need them.
  */
-public class SmartIndexMQFeedingTest extends BaseIndexMQFeedingTest{
+public class SmartIndexMQFeedingTest extends BaseIndexMQFeedingTest {
 
     @BeforeClass
-    public static void setupBeforeClass () throws Exception{
+    public static void setupBeforeClass() throws Exception {
         BaseIndexMQFeedingTest.baseSetup();
         setupSchema();
     }
 
-    public static void setupSchema()  throws Exception{
+    public static void setupSchema() throws Exception {
         //
         // Define schema
         //
