@@ -34,7 +34,7 @@
   </parent>
 
   <modules>
-    <module>avro-api</module>
+    <module>avro-module</module>
     <module>general-module</module>
     <module>rowlog-module</module>
     <module>repository-module</module>
