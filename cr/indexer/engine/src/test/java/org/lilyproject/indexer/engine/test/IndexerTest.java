@@ -45,7 +45,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
@@ -63,8 +62,6 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.VariantFollow;
-import org.lilyproject.linkindex.LinkIndex;
-import org.lilyproject.linkindex.LinkIndexUpdater;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
@@ -108,7 +105,6 @@ public class IndexerTest {
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
     private static SolrShardManagerImpl solrShardManager;
-    private static LinkIndex linkIndex;
     private static DerefMap derefMap;
 
     private static FieldType nvTag;
@@ -158,8 +154,7 @@ public class IndexerTest {
         SOLR_TEST_UTIL = new SolrTestingUtility();
         SOLR_TEST_UTIL.setSchemaData(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml")));
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
-                "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
 
         SOLR_TEST_UTIL.start();
 
@@ -171,18 +166,12 @@ public class IndexerTest {
         typeManager = repoSetup.getTypeManager();
         idGenerator = repository.getIdGenerator();
 
-        IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
-
-        linkIndex = new LinkIndex(indexManager, repository);
-
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
         RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
-        rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
         rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 2);
 
-        repoSetup.waitForSubscription(repoSetup.getWal(), "LinkIndexUpdater");
         repoSetup.waitForSubscription(repoSetup.getWal(), "MessageVerifier");
 
         rowLogConfMgr.addSubscription("MQ", "IndexUpdater", RowLogSubscription.Type.VM, 1);
@@ -193,7 +182,6 @@ public class IndexerTest {
 
         solrShardManager = SolrShardManagerImpl.createForOneShard(SOLR_TEST_UTIL.getUri());
 
-        RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
         RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
     }
@@ -218,7 +206,7 @@ public class IndexerTest {
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 
-        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
+        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository,
                 indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap, "IndexUpdater"));
     }
 

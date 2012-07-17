@@ -33,7 +33,6 @@ import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
-import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.linkindex.LinkIndexException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
@@ -47,7 +46,6 @@ import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
-import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -91,7 +89,6 @@ import static org.lilyproject.util.repo.RecordEvent.Type.INDEX;
  */
 public class IndexUpdater implements RowLogMessageListener {
     private Repository repository;
-    private LinkIndex linkIndex;
     private Indexer indexer;
     private IndexUpdaterMetrics metrics;
     private ClassLoader myContextClassLoader;
@@ -114,13 +111,12 @@ public class IndexUpdater implements RowLogMessageListener {
      *                       because the IndexUpdater generates events itself, which should only be sent to
      *                       this subscription.
      */
-    public IndexUpdater(Indexer indexer, Repository repository, LinkIndex linkIndex, IndexLocker indexLocker,
+    public IndexUpdater(Indexer indexer, Repository repository, IndexLocker indexLocker,
             RowLog rowLog, IndexUpdaterMetrics metrics, DerefMap derefMap, String subscriptionId)
             throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
         this.idGenerator = repository.getIdGenerator();
-        this.linkIndex = linkIndex;
         this.indexLocker = indexLocker;
         this.rowLog = rowLog;
         this.derefMap = derefMap;
@@ -176,7 +172,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
                 // After this we can go to update denormalized data
                 if (derefMap != null)
-                    updateDenormalizedData(recordId, event, null, null, null);
+                    updateDenormalizedData(recordId, null, null);
             } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
 
@@ -202,9 +198,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 }
 
                 if (derefMap != null)
-                    updateDenormalizedData(recordId, event, vtRecord.getUpdatedFieldsByScope(),
-                            vtRecord.getVTagsByVersion(),
-                            vtRecord.getModifiedVTags());
+                    updateDenormalizedData(recordId, vtRecord.getUpdatedFieldsByScope(), vtRecord.getModifiedVTags());
             }
 
         } catch (InterruptedException e) {
@@ -356,9 +350,7 @@ public class IndexUpdater implements RowLogMessageListener {
         }
     }
 
-    private void updateDenormalizedData(RecordId recordId, RecordEvent event,
-                                        Map<Scope, Set<FieldType>> updatedFieldsByScope,
-                                        Map<Long, Set<SchemaId>> vtagsByVersion,
+    private void updateDenormalizedData(RecordId recordId, Map<Scope, Set<FieldType>> updatedFieldsByScope,
                                         Set<SchemaId> changedVTagFields)
             throws RepositoryException, InterruptedException, LinkIndexException, IOException {
 
@@ -366,9 +358,10 @@ public class IndexUpdater implements RowLogMessageListener {
 
         Set<SchemaId> allVTags = indexer.getConf().getVtags();
 
-        log.debug("changed vtag fields: " + changedVTagFields);
+        if (log.isDebugEnabled()) {
+            log.debug("Updating denormalized data for " + recordId + ", vtags: " + changedVTagFields);
+        }
 
-        log.debug("updating denormalized data for " + recordId);
         for (SchemaId vtag : allVTags) {
             if ((changedVTagFields != null && changedVTagFields.contains(vtag)) || updatedFieldsByScope == null) {
                 // changed vtags or delete: reindex regardless of fields

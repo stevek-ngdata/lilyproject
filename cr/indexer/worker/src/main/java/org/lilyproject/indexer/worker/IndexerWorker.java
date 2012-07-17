@@ -57,7 +57,6 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
-import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
@@ -89,8 +88,6 @@ public class IndexerWorker {
     private Repository repository;
 
     private Configuration hbaseConf;
-
-    private LinkIndex linkIndex;
 
     private ZooKeeperItf zk;
 
@@ -127,7 +124,6 @@ public class IndexerWorker {
         this.repository = repository;
         this.rowLog = rowLog;
         this.hbaseConf = hbaseConf;
-        this.linkIndex = new LinkIndex(new IndexManager(hbaseConf), repository);
         this.zk = zk;
         this.rowLogConfMgr = rowLogConfMgr;
         this.settings = settings;
@@ -205,7 +201,7 @@ public class IndexerWorker {
                     indexerMetrics, derefMap);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
-            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,
+            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, rowLog,
                     updaterMetrics, derefMap, index.getQueueSubscriptionId());
 
             List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();

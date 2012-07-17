@@ -167,7 +167,7 @@ public abstract class BaseIndexMQFeedingTest {
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 
-        IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, null, indexLocker, repoSetup.getMq(),
+        IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, repoSetup.getMq(),
                 new IndexUpdaterMetrics("test"), derefMap, subscriptionId);
 
         TrackingIndexUpdater trackingIndexUpdater = new TrackingIndexUpdater(indexUpdater);
