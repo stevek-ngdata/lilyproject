@@ -401,7 +401,7 @@ public class IndexerTest {
     @Test
     public void testForEach() throws Exception {
         changeIndexUpdater("indexerconf_match.xml");
-        messageVerifier.init();
+        messageVerifier.disable();
 
         //
         // Test ForEach
@@ -450,22 +450,17 @@ public class IndexerTest {
     public void testMatch() throws Exception {
         changeIndexUpdater("indexerconf_match.xml");
 
+        // disabling since we are not verifying the messages
+        messageVerifier.disable();
+
         //
         // Test Match
         //
-
-        {
-            log.debug("Begin test match");
-            // disabling since we are not verifying these create messages
-            messageVerifier.disable();
-            createMatchTestRecord(NS, "Alpha", "alpha");
-            createMatchTestRecord(NS, "Beta", "beta");
-            createMatchTestRecord(NS2, "Alpha", "gamma");
-            createMatchTestRecord(NS2, "Beta", "delta");
-
-            // re-enable messageVerifier
-            messageVerifier.init();
-        }
+        log.debug("Begin test match");
+        createMatchTestRecord(NS, "Alpha", "alpha");
+        createMatchTestRecord(NS, "Beta", "beta");
+        createMatchTestRecord(NS2, "Alpha", "gamma");
+        createMatchTestRecord(NS2, "Beta", "delta");
 
         // Initialise a map containing all the expected result counts (2, since we have 'last' and 'preview')
         setExpectedCountsForMatch("nvmatch1", 2, 2, 2, 2, 0, 0, 0, 0); // all
