@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.client.repository;
+package org.lilyproject.repository.remote;
 
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -32,7 +32,6 @@ import org.lilyproject.avro.AvroGenericException;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroRepositoryException;
 import org.lilyproject.avro.AvroTypeBucket;
-import org.lilyproject.client.NettyTransceiverFactory;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IOTypeException;
 import org.lilyproject.repository.api.IdGenerator;
