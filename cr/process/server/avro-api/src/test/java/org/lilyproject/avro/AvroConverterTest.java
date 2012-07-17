@@ -13,26 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl.test;
+package org.lilyproject.avro;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.easymock.IMocksControl;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.FieldTypes;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.FieldTypeEntryImpl;
+import org.lilyproject.repository.impl.FieldTypeImpl;
+import org.lilyproject.repository.impl.RecordImpl;
+import org.lilyproject.repository.impl.RecordTypeImpl;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+import org.lilyproject.repository.impl.id.SchemaIdImpl;
+import org.lilyproject.repository.impl.valuetype.StringValueType;
 
 import static org.easymock.EasyMock.createControl;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.isA;
 import static org.junit.Assert.assertEquals;
-
-import java.nio.ByteBuffer;
-import java.util.*;
-
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
-import org.easymock.IMocksControl;
-import org.junit.*;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.*;
-import org.lilyproject.repository.impl.*;
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-import org.lilyproject.repository.impl.id.SchemaIdImpl;
-import org.lilyproject.repository.impl.valuetype.StringValueType;
 
 
 public class AvroConverterTest {
@@ -41,14 +63,14 @@ public class AvroConverterTest {
     private static TypeManager typeManager;
     private static AvroConverter converter;
     private static IMocksControl control;
-    
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         control = createControl();
         repository = control.createMock(Repository.class);
         typeManager = control.createMock(TypeManager.class);
     }
-    
+
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
     }
@@ -63,7 +85,7 @@ public class AvroConverterTest {
     public void tearDown() throws Exception {
         control.reset();
     }
-    
+
     @Test
     public void testQName() {
         control.replay();
@@ -77,31 +99,31 @@ public class AvroConverterTest {
         assertEquals(avroQName, converter.convert(qname));
         assertEquals(qname, converter.convert(avroQName));
     }
-    
+
     @Test
     public void testValueType() throws Exception {
         ValueType valueType = new StringValueType();
         typeManager.getValueType("STRING");
         expectLastCall().andReturn(valueType);
-        
+
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = "STRING";
-        
+
         assertEquals(valueType, converter.convert(avroValueType));
         assertEquals(avroValueType, converter.convert(valueType));
         control.verify();
     }
-    
+
     @Test
     public void testFieldTypeEntry() {
         SchemaId id = new SchemaIdImpl(UUID.randomUUID());
         FieldTypeEntry fieldTypeEntry = new FieldTypeEntryImpl(id, true);
         typeManager.newFieldTypeEntry(id, true);
         expectLastCall().andReturn(fieldTypeEntry);
-        
+
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
@@ -114,7 +136,7 @@ public class AvroConverterTest {
         assertEquals(avroFieldTypeEntry, converter.convert(fieldTypeEntry));
         control.verify();
     }
-    
+
     @Test
     public void testFieldType() throws Exception {
         ValueType valueType = new StringValueType();
@@ -122,7 +144,7 @@ public class AvroConverterTest {
         expectLastCall().andReturn(valueType);
         QName name = new QName("aNamespace", "aName");
         SchemaId fieldTypeId = new SchemaIdImpl(UUID.randomUUID());
-        FieldType fieldType = new FieldTypeImpl(fieldTypeId, valueType , name, Scope.NON_VERSIONED);
+        FieldType fieldType = new FieldTypeImpl(fieldTypeId, valueType, name, Scope.NON_VERSIONED);
         typeManager.newFieldType(fieldTypeId, valueType, name, Scope.NON_VERSIONED);
         expectLastCall().andReturn(fieldType);
 
@@ -136,24 +158,24 @@ public class AvroConverterTest {
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
-        avroFieldType.name = avroQName ;
+        avroFieldType.name = avroQName;
         avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = "STRING";
         avroFieldType.valueType = avroValueType;
-        
+
         assertEquals(fieldType, converter.convert(avroFieldType));
         assertEquals(avroFieldType, converter.convert(fieldType));
         control.verify();
     }
-    
+
     @Test
     public void testFieldTypeWithoutId() throws Exception {
         ValueType valueType = new StringValueType();
         typeManager.getValueType("LIST<STRING>");
         expectLastCall().andReturn(valueType);
         QName name = new QName("aNamespace", "aName");
-        FieldType fieldType = new FieldTypeImpl(null, valueType , name, Scope.NON_VERSIONED);
+        FieldType fieldType = new FieldTypeImpl(null, valueType, name, Scope.NON_VERSIONED);
         typeManager.newFieldType(valueType, name, Scope.NON_VERSIONED);
         expectLastCall().andReturn(fieldType);
 
@@ -164,18 +186,18 @@ public class AvroConverterTest {
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
-        avroFieldType.name = avroQName ;
+        avroFieldType.name = avroQName;
         avroFieldType.scope = AvroScope.NON_VERSIONED;
         AvroValueType avroValueType = new AvroValueType();
         avroValueType.valueType = "LIST<STRING>";
         avroFieldType.valueType = avroValueType;
-        
+
         converter.convert(avroFieldType);
 //        assertEquals(fieldType, converter.convert(avroFieldType));
 //        assertEquals(avroFieldType, converter.convert(fieldType));
         control.verify();
     }
-    
+
     @Test
     public void testEmptyRecordType() throws Exception {
         QName name = new QName("aNamespace", "aName");
@@ -194,15 +216,16 @@ public class AvroConverterTest {
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
-        avroRecordType.name = avroQName ;
+        avroRecordType.name = avroQName;
         // fieldTypeEntries and mixins are by default empty instead of null
-        avroRecordType.fieldTypeEntries = new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
+        avroRecordType.fieldTypeEntries =
+                new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
         avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
         assertEquals(recordType, converter.convert(avroRecordType));
         assertEquals(avroRecordType, converter.convert(recordType));
         control.verify();
     }
-    
+
     @Test
     public void testRecordTypeVersion() throws Exception {
         QName name = new QName("aNamespace", "aName");
@@ -222,16 +245,17 @@ public class AvroConverterTest {
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
-        avroRecordType.name = avroQName ;
+        avroRecordType.name = avroQName;
         avroRecordType.version = 1L;
         // fieldTypeEntries and mixins are by default empty instead of null
-        avroRecordType.fieldTypeEntries = new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
+        avroRecordType.fieldTypeEntries =
+                new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
         avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
         assertEquals(recordType, converter.convert(avroRecordType));
         assertEquals(avroRecordType, converter.convert(recordType));
         control.verify();
     }
-    
+
     @Test
     public void testRecordTypeFieldTypeEntries() throws Exception {
         QName name = new QName("aNamespace", "aName");
@@ -239,16 +263,16 @@ public class AvroConverterTest {
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
         typeManager.newRecordType(recordTypeId, name);
         expectLastCall().andReturn(recordType);
-        
-        SchemaId fieldTypeId1 = new SchemaIdImpl(UUID.randomUUID());        
-        SchemaId fieldTypeId2 = new SchemaIdImpl(UUID.randomUUID());        
+
+        SchemaId fieldTypeId1 = new SchemaIdImpl(UUID.randomUUID());
+        SchemaId fieldTypeId2 = new SchemaIdImpl(UUID.randomUUID());
         FieldTypeEntryImpl fieldTypeEntry1 = new FieldTypeEntryImpl(fieldTypeId1, true);
         FieldTypeEntryImpl fieldTypeEntry2 = new FieldTypeEntryImpl(fieldTypeId2, false);
         typeManager.newFieldTypeEntry(fieldTypeId1, true);
         expectLastCall().andReturn(fieldTypeEntry1);
         typeManager.newFieldTypeEntry(fieldTypeId2, false);
         expectLastCall().andReturn(fieldTypeEntry2);
-        
+
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
@@ -261,9 +285,10 @@ public class AvroConverterTest {
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
-        avroRecordType.name = avroQName ;
+        avroRecordType.name = avroQName;
         // fieldTypeEntries and mixins are by default empty instead of null
-        avroRecordType.fieldTypeEntries = new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
+        avroRecordType.fieldTypeEntries =
+                new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
         AvroFieldTypeEntry avroFieldTypeEntry = new AvroFieldTypeEntry();
         AvroSchemaId avroFieldTypeId1 = new AvroSchemaId();
         avroFieldTypeId1.idBytes = ByteBuffer.wrap(fieldTypeId1.getBytes());
@@ -291,7 +316,7 @@ public class AvroConverterTest {
         assertEquals(expectedFieldTypeEntries, actualFieldTypeEntries);
         control.verify();
     }
-    
+
     @Test
     public void testRecordTypeMixins() throws Exception {
         QName name = new QName("aNamespace", "aName");
@@ -299,7 +324,7 @@ public class AvroConverterTest {
         RecordType recordType = new RecordTypeImpl(recordTypeId, name);
         typeManager.newRecordType(recordTypeId, name);
         expectLastCall().andReturn(recordType);
-        
+
         control.replay();
         converter = new AvroConverter();
         converter.setRepository(repository);
@@ -314,9 +339,10 @@ public class AvroConverterTest {
         AvroQName avroQName = new AvroQName();
         avroQName.namespace = "aNamespace";
         avroQName.name = "aName";
-        avroRecordType.name = avroQName ;
+        avroRecordType.name = avroQName;
         // fieldTypeEntries and mixins are by default empty instead of null
-        avroRecordType.fieldTypeEntries = new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
+        avroRecordType.fieldTypeEntries =
+                new GenericData.Array<AvroFieldTypeEntry>(0, Schema.createArray(AvroFieldTypeEntry.SCHEMA$));
         avroRecordType.mixins = new GenericData.Array<AvroMixin>(0, Schema.createArray(AvroMixin.SCHEMA$));
         AvroMixin avroMixin1 = new AvroMixin();
         AvroSchemaId avroMixinId1 = new AvroSchemaId();
@@ -344,7 +370,7 @@ public class AvroConverterTest {
         assertEquals(expectedMixins, actualMixins);
         control.verify();
     }
-    
+
     @Test
     public void testEmptyRecord() throws Exception {
         FieldTypes fieldTypesSnapshot = control.createMock(FieldTypes.class);
@@ -356,7 +382,7 @@ public class AvroConverterTest {
         converter = new AvroConverter();
         converter.setRepository(repository);
         Record record = new RecordImpl();
-        record.setRecordType(new QName("ns","recordTypeName"), null);
+        record.setRecordType(new QName("ns", "recordTypeName"), null);
 
         assertEquals(record, converter.convertRecord(converter.convert(record)));
         assertEquals(converter.convert(record), converter.convert(converter.convertRecord(converter.convert(record))));
@@ -369,7 +395,7 @@ public class AvroConverterTest {
         FieldTypes fieldTypesSnapshot = control.createMock(FieldTypes.class);
         ValueType valueType = new StringValueType();
         IdGenerator idGenerator = new IdGeneratorImpl();
-        
+
         repository.newRecord();
         expectLastCall().andReturn(new RecordImpl()).anyTimes();
         repository.getIdGenerator();
@@ -398,7 +424,7 @@ public class AvroConverterTest {
         QName fieldName2 = new QName("ns", "aName2");
         record.setField(fieldName2, "aValue2");
         record.addFieldsToDelete(Arrays.asList(new QName("devnull", "fieldToDelete")));
-        
+
         assertEquals(record, converter.convertRecord(converter.convert(record)));
         control.verify();
     }

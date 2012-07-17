@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 -->
-<beans              xmlns = "http://www.springframework.org/schema/beans"
-                xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
-            xmlns:context = "http://www.springframework.org/schema/context"
-       xsi:schemaLocation = "http://www.springframework.org/schema/beans
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:kauri="http://kauriproject.org/runtime/1.0#springext"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
@@ -76,8 +76,8 @@
       service="org.lilyproject.repository.api.Repository"/>
 
   <bean id="hbaseConf"
-      factory-bean="hadoopConfFactory"
-      factory-method="getHBaseConf"/>
+        factory-bean="hadoopConfFactory"
+        factory-method="getHBaseConf"/>
 
   <bean id="idGenerator" class="org.lilyproject.repository.impl.id.IdGeneratorImpl"/>
 
@@ -99,15 +99,19 @@
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg ref="zooKeeper"/>
-    <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
+    <constructor-arg>
+      <kauri:conf path="blobmanager"/>
+    </constructor-arg>
   </bean>
-  
+
   <bean id="blobIncubatorMonitorSetup" class="org.lilyproject.server.modules.repository.BlobIncubatorMonitorSetup">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg ref="blobManager"/>
     <constructor-arg ref="typeManager"/>
-    <constructor-arg><kauri:conf path="blobmanager"/></constructor-arg>
+    <constructor-arg>
+      <kauri:conf path="blobmanager"/>
+    </constructor-arg>
     <constructor-arg>
       <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
     </constructor-arg>
@@ -115,7 +119,9 @@
 
   <bean id="recordUpdateHookActivator" class="org.lilyproject.server.modules.repository.RecordUpdateHookActivator">
     <constructor-arg ref="pluginRegistry"/>
-    <constructor-arg><kauri:conf path="repository"/></constructor-arg>
+    <constructor-arg>
+      <kauri:conf path="repository"/>
+    </constructor-arg>
   </bean>
 
   <bean id="undecoratedRepository"
@@ -133,10 +139,13 @@
     </constructor-arg>
   </bean>
 
-  <bean id="repositoryDecoratorActivator" class="org.lilyproject.server.modules.repository.RepositoryDecoratorActivator">
+  <bean id="repositoryDecoratorActivator"
+        class="org.lilyproject.server.modules.repository.RepositoryDecoratorActivator">
     <constructor-arg ref="pluginRegistry"/>
     <constructor-arg ref="undecoratedRepository"/>
-    <constructor-arg><kauri:conf path="repository"/></constructor-arg>
+    <constructor-arg>
+      <kauri:conf path="repository"/>
+    </constructor-arg>
   </bean>
 
   <bean id="repository" factory-bean="repositoryDecoratorActivator" factory-method="getDecoratedRepository"/>
@@ -145,26 +154,6 @@
     <constructor-arg ref="repository"/>
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="hbaseTableFactory"/>
-  </bean>
-
-  <bean id="avroServer" class="org.lilyproject.server.modules.repository.AvroServer">
-    <constructor-arg>
-      <bean factory-bean="networkItfInfo" factory-method="getHostAddress"/>
-    </constructor-arg>
-    <constructor-arg ref="repository"/>
-    <constructor-arg value="${repository:port}"/>
-    <constructor-arg value="${repository:maxServerThreads}"/>
-  </bean>
-
-  <bean id="zkPublisher" class="org.lilyproject.server.modules.repository.ZKPublisher">
-    <constructor-arg ref="zooKeeper"/>
-    <constructor-arg>
-      <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
-    </constructor-arg>
-    <constructor-arg>
-      <bean factory-bean="avroServer" factory-method="getPort"/>
-    </constructor-arg>
-    <constructor-arg ref="hbaseConf"/>
   </bean>
 
   <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">

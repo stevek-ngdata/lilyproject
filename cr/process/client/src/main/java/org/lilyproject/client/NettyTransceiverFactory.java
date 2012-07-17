@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl;
-
-import org.apache.avro.ipc.NettyTransceiver;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.lilyproject.util.concurrent.CustomThreadFactory;
+package org.lilyproject.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+
+import org.apache.avro.ipc.NettyTransceiver;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.lilyproject.util.concurrent.CustomThreadFactory;
 
 public class NettyTransceiverFactory {
 

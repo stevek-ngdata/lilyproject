@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.server.modules.repository;
+package org.lilyproject.avro;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
-
 import javax.annotation.PostConstruct;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.util.json.JsonFormat;
@@ -35,7 +32,6 @@ import org.lilyproject.util.zookeeper.ZooKeeperOperation;
 
 /**
  * Publishes this Lily repository node to Zookeeper.
- *
  */
 public class ZKPublisher {
     private ZooKeeperItf zk;
@@ -61,11 +57,12 @@ public class ZKPublisher {
         zk.retryOperation(new ZooKeeperOperation<Object>() {
             @Override
             public Object execute() throws KeeperException, InterruptedException {
-                zk.create(nodesPath + "/" + repoAddressAndPort, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                zk.create(nodesPath + "/" + repoAddressAndPort, null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.EPHEMERAL);
                 return null;
             }
         });
-        
+
         // Publish HBase configuration for LilyClient use
         // Translate HBase conf into json 
         ObjectNode propertiesNode = JsonNodeFactory.instance.objectNode();

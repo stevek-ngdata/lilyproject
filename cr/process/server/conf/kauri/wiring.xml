@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <wiring>
   <modules>
-    <artifact id="pluginregistry" groupId="org.lilyproject" artifactId="lily-pluginregistry-impl" version="2.0-SNAPSHOT">
+    <artifact id="pluginregistry" groupId="org.lilyproject" artifactId="lily-pluginregistry-impl"
+              version="2.0-SNAPSHOT">
     </artifact>
 
     <artifact id="general" groupId="org.lilyproject" artifactId="lily-general-module" version="2.0-SNAPSHOT">
@@ -25,6 +26,9 @@
     <artifact id="indexer" groupId="org.lilyproject" artifactId="lily-indexer-module" version="2.0-SNAPSHOT">
       <inject-javaservice name="messageQueue" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:messageQueue"/>
       <inject-javaservice name="writeAheadLog" service="org.lilyproject.rowlog.api.RowLog" ref="rowlog:writeAheadLog"/>
+    </artifact>
+
+    <artifact id="avro" groupId="org.lilyproject" artifactId="lily-avro-module" version="2.0-SNAPSHOT">
     </artifact>
 
     <artifact id="template" groupId="org.kauriproject" artifactId="kauri-template-service-impl">

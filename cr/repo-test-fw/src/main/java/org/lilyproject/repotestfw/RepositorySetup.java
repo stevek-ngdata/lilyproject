@@ -15,25 +15,59 @@
  */
 package org.lilyproject.repotestfw;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.zookeeper.KeeperException;
 import org.junit.Assert;
+import org.lilyproject.avro.AvroConverter;
+import org.lilyproject.avro.AvroLily;
+import org.lilyproject.avro.AvroLilyImpl;
+import org.lilyproject.avro.LilySpecificResponder;
+import org.lilyproject.client.repository.RemoteRepository;
+import org.lilyproject.client.repository.RemoteTypeManager;
 import org.lilyproject.hadooptestfw.HBaseProxy;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.avro.AvroLily;
-import org.lilyproject.repository.avro.AvroLilyImpl;
-import org.lilyproject.repository.avro.LilySpecificResponder;
-import org.lilyproject.repository.impl.*;
+import org.lilyproject.repository.api.BlobManager;
+import org.lilyproject.repository.api.BlobStoreAccess;
+import org.lilyproject.repository.api.BlobStoreAccessFactory;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.AbstractSchemaCache;
+import org.lilyproject.repository.impl.BlobManagerImpl;
+import org.lilyproject.repository.impl.BlobStoreAccessConfig;
+import org.lilyproject.repository.impl.DFSBlobStoreAccess;
+import org.lilyproject.repository.impl.HBaseBlobStoreAccess;
+import org.lilyproject.repository.impl.HBaseRepository;
+import org.lilyproject.repository.impl.HBaseTypeManager;
+import org.lilyproject.repository.impl.InlineBlobStoreAccess;
+import org.lilyproject.repository.impl.SchemaCache;
+import org.lilyproject.repository.impl.SizeBasedBlobStoreAccessFactory;
 import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.rowlock.HBaseRowLocker;
 import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.*;
-import org.lilyproject.rowlog.impl.*;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessageListener;
+import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
+import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.rowlog.impl.MessageQueueFeeder;
+import org.lilyproject.rowlog.impl.RowLogConfigurationManagerImpl;
+import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
+import org.lilyproject.rowlog.impl.RowLogImpl;
+import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
+import org.lilyproject.rowlog.impl.RowLogShardSetup;
+import org.lilyproject.rowlog.impl.WalRowLog;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -42,12 +76,6 @@ import org.lilyproject.util.hbase.LilyHBaseSchema.RecordColumn;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkUtil;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Helper class to instantiate and wire all the repository related services.
@@ -133,9 +161,12 @@ public class RepositorySetup {
 
         if (withWal) {
             setupRowLogConfigurationManager();
-            HBaseRowLocker rowLocker = new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes, RecordColumn.LOCK.bytes, 10000);
+            HBaseRowLocker rowLocker =
+                    new HBaseRowLocker(LilyHBaseSchema.getRecordTable(hbaseTableFactory), RecordCf.DATA.bytes,
+                            RecordColumn.LOCK.bytes, 10000);
             rowLogConfManager.addRowLog("WAL", new RowLogConfig(true, false, 100L, 5000L, 5000L, 120000L, 100));
-            wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
+            wal = new WalRowLog("WAL", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
+                    LilyHBaseSchema.RecordCf.ROWLOG.bytes,
                     LilyHBaseSchema.RecordColumn.WAL_PREFIX, rowLogConfManager, rowLocker, new RowLogHashShardRouter());
             RowLogShardSetup.setupShards(1, wal, hbaseTableFactory);
         }
@@ -145,7 +176,7 @@ public class RepositorySetup {
 
         repositorySetup = true;
     }
-    
+
     private BlobStoreAccessFactory createBlobAccess() throws Exception {
         DFSBlobStoreAccess dfsBlobStoreAccess = new DFSBlobStoreAccess(hbaseProxy.getBlobFS(), new Path("/lily/blobs"));
         BlobStoreAccess hbaseBlobStoreAccess = new HBaseBlobStoreAccess(hadoopConf);
@@ -161,8 +192,10 @@ public class RepositorySetup {
             blobStoreAccessConfig.setLimit(inlineBlobStoreAccess.getId(), inlineBlobLimit);
         }
 
-        List<BlobStoreAccess> blobStoreAccesses = Arrays.asList(dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess);
-        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory = new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
+        List<BlobStoreAccess> blobStoreAccesses =
+                Arrays.asList(dfsBlobStoreAccess, hbaseBlobStoreAccess, inlineBlobStoreAccess);
+        SizeBasedBlobStoreAccessFactory blobStoreAccessFactory =
+                new SizeBasedBlobStoreAccessFactory(blobStoreAccesses, blobStoreAccessConfig);
         return blobStoreAccessFactory;
     }
 
@@ -211,7 +244,6 @@ public class RepositorySetup {
     }
 
     /**
-     *
      * @param withManualProcessing if true, the MQ RowLog will be wrapped to keep track of added messages to allow
      *                             triggering a manual processing, see method {@link #processMQ}. Usually you will want
      *                             either this or withProcessor, not both.
@@ -221,7 +253,8 @@ public class RepositorySetup {
         rowLogConfManager.addRowLog("MQ", new RowLogConfig(false, true, 100L, 0L, 5000L, 120000L, 100));
         rowLogConfManager.addSubscription("WAL", "MQFeeder", RowLogSubscription.Type.VM, 1);
 
-        mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory), LilyHBaseSchema.RecordCf.ROWLOG.bytes,
+        mq = new RowLogImpl("MQ", LilyHBaseSchema.getRecordTable(hbaseTableFactory),
+                LilyHBaseSchema.RecordCf.ROWLOG.bytes,
                 LilyHBaseSchema.RecordColumn.MQ_PREFIX, rowLogConfManager, null, new RowLogHashShardRouter());
         RowLogShardSetup.setupShards(1, mq, hbaseTableFactory);
         if (withManualProcessing) {
@@ -251,7 +284,7 @@ public class RepositorySetup {
      * trigger synchronous MQ processing.
      */
     public void processMQ() throws RowLogException, InterruptedException {
-        ((ManualProcessRowLog)mq).processMessages();
+        ((ManualProcessRowLog) mq).processMessages();
     }
 
     public void stop() throws InterruptedException {
@@ -372,7 +405,7 @@ public class RepositorySetup {
     public RowLocker getRowLocker() {
         return rowLocker;
     }
-    
+
     private class RemoteTestSchemaCache extends AbstractSchemaCache implements SchemaCache {
 
         private TypeManager typeManager;
@@ -389,6 +422,6 @@ public class RepositorySetup {
         protected TypeManager getTypeManager() {
             return typeManager;
         }
-        
+
     }
 }

@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl;
+package org.lilyproject.client.repository;
 
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.util.List;
-
 import javax.annotation.PreDestroy;
 
 import org.apache.avro.AvroRemoteException;
@@ -27,8 +26,27 @@ import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.avro.*;
+import org.lilyproject.avro.AvroConverter;
+import org.lilyproject.avro.AvroFieldType;
+import org.lilyproject.avro.AvroGenericException;
+import org.lilyproject.avro.AvroLily;
+import org.lilyproject.avro.AvroRepositoryException;
+import org.lilyproject.avro.AvroTypeBucket;
+import org.lilyproject.client.NettyTransceiverFactory;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.IOTypeException;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeBucket;
+import org.lilyproject.repository.api.TypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.impl.AbstractTypeManager;
+import org.lilyproject.repository.impl.SchemaCache;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
@@ -44,7 +62,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     private Transceiver client;
 
     public RemoteTypeManager(InetSocketAddress address, AvroConverter converter, IdGenerator idGenerator,
-            ZooKeeperItf zooKeeper, SchemaCache schemaCache)
+                             ZooKeeperItf zooKeeper, SchemaCache schemaCache)
             throws IOException {
         super(zooKeeper);
         super.schemaCache = schemaCache;
@@ -64,7 +82,7 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
      * has been assigned to the repository, after the repository has been
      * assigned to the AvroConverter and before using the typemanager and
      * repository.
-     * 
+     *
      * @throws InterruptedException
      * @throws KeeperException
      * @throws RepositoryException
@@ -100,7 +118,8 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     @Override
     public RecordType createOrUpdateRecordType(RecordType recordType) throws RepositoryException, InterruptedException {
         try {
-            RecordType newRecordType = converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType)));
+            RecordType newRecordType =
+                    converter.convert(lilyProxy.createOrUpdateRecordType(converter.convert(recordType)));
             updateRecordTypeCache(newRecordType.clone());
             return newRecordType;
         } catch (AvroRepositoryException e) {
@@ -115,7 +134,8 @@ public class RemoteTypeManager extends AbstractTypeManager implements TypeManage
     }
 
     @Override
-    protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version) throws RepositoryException, InterruptedException {
+    protected RecordType getRecordTypeByIdWithoutCache(SchemaId id, Long version)
+            throws RepositoryException, InterruptedException {
         try {
             long avroVersion;
             if (version == null) {

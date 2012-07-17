@@ -1,5 +1,5 @@
 {
-  "namespace": "org.lilyproject.repository.avro",
+  "namespace": "org.lilyproject.avro",
   "protocol": "AvroLily",
 
   "types": [

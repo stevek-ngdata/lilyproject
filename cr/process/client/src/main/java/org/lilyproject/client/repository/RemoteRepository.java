@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.impl;
+package org.lilyproject.client.repository;
 
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -26,6 +26,11 @@ import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.hadoop.conf.Configuration;
+import org.lilyproject.avro.AvroConverter;
+import org.lilyproject.avro.AvroGenericException;
+import org.lilyproject.avro.AvroLily;
+import org.lilyproject.avro.AvroRepositoryException;
+import org.lilyproject.client.NettyTransceiverFactory;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IORecordException;
 import org.lilyproject.repository.api.IdGenerator;
@@ -35,10 +40,8 @@ import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordException;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RepositoryException;
-import org.lilyproject.repository.avro.AvroConverter;
-import org.lilyproject.repository.avro.AvroGenericException;
-import org.lilyproject.repository.avro.AvroLily;
-import org.lilyproject.repository.avro.AvroRepositoryException;
+import org.lilyproject.repository.impl.BaseRepository;
+import org.lilyproject.repository.impl.RecordBuilderImpl;
 import org.lilyproject.util.hbase.HBaseTableFactoryImpl;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
 import org.lilyproject.util.io.Closer;
@@ -53,7 +56,8 @@ public class RemoteRepository extends BaseRepository {
     private Transceiver client;
 
     public RemoteRepository(InetSocketAddress address, AvroConverter converter, RemoteTypeManager typeManager,
-            IdGenerator idGenerator, BlobManager blobManager, Configuration hbaseConf) throws IOException {
+                            IdGenerator idGenerator, BlobManager blobManager, Configuration hbaseConf)
+            throws IOException {
 
         // true flag to getRecordTable: we don't let the remote side create the record table if it
         // would not yet exist, as it is not aware of creation parameters (such as splits, compression, etc.)
@@ -78,7 +82,7 @@ public class RemoteRepository extends BaseRepository {
     public IdGenerator getIdGenerator() {
         return idGenerator;
     }
-    
+
     @Override
     public Record create(Record record) throws RepositoryException, InterruptedException {
         try {
@@ -125,7 +129,7 @@ public class RemoteRepository extends BaseRepository {
             throw handleUndeclaredRecordThrowable(e);
         }
     }
-    
+
     @Override
     public void delete(Record record) throws RepositoryException, InterruptedException {
         try {
@@ -160,10 +164,11 @@ public class RemoteRepository extends BaseRepository {
 
     @Override
     public Record update(Record record, boolean updateVersion, boolean useLatestRecordType,
-            List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
+                         List<MutationCondition> conditions) throws RepositoryException, InterruptedException {
         try {
-            return converter.convertRecord(lilyProxy.update(converter.convert(record), updateVersion, useLatestRecordType,
-                    converter.convert(record, conditions)));
+            return converter
+                    .convertRecord(lilyProxy.update(converter.convert(record), updateVersion, useLatestRecordType,
+                            converter.convert(record, conditions)));
         } catch (AvroRepositoryException e) {
             throw converter.convert(e);
         } catch (AvroGenericException e) {
@@ -181,7 +186,8 @@ public class RemoteRepository extends BaseRepository {
     }
 
     @Override
-    public Record createOrUpdate(Record record, boolean useLatestRecordType) throws RepositoryException, InterruptedException {
+    public Record createOrUpdate(Record record, boolean useLatestRecordType)
+            throws RepositoryException, InterruptedException {
         try {
             return converter.convertRecord(lilyProxy.createOrUpdate(converter.convert(record), useLatestRecordType));
         } catch (AvroRepositoryException e) {

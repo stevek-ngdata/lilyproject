@@ -13,32 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.repository.avro;
+package org.lilyproject.avro;
 
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.avro.AvroRemoteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lilyproject.avro.repository.RecordAsBytesConverter;
 import org.lilyproject.bytes.impl.DataInputImpl;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.RecordAsBytesConverter;
+import org.lilyproject.repository.api.CompareOp;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.FieldTypeEntry;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
+import org.lilyproject.repository.api.IdentityRecordStack;
+import org.lilyproject.repository.api.MutationCondition;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RemoteException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeBucket;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.api.ValueType;
 import org.lilyproject.repository.impl.id.SchemaIdImpl;
 import org.lilyproject.util.Pair;
 import org.lilyproject.util.repo.SystemFields;
 
 public class AvroConverter {
     private Log log = LogFactory.getLog(getClass());
-    
+
     private TypeManager typeManager;
     private Repository repository;
 
     public AvroConverter() {
     }
-    
+
     public void setRepository(Repository repository) {
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
@@ -57,7 +80,7 @@ public class AvroConverter {
     public IdRecord convertIdRecord(ByteBuffer avroIdRecord) throws RepositoryException, InterruptedException {
         return RecordAsBytesConverter.readIdRecord(new DataInputImpl(asArray(avroIdRecord)), repository);
     }
-    
+
     public List<MutationCondition> convertFromAvro(List<AvroMutationCondition> avroConditions)
             throws RepositoryException, InterruptedException {
 
@@ -124,9 +147,9 @@ public class AvroConverter {
 
 
                 AvroMutationCondition avroCond = new AvroMutationCondition();
-    
+
                 avroCond.setName(convert(condition.getField()));
-    
+
                 if (condition.getValue() != null) {
                     ValueType valueType = fieldType.getValueType();
                     avroCond.setValueType(valueType.getName());
@@ -136,7 +159,7 @@ public class AvroConverter {
                 }
                 avroCond.setOperator(convert(condition.getOp()));
                 avroCond.setAllowMissing(condition.getAllowMissing());
-                
+
                 avroConditions.add(avroCond);
             } catch (RepositoryException e) {
                 throw convert(e);
@@ -148,7 +171,7 @@ public class AvroConverter {
 
         return avroConditions;
     }
-    
+
     public AvroCompareOp convert(CompareOp op) {
         return op == null ? null : AvroCompareOp.values()[op.ordinal()];
     }
@@ -169,7 +192,7 @@ public class AvroConverter {
 
     public AvroFieldType convert(FieldType fieldType) {
         AvroFieldType avroFieldType = new AvroFieldType();
-        
+
         avroFieldType.setId(convert(fieldType.getId()));
         avroFieldType.setName(convert(fieldType.getName()));
         avroFieldType.setValueType(convert(fieldType.getValueType()));
@@ -214,7 +237,7 @@ public class AvroConverter {
         for (FieldTypeEntry fieldTypeEntry : fieldTypeEntries) {
             avroRecordType.getFieldTypeEntries().add(convert(fieldTypeEntry));
         }
-        Set<Entry<SchemaId,Long>> mixinEntries = recordType.getMixins().entrySet();
+        Set<Entry<SchemaId, Long>> mixinEntries = recordType.getMixins().entrySet();
         avroRecordType.setMixins(new ArrayList<AvroMixin>(mixinEntries.size()));
         for (Entry<SchemaId, Long> mixinEntry : mixinEntries) {
             avroRecordType.getMixins().add(convert(mixinEntry));
@@ -345,7 +368,7 @@ public class AvroConverter {
             if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
                 Constructor constructor = exceptionClass.getConstructor(String.class);
                 constructor.setAccessible(true);
-                RuntimeException runtimeException = (RuntimeException)constructor.newInstance(
+                RuntimeException runtimeException = (RuntimeException) constructor.newInstance(
                         avroException.getMessage$());
                 restoreCauses(avroException.getRemoteCauses(), runtimeException);
                 return runtimeException;
@@ -363,7 +386,7 @@ public class AvroConverter {
     public RemoteException convert(AvroRemoteException exception) {
         return new RemoteException(exception.getMessage(), exception);
     }
-    
+
     public AvroRepositoryException convert(RepositoryException exception) {
         AvroRepositoryException avroRepositoryException = new AvroRepositoryException();
         avroRepositoryException.setMessage$(exception.getMessage());
@@ -372,12 +395,12 @@ public class AvroConverter {
         avroRepositoryException.setParams(exception.getState());
         return avroRepositoryException;
     }
-    
+
     public RepositoryException convert(AvroRepositoryException avroException) {
         try {
             Class exceptionClass = Class.forName(avroException.getExceptionClass());
             Constructor constructor = exceptionClass.getConstructor(String.class, Map.class);
-            RepositoryException repositoryException = (RepositoryException)constructor.newInstance(
+            RepositoryException repositoryException = (RepositoryException) constructor.newInstance(
                     avroException.getMessage$(), avroException.getParams());
             restoreCauses(avroException.getRemoteCauses(), repositoryException);
             return repositoryException;
@@ -411,7 +434,7 @@ public class AvroConverter {
             return null;
         return avroVersion;
     }
-    
+
     public long convertVersion(Long version) {
         if (version == null)
             return -1;
@@ -488,7 +511,8 @@ public class AvroConverter {
         return result;
     }
 
-    public List<FieldType> convertAvroFieldTypes(List<AvroFieldType> avroFieldTypes) throws RepositoryException, InterruptedException {
+    public List<FieldType> convertAvroFieldTypes(List<AvroFieldType> avroFieldTypes)
+            throws RepositoryException, InterruptedException {
         List<FieldType> fieldTypes = new ArrayList<FieldType>();
         for (AvroFieldType avroFieldType : avroFieldTypes) {
             fieldTypes.add(convert(avroFieldType));
@@ -496,7 +520,8 @@ public class AvroConverter {
         return fieldTypes;
     }
 
-    public List<RecordType> convertAvroRecordTypes(List<AvroRecordType> avroRecordTypes) throws RepositoryException, InterruptedException {
+    public List<RecordType> convertAvroRecordTypes(List<AvroRecordType> avroRecordTypes)
+            throws RepositoryException, InterruptedException {
         List<RecordType> recordTypes = new ArrayList<RecordType>();
         for (AvroRecordType avroRecordType : avroRecordTypes) {
             recordTypes.add(convert(avroRecordType));
@@ -519,10 +544,11 @@ public class AvroConverter {
         }
         return avroRecordTypes;
     }
-    
-    public List<Record> convertAvroRecords(List<ByteBuffer> avroRecords) throws RepositoryException, InterruptedException {
+
+    public List<Record> convertAvroRecords(List<ByteBuffer> avroRecords)
+            throws RepositoryException, InterruptedException {
         List<Record> records = new ArrayList<Record>();
-        for(ByteBuffer avroRecord : avroRecords) {
+        for (ByteBuffer avroRecord : avroRecords) {
             records.add(convertRecord(avroRecord));
         }
         return records;
@@ -531,12 +557,12 @@ public class AvroConverter {
     public List<ByteBuffer> convertRecords(Collection<Record> records) throws AvroRepositoryException,
             AvroInterruptedException, RepositoryException, InterruptedException {
         List<ByteBuffer> avroRecords = new ArrayList<ByteBuffer>(records.size());
-        for (Record record: records) {
+        for (Record record : records) {
             avroRecords.add(convert(record));
         }
         return avroRecords;
     }
-    
+
     public Set<RecordId> convertAvroRecordIds(List<String> avroRecordIds) {
         Set<RecordId> recordIds = new HashSet<RecordId>();
         IdGenerator idGenerator = repository.getIdGenerator();
@@ -545,10 +571,10 @@ public class AvroConverter {
         }
         return recordIds;
     }
-    
+
     public List<String> convert(Set<RecordId> recordIds) {
         List<String> avroRecordIds = new ArrayList<String>(recordIds.size());
-        for (RecordId recordId: recordIds) {
+        for (RecordId recordId : recordIds) {
             avroRecordIds.add(recordId.toString());
         }
         return avroRecordIds;
@@ -562,16 +588,16 @@ public class AvroConverter {
             idBytes = avroSchemaId.getIdBytes().array();
         return new SchemaIdImpl(idBytes);
     }
-    
+
     public AvroSchemaId convert(SchemaId schemaId) {
         if (schemaId == null)
             return null;
         AvroSchemaId avroSchemaId = new AvroSchemaId();
-        if (schemaId.getBytes() != null) 
+        if (schemaId.getBytes() != null)
             avroSchemaId.setIdBytes(ByteBuffer.wrap(schemaId.getBytes()));
         return avroSchemaId;
     }
-    
+
     public QName[] convert(List<AvroQName> avroNames) {
         QName[] names = null;
         if (avroNames != null) {

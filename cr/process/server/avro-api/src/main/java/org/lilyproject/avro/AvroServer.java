@@ -13,7 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.server.modules.repository;
+package org.lilyproject.avro;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Responder;
@@ -21,15 +32,8 @@ import org.apache.avro.ipc.Server;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.execution.ExecutionHandler;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.avro.*;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.*;
 
 public class AvroServer {
     private String bindAddress;
@@ -71,7 +75,7 @@ public class AvroServer {
                 (Executors.newCachedThreadPool(), Executors.newCachedThreadPool()), executionHandler);
         server.start();
     }
-    
+
     @PreDestroy
     public void stop() {
         // Previously the server.close call was disable for the following reason, just leaving this comment here for
