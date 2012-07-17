@@ -67,6 +67,10 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
 
         // Don't feed MQ if attribute lily.mq=false is set
         if (recordEvent.hasAttributes() && "false".equals(recordEvent.getAttributes().get("lily.mq"))) {
+            if (log.isDebugEnabled()) {
+                RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
+                log.debug("Record " + recordId + ": not feeding MQ on user request.");
+            }
             return true;
         }
 
@@ -170,6 +174,11 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
                 IndexRecordFilter filter = indexInfo.getIndexerConf().getRecordFilter();
                 if (filter.getIndexCase(oldRecord) != null || filter.getIndexCase(newRecord) != null) {
                     relevantIndex = true;
+                }
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Record " + recordId + " is found " + (relevantIndex ? "" : "not ")
+                            + "relevant for index " + indexInfo.getIndexDefinition().getName());
                 }
 
                 // If not relevant, remove it from the list of subscriptions
