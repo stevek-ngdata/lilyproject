@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema elementFormDefault="unqualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:attributeGroup name="recordMatcherAttrs">
+    <xs:attribute name="recordType" type="xs:string" use="optional"/>
+    <xs:attribute name="field" type="xs:string" use="optional"/>
+    <xs:attribute name="variant" type="xs:string" use="optional"/>
+  </xs:attributeGroup>
   <xs:element name="indexer">
     <xs:complexType>
       <xs:all minOccurs="0">
@@ -17,14 +22,23 @@
         <xs:element maxOccurs="1" minOccurs="0" name="includes">
           <xs:complexType>
             <xs:sequence>
-              <xs:element maxOccurs="unbounded" minOccurs="0" name="include"/>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="include">
+                <xs:complexType>
+                  <xs:attributeGroup ref="recordMatcherAttrs"/>
+                  <xs:attribute name="vtags" type="xs:string" use="required"/>
+                </xs:complexType>
+              </xs:element>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
         <xs:element maxOccurs="1" minOccurs="0" name="excludes">
           <xs:complexType>
             <xs:sequence>
-              <xs:element maxOccurs="unbounded" minOccurs="0" name="exclude"/>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="exclude">
+                <xs:complexType>
+                  <xs:attributeGroup ref="recordMatcherAttrs"/>
+                </xs:complexType>
+              </xs:element>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -108,9 +122,7 @@
           <xs:element minOccurs="0" ref="forEach"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="recordType" type="xs:string" use="optional"/>
-      <xs:attribute name="field" type="xs:string" use="optional"/>
-      <xs:attribute name="variant" type="xs:string" use="optional"/>
+      <xs:attributeGroup ref="recordMatcherAttrs"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="forEach">
