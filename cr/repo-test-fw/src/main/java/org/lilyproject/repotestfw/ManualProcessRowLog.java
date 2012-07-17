@@ -53,15 +53,15 @@ public class ManualProcessRowLog implements RowLog {
     @Override
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws RowLogException,
             InterruptedException {
-        List<RowLogSubscription> subscriptions = getSubscriptions();
-        return putMessage(rowKey, data, payload, put, subscriptions);
+        List<String> subscriptionIds = getSubscriptionIds();
+        return putMessage(rowKey, data, payload, put, subscriptionIds);
     }
 
     @Override
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
-            List<RowLogSubscription> subscriptions) throws RowLogException, InterruptedException {
+            List<String> subscriptionIds) throws RowLogException, InterruptedException {
 
-        RowLogMessage msg = delegate.putMessage(rowKey, data, payload, put, subscriptions);
+        RowLogMessage msg = delegate.putMessage(rowKey, data, payload, put, subscriptionIds);
         unprocessedMessages.add(msg);
 
         return msg;
@@ -97,6 +97,11 @@ public class ManualProcessRowLog implements RowLog {
     @Override
     public List<RowLogSubscription> getSubscriptions() {
         return delegate.getSubscriptions();
+    }
+
+    @Override
+    public List<String> getSubscriptionIds() {
+        return delegate.getSubscriptionIds();
     }
 
     @Override

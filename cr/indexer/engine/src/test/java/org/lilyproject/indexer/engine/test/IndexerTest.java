@@ -2501,22 +2501,6 @@ public class IndexerTest {
         }
     }
 
-    @Test
-    public void testIndexUpdaterRequiresValidSubscription() throws Exception {
-        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
-
-        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics("test"), derefMap);
-
-        try {
-            new IndexUpdater(indexer, repository, linkIndex, indexLocker, repoSetup.getMq(),
-                    new IndexUpdaterMetrics("test"), null, "NonExistingSubscriptionId");
-            fail("Expected exception about NonExistingSubscriptionId");
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("NonExistingSubscriptionId"));
-        }
-    }
-
     /**
      * Verifies that the re-index messages produced by IndexUpdater are only produced for the subscription
      * to which this IndexUpdater is listening, thus are only sent to the relevant index.

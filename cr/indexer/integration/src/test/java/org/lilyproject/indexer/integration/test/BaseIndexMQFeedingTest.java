@@ -126,9 +126,9 @@ public abstract class BaseIndexMQFeedingTest {
             solrShardManagers.add(new MySolrShardManager());
             solrClients.add(solrShardManagers.get(i).getSolrClient());
 
-            indexUpdaters.add(createIndexUpdater("IndexUpdater" + i, confName, solrShardManagers.get(i)));
-
             rowLogConfMgr.addSubscription("MQ", "IndexUpdater" + i, RowLogSubscription.Type.VM, 1);
+
+            indexUpdaters.add(createIndexUpdater("IndexUpdater" + i, confName, solrShardManagers.get(i)));
         }
 
         waitForIndexesInfoUpdate(confNames.size());

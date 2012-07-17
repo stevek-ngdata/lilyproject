@@ -116,7 +116,7 @@ public interface RowLog {
      * A variant of putMessage which allows the client to specify what subscriptions should receive this message.
      */
     RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
-            List<RowLogSubscription> subscriptions) throws RowLogException, InterruptedException;
+            List<String> subscriptionIds) throws RowLogException, InterruptedException;
 
     /**
      * Request each registered {@link RowLogMessageListener} to process a {@link RowLogMessage} explicitly. 
@@ -176,6 +176,8 @@ public interface RowLog {
      * order number.
      */
     List<RowLogSubscription> getSubscriptions();
+
+    List<String> getSubscriptionIds();
 
     /**
      * @return the list of registered shards on the rowlog

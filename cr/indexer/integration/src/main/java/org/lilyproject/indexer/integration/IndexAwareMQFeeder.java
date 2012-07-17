@@ -32,14 +32,12 @@ import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
-import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RowLogContext;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class IndexAwareMQFeeder implements RowLogMessageListener {
@@ -73,28 +71,18 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
         }
 
         // Get a snapshot of the currently known MQ subscriptions
-        List<RowLogSubscription> subscriptions = new ArrayList<RowLogSubscription>(messageQueue.getSubscriptions());
+        List<String> subscriptionIds = new ArrayList<String>(messageQueue.getSubscriptionIds());
 
         // If there are indexes, remove their subscription from the list if we see the record is not
         // relevant for the index. This avoids the cost of needlessly dispatching this event to
         // indexes that don't need it anyway.
         Collection<IndexInfo> indexInfos = indexesInfo.getIndexInfos();
         if (indexInfos.size() >= 0) {
-            filterSubscriptions(subscriptions, indexInfos, message, recordEvent);
+            filterSubscriptions(subscriptionIds, indexInfos, message, recordEvent);
         }
 
         // Add event to the MQ
-        return addMessageToMQ(message, subscriptions);
-    }
-
-    private void removeSubscription(List<RowLogSubscription> subscriptions, String idToRemove) {
-        Iterator<RowLogSubscription> subscriptionIt = subscriptions.iterator();
-        while (subscriptionIt.hasNext()) {
-            if (subscriptionIt.next().getId().equals(idToRemove)) {
-                subscriptionIt.remove();
-                return;
-            }
-        }
+        return addMessageToMQ(message, subscriptionIds);
     }
 
     private RecordEvent getRecordEvent(RowLogMessage message) {
@@ -120,7 +108,7 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
      * Performs the index-aware filtering of the subscriptions, modifies the provided subscriptions
      * list.
      */
-    private void filterSubscriptions(List<RowLogSubscription> subscriptions, Collection<IndexInfo> indexInfos,
+    private void filterSubscriptions(List<String> subscriptionIds, Collection<IndexInfo> indexInfos,
             RowLogMessage message, RecordEvent recordEvent) {
 
         try {
@@ -187,7 +175,7 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
                 // If not relevant, remove it from the list of subscriptions
                 if (!relevantIndex) {
                     String subscriptionId = indexInfo.getIndexDefinition().getQueueSubscriptionId();
-                    removeSubscription(subscriptions, subscriptionId);
+                    subscriptionIds.remove(subscriptionId);
                 }
             }
         } catch (Exception e) {
@@ -198,7 +186,7 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
     /**
      * Add message to the MQ, this is the code from the original MessageQueueFeeder.
      */
-    private boolean addMessageToMQ(RowLogMessage message, List<RowLogSubscription> subscriptions)
+    private boolean addMessageToMQ(RowLogMessage message, List<String> subscriptionIds)
             throws InterruptedException {
         Exception lastException = null;
         // When an exception occurs, we retry to put the message.
@@ -208,7 +196,7 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
         for (int i = 0; i < 50; i++) {
             try {
                 messageQueue.putMessage(message.getRowKey(), message.getData(), message.getPayload(), null,
-                        subscriptions);
+                        subscriptionIds);
                 return true;
             } catch (RowLogException e) {
                 lastException = e;

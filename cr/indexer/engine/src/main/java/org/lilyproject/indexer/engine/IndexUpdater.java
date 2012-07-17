@@ -97,7 +97,7 @@ public class IndexUpdater implements RowLogMessageListener {
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
     private RowLog rowLog;
-    private RowLogSubscription subscription;
+    private String subscriptionId;
 
     /**
      * Deref map used to update denormalized data. It is <code>null</code> in case the indexer configuration doesn't
@@ -124,18 +124,7 @@ public class IndexUpdater implements RowLogMessageListener {
         this.indexLocker = indexLocker;
         this.rowLog = rowLog;
         this.derefMap = derefMap;
-
-        for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
-            if (subscription.getId().equals(subscriptionId)) {
-                this.subscription = subscription;
-                break;
-            }
-        }
-        if (this.subscription == null) {
-            // This will only happen in edge situations such as subscription being removed while IndexUpdater
-            // is starting up.
-            throw new RuntimeException("IndexUpdater subscription does not exist: " + subscriptionId);
-        }
+        this.subscriptionId = subscriptionId;
 
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
 
@@ -425,7 +414,7 @@ public class IndexUpdater implements RowLogMessageListener {
             // TODO how will this behave if the row was meanwhile deleted?
             try {
                 rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null,
-                        Collections.singletonList(subscription));
+                        Collections.singletonList(subscriptionId));
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.

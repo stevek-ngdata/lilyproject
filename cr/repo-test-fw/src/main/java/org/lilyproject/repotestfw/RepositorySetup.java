@@ -317,11 +317,9 @@ public class RepositorySetup {
         int timeOut = 10000;
         long waitUntil = System.currentTimeMillis() + timeOut;
         while (!subscriptionKnown && System.currentTimeMillis() < waitUntil) {
-            for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
-                if (subscriptionId.equals(subscription.getId())) {
-                    subscriptionKnown = true;
-                    break;
-                }
+            if (rowLog.getSubscriptionIds().contains(subscriptionId)) {
+                subscriptionKnown = true;
+                break;
             }
             Thread.sleep(10);
         }
