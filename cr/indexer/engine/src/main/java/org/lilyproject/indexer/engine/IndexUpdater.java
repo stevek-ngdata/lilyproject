@@ -16,6 +16,7 @@
 package org.lilyproject.indexer.engine;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
+import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VTaggedRecord;
 
@@ -95,6 +97,7 @@ public class IndexUpdater implements RowLogMessageListener {
     private ClassLoader myContextClassLoader;
     private IndexLocker indexLocker;
     private RowLog rowLog;
+    private RowLogSubscription subscription;
 
     /**
      * Deref map used to update denormalized data. It is <code>null</code> in case the indexer configuration doesn't
@@ -107,10 +110,12 @@ public class IndexUpdater implements RowLogMessageListener {
 
     /**
      * @param rowLog this should be the message queue
+     * @param subscriptionId ID of the rowlog subscription to which this listener is listening. This is needed
+     *                       because the IndexUpdater generates events itself, which should only be sent to
+     *                       this subscription.
      */
-    public IndexUpdater(Indexer indexer, Repository repository,
-                        LinkIndex linkIndex, IndexLocker indexLocker, RowLog rowLog, IndexUpdaterMetrics metrics,
-                        DerefMap derefMap)
+    public IndexUpdater(Indexer indexer, Repository repository, LinkIndex linkIndex, IndexLocker indexLocker,
+            RowLog rowLog, IndexUpdaterMetrics metrics, DerefMap derefMap, String subscriptionId)
             throws RowLogException, IOException {
         this.indexer = indexer;
         this.repository = repository;
@@ -119,6 +124,18 @@ public class IndexUpdater implements RowLogMessageListener {
         this.indexLocker = indexLocker;
         this.rowLog = rowLog;
         this.derefMap = derefMap;
+
+        for (RowLogSubscription subscription : rowLog.getSubscriptions()) {
+            if (subscription.getId().equals(subscriptionId)) {
+                this.subscription = subscription;
+                break;
+            }
+        }
+        if (this.subscription == null) {
+            // This will only happen in edge situations such as subscription being removed while IndexUpdater
+            // is starting up.
+            throw new RuntimeException("IndexUpdater subscription does not exist: " + subscriptionId);
+        }
 
         this.myContextClassLoader = Thread.currentThread().getContextClassLoader();
 
@@ -147,16 +164,11 @@ public class IndexUpdater implements RowLogMessageListener {
             }
 
             if (event.getType().equals(INDEX)) {
-                boolean forUs = indexer.getIndexName().equals(event.getIndexName());
-
-                if (forUs) {
-                    if (log.isDebugEnabled()) {
-                        log.debug(String.format("Record %1$s: reindex requested for these vtags: %2$s", recordId,
-                                indexer.vtagSetToNameString(event.getVtagsToIndex())));
-                    }
-
-                    index(recordId, event.getVtagsToIndex());
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Record %1$s: reindex requested for these vtags: %2$s", recordId,
+                            indexer.vtagSetToNameString(event.getVtagsToIndex())));
                 }
+                index(recordId, event.getVtagsToIndex());
             } else if (event.getType().equals(DELETE)) {
                 // Record is deleted: delete its index entry. We do not check for a matching index case, since
                 // we can't (record is not available anymore), and besides IndexAwareMQFeeder takes care of sending us
@@ -406,14 +418,14 @@ public class IndexUpdater implements RowLogMessageListener {
 
             RecordEvent payload = new RecordEvent();
             payload.setType(INDEX);
-            payload.setIndexName(indexer.getIndexName());
             for (SchemaId vtag : referrersAndVTags.get(referrer)) {
                 payload.addVTagToIndex(vtag);
             }
 
             // TODO how will this behave if the row was meanwhile deleted?
             try {
-                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null);
+                rowLog.putMessage(referrer.toBytes(), null, payload.toJsonBytes(), null,
+                        Collections.singletonList(subscription));
             } catch (Exception e) {
                 // We failed to put the message: this is pretty important since it means the record's index
                 // won't get updated, therefore log as error, but after this we continue with the next one.

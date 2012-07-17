@@ -158,7 +158,7 @@ public abstract class BaseIndexMQFeedingTest {
     }
 
     private static TrackingIndexUpdater createIndexUpdater(String subscriptionId, String confName,
-                                                           SolrShardManager solrShardManager) throws Exception {
+            SolrShardManager solrShardManager) throws Exception {
         IndexerConf INDEXER_CONF = IndexerConfBuilder.build(BaseIndexMQFeedingTest.class.getResourceAsStream(confName),
                 repository);
 
@@ -168,7 +168,7 @@ public abstract class BaseIndexMQFeedingTest {
                 new IndexerMetrics("test"), derefMap);
 
         IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, null, indexLocker, repoSetup.getMq(),
-                new IndexUpdaterMetrics("test"), derefMap);
+                new IndexUpdaterMetrics("test"), derefMap, subscriptionId);
 
         TrackingIndexUpdater trackingIndexUpdater = new TrackingIndexUpdater(indexUpdater);
 

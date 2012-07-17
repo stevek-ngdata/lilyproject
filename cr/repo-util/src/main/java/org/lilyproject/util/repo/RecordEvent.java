@@ -47,8 +47,6 @@ public class RecordEvent {
     private Type type;
     private Set<SchemaId> updatedFields;
     private boolean recordTypeChanged = false;
-    /** For index-type events: name of the index for which this event matters. */
-    private String indexName;
     /** For index-type events: affected vtags */
     private Set<SchemaId> vtagsToIndex;
     private IndexSelection indexSelection;
@@ -113,8 +111,6 @@ public class RecordEvent {
                 versionUpdated = jp.getLongValue();
             } else if (fieldName.equals("recordTypeChanged")) {
                 recordTypeChanged = jp.getBooleanValue();
-            } else if (fieldName.equals("index")) {
-                indexName = jp.getText();
             } else if (fieldName.equals("updatedFields")) {
                 if (current != JsonToken.START_ARRAY) {
                     throw new RuntimeException("updatedFields is not a JSON array");
@@ -197,14 +193,6 @@ public class RecordEvent {
         updatedFields.add(fieldTypeId);
     }
 
-    public String getIndexName() {
-        return indexName;
-    }
-
-    public void setIndexName(String indexName) {
-        this.indexName = indexName;
-    }
-
     public Set<SchemaId> getVtagsToIndex() {
         return vtagsToIndex;
     }
@@ -264,10 +252,6 @@ public class RecordEvent {
 
         if (recordTypeChanged) {
             gen.writeBooleanField("recordTypeChanged", true);
-        }
-
-        if (indexName != null) {
-            gen.writeStringField("index", indexName);
         }
 
         if (updatedFields != null && updatedFields.size() > 0) {
@@ -352,9 +336,6 @@ public class RecordEvent {
         if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields))
             return false;
 
-        if (!ObjectUtils.safeEquals(other.indexName, this.indexName))
-            return false;
-
         if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))
             return false;
         
@@ -373,7 +354,6 @@ public class RecordEvent {
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (updatedFields != null ? updatedFields.hashCode() : 0);
         result = 31 * result + (recordTypeChanged ? 1 : 0);
-        result = 31 * result + (indexName != null ? indexName.hashCode() : 0);
         result = 31 * result + (vtagsToIndex != null ? vtagsToIndex.hashCode() : 0);
         result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
         return result;

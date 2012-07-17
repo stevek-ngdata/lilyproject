@@ -206,7 +206,7 @@ public class IndexerWorker {
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,
-                    updaterMetrics, derefMap);
+                    updaterMetrics, derefMap, index.getQueueSubscriptionId());
 
             List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
 

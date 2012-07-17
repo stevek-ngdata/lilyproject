@@ -144,6 +144,8 @@ public class IndexerTest {
     private static Log log = LogFactory.getLog(IndexerTest.class);
 
     private static MessageVerifier messageVerifier = new MessageVerifier();
+    private static OtherListener otherListener = new OtherListener();
+
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
     private static RecordType lastRecordType;
@@ -184,13 +186,16 @@ public class IndexerTest {
         repoSetup.waitForSubscription(repoSetup.getWal(), "MessageVerifier");
 
         rowLogConfMgr.addSubscription("MQ", "IndexUpdater", RowLogSubscription.Type.VM, 1);
+        rowLogConfMgr.addSubscription("MQ", "OtherListener", RowLogSubscription.Type.VM, 2);
 
         repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
+        repoSetup.waitForSubscription(repoSetup.getMq(), "OtherListener");
 
         solrShardManager = SolrShardManagerImpl.createForOneShard(SOLR_TEST_UTIL.getUri());
 
         RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
+        RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
     }
 
     @AfterClass
@@ -203,7 +208,7 @@ public class IndexerTest {
 
     public static void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
-        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
+        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
         Configuration hbaseConf = repoSetup.getHadoopConf();
         if (derefMap != null) {
@@ -214,7 +219,7 @@ public class IndexerTest {
                 new IndexerMetrics("test"), derefMap);
 
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
-                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap));
+                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap, "IndexUpdater"));
     }
 
     private static void setupSchema() throws Exception {
@@ -2496,6 +2501,60 @@ public class IndexerTest {
         }
     }
 
+    @Test
+    public void testIndexUpdaterRequiresValidSubscription() throws Exception {
+        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
+
+        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
+                new IndexerMetrics("test"), derefMap);
+
+        try {
+            new IndexUpdater(indexer, repository, linkIndex, indexLocker, repoSetup.getMq(),
+                    new IndexUpdaterMetrics("test"), null, "NonExistingSubscriptionId");
+            fail("Expected exception about NonExistingSubscriptionId");
+        } catch (RuntimeException e) {
+            assertTrue(e.getMessage().contains("NonExistingSubscriptionId"));
+        }
+    }
+
+    /**
+     * Verifies that the re-index messages produced by IndexUpdater are only produced for the subscription
+     * to which this IndexUpdater is listening, thus are only sent to the relevant index.
+     */
+    @Test
+    public void testReindexMessagesOnlyGoToOwnSubscription() throws Exception {
+        changeIndexUpdater("indexerconf1.xml");
+        messageVerifier.disable();
+
+        otherListener.reset();
+
+        // Create a record (record2) which links to another record (record1)
+        Record record1 = repository.newRecord();
+        record1.setRecordType(nvRecordType1.getName());
+        record1.setField(nvfield1.getName(), "Manila");
+        record1.setField(nvTag.getName(), 0L);
+        record1 = repository.create(record1);
+
+        Record record2 = repository.newRecord();
+        record2.setRecordType(nvRecordType1.getName());
+        record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
+        record2.setField(nvTag.getName(), 0L);
+        expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
+        record2 = repository.create(record2);
+
+        commitIndex();
+        assertEquals(2, otherListener.getMsgCount());
+
+        // Now update record2: this produces two events on the rowlog: one about the update, and one reindex message
+        // produced by the IndexUpdater. The reindex message should however only go the subscription of the
+        // IndexUpdater, not to any other listeners (indexers or otherwise).
+        otherListener.reset();
+        record1.setField(nvfield1.getName(), "Manama");
+        record1 = repository.update(record1);
+        commitIndex();
+        assertEquals(1, otherListener.getMsgCount());
+    }
+
     /**
      * This test might better fit in the indexer-model package
      */
@@ -2799,6 +2858,27 @@ public class IndexerTest {
             for (int i = 0; i < 10; i++) {
                 System.err.println("!!");
             }
+        }
+    }
+
+    /**
+     * An arbitrary, non-indexing, MQ listener.
+     */
+    private static class OtherListener implements RowLogMessageListener {
+        private int msgCount;
+
+        @Override
+        public boolean processMessage(RowLogMessage message) throws InterruptedException {
+            msgCount++;
+            return true;
+        }
+
+        public int getMsgCount() {
+            return msgCount;
+        }
+
+        public void reset() {
+            msgCount = 0;
         }
     }
 }
