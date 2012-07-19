@@ -294,10 +294,10 @@ public class IndexerConfBuilder {
     private Map<String, String> parseVariantPropertiesPattern(Element caseEl, String attrName) throws Exception {
         String variant = DocumentHelper.getAttribute(caseEl, attrName, false);
 
-        Map<String, String> varPropsPattern = new HashMap<String, String>();
-
         if (variant == null)
-            return varPropsPattern;
+            return null;
+
+        Map<String, String> varPropsPattern = new HashMap<String, String>();
 
         for (String prop : COMMA_SPLITTER.split(variant)) {
             int eqPos = prop.indexOf("=");

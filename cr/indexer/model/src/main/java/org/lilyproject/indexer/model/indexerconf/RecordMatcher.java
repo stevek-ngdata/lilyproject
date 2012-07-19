@@ -73,23 +73,25 @@ public class RecordMatcher {
             return false;
         }
 
-        if (variantPropsPattern.size() != varProps.size() && !variantPropsPattern.containsKey("*")) {
-            return false;
-        }
-
-        for (Map.Entry<String, String> entry : variantPropsPattern.entrySet()) {
-            if (entry.getKey().equals("*"))
-                continue;
-
-            String dimVal = varProps.get(entry.getKey());
-            if (dimVal == null) {
-                // this record does not have a required variant property
+        if (variantPropsPattern != null) {
+            if (variantPropsPattern.size() != varProps.size() && !variantPropsPattern.containsKey("*")) {
                 return false;
             }
 
-            if (entry.getValue() != null && !entry.getValue().equals(dimVal)) {
-                // the variant property does not have the required value
-                return false;
+            for (Map.Entry<String, String> entry : variantPropsPattern.entrySet()) {
+                if (entry.getKey().equals("*"))
+                    continue;
+
+                String dimVal = varProps.get(entry.getKey());
+                if (dimVal == null) {
+                    // this record does not have a required variant property
+                    return false;
+                }
+
+                if (entry.getValue() != null && !entry.getValue().equals(dimVal)) {
+                    // the variant property does not have the required value
+                    return false;
+                }
             }
         }
 

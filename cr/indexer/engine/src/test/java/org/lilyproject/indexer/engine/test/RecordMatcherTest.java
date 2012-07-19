@@ -297,6 +297,54 @@ public class RecordMatcherTest {
     }
 
     @Test
+    public void testVariantPropertiesMatchNone() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("variant='' vtags='vtag1'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        // An empty variant expression should only match record without variant properties
+        Record recordProp1 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "something")
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(recordProp1));
+
+        Record record = repository.recordBuilder()
+                .id("record")
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "something")
+                .build();
+
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(record));
+    }
+
+    @Test
+    public void testVariantPropertiesMatchAll() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("vtags='vtag1'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        // There are no conditions on variant properties, so a record id with variant properties should pass
+        Record recordProp1 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "string"), "something")
+                .build();
+
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(recordProp1));
+    }
+
+    @Test
     public void testExcludes() throws Exception {
         String conf = makeIndexerConf(
                 "xmlns:ns1='ns1'",
