@@ -22,8 +22,11 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.annotation.Nullable;
 import javax.management.*;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
@@ -280,7 +283,12 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
 
     protected void putMessageOnShard(RowLogMessage message, List<RowLogSubscription> subscriptions)
             throws RowLogException {
-        List<String> subscriptionIds = getSubscriptionIds();
+        List<String> subscriptionIds = Lists.transform(subscriptions, new Function<RowLogSubscription, String>() {
+            @Override
+            public String apply(@Nullable RowLogSubscription input) {
+                return input.getId();
+            }
+        });
         getShard(message).putMessage(message, subscriptionIds);
     }
 
