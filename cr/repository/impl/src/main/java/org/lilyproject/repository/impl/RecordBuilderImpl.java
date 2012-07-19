@@ -92,6 +92,12 @@ public class RecordBuilderImpl implements RecordBuilder {
     }
 
     @Override
+    public RecordBuilder id(RecordId id, Map<String, String> variantProperties) {
+        record.setId(repository.getIdGenerator().newRecordId(id.getMaster(), variantProperties));
+        return this;
+    }
+
+    @Override
     public RecordBuilder id(String userId) {
         record.setId(repository.getIdGenerator().newRecordId(userId));
         return this;

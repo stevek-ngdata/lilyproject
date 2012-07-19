@@ -97,6 +97,14 @@ public interface RecordBuilder {
     RecordBuilder id(RecordId id);
 
     /**
+     * Set the id of the record to the master id of the given id (= the record id without any
+     * variant properties), extended with the supplied variant properties.
+     *
+     * @see {@link IdGenerator#newRecordId(String, java.util.Map)}
+     */
+    RecordBuilder id(RecordId id, Map<String, String> variantProperties);
+
+    /**
      * Set the id of the record to a user specified ID.
      *
      * @see {@link IdGenerator#newRecordId(String)}
