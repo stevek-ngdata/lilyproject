@@ -31,6 +31,7 @@ import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.execution.ExecutionHandler;
+import org.lilyproject.indexer.Indexer;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.util.concurrent.CustomThreadFactory;
 import org.lilyproject.util.concurrent.WaitPolicy;
@@ -38,6 +39,7 @@ import org.lilyproject.util.concurrent.WaitPolicy;
 public class AvroServer {
     private String bindAddress;
     private Repository repository;
+    private Indexer indexer;
     private int port;
     private int maxServerThreads;
     private ExecutionHandler executionHandler;
@@ -45,9 +47,10 @@ public class AvroServer {
 
     private Server server;
 
-    public AvroServer(String bindAddress, Repository repository, int port, int maxServerThreads) {
+    public AvroServer(String bindAddress, Repository repository, Indexer indexer, int port, int maxServerThreads) {
         this.bindAddress = bindAddress;
         this.repository = repository;
+        this.indexer = indexer;
         this.port = port;
         this.maxServerThreads = maxServerThreads;
     }
@@ -57,7 +60,7 @@ public class AvroServer {
         AvroConverter avroConverter = new AvroConverter();
         avroConverter.setRepository(repository);
 
-        AvroLilyImpl avroLily = new AvroLilyImpl(repository, avroConverter);
+        AvroLilyImpl avroLily = new AvroLilyImpl(repository, indexer, avroConverter);
         Responder responder = new LilySpecificResponder(AvroLily.class, avroLily, avroConverter);
 
         ThreadFactory threadFactory = new CustomThreadFactory("avro-exechandler", new ThreadGroup("AvroExecHandler"));

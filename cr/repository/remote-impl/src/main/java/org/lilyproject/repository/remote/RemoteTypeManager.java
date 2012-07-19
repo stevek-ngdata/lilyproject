@@ -32,6 +32,7 @@ import org.lilyproject.avro.AvroGenericException;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroRepositoryException;
 import org.lilyproject.avro.AvroTypeBucket;
+import org.lilyproject.avro.NettyTransceiverFactory;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IOTypeException;
 import org.lilyproject.repository.api.IdGenerator;

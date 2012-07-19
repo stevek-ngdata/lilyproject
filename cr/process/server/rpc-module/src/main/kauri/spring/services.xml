@@ -44,6 +44,10 @@
       service="org.lilyproject.repository.api.Repository"/>
 
   <kauri:import-service
+      id="indexer"
+      service="org.lilyproject.indexer.Indexer"/>
+
+  <kauri:import-service
       id="zooKeeper"
       service="org.lilyproject.util.zookeeper.ZooKeeperItf"/>
 
@@ -60,6 +64,7 @@
       <bean factory-bean="networkItfInfo" factory-method="getHostAddress"/>
     </constructor-arg>
     <constructor-arg ref="repository"/>
+    <constructor-arg ref="indexer"/>
     <constructor-arg value="${avro:port}"/>
     <constructor-arg value="${avro:maxServerThreads}"/>
   </bean>

@@ -41,6 +41,8 @@ import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.lilyproject.avro.AvroConverter;
+import org.lilyproject.indexer.Indexer;
+import org.lilyproject.indexer.RemoteIndexer;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.BlobStoreAccess;
 import org.lilyproject.repository.api.Repository;
@@ -84,7 +86,8 @@ public class LilyClient implements Closeable {
 
     private ZkWatcher watcher = new ZkWatcher();
 
-    private Repository balancingAndRetryingRepository = BalancingAndRetryingRepository.getInstance(this);
+    private BalancingAndRetryingLilyConnection balancingAndRetryingLilyConnection =
+            BalancingAndRetryingLilyConnection.getInstance(this);
     private RemoteSchemaCache schemaCache;
     private HBaseConnections hbaseConnections = new HBaseConnections();
 
@@ -179,7 +182,37 @@ public class LilyClient implements Closeable {
      * the category org.lilyproject.client.
      */
     public Repository getRepository() {
-        return balancingAndRetryingRepository;
+        return balancingAndRetryingLilyConnection.getRepository();
+    }
+
+    /**
+     * Returns an Indexer that uses one of the available Lily servers (randomly selected).
+     * This indexer instance will not automatically retry operations and to balance requests
+     * over multiple Lily servers, you need to recall this method regularly to retrieve other
+     * indexer instances. Most of the time, you will rather use {@link #getIndexer()}.
+     */
+    public synchronized Indexer getPlainIndexer() throws IOException, NoServersException, InterruptedException,
+            KeeperException, RepositoryException {
+        if (servers.size() == 0) {
+            throw new NoServersException("No servers available");
+        }
+        int pos = (int) Math.floor(Math.random() * servers.size());
+        ServerNode server = servers.get(pos);
+        if (server.repository == null) {
+            constructIndexer(server);
+        }
+        return server.indexer;
+    }
+
+    /**
+     * Returns an indexer instance which will automatically balance requests over the available
+     * Lily servers, and will retry operations according to what is specified in {@link RetryConf}.
+     *
+     * <p>To see some information when the client goes into retry mode, enable INFO logging for
+     * the category org.lilyproject.client.
+     */
+    public Indexer getIndexer() {
+        return balancingAndRetryingLilyConnection.getIndexer();
     }
 
     public RetryConf getRetryConf() {
@@ -271,6 +304,12 @@ public class LilyClient implements Closeable {
         }
     }
 
+    private void constructIndexer(ServerNode server) throws IOException, InterruptedException, KeeperException,
+            RepositoryException {
+
+        server.indexer = new RemoteIndexer(parseAddressAndPort(server.lilyAddressAndPort), new AvroConverter());
+    }
+
     private InetSocketAddress parseAddressAndPort(String addressAndPort) {
         int colonPos = addressAndPort.indexOf(":");
         if (colonPos == -1) {
@@ -287,6 +326,7 @@ public class LilyClient implements Closeable {
     private class ServerNode {
         private String lilyAddressAndPort;
         private Repository repository;
+        private Indexer indexer;
 
         public ServerNode(String lilyAddressAndPort) {
             this.lilyAddressAndPort = lilyAddressAndPort;

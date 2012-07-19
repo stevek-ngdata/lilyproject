@@ -15,33 +15,69 @@
  */
 package org.lilyproject.client;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.repository.impl.id.IdGeneratorImpl;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.lilyproject.indexer.Indexer;
+import org.lilyproject.repository.api.Blob;
+import org.lilyproject.repository.api.IOBlobException;
+import org.lilyproject.repository.api.IORecordException;
+import org.lilyproject.repository.api.IOTypeException;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.RecordLockedException;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RetriesExhaustedBlobException;
+import org.lilyproject.repository.api.RetriesExhaustedRecordException;
+import org.lilyproject.repository.api.RetriesExhaustedTypeException;
+import org.lilyproject.repository.api.TypeManager;
+import org.lilyproject.repository.impl.id.IdGeneratorImpl;
+
 /**
- * Creates a proxy around Repository and TypeManager that automatically balances requests
+ * Creates a proxy around Repository, Indexer and TypeManager that automatically balances requests
  * over different Lily nodes, and can optionally retry operations when they fail due to
  * IO related exceptions or when no Lily servers are available.
  */
-public class BalancingAndRetryingRepository {
-    public static Repository getInstance(LilyClient lilyClient) {
+public class BalancingAndRetryingLilyConnection {
+
+    private final Repository repository;
+
+    private final TypeManager typeManager;
+
+    private final Indexer indexer;
+
+    private BalancingAndRetryingLilyConnection(Repository repository, TypeManager typeManager, Indexer indexer) {
+        this.repository = repository;
+        this.typeManager = typeManager;
+        this.indexer = indexer;
+    }
+
+    public Repository getRepository() {
+        return repository;
+    }
+
+    public Indexer getIndexer() {
+        return indexer;
+    }
+
+    public static BalancingAndRetryingLilyConnection getInstance(LilyClient lilyClient) {
 
         InvocationHandler typeManagerHandler = new TypeManagerInvocationHandler(lilyClient);
-        TypeManager typeManager = (TypeManager)Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
-                new Class[] { TypeManager.class }, typeManagerHandler);
+        TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
+                new Class[]{TypeManager.class}, typeManagerHandler);
 
         InvocationHandler repositoryHandler = new RepositoryInvocationHandler(lilyClient, typeManager);
-        Repository repository = (Repository)Proxy.newProxyInstance(Repository.class.getClassLoader(),
-                new Class[] { Repository.class }, repositoryHandler);
+        Repository repository = (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
+                new Class[]{Repository.class}, repositoryHandler);
 
-        return repository;
+        InvocationHandler indexerHandler = new IndexerInvocationHandler(lilyClient);
+        Indexer indexer = (Indexer) Proxy.newProxyInstance(Indexer.class.getClassLoader(),
+                new Class[]{Indexer.class}, indexerHandler);
+
+        return new BalancingAndRetryingLilyConnection(repository, typeManager, indexer);
     }
 
     private static final class TypeManagerInvocationHandler extends RetryBase implements InvocationHandler {
@@ -135,7 +171,39 @@ public class BalancingAndRetryingRepository {
         }
     }
 
-    private enum OperationType { RECORD, TYPE, BLOB };
+    private static final class IndexerInvocationHandler extends RetryBase implements InvocationHandler {
+        private final LilyClient lilyClient;
+
+        private IndexerInvocationHandler(LilyClient lilyClient) {
+            super(lilyClient.getRetryConf());
+            this.lilyClient = lilyClient;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            long startedAt = System.currentTimeMillis();
+            int attempt = 0;
+
+            while (true) {
+                try {
+                    Indexer indexer = lilyClient.getPlainIndexer();
+                    return method.invoke(indexer, args);
+                } catch (NoServersException e) {
+                    // Needs to be wrapped because NoServersException is not in the throws clause of the
+                    // Repository & TypeManager methods
+                    handleThrowable(new IORecordException(e), method, startedAt, attempt, OperationType.RECORD);
+                } catch (InterruptedException e) {
+                    throw e;
+                } catch (Throwable throwable) {
+                    handleThrowable(throwable, method, startedAt, attempt, OperationType.RECORD);
+                }
+
+                attempt++;
+            }
+        }
+    }
+
+    private enum OperationType {RECORD, TYPE, BLOB}
 
     private static class RetryBase {
         private Log log = LogFactory.getLog(getClass());
@@ -146,10 +214,10 @@ public class BalancingAndRetryingRepository {
         }
 
         protected void handleThrowable(Throwable throwable, Method method, long startedAt, int attempt,
-                OperationType opType) throws Throwable {
+                                       OperationType opType) throws Throwable {
 
             if (throwable instanceof InvocationTargetException)
-                throwable = ((InvocationTargetException)throwable).getTargetException();
+                throwable = ((InvocationTargetException) throwable).getTargetException();
 
             if (throwable instanceof IORecordException || throwable instanceof IOBlobException ||
                     throwable instanceof IOTypeException || throwable instanceof RecordLockedException) {
@@ -171,17 +239,20 @@ public class BalancingAndRetryingRepository {
         }
 
         protected void handleRetry(Method method, long startedAt, int attempt,
-                boolean callInitiated, Throwable throwable, OperationType opType) throws Throwable {
+                                   boolean callInitiated, Throwable throwable, OperationType opType) throws Throwable {
 
             long timeSpentRetrying = System.currentTimeMillis() - startedAt;
             if (timeSpentRetrying > retryConf.getRetryMaxTime()) {
                 switch (opType) {
                     case RECORD:
-                        throw new RetriesExhaustedRecordException(getOpString(method), attempt, timeSpentRetrying, throwable);
+                        throw new RetriesExhaustedRecordException(getOpString(method), attempt, timeSpentRetrying,
+                                throwable);
                     case TYPE:
-                        throw new RetriesExhaustedTypeException(getOpString(method), attempt, timeSpentRetrying, throwable);
+                        throw new RetriesExhaustedTypeException(getOpString(method), attempt, timeSpentRetrying,
+                                throwable);
                     case BLOB:
-                        throw new RetriesExhaustedBlobException(getOpString(method), attempt, timeSpentRetrying, throwable);
+                        throw new RetriesExhaustedBlobException(getOpString(method), attempt, timeSpentRetrying,
+                                throwable);
                     default:
                         throw new RuntimeException("This should never occur: unhandled op type: " + opType);
                 }
@@ -203,7 +274,8 @@ public class BalancingAndRetryingRepository {
                 retry = true;
             } else if (methodName.startsWith("delete") && retryConf.getRetryDeletes()) {
                 retry = true;
-            } else if (methodName.startsWith("create") && retryConf.getRetryCreate() && (!callInitiated || retryConf.getRetryCreateRiskDoubles())) {
+            } else if (methodName.startsWith("create") && retryConf.getRetryCreate() &&
+                    (!callInitiated || retryConf.getRetryCreateRiskDoubles())) {
                 retry = true;
             }
 
@@ -226,7 +298,8 @@ public class BalancingAndRetryingRepository {
         }
 
         private int getSleepTime(int attempt) throws InterruptedException {
-            int pos = attempt < retryConf.getRetryIntervals().length ? attempt : retryConf.getRetryIntervals().length - 1;
+            int pos =
+                    attempt < retryConf.getRetryIntervals().length ? attempt : retryConf.getRetryIntervals().length - 1;
             int waitTime = retryConf.getRetryIntervals()[pos];
             return waitTime;
         }

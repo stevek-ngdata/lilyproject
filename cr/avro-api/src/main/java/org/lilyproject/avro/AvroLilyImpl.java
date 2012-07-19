@@ -16,9 +16,12 @@
 package org.lilyproject.avro;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.avro.AvroRemoteException;
+import org.lilyproject.indexer.Indexer;
+import org.lilyproject.indexer.IndexerException;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
@@ -29,10 +32,12 @@ public class AvroLilyImpl implements AvroLily {
 
     private final Repository repository;
     private final TypeManager typeManager;
+    private final Indexer indexer;
     private final AvroConverter converter;
 
-    public AvroLilyImpl(Repository repository, AvroConverter converter) {
+    public AvroLilyImpl(Repository repository, Indexer indexer, AvroConverter converter) {
         this.repository = repository;
+        this.indexer = indexer;
         this.typeManager = repository.getTypeManager();
         this.converter = converter;
     }
@@ -335,6 +340,31 @@ public class AvroLilyImpl implements AvroLily {
             typeManager.triggerSchemaCacheRefresh();
             return null;
         } catch (RepositoryException e) {
+            throw converter.convert(e);
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public Object index(ByteBuffer recordId) throws AvroInterruptedException, AvroIndexerException {
+        try {
+            indexer.index(converter.convertAvroRecordId(recordId));
+            return null;
+        } catch (InterruptedException e) {
+            throw converter.convert(e);
+        } catch (IndexerException e) {
+            throw converter.convert(e);
+        }
+    }
+
+    @Override
+    public Object indexOn(ByteBuffer recordId, List<String> indexes)
+            throws AvroInterruptedException, AvroIndexerException {
+        try {
+            indexer.indexOn(converter.convertAvroRecordId(recordId), new HashSet<String>(indexes));
+            return null;
+        } catch (IndexerException e) {
             throw converter.convert(e);
         } catch (InterruptedException e) {
             throw converter.convert(e);

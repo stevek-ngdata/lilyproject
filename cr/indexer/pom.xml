@@ -37,8 +37,10 @@
   </parent>
 
   <modules>
-    <module>derefmap-indexfilter</module>
+    <module>api</module>
+    <module>remote-impl</module>
     <module>engine</module>
+    <module>derefmap-indexfilter</module>
     <module>model</module>
     <module>admin-cli</module>
     <module>worker</module>

@@ -77,6 +77,16 @@
     },
 
     {
+      "name": "AvroIndexerException",
+      "type": "error",
+      "fields": [
+        {"name": "message", "type": "string"},
+        {"name": "remoteCauses", "type": ["null", {"type": "array", "items": "AvroExceptionCause"}]},
+        {"name": "exceptionClass", "type": ["null", "string"]}
+      ]
+    },
+
+    {
       "name": "AvroGenericException",
       "type": "error",
       "fields": [
@@ -166,6 +176,9 @@
   ],
 
   "messages": {
+
+    // repository api functionality
+
     "create": {
       "request": [{"name": "record", "type": "bytes"}],
       "response": "bytes",
@@ -331,6 +344,22 @@
       "request": [],
       "response": ["null"],
       "errors": ["AvroRepositoryException", "AvroGenericException", "AvroInterruptedException"]
+    },
+
+    // indexer api functionality
+
+    "index": {
+      "request": [{"name": "recordId", "type": "bytes"}],
+      "response": ["null"],
+      "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
+    },
+
+    "indexOn": {
+      "request": [{"name": "recordId", "type": "bytes"},
+                  {"name": "indexes", "type": {"type": "array", "items": "string"}}],
+      "response": ["null"],
+      "errors": ["AvroIndexerException", "AvroGenericException", "AvroInterruptedException"]
     }
+
  }
 }

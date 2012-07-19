@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.indexer.model.api;
+package org.lilyproject.indexer;
 
 public class IndexNotFoundException extends Exception {
 

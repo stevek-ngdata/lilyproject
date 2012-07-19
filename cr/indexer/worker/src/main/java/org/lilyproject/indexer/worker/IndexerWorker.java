@@ -35,7 +35,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.hbaseindex.IndexManager;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
@@ -43,6 +42,7 @@ import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
 import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.IndexerRegistry;
 import org.lilyproject.indexer.engine.SolrClientConfig;
 import org.lilyproject.indexer.engine.SolrShardManager;
 import org.lilyproject.indexer.engine.SolrShardManagerImpl;
@@ -114,11 +114,15 @@ public class IndexerWorker {
     private HttpClient httpClient;
 
     private MultiThreadedHttpConnectionManager connectionManager;
+
+    private IndexerRegistry indexerRegistry;
+
     private final Log log = LogFactory.getLog(getClass());
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
                          Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
-                         SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings)
+                         SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings,
+                         IndexerRegistry indexerRegistry)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -129,6 +133,7 @@ public class IndexerWorker {
         this.settings = settings;
         this.solrClientConfig = solrClientConfig;
         this.hostName = hostName;
+        this.indexerRegistry = indexerRegistry;
     }
 
     @PostConstruct
@@ -197,8 +202,11 @@ public class IndexerWorker {
             // create a deref map in case the indexer configuration contains deref fields
             DerefMap derefMap = indexerConf.containsDerefExpressions() ?
                     DerefMapHbaseImpl.create(index.getName(), hbaseConf, repository.getIdGenerator()) : null;
+
+            // create and register the indexer
             Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
                     indexerMetrics, derefMap);
+            indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
             IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, rowLog,
@@ -269,6 +277,8 @@ public class IndexerWorker {
     }
 
     private boolean removeIndexUpdater(String indexName) {
+        indexerRegistry.unregister(indexName);
+
         IndexUpdaterHandle handle = indexUpdaters.get(indexName);
 
         if (handle == null) {

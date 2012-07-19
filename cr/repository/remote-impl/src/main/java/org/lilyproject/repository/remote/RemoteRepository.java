@@ -30,6 +30,7 @@ import org.lilyproject.avro.AvroConverter;
 import org.lilyproject.avro.AvroGenericException;
 import org.lilyproject.avro.AvroLily;
 import org.lilyproject.avro.AvroRepositoryException;
+import org.lilyproject.avro.NettyTransceiverFactory;
 import org.lilyproject.repository.api.BlobManager;
 import org.lilyproject.repository.api.IORecordException;
 import org.lilyproject.repository.api.IdGenerator;

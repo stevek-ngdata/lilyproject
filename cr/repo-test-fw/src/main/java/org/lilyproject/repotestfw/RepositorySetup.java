@@ -216,27 +216,27 @@ public class RepositorySetup {
         AvroConverter serverConverter = new AvroConverter();
         serverConverter.setRepository(repository);
         lilyServer = new NettyServer(
-                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(repository, serverConverter),
+                new LilySpecificResponder(AvroLily.class, new AvroLilyImpl(repository, null, serverConverter),
                         serverConverter), new InetSocketAddress(0));
         lilyServer.start();
 
-        AvroConverter remoteConverter = new AvroConverter();
+        final AvroConverter remoteConverter = new AvroConverter();
+        final InetSocketAddress remoteAddr = new InetSocketAddress(lilyServer.getPort());
 
         remoteSchemaCache = new RemoteTestSchemaCache(zk);
-        remoteTypeManager = new RemoteTypeManager(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                idGenerator, zk, remoteSchemaCache);
+        remoteTypeManager = new RemoteTypeManager(remoteAddr, remoteConverter, idGenerator, zk, remoteSchemaCache);
         remoteSchemaCache.setTypeManager(remoteTypeManager);
 
         remoteBlobStoreAccessFactory = createBlobAccess();
         remoteBlobManager = new BlobManagerImpl(hbaseTableFactory, remoteBlobStoreAccessFactory, false);
 
-        remoteRepository = new RemoteRepository(new InetSocketAddress(lilyServer.getPort()), remoteConverter,
-                remoteTypeManager, idGenerator, remoteBlobManager, getHadoopConf());
+        remoteRepository =
+                new RemoteRepository(remoteAddr, remoteConverter, remoteTypeManager, idGenerator, remoteBlobManager,
+                        getHadoopConf());
 
         remoteConverter.setRepository(repository);
         remoteTypeManager.start();
         remoteSchemaCache.start();
-
     }
 
     public void setupMessageQueue(boolean withProcessor) throws Exception {
@@ -357,7 +357,6 @@ public class RepositorySetup {
     public TypeManager getNewTypeManager() throws IOException, InterruptedException, KeeperException,
             RepositoryException {
         return new HBaseTypeManager(new IdGeneratorImpl(), hadoopConf, zk, hbaseTableFactory);
-
     }
 
     public IdGenerator getIdGenerator() {
