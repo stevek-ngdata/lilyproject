@@ -198,7 +198,7 @@ public class LilyClient implements Closeable {
         }
         int pos = (int) Math.floor(Math.random() * servers.size());
         ServerNode server = servers.get(pos);
-        if (server.repository == null) {
+        if (server.indexer == null) {
             constructIndexer(server);
         }
         return server.indexer;

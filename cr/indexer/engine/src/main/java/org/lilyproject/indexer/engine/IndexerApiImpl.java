@@ -3,6 +3,8 @@ package org.lilyproject.indexer.engine;
 import java.io.IOException;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.lilyproject.indexer.IndexerException;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
@@ -19,6 +21,8 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
 
     private IndexerRegistry indexerRegistry;
 
+    private Log log = LogFactory.getLog(getClass());
+
     public IndexerApiImpl(Repository repository, IndexerRegistry indexerRegistry) {
         this.repository = repository;
         this.indexerRegistry = indexerRegistry;
@@ -28,9 +32,15 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
     public void index(RecordId recordId) throws IndexerException, InterruptedException {
         final IdRecord idRecord = tryReadRecord(recordId);
 
+        if (indexerRegistry.getAllIndexers().isEmpty()) {
+            log.warn("cannot index record [" + recordId + "] because there are no known indexes");
+        }
+
+        boolean matched = false;
         for (Indexer indexer : indexerRegistry.getAllIndexers()) {
             final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
             if (indexCase != null) {
+                matched = true;
                 try {
                     indexer.index(idRecord, indexCase.getVersionTags());
                 } catch (SolrClientException e) {
@@ -43,6 +53,10 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
                     throw new IndexerException("problem with repository", e);
                 }
             }
+        }
+
+        if (!matched) {
+            log.warn("cannot index record [" + recordId + "] because it didn't match the record filter of any index");
         }
     }
 
