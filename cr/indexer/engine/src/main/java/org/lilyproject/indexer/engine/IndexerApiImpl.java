@@ -41,22 +41,29 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
             final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
             if (indexCase != null) {
                 matched = true;
-                try {
-                    indexer.index(idRecord, indexCase.getVersionTags());
-                } catch (SolrClientException e) {
-                    throw new IndexerException("failed to index on solr", e);
-                } catch (ShardSelectorException e) {
-                    throw new IndexerException("failed to select shard", e);
-                } catch (IOException e) {
-                    throw new IndexerException(e);
-                } catch (RepositoryException e) {
-                    throw new IndexerException("problem with repository", e);
-                }
+                tryIndex(indexer, idRecord, indexCase);
             }
         }
 
         if (!matched) {
             log.warn("cannot index record [" + recordId + "] because it didn't match the record filter of any index");
+        }
+    }
+
+    @Override
+    public void indexOn(RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
+        for (String indexName : indexes) {
+            final org.lilyproject.indexer.engine.Indexer indexer = indexerRegistry.getIndexer(indexName);
+            if (indexer == null) {
+                throw new IndexerException("index " + indexName + " could not be found");
+            } else {
+                final IdRecord idRecord = tryReadRecord(recordId);
+                final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
+                if (indexCase != null) // it matches -> index
+                    tryIndex(indexer, idRecord, indexCase);
+                else // it doesn't match -> explicitely delete
+                    tryDelete(indexer, recordId);
+            }
         }
     }
 
@@ -68,25 +75,29 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
         }
     }
 
-    @Override
-    public void indexOn(RecordId recordId, Set<String> indexes) throws IndexerException, InterruptedException {
-        for (String indexName : indexes) {
-            final org.lilyproject.indexer.engine.Indexer indexer = indexerRegistry.getIndexer(indexName);
-            if (indexer == null) {
-                throw new IndexerException("index " + indexName + " could not be found");
-            } else {
-                try {
-                    indexer.index(recordId);
-                } catch (SolrClientException e) {
-                    throw new IndexerException("failed to index on solr", e);
-                } catch (ShardSelectorException e) {
-                    throw new IndexerException("failed to select shard", e);
-                } catch (IOException e) {
-                    throw new IndexerException(e);
-                } catch (RepositoryException e) {
-                    throw new IndexerException("problem with repository", e);
-                }
-            }
+    private void tryIndex(Indexer indexer, IdRecord idRecord, IndexCase indexCase)
+            throws InterruptedException, IndexerException {
+        try {
+            indexer.index(idRecord, indexCase.getVersionTags());
+        } catch (SolrClientException e) {
+            throw new IndexerException("failed to index on solr", e);
+        } catch (ShardSelectorException e) {
+            throw new IndexerException("failed to select shard", e);
+        } catch (IOException e) {
+            throw new IndexerException(e);
+        } catch (RepositoryException e) {
+            throw new IndexerException("problem with repository", e);
+        }
+    }
+
+    private void tryDelete(Indexer indexer, RecordId recordId)
+            throws InterruptedException, IndexerException {
+        try {
+            indexer.delete(recordId);
+        } catch (SolrClientException e) {
+            throw new IndexerException("failed to delete on solr", e);
+        } catch (ShardSelectorException e) {
+            throw new IndexerException("failed to select shard", e);
         }
     }
 
