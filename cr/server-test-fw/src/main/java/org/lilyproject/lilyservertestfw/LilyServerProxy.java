@@ -223,31 +223,49 @@ public class LilyServerProxy {
     /**
      * Adds an index from in index configuration contained in a resource.
      * 
-     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout has passed).
-     * Only when this is the case record creates or updates will result in messages to be created on the MQ rowlog.
-     * <p>Note that when the messages from the MQ rowlog are processed, the data has been put in solr but this data might not
-     * be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
-     * 
+     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout
+     * has passed). Only when this is the case record creates or updates will result in messages to be created
+     * on the MQ rowlog.
+     *
+     * <p>Note that when the messages from the MQ rowlog are processed, the data has been put in solr but this
+     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
+     *
      * @param indexName name of the index
+     * @param coreName name of the Solr core to which to index (when null, indexes to default core)
      * @param indexerConf path to the resource containing the index configuration
      * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
-     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the subscriptionId of the new index
-     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId of the new index. 
+     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the
+     *                            subscriptionId of the new index
+     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId
+     *                        of the new index.
      *        This can only be true if the waitForIndexerModel is true as well. 
      * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
      */
-    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
+    public boolean addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout,
+            boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        return addIndex(indexName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+        return addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
     }
     
+    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel,
+            boolean waitForMQRowlog) throws Exception {
+        InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
+        byte[] indexerConfiguration = IOUtils.toByteArray(is);
+        is.close();
+        return addIndex(indexName, null, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+    }
+
     /**
      * Shortcut method with waitForIndexerModel and waitForMQRowlog put to true
      */
     public boolean addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
         return addIndexFromResource(indexName, indexerConf, timeout, true, true);
+    }
+
+    public boolean addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout) throws Exception {
+        return addIndexFromResource(indexName, coreName, indexerConf, timeout, true, true);
     }
 
     /**
@@ -257,6 +275,7 @@ public class LilyServerProxy {
      * Only when this is the case record creates or updates will result in messages to be created on the MQ rowlog.
      * 
      * @param indexName name of the index
+     * @param coreName name of the Solr core to which to index (when null, indexes to default core)
      * @param indexerConf path to the file containing the index configuration
      * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
      * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the subscriptionId of the new index
@@ -264,10 +283,10 @@ public class LilyServerProxy {
      *        This can only be true if the waitForIndexerModel is true as well. 
      * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
      */
-    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel,
-            boolean waitForMQRowlog) throws Exception {
+    public boolean addIndexFromFile(String indexName, String coreName, String indexerConf, long timeout,
+            boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
         byte[] indexerConfiguration = FileUtils.readFileToByteArray(new File(indexerConf));
-        return addIndex(indexName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+        return addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
     }
 
     public void validateIndexerconf(byte[] indexerConfiguration) throws Exception {
@@ -277,17 +296,21 @@ public class LilyServerProxy {
     /**
      * Shortcut method with waitForIndexerModel and waitForMQRowlog put to true
      */
-    public boolean addIndexFromFile(String indexName, String indexerConf, long timeout) throws Exception {
-        return addIndexFromFile(indexName, indexerConf, timeout, true, true);
+    public boolean addIndexFromFile(String indexName, String coreName, String indexerConf, long timeout) throws Exception {
+        return addIndexFromFile(indexName, coreName, indexerConf, timeout, true, true);
     }
 
-    private boolean addIndex(String indexName, byte[] indexerConfiguration, long timeout, boolean waitForIndexerModel,
-            boolean waitForMQRowlog) throws Exception {
+    private boolean addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
+            boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
         Map<String, String> solrShards = new HashMap<String, String>();
-        solrShards.put("shard1", "http://localhost:8983/solr");
+        String solrUri = "http://localhost:8983/solr";
+        if (coreName != null) {
+            solrUri += "/" + coreName + "/";
+        }
+        solrShards.put("shard1", solrUri);
         index.setSolrShards(solrShards);
         index.setConfiguration(indexerConfiguration);
         indexerModel.addIndex(index);

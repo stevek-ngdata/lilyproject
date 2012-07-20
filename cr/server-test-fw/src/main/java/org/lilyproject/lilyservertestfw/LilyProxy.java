@@ -27,6 +27,7 @@ import javax.management.remote.JMXServiceURL;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.lilyproject.hadooptestfw.HBaseProxy;
+import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
@@ -149,6 +150,14 @@ public class LilyProxy {
     }
 
     public void start(byte[] solrSchemaData, byte[] solrConfigData) throws Exception {
+        if (solrSchemaData != null || solrConfigData != null) {
+            start(new SolrDefinition(solrSchemaData, solrConfigData));
+        } else {
+            start((SolrDefinition)null);
+        }
+    }
+
+    public void start(SolrDefinition solrDef) throws Exception {
         if (started) {
             throw new IllegalStateException("LilyProxy is already started.");
         } else {
@@ -199,7 +208,7 @@ public class LilyProxy {
         }
 
         hbaseProxy.start();
-        solrProxy.start(solrSchemaData, solrConfigData);
+        solrProxy.start(solrDef);
         lilyServerProxy.start();
     }
     

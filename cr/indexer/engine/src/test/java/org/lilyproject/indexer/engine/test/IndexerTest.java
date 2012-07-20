@@ -89,6 +89,7 @@ import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
@@ -156,7 +157,8 @@ public class IndexerTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         SOLR_TEST_UTIL = new SolrTestingUtility();
-        SOLR_TEST_UTIL.setSchemaData(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml")));
+        SOLR_TEST_UTIL.setSolrDefinition(
+                new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
 

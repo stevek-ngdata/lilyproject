@@ -25,6 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.lilyservertestfw.TemplateDir;
+import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 import org.lilyproject.util.xml.DocumentHelper;
 import org.w3c.dom.Document;
@@ -169,10 +170,8 @@ public class SolrLauncherService implements LauncherService {
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
         
         byte[] schemaData = schema == null ? null : FileUtils.readFileToByteArray(new File(schema));
-        solrTestingUtility.setSchemaData(schemaData);
-        
         byte[] solrConfigData = solrConfig == null ? null : FileUtils.readFileToByteArray(new File(solrConfig));
-        solrTestingUtility.setSolrConfigData(solrConfigData);
+        solrTestingUtility.setSolrDefinition(new SolrDefinition(schemaData, solrConfigData));
 
         solrTestingUtility.start();
 
