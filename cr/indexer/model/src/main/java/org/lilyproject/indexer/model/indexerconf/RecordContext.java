@@ -4,9 +4,9 @@ import org.lilyproject.repository.api.Record;
 
 public class RecordContext {
 
-    public Record contextRecord;
-    public Record record;
-    public Dep dep;
+    public final Record contextRecord;
+    public final Record record;
+    public final Dep dep;
 
     public RecordContext(Record record, Dep dep) {
         this.contextRecord = record;

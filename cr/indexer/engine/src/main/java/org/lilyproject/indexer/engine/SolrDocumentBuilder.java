@@ -25,12 +25,15 @@ import java.util.concurrent.ExecutionException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.apache.solr.common.SolrInputDocument;
 import org.lilyproject.indexer.derefmap.DependencyEntry;
 import org.lilyproject.indexer.derefmap.DerefMapUtil;
 import org.lilyproject.indexer.model.indexerconf.Dep;
 import org.lilyproject.indexer.model.indexerconf.FieldTemplatePart;
+import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
 import org.lilyproject.indexer.model.indexerconf.IndexUpdateBuilder;
 import org.lilyproject.indexer.model.indexerconf.LiteralTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.NameTemplate;
@@ -52,7 +55,10 @@ import org.lilyproject.util.repo.SystemFields;
 
 public class SolrDocumentBuilder implements IndexUpdateBuilder {
 
+    private Log log = LogFactory.getLog(getClass());
+
     private final Repository repository;
+    private final IndexRecordFilter indexRecordFilter;
     private final SystemFields systemFields;
     private final TypeManager typeManager;
     private final ValueEvaluator valueEvaluator;
@@ -69,10 +75,10 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     private SchemaId vtag;
     private long version;
 
-    public SolrDocumentBuilder(Repository repository, SystemFields systemFields, ValueEvaluator valueEvaluator,
-                               IdRecord record, String key,
-                               SchemaId vtag, long version) {
+    public SolrDocumentBuilder(Repository repository, IndexRecordFilter indexRecordFilter, SystemFields systemFields,
+                               ValueEvaluator valueEvaluator, IdRecord record, String key, SchemaId vtag, long version) {
         this.repository = repository;
+        this.indexRecordFilter = indexRecordFilter;
         this.systemFields = systemFields;
         this.typeManager = repository.getTypeManager();
         this.valueEvaluator = valueEvaluator;
@@ -184,11 +190,24 @@ public class SolrDocumentBuilder implements IndexUpdateBuilder {
     @Override
     public void push(Record record, Dep dep) {
         this.contexts.push(new RecordContext(record, dep));
+
+        warnForUnmatchedDependencies(record);
     }
 
     @Override
     public void push(Record record, Record contextRecord, Dep dep) {
         this.contexts.push(new RecordContext(record, contextRecord, dep));
+
+        warnForUnmatchedDependencies(record);
+    }
+
+    /**
+     * If the dependency is not matched by the configuration of the indexer, we log a warning because updates to this
+     * dependency will not trigger 'denormalized data updates'.
+     */
+    private void warnForUnmatchedDependencies(Record dependency) {
+        if (dependency != null && this.indexRecordFilter.getIndexCase(dependency) == null)
+            log.warn(String.format("discovered dependency on record [%s] which will not be matched by the record filter of the index", dependency.getId()));
     }
 
     @Override

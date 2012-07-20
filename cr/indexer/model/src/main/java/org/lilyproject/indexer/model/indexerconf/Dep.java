@@ -10,9 +10,9 @@ import org.lilyproject.repository.api.RecordId;
 
 public class Dep {
 
-    public RecordId id;
+    public final RecordId id;
 
-    public Set<String> vprops;
+    public final Set<String> vprops;
 
     public Dep(RecordId recordId, Set<String> vprops) {
         this.id = recordId;

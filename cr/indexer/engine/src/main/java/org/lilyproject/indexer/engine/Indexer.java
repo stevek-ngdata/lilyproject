@@ -207,9 +207,8 @@ public class Indexer {
         for (SchemaId vtag : vtags) {
 
             SolrDocumentBuilder solrDocumentBuilder =
-                    new SolrDocumentBuilder(repository, systemFields, valueEvaluator, record,
-                            getIndexId(record.getId(), vtag), vtag,
-                            version);
+                    new SolrDocumentBuilder(repository, getConf().getRecordFilter(), systemFields, valueEvaluator,
+                            record, getIndexId(record.getId(), vtag), vtag, version);
 
             // By convention/definition, we first evaluate the static index fields and then the dynamic ones
 
@@ -255,39 +254,37 @@ public class Indexer {
                 solrShardMgr.getSolrClient(record.getId()).deleteById(getIndexId(record.getId(), vtag));
                 metrics.deletesById.inc();
 
-                if (log.isDebugEnabled()) {
+                if (log.isDebugEnabled())
                     log.debug(String.format("Record %1$s, vtag %2$s: no index fields produced output, " +
                             "removed from index if present", record.getId(), safeLoadTagName(vtag)));
 
-                    log.debug("Updating dependencies:");
-                    logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
+                processDependencies(record, vtag, solrDocumentBuilder);
+            } else {
+                SolrInputDocument solrDoc = solrDocumentBuilder.build();
+
+                processDependencies(record, vtag, solrDocumentBuilder);
+
+                solrShardMgr.getSolrClient(record.getId()).add(solrDoc);
+                metrics.adds.inc();
+
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Record %1$s, vtag %2$s: indexed, doc = %3$s", record.getId(),
+                            safeLoadTagName(vtag), solrDoc));
                 }
-
-                if (derefMap != null)
-                    derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
-                continue;
-            }
-
-            SolrInputDocument solrDoc = solrDocumentBuilder.build();
-
-            // Can be useful during development
-            if (log.isDebugEnabled()) {
-                log.debug("Constructed Solr doc: " + solrDoc);
-                log.debug("Updating dependencies for " + record.getId());
-                logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
-            }
-
-            if (derefMap != null)
-                derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
-
-            solrShardMgr.getSolrClient(record.getId()).add(solrDoc);
-            metrics.adds.inc();
-
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("Record %1$s, vtag %2$s: indexed, doc = %3$s", record.getId(),
-                        safeLoadTagName(vtag), solrDoc));
             }
         }
+    }
+
+    private void processDependencies(IdRecord record, SchemaId vtag, SolrDocumentBuilder solrDocumentBuilder)
+            throws IOException, RepositoryException, InterruptedException {
+        if (log.isDebugEnabled()) {
+            log.debug("Constructed Solr doc: " + solrDocumentBuilder.build());
+            log.debug("Updating dependencies for " + record.getId());
+            logDependencies(record.getId(), solrDocumentBuilder.getDependencies());
+        }
+
+        if (derefMap != null)
+            derefMap.updateDependencies(record.getId(), vtag, solrDocumentBuilder.getDependencies());
     }
 
     private void logDependencies(RecordId recordId, Map<DependencyEntry, Set<SchemaId>> dependencies) {
