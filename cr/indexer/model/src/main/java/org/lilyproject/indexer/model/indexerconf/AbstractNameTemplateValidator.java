@@ -5,17 +5,24 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class DefaultNameTemplateValidator implements NameTemplateValidator {
+import org.lilyproject.repository.api.QName;
+
+public abstract class AbstractNameTemplateValidator implements NameTemplateValidator {
 
     private Set<Class> supportedTypes = new HashSet<Class>();
     private Set<String> variables = new HashSet<String>();
     private Set<String> booleanVariables = new HashSet<String>();
+    private Set<String> variantProperties = new HashSet<String>();
+    private Set<QName> fieldNames = new HashSet<QName>();
 
-    public DefaultNameTemplateValidator(Set<Class> supportedTypes, Set<String> variables,
-                                        Set<String> booleanVariables) {
+    protected AbstractNameTemplateValidator(Set<Class> supportedTypes, Set<String> variables,
+                                            Set<String> booleanVariables, Set<String> variantProperties,
+                                            Set<QName> fieldNames) {
         this.supportedTypes = supportedTypes;
         this.variables = variables;
         this.booleanVariables = booleanVariables;
+        this.variantProperties = variantProperties;
+        this.fieldNames = fieldNames;
     }
 
     @Override
@@ -47,7 +54,7 @@ public class DefaultNameTemplateValidator implements NameTemplateValidator {
         partValidators.put(ConditionalTemplatePart.class, conditionalValidator());
         partValidators.put(VariableTemplatePart.class, variableValidator());
         partValidators.put(FieldTemplatePart.class, fieldValidator());
-        partValidators.put(VariantPropertyTemplatePart.class, allOk());
+        partValidators.put(VariantPropertyTemplatePart.class, variantPropertyValidator());
     }
 
     private PartValidator allOk() {
@@ -86,8 +93,23 @@ public class DefaultNameTemplateValidator implements NameTemplateValidator {
     private PartValidator fieldValidator() {
         return new PartValidator() {
             @Override
-            public void validate(String template, TemplatePart part) {
-                // OK: field name is validated during parsing
+            public void validate(String template, TemplatePart part) throws NameTemplateException {
+                QName field = ((FieldTemplatePart) part).getFieldName();
+                if (fieldNames != null && !fieldNames.contains(field)) {
+                    throw new NameTemplateException("No such field: " + field, template);
+                }
+            }
+        };
+    }
+
+    private PartValidator variantPropertyValidator() {
+        return new PartValidator() {
+            @Override
+            public void validate(String template, TemplatePart part) throws NameTemplateException {
+                String variantProperty = ((VariantPropertyTemplatePart) part).getName();
+                 if (variantProperties != null && !variantProperties.contains(variantProperty)) {
+                    throw new NameTemplateException("No such variant property: " + variantProperty, template);
+                }
             }
         };
     }

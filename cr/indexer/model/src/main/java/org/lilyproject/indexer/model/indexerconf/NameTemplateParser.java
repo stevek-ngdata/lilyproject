@@ -85,7 +85,7 @@ public class NameTemplateParser {
             throws IndexerConfException, InterruptedException, RepositoryException {
         QName field = ConfUtil.parseQName(expr, el);
         FieldType fieldType = ConfUtil.getFieldType(field, systemFields, repository.getTypeManager());
-        return new FieldTemplatePart(fieldType);
+        return new FieldTemplatePart(fieldType, field);
     }
 
 }

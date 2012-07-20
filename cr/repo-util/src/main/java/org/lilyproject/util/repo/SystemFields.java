@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.lilyproject.repository.api.FieldType;
@@ -321,6 +322,10 @@ public class SystemFields {
         } else {
             return record.getFields().get(fieldType);
         }
+    }
+
+    public Set<QName> getAll() {
+        return fieldsByName.keySet();
     }
 
     private static abstract class SystemField {

@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.xml.XMLConstants;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
@@ -357,15 +356,31 @@ public class IndexerConfBuilder {
         return matchNode;
     }
 
-    private IndexField buildIndexField(Element el) throws Exception {
+    /**
+     * @param forwardVariantDimensions in case this is an index field which is part of a foreach, these are the forward
+     *                                 variant dimensions used in the foreach, and thus the ones that can be used to
+     *                                 build a name from a template. Otherwise <code>null</code>.
+     */
+    private IndexField buildIndexField(Element el, Set<String> forwardVariantDimensions) throws Exception {
         String nameAttr = DocumentHelper.getAttribute(el, "name", true);
         String valueExpr = DocumentHelper.getAttribute(el, "value", true);
 
-        // TODO: add a NameTemplateValidator - NOTE: NameTemplateValidator should
-        // validate within the scope of a Value (its valuetype determines what can be used in the template).
-        NameTemplate name = new NameTemplateParser(repository, systemFields).parse(el, nameAttr, null);
+        final Set<QName> supportedFields = new HashSet<QName>();
+        supportedFields.addAll(systemFields.getAll());
+        supportedFields.addAll(getAllRepositoryFields());
+
+        NameTemplate name = new NameTemplateParser(repository, systemFields)
+                .parse(el, nameAttr, new FieldNameTemplateValidator(forwardVariantDimensions, supportedFields));
 
         return new IndexField(name, buildValue(el, valueExpr));
+    }
+
+    private Set<QName> getAllRepositoryFields() throws RepositoryException, InterruptedException {
+        final Set<QName> result = new HashSet<QName>();
+        for (FieldType fieldType : repository.getTypeManager().getFieldTypes()) {
+            result.add(fieldType.getName());
+        }
+        return result;
     }
 
     private ForEachNode buildForEachNode(Element el) throws Exception {
@@ -397,7 +412,13 @@ public class IndexerConfBuilder {
             } else if (name.equals("match")) {
                 parent.addChildNode(buildMatchNode(childEl));
             } else if (name.equals("field")) {
-                parent.addChildNode(buildIndexField(childEl));
+                final IndexField indexField;
+                if (parent instanceof ForEachNode && ((ForEachNode) parent).getFollow() instanceof ForwardVariantFollow) {
+                    indexField = buildIndexField(childEl, ((ForwardVariantFollow) ((ForEachNode)parent).getFollow()).getDimensions().keySet());
+                } else {
+                    indexField = buildIndexField(childEl, null);
+                }
+                parent.addChildNode(indexField);
             } else if (name.equals("forEach")) {
                 parent.addChildNode(buildForEachNode(childEl));
             } else {
@@ -470,17 +491,9 @@ public class IndexerConfBuilder {
             if (matchNamespace != null && matchNamespace.hasWildcard())
                 variables.add("namespaceMatch");
 
-            Set<String> booleanVariables = new HashSet<String>();
-            booleanVariables.add("list");
-            booleanVariables.add("multiValue");
-
             NameTemplate name;
             try {
-                Set<Class> supportedPartTypes = new HashSet<Class>();
-                supportedPartTypes.add(LiteralTemplatePart.class);
-                supportedPartTypes.add(VariableTemplatePart.class);
-                supportedPartTypes.add(ConditionalTemplatePart.class);
-                name = new NameTemplateParser().parse(fieldEl, nameAttr, new DefaultNameTemplateValidator(supportedPartTypes, variables, booleanVariables));
+                name = new NameTemplateParser().parse(fieldEl, nameAttr, new DynamicFieldNameTemplateValidator(variables));
             } catch (NameTemplateException nte) {
                 throw new IndexerConfException("Error in name template: " + nameAttr + " at " + LocationAttributes.getLocationString(fieldEl), nte);
             }

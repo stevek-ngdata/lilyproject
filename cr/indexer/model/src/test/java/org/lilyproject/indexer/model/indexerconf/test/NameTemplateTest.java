@@ -15,23 +15,22 @@
  */
 package org.lilyproject.indexer.model.indexerconf.test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.common.collect.Sets;
 import org.junit.Test;
-import org.lilyproject.indexer.model.indexerconf.ConditionalTemplatePart;
-import org.lilyproject.indexer.model.indexerconf.DefaultNameTemplateValidator;
 import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolver;
-import org.lilyproject.indexer.model.indexerconf.LiteralTemplatePart;
+import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateValidator;
+import org.lilyproject.indexer.model.indexerconf.FieldNameTemplateValidator;
 import org.lilyproject.indexer.model.indexerconf.NameTemplate;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateException;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateParser;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateValidator;
-import org.lilyproject.indexer.model.indexerconf.VariableTemplatePart;
+import org.lilyproject.repository.api.QName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -63,16 +62,16 @@ public class NameTemplateTest {
 
     @Test
     public void testCond() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("${bool1?yes:no}", defaultValidator());
+        NameTemplate template = new NameTemplateParser().parse("${list?yes:no}", defaultValidator());
         assertEquals("yes", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("${bool2?yes:no}", defaultValidator());
+        template = new NameTemplateParser().parse("${multiValue?yes:no}", defaultValidator());
         assertEquals("no", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("${bool2?yes}", defaultValidator());
+        template = new NameTemplateParser().parse("${multiValue?yes}", defaultValidator());
         assertEquals("", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("${bool1?yes}", defaultValidator());
+        template = new NameTemplateParser().parse("${list?yes}", defaultValidator());
         assertEquals("yes", template.format(getResolver()));
 
         // test with disabled validator because we want it to fail @ evaluation time
@@ -96,7 +95,7 @@ public class NameTemplateTest {
 
     @Test
     public void testCondEmbedded() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("prefix_${bool1?yes:no}_suffix", defaultValidator());
+        NameTemplate template = new NameTemplateParser().parse("prefix_${list?yes:no}_suffix", defaultValidator());
         assertEquals("prefix_yes_suffix", template.format(getResolver()));
     }
 
@@ -132,30 +131,27 @@ public class NameTemplateTest {
 
     @Test(expected = NameTemplateException.class)
     public void testInvalidExpressionNoSuchBooleanVariable() throws Exception {
-        new NameTemplateParser()
-                .parse("${foo?true:false}",
-                        new DefaultNameTemplateValidator(templatePartTypes(), null, Sets.newHashSet("list")));
+        new NameTemplateParser().parse("${foo?true:false}", new DynamicFieldNameTemplateValidator(null));
     }
 
     @Test(expected = NameTemplateException.class)
     public void testInvalidExpressionNoSuchVariable() throws Exception {
-        new NameTemplateParser()
-                .parse("${variable}",
-                        new DefaultNameTemplateValidator(templatePartTypes(), Sets.newHashSet("anothervariable"),
-                                null));
+        new NameTemplateParser().parse("${variable}",
+                new DynamicFieldNameTemplateValidator(Sets.newHashSet("anothervariable")));
+    }
+
+    @Test(expected = NameTemplateException.class)
+    public void testInvalidExpressionNoSuchVariantProperty() throws Exception {
+        new NameTemplateParser().parse("${@vprop:foo}",
+                new FieldNameTemplateValidator(Sets.newHashSet("bar"), Collections.<QName>emptySet()));
     }
 
     private NameTemplateValidator defaultValidator() {
-        return new DefaultNameTemplateValidator(templatePartTypes(), defaultContext().keySet(),
-                defaultBooleanVariables());
+        return new DynamicFieldNameTemplateValidator(defaultContext().keySet());
     }
 
     private NameTemplateValidator disabledValidator() {
-        return new DefaultNameTemplateValidator(templatePartTypes(), null, null);
-    }
-
-    private Set<String> defaultBooleanVariables() {
-        return Sets.newHashSet("bool1", "bool2");
+        return new DynamicFieldNameTemplateValidator(null, null);
     }
 
     public NameTemplateResolver getResolver() {
@@ -165,16 +161,8 @@ public class NameTemplateTest {
     private Map<String, Object> defaultContext() {
         Map<String, Object> context = new HashMap<String, Object>();
         context.put("var1", "hello");
-        context.put("bool1", Boolean.TRUE);
-        context.put("bool2", Boolean.FALSE);
+        context.put("list", Boolean.TRUE);
+        context.put("multiValue", Boolean.FALSE);
         return context;
-    }
-
-    private Set<Class> templatePartTypes() {
-        Set<Class> result = Sets.newHashSet();
-        result.add(LiteralTemplatePart.class);
-        result.add(VariableTemplatePart.class);
-        result.add(ConditionalTemplatePart.class);
-        return result;
     }
 }
