@@ -1,8 +1,8 @@
 package org.lilyproject.indexer.engine;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -11,7 +11,7 @@ import java.util.Map;
  *
  */
 public class IndexerRegistry {
-    private final Map<String, Indexer> indexers = new HashMap<String, Indexer>();
+    private final Map<String, Indexer> indexers = new ConcurrentHashMap<String, Indexer>();
 
     public void register(Indexer indexer) {
         indexers.put(indexer.getIndexName(), indexer);
