@@ -56,7 +56,7 @@ public interface RecordBuilder {
      * Sets record type of the record.
      * @see {@link Record#setRecordType(QName, Long)}
      * @param name QName of the record type
-     * @param the version of the record type
+     * @param version the version of the record type
      * @return the builder
      */
     RecordBuilder recordType(QName name, Long version);
@@ -75,7 +75,7 @@ public interface RecordBuilder {
      * @see {@link Record#setDefaultNamespace(String)}
      * @see {@link Record#setRecordType(String)}
      * @param name QName of the record type
-     * @param the version of the record type
+     * @param version the version of the record type
      * @return the builder
      */
     RecordBuilder recordType(String name, Long version) throws RecordException;
