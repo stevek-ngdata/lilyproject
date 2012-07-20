@@ -41,7 +41,6 @@ import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.io.Closer;
@@ -418,10 +417,22 @@ public class LilyServerProxy {
     }
 
     /**
-     * Performs a batch index build of an index, waits for it to finish. If it does not finish within the
-     * specified timeout, false is returned. If the index build was not successful, an exception is thrown.
+     * Calls {@link #batchBuildIndex(String, byte[], long) batchBuildIndex(indexName, null, timeOut)}.
      */
     public boolean batchBuildIndex(String indexName, long timeOut) throws Exception {
+        return batchBuildIndex(indexName, null, timeOut);
+    }
+
+    /**
+     * Performs a batch index build of an index, waits for it to finish. If it does not finish within the
+     * specified timeout, false is returned. If the index build was not successful, an exception is thrown.
+     *
+     * @param batchConf the batch index conf for this particular invocation of the batch build
+     * @param timeOut maximum time to wait for the batch index to finish. You can put this rather high: the method
+     *                will return as soon as the batch indexing is finished, it is only in case something goes
+     *                wrong that this timeout will prevent endless hanging.
+     */
+    public boolean batchBuildIndex(String indexName, byte[] batchConf, long timeOut) throws Exception {
         WriteableIndexerModel model = getIndexerModel();
 
         try {
@@ -429,6 +440,7 @@ public class LilyServerProxy {
             try {
                 IndexDefinition index = model.getMutableIndex(indexName);
                 index.setBatchBuildState(IndexBatchBuildState.BUILD_REQUESTED);
+                index.setBatchIndexConfiguration(batchConf);
                 model.updateIndex(index, lock);
             } finally {
                 model.unlockIndex(lock);
