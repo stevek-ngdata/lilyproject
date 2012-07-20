@@ -15,9 +15,11 @@
  */
 package org.lilyproject.indexer.model.indexerconf.test;
 
+import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.junit.Test;
 import org.lilyproject.indexer.model.indexerconf.NameTemplate;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -107,6 +109,16 @@ public class NameTemplateTest {
         } catch (NameTemplateEvaluationException e) {
             // expected
         }
+    }
+
+    @Test(expected = NameTemplateException.class)
+    public void testInvalidExpressionNoSuchBooleanVariable() throws NameTemplateException {
+        new NameTemplate("${foo?true:false}", null, Sets.newHashSet("list"));
+    }
+
+    @Test(expected = NameTemplateException.class)
+    public void testInvalidExpressionNoSuchVariable() throws NameTemplateException {
+        new NameTemplate("${variable}", Sets.newHashSet("anothervariable"), null);
     }
 
     public Map<String, Object> getContext() {
