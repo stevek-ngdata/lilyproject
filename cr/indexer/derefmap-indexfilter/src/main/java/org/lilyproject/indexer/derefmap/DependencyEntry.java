@@ -9,7 +9,7 @@ import org.lilyproject.util.ArgumentValidator;
 /**
  * An entry in the dereference map, used when updating information in the dereference map.
  *
- * @author Jan Van Besien
+ *
  */
 public final class DependencyEntry {
 

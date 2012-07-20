@@ -36,7 +36,7 @@ import org.lilyproject.util.io.Closer;
 /**
  * Remote implementation of the Indexer api (via avro protocol).
  *
- * @author Jan Van Besien
+ *
  */
 public class RemoteIndexer implements Indexer, Closeable {
     private AvroLily lilyProxy;

@@ -8,7 +8,7 @@ import org.lilyproject.repository.api.RecordId;
  * The indexer provides access to the indexing functionality of Lily. It allows things like explicitely indexing a
  * record.
  *
- * @author Jan Van Besien
+ *
  */
 public interface Indexer {
 

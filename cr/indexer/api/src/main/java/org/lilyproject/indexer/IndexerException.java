@@ -1,7 +1,7 @@
 package org.lilyproject.indexer;
 
 /**
- * @author Jan Van Besien
+ *
  */
 public class IndexerException extends Exception {
 

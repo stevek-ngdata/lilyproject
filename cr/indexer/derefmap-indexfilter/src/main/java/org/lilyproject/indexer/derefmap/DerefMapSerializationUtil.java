@@ -24,7 +24,7 @@ import org.lilyproject.repository.api.SchemaId;
  * Helper for the {@link org.lilyproject.indexer.derefmap.DerefMapHbaseImpl} to serialize/deserialize various elements
  * for storage in the hbase-index.
  *
- * @author Jan Van Besien
+ *
  */
 final class DerefMapSerializationUtil {
 

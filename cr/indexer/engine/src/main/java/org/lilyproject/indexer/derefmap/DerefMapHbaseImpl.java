@@ -22,7 +22,7 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.io.Closer;
 
 /**
- * @author Jan Van Besien
+ *
  */
 public class DerefMapHbaseImpl implements DerefMap {
 

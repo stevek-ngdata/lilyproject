@@ -10,7 +10,7 @@ import org.lilyproject.util.ArgumentValidator;
 /**
  * Representation of a variant properties pattern as stored in the dereference map.
  *
- * @author Jan Van Besien
+ *
  */
 final class DerefMapVariantPropertiesPattern {
 

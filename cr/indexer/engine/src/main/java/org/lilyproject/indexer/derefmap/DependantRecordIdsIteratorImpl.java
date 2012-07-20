@@ -8,7 +8,7 @@ import org.lilyproject.repository.api.RecordId;
 /**
  * Implementation of {@link org.lilyproject.indexer.derefmap.DependantRecordIdsIterator}.
  *
- * @author Jan Van Besien
+ *
  */
 final class DependantRecordIdsIteratorImpl implements DependantRecordIdsIterator {
     private final QueryResult queryResult;

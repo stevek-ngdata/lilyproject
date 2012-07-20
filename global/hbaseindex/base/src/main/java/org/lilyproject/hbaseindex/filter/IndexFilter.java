@@ -11,7 +11,7 @@ import org.apache.hadoop.io.Writable;
 /**
  * Allows additional filtering on query results based on the fields and data stored in the index.
  *
- * @author Jan Van Besien
+ *
  */
 public abstract class IndexFilter implements Writable {
 

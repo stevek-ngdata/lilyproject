@@ -34,7 +34,7 @@ import org.lilyproject.solrtestfw.SolrTestingUtility;
 import static org.junit.Assert.assertEquals;
 
 /**
- * @author Jan Van Besien
+ *
  */
 public class IndexerApiTest {
 

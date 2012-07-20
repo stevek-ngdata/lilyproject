@@ -15,7 +15,7 @@ import org.lilyproject.hbaseindex.IndexFieldDefinition;
 /**
  * Actual implementation of {@link IndexFilter} as an HBase filter.
  *
- * @author Jan Van Besien
+ *
  */
 public class IndexFilterHbaseImpl extends FilterBase {
 

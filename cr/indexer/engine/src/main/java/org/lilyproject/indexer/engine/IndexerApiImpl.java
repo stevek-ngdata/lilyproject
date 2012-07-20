@@ -14,7 +14,7 @@ import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
 
 /**
- * @author Jan Van Besien
+ *
  */
 public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
     private Repository repository;

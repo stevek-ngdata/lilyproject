@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
  * This tests the functionality of the {@link DerefMapHbaseImpl}. Note there is also a DerefMapIndexTest which
  * tests it in real indexing scenario's.
  *
- * @author Jan Van Besien
+ *
  */
 public class DerefMapBasicTest {
     private final static RepositorySetup repoSetup = new RepositorySetup();

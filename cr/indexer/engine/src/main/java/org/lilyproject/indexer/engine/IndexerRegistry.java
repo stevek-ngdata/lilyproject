@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Keeps track of all indexers that have been created. There is one indexer for every index, identified by name.
  *
- * @author Jan Van Besien
+ *
  */
 public class IndexerRegistry {
     private final Map<String, Indexer> indexers = new HashMap<String, Indexer>();

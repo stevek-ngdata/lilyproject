@@ -16,7 +16,7 @@ import org.lilyproject.repository.impl.id.IdGeneratorImpl;
 import static org.junit.Assert.assertEquals;
 
 /**
- * @author Jan Van Besien
+ *
  */
 public class DerefMapSerializationUtilTest {
 
