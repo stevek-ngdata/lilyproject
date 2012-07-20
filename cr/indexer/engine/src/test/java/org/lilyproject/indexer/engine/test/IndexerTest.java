@@ -25,8 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -58,9 +60,11 @@ import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
+import org.lilyproject.indexer.model.indexerconf.IndexFields;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
+import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.indexerconf.VariantFollow;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
@@ -2572,71 +2576,80 @@ public class IndexerTest {
 
         changeIndexUpdater("indexerconf_complex_configuration.xml");
 
-        final List<IndexField> derefIndexFields = INDEXER_CONF.getDerefIndexFields();
-        for (IndexField indexField : derefIndexFields) {
-            if ("cc_less_variant_spaces".equals(indexField.getName().getTemplate())) {
-                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
-                assertEquals(1, dimensions.size());
-                assertTrue(dimensions.contains("my branch"));
-            } else if ("cc_less_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
-                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.contains("my branch"));
-                assertTrue(dimensions.contains("some lang"));
-            } else if ("cc_more_variant_spaces".equals(indexField.getName().getTemplate())) {
-                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(1, dimensions.size());
-                assertTrue(dimensions.containsKey("my branch"));
-                assertNull(dimensions.get("my branch"));
-            } else if ("cc_more_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
-                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.containsKey("my branch"));
-                assertNull(dimensions.get("my branch"));
-                assertTrue(dimensions.containsKey("some lang"));
-                assertNull(dimensions.get("some lang"));
-            } else if ("cc_more_variant_spaces_value".equals(indexField.getName().getTemplate())) {
-                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(1, dimensions.size());
-                assertTrue(dimensions.containsKey("branch"));
-                assertEquals("some value", dimensions.get("branch"));
-            } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName().getTemplate())) {
-                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.containsKey("branch"));
-                assertEquals("some value", dimensions.get("branch"));
-                assertTrue(dimensions.containsKey("lang"));
-                assertEquals("some lang", dimensions.get("lang"));
-            } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName().getTemplate())) {
-                final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.containsKey("my branch"));
-                assertEquals("some value", dimensions.get("my branch"));
-                assertTrue(dimensions.containsKey("my lang"));
-                assertEquals("some lang", dimensions.get("my lang"));
-            } else {
-                throw new IllegalStateException("unexpected index field " + indexField.getName().getTemplate());
+        final IndexFields indexFields = INDEXER_CONF.getIndexFields();
+        indexFields.visitAll(new Predicate<MappingNode>() {
+            @Override
+            public boolean apply(@Nullable MappingNode input) {
+                if (input instanceof IndexField) {
+                    final IndexField indexField = (IndexField) input;
+
+                    if ("cc_less_variant_spaces".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(1, dimensions.size());
+                        assertTrue(dimensions.contains("my branch"));
+                    } else if ("cc_less_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.contains("my branch"));
+                        assertTrue(dimensions.contains("some lang"));
+                    } else if ("cc_more_variant_spaces".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(1, dimensions.size());
+                        assertTrue(dimensions.containsKey("my branch"));
+                        assertNull(dimensions.get("my branch"));
+                    } else if ("cc_more_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.containsKey("my branch"));
+                        assertNull(dimensions.get("my branch"));
+                        assertTrue(dimensions.containsKey("some lang"));
+                        assertNull(dimensions.get("some lang"));
+                    } else if ("cc_more_variant_spaces_value".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(1, dimensions.size());
+                        assertTrue(dimensions.containsKey("branch"));
+                        assertEquals("some value", dimensions.get("branch"));
+                    } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.containsKey("branch"));
+                        assertEquals("some value", dimensions.get("branch"));
+                        assertTrue(dimensions.containsKey("lang"));
+                        assertEquals("some lang", dimensions.get("lang"));
+                    } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.containsKey("my branch"));
+                        assertEquals("some value", dimensions.get("my branch"));
+                        assertTrue(dimensions.containsKey("my lang"));
+                        assertEquals("some lang", dimensions.get("my lang"));
+                    } else {
+                        throw new IllegalStateException("unexpected index field " + indexField.getName().getTemplate());
+                    }
+                }
+
+                return true; // to make visit continue
             }
-        }
+        });
     }
 
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
