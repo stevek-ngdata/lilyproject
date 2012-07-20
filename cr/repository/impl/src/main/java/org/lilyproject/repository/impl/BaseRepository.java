@@ -266,14 +266,23 @@ public abstract class BaseRepository implements Repository {
         return hbaseScanner;
     }
 
-    private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
-        private ServiceLoader<HBaseRecordFilterFactory> filterLoader =
-                ServiceLoader.load(HBaseRecordFilterFactory.class);
+    private static List<HBaseRecordFilterFactory> FILTER_FACTORIES;
+    static {
+        FILTER_FACTORIES = new ArrayList<HBaseRecordFilterFactory>();
+        // Make our own copy of list of filter factories, because it is not thread-safe to iterate over filterLoader
+        ServiceLoader<HBaseRecordFilterFactory> filterLoader =
+                ServiceLoader.load(HBaseRecordFilterFactory.class, BaseRepository.class.getClassLoader());
+        for (HBaseRecordFilterFactory filterFactory : filterLoader) {
+            FILTER_FACTORIES.add(filterFactory);
+        }
+        FILTER_FACTORIES = Collections.unmodifiableList(FILTER_FACTORIES);
+    }
 
+    private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
         @Override
         public Filter createHBaseFilter(RecordFilter filter, Repository repository, HBaseRecordFilterFactory factory)
                 throws RepositoryException, InterruptedException {
-            for (HBaseRecordFilterFactory filterFactory : filterLoader) {
+            for (HBaseRecordFilterFactory filterFactory : FILTER_FACTORIES) {
                 Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
                 if (hbaseFilter != null)
                     return hbaseFilter;
