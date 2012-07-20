@@ -28,6 +28,7 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repotestfw.RepositorySetup;
+import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
 
 import static org.junit.Assert.assertEquals;
@@ -56,7 +57,8 @@ public class IndexerApiTest {
     @Before
     public void setUp() throws Exception {
         SOLR_TEST_UTIL = new SolrTestingUtility();
-        SOLR_TEST_UTIL.setSchemaData(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml")));
+        SOLR_TEST_UTIL.setSolrDefinition(
+                new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
         TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
 
