@@ -27,6 +27,7 @@ import org.lilyproject.indexer.model.indexerconf.DynamicFieldNameTemplateResolve
 import org.lilyproject.indexer.model.indexerconf.LiteralTemplatePart;
 import org.lilyproject.indexer.model.indexerconf.NameTemplate;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateEvaluationException;
+import org.lilyproject.indexer.model.indexerconf.NameTemplateException;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateParser;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateResolver;
 import org.lilyproject.indexer.model.indexerconf.NameTemplateValidator;
@@ -44,37 +45,38 @@ public class NameTemplateTest {
 
     @Test
     public void testLiteral() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("foobar");
+        NameTemplate template = new NameTemplateParser().parse("foobar", defaultValidator());
         assertEquals("foobar", template.format(getResolver()));
     }
 
     @Test
     public void testVar() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("${var1}");
+        NameTemplate template = new NameTemplateParser().parse("${var1}", defaultValidator());
         assertEquals("hello", template.format(getResolver()));
     }
 
     @Test
     public void testEmbeddedVar() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("prefix_${var1}_suffix");
+        NameTemplate template = new NameTemplateParser().parse("prefix_${var1}_suffix", defaultValidator());
         assertEquals("prefix_hello_suffix", template.format(getResolver()));
     }
 
     @Test
     public void testCond() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("${bool1?yes:no}");
+        NameTemplate template = new NameTemplateParser().parse("${bool1?yes:no}", defaultValidator());
         assertEquals("yes", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("${bool2?yes:no}");
+        template = new NameTemplateParser().parse("${bool2?yes:no}", defaultValidator());
         assertEquals("no", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("${bool2?yes}");
+        template = new NameTemplateParser().parse("${bool2?yes}", defaultValidator());
         assertEquals("", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("${bool1?yes}");
+        template = new NameTemplateParser().parse("${bool1?yes}", defaultValidator());
         assertEquals("yes", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("${var1?yes:no}");
+        // test with disabled validator because we want it to fail @ evaluation time
+        template = new NameTemplateParser().parse("${var1?yes:no}", disabledValidator());
         try {
             assertEquals("no", template.format(getResolver()));
             fail("Expected exception");
@@ -82,7 +84,8 @@ public class NameTemplateTest {
             // expected
         }
 
-        template = new NameTemplateParser().parse("${nonexisting?yes:no}");
+        // test with disabled validator because we want it to fail @ evaluation time
+        template = new NameTemplateParser().parse("${nonexisting?yes:no}", disabledValidator());
         try {
             assertEquals("no", template.format(getResolver()));
             fail("Expected exception");
@@ -93,22 +96,23 @@ public class NameTemplateTest {
 
     @Test
     public void testCondEmbedded() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("prefix_${bool1?yes:no}_suffix");
+        NameTemplate template = new NameTemplateParser().parse("prefix_${bool1?yes:no}_suffix", defaultValidator());
         assertEquals("prefix_yes_suffix", template.format(getResolver()));
     }
 
     @Test
     public void testIncompleteExpr() throws Exception {
-        NameTemplate template = new NameTemplateParser().parse("${");
+        NameTemplate template = new NameTemplateParser().parse("${", defaultValidator());
         assertEquals("${", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("x${x${x");
+        template = new NameTemplateParser().parse("x${x${x", defaultValidator());
         assertEquals("x${x${x", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("x${}");
+        template = new NameTemplateParser().parse("x${}", defaultValidator());
         assertEquals("x${}", template.format(getResolver()));
 
-        template = new NameTemplateParser().parse("x${?}");
+        // test with disabled validator because we want it to fail @ evaluation time
+        template = new NameTemplateParser().parse("x${?}", disabledValidator());
         try {
             assertEquals("x${?}", template.format(getResolver()));
             fail("expected exception");
@@ -116,7 +120,8 @@ public class NameTemplateTest {
             // expected
         }
 
-        template = new NameTemplateParser().parse("x${a?}");
+        // test with disabled validator because we want it to fail @ evaluation time
+        template = new NameTemplateParser().parse("x${a?}", disabledValidator());
         try {
             assertEquals("x${a?}", template.format(getResolver()));
             fail("expected exception");
@@ -125,8 +130,28 @@ public class NameTemplateTest {
         }
     }
 
-    private NameTemplateValidator getDefaultValidator() {
-        return new DefaultNameTemplateValidator(templatePartTypes(), defaultContext().keySet(), defaultBooleanVariables());
+    @Test(expected = NameTemplateException.class)
+    public void testInvalidExpressionNoSuchBooleanVariable() throws Exception {
+        new NameTemplateParser()
+                .parse("${foo?true:false}",
+                        new DefaultNameTemplateValidator(templatePartTypes(), null, Sets.newHashSet("list")));
+    }
+
+    @Test(expected = NameTemplateException.class)
+    public void testInvalidExpressionNoSuchVariable() throws Exception {
+        new NameTemplateParser()
+                .parse("${variable}",
+                        new DefaultNameTemplateValidator(templatePartTypes(), Sets.newHashSet("anothervariable"),
+                                null));
+    }
+
+    private NameTemplateValidator defaultValidator() {
+        return new DefaultNameTemplateValidator(templatePartTypes(), defaultContext().keySet(),
+                defaultBooleanVariables());
+    }
+
+    private NameTemplateValidator disabledValidator() {
+        return new DefaultNameTemplateValidator(templatePartTypes(), null, null);
     }
 
     private Set<String> defaultBooleanVariables() {

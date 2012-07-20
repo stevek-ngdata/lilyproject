@@ -32,16 +32,14 @@ public class NameTemplateParser {
         this.systemFields = systemFields;
     }
 
-    public NameTemplate parse(String template) throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
-        return parse(template, null);
-    }
-
-    public NameTemplate parse(String template, NameTemplateValidator validator) throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
+    public NameTemplate parse(String template, NameTemplateValidator validator)
+            throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
         return parse(null, template, validator);
     }
 
     // FIXME: Not very clean that this can throw IndexerConfException
-    public NameTemplate parse(Element el, String template, NameTemplateValidator validator) throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
+    public NameTemplate parse(Element el, String template, NameTemplateValidator validator)
+            throws IndexerConfException, NameTemplateException, InterruptedException, RepositoryException {
         List<TemplatePart> parts = new ArrayList<TemplatePart>();
         int pos = 0;
         Matcher matcher = varPattern.matcher(template);
@@ -62,9 +60,9 @@ public class NameTemplateParser {
                     String falseValue = exprMatcher.group(3) != null ? exprMatcher.group(3) : "";
 
                     parts.add(new ConditionalTemplatePart(condition, trueValue, falseValue));
-                } else if (atVariantPropMatcher.matches()){
+                } else if (atVariantPropMatcher.matches()) {
                     parts.add(new VariantPropertyTemplatePart(atVariantPropMatcher.group(1)));
-                } else if (fieldMatcher.matches()){
+                } else if (fieldMatcher.matches()) {
                     parts.add(buildFieldTemplatePart(el, template, expr));
                 } else {
                     parts.add(new VariableTemplatePart(expr));
@@ -77,10 +75,14 @@ public class NameTemplateParser {
             }
         }
 
-        return new NameTemplate(template, parts);
+        final NameTemplate nameTemplate = new NameTemplate(template, parts);
+        if (validator != null)
+            validator.validate(nameTemplate);
+        return nameTemplate;
     }
 
-    private TemplatePart buildFieldTemplatePart(Element el, String template, String expr) throws IndexerConfException, InterruptedException, RepositoryException {
+    private TemplatePart buildFieldTemplatePart(Element el, String template, String expr)
+            throws IndexerConfException, InterruptedException, RepositoryException {
         QName field = ConfUtil.parseQName(expr, el);
         FieldType fieldType = ConfUtil.getFieldType(field, systemFields, repository.getTypeManager());
         return new FieldTemplatePart(fieldType);
