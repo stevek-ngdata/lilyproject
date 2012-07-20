@@ -213,6 +213,14 @@ public interface RecordBuilder {
      * @return the builder
      */
     RecordBuilder useLatestRecordType(boolean latestRT);
+
+    /**
+     * Adds an attribute to the record, this is <b>transient</b> data attached to a
+     * create/update/delete operation. Attributes are not returned on read.
+     *
+     * @return the builder
+     */
+    RecordBuilder attribute(String name, String value);
     
     /**
      * Clears all data from the builder object.
