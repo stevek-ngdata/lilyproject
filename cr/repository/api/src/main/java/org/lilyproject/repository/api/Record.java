@@ -349,7 +349,8 @@ public interface Record {
      * Set the transient attributes associated with this record.
      *
      * <p>These transient attributes are not persisted in the repository, thus they do not behave like fields.
-     * As such, they are not returned when doing a {@link Repository#read}.</p>
+     * As such, they are not returned when doing a {@link Repository#read}. Instead, the attributes are
+     * related to a particular create/update/delete operation.</p>
      *
      * <p>The purpose of these attributes is to be able to pass along data/hints to certain
      * components, such as server-side repository decorators, secondary actions, message queue listeners
@@ -358,6 +359,6 @@ public interface Record {
      * <p>The attributes are not preserved when cloning the record, or on a round-trip from the repository,
      * thus in the record object returned from create, update, etc.</p>
      */
-    void setAttributes(Map<String,String> attributes);
+    void setAttributes(Map<String, String> attributes);
     
 }
