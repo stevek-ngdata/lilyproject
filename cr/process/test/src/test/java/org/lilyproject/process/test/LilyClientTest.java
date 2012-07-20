@@ -172,7 +172,7 @@ public class LilyClientTest {
         record.setField(fieldType.getName(), "value");
         repository.create(record);
 
-        // explicitely index the record (if this succeeds, the test succeeded to verify that we can access the indexer through lily-client)
+        // explicitly index the record (if this succeeds, the test succeeded to verify that we can access the indexer through lily-client)
         client.getIndexer().index(record.getId());
     }
 }

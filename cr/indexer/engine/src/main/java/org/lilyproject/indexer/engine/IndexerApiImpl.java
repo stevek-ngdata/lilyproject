@@ -61,7 +61,7 @@ public class IndexerApiImpl implements org.lilyproject.indexer.Indexer {
                 final IndexCase indexCase = indexer.getConf().getRecordFilter().getIndexCase(idRecord);
                 if (indexCase != null) // it matches -> index
                     tryIndex(indexer, idRecord, indexCase);
-                else // it doesn't match -> explicitely delete
+                else // it doesn't match -> explicitly delete
                     tryDelete(indexer, recordId);
             }
         }

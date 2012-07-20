@@ -74,7 +74,7 @@ public abstract class IndexFieldDefinition implements Writable {
     abstract RowKey asRowKey();
 
     /**
-     * @return a rowKey with termination explicitely disabled (only to be used for prefix searches etc, never to be
+     * @return a rowKey with termination explicitly disabled (only to be used for prefix searches etc, never to be
      *         used for actually storing in HBase!)
      */
     abstract RowKey asRowKeyWithoutTermination();

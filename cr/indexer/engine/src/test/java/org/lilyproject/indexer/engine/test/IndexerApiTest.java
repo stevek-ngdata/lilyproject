@@ -100,7 +100,7 @@ public class IndexerApiTest {
         changeIndexUpdater("indexerconf_synchronous.xml");
 
         final Record record = repository.recordBuilder()
-                .id(repository.getIdGenerator().newRecordId("index-explicitely"))
+                .id(repository.getIdGenerator().newRecordId("index-explicitly"))
                 .recordType(matchingRecordType.getName())
                 .field(new QName(NS, "nv_field1"), "value")
                 .create();
