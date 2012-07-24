@@ -21,6 +21,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -232,75 +233,75 @@ public class LilyServerProxy {
      * @param indexName name of the index
      * @param coreName name of the Solr core to which to index (when null, indexes to default core)
      * @param indexerConf path to the resource containing the index configuration
-     * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
+     * @param timeout maximum time to spent waiting, an exception is thrown when the required conditions
+     *                have not been reached within this timeout
      * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the
      *                            subscriptionId of the new index
      * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId
      *                        of the new index.
      *        This can only be true if the waitForIndexerModel is true as well. 
-     * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
+     * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
+     *                               the index, this is important for synchronous indexing.
      */
-    public boolean addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout,
-            boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
+    public void addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout,
+            boolean waitForIndexerModel, boolean waitForMQRowlog, boolean waitForIndexerRegistry) throws Exception {
         InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
         byte[] indexerConfiguration = IOUtils.toByteArray(is);
         is.close();
-        return addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+        addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog,
+                waitForIndexerRegistry);
     }
-    
-    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel,
-            boolean waitForMQRowlog) throws Exception {
-        InputStream is = getClass().getClassLoader().getResourceAsStream(indexerConf);
-        byte[] indexerConfiguration = IOUtils.toByteArray(is);
-        is.close();
-        return addIndex(indexName, null, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+
+    /**
+     * Calls {@link #addIndexFromResource(String, String, String, long, boolean, boolean, boolean)} with
+     * the default core name.
+     */
+    public void addIndexFromResource(String indexName, String indexerConf, long timeout, boolean waitForIndexerModel,
+            boolean waitForMQRowlog, boolean waitForIndexerRegistry) throws Exception {
+        addIndexFromResource(indexName, (String)null, indexerConf, timeout, waitForIndexerModel, waitForMQRowlog,
+                waitForIndexerRegistry);
     }
 
     /**
      * Shortcut method with waitForIndexerModel and waitForMQRowlog put to true
      */
-    public boolean addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
-        return addIndexFromResource(indexName, indexerConf, timeout, true, true);
+    public void addIndexFromResource(String indexName, String indexerConf, long timeout) throws Exception {
+        addIndexFromResource(indexName, indexerConf, timeout, true, true, true);
     }
 
-    public boolean addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout) throws Exception {
-        return addIndexFromResource(indexName, coreName, indexerConf, timeout, true, true);
-    }
-
-    /**
-     * Adds an index from in index configuration contained in a file.
-     * 
-     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout has passed).
-     * Only when this is the case record creates or updates will result in messages to be created on the MQ rowlog.
-     * 
-     * @param indexName name of the index
-     * @param coreName name of the Solr core to which to index (when null, indexes to default core)
-     * @param indexerConf path to the file containing the index configuration
-     * @param timeout time to wait for the index subscription to be known by the MQ rowlog.
-     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the subscriptionId of the new index
-     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId of the new index. 
-     *        This can only be true if the waitForIndexerModel is true as well. 
-     * @return false if the index subscription was not known by the MQ rowlog within the given timeout.
-     */
-    public boolean addIndexFromFile(String indexName, String coreName, String indexerConf, long timeout,
-            boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
-        byte[] indexerConfiguration = FileUtils.readFileToByteArray(new File(indexerConf));
-        return addIndex(indexName, coreName, indexerConfiguration, timeout, waitForIndexerModel, waitForMQRowlog);
+    public void addIndexFromResource(String indexName, String coreName, String indexerConf, long timeout) throws Exception {
+        addIndexFromResource(indexName, coreName, indexerConf, timeout, true, true, true);
     }
 
     public void validateIndexerconf(byte[] indexerConfiguration) throws Exception {
         IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfiguration), getClient().getRepository());
     }
-    
-    /**
-     * Shortcut method with waitForIndexerModel and waitForMQRowlog put to true
-     */
-    public boolean addIndexFromFile(String indexName, String coreName, String indexerConf, long timeout) throws Exception {
-        return addIndexFromFile(indexName, coreName, indexerConf, timeout, true, true);
-    }
 
-    private boolean addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
-            boolean waitForIndexerModel, boolean waitForMQRowlog) throws Exception {
+    /**
+     * Adds an index from in index configuration contained in a resource.
+     *
+     * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout
+     * has passed). Only when this is the case record creates or updates will result in messages to be created
+     * on the MQ rowlog.
+     *
+     * <p>Note that when the messages from the MQ rowlog are processed, the data has been put in solr but this
+     * data might not be visible until the solr index has been committed. See {@link SolrProxy#commit()}.
+     *
+     * @param indexName name of the index
+     * @param coreName name of the Solr core to which to index (when null, indexes to default core)
+     * @param indexerConfiguration byte array containing the index configuration
+     * @param timeout maximum time to spent waiting, an exception is thrown when the required conditions
+     *                have not been reached within this timeout
+     * @param waitForIndexerModel boolean indicating the call has to wait until the indexerModel knows the
+     *                            subscriptionId of the new index
+     * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId
+     *                        of the new index.
+     *        This can only be true if the waitForIndexerModel is true as well.
+     * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
+     *                               the index, this is important for synchronous indexing.
+     */
+    public void addIndex(String indexName, String coreName, byte[] indexerConfiguration, long timeout,
+            boolean waitForIndexerModel, boolean waitForMQRowlog, boolean waitForIndexerRegistry) throws Exception {
         long tryUntil = System.currentTimeMillis() + timeout;
         WriteableIndexerModel indexerModel = getIndexerModel();
         IndexDefinition index = indexerModel.newIndex(indexName);
@@ -314,21 +315,20 @@ public class LilyServerProxy {
         index.setConfiguration(indexerConfiguration);
         indexerModel.addIndex(index);
 
-        String subscriptionId;
         if (waitForIndexerModel) {
             // Wait for subscriptionId to be known by indexerModel
-            subscriptionId = waitOnIndexSubscriptionId(indexName, tryUntil, timeout);
+            String subscriptionId = waitOnIndexSubscriptionId(indexName, tryUntil, timeout);
             if (subscriptionId == null)
-                return false;
-        } else {
-            return true;
+                throw new Exception("Timed out waiting for index subscription ID to be assigned.");
+
+            if (waitForMQRowlog) {
+                // Wait for RowLog to know the mq subscriptionId
+                waitOnMQSubscription(subscriptionId, true, timeout);
+            }
         }
 
-        if (waitForMQRowlog) {
-            // Wait for RowLog to know the mq subscriptionId
-            return waitOnMQSubscription(subscriptionId, true, timeout);
-        } else {
-            return true;
+        if (waitForIndexerRegistry) {
+            waitOnIndexerRegistry(indexName, tryUntil);
         }
     }
 
@@ -372,55 +372,94 @@ public class LilyServerProxy {
      * @param timeOut maximim time to wait
      * @return false if the intended situation was not reached within the timeout.
      */
-    public boolean waitOnMQSubscription(String subscriptionId, boolean waitUntilAvailable, long timeOut) throws Exception {
-        return waitOnMQSubscriptionInt(subscriptionId, waitUntilAvailable, System.currentTimeMillis() + timeOut);
+    public void waitOnMQSubscription(String subscriptionId, boolean waitUntilAvailable, long timeOut) throws Exception {
+        waitOnMQSubscriptionInt(subscriptionId, waitUntilAvailable, System.currentTimeMillis() + timeOut);
     }
 
-    private boolean waitOnMQSubscriptionInt(String subscriptionId, boolean waitUntilAvailable, long tryUntil) throws Exception {
-        ObjectName objectName = new ObjectName("Lily:name=RowLog,id=mq");
-        MBeanServerConnection connection = null;
-        JMXConnector connector = null;
+    private void waitOnMQSubscriptionInt(String subscriptionId, boolean waitUntilAvailable, long tryUntil) throws Exception {
+        JmxLiaison jmxLiaison = new JmxLiaison("Lily:name=RowLog,id=mq");
 
         try {
+            jmxLiaison.connect();
+
+            while (System.currentTimeMillis() < tryUntil) {
+                List<String> subscriptionIds = (List<String>)jmxLiaison.getAttribute("SubscriptionIds");
+                if (waitUntilAvailable && subscriptionIds.contains(subscriptionId)) {
+                    return;
+                } else if (!waitUntilAvailable && !subscriptionIds.contains(subscriptionId)) {
+                    return;
+                }
+                Thread.sleep(50);
+            }
+            String adjective = waitUntilAvailable ? "available" : "unavailable";
+            throw new Exception("Timed out waiting for MQ subscription to become " + adjective
+                    + " in RowLog instance: " + subscriptionId);
+        } finally {
+            jmxLiaison.disconnect();
+        }
+    }
+
+    public void waitOnIndexerRegistry(String indexName, long tryUntil) throws Exception {
+        JmxLiaison jmxLiaison = new JmxLiaison("Lily:name=Indexer");
+
+        try {
+            jmxLiaison.connect();
+
+            while (System.currentTimeMillis() < tryUntil) {
+                Set<String> subscriptionIds = (Set<String>)jmxLiaison.getAttribute("IndexNames");
+                if (subscriptionIds.contains(indexName)) {
+                    return;
+                }
+                Thread.sleep(50);
+            }
+            throw new Exception("Timed out waiting for indexer to become known to IndexerRegistry: " + indexName);
+        } finally {
+            jmxLiaison.disconnect();
+        }
+    }
+
+    private class JmxLiaison {
+        private String objectNameString;
+        private ObjectName objectName;
+        private MBeanServerConnection connection;
+        private JMXConnector connector;
+
+        public JmxLiaison(String objectName) {
+            this.objectNameString = objectName;
+        }
+
+        public void connect() throws Exception {
+            objectName = new ObjectName(objectNameString);
             switch (mode) {
                 case EMBED:
                     connection = java.lang.management.ManagementFactory.getPlatformMBeanServer();
                     break;
                 case CONNECT:
                     String hostport = "localhost:10102";
-                    JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://" + hostport + "/jmxrmi");
+                    JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostport + "/jndi/rmi://"
+                            + hostport + "/jmxrmi");
                     connector = JMXConnectorFactory.connect(url);
                     connector.connect();
                     connection = connector.getMBeanServerConnection();
                     break;
             }
+        }
 
-            while (System.currentTimeMillis() < tryUntil) {
-                List<String> subscriptionIds = (List<String>)connection.getAttribute(objectName, "SubscriptionIds");
-                if (waitUntilAvailable) {
-                    if (subscriptionIds.contains(subscriptionId)) {
-                        return true;
-                    }
-                } else {
-                    if (!subscriptionIds.contains(subscriptionId)) {
-                        return true;
-                    }
-                }
-                Thread.sleep(50);
-            }
-            return false;
-
-        } finally {
+        public void disconnect() throws Exception {
             if (connector != null)
                 connector.close();
+        }
+
+        public Object getAttribute(String attrName) throws Exception {
+            return connection.getAttribute(objectName, attrName);
         }
     }
 
     /**
      * Calls {@link #batchBuildIndex(String, byte[], long) batchBuildIndex(indexName, null, timeOut)}.
      */
-    public boolean batchBuildIndex(String indexName, long timeOut) throws Exception {
-        return batchBuildIndex(indexName, null, timeOut);
+    public void batchBuildIndex(String indexName, long timeOut) throws Exception {
+        batchBuildIndex(indexName, null, timeOut);
     }
 
     /**
@@ -430,9 +469,10 @@ public class LilyServerProxy {
      * @param batchConf the batch index conf for this particular invocation of the batch build
      * @param timeOut maximum time to wait for the batch index to finish. You can put this rather high: the method
      *                will return as soon as the batch indexing is finished, it is only in case something goes
-     *                wrong that this timeout will prevent endless hanging.
+     *                wrong that this timeout will prevent endless hanging. An exception is thrown in case
+     *                the batch indexing did not finish within this timeout.
      */
-    public boolean batchBuildIndex(String indexName, byte[] batchConf, long timeOut) throws Exception {
+    public void batchBuildIndex(String indexName, byte[] batchConf, long timeOut) throws Exception {
         WriteableIndexerModel model = getIndexerModel();
 
         try {
@@ -459,7 +499,7 @@ public class LilyServerProxy {
                     Long amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
                     boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
                     if (successFlag && (amountFailed == null || amountFailed == 0L)) {
-                        return true;
+                        return;
                     } else {
                         throw new Exception("Batch index build did not finish successfully: success flag = " +
                             successFlag + ", amount failed records = " + amountFailed + ", job state = " +
@@ -471,6 +511,6 @@ public class LilyServerProxy {
             throw new Exception("Error checking if batch index job ended.", e);
         }
 
-        return false;
+        throw new Exception("Timed out waiting for batch index build to finish.");
     }
 }

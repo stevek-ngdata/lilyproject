@@ -248,11 +248,9 @@ public class BatchBuildTest {
         recordToChange2.setField(ft1.getName(), "test3 index run3");
         repository.update(recordToChange1);
         repository.update(recordToChange2);
-        System.out.println("It runs now");
         // Now rebuild the index and see if the default indexer has kicked in
         this.buildAndCommit();
 
-        System.out.println("here it stops");
         response = solrServer.query(new SolrQuery("field1:test3\\ index\\ run3").
                 addSortField("lily.id", ORDER.asc));
         assertEquals(2, response.getResults().size());
@@ -339,12 +337,8 @@ public class BatchBuildTest {
     }
 
     private void buildAndCommit() throws Exception {
-        boolean success = lilyServerProxy.batchBuildIndex(INDEX_NAME, BUILD_TIMEOUT);
-        if (success) {
-            solrServer.commit();
-        } else {
-            fail("Batch build did not end after " + BUILD_TIMEOUT + " millis");
-        }
+        lilyServerProxy.batchBuildIndex(INDEX_NAME, BUILD_TIMEOUT);
+        solrServer.commit();
     }
 
     private void waitForIndexAndCommit(long timeout) throws Exception {

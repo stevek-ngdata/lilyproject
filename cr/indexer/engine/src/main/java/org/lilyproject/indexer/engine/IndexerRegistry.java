@@ -1,7 +1,16 @@
 package org.lilyproject.indexer.engine;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -10,8 +19,10 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *
  */
-public class IndexerRegistry {
+public class IndexerRegistry implements IndexerRegistryMBean {
     private final Map<String, Indexer> indexers = new ConcurrentHashMap<String, Indexer>();
+    private final Log log = LogFactory.getLog(getClass());
+    private ObjectName jmxObjectName;
 
     public void register(Indexer indexer) {
         indexers.put(indexer.getIndexName(), indexer);
@@ -35,4 +46,35 @@ public class IndexerRegistry {
         return indexers.values();
     }
 
+    @Override
+    public Set<String> getIndexNames() {
+        return new HashSet<String>(indexers.keySet());
+    }
+
+    @PostConstruct
+    public void start() {
+        registerMBean();
+    }
+
+    @PreDestroy
+    public void stop() {
+        unregisterMBean();
+    }
+
+    private void registerMBean() {
+        try {
+            jmxObjectName = new ObjectName("Lily:name=Indexer");
+            ManagementFactory.getPlatformMBeanServer().registerMBean(this, jmxObjectName);
+        } catch (Exception e) {
+            log.warn("Error registering mbean '"+ jmxObjectName, e);
+        }
+    }
+
+    private void unregisterMBean() {
+        try {
+            ManagementFactory.getPlatformMBeanServer().unregisterMBean(jmxObjectName);
+        } catch (Exception e) {
+            log.warn("Error unregistering mbean '"+ jmxObjectName, e);
+        }
+    }
 }
