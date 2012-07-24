@@ -109,6 +109,8 @@ public class IndexerWorker {
 
     private BlockingQueue<IndexerModelEvent> eventQueue = new LinkedBlockingQueue<IndexerModelEvent>();
 
+    private EventWorker eventWorker;
+
     private Thread eventWorkerThread;
 
     private HttpClient httpClient;
@@ -143,7 +145,8 @@ public class IndexerWorker {
         connectionManager.getParams().setMaxTotalConnections(settings.getSolrMaxTotalConnections());
         httpClient = new HttpClient(connectionManager);
 
-        eventWorkerThread = new Thread(new EventWorker(), "IndexerWorkerEventWorker");
+        eventWorker = new EventWorker();
+        eventWorkerThread = new Thread(eventWorker, "IndexerWorkerEventWorker");
         eventWorkerThread.start();
 
         synchronized (indexUpdatersLock) {
@@ -159,6 +162,7 @@ public class IndexerWorker {
 
     @PreDestroy
     public void stop() {
+        eventWorker.stop();
         eventWorkerThread.interrupt();
         try {
             Logs.logThreadJoin(eventWorkerThread);
@@ -350,9 +354,15 @@ public class IndexerWorker {
     }
 
     private class EventWorker implements Runnable {
+        private volatile boolean stop = false;
+
+        public void stop() {
+            stop = true;
+        }
+
         @Override
         public void run() {
-            while (true) {
+            while (!stop) { // We need the stop flag because some code (HBase client code) eats interrupted flags
                 if (Thread.interrupted()) {
                     return;
                 }
