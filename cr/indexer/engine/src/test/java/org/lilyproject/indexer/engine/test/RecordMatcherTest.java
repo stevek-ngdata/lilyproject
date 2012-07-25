@@ -162,6 +162,38 @@ public class RecordMatcherTest {
     }
 
     @Test
+    public void testNullRecordTypeDoesNotMatchSpecifiedRecordType() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1'",
+                Lists.newArrayList(
+                        "recordType='ns1:typeA' vtags='vtag1'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        Record record = repository.recordBuilder().id("record").build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(record));
+    }
+
+    @Test
+    public void testNullRecordTypeMatchesAbsentRecordTypeCondition() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1'",
+                Lists.newArrayList(
+                        "vtags='vtag1'"),
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        Record record = repository.recordBuilder().id("record").build();
+
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(record));
+    }
+
+    @Test
     public void testEqualsFieldCondition() throws Exception {
         String conf = makeIndexerConf(
                 "xmlns:ns1='ns1' xmlns:ns='ns'",
@@ -402,6 +434,46 @@ public class RecordMatcherTest {
                 .build();
 
         assertNull(idxConf.getRecordFilter().getIndexCase(record4));
+    }
+
+    @Test
+    public void testNoConditionsOnInclude() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("vtags='vtag1'"), /* an include without conditions */
+                Collections.<String>emptyList()
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        // A record of any type with any number of variant properties should match
+        Record record1 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "int"), new Integer(10))
+                .build();
+
+        assertNotNull(idxConf.getRecordFilter().getIndexCase(record1));
+    }
+
+    @Test
+    public void testNoConditionsOnExclude() throws Exception {
+        String conf = makeIndexerConf(
+                "xmlns:ns1='ns1' xmlns:ns='ns'",
+                Lists.newArrayList("vtags='vtag1'"),
+                Lists.newArrayList("")
+        );
+
+        IndexerConf idxConf = IndexerConfBuilder.build(new ByteArrayInputStream(conf.getBytes()), repository);
+
+        // A record of any type with any number of variant properties should match
+        Record record1 = repository.recordBuilder()
+                .id("record", ImmutableMap.of("prop1", "val1"))
+                .recordType(new QName("ns1", "typeA"))
+                .field(new QName("ns", "int"), new Integer(10))
+                .build();
+
+        assertNull(idxConf.getRecordFilter().getIndexCase(record1));
     }
 
     private Record newRecordOfType(QName recordType) throws Exception {
