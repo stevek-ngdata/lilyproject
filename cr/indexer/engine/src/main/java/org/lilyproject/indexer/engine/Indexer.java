@@ -115,7 +115,7 @@ public class Indexer {
 
     public void index(IdRecord idRecord) throws RepositoryException, SolrClientException,
             ShardSelectorException, InterruptedException, IOException {
-        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, null, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repository);
         index(vtRecord, idRecord);
     }
 
@@ -131,7 +131,7 @@ public class Indexer {
 
     void index(IdRecord idRecord, Set<SchemaId> vtags)
             throws RepositoryException, IOException, ShardSelectorException, SolrClientException, InterruptedException {
-        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, null, repository);
+        final VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repository);
 
         Set<SchemaId> vtagsToIndex = retainExistingVtagsOnly(vtags, vtRecord);
 

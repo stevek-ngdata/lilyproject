@@ -35,7 +35,7 @@
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-indexer-integration</artifactId>
+      <artifactId>lily-indexer-engine</artifactId>
     </dependency>
 
     <dependency>

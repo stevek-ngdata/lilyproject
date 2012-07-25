@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lilyproject.indexer.integration.test;
+package org.lilyproject.indexer.integration;
 
 import com.google.common.collect.Lists;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -25,7 +25,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
 import org.lilyproject.indexer.derefmap.DerefMap;
-import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
@@ -34,8 +33,6 @@ import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClient;
 import org.lilyproject.indexer.engine.SolrClientException;
 import org.lilyproject.indexer.engine.SolrShardManager;
-import org.lilyproject.indexer.integration.IndexAwareMQFeeder;
-import org.lilyproject.indexer.integration.IndexSelectionRecordUpdateHook;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
@@ -108,7 +105,7 @@ public class IndexAwareMQFeederTest {
         PrematureRepository prematureRepository = new PrematureRepositoryImpl();
 
         indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepository);
-        RecordUpdateHook hook = new IndexSelectionRecordUpdateHook(indexesInfo);
+        RecordUpdateHook hook = new IndexRecordFilterHook(indexesInfo);
 
         repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
 

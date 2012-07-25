@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<indexer xmlns:ns2="org.lilyproject.indexer.test.2">
+
+  <recordFilter>
+    <includes>
+      <include field="ns2:v_field1=caseA" vtags="live,latest"/>
+      <include field="ns2:v_field1=caseB" vtags="latest"/>
+    </includes>
+  </recordFilter>
+
+  <fields>
+    <field name="v_field2" value="ns2:v_field2"/>
+  </fields>
+
+</indexer>

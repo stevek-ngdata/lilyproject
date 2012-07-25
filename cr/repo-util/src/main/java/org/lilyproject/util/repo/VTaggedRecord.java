@@ -16,7 +16,6 @@
 package org.lilyproject.util.repo;
 
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,8 +33,6 @@ import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
-
-import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
 
 /**
  * This is a record with added logic/state for version tag behavior.
@@ -58,31 +55,27 @@ public class VTaggedRecord {
 
     private RecordEvent recordEvent;
 
+    private RecordEventHelper recordEventHelper;
+
     private SchemaId lastVTag;
 
     private Repository repository;
 
     private TypeManager typeManager;
 
-    private Map<Scope, Set<FieldType>> updatedFieldsByScope;
-    private Map<Scope, Set<SchemaId>> updatedFieldsSchemaIdByScope;
-    private Map<Scope, Set<QName>> updatedFieldsNameByScope;
-
-    private FieldFilter fieldFilter;
-
     public VTaggedRecord(RecordId recordId, Repository repository) throws RepositoryException, InterruptedException {
-        this(recordId, null, null, repository);
+        this(recordId, null, repository);
     }
 
     /**
      * Construct based on a recordId. This will do a repository read to get the latest record.
      */
-    public VTaggedRecord(RecordId recordId, RecordEvent recordEvent, FieldFilter fieldFilter, Repository repository)
+    public VTaggedRecord(RecordId recordId, RecordEventHelper eventHelper, Repository repository)
             throws RepositoryException, InterruptedException {
         // Load the last version of the record to get vtag and non-versioned fields information
         // We will also reuse this record object in case the last version or the non-versioned data is needed,
         // to avoid extra gets on HBase.
-        this(repository.readWithIds(recordId, null, null), recordEvent, fieldFilter, repository);
+        this(repository.readWithIds(recordId, null, null), eventHelper, repository);
     }
 
     /**
@@ -90,13 +83,14 @@ public class VTaggedRecord {
      * available. The existing IdRecord should be the last (when it was read) and should have been read with all
      * fields!
      */
-    public VTaggedRecord(IdRecord idRecord, RecordEvent recordEvent, FieldFilter fieldFilter, Repository repository)
+    public VTaggedRecord(IdRecord idRecord, RecordEventHelper eventHelper, Repository repository)
             throws RepositoryException, InterruptedException {
         this.repository = repository;
         this.typeManager = repository.getTypeManager();
         this.record = idRecord;
-        this.recordEvent = recordEvent;
-        this.fieldFilter = fieldFilter != null ? fieldFilter : PASS_ALL_FIELD_FILTER;
+        this.recordEventHelper = eventHelper;
+        if (eventHelper != null)
+            this.recordEvent = eventHelper.getEvent();
     }
 
     public RecordId getId() {
@@ -175,22 +169,16 @@ public class VTaggedRecord {
         return recordEvent;
     }
 
-    public Set<SchemaId> getModifiedVTags() throws RepositoryException, InterruptedException {
-        Set<SchemaId> changedVTags = VersionTag.filterVTagFields(recordEvent.getUpdatedFields(), typeManager);
-
-        // Last vtag
-        if (recordEvent.getVersionCreated() != -1 || recordEvent.getType() == CREATE) {
-            changedVTags.add(getLastVTag());
-        }
-
-        return changedVTags;
+    public RecordEventHelper getRecordEventHelper() {
+        return recordEventHelper;
     }
 
     public Set<SchemaId> getVTagsOfModifiedData() throws RepositoryException, InterruptedException {
         Set<SchemaId> vtagsOfChangedData = null;
 
+        Map<Scope, Set<FieldType>> updatedFieldsByScope = recordEventHelper.getUpdatedFieldsByScope();
+
         // Make sure these are calculated
-        getUpdatedFieldsByScope();
         getVTags();
         getVTagsByVersion();
 
@@ -210,27 +198,6 @@ public class VTaggedRecord {
         }
 
         return vtagsOfChangedData != null ? vtagsOfChangedData : Collections.<SchemaId>emptySet();
-    }
-
-    public Map<Scope, Set<FieldType>> getUpdatedFieldsByScope() throws RepositoryException, InterruptedException {
-        if (updatedFieldsByScope == null) {
-            updatedFieldsByScope = getFieldTypeAndScope(recordEvent.getUpdatedFields());
-        }
-        return updatedFieldsByScope;
-    }
-
-    public Map<Scope, Set<SchemaId>> getUpdatedFieldTypeIdsByScope() throws RepositoryException, InterruptedException {
-        if (updatedFieldsSchemaIdByScope == null) {
-            updatedFieldsSchemaIdByScope = getFieldTypeIdsAndScope(recordEvent.getUpdatedFields());
-        }
-        return updatedFieldsSchemaIdByScope;
-    }
-
-    public Map<Scope, Set<QName>> getUpdatedFieldTypeNamesByScope() throws RepositoryException, InterruptedException {
-        if (updatedFieldsNameByScope == null) {
-            updatedFieldsNameByScope = getFieldTypeNamesAndScope(recordEvent.getUpdatedFields());
-        }
-        return updatedFieldsNameByScope;
     }
 
     public Map<Long, Set<SchemaId>> getVTagsByVersion() throws InterruptedException, RepositoryException {
@@ -318,72 +285,4 @@ public class VTaggedRecord {
         record.setRecordType(Scope.VERSIONED, (QName) null, null);
         record.setRecordType(Scope.VERSIONED_MUTABLE, (QName) null, null);
     }
-
-    private Map<Scope, Set<FieldType>> getFieldTypeAndScope(Set<SchemaId> fieldIds)
-            throws RepositoryException, InterruptedException {
-
-        // Could be written more elegantly using Multimaps.index, but we want to limit dependencies
-        Map<Scope, Set<FieldType>> result = new EnumMap<Scope, Set<FieldType>>(Scope.class);
-        for (Scope scope : Scope.values()) {
-            result.put(scope, new HashSet<FieldType>());
-        }
-
-        for (SchemaId fieldId : fieldIds) {
-            FieldType fieldType;
-            try {
-                fieldType = typeManager.getFieldTypeById(fieldId);
-            } catch (FieldTypeNotFoundException e) {
-                // A field whose field type does not exist: skip it
-                continue;
-            }
-            if (fieldFilter.accept(fieldType)) {
-                result.get(fieldType.getScope()).add(fieldType);
-            }
-        }
-
-        return result;
-    }
-
-    private Map<Scope, Set<SchemaId>> getFieldTypeIdsAndScope(Set<SchemaId> fieldIds)
-            throws RepositoryException, InterruptedException {
-        // could be written more elegantly with guava Maps.transformedMap, but we want to limit dependencies
-        Map<Scope, Set<SchemaId>> result = new HashMap<Scope, Set<SchemaId>>();
-        Map<Scope, Set<FieldType>> fieldTypesByScope = getFieldTypeAndScope(fieldIds);
-        for (Scope scope: fieldTypesByScope.keySet()) {
-            Set<SchemaId> schemaIds = new HashSet<SchemaId>();
-            for (FieldType t: fieldTypesByScope.get(scope)) {
-                schemaIds.add(t.getId());
-            }
-            result.put(scope, schemaIds);
-        };
-
-        return result;
-    }
-
-    private Map<Scope, Set<QName>> getFieldTypeNamesAndScope(Set<SchemaId> fieldIds)
-            throws RepositoryException, InterruptedException {
-        // could be written more elegantly with guava Maps.transformedMap, but we want to limit dependencies
-        Map<Scope, Set<QName>> result = new HashMap<Scope, Set<QName>>();
-        Map<Scope, Set<FieldType>> fieldTypesByScope = getFieldTypeAndScope(fieldIds);
-        for (Scope scope: fieldTypesByScope.keySet()) {
-            Set<QName> schemaIds = new HashSet<QName>();
-            for (FieldType t: fieldTypesByScope.get(scope)) {
-                schemaIds.add(t.getName());
-            }
-            result.put(scope, schemaIds);
-        };
-
-        return result;
-    }
-
-    public static interface FieldFilter {
-        boolean accept(FieldType fieldtype);
-    }
-
-    private static final FieldFilter PASS_ALL_FIELD_FILTER = new FieldFilter() {
-        @Override
-        public boolean accept(FieldType fieldtype) {
-            return true;
-        }
-    };
 }

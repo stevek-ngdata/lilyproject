@@ -49,7 +49,7 @@ public class ForEachNode extends ContainerMappingNode {
     public boolean isIndexAffectedByUpdate(VTaggedRecord vtRecord, Scope scope) throws InterruptedException,
             RepositoryException {
         if (fieldType != null && !systemFields.isSystemField(fieldType.getName())) {
-            return vtRecord.getUpdatedFieldsByScope().get(scope).contains(fieldType.getId());
+            return vtRecord.getRecordEventHelper().getUpdatedFieldsByScope().get(scope).contains(fieldType.getId());
         }
 
         return false;

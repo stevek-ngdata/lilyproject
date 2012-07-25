@@ -56,6 +56,10 @@ import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClientException;
 import org.lilyproject.indexer.engine.SolrShardManagerImpl;
+import org.lilyproject.indexer.integration.IndexRecordFilterHook;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
 import org.lilyproject.indexer.model.indexerconf.Follow;
 import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
@@ -66,6 +70,8 @@ import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.indexerconf.MappingNode;
 import org.lilyproject.indexer.model.indexerconf.VariantFollow;
+import org.lilyproject.indexer.model.util.IndexesInfo;
+import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
@@ -82,6 +88,7 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -91,6 +98,8 @@ import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
 import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
+import org.lilyproject.util.repo.PrematureRepository;
+import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
@@ -111,6 +120,8 @@ public class IndexerTest {
     private static IdGenerator idGenerator;
     private static SolrShardManagerImpl solrShardManager;
     private static DerefMap derefMap;
+    private static WriteableIndexerModel indexerModel;
+    private static IndexesInfo indexesInfo;
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -165,7 +176,17 @@ public class IndexerTest {
         SOLR_TEST_UTIL.start();
 
         repoSetup.setupCore();
+
+        indexerModel = new IndexerModelImpl(repoSetup.getZk());
+        PrematureRepository prematureRepository = new PrematureRepositoryImpl();
+
+        indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepository);
+        RecordUpdateHook hook = new IndexRecordFilterHook(indexesInfo);
+
+        repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
+
         repoSetup.setupRepository(true);
+        prematureRepository.setRepository(repoSetup.getRepository());
         repoSetup.setupMessageQueue(false, true);
 
         repository = repoSetup.getRepository();
@@ -214,6 +235,29 @@ public class IndexerTest {
 
         RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository,
                 indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap, "IndexUpdater"));
+
+        if (indexerModel.hasIndex("test")) {
+            indexerModel.deleteIndex("test");
+        }
+        waitForIndexesInfoUpdate(0);
+
+        // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
+        IndexDefinition indexDef = indexerModel.newIndex("test");
+        indexDef.setConfiguration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)));
+        indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
+        indexerModel.addIndex(indexDef);
+        waitForIndexesInfoUpdate(1);
+    }
+
+    protected static void waitForIndexesInfoUpdate(int expectedCount) throws InterruptedException {
+        // IndexesInfo will be updated asynchronously: wait for that to happen
+        long now = System.currentTimeMillis();
+        while (indexesInfo.getIndexInfos().size() != expectedCount) {
+            if (System.currentTimeMillis() - now > 10000) {
+                fail("IndexesInfo was not updated within the expected timeout.");
+            }
+            Thread.sleep(20);
+        }
     }
 
     private static void setupSchema() throws Exception {
@@ -2531,6 +2575,44 @@ public class IndexerTest {
         record1 = repository.update(record1);
         commitIndex();
         assertEquals(1, otherListener.getMsgCount());
+    }
+
+    /**
+     * Tests the correct behavior when a record's state changes so that a different
+     * record filter include rule is matched, with different vtags to index.
+     */
+    @Test
+    public void testSwitchBetweenIncludeRules() throws Exception {
+        changeIndexUpdater("indexerconf_include_rule_switch.xml");
+
+        messageVerifier.disable();
+
+        // Another include rule will match based on the value of the vfield1 field.
+
+        // First test with vfield1=caseA
+
+        Record record = repository.newRecord();
+        record.setRecordType(vRecordType1.getName());
+        record.setField(vfield1.getName(), "caseA");
+        record.setField(vfield2.getName(), "guggenheim"); /* theme: NY museums */
+        record.setField(liveTag.getName(), 1L);
+        record.setField(latestTag.getName(), 1L);
+        record = repository.create(record);
+
+        commitIndex();
+
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:live", 1);
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:latest", 1);
+
+        // Now test with vfield1=caseB
+
+        record.setField(vfield1.getName(), "caseB");
+        record = repository.update(record);
+
+        commitIndex();
+
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:latest", 1);
     }
 
     /**

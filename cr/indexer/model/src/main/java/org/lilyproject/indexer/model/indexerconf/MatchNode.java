@@ -51,7 +51,7 @@ public class MatchNode extends ContainerMappingNode {
         }
 
         // If the matcher uses fields and any of the fields were changed, we must reindex.
-        for (FieldType ft: vtRecord.getUpdatedFieldsByScope().get(scope)) {
+        for (FieldType ft: vtRecord.getRecordEventHelper().getUpdatedFieldsByScope().get(scope)) {
             if (recordMatcher.getFieldDependencies().contains(ft.getName())) {
                 return true;
             }

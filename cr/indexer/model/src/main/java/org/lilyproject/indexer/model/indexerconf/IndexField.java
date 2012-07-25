@@ -44,7 +44,8 @@ public class IndexField implements MappingNode {
     @Override
     public boolean isIndexAffectedByUpdate(VTaggedRecord vtRecord, Scope scope) throws InterruptedException,
             RepositoryException {
-        return vtRecord.getUpdatedFieldTypeIdsByScope().get(scope).contains(value.getFieldDependency());
+        return vtRecord.getRecordEventHelper().getUpdatedFieldTypeIdsByScope()
+                .get(scope).contains(value.getFieldDependency());
     }
 
     @Override

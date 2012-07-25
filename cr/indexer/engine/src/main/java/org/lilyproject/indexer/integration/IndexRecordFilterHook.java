@@ -27,10 +27,12 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * A record update hook that adds information to the RecordEvent needed to select what indexes
- * need to be informed about this record update.
+ * A record update hook that adds information to the RecordEvent needed to evaluate the
+ * IndexRecordFilter, especially needed to be able to know what IndexRecordFilter's matched
+ * on the previous (or deleted) record state. Also allows to make this decision without
+ * needing to read the complete record.
  */
-public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
+public class IndexRecordFilterHook implements RecordUpdateHook {
     private PluginRegistry pluginRegistry;
     private IndexesInfo indexesInfo;
 
@@ -39,13 +41,13 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
      * with 'org.lilyproject', this hook does not need to be activated through
      * configuration.
      */
-    private String NAME = "org.lilyproject.IndexSelectionRecordUpdateHook";
+    private String NAME = "org.lilyproject.IndexRecordFilterHook";
 
-    public IndexSelectionRecordUpdateHook(IndexesInfo indexesInfo) {
+    public IndexRecordFilterHook(IndexesInfo indexesInfo) {
         this.indexesInfo = indexesInfo;
     }
 
-    public IndexSelectionRecordUpdateHook(PluginRegistry pluginRegistry, IndexesInfo indexesInfo) {
+    public IndexRecordFilterHook(PluginRegistry pluginRegistry, IndexesInfo indexesInfo) {
         this.pluginRegistry = pluginRegistry;
         this.indexesInfo = indexesInfo;
 
@@ -65,14 +67,20 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
         if (indexInfos.size() > 0) {
             TypeManager typeMgr = repository.getTypeManager();
 
-            RecordEvent.IndexSelection idxSel = new RecordEvent.IndexSelection();
-            recordEvent.setIndexSelection(idxSel);
+            RecordEvent.IndexRecordFilterData idxSel = new RecordEvent.IndexRecordFilterData();
+            recordEvent.setIndexRecordFilterData(idxSel);
+
+            idxSel.setOldRecordExists(true);
+            idxSel.setNewRecordExists(true);
 
             if (indexesInfo.getRecordFilterDependsOnRecordType()) {
                 // Because record type names can change, this is not guaranteed to be the same as what gets
                 // stored in the repo, but that doesn't matter as it is only for indexing purposes.
-                idxSel.setNewRecordType(typeMgr.getRecordTypeByName(record.getRecordTypeName(), null).getId());
-                idxSel.setOldRecordType(typeMgr.getRecordTypeByName(originalRecord.getRecordTypeName(), null).getId());
+                SchemaId oldRecordTypeId = typeMgr.getRecordTypeByName(originalRecord.getRecordTypeName(), null).getId();
+                idxSel.setOldRecordType(oldRecordTypeId);
+                // on update, specifying record type is optional
+                idxSel.setNewRecordType(record.getRecordTypeName() != null ?
+                        typeMgr.getRecordTypeByName(record.getRecordTypeName(), null).getId() : oldRecordTypeId);
             }
 
             Set<QName> names = indexesInfo.getRecordFilterFieldDependencies();
@@ -100,8 +108,11 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
         if (indexInfos.size() > 0) {
             TypeManager typeMgr = repository.getTypeManager();
 
-            RecordEvent.IndexSelection idxSel = new RecordEvent.IndexSelection();
-            recordEvent.setIndexSelection(idxSel);
+            RecordEvent.IndexRecordFilterData idxSel = new RecordEvent.IndexRecordFilterData();
+            recordEvent.setIndexRecordFilterData(idxSel);
+
+            idxSel.setOldRecordExists(false);
+            idxSel.setNewRecordExists(true);
 
             if (indexesInfo.getRecordFilterDependsOnRecordType()) {
                 idxSel.setNewRecordType(typeMgr.getRecordTypeByName(newRecord.getRecordTypeName(), null).getId());
@@ -125,8 +136,11 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
         if (indexInfos.size() > 0) {
             TypeManager typeMgr = repository.getTypeManager();
 
-            RecordEvent.IndexSelection idxSel = new RecordEvent.IndexSelection();
-            recordEvent.setIndexSelection(idxSel);
+            RecordEvent.IndexRecordFilterData idxSel = new RecordEvent.IndexRecordFilterData();
+            recordEvent.setIndexRecordFilterData(idxSel);
+
+            idxSel.setOldRecordExists(true);
+            idxSel.setNewRecordExists(false);
 
             if (indexesInfo.getRecordFilterDependsOnRecordType()) {
                 idxSel.setOldRecordType(typeMgr.getRecordTypeByName(originalRecord.getRecordTypeName(), null).getId());
@@ -143,7 +157,7 @@ public class IndexSelectionRecordUpdateHook implements RecordUpdateHook {
         }
     }
 
-    private void addField(FieldType type, Object oldValue, Object newValue, RecordEvent.IndexSelection idxSel)
+    private void addField(FieldType type, Object oldValue, Object newValue, RecordEvent.IndexRecordFilterData idxSel)
             throws RepositoryException, InterruptedException {
 
         if (oldValue == null && newValue == null) {

@@ -18,6 +18,7 @@ package org.lilyproject.indexer.model.indexerconf;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,7 +140,7 @@ public class IndexerConfBuilder {
         List<Element> includes = RECORD_INCLUDE_FILTERS.get().evalAsNativeElementList(doc);
         for (Element includeEl : includes) {
             RecordMatcher recordMatcher = parseRecordMatcher(includeEl);
-            String vtagsSpec = DocumentHelper.getAttribute(includeEl, "vtags", false);
+            String vtagsSpec = DocumentHelper.getAttribute(includeEl, "vtags", true);
             Set<SchemaId> vtags = parseVersionTags(vtagsSpec);
             recordFilter.addInclude(recordMatcher, new IndexCase(vtags));
         }
@@ -333,7 +334,7 @@ public class IndexerConfBuilder {
             }
         }
 
-        return vtags;
+        return Collections.unmodifiableSet(vtags);
     }
 
     private void buildIndexFields() throws Exception {

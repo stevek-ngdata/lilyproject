@@ -56,7 +56,7 @@
     <constructor-arg ref="prematureRepository"/>
   </bean>
 
-  <bean id="indexSelectionRecordUpdateHook" class="org.lilyproject.indexer.integration.IndexSelectionRecordUpdateHook">
+  <bean id="indexRecordFilterHook" class="org.lilyproject.indexer.integration.IndexRecordFilterHook">
     <constructor-arg ref="pluginRegistry"/>
     <constructor-arg ref="indexesInfo"/>
   </bean>

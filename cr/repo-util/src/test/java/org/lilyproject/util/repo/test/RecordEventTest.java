@@ -32,30 +32,30 @@ import static org.junit.Assert.assertNull;
 
 public class RecordEventTest {
     @Test
-    public void testIndexSelectionJson() throws Exception {
+    public void testIndexRecordFilterDataJson() throws Exception {
         IdGenerator idGenerator = new IdGeneratorImpl();
 
         RecordEvent event = new RecordEvent();
         byte[] json = event.toJsonBytes();
         event = new RecordEvent(json, idGenerator);
 
-        assertNull(event.getIndexSelection());
+        assertNull(event.getIndexRecordFilterData());
 
         SchemaId oldRtId = idGenerator.getSchemaId(UUID.randomUUID());
         SchemaId newRtId = idGenerator.getSchemaId(UUID.randomUUID());
 
-        RecordEvent.IndexSelection idxSel = new RecordEvent.IndexSelection();
-        event.setIndexSelection(idxSel);
+        RecordEvent.IndexRecordFilterData idxSel = new RecordEvent.IndexRecordFilterData();
+        event.setIndexRecordFilterData(idxSel);
         idxSel.setOldRecordType(oldRtId);
         idxSel.setNewRecordType(newRtId);
 
         json = event.toJsonBytes();
         event = new RecordEvent(json, idGenerator);
 
-        assertNotNull(event.getIndexSelection());
-        assertEquals(oldRtId, event.getIndexSelection().getOldRecordType());
-        assertEquals(newRtId, event.getIndexSelection().getNewRecordType());
-        assertNull(event.getIndexSelection().getFieldChanges());
+        assertNotNull(event.getIndexRecordFilterData());
+        assertEquals(oldRtId, event.getIndexRecordFilterData().getOldRecordType());
+        assertEquals(newRtId, event.getIndexRecordFilterData().getNewRecordType());
+        assertNull(event.getIndexRecordFilterData().getFieldChanges());
 
         SchemaId field1Id = idGenerator.getSchemaId(UUID.randomUUID());
         SchemaId field2Id = idGenerator.getSchemaId(UUID.randomUUID());
@@ -63,8 +63,8 @@ public class RecordEventTest {
         SchemaId field4Id = idGenerator.getSchemaId(UUID.randomUUID());
 
         event = new RecordEvent();
-        idxSel = new RecordEvent.IndexSelection();
-        event.setIndexSelection(idxSel);
+        idxSel = new RecordEvent.IndexRecordFilterData();
+        event.setIndexRecordFilterData(idxSel);
         idxSel.addChangedField(field1Id, null, null);
         idxSel.addChangedField(field2Id, Bytes.toBytes("foo1"), Bytes.toBytes("foo2"));
         idxSel.addChangedField(field3Id, Bytes.toBytes("foo3"), null);
@@ -73,7 +73,7 @@ public class RecordEventTest {
         json = event.toJsonBytes();
         event = new RecordEvent(json, idGenerator);
 
-        List<RecordEvent.FieldChange> fieldChanges = event.getIndexSelection().getFieldChanges();
+        List<RecordEvent.FieldChange> fieldChanges = event.getIndexRecordFilterData().getFieldChanges();
         assertEquals(4, fieldChanges.size());
 
         assertEquals(field1Id, fieldChanges.get(0).getId());

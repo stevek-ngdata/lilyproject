@@ -20,13 +20,11 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lilyproject.indexer.model.indexerconf.IndexRecordFilter;
 import org.lilyproject.indexer.model.util.IndexInfo;
+import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
 import org.lilyproject.indexer.model.util.IndexesInfo;
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.Repository;
-import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -120,7 +118,7 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
             // Create the 'old' and 'new' Record instances.
             //
             // The RecordEvent contains the fields & record type info needed by the filters of the different
-            // indexes, this is taken care of by IndexSelectionRecordUpdateHook.
+            // indexes, this is taken care of by IndexRecordFilterHook.
             //
             // Of course, it can happen that indexerconfs have been changed, or new indexes have been added,
             // since the event was created, and then this information will be missing. We could check for that
@@ -131,38 +129,11 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
             // period to be expected, and one might need to rebuild indexes.
             //
             RecordId recordId = repository.getIdGenerator().fromBytes(message.getRowKey());
-            Record newRecord = repository.newRecord(recordId);
-            Record oldRecord = repository.newRecord(recordId);
 
-            RecordEvent.IndexSelection idxSel = recordEvent.getIndexSelection();
-            if (idxSel != null) {
-                TypeManager typeManager = repository.getTypeManager();
-
-                if (idxSel.getFieldChanges() != null) {
-                    for (RecordEvent.FieldChange fieldChange : idxSel.getFieldChanges()) {
-                        FieldType fieldType = typeManager.getFieldTypeById(fieldChange.getId());
-                        QName name = fieldType.getName();
-
-                        if (fieldChange.getNewValue() != null) {
-                            Object value = fieldType.getValueType().read(fieldChange.getNewValue());
-                            newRecord.setField(name, value);
-                        }
-
-                        if (fieldChange.getOldValue() != null) {
-                            Object value = fieldType.getValueType().read(fieldChange.getOldValue());
-                            oldRecord.setField(name, value);
-                        }
-                    }
-                }
-
-                if (idxSel.getNewRecordType() != null) {
-                    newRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getNewRecordType(), null).getName());
-                }
-
-                if (idxSel.getOldRecordType() != null) {
-                    oldRecord.setRecordType(typeManager.getRecordTypeById(idxSel.getOldRecordType(), null).getName());
-                }
-            }
+            Record[] records =
+                    IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, recordEvent, repository);
+            Record oldRecord = records[0];
+            Record newRecord = records[1];
 
             //
             // And now, the actual subscription filtering
@@ -172,7 +143,8 @@ public class IndexAwareMQFeeder implements RowLogMessageListener {
                 // then the index needs to process this event
                 boolean relevantIndex = false;
                 IndexRecordFilter filter = indexInfo.getIndexerConf().getRecordFilter();
-                if (filter.getIndexCase(oldRecord) != null || filter.getIndexCase(newRecord) != null) {
+                if ((oldRecord != null && filter.getIndexCase(oldRecord) != null)
+                        || (newRecord != null && filter.getIndexCase(newRecord) != null)) {
                     relevantIndex = true;
                 }
 

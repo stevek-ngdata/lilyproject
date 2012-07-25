@@ -132,7 +132,7 @@ public class IndexerConf {
 
     public boolean changesAffectIndex(VTaggedRecord vtRecord, Scope scope)
             throws InterruptedException, RepositoryException {
-        Set<FieldType> changedFields = vtRecord.getUpdatedFieldsByScope().get(scope);
+        Set<FieldType> changedFields = vtRecord.getRecordEventHelper().getUpdatedFieldsByScope().get(scope);
 
         // Check static fields and dynamic fields
         for (FieldType fieldType : changedFields) {

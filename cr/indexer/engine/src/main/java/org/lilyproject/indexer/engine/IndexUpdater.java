@@ -33,9 +33,11 @@ import org.lilyproject.indexer.derefmap.DependantRecordIdsIterator;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.model.indexerconf.IndexCase;
 import org.lilyproject.indexer.model.sharding.ShardSelectorException;
+import org.lilyproject.indexer.model.util.IndexRecordFilterUtil;
 import org.lilyproject.linkindex.LinkIndexException;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordNotFoundException;
 import org.lilyproject.repository.api.Repository;
@@ -47,6 +49,7 @@ import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.util.repo.RecordEvent;
+import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.VTaggedRecord;
 
 import static org.lilyproject.util.repo.RecordEvent.Type.CREATE;
@@ -176,29 +179,73 @@ public class IndexUpdater implements RowLogMessageListener {
             } else { // CREATE or UPDATE
                 VTaggedRecord vtRecord;
 
-                indexLocker.lock(recordId);
-                try {
-                    try {
-                        // Read the vtags of the record. Note that while this algorithm is running, the record can
-                        // meanwhile undergo changes. However, we continuously work with the snapshot of the vtags
-                        // mappings read here. The processing of later events will bring the index up to date with
-                        // any new changes.
-                        vtRecord = new VTaggedRecord(recordId, event, null, repository);
-                    } catch (RecordNotFoundException e) {
-                        // The record has been deleted in the meantime.
-                        // For now, we do nothing, when the delete event is received the record will be removed
-                        // from the index (as well as update of denormalized data).
-                        // TODO: we should process all outstanding messages for the record (up to delete) in one go
-                        return true;
-                    }
+                // Based on the partial old/new record state stored in the RecordEvent, determine whether we
+                // now match a different IndexCase than before, and if so, if the new case would have less vtags
+                // than the old one, perform the necessary deletes on Solr.
+                Record[] records =
+                        IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, event, repository);
+                Record oldRecord = records[0];
+                Record newRecord = records[1];
+                IndexCase caseOld = null;
+                IndexCase caseNew = null;
+                boolean doIndexing = true;
+                if (oldRecord != null && newRecord != null) {
+                    caseOld = indexer.getConf().getIndexCase(oldRecord);
+                    caseNew = indexer.getConf().getIndexCase(newRecord);
 
-                    handleRecordCreateUpdate(vtRecord);
-                } finally {
-                    indexLocker.unlockLogFailure(recordId);
+                    if (caseOld != null && caseNew != null) {
+                        Set<SchemaId> droppedVtags = new HashSet<SchemaId>(caseOld.getVersionTags());
+                        droppedVtags.removeAll(caseNew.getVersionTags());
+
+                        if (droppedVtags.size() > 0) {
+                            // Perform deletes
+                            for (SchemaId vtag : droppedVtags) {
+                                indexer.delete(recordId, vtag);
+                            }
+                        }
+                    }
                 }
 
-                if (derefMap != null)
-                    updateDenormalizedData(recordId, vtRecord.getUpdatedFieldsByScope(), vtRecord.getModifiedVTags());
+                // This is an optimization: an IndexCase with empty vtags list means that this record is
+                // included in this index only to trigger updating of denormalized data.
+                if (caseNew != null) {
+                    doIndexing = caseNew.getVersionTags().size() > 0;
+                } else if (caseNew == null && caseOld != null) {
+                    // caseNew == null means either the record has been deleted, or means the record does
+                    // not match the recordFilter anymore. In either case, we only need to trigger update
+                    // of denormalized data (if the vtags list was empty on caseOld).
+                    doIndexing = caseOld.getVersionTags().size() > 0;
+                }
+
+                RecordEventHelper eventHelper = new RecordEventHelper(event, null, repository.getTypeManager());
+
+                if (doIndexing) {
+                    indexLocker.lock(recordId);
+                    try {
+                        try {
+                            // Read the vtags of the record. Note that while this algorithm is running, the record can
+                            // meanwhile undergo changes. However, we continuously work with the snapshot of the vtags
+                            // mappings read here. The processing of later events will bring the index up to date with
+                            // any new changes.
+                            vtRecord = new VTaggedRecord(recordId, eventHelper, repository);
+                        } catch (RecordNotFoundException e) {
+                            // The record has been deleted in the meantime.
+                            // For now, we do nothing, when the delete event is received the record will be removed
+                            // from the index (as well as update of denormalized data).
+                            // TODO: we should process all outstanding messages for the record (up to delete) in one go
+                            return true;
+                        }
+
+                        handleRecordCreateUpdate(vtRecord);
+                    } finally {
+                        indexLocker.unlockLogFailure(recordId);
+                    }
+                }
+
+                if (derefMap != null) {
+                    updateDenormalizedData(recordId, eventHelper.getUpdatedFieldsByScope(),
+                            eventHelper.getModifiedVTags());
+                }
             }
 
         } catch (InterruptedException e) {
@@ -321,7 +368,7 @@ public class IndexUpdater implements RowLogMessageListener {
                 // Handle changes to vtag fields themselves
                 //
                 Map<SchemaId, Long> vtags = vtRecord.getVTags();
-                Set<SchemaId> changedVTagFields = vtRecord.getModifiedVTags();
+                Set<SchemaId> changedVTagFields = vtRecord.getRecordEventHelper().getModifiedVTags();
                 // Remove the vtags which are going to be reindexed anyway
                 changedVTagFields.removeAll(vtagsToIndex);
                 for (SchemaId vtag : changedVTagFields) {

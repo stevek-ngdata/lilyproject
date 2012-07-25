@@ -49,7 +49,7 @@ public class RecordEvent {
     private boolean recordTypeChanged = false;
     /** For index-type events: affected vtags */
     private Set<SchemaId> vtagsToIndex;
-    private IndexSelection indexSelection;
+    private IndexRecordFilterData indexRecordFilterData;
     /** A copy of the attributes supplied via {@link Record#setAttributes(Map)}. */
     private Map<String, String> attributes;
 
@@ -135,8 +135,8 @@ public class RecordEvent {
                     String value = jp.getText();
                     attributes.put(key, value);
                 }
-            } else if (fieldName.equals("indexSelection")) {
-                this.indexSelection = new IndexSelection(jp, idGenerator);
+            } else if (fieldName.equals("indexFilterData")) {
+                this.indexRecordFilterData = new IndexRecordFilterData(jp, idGenerator);
             }
         }
     }
@@ -227,12 +227,12 @@ public class RecordEvent {
         this.attributes = attributes;
     }
 
-    public IndexSelection getIndexSelection() {
-        return indexSelection;
+    public IndexRecordFilterData getIndexRecordFilterData() {
+        return indexRecordFilterData;
     }
 
-    public void setIndexSelection(IndexSelection indexSelection) {
-        this.indexSelection = indexSelection;
+    public void setIndexRecordFilterData(IndexRecordFilterData indexRecordFilterData) {
+        this.indexRecordFilterData = indexRecordFilterData;
     }
 
     public void toJson(JsonGenerator gen) throws IOException {
@@ -278,9 +278,9 @@ public class RecordEvent {
             gen.writeEndObject();
         }
 
-        if (indexSelection != null) {
-            gen.writeFieldName("indexSelection");
-            indexSelection.toJson(gen);
+        if (indexRecordFilterData != null) {
+            gen.writeFieldName("indexFilterData");
+            indexRecordFilterData.toJson(gen);
         }
 
         gen.writeEndObject();
@@ -342,7 +342,7 @@ public class RecordEvent {
         if(!ObjectUtils.safeEquals(other.attributes, this.attributes))
             return false;
 
-        // TODO implement equals for IndexSelection
+        // TODO implement equals for IndexRecordFilterData
 
         return true;
     }
@@ -360,21 +360,32 @@ public class RecordEvent {
     }
 
     /**
-     * Information needed by MQFeeder to know what indexer subscriptions should receive what
-     * events. At the time of this writing, the indexerconf only allows to expression selection
-     * based on record type, on 1 STRING-type field, and on information that is part of the record id.
+     * Data needed for IndexRecordFilter evaluation.
+     *
+     * <p>Information needed to decide if an IndexRecordFilter matches a record. Contains both the
+     * necessary information both from the old and new record state, so that we know what matched
+     * before and what matches now, which enables important optimisations.</p>
+     *
+     * <p>For example, this information is used by the IndexAwareMQFeeder to only sent events
+     * to subscriptions from relevant indexes, as well as by IndexUpdater to know what
+     * index inclusion rule matches before & now.</p>
+     *
+     * <p>At the time of this writing, the indexerconf only allows selection
+     * based on record type, on 1 field, and on information that is part of the record id.
      * The model here is already a bit more flexible (can contain info on multiple fields) to allow for
-     * more powerful selections in the future.
+     * more powerful selections in the future.</p>
      */
-    public static class IndexSelection {
+    public static class IndexRecordFilterData {
+        private boolean newRecordExists;
+        private boolean oldRecordExists;
         private SchemaId newRecordType;
         private SchemaId oldRecordType;
         private List<FieldChange> fieldChanges;
 
-        public IndexSelection() {
+        public IndexRecordFilterData() {
         }
 
-        public IndexSelection(JsonParser jp, IdGenerator idGenerator) throws IOException {
+        public IndexRecordFilterData(JsonParser jp, IdGenerator idGenerator) throws IOException {
             JsonToken current = jp.getCurrentToken();
 
             if (current != JsonToken.START_OBJECT) {
@@ -384,7 +395,11 @@ public class RecordEvent {
             while (jp.nextToken() != JsonToken.END_OBJECT) {
                 String fieldName = jp.getCurrentName();
                 current = jp.nextToken(); // move from field name to field value
-                if (fieldName.equals("newRecordType")) {
+                if (fieldName.equals("old")) {
+                    oldRecordExists = jp.getBooleanValue();
+                } else if (fieldName.equals("new")) {
+                    newRecordExists = jp.getBooleanValue();
+                } else if (fieldName.equals("newRecordType")) {
                     newRecordType = idGenerator.getSchemaId(jp.getBinaryValue());
                 } else if (fieldName.equals("oldRecordType")) {
                     oldRecordType = idGenerator.getSchemaId(jp.getBinaryValue());
@@ -398,6 +413,22 @@ public class RecordEvent {
                     }
                 }
             }
+        }
+
+        public boolean getNewRecordExists() {
+            return newRecordExists;
+        }
+
+        public void setNewRecordExists(boolean newRecordExists) {
+            this.newRecordExists = newRecordExists;
+        }
+
+        public boolean getOldRecordExists() {
+            return oldRecordExists;
+        }
+
+        public void setOldRecordExists(boolean oldRecordExists) {
+            this.oldRecordExists = oldRecordExists;
         }
 
         public SchemaId getNewRecordType() {
@@ -429,6 +460,10 @@ public class RecordEvent {
 
         public void toJson(JsonGenerator gen) throws IOException {
             gen.writeStartObject();
+
+            gen.writeBooleanField("old", oldRecordExists);
+
+            gen.writeBooleanField("new", newRecordExists);
 
             if (newRecordType != null) {
                 gen.writeBinaryField("newRecordType", newRecordType.getBytes());
