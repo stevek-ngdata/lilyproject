@@ -186,13 +186,10 @@ public class IndexUpdater implements RowLogMessageListener {
                         IndexRecordFilterUtil.getOldAndNewRecordForRecordFilterEvaluation(recordId, event, repository);
                 Record oldRecord = records[0];
                 Record newRecord = records[1];
-                IndexCase caseOld = null;
-                IndexCase caseNew = null;
-                boolean doIndexing = true;
-                if (oldRecord != null && newRecord != null) {
-                    caseOld = indexer.getConf().getIndexCase(oldRecord);
-                    caseNew = indexer.getConf().getIndexCase(newRecord);
+                IndexCase caseOld = oldRecord != null ? indexer.getConf().getIndexCase(oldRecord) : null;
+                IndexCase caseNew = newRecord != null ? indexer.getConf().getIndexCase(newRecord) : null;
 
+                if (oldRecord != null && newRecord != null) {
                     if (caseOld != null && caseNew != null) {
                         Set<SchemaId> droppedVtags = new HashSet<SchemaId>(caseOld.getVersionTags());
                         droppedVtags.removeAll(caseNew.getVersionTags());
@@ -208,6 +205,7 @@ public class IndexUpdater implements RowLogMessageListener {
 
                 // This is an optimization: an IndexCase with empty vtags list means that this record is
                 // included in this index only to trigger updating of denormalized data.
+                boolean doIndexing = true;
                 if (caseNew != null) {
                     doIndexing = caseNew.getVersionTags().size() > 0;
                 } else if (caseNew == null && caseOld != null) {

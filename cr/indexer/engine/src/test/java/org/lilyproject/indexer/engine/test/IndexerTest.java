@@ -76,6 +76,7 @@ import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
@@ -88,6 +89,7 @@ import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.spi.BaseRepositoryDecorator;
 import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
@@ -122,6 +124,7 @@ public class IndexerTest {
     private static DerefMap derefMap;
     private static WriteableIndexerModel indexerModel;
     private static IndexesInfo indexesInfo;
+    private static TrackingRepository indexUpdaterRepository = new TrackingRepository();
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -186,7 +189,10 @@ public class IndexerTest {
         repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
 
         repoSetup.setupRepository(true);
+
         prematureRepository.setRepository(repoSetup.getRepository());
+        indexUpdaterRepository.setDelegate(repoSetup.getRepository());
+
         repoSetup.setupMessageQueue(false, true);
 
         repository = repoSetup.getRepository();
@@ -233,7 +239,7 @@ public class IndexerTest {
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 
-        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository,
+        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, indexUpdaterRepository,
                 indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap, "IndexUpdater"));
 
         if (indexerModel.hasIndex("test")) {
@@ -2616,6 +2622,67 @@ public class IndexerTest {
     }
 
     /**
+     * When a record is only included in an index to trigger updates of denormalized data
+     * (that is, when vtags=""), then the IndexUpdater shouldn't do any read operations
+     * on the repository.
+     */
+    @Test
+    public void testEmptyVtagsDoesNotDoRepositoryRead() throws Exception {
+        changeIndexUpdater("indexerconf_emptyvtags.xml");
+
+        messageVerifier.disable();
+
+        // reset current read count
+        indexUpdaterRepository.reads();
+
+        Record record = repository.newRecord();
+        record.setRecordType(vRecordType1.getName());
+        record.setField(vfield1.getName(), "check");
+        record.setField(vfield2.getName(), "met"); /* theme: NY museums */
+        record.setField(liveTag.getName(), 1L);
+        record.setField(latestTag.getName(), 1L);
+        record = repository.create(record);
+        commitIndex();
+
+        assertEquals(0, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:met +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:met +lily.vtag:latest", 0);
+
+        // Check this is also true for updates
+
+        record.setField(vfield2.getName(), "moma");
+        record = repository.update(record);
+        commitIndex();
+
+        assertEquals(0, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:moma +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:moma +lily.vtag:latest", 0);
+
+        // And for deletes
+
+        repository.delete(record.getId());
+        commitIndex();
+
+        assertEquals(0, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:moma +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:moma +lily.vtag:latest", 0);
+
+        // But not for records that match a rule with vtags
+
+        record = repository.newRecord();
+        record.setRecordType(vRecordType1.getName());
+        record.setField(vfield2.getName(), "met");
+        record.setField(liveTag.getName(), 1L);
+        record.setField(latestTag.getName(), 1L);
+        record = repository.create(record);
+        commitIndex();
+
+        assertEquals(1, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:met +lily.vtag:live", 1);
+        verifyResultCount("+v_field2:met +lily.vtag:latest", 1);
+    }
+
+    /**
      * This test might better fit in the indexer-model package
      */
     @Test
@@ -2948,6 +3015,22 @@ public class IndexerTest {
 
         public void reset() {
             msgCount = 0;
+        }
+    }
+
+    private static class TrackingRepository extends BaseRepositoryDecorator {
+        private int readCount;
+
+        @Override
+        public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException {
+            readCount++;
+            return super.readWithIds(recordId, version, fieldIds);
+        }
+
+        public int reads() {
+            int result = readCount;
+            readCount = 0;
+            return result;
         }
     }
 }
