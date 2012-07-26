@@ -205,7 +205,9 @@ public class RecordEvent {
     }
     
     /**
-     * Transient attributes passed on from the Record during create/update operations
+     * Transient attributes passed on from the Record during create/update operations,
+     * see also {@link Record#setAttributes(Map)}.
+     *
      * @return A map of Strings containing attributes.
      */ 
     public Map<String,String> getAttributes() {
@@ -220,7 +222,9 @@ public class RecordEvent {
     }
     
     /**
-     * Sets attributes
+     * Transient attributes passed on from the Record during create/update operations,
+     * see also {@link Record#setAttributes(Map)}.
+     *
      * @param attributes A map of Strings containing attributes.
      */
     public void setAttributes(Map<String,String> attributes) {
