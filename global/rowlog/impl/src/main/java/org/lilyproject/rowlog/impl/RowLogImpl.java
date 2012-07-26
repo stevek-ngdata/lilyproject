@@ -271,7 +271,9 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
                 // important for the MQ case and since for the MQ currently the Put is always
                 // done here, this is sufficient.
                 if (rowLogConfig.isEnableNotify()) {
-                    processorNotifier.notifyProcessor(id);
+                    for (RowLogSubscription subscription : subscriptions) {
+                        processorNotifier.notifyProcessor(subscription.getRowLogId(), subscription.getId());
+                    }
                 }
             }
 

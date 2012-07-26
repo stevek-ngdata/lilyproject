@@ -167,14 +167,14 @@ public interface RowLogConfigurationManager {
     void removeListenersObserver(String rowLogId, String subscriptionId, ListenersObserver observer);
 
     /**
-     * Add a new {@link ProcessorNotifyObserver}.
+     * Set the {@link ProcessorNotifyObserver} for a particular rowlog subscription.
      */
-    void addProcessorNotifyObserver(String rowLogId, ProcessorNotifyObserver observer);
+    void setProcessorNotifyObserver(String rowLogId, String subscriptionId, ProcessorNotifyObserver observer);
     
     /**
      * Removes a {@link ProcessorNotifyObserver} from the configuration manager. 
      */
-    void removeProcessorNotifyObserver(String rowLogId);
+    void removeProcessorNotifyObserver(String rowLogId, String subscriptionId);
     
     /**
      *
@@ -204,10 +204,10 @@ public interface RowLogConfigurationManager {
     List<String> getListeners(final String rowLogId, final String subscriptionId) throws KeeperException, InterruptedException;
     
     /**
-     * Notify the processor that a new message has been put on the rowlog.
+     * Notify the processor that a new message has been put on the rowlog for the given subscription.
      * <p>If the processor was in a wait mode, it will wake up and check the rowlog for new messages.
      */
-	void notifyProcessor(String rowLogId)
+	void notifyProcessor(String rowLogId, String subscriptionId)
 			throws InterruptedException, KeeperException;
 
 }
