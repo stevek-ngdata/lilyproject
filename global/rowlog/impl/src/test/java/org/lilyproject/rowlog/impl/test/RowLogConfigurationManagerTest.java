@@ -309,7 +309,11 @@ public class RowLogConfigurationManagerTest {
         callBack1Sub2.validate();
         callBack2Sub1.validate();
 
+        callBack1Sub1.expect(false);
+        callBack1Sub2.expect(true);
         rowLogConfigurationManager.setProcessorNotifyObserver(rowLogId1, subscriptionId2, callBack1Sub2);
+        callBack1Sub1.validate();
+        callBack1Sub2.validate();
 
         callBack1Sub1.expect(false);
         callBack1Sub2.expect(false);
