@@ -59,7 +59,7 @@
               <outputDirectory>${basedir}/target/classes/KAURI-INF/conf</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${basedir}/../conf/avro</directory>
+                  <directory>${basedir}/../conf/rpc</directory>
                   <filtering>false</filtering>
                 </resource>
               </resources>

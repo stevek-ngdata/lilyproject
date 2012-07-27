@@ -65,8 +65,8 @@
     </constructor-arg>
     <constructor-arg ref="repository"/>
     <constructor-arg ref="indexer"/>
-    <constructor-arg value="${avro:port}"/>
-    <constructor-arg value="${avro:maxServerThreads}"/>
+    <constructor-arg value="${rpc:port}"/>
+    <constructor-arg value="${rpc:maxServerThreads}"/>
   </bean>
 
   <bean id="zkPublisher" class="org.lilyproject.avro.ZKPublisher">

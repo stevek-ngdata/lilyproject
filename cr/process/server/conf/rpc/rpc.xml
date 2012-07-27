@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<avro xmlns:conf="http://kauriproject.org/configuration"
+<rpc xmlns:conf="http://kauriproject.org/configuration"
       conf:inherit="deep">
 
   <!-- Port on which to bind the avro server, 0 will bind to an ephemeral port. -->
@@ -9,4 +9,4 @@
        Set to -1 for unbounded. -->
   <maxServerThreads>35</maxServerThreads>
 
-</avro>
+</rpc>
