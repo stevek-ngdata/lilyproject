@@ -4,10 +4,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.Record;
@@ -33,25 +29,8 @@ public class ForwardVariantFollow implements Follow {
         return dimensions;
     }
 
-    public Map<String, String> getValuedDimensions() {
-        return Maps.filterValues(dimensions, new Predicate<String>() {
-            @Override
-            public boolean apply(@Nullable String input) {
-                return input != null;
-            }
-        });
-    }
-
-    public Set<String> getFreeDimensions() {
-        return Maps.filterValues(dimensions, new Predicate<String>() {
-            @Override
-            public boolean apply(@Nullable String input) {
-                return input == null;
-            }
-        }).keySet();
-    }
-
-    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback) throws RepositoryException, InterruptedException {
+    public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback)
+            throws RepositoryException, InterruptedException {
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
         Set<String> currentDimensions = Sets.newHashSet(ctx.dep.vprops);
         currentDimensions.addAll(ctx.dep.id.getVariantProperties().keySet());
