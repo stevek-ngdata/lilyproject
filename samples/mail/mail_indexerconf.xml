@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <indexer xmlns:m="org.lilyproject.mail">
-  <records>
-    <record matchNamespace="m" matchName="Part" matchVariant="*" vtags="last"/>
-  </records>
+  <recordFilter>
+    <includes>
+      <include recordType="m:Part" vtags="last"/>
+      <include recordType="m:Message" vtags=""/>
+    </includes>
+  </recordFilter>
 
   <fields>
     <field name="content" value="m:content" extractContent="true"/>

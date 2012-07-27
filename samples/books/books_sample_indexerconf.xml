@@ -1,8 +1,18 @@
 <?xml version="1.0"?>
 <indexer xmlns:b="org.lilyproject.bookssample">
-  <records>
-    <record matchNamespace="b" matchName="Book" matchVariant="*" vtags="last"/>
-  </records>
+  <recordFilter>
+    <includes>
+      <include recordType="b:Book" vtags="last"/>
+
+      <!-- Authors are not indexed, but need to be matched by this
+           indexer's record filter anyway. This is because when an
+           Author is updated, a Book might need re-indexing. By using
+           an empty vtags attribute, we indicate the Author records
+           themselves do not need to be indexed.
+           -->
+      <include recordType="b:Author" vtags=""/>
+    </includes>
+  </recordFilter>
 
   <fields>
     <field name="title" value="b:title"/>
