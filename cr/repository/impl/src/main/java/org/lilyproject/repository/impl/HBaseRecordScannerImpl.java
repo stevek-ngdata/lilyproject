@@ -7,7 +7,7 @@ import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 
 /**
- * @author Jan Van Besien
+ *
  */
 public class HBaseRecordScannerImpl extends AbstractHBaseRecordScanner<Record> implements RecordScanner {
 

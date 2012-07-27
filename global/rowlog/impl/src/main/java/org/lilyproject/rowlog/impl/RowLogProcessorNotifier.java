@@ -16,9 +16,9 @@
 package org.lilyproject.rowlog.impl;
 
 import com.google.common.base.Function;
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
@@ -26,35 +26,35 @@ import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.util.io.Closer;
 
 public class RowLogProcessorNotifier {
-    private RowLogConfigurationManager rowLogConfigurationManager;
+    private RowLogConfigurationManager rowLogConfMgr;
     private Log log = LogFactory.getLog(getClass());
-    private Cache<String, Triggerable> triggerables;
+    private LoadingCache<SubscriptionKey, Triggerable> triggerables;
 
     public RowLogProcessorNotifier(RowLogConfigurationManager rowLogConfigurationManager, final long delay) {
-        this.rowLogConfigurationManager = rowLogConfigurationManager;
+        this.rowLogConfMgr = rowLogConfigurationManager;
 
-        this.triggerables = CacheBuilder.newBuilder().build(CacheLoader.from(new Function<String, Triggerable>() {
+        this.triggerables = CacheBuilder.newBuilder().build(CacheLoader.from(new Function<SubscriptionKey, Triggerable>() {
             @Override
-            public Triggerable apply(final String rowLogId) {
+            public Triggerable apply(final SubscriptionKey subscriptionKey) {
                 return new BufferedTriggerable(new Triggerable() {
                     @Override
                     public void trigger() throws InterruptedException {
-                        sendNotification(rowLogId);
+                        sendNotification(subscriptionKey);
                     }
                 }, delay);
             }
         }));
     }
 
-    protected void notifyProcessor(final String rowLogId) throws InterruptedException {
-        triggerables.getUnchecked(rowLogId).trigger();
+    protected void notifyProcessor(String rowLogId, String subscriptionId) throws InterruptedException {
+        triggerables.getUnchecked(new SubscriptionKey(rowLogId, subscriptionId)).trigger();
     }
 
-	private void sendNotification(String rowLogId) throws InterruptedException {
+	private void sendNotification(SubscriptionKey subscriptionKey) throws InterruptedException {
 		try {
-			rowLogConfigurationManager.notifyProcessor(rowLogId);
+			rowLogConfMgr.notifyProcessor(subscriptionKey.getRowLogId(), subscriptionKey.getSubscriptionId());
 		} catch (KeeperException e) {
-			log.debug("Exception while notifying processor of rowLog '" + rowLogId + "'", e);
+			log.debug("Exception while notifying processor for rowlog subscription " + subscriptionKey, e);
 		}
     }
     

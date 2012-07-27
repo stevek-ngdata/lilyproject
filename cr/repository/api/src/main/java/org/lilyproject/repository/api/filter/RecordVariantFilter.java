@@ -10,7 +10,7 @@ import org.lilyproject.repository.api.RecordId;
  * value of the variant property is specified, it has to match exactly. If the value is <code>null</code>, any value
  * will match.
  *
- * @author Jan Van Besien
+ *
  */
 public class RecordVariantFilter implements RecordFilter {
 

@@ -27,6 +27,7 @@ import org.lilyproject.cli.BaseCliTool;
 import org.lilyproject.hadooptestfw.CleanupUtil;
 import org.lilyproject.hadooptestfw.JavaLoggingToLog4jRedirector;
 import org.lilyproject.lilyservertestfw.TemplateDir;
+import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 
@@ -321,14 +322,11 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             cleanupUtil.cleanBlobStore(new URI(dfsUri));
 
             // Clear Solr state
-            int response = sendSolrUpdateRequest("<update><delete><query>*:*</query></delete><commit/></update>");
-            if (response != 200) {
-                throw new RuntimeException("Solr delete all docs: expected 200 status but it is " + response);
-            }
+            clearSolrState();
 
             // The following is useful to observer what threads were not stopped properly after stopping Lily
             if (System.getProperty("lily.launcher.threaddump-after-lily-stop") != null) {
-                ReflectionUtils.printThreadInfo(new PrintWriter("launcher-threadump-after-lily-stop"), "Thread dump");
+                ReflectionUtils.printThreadInfo(new PrintWriter("launcher-threaddump-after-lily-stop"), "Thread dump");
             }
 
             // Start Lily
@@ -345,8 +343,18 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         }
     }
 
-    private int sendSolrUpdateRequest(String request) throws IOException {
-        URL url = new URL("http://localhost:8983/solr/update");
+    private void clearSolrState() throws Exception {
+        for (String core : SolrProxy.getSolrCoreNames()) {
+            int response = sendSolrUpdateRequest("<update><delete><query>*:*</query></delete><commit/></update>", core);
+            if (response != 200) {
+                throw new RuntimeException("Solr delete all docs on core " + core +
+                        ": expected 200 status but it is " + response);
+            }
+        }
+    }
+
+    private int sendSolrUpdateRequest(String request, String core) throws IOException {
+        URL url = new URL("http://localhost:8983/solr/" + core + "/update");
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", "text/xml");

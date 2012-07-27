@@ -15,16 +15,14 @@
  */
 package org.lilyproject.indexer.engine;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.SolrParams;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 
 public class SolrClientImpl implements SolrClient {
 

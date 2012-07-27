@@ -7,7 +7,7 @@ import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 
 /**
- * @author Jan Van Besien
+ *
  */
 public class HBaseIdRecordScannerImpl extends AbstractHBaseRecordScanner<IdRecord> implements IdRecordScanner {
 

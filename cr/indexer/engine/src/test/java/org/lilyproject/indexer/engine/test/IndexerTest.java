@@ -25,11 +25,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.thirdparty.guava.common.collect.Maps;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
@@ -42,35 +47,50 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.lilyproject.hadooptestfw.TestHelper;
-import org.lilyproject.hbaseindex.IndexManager;
+import org.lilyproject.indexer.derefmap.DerefMap;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
 import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
 import org.lilyproject.indexer.engine.SolrClientException;
-import org.lilyproject.indexer.engine.SolrShardManager;
+import org.lilyproject.indexer.engine.SolrShardManagerImpl;
+import org.lilyproject.indexer.integration.IndexRecordFilterHook;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.DerefValue;
+import org.lilyproject.indexer.model.indexerconf.Follow;
+import org.lilyproject.indexer.model.indexerconf.ForwardVariantFollow;
 import org.lilyproject.indexer.model.indexerconf.IndexField;
+import org.lilyproject.indexer.model.indexerconf.IndexFields;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
-import org.lilyproject.linkindex.LinkIndex;
-import org.lilyproject.linkindex.LinkIndexUpdater;
+import org.lilyproject.indexer.model.indexerconf.MappingNode;
+import org.lilyproject.indexer.model.indexerconf.VariantFollow;
+import org.lilyproject.indexer.model.util.IndexesInfo;
+import org.lilyproject.indexer.model.util.IndexesInfoImpl;
 import org.lilyproject.repository.api.Blob;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.HierarchyPath;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.Link;
 import org.lilyproject.repository.api.QName;
 import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordBuilder;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.RecordType;
 import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.repository.api.Scope;
 import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.repository.api.ValueType;
+import org.lilyproject.repository.spi.BaseRepositoryDecorator;
+import org.lilyproject.repository.spi.RecordUpdateHook;
 import org.lilyproject.repotestfw.RepositorySetup;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
 import org.lilyproject.rowlog.api.RowLogException;
@@ -78,7 +98,10 @@ import org.lilyproject.rowlog.api.RowLogMessage;
 import org.lilyproject.rowlog.api.RowLogMessageListener;
 import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
 import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.solrtestfw.SolrDefinition;
 import org.lilyproject.solrtestfw.SolrTestingUtility;
+import org.lilyproject.util.repo.PrematureRepository;
+import org.lilyproject.util.repo.PrematureRepositoryImpl;
 import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.VersionTag;
 
@@ -97,8 +120,11 @@ public class IndexerTest {
     private static Repository repository;
     private static TypeManager typeManager;
     private static IdGenerator idGenerator;
-    private static SolrShardManager solrShardManager;
-    private static LinkIndex linkIndex;
+    private static SolrShardManagerImpl solrShardManager;
+    private static DerefMap derefMap;
+    private static WriteableIndexerModel indexerModel;
+    private static IndexesInfo indexesInfo;
+    private static TrackingRepository indexUpdaterRepository = new TrackingRepository();
 
     private static FieldType nvTag;
     private static FieldType liveTag;
@@ -112,7 +138,9 @@ public class IndexerTest {
     private static FieldType nvLinkField2;
 
     private static FieldType vfield1;
+    private static FieldType vfield2;
     private static FieldType vLinkField1;
+    private static FieldType vLinkField2;
 
     private static FieldType vStringMvField;
     private static FieldType vLongField;
@@ -131,50 +159,64 @@ public class IndexerTest {
     private static Log log = LogFactory.getLog(IndexerTest.class);
 
     private static MessageVerifier messageVerifier = new MessageVerifier();
+    private static OtherListener otherListener = new OtherListener();
+
     private static RecordType nvRecordType1;
     private static RecordType vRecordType1;
     private static RecordType lastRecordType;
 
+    private static Map<String, FieldType> fields = Maps.newHashMap();
+    private Map<String, Integer> matchResultCounts = Maps.newHashMap();
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         SOLR_TEST_UTIL = new SolrTestingUtility();
-        SOLR_TEST_UTIL.setSchemaData(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml")));
+        SOLR_TEST_UTIL.setSolrDefinition(
+                new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.linkindex",
-                "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
 
         SOLR_TEST_UTIL.start();
 
         repoSetup.setupCore();
+
+        indexerModel = new IndexerModelImpl(repoSetup.getZk());
+        PrematureRepository prematureRepository = new PrematureRepositoryImpl();
+
+        indexesInfo = new IndexesInfoImpl(indexerModel, prematureRepository);
+        RecordUpdateHook hook = new IndexRecordFilterHook(indexesInfo);
+
+        repoSetup.setRecordUpdateHooks(Collections.singletonList(hook));
+
         repoSetup.setupRepository(true);
+
+        prematureRepository.setRepository(repoSetup.getRepository());
+        indexUpdaterRepository.setDelegate(repoSetup.getRepository());
+
         repoSetup.setupMessageQueue(false, true);
 
         repository = repoSetup.getRepository();
         typeManager = repoSetup.getTypeManager();
         idGenerator = repository.getIdGenerator();
 
-        IndexManager indexManager = new IndexManager(repoSetup.getHadoopConf());
-
-        linkIndex = new LinkIndex(indexManager, repository);
-
         // Field types should exist before the indexer conf is loaded
         setupSchema();
 
         RowLogConfigurationManager rowLogConfMgr = repoSetup.getRowLogConfManager();
-        rowLogConfMgr.addSubscription("WAL", "LinkIndexUpdater", RowLogSubscription.Type.VM, 1);
         rowLogConfMgr.addSubscription("WAL", "MessageVerifier", RowLogSubscription.Type.VM, 2);
 
-        repoSetup.waitForSubscription(repoSetup.getWal(), "LinkIndexUpdater");
         repoSetup.waitForSubscription(repoSetup.getWal(), "MessageVerifier");
 
         rowLogConfMgr.addSubscription("MQ", "IndexUpdater", RowLogSubscription.Type.VM, 1);
+        rowLogConfMgr.addSubscription("MQ", "OtherListener", RowLogSubscription.Type.VM, 2);
 
         repoSetup.waitForSubscription(repoSetup.getMq(), "IndexUpdater");
+        repoSetup.waitForSubscription(repoSetup.getMq(), "OtherListener");
 
-        solrShardManager = SolrShardManager.createForOneShard(SOLR_TEST_UTIL.getUri());
+        solrShardManager = SolrShardManagerImpl.createForOneShard(SOLR_TEST_UTIL.getUri());
 
-        RowLogMessageListenerMapping.INSTANCE.put("LinkIndexUpdater", new LinkIndexUpdater(repository, linkIndex));
         RowLogMessageListenerMapping.INSTANCE.put("MessageVerifier", messageVerifier);
+        RowLogMessageListenerMapping.INSTANCE.put("OtherListener", otherListener);
     }
 
     @AfterClass
@@ -187,12 +229,41 @@ public class IndexerTest {
 
     public static void changeIndexUpdater(String confName) throws Exception {
         INDEXER_CONF = IndexerConfBuilder.build(IndexerTest.class.getResourceAsStream(confName), repository);
-        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), true);
-        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
-                new IndexerMetrics("test"));
+        IndexLocker indexLocker = new IndexLocker(repoSetup.getZk(), false);
 
-        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, repository, linkIndex,
-                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test")));
+        Configuration hbaseConf = repoSetup.getHadoopConf();
+        if (derefMap != null) {
+            DerefMapHbaseImpl.delete("test", hbaseConf);
+        }
+        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, repository.getIdGenerator());
+        Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
+                new IndexerMetrics("test"), derefMap);
+
+        RowLogMessageListenerMapping.INSTANCE.put("IndexUpdater", new IndexUpdater(indexer, indexUpdaterRepository,
+                indexLocker, repoSetup.getMq(), new IndexUpdaterMetrics("test"), derefMap, "IndexUpdater"));
+
+        if (indexerModel.hasIndex("test")) {
+            indexerModel.deleteIndex("test");
+        }
+        waitForIndexesInfoUpdate(0);
+
+        // The registration of the index into the IndexerModel is only needed for the IndexRecordFilterHook
+        IndexDefinition indexDef = indexerModel.newIndex("test");
+        indexDef.setConfiguration(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream(confName)));
+        indexDef.setSolrShards(Collections.singletonMap("shard1", "http://somewhere/"));
+        indexerModel.addIndex(indexDef);
+        waitForIndexesInfoUpdate(1);
+    }
+
+    protected static void waitForIndexesInfoUpdate(int expectedCount) throws InterruptedException {
+        // IndexesInfo will be updated asynchronously: wait for that to happen
+        long now = System.currentTimeMillis();
+        while (indexesInfo.getIndexInfos().size() != expectedCount) {
+            if (System.currentTimeMillis() - now > 10000) {
+                fail("IndexesInfo was not updated within the expected timeout.");
+            }
+            Thread.sleep(20);
+        }
     }
 
     private static void setupSchema() throws Exception {
@@ -256,13 +327,7 @@ public class IndexerTest {
         nvLinkField2 = typeManager.createFieldType(nvLinkField2);
 
         nvRecordType1 = typeManager.newRecordType(new QName(NS, "NVRecordType1"));
-        nvRecordType1.addFieldTypeEntry(nvfield1.getId(), false);
-        nvRecordType1.addFieldTypeEntry(nvfield2.getId(), false);
-        nvRecordType1.addFieldTypeEntry(liveTag.getId(), false);
-        nvRecordType1.addFieldTypeEntry(latestTag.getId(), false);
-        nvRecordType1.addFieldTypeEntry(previewTag.getId(), false);
-        nvRecordType1.addFieldTypeEntry(nvLinkField1.getId(), false);
-        nvRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
+        addNvFieldTypes(nvRecordType1);
         nvRecordType1 = typeManager.createRecordType(nvRecordType1);
 
         //
@@ -272,9 +337,17 @@ public class IndexerTest {
         vfield1 = typeManager.newFieldType(stringValueType, vfield1Name, Scope.VERSIONED);
         vfield1 = typeManager.createFieldType(vfield1);
 
+        QName vfield2Name = new QName(NS2, "v_field2");
+        vfield2 = typeManager.newFieldType(stringValueType, vfield2Name, Scope.VERSIONED);
+        vfield2 = typeManager.createFieldType(vfield2);
+
         QName vlinkField1Name = new QName(NS2, "v_linkfield1");
         vLinkField1 = typeManager.newFieldType(linkValueType, vlinkField1Name, Scope.VERSIONED);
         vLinkField1 = typeManager.createFieldType(vLinkField1);
+
+        QName vlinkField2Name = new QName(NS2, "v_linkfield2");
+        vLinkField2 = typeManager.newFieldType(linkValueType, vlinkField2Name, Scope.VERSIONED);
+        vLinkField2 = typeManager.createFieldType(vLinkField2);
 
         QName vStringMvFieldName = new QName(NS2, "v_string_mv_field");
         vStringMvField = typeManager.newFieldType(stringMvValueType, vStringMvFieldName, Scope.VERSIONED);
@@ -309,20 +382,7 @@ public class IndexerTest {
         vIntHierField = typeManager.createFieldType(vIntHierField);
 
         vRecordType1 = typeManager.newRecordType(new QName(NS2, "VRecordType1"));
-        vRecordType1.addFieldTypeEntry(vfield1.getId(), false);
-        vRecordType1.addFieldTypeEntry(liveTag.getId(), false);
-        vRecordType1.addFieldTypeEntry(latestTag.getId(), false);
-        vRecordType1.addFieldTypeEntry(previewTag.getId(), false);
-        vRecordType1.addFieldTypeEntry(vLinkField1.getId(), false);
-        vRecordType1.addFieldTypeEntry(nvLinkField2.getId(), false);
-        vRecordType1.addFieldTypeEntry(vStringMvField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vLongField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vBlobField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vBlobMvHierField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vBlobNestedField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vDateTimeField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vDateField.getId(), false);
-        vRecordType1.addFieldTypeEntry(vIntHierField.getId(), false);
+        addVFieldTypes(vRecordType1);
         vRecordType1 = typeManager.createRecordType(vRecordType1);
 
         //
@@ -332,6 +392,341 @@ public class IndexerTest {
         lastRecordType.addFieldTypeEntry(vfield1.getId(), false);
         lastRecordType.addFieldTypeEntry(nvfield1.getId(), false);
         lastRecordType = typeManager.createRecordType(lastRecordType);
+
+        //
+        // Schema types for testing <match> and <foreach>
+        //
+        for (int i = 1; i <= 6; i++) {
+            typeManager.fieldTypeBuilder().name(new QName(NS, "nvmatch" + i))
+                    .scope(Scope.NON_VERSIONED)
+                    .type("STRING").create();
+            typeManager.fieldTypeBuilder().name(new QName(NS2, "match" + i))
+                    .scope(Scope.VERSIONED)
+                    .type("STRING").create();
+        }
+        for (QName name : new QName[]{new QName(NS, "Alpha"), new QName(NS, "Beta"), new QName(NS2, "Alpha"),
+                new QName(NS2, "Beta")}) {
+            RecordType recordType = typeManager.newRecordType(name);
+            addNvFieldTypes(recordType);
+            addVFieldTypes(recordType);
+            for (int i = 1; i <= 6; i++) {
+                recordType
+                        .addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS, "nvmatch" + i)).getId(), false);
+                recordType
+                        .addFieldTypeEntry(typeManager.getFieldTypeByName(new QName(NS2, "match" + i)).getId(), false);
+            }
+            typeManager.createRecordType(recordType);
+        }
+
+    }
+
+    private static void addVFieldTypes(RecordType recordType) {
+        recordType.addFieldTypeEntry(vfield1.getId(), false);
+        recordType.addFieldTypeEntry(liveTag.getId(), false);
+        recordType.addFieldTypeEntry(latestTag.getId(), false);
+        recordType.addFieldTypeEntry(previewTag.getId(), false);
+        recordType.addFieldTypeEntry(vLinkField1.getId(), false);
+        recordType.addFieldTypeEntry(nvLinkField2.getId(), false);
+        recordType.addFieldTypeEntry(vStringMvField.getId(), false);
+        recordType.addFieldTypeEntry(vLongField.getId(), false);
+        recordType.addFieldTypeEntry(vBlobField.getId(), false);
+        recordType.addFieldTypeEntry(vBlobMvHierField.getId(), false);
+        recordType.addFieldTypeEntry(vBlobNestedField.getId(), false);
+        recordType.addFieldTypeEntry(vDateTimeField.getId(), false);
+        recordType.addFieldTypeEntry(vDateField.getId(), false);
+        recordType.addFieldTypeEntry(vIntHierField.getId(), false);
+    }
+
+    private static void addNvFieldTypes(RecordType recordType) {
+        recordType.addFieldTypeEntry(nvfield1.getId(), false);
+        recordType.addFieldTypeEntry(nvfield2.getId(), false);
+        recordType.addFieldTypeEntry(liveTag.getId(), false);
+        recordType.addFieldTypeEntry(latestTag.getId(), false);
+        recordType.addFieldTypeEntry(previewTag.getId(), false);
+        recordType.addFieldTypeEntry(nvLinkField1.getId(), false);
+        recordType.addFieldTypeEntry(nvLinkField2.getId(), false);
+    }
+
+    @Test
+    public void testForEach() throws Exception {
+        changeIndexUpdater("indexerconf_match.xml");
+        messageVerifier.disable();
+
+        //
+        // Test ForEach
+        //
+        repository.recordBuilder()
+                .id(repository.getIdGenerator().newRecordId("product29485"))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "29485")
+                .create();
+
+        repository.recordBuilder()
+                .id(repository.getIdGenerator()
+                        .newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "louche")
+                .field(nvfield2.getName(), "10")
+                .create();
+
+        repository.recordBuilder()
+                .id(repository.getIdGenerator()
+                        .newRecordId("product29485", Collections.singletonMap("country", "belgium")))
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "schuimspaan")
+                .field(nvfield2.getName(), "11")
+                .create();
+
+        commitIndex();
+
+        verifyResultCount("product_description_france_string:louche", 1);
+        verifyResultCount("product_price_france_string:10", 1);
+
+        // update the price in france:
+        repository.recordBuilder()
+                .id(repository.getIdGenerator()
+                        .newRecordId("product29485", Collections.singletonMap("country", "france")))
+                .field(nvfield2.getName(), "12")
+                .update();
+
+        commitIndex();
+
+        verifyResultCount("product_price_france_string:12", 1);
+
+    }
+
+    @Test
+    public void testMatch() throws Exception {
+        changeIndexUpdater("indexerconf_match.xml");
+
+        // disabling since we are not verifying the messages
+        messageVerifier.disable();
+
+        //
+        // Test Match
+        //
+        log.debug("Begin test match");
+        createMatchTestRecord(NS, "Alpha", "alpha");
+        createMatchTestRecord(NS, "Beta", "beta");
+        createMatchTestRecord(NS2, "Alpha", "gamma");
+        createMatchTestRecord(NS2, "Beta", "delta");
+
+        // Initialise a map containing all the expected result counts (2, since we have 'last' and 'preview')
+        setExpectedCountsForMatch("nvmatch1", 2, 2, 2, 2, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("nvmatch2", 2, 2, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("nvmatch3", 2, 0, 2, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("nvmatch4", 2, 0, 0, 0, 0, 0, 0, 0); // ns:Alpha
+
+        setExpectedCountsForMatch("match1", 2, 2, 2, 2, 0, 0, 0, 0); // all
+        setExpectedCountsForMatch("match2", 2, 2, 0, 0, 0, 0, 0, 0); // ns:*
+        setExpectedCountsForMatch("match3", 2, 0, 2, 0, 0, 0, 0, 0); // *:Alpha
+        setExpectedCountsForMatch("match4", 2, 0, 0, 0, 0, 0, 0, 0); // ns:Alpha
+
+        verifyMatchResultCounts();
+
+        // Update non-versioned fields
+        updateMatchTestRecords(new QName(NS, "nvmatch1"), "nvmatch1");
+        setExpectedCountsForMatch("nvmatch1", 0, 0, 0, 0, 2, 2, 2, 2);
+        verifyMatchResultCounts();
+        updateMatchTestRecords(new QName(NS, "nvmatch2"), "nvmatch2");
+        setExpectedCountsForMatch("nvmatch2", 0, 0, 0, 0, 2, 2, 0, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords(new QName(NS, "nvmatch3"), "nvmatch3");
+        setExpectedCountsForMatch("nvmatch3", 0, 0, 0, 0, 2, 0, 2, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords(new QName(NS, "nvmatch4"), "nvmatch4");
+        setExpectedCountsForMatch("nvmatch4", 0, 0, 0, 0, 2, 0, 0, 0);
+        verifyMatchResultCounts();
+
+        // Update versioned fields
+        updateMatchTestRecords(new QName(NS2, "match1"), "match1");
+        setExpectedCountsForMatch("match1", 1, 1, 1, 1, 1, 1, 1, 1);
+        verifyMatchResultCounts();
+        updateMatchTestRecords(new QName(NS2, "match2"), "match2");
+        setExpectedCountsForMatch("match2", 1, 1, 0, 0, 1, 1, 0, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords(new QName(NS2, "match3"), "match3");
+        setExpectedCountsForMatch("match3", 1, 0, 1, 0, 1, 0, 1, 0);
+        verifyMatchResultCounts();
+        updateMatchTestRecords(new QName(NS2, "match4"), "match4");
+        setExpectedCountsForMatch("match4", 1, 0, 0, 0, 1, 0, 0, 0);
+        verifyMatchResultCounts();
+
+        //
+        // Test match on field conditions using non versioned fields
+        // Note: the lines marked with /*hasfield*/ test for a feature we don't support yet, hence commented out
+        //
+        repository.recordBuilder().id("match_nvfield")
+                .recordType(new QName(NS, "Alpha"))
+                .field(nvfield1.getName(), "jupiter")
+                .field(nvfield2.getName(), "pancake")
+                .field(previewTag.getName(), new Long(0))
+                .create();
+
+        commitIndex();
+
+        /*hasfield*/// verifyResultCount("nvmatch5:jupiter", 2); // vfield2 is present
+        verifyResultCount("nvmatch6:jupiter", 2); // nvfield2=specialvalue
+
+        repository.recordBuilder().id("match_nvfield")
+                .field(nvfield1.getName(), "waffle")
+                .update();
+
+        commitIndex();
+
+        verifyResultCount("nvmatch6:jupiter", 0); // nvfield2=specialvalue
+
+        /*hasfield*/// verifyResultCount("nvmatch5:jupiter", 2); // nvfield2 is present
+        /*hasfield*/// Record record = repository.read(repository.getIdGenerator().newRecordId("match_nvfield"));
+        /*hasfield*/// record.delete(nvfield2.getName(), true);
+
+        /*hasfield*/// commitIndex();
+        /*hasfield*/// verifyResultCount("nvmatch5:jupiter", 0); // nvfield2 is present
+        /*hasfield*/// verifyResultCount("nvmatch6:jupiter", 0); // nvfield2=specialvalue
+
+        //
+        // Test match on field conditions (has field, field equals) using non versioned fields
+        //
+        repository.recordBuilder().id("match_vfield")
+                .recordType(new QName(NS, "Alpha"))
+                .field(vfield1.getName(), "apollo")
+                .field(vfield2.getName(), "bacon")
+                .field(previewTag.getName(), new Long(1))
+                .create();
+
+        commitIndex();
+        /*hasfield*/// verifyResultCount("match5:apollo", 2); // vfield2 is present
+        verifyResultCount("match6:apollo", 2); // vfield2=specialvalue
+
+        repository.recordBuilder().id("match_vfield")
+                .field(vfield1.getName(), "eggs")
+                .update();
+
+        commitIndex();
+
+        /*hasfield*/// verifyResultCount("match5:apollo", 2); // vfield2 is present in preview and last
+        verifyResultCount("match6:apollo", 1); // vfield2=specialvalue (version tagged with preview still matches)
+
+        /*hasfield*/// record = repository.read(repository.getIdGenerator().newRecordId("match_vfield"));
+        /*hasfield*/// record.delete(vfield2.getName(), true);
+
+        /*hasfield*/// commitIndex();
+        /*hasfield*/// verifyResultCount("match5:apollo", 1); // vfield2 is present
+        /*hasfield*/// verifyResultCount("match6:apollo", 1); // vfield2=specialvalue
+
+        //
+        // TODO: match on variant properties
+        //
+        for (String lang : new String[]{"en", "fr"}) {
+            repository.recordBuilder().id("match_varprops_cupid", vprops("lang", lang))
+                    .recordType(new QName(NS, "Alpha"))
+                    .field(vfield1.getName(), "cupido_" + lang + "_nobranch")
+                    .create();
+
+            repository.recordBuilder().id("match_varprops_merc", vprops("lang", lang))
+                    .recordType(new QName(NS, "Alpha"))
+                    .field(nvfield1.getName(), "mercurius_" + lang + "_nobranch")
+                    .create();
+
+            for (String branch : new String[]{"dev", "prod"}) {
+                repository.recordBuilder().id("match_varprops_cupid", vprops("lang", lang, "branch", branch))
+                        .recordType(new QName(NS, "Alpha"))
+                        .field(vfield1.getName(), "cupido_" + lang + "_" + branch)
+                        .create();
+                repository.recordBuilder().id("match_varprops_merc", vprops("lang", lang, "branch", branch))
+                        .recordType(new QName(NS, "Alpha"))
+                        .field(nvfield1.getName(), "mercurius_" + lang + "_" + branch)
+                        .create();
+            }
+        }
+        commitIndex();
+
+        verifyResultCount("match7:cupido_en_nobranch", 0);
+        verifyResultCount("match7:cupido_en_dev", 1);
+        verifyResultCount("match7:cupido_en_prod", 1);
+        verifyResultCount("match7:cupido_fr_nobranch", 0);
+        verifyResultCount("match7:cupido_fr_dev", 0);
+        verifyResultCount("match7:cupido_fr_prod", 0);
+
+        verifyResultCount("nvmatch7:mercurius_en_nobranch", 0);
+        verifyResultCount("nvmatch7:mercurius_en_dev", 1);
+        verifyResultCount("nvmatch7:mercurius_en_prod", 1);
+        verifyResultCount("nvmatch7:mercurius_fr_nobranch", 0);
+        verifyResultCount("nvmatch7:mercurius_fr_dev", 0);
+        verifyResultCount("nvmatch7:mercurius_fr_prod", 0);
+    }
+
+    private Map<String, String> vprops(String... args) {
+        Map<String, String> result = Maps.newHashMap();
+        for (int i = 0; i < args.length; i += 2) {
+            result.put(args[i], args[i + 1]);
+        }
+        return result;
+    }
+
+    private void verifyMatchResultCounts() throws Exception {
+        List<String> results = Lists.newArrayList();
+        boolean allOk = true;
+
+        commitIndex();
+        for (String condition : matchResultCounts.keySet()) {
+            Integer expected = matchResultCounts.get(condition);
+            long numFound = getQueryResponse(condition).getResults().getNumFound();
+            if (numFound == expected.longValue()) {
+                results.add("OK: " + condition + " => " + expected);
+            } else {
+                results.add("ERROR: " + condition + " => " + numFound + " in stead of " + expected);
+                allOk = false;
+            }
+        }
+
+        if (!allOk) {
+            fail(Joiner.on("\n").join(results));
+        }
+    }
+
+    private void updateMatchTestRecords(QName lilyField, String solrField)
+            throws InterruptedException, RepositoryException {
+        for (String id : new String[]{"alpha", "beta", "gamma", "delta"}) {
+            repository.recordBuilder()
+                    .id(repository.getIdGenerator().newRecordId(id))
+                    .field(lilyField, id + "_" + solrField + "_updated")
+                    .field(previewTag.getName(), new Long(1))
+                    .update();
+        }
+    }
+
+    private void setExpectedCountsForMatch(String indexField, int... counts) {
+        matchResultCounts.put(indexField + ":alpha_" + indexField + "_orig", counts[0]);
+        matchResultCounts.put(indexField + ":beta_" + indexField + "_orig", counts[1]);
+        matchResultCounts.put(indexField + ":gamma_" + indexField + "_orig", counts[2]);
+        matchResultCounts.put(indexField + ":delta_" + indexField + "_orig", counts[3]);
+        matchResultCounts.put(indexField + ":alpha_" + indexField + "_updated", counts[4]);
+        matchResultCounts.put(indexField + ":beta_" + indexField + "_updated", counts[5]);
+        matchResultCounts.put(indexField + ":gamma_" + indexField + "_updated", counts[6]);
+        matchResultCounts.put(indexField + ":delta_" + indexField + "_updated", counts[7]);
+    }
+
+    private void createMatchTestRecord(String ns, String name, String id) throws Exception {
+        RecordBuilder builder = repository.recordBuilder();
+
+        builder.recordType(new QName(ns, name))
+                .id(id);
+
+        for (int i = 1; i <= 4; i++) {
+            builder.field(new QName(NS2, "match" + i), id + "_" + "match" + i + "_orig");
+            builder.field(new QName(NS, "nvmatch" + i), id + "_" + "nvmatch" + i + "_orig");
+        }
+        builder.field(previewTag.getName(), new Long(1));
+
+        builder.create();
+    }
+
+    @Test
+    public void changeIndexUpdaterMultipleTimes() throws Exception {
+        changeIndexUpdater("indexerconf1.xml");
+        changeIndexUpdater("indexerconf1.xml");
+        changeIndexUpdater("indexerconf1.xml");
     }
 
     @Test
@@ -505,27 +900,28 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref1:cucumber", 1);
-            verifyResultCount("nv_deref2:cucumber", 1);
-            verifyResultCount("nv_deref3:cucumber", 2);
-            verifyResultCount("nv_deref5:broccoli", 1);
-            verifyResultCount("nv_deref6:broccoli", 2);
-            verifyResultCount("nv_deref7:broccoli", 1);
+            verifyResultCount("nv_deref1:cucumber", 1); // record2[nv:linkField1] = record1
+            verifyResultCount("nv_deref2:cucumber", 1); // record4{-branch,-lang} = record1
+            verifyResultCount("nv_deref3:cucumber", 2); // record3{master} and record4{master} = record1
+            verifyResultCount("nv_deref4:eggplant", 1); // record4{-branch} = record3
+            verifyResultCount("nv_deref5:broccoli", 1); // record3{+branch} = record4
+            verifyResultCount("nv_deref6:broccoli", 2); // record1{+branch,+lang} = record4 (2 tags!)
+            verifyResultCount("nv_deref7:broccoli", 1); // record3{+branch=dev} = record4
 
-            // Update record1, check if index of the others is updated
+            // Update record1, check if the others are updated in the index
             log.debug("Begin test NV9");
             record1.setField(nvfield1.getName(), "tomato");
             expectEvent(UPDATE, record1.getId(), nvfield1.getId());
             record1 = repository.update(record1);
 
             commitIndex();
-            verifyResultCount("nv_deref1:tomato", 1);
-            verifyResultCount("nv_deref2:tomato", 1);
-            verifyResultCount("nv_deref3:tomato", 2);
-            verifyResultCount("nv_deref1:cucumber", 0);
-            verifyResultCount("nv_deref2:cucumber", 0);
-            verifyResultCount("nv_deref3:cucumber", 0);
-            verifyResultCount("nv_deref4:eggplant", 1);
+            verifyResultCount("nv_deref1:tomato", 1); // record2[ns:nvLinkField1] = record1
+            verifyResultCount("nv_deref2:tomato", 1); // record4{-branch,-lang} = record1
+            verifyResultCount("nv_deref3:tomato", 2); // record3{master} and record4{master} = record1
+            verifyResultCount("nv_deref1:cucumber", 0); // old value should be removed from index (non versioned field!)
+            verifyResultCount("nv_deref2:cucumber", 0); // old value should be removed from index (non versioned field!)
+            verifyResultCount("nv_deref3:cucumber", 0); // old value should be removed from index (non versioned field!)
+            verifyResultCount("nv_deref4:eggplant", 1); // record4(-branch) = record3
 
             // Update record3, index for record4 should be updated
             log.debug("Begin test NV10");
@@ -534,22 +930,23 @@ public class IndexerTest {
             repository.update(record3);
 
             commitIndex();
-            verifyResultCount("nv_deref4:courgette", 1);
-            verifyResultCount("nv_deref4:eggplant", 0);
+            verifyResultCount("nv_deref4:courgette", 1); // record4(-branch) = record3
+            verifyResultCount("nv_deref4:eggplant", 0); // old value should be removed from index (non versioned field!)
 
             // Update record4, index for record3 and record1 should be updated
             log.debug("Begin test NV10.1");
-            record4.setField(nvfield1.getName(), "courgette");
+            record4.setField(nvfield1.getName(), "cauliflower"); //FIXME: 2nd courgette; use something else here
             expectEvent(UPDATE, record4.getId(), nvfield1.getId());
             repository.update(record4);
 
             commitIndex();
-            verifyResultCount("nv_deref5:courgette", 1);
-            verifyResultCount("nv_deref5:broccoli", 0);
-            verifyResultCount("nv_deref6:courgette", 2);
-            verifyResultCount("nv_deref6:broccoli", 0);
-            verifyResultCount("nv_deref7:courgette", 1);
-            verifyResultCount("nv_deref7:broccoli", 0);
+            verifyResultCount("nv_deref5:cauliflower", 1); // record3{+branch} produces record4
+            verifyResultCount("nv_deref5:broccoli", 0);    // old value should be removed from index
+            verifyResultCount("nv_deref5:courgette", 0);   // sanity check, nothing could match
+            verifyResultCount("nv_deref6:cauliflower", 2); // record1{+branch,+lang} = record4 (2 vtags!)
+            verifyResultCount("nv_deref6:broccoli", 0);    // old value should be removed from index
+            verifyResultCount("nv_deref7:cauliflower", 1); // record3{+branch=dev} = record4
+            verifyResultCount("nv_deref7:broccoli", 0);    // old value should be removed from index
 
             // Delete record 3: index for record 4 should be updated
             log.debug("Begin test NV11");
@@ -558,7 +955,7 @@ public class IndexerTest {
             repository.delete(record3.getId());
 
             commitIndex();
-            verifyResultCount("nv_deref4:courgette", 0);
+            verifyResultCount("nv_deref4:cauliflower", 0);
             verifyResultCount("nv_deref3:tomato", 1);
             verifyResultCount("lily.id:" + ClientUtils.escapeQueryChars(record3.getId().toString()), 0);
 
@@ -704,10 +1101,10 @@ public class IndexerTest {
             record4 = repository.create(record4);
 
             commitIndex();
-            verifyResultCount("v_deref3:fig", 2);
-            verifyResultCount("v_deref2:fig", 1);
-            verifyResultCount("v_deref4:banana", 1);
-            verifyResultCount("v_deref5:coconut", 1);
+            verifyResultCount("v_deref3:fig", 2);       //master=>v_field1 (record3 and record4)
+            verifyResultCount("v_deref2:fig", 1);       //-branch,-lang=>v_field1 (record4)
+            verifyResultCount("v_deref4:banana", 1);    //-branch=>v_field1 (record4)
+            verifyResultCount("v_deref5:coconut", 1);   //+branch=>v_field1 (record3)
 
             // remove the live tag from record1
             log.debug("Begin test V7");
@@ -2063,28 +2460,25 @@ public class IndexerTest {
             verifyResultCount("+cfd_case4:languedoc", 1);
             verifyResultCount("+cfd_case4:champagne", 0);
 
-            // perform another update
-            /* FIXME this test does not work yet
+            // perform another update */
             log.debug("Begin test V641");
 
             repository
                     .recordBuilder()
-                    .recordId(recordId2)
+                    .id(recordId2)
                     .recordType(recordType.getName())
                     .field(recordListField.getName(),
                             Arrays.asList(repository
                                     .recordBuilder()
-                                    .recordId(recordId3)
                                     .recordType(recordType.getName())
                                     .field(linkField.getName(), new Link(recordId3))
-                                    .newRecord()))
+                                    .build()))
                     .update();
 
             commitIndex();
 
             verifyResultCount("+cfd_case4:sampanje", 1);
             verifyResultCount("+cfd_case4:languedoc", 0);
-            */
         }
 
         //
@@ -2152,6 +2546,143 @@ public class IndexerTest {
     }
 
     /**
+     * Verifies that the re-index messages produced by IndexUpdater are only produced for the subscription
+     * to which this IndexUpdater is listening, thus are only sent to the relevant index.
+     */
+    @Test
+    public void testReindexMessagesOnlyGoToOwnSubscription() throws Exception {
+        changeIndexUpdater("indexerconf1.xml");
+        messageVerifier.disable();
+
+        otherListener.reset();
+
+        // Create a record (record2) which links to another record (record1)
+        Record record1 = repository.newRecord();
+        record1.setRecordType(nvRecordType1.getName());
+        record1.setField(nvfield1.getName(), "Manila");
+        record1.setField(nvTag.getName(), 0L);
+        record1 = repository.create(record1);
+
+        Record record2 = repository.newRecord();
+        record2.setRecordType(nvRecordType1.getName());
+        record2.setField(nvLinkField1.getName(), new Link(record1.getId()));
+        record2.setField(nvTag.getName(), 0L);
+        expectEvent(CREATE, record2.getId(), nvLinkField1.getId(), nvTag.getId());
+        record2 = repository.create(record2);
+
+        commitIndex();
+        assertEquals(2, otherListener.getMsgCount());
+
+        // Now update record2: this produces two events on the rowlog: one about the update, and one reindex message
+        // produced by the IndexUpdater. The reindex message should however only go the subscription of the
+        // IndexUpdater, not to any other listeners (indexers or otherwise).
+        otherListener.reset();
+        record1.setField(nvfield1.getName(), "Manama");
+        record1 = repository.update(record1);
+        commitIndex();
+        assertEquals(1, otherListener.getMsgCount());
+    }
+
+    /**
+     * Tests the correct behavior when a record's state changes so that a different
+     * record filter include rule is matched, with different vtags to index.
+     */
+    @Test
+    public void testSwitchBetweenIncludeRules() throws Exception {
+        changeIndexUpdater("indexerconf_include_rule_switch.xml");
+
+        messageVerifier.disable();
+
+        // Another include rule will match based on the value of the vfield1 field.
+
+        // First test with vfield1=caseA
+
+        Record record = repository.newRecord();
+        record.setRecordType(vRecordType1.getName());
+        record.setField(vfield1.getName(), "caseA");
+        record.setField(vfield2.getName(), "guggenheim"); /* theme: NY museums */
+        record.setField(liveTag.getName(), 1L);
+        record.setField(latestTag.getName(), 1L);
+        record = repository.create(record);
+
+        commitIndex();
+
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:live", 1);
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:latest", 1);
+
+        // Now test with vfield1=caseB
+
+        record.setField(vfield1.getName(), "caseB");
+        record = repository.update(record);
+
+        commitIndex();
+
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:guggenheim +lily.vtag:latest", 1);
+    }
+
+    /**
+     * When a record is only included in an index to trigger updates of denormalized data
+     * (that is, when vtags=""), then the IndexUpdater shouldn't do any read operations
+     * on the repository.
+     */
+    @Test
+    public void testEmptyVtagsDoesNotDoRepositoryRead() throws Exception {
+        changeIndexUpdater("indexerconf_emptyvtags.xml");
+
+        messageVerifier.disable();
+
+        // reset current read count
+        indexUpdaterRepository.reads();
+
+        Record record = repository.newRecord();
+        record.setRecordType(vRecordType1.getName());
+        record.setField(vfield1.getName(), "check");
+        record.setField(vfield2.getName(), "met"); /* theme: NY museums */
+        record.setField(liveTag.getName(), 1L);
+        record.setField(latestTag.getName(), 1L);
+        record = repository.create(record);
+        commitIndex();
+
+        assertEquals(0, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:met +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:met +lily.vtag:latest", 0);
+
+        // Check this is also true for updates
+
+        record.setField(vfield2.getName(), "moma");
+        record = repository.update(record);
+        commitIndex();
+
+        assertEquals(0, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:moma +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:moma +lily.vtag:latest", 0);
+
+        // And for deletes
+
+        repository.delete(record.getId());
+        commitIndex();
+
+        assertEquals(0, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:moma +lily.vtag:live", 0);
+        verifyResultCount("+v_field2:moma +lily.vtag:latest", 0);
+
+        // But not for records that match a rule with vtags
+
+        record = repository.newRecord();
+        record.setRecordType(vRecordType1.getName());
+        record.setField(vfield2.getName(), "met");
+        record.setField(liveTag.getName(), 1L);
+        record.setField(latestTag.getName(), 1L);
+        record = repository.create(record);
+        commitIndex();
+
+        assertEquals(1, indexUpdaterRepository.reads());
+        verifyResultCount("+v_field2:met +lily.vtag:live", 1);
+        verifyResultCount("+v_field2:met +lily.vtag:latest", 1);
+    }
+
+    /**
      * This test might better fit in the indexer-model package
      */
     @Test
@@ -2196,71 +2727,80 @@ public class IndexerTest {
 
         changeIndexUpdater("indexerconf_complex_configuration.xml");
 
-        final List<IndexField> derefIndexFields = INDEXER_CONF.getDerefIndexFields();
-        for (IndexField indexField : derefIndexFields) {
-            if ("cc_less_variant_spaces".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Set<String> dimensions = ((DerefValue.VariantFollow) follows.get(0)).getDimensions();
-                assertEquals(1, dimensions.size());
-                assertTrue(dimensions.contains("my branch"));
-            } else if ("cc_less_variant_spaces_twice".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Set<String> dimensions = ((DerefValue.VariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.contains("my branch"));
-                assertTrue(dimensions.contains("some lang"));
-            } else if ("cc_more_variant_spaces".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(1, dimensions.size());
-                assertTrue(dimensions.containsKey("my branch"));
-                assertNull(dimensions.get("my branch"));
-            } else if ("cc_more_variant_spaces_twice".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.containsKey("my branch"));
-                assertNull(dimensions.get("my branch"));
-                assertTrue(dimensions.containsKey("some lang"));
-                assertNull(dimensions.get("some lang"));
-            } else if ("cc_more_variant_spaces_value".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(1, dimensions.size());
-                assertTrue(dimensions.containsKey("branch"));
-                assertEquals("some value", dimensions.get("branch"));
-            } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.containsKey("branch"));
-                assertEquals("some value", dimensions.get("branch"));
-                assertTrue(dimensions.containsKey("lang"));
-                assertEquals("some lang", dimensions.get("lang"));
-            } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName())) {
-                final List<DerefValue.Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
-                assertEquals(1, follows.size());
-                final Map<String, String> dimensions =
-                        ((DerefValue.ForwardVariantFollow) follows.get(0)).getDimensions();
-                assertEquals(2, dimensions.size());
-                assertTrue(dimensions.containsKey("my branch"));
-                assertEquals("some value", dimensions.get("my branch"));
-                assertTrue(dimensions.containsKey("my lang"));
-                assertEquals("some lang", dimensions.get("my lang"));
-            } else {
-                throw new IllegalStateException("unexpected index field" + indexField.getName());
+        final IndexFields indexFields = INDEXER_CONF.getIndexFields();
+        indexFields.visitAll(new Predicate<MappingNode>() {
+            @Override
+            public boolean apply(@Nullable MappingNode input) {
+                if (input instanceof IndexField) {
+                    final IndexField indexField = (IndexField) input;
+
+                    if ("cc_less_variant_spaces".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(1, dimensions.size());
+                        assertTrue(dimensions.contains("my branch"));
+                    } else if ("cc_less_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Set<String> dimensions = ((VariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.contains("my branch"));
+                        assertTrue(dimensions.contains("some lang"));
+                    } else if ("cc_more_variant_spaces".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(1, dimensions.size());
+                        assertTrue(dimensions.containsKey("my branch"));
+                        assertNull(dimensions.get("my branch"));
+                    } else if ("cc_more_variant_spaces_twice".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.containsKey("my branch"));
+                        assertNull(dimensions.get("my branch"));
+                        assertTrue(dimensions.containsKey("some lang"));
+                        assertNull(dimensions.get("some lang"));
+                    } else if ("cc_more_variant_spaces_value".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(1, dimensions.size());
+                        assertTrue(dimensions.containsKey("branch"));
+                        assertEquals("some value", dimensions.get("branch"));
+                    } else if ("cc_more_variant_spaces_twice_value".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.containsKey("branch"));
+                        assertEquals("some value", dimensions.get("branch"));
+                        assertTrue(dimensions.containsKey("lang"));
+                        assertEquals("some lang", dimensions.get("lang"));
+                    } else if ("cc_more_variant_spaces_key_and_value".equals(indexField.getName().getTemplate())) {
+                        final List<Follow> follows = ((DerefValue) indexField.getValue()).getFollows();
+                        assertEquals(1, follows.size());
+                        final Map<String, String> dimensions =
+                                ((ForwardVariantFollow) follows.get(0)).getDimensions();
+                        assertEquals(2, dimensions.size());
+                        assertTrue(dimensions.containsKey("my branch"));
+                        assertEquals("some value", dimensions.get("my branch"));
+                        assertTrue(dimensions.containsKey("my lang"));
+                        assertEquals("some lang", dimensions.get("my lang"));
+                    } else {
+                        throw new IllegalStateException("unexpected index field " + indexField.getName().getTemplate());
+                    }
+                }
+
+                return true; // to make visit continue
             }
-        }
+        });
     }
 
     private Blob createBlob(String resource, String mediaType, String fileName) throws Exception {
@@ -2327,7 +2867,8 @@ public class IndexerTest {
                 System.out.println(result.getFirstValue("lily.key"));
             }
         }
-        assertEquals(count, response.getResults().getNumFound());
+        assertEquals("The query result for '" + query + "' contains the wrong number of documents.", count,
+                response.getResults().getNumFound());
     }
 
     private void verifyFieldValues(String query, String fieldName, String... expectedValues)
@@ -2453,6 +2994,43 @@ public class IndexerTest {
             for (int i = 0; i < 10; i++) {
                 System.err.println("!!");
             }
+        }
+    }
+
+    /**
+     * An arbitrary, non-indexing, MQ listener.
+     */
+    private static class OtherListener implements RowLogMessageListener {
+        private int msgCount;
+
+        @Override
+        public boolean processMessage(RowLogMessage message) throws InterruptedException {
+            msgCount++;
+            return true;
+        }
+
+        public int getMsgCount() {
+            return msgCount;
+        }
+
+        public void reset() {
+            msgCount = 0;
+        }
+    }
+
+    private static class TrackingRepository extends BaseRepositoryDecorator {
+        private int readCount;
+
+        @Override
+        public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds) throws RepositoryException, InterruptedException {
+            readCount++;
+            return super.readWithIds(recordId, version, fieldIds);
+        }
+
+        public int reads() {
+            int result = readCount;
+            readCount = 0;
+            return result;
         }
     }
 }

@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -33,12 +34,14 @@
   </parent>
 
   <modules>
+    <module>rpc-module</module>
     <module>general-module</module>
     <module>rowlog-module</module>
     <module>repository-module</module>
     <module>indexer-module</module>
     <module>rest-module</module>
     <module>webui-module</module>
+    <module>indexer-integration-module</module>
   </modules>
 
   <build>
@@ -66,7 +69,7 @@
       <plugin>
         <groupId>org.lilyproject</groupId>
         <artifactId>lily-genscript-plugin</artifactId>
-        <inherited>false</inherited>        
+        <inherited>false</inherited>
         <configuration>
           <scripts>
             <script>
@@ -121,9 +124,9 @@
               <platform>unix</platform>
               <mode>dev</mode>
               <value>
-# Enable JMX access
-LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10202"
-LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
+                # Enable JMX access
+                LILY_JMX_OPTIONS="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=10202"
+                LILY_OPTIONS="$LILY_JAVA_OPTIONS $LILY_JMX_OPTIONS"
               </value>
             </parameter>
           </beforeJavaHook>

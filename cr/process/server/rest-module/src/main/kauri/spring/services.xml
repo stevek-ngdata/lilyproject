@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 -->
-<beans              xmlns = "http://www.springframework.org/schema/beans"
-                xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
-            xmlns:context = "http://www.springframework.org/schema/context"
-       xsi:schemaLocation = "http://www.springframework.org/schema/beans
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:kauri="http://kauriproject.org/runtime/1.0#springext"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
@@ -46,6 +46,10 @@
   <kauri:import-service
       id="repository"
       service="org.lilyproject.repository.api.Repository"/>
+
+  <kauri:import-service
+      id="indexer"
+      service="org.lilyproject.indexer.Indexer"/>
 
   <kauri:export-restservice name="repository" ref="repositoryRouter"/>
   <kauri:export-restservice name="rowlog" ref="rowlogRouter"/>
@@ -85,11 +89,14 @@
   </bean>
 
   <kauri:import-service id="indexerModel" service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
-  
+
   <kauri:import-service id="rowLogConfigurationMgr" service="org.lilyproject.rowlog.api.RowLogConfigurationManager"/>
-  
-  <bean id="recordScannerMap" class="org.lilyproject.rest.RecordScannerMapBuilder" factory-method="createRecordScannerMap" scope="singleton">
-    <constructor-arg><value>3600</value></constructor-arg>
+
+  <bean id="recordScannerMap" class="org.lilyproject.rest.RecordScannerMapBuilder"
+        factory-method="createRecordScannerMap" scope="singleton">
+    <constructor-arg>
+      <value>3600</value>
+    </constructor-arg>
   </bean>
 
 </beans>

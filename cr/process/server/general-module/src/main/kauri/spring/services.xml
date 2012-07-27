@@ -63,6 +63,10 @@
       ref="indexerModel"
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
+  <kauri:export-service
+      ref="prematureRepository"
+      service="org.lilyproject.util.repo.PrematureRepository"/>
+
   <!-- The depends-on zooKeeper is so that Lily's ZooKeeper connection establishment code
        is the reference with regards to waiting until ZooKeeper is available. -->
   <bean id="hbaseConfiguration"
@@ -152,6 +156,9 @@
 
   <bean id="indexerModel" class="org.lilyproject.indexer.model.impl.IndexerModelImpl">
     <constructor-arg ref="zooKeeper"/>
+  </bean>
+
+  <bean id="prematureRepository" class="org.lilyproject.util.repo.PrematureRepositoryImpl">
   </bean>
 
 </beans>

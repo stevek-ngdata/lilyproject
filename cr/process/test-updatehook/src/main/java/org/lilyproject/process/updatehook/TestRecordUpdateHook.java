@@ -18,6 +18,7 @@ package org.lilyproject.process.updatehook;
 import org.lilyproject.plugin.PluginRegistry;
 import org.lilyproject.repository.api.*;
 import org.lilyproject.repository.spi.RecordUpdateHook;
+import org.lilyproject.util.repo.RecordEvent;
 
 import javax.annotation.PreDestroy;
 
@@ -38,10 +39,23 @@ public class TestRecordUpdateHook implements RecordUpdateHook {
     }
 
     @Override
-    public void beforeUpdate(Record record, Record originalRecord, Repository repository, FieldTypes fieldTypes)
-            throws RepositoryException, InterruptedException {
+    public void beforeUpdate(Record record, Record originalRecord, Repository repository, FieldTypes fieldTypes,
+            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
         QName name = new QName("ns", "f1");
         String currentValue = (String)record.getField(name);
-        record.setField(name, currentValue + "-hooked");
+        record.setField(name, currentValue + "-update-hook");
+    }
+
+    @Override
+    public void beforeCreate(Record newRecord, Repository repository, FieldTypes fieldTypes, RecordEvent recordEvent)
+            throws RepositoryException, InterruptedException {
+        QName name = new QName("ns", "f1");
+        String currentValue = (String)newRecord.getField(name);
+        newRecord.setField(name, currentValue + "-create-hook");
+    }
+
+    @Override
+    public void beforeDelete(Record originalRecord, Repository repository, FieldTypes fieldTypes,
+            RecordEvent recordEvent) throws RepositoryException, InterruptedException {
     }
 }

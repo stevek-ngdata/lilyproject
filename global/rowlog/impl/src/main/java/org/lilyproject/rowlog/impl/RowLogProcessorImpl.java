@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +34,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.base.Function;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ComparisonChain;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -59,7 +62,9 @@ import org.lilyproject.util.io.Closer;
 public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, SubscriptionsObserver, ProcessorNotifyObserver {
     private volatile boolean stop = true;
     protected final RowLog rowLog;
-    protected final Map<String, SubscriptionThread> subscriptionThreads = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
+    /** key = subscription id */
+    protected final Map<String, SubscriptionThread> subscriptionThreads
+            = Collections.synchronizedMap(new HashMap<String, SubscriptionThread>());
     private RowLogConfigurationManager rowLogConfigurationManager;
     private Log log = LogFactory.getLog(RowLogProcessorImpl.class);
     private RowLogConfig rowLogConfig;
@@ -67,7 +72,8 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
     private ScheduledExecutorService scheduledServices;
     private Configuration hbaseConf;
     private RowLogProcessorSettings settings;
-    private Triggerable bufferedProcessorNotifier;
+    /** key = subscription id */
+    private LoadingCache<String, Triggerable> bufferedProcessorNotifiers;
 
     private final AtomicBoolean initialRowLogConfigLoaded = new AtomicBoolean(false);
     
@@ -127,26 +133,31 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
 
             initializeRowLogConfig();
             initializeSubscriptions();
-            initializeNotifyObserver();
 
-            bufferedProcessorNotifier = new BufferedTriggerable(new Triggerable() {
+            this.bufferedProcessorNotifiers = CacheBuilder.newBuilder().build(CacheLoader.from(new Function<String, Triggerable>() {
                 @Override
-                public void trigger() {
-                    notifyProcessorNonDelayed();
+                public Triggerable apply(final String subscriptionId) {
+                    return new BufferedTriggerable(new Triggerable() {
+                        @Override
+                        public void trigger() throws InterruptedException {
+                            notifyProcessorNonDelayed(subscriptionId);
+                        }
+                    }, rowLogConfig.getNotifyDelay());
                 }
-            }, rowLogConfig.getNotifyDelay());
+            }));
         }
     }
 
     @Override
     public synchronized void stop() {
         stop = true;
-        Closer.close(bufferedProcessorNotifier);
+        for (Triggerable triggerable : bufferedProcessorNotifiers.asMap().values()) {
+            Closer.close(triggerable);
+        }
         if (scheduledServices != null)
             scheduledServices.shutdownNow();
         stopRowLogConfig();
         stopSubscriptions();
-        stopNotifyObserver();
         stopSubscriptionThreads();
         if (globalQScanExecutor != null)
             globalQScanExecutor.shutdownNow();
@@ -171,10 +182,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         threads = threads > shardCount ? shardCount : threads;
 
         return threads;
-    }
-
-    private void initializeNotifyObserver() {
-        rowLogConfigurationManager.addProcessorNotifyObserver(rowLog.getId(), this);
     }
 
     protected void initializeSubscriptions() {
@@ -206,6 +213,8 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         }
                         SubscriptionThread subscriptionThread = startSubscriptionThread(newSubscription);
                         subscriptionThreads.put(subscriptionId, subscriptionThread);
+                        rowLogConfigurationManager.setProcessorNotifyObserver(newSubscription.getRowLogId(),
+                                newSubscription.getId(), this);
                     } else if (!existingSubscriptionThread.getSubscription().equals(newSubscription)) {
                         if (log.isDebugEnabled()) {
                             log.debug("Stopping existing and starting new subscription thread for subscription "
@@ -223,6 +232,7 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
                         if (log.isDebugEnabled()) {
                             log.debug("Stopping subscription thread for subscription " + subscriptionId);
                         }
+                        rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId(), subscriptionId);
                         stopSubscriptionThread(subscriptionId);
                         iterator.remove();
                     }
@@ -271,10 +281,6 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
         }
     }
 
-    private void stopNotifyObserver() {
-        rowLogConfigurationManager.removeProcessorNotifyObserver(rowLog.getId());
-    }
-
     protected void stopSubscriptions() {
         rowLogConfigurationManager.removeSubscriptionsObserver(rowLog.getId(), this);
     }
@@ -296,22 +302,21 @@ public class RowLogProcessorImpl implements RowLogProcessor, RowLogObserver, Sub
      * The notification will only be taken into account when a delay has passed since the previous notification.
      */
     @Override
-    public void notifyProcessor() {
+    public void notifyProcessor(String rowLogId, String subscriptionId) {
         try {
-            bufferedProcessorNotifier.trigger();
+            bufferedProcessorNotifiers.getUnchecked(subscriptionId).trigger();
         } catch (InterruptedException e) {
             // we are asked to stop
             Thread.currentThread().interrupt();
         }
     }
 
-    private synchronized void notifyProcessorNonDelayed() {
-        Collection<SubscriptionThread> threadsToWakeup;
-        synchronized (subscriptionThreads) {
-            threadsToWakeup = new HashSet<SubscriptionThread>(subscriptionThreads.values());
-        }
-        for (SubscriptionThread subscriptionThread : threadsToWakeup) {
-            subscriptionThread.wakeup();
+    private synchronized void notifyProcessorNonDelayed(String subscriptionId) {
+        SubscriptionThread thread = subscriptionThreads.get(subscriptionId);
+        if (thread == null) {
+            log.debug("Received processor notification for a subscription for which we have no thread running.");
+        } else {
+            thread.wakeup();
         }
     }
 

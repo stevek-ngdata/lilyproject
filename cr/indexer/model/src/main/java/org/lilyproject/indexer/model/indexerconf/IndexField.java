@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Outerthought bvba
+ * Copyright 2012 NGDATA nv
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,54 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-public class IndexField {
-    private String name;
-    private Value value;
 
-    public IndexField(String name, Value value) {
-        this.name = name;
+import java.util.List;
+
+import com.google.common.base.Predicate;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.util.repo.VTaggedRecord;
+
+public class IndexField implements MappingNode {
+
+    private final NameTemplate nameTemplate;
+    private final Value value;
+
+    public IndexField(NameTemplate nameTemplate, Value value) {
+        this.nameTemplate = nameTemplate;
         this.value = value;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public Value getValue() {
         return value;
     }
+
+    public NameTemplate getName() {
+        return nameTemplate;
+    }
+
+    @Override
+    public boolean isIndexAffectedByUpdate(VTaggedRecord vtRecord, Scope scope) throws InterruptedException,
+            RepositoryException {
+        return vtRecord.getRecordEventHelper().getUpdatedFieldTypeIdsByScope()
+                .get(scope).contains(value.getFieldDependency());
+    }
+
+    @Override
+    public void visitAll(Predicate<MappingNode> predicate) {
+        predicate.apply(this);
+    }
+
+    @Override
+    public void collectIndexUpdate(IndexUpdateBuilder indexUpdateBuilder) throws InterruptedException, RepositoryException {
+        // We must evaluate both name and values (even if there is no context record - to make sure
+        // all dependencies are added.
+        String formattedName = indexUpdateBuilder.evalIndexFieldName(nameTemplate);
+        List<String> values = indexUpdateBuilder.eval(value);
+
+        if (formattedName != null) {
+            indexUpdateBuilder.addField(formattedName, values);
+        }
+    }
+
 }

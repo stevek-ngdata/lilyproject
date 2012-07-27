@@ -78,4 +78,8 @@ public class HXPathExpression {
         }
         return newList;
     }
+
+    public Element evalAsNativeElement(Node node) throws XPathExpressionException {
+        return (Element)expr.evaluate(node, XPathConstants.NODE);
+    }
 }

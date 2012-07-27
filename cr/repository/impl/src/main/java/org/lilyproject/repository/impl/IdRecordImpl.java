@@ -274,6 +274,11 @@ public class IdRecordImpl implements IdRecord, Cloneable {
     }
 
     @Override
+    public boolean hasAttributes() {
+        return record.hasAttributes();
+    }
+
+    @Override
     public void setAttributes(Map<String, String> attributes) {
         record.setAttributes(attributes);
     }

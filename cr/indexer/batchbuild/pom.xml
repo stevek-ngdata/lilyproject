@@ -47,23 +47,18 @@
     </dependency>
 
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-impl</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>net.iharder</groupId>
       <artifactId>base64</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-hadoop-test-fw</artifactId>
+      <artifactId>lily-mapreduce</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-mapreduce</artifactId>
+      <artifactId>lily-hadoop-test-fw</artifactId>
     </dependency>
   </dependencies>
 

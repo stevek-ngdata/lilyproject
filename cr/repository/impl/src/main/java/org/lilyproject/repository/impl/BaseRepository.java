@@ -266,14 +266,23 @@ public abstract class BaseRepository implements Repository {
         return hbaseScanner;
     }
 
-    private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
-        private ServiceLoader<HBaseRecordFilterFactory> filterLoader =
-                ServiceLoader.load(HBaseRecordFilterFactory.class);
+    private static List<HBaseRecordFilterFactory> FILTER_FACTORIES;
+    static {
+        FILTER_FACTORIES = new ArrayList<HBaseRecordFilterFactory>();
+        // Make our own copy of list of filter factories, because it is not thread-safe to iterate over filterLoader
+        ServiceLoader<HBaseRecordFilterFactory> filterLoader =
+                ServiceLoader.load(HBaseRecordFilterFactory.class, BaseRepository.class.getClassLoader());
+        for (HBaseRecordFilterFactory filterFactory : filterLoader) {
+            FILTER_FACTORIES.add(filterFactory);
+        }
+        FILTER_FACTORIES = Collections.unmodifiableList(FILTER_FACTORIES);
+    }
 
+    private HBaseRecordFilterFactory filterFactory = new HBaseRecordFilterFactory() {
         @Override
         public Filter createHBaseFilter(RecordFilter filter, Repository repository, HBaseRecordFilterFactory factory)
                 throws RepositoryException, InterruptedException {
-            for (HBaseRecordFilterFactory filterFactory : filterLoader) {
+            for (HBaseRecordFilterFactory filterFactory : FILTER_FACTORIES) {
                 Filter hbaseFilter = filterFactory.createHBaseFilter(filter, repository, factory);
                 if (hbaseFilter != null)
                     return hbaseFilter;
@@ -281,7 +290,7 @@ public abstract class BaseRepository implements Repository {
             throw new RepositoryException("No implementation available for filter type " + filter.getClass().getName());
         }
     };
-    
+
     /* READING */
     public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
         return read(recordId, null, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
@@ -316,7 +325,7 @@ public abstract class BaseRepository implements Repository {
 
         return read(recordId, version, fields, fieldTypes);
     }
-    
+
     public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
             throws RepositoryException, InterruptedException {
         FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
@@ -349,7 +358,7 @@ public abstract class BaseRepository implements Repository {
                 metrics.report(Action.READ, System.currentTimeMillis() - before);
         }
     }
-    
+
     private List<FieldType> getFieldTypesFromIds(List<SchemaId> fieldIds, FieldTypes fieldTypes)
             throws TypeException, InterruptedException {
         List<FieldType> fields = null;
@@ -373,7 +382,7 @@ public abstract class BaseRepository implements Repository {
         }
         return fields;
     }
-    
+
     protected Record read(RecordId recordId, Long requestedVersion, List<FieldType> fields, FieldTypes fieldTypes)
             throws RepositoryException, InterruptedException {
         long before = System.currentTimeMillis();
@@ -448,7 +457,7 @@ public abstract class BaseRepository implements Repository {
         }
         return result;
     }
-    
+
     private void addFieldsToGet(Get get, List<FieldType> fields) {
         if (fields != null && (!fields.isEmpty())) {
             for (FieldType field : fields) {
@@ -460,8 +469,8 @@ public abstract class BaseRepository implements Repository {
             get.addFamily(RecordCf.DATA.bytes);
         }
     }
-    
- // Retrieves the row from the table and check if it exists and has not been flagged as deleted
+
+    // Retrieves the row from the table and check if it exists and has not been flagged as deleted
     protected Map<RecordId, Result> getRows(List<RecordId> recordIds, List<FieldType> fields)
             throws RecordException {
         Map<RecordId, Result> results = new HashMap<RecordId, Result>();
@@ -497,7 +506,7 @@ public abstract class BaseRepository implements Repository {
         }
         return results;
     }
-    
+
     public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
             throws RepositoryException, InterruptedException {
         return readVersions(recordId, fromVersion, toVersion,

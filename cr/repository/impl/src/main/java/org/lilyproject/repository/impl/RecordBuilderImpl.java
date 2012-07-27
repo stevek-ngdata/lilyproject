@@ -92,6 +92,12 @@ public class RecordBuilderImpl implements RecordBuilder {
     }
 
     @Override
+    public RecordBuilder id(RecordId id, Map<String, String> variantProperties) {
+        record.setId(repository.getIdGenerator().newRecordId(id.getMaster(), variantProperties));
+        return this;
+    }
+
+    @Override
     public RecordBuilder id(String userId) {
         record.setId(repository.getIdGenerator().newRecordId(userId));
         return this;
@@ -148,7 +154,13 @@ public class RecordBuilderImpl implements RecordBuilder {
         this.useLatestRecordType = latestRT;
         return this;
     }
-    
+
+    @Override
+    public RecordBuilder attribute(String name, String value) {
+        record.getAttributes().put(name, value);
+        return this;
+    }
+
     @Override
     public RecordBuilder version(Long version) {
         record.setVersion(version);

@@ -15,12 +15,19 @@
  */
 package org.lilyproject.indexer.model.indexerconf;
 
-import org.lilyproject.repository.api.FieldType;
-import org.lilyproject.repository.api.QName;
-import org.lilyproject.repository.api.SchemaId;
-import org.lilyproject.util.repo.SystemFields;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import java.util.*;
+import com.google.common.base.Predicate;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.util.repo.SystemFields;
+import org.lilyproject.util.repo.VTaggedRecord;
 
 // TODO for safety should consider making some of the returned lists immutable
 
@@ -35,59 +42,61 @@ import java.util.*;
  * construction.
  */
 public class IndexerConf {
-    private List<IndexCase> indexCases = new ArrayList<IndexCase>();
-    private List<IndexField> indexFields = new ArrayList<IndexField>();
+    private IndexRecordFilter recordFilter;
+    private IndexFields indexFields;
     private Set<SchemaId> repoFieldDependencies = new HashSet<SchemaId>();
-    private List<IndexField> derefIndexFields = new ArrayList<IndexField>();
     private List<DynamicIndexField> dynamicFields = new ArrayList<DynamicIndexField>();
-    private Map<SchemaId, List<IndexField>> derefIndexFieldsByField = new HashMap<SchemaId, List<IndexField>>();
     private Set<SchemaId> vtags = new HashSet<SchemaId>();
     private Formatters formatters = new Formatters();
     private SystemFields systemFields;
+    private boolean containsDerefExpression = false;
 
-    protected void addIndexCase(IndexCase indexCase) {
-        indexCases.add(indexCase);
-        vtags.addAll(indexCase.getVersionTags());
+    protected void setRecordFilter(IndexRecordFilter recordFilter) {
+        this.recordFilter = recordFilter;
+        for (IndexCase indexCase : recordFilter.getAllIndexCases()) {
+            vtags.addAll(indexCase.getVersionTags());
+        }
     }
 
     /**
      * @return null if there is no matching IndexCase
      */
-    public IndexCase getIndexCase(QName recordTypeName, Map<String, String> varProps) {
-        for (IndexCase indexCase : indexCases) {
-            if (indexCase.match(recordTypeName, varProps)) {
-                return indexCase;
-            }
-        }
-
-        return null;
+    public IndexCase getIndexCase(Record record) {
+        return recordFilter.getIndexCase(record);
     }
 
-    public List<IndexField> getIndexFields() {
+    public IndexFields getIndexFields() {
         return indexFields;
     }
 
-    protected void addIndexField(IndexField indexField) {
-        indexFields.add(indexField);
+    public IndexRecordFilter getRecordFilter() {
+        return recordFilter;
+    }
 
-        SchemaId fieldDep = indexField.getValue().getFieldDependency();
-        if (fieldDep != null)
-            repoFieldDependencies.add(fieldDep);
+    public void setIndexFields(IndexFields indexFields) {
+        this.indexFields = indexFields;
 
-        if (indexField.getValue() instanceof DerefValue) {
-            FieldType lastRealField = ((DerefValue)indexField.getValue()).getLastRealField();
-            if (lastRealField != null && !systemFields.isSystemField(lastRealField.getId())) {
-                derefIndexFields.add(indexField);
+        // update information about repository field dependencies
+        repoFieldDependencies.clear();
 
-                SchemaId fieldId = lastRealField.getId();
-                List<IndexField> fields = derefIndexFieldsByField.get(fieldId);
-                if (fields == null) {
-                    fields = new ArrayList<IndexField>();
-                    derefIndexFieldsByField.put(fieldId, fields);
+        indexFields.visitAll(new Predicate<MappingNode>() {
+            @Override
+            public boolean apply(MappingNode node) {
+                if (node instanceof IndexField) {
+                    IndexField indexField = (IndexField) node;
+                    SchemaId fieldDep = indexField.getValue().getFieldDependency();
+                    if (fieldDep != null)
+                        repoFieldDependencies.add(fieldDep);
+
+                    if (indexField.getValue() instanceof DerefValue) {
+                        containsDerefExpression = true;
+                    }
+                } else if (node instanceof ForEachNode) {
+                    containsDerefExpression = true;
                 }
-                fields.add(indexField);
+                return true;
             }
-        }
+        });
     }
 
     protected void addDynamicIndexField(DynamicIndexField field) {
@@ -98,40 +107,8 @@ public class IndexerConf {
         return dynamicFields;
     }
 
-    /**
-     * Checks if the supplied field type is used by one of the indexField's.
-     */
-    public boolean isIndexFieldDependency(FieldType fieldType) {
-        boolean staticFieldMatch = repoFieldDependencies.contains(fieldType.getId());
-
-        if (staticFieldMatch) {
-            return true;
-        }
-
-        // If there are lots of dynamic index fields, or lots of fields which are not indexed at all (thus
-        // leading to lots of invocations of this method), than maybe we need to review this for performance.
-        for (DynamicIndexField field : dynamicFields) {
-            if (field.matches(fieldType).match) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns all IndexField's which have a DerefValue.
-     */
-    public List<IndexField> getDerefIndexFields() {
-        return derefIndexFields;
-    }
-
-    /**
-     * Returns all IndexFields which have a DerefValue pointing to the given field id, or null if there are none.
-     */
-    public List<IndexField> getDerefIndexFields(SchemaId fieldId) {
-        List<IndexField> result = derefIndexFieldsByField.get(fieldId);
-        return result == null ? Collections.<IndexField>emptyList() : result;
+    public boolean containsDerefExpressions() {
+        return containsDerefExpression;
     }
 
     /**
@@ -152,4 +129,30 @@ public class IndexerConf {
     public void setSystemFields(SystemFields systemFields) {
         this.systemFields = systemFields;
     }
+
+    public boolean changesAffectIndex(VTaggedRecord vtRecord, Scope scope)
+            throws InterruptedException, RepositoryException {
+        Set<FieldType> changedFields = vtRecord.getRecordEventHelper().getUpdatedFieldsByScope().get(scope);
+
+        // Check static fields and dynamic fields
+        for (FieldType fieldType : changedFields) {
+            if (repoFieldDependencies.contains(fieldType.getId())) {
+                return true;
+            }
+
+            // If there are lots of dynamic index fields, or lots of fields which are not indexed at all (thus
+            // leading to lots of invocations of this method), than maybe we need to review this for performance.
+            for (DynamicIndexField field : dynamicFields) {
+                if (field.matches(fieldType).match) {
+                    return true;
+                }
+            }
+
+        }
+
+        // Check <fields>
+        return indexFields.isIndexAffectedByUpdate(vtRecord, scope);
+
+    }
+
 }

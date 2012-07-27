@@ -114,13 +114,11 @@
    <dynamicField name="*_datetime" type="tdate" indexed="true" stored="true" required="false"/>
    <dynamicField name="*_datetime_mv" type="tdate" indexed="true" stored="true" required="false" multiValued="true"/>
 
-   <field name="everything" type="text_general" indexed="true" stored="true" required="false" multiValued="true"/>
-
-
-
    <dynamicField name="*_bytearray" type="bytearray" indexed="false" stored="false" required="false"/>
    <dynamicField name="*_bytearray_mv" type="bytearray" indexed="false" stored="false" required="false" multiValued="true"/>
-   
+
+   <field name="everything" type="text_general" indexed="true" stored="true" required="false" multiValued="true"/>
+
    <copyField source="*_text" dest="everything"/>
    <copyField source="*_text_mv" dest="everything"/>
    <copyField source="*_string" dest="everything"/>

@@ -26,11 +26,12 @@ import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.IdRecordScanner;
 import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.util.io.Closer;
 
 /**
  * A MapReduce InputFormat for Lily based on Lily scanners.
  */
-public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWritable, IdRecordWritable> implements Configurable {    
+public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdWritable, IdRecordWritable> implements Configurable {
 
     @Override
     public RecordReader<RecordIdWritable, IdRecordWritable> createRecordReader(InputSplit inputSplit,
@@ -55,6 +56,7 @@ public class LilyIdScanInputFormat extends AbstractLilyScanInputFormat<RecordIdW
         try {
             scanner = lilyClient.getRepository().getScannerWithIds(scan);
         } catch (RepositoryException e) {
+            Closer.close(lilyClient);
             throw new IOException("Error setting up RecordScanner", e);
         }
 
