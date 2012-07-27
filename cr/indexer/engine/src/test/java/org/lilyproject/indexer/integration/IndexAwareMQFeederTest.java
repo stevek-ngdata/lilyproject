@@ -254,7 +254,7 @@ public class IndexAwareMQFeederTest {
         CountingSolrClient solrClientB = solrClients.get(1);
 
         //
-        // Verifiy initial state
+        // Verify initial state
         //
         assertEquals(0, indexUpdaterA.events());
         assertEquals(0, indexUpdaterB.events());
@@ -338,6 +338,16 @@ public class IndexAwareMQFeederTest {
 
         assertEquals(1, indexUpdaterB.events());
         assertEquals(1, solrClientB.adds());
+
+        // Delete record
+        repository.delete(record.getId());
+
+        repoSetup.processMQ();
+
+        assertEquals(0, indexUpdaterA.events());
+        assertEquals(0, solrClientA.adds());
+        assertEquals(1, indexUpdaterB.events());
+        assertEquals(1, solrClientB.deletes());
     }
 
     @Test
