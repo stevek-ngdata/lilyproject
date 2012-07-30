@@ -92,8 +92,8 @@ public class KeepDataTest {
         
         // Add index
         String indexName = "testIndex";
-        Assert.assertTrue("Adding index took too long", lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
-                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L));
+        lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
+                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L);
         
         // Create an extra record
         RecordId recordId = null;

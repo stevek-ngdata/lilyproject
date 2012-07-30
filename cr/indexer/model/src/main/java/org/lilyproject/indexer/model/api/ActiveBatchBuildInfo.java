@@ -22,6 +22,7 @@ public class ActiveBatchBuildInfo {
     private long submitTime;
     private boolean immutable;
     private String trackingUrl;
+    private byte[] batchIndexConfiguration;
 
     public String getJobId() {
         return jobId;
@@ -87,5 +88,13 @@ public class ActiveBatchBuildInfo {
         result = 31 * result + (int) (submitTime ^ (submitTime >>> 32));
         result = 31 * result + (trackingUrl != null ? trackingUrl.hashCode() : 0);
         return result;
+    }
+
+    public byte[] getBatchIndexConfiguration() {
+        return batchIndexConfiguration;
+    }
+
+    public void setBatchIndexConfiguration(byte[] batchIndexConfiguration) {
+        this.batchIndexConfiguration = batchIndexConfiguration;
     }
 }

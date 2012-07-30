@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 -->
-<beans              xmlns = "http://www.springframework.org/schema/beans"
-                xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-              xmlns:kauri = "http://kauriproject.org/runtime/1.0#springext"
-            xmlns:context = "http://www.springframework.org/schema/context"
-       xsi:schemaLocation = "http://www.springframework.org/schema/beans
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:kauri="http://kauriproject.org/runtime/1.0#springext"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
                              http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                              http://www.springframework.org/schema/context
                              http://www.springframework.org/schema/context/spring-context-2.5.xsd
@@ -71,9 +71,13 @@
       id="indexerModel"
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
+  <kauri:export-service
+      ref="indexer"
+      service="org.lilyproject.indexer.Indexer"/>
+
   <bean id="hbaseConf"
-      factory-bean="hadoopConfFactory"
-      factory-method="getHBaseConf"/>
+        factory-bean="hadoopConfFactory"
+        factory-method="getHBaseConf"/>
 
   <bean id="solrClientConfig" class="org.lilyproject.indexer.engine.SolrClientConfig">
     <property name="requestWriter" value="${indexer:solr/requestWriter}"/>
@@ -83,7 +87,10 @@
   <bean id="indexerMaster" class="org.lilyproject.indexer.master.IndexerMaster">
     <constructor-arg ref="zooKeeper"/>
     <constructor-arg ref="indexerModel"/>
-    <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getMapReduceConf"/></constructor-arg>
+    <constructor-arg ref="repository"/>
+    <constructor-arg>
+      <bean factory-bean="hadoopConfFactory" factory-method="getMapReduceConf"/>
+    </constructor-arg>
     <constructor-arg>
       <bean factory-bean="hadoopConfFactory" factory-method="getMapReduceConf">
         <constructor-arg>
@@ -92,16 +99,24 @@
       </bean>
     </constructor-arg>
     <constructor-arg ref="hbaseConf"/>
-    <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperConnectString"/></constructor-arg>
-    <constructor-arg><bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperSessionTimeout"/></constructor-arg>
+    <constructor-arg>
+      <bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperConnectString"/>
+    </constructor-arg>
+    <constructor-arg>
+      <bean factory-bean="hadoopConfFactory" factory-method="getZooKeeperSessionTimeout"/>
+    </constructor-arg>
     <constructor-arg ref="rowLogConfigurationMgr"/>
     <constructor-arg ref="lilyInfo"/>
     <constructor-arg ref="solrClientConfig"/>
     <constructor-arg value="${indexer:enableLocking}"/>
-    <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
+    <constructor-arg>
+      <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
+    </constructor-arg>
     <constructor-arg value="${indexer:masterNodes}"/>
   </bean>
-  
+
+  <bean id="indexerRegistry" class="org.lilyproject.indexer.engine.IndexerRegistry"/>
+
   <bean id="indexerWorker" class="org.lilyproject.indexer.worker.IndexerWorker">
     <constructor-arg ref="indexerModel"/>
     <constructor-arg ref="repository"/>
@@ -110,7 +125,9 @@
     <constructor-arg ref="hbaseConf"/>
     <constructor-arg ref="rowLogConfigurationMgr"/>
     <constructor-arg ref="solrClientConfig"/>
-    <constructor-arg><bean factory-bean="networkItfInfo" factory-method="getHostName"/></constructor-arg>
+    <constructor-arg>
+      <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
+    </constructor-arg>
     <constructor-arg>
       <bean class="org.lilyproject.indexer.worker.IndexerWorkerSettings">
         <property name="listenersPerIndex" value="${indexer:listenersPerIndex}"/>
@@ -119,6 +136,12 @@
         <property name="solrMaxConnectionsPerHost" value="${indexer:solr/maxConnectionsPerHost}"/>
       </bean>
     </constructor-arg>
+    <constructor-arg ref="indexerRegistry"/>
+  </bean>
+
+  <bean id="indexer" class="org.lilyproject.indexer.engine.IndexerApiImpl">
+    <constructor-arg ref="repository"/>
+    <constructor-arg ref="indexerRegistry"/>
   </bean>
 
 </beans>

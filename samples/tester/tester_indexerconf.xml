@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <indexer xmlns:t="org.lilyproject.tools.tester">
-  <records>
-    <record matchNamespace="t" matchName="TesterRecordType" matchVariant="*" vtags="last"/>
-  </records>
+  <recordFilter>
+    <includes>
+      <include recordType="t:TesterRecordType" vtags="last"/>
+    </includes>
+  </recordFilter>
 
   <fields>
     <field name="t$field1" value="t:field1"/>

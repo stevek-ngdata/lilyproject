@@ -36,6 +36,7 @@
     <module>api</module>
     <module>id-impl</module>
     <module>impl</module>
+    <module>remote-impl</module>
     <module>spi</module>
     <module>test</module>
   </modules>

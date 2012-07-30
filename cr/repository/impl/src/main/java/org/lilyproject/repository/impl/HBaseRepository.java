@@ -15,8 +15,12 @@
  */
 package org.lilyproject.repository.impl;
 
+import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
+import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
+import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
+
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +62,6 @@ import org.lilyproject.repository.api.FieldTypeEntry;
 import org.lilyproject.repository.api.FieldTypeNotFoundException;
 import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.IdGenerator;
-import org.lilyproject.repository.api.IdRecord;
 import org.lilyproject.repository.api.IdentityRecordStack;
 import org.lilyproject.repository.api.InvalidRecordException;
 import org.lilyproject.repository.api.MutationCondition;
@@ -99,11 +102,6 @@ import org.lilyproject.util.repo.RecordEvent;
 import org.lilyproject.util.repo.RecordEvent.Type;
 import org.lilyproject.util.repo.RowLogContext;
 
-import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_ID_QUALIFIERS;
-import static org.lilyproject.repository.impl.RecordDecoder.RECORD_TYPE_VERSION_QUALIFIERS;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.DELETE_MARKER;
-import static org.lilyproject.util.hbase.LilyHBaseSchema.EXISTS_FLAG;
-
 /**
  * Repository implementation.
  */
@@ -114,17 +112,15 @@ public class HBaseRepository extends BaseRepository {
     private List<RecordUpdateHook> updateHooks = Collections.emptyList();
 
     private Log log = LogFactory.getLog(getClass());
-    private RepositoryMetrics metrics;
-
+    
     public HBaseRepository(TypeManager typeManager, IdGenerator idGenerator, RowLog wal,
                            HBaseTableFactory hbaseTableFactory, BlobManager blobManager, RowLocker rowLocker)
             throws IOException {
-        super(typeManager, blobManager, idGenerator, LilyHBaseSchema.getRecordTable(hbaseTableFactory));
+        super(typeManager, blobManager, idGenerator, LilyHBaseSchema.getRecordTable(hbaseTableFactory), new RepositoryMetrics("hbaserepository"));
 
         this.wal = wal;
 
-        this.rowLocker = rowLocker;
-        metrics = new RepositoryMetrics("hbaserepository");
+        this.rowLocker = rowLocker;        
     }
 
     @Override
@@ -205,12 +201,9 @@ public class HBaseRepository extends BaseRepository {
         try {
             checkCreatePreconditions(record);
 
-            Record newRecord = record.cloneRecord();
-
-            RecordId recordId = newRecord.getId();
+            RecordId recordId = record.getId();
             if (recordId == null) {
                 recordId = idGenerator.newRecordId();
-                newRecord.setId(recordId);
             }
 
             byte[] rowId = recordId.toBytes();
@@ -246,16 +239,28 @@ public class HBaseRepository extends BaseRepository {
                     }
                 }
 
+                RecordEvent recordEvent = new RecordEvent();
+                recordEvent.setType(Type.CREATE);
+
+                for (RecordUpdateHook hook : updateHooks) {
+                    hook.beforeCreate(record, this, fieldTypes, recordEvent);
+                }
+
+                Record newRecord = record.cloneRecord();
+                newRecord.setId(recordId);
+
                 Record dummyOriginalRecord = newRecord();
                 Put put = new Put(newRecord.getId().toBytes());
                 put.add(RecordCf.DATA.bytes, RecordColumn.DELETED.bytes, 1L, Bytes.toBytes(false));
-                RecordEvent recordEvent = new RecordEvent();
-                recordEvent.setType(Type.CREATE);
                 Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
                 Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
 
                 calculateRecordChanges(newRecord, dummyOriginalRecord, version, put, recordEvent, referencedBlobs,
                         unReferencedBlobs, false, fieldTypes);
+
+                if (record.hasAttributes()) {
+                    recordEvent.setAttributes(record.getAttributes());
+                }
 
                 // Make sure the record type changed flag stays false for a newly
                 // created record
@@ -271,6 +276,10 @@ public class HBaseRepository extends BaseRepository {
 
                 // Remove the used blobs from the blobIncubator
                 blobManager.handleBlobReferences(recordId, referencedBlobs, unReferencedBlobs);
+
+                newRecord.setResponseStatus(ResponseStatus.CREATED);
+                newRecord.getFieldsToDelete().clear();
+                return newRecord;
 
             } catch (IOException e) {
                 throw new RecordException("Exception occurred while creating record '" + recordId + "' in HBase table",
@@ -288,10 +297,6 @@ public class HBaseRepository extends BaseRepository {
             } finally {
                 unlockRow(rowLock);
             }
-
-            newRecord.setResponseStatus(ResponseStatus.CREATED);
-            newRecord.getFieldsToDelete().clear();
-            return newRecord;
         } finally {
             metrics.report(Action.CREATE, System.currentTimeMillis() - before);
         }
@@ -374,8 +379,11 @@ public class HBaseRepository extends BaseRepository {
         try {
             Record originalRecord = new UnmodifiableRecord(read(record.getId(), null, null, fieldTypes));
 
+            RecordEvent recordEvent = new RecordEvent();
+            recordEvent.setType(Type.UPDATE);
+
             for (RecordUpdateHook hook : updateHooks) {
-                hook.beforeUpdate(record, originalRecord, this, fieldTypes);
+                hook.beforeUpdate(record, originalRecord, this, fieldTypes, recordEvent);
             }
 
             Record newRecord = record.cloneRecord();
@@ -383,8 +391,6 @@ public class HBaseRepository extends BaseRepository {
             Put put = new Put(newRecord.getId().toBytes());
             Set<BlobReference> referencedBlobs = new HashSet<BlobReference>();
             Set<BlobReference> unReferencedBlobs = new HashSet<BlobReference>();
-            RecordEvent recordEvent = new RecordEvent();
-            recordEvent.setType(Type.UPDATE);
             long newVersion = originalRecord.getVersion() == null ? 1 : originalRecord.getVersion() + 1;
 
             if (calculateRecordChanges(newRecord, originalRecord, newVersion, put, recordEvent, referencedBlobs,
@@ -396,6 +402,10 @@ public class HBaseRepository extends BaseRepository {
                         record);
                 if (conditionsResponse != null) {
                     return conditionsResponse;
+                }
+
+                if (record.hasAttributes()) {
+                    recordEvent.setAttributes(record.getAttributes());
                 }
 
                 // Reserve blobs so no other records can use them
@@ -883,303 +893,20 @@ public class HBaseRepository extends BaseRepository {
     }
 
     @Override
-    public Record read(RecordId recordId, List<QName> fieldNames) throws RepositoryException, InterruptedException {
-        return read(recordId, null, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-
-    @Override
-    public Record read(RecordId recordId, QName... fieldNames) throws RepositoryException, InterruptedException {
-        return read(recordId, null, fieldNames);
-    }
-
-    @Override
-    public List<Record> read(List<RecordId> recordIds, List<QName> fieldNames)
-            throws RepositoryException, InterruptedException {
-        return read(recordIds, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-
-    @Override
-    public List<Record> read(List<RecordId> recordIds, QName... fieldNames)
-            throws RepositoryException, InterruptedException {
-        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
-
-        return read(recordIds, fields, fieldTypes);
-    }
-
-    @Override
-    public Record read(RecordId recordId, Long version, List<QName> fieldNames)
-            throws RepositoryException, InterruptedException {
-        return read(recordId, version, fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-
-    @Override
-    public Record read(RecordId recordId, Long version, QName... fieldNames)
-            throws RepositoryException, InterruptedException {
-        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
-
-        return read(recordId, version, fields, fieldTypes);
-    }
-
-    private List<FieldType> getFieldTypesFromNames(FieldTypes fieldTypes, QName... fieldNames)
-            throws TypeException, InterruptedException {
-        List<FieldType> fields = null;
-        if (fieldNames != null) {
-            fields = new ArrayList<FieldType>();
-            for (QName fieldName : fieldNames) {
-                fields.add(fieldTypes.getFieldType(fieldName));
-            }
-        }
-        return fields;
-    }
-
-    private List<FieldType> getFieldTypesFromIds(List<SchemaId> fieldIds, FieldTypes fieldTypes)
-            throws TypeException, InterruptedException {
-        List<FieldType> fields = null;
-        if (fieldIds != null) {
-            fields = new ArrayList<FieldType>(fieldIds.size());
-            for (SchemaId fieldId : fieldIds) {
-                fields.add(fieldTypes.getFieldType(fieldId));
-            }
-        }
-        return fields;
-    }
-
-    @Override
-    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, List<QName> fieldNames)
-            throws RepositoryException, InterruptedException {
-        return readVersions(recordId, fromVersion, toVersion,
-                fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-
-    @Override
-    public List<Record> readVersions(RecordId recordId, Long fromVersion, Long toVersion, QName... fieldNames)
-            throws RepositoryException, InterruptedException {
-        ArgumentValidator.notNull(recordId, "recordId");
-        ArgumentValidator.notNull(fromVersion, "fromVersion");
-        ArgumentValidator.notNull(toVersion, "toVersion");
-        if (fromVersion > toVersion) {
-            throw new IllegalArgumentException("fromVersion '" + fromVersion +
-                    "' must be smaller or equal to toVersion '" + toVersion + "'");
-        }
-
-        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
-
-        int numberOfVersionsToRetrieve = (int) (toVersion - fromVersion + 1);
-        Result result = getRow(recordId, toVersion, numberOfVersionsToRetrieve, fields);
-        if (fromVersion < 1L)
-            fromVersion = 1L; // Put the fromVersion to a sensible value
-        Long latestVersion = recdec.getLatestVersion(result);
-        if (latestVersion < toVersion)
-            toVersion = latestVersion; // Limit the toVersion to the highest possible version
-        List<Long> versionsToRead = new ArrayList<Long>();
-        for (long version = fromVersion; version <= toVersion; version++) {
-            versionsToRead.add(version);
-        }
-        return recdec.decodeRecords(recordId, versionsToRead, result, fieldTypes);
-    }
-
-    @Override
-    public List<Record> readVersions(RecordId recordId, List<Long> versions, List<QName> fieldNames)
-            throws RepositoryException, InterruptedException {
-        return readVersions(recordId, versions,
-                fieldNames == null ? null : fieldNames.toArray(new QName[fieldNames.size()]));
-    }
-
-    @Override
-    public List<Record> readVersions(RecordId recordId, List<Long> versions, QName... fieldNames)
-            throws RepositoryException, InterruptedException {
-        ArgumentValidator.notNull(recordId, "recordId");
-        ArgumentValidator.notNull(versions, "versions");
-
-        if (versions.isEmpty())
-            return new ArrayList<Record>();
-
-        Collections.sort(versions);
-
-        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromNames(fieldTypes, fieldNames);
-
-        Long lowestRequestedVersion = versions.get(0);
-        Long highestRequestedVersion = versions.get(versions.size() - 1);
-        int numberOfVersionsToRetrieve = (int) (highestRequestedVersion - lowestRequestedVersion + 1);
-        Result result = getRow(recordId, highestRequestedVersion, numberOfVersionsToRetrieve, fields);
-        Long latestVersion = recdec.getLatestVersion(result);
-
-        // Drop the versions that are higher than the latestVersion
-        List<Long> validVersions = new ArrayList<Long>();
-        for (Long version : versions) {
-            if (version > latestVersion)
-                break;
-            validVersions.add(version);
-        }
-        return recdec.decodeRecords(recordId, validVersions, result, fieldTypes);
-    }
-
-    @Override
-    public IdRecord readWithIds(RecordId recordId, Long version, List<SchemaId> fieldIds)
-            throws RepositoryException, InterruptedException {
-        FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-        List<FieldType> fields = getFieldTypesFromIds(fieldIds, fieldTypes);
-
-        return readWithIds(recordId, version, fields, fieldTypes);
-    }
-
-    private IdRecord readWithIds(RecordId recordId, Long requestedVersion, List<FieldType> fields,
-                                 FieldTypes fieldTypes) throws RepositoryException, InterruptedException {
-        long before = System.currentTimeMillis();
-        try {
-            ArgumentValidator.notNull(recordId, "recordId");
-
-            Result result = getRow(recordId, requestedVersion, 1, fields);
-
-            Long latestVersion = recdec.getLatestVersion(result);
-            if (requestedVersion == null) {
-                // Latest version can still be null if there are only non-versioned fields in the record
-                requestedVersion = latestVersion;
-            } else {
-                if (latestVersion == null || latestVersion < requestedVersion) {
-                    // The requested version is higher than the highest existing version
-                    throw new VersionNotFoundException(recordId, requestedVersion);
-                }
-            }
-            return recdec.decodeRecordWithIds(recordId, requestedVersion, result, fieldTypes);
-        } finally {
-            metrics.report(Action.READ, System.currentTimeMillis() - before);
-        }
-    }
-
-    private Record read(RecordId recordId, Long requestedVersion, List<FieldType> fields, FieldTypes fieldTypes)
-            throws RepositoryException, InterruptedException {
-        long before = System.currentTimeMillis();
-        try {
-            ArgumentValidator.notNull(recordId, "recordId");
-
-            Result result = getRow(recordId, requestedVersion, 1, fields);
-
-            Long latestVersion = recdec.getLatestVersion(result);
-            if (requestedVersion == null) {
-                // Latest version can still be null if there are only non-versioned fields in the record
-                requestedVersion = latestVersion;
-            } else {
-                if (latestVersion == null || latestVersion < requestedVersion) {
-                    // The requested version is higher than the highest existing version
-                    throw new VersionNotFoundException(recordId, requestedVersion);
-                }
-            }
-            return recdec.decodeRecord(recordId, requestedVersion, null, result, fieldTypes);
-        } finally {
-            metrics.report(Action.READ, System.currentTimeMillis() - before);
-        }
-    }
-
-    private List<Record> read(List<RecordId> recordIds, List<FieldType> fields, FieldTypes fieldTypes)
-            throws RepositoryException, InterruptedException {
-        long before = System.currentTimeMillis();
-        try {
-            ArgumentValidator.notNull(recordIds, "recordIds");
-            List<Record> records = new ArrayList<Record>();
-            if (recordIds.isEmpty())
-                return records;
-
-            Map<RecordId, Result> results = getRows(recordIds, fields);
-
-            for (Entry<RecordId, Result> entry : results.entrySet()) {
-                Long version = recdec.getLatestVersion(entry.getValue());
-                records.add(recdec.decodeRecord(entry.getKey(), version, null, entry.getValue(), fieldTypes));
-            }
-            return records;
-        } finally {
-            metrics.report(Action.READ, System.currentTimeMillis() - before);
-        }
-    }
-
-    // Retrieves the row from the table and check if it exists and has not been flagged as deleted
-    private Result getRow(RecordId recordId, Long version, int numberOfVersions, List<FieldType> fields)
-            throws RecordException {
-        Result result;
-        Get get = new Get(recordId.toBytes());
-        get.setFilter(REAL_RECORDS_FILTER);
-
-        try {
-            // Add the columns for the fields to get
-            addFieldsToGet(get, fields);
-
-            if (version != null)
-                get.setTimeRange(0, version + 1); // Only retrieve data within this timerange
-            get.setMaxVersions(numberOfVersions);
-
-            // Retrieve the data from the repository
-            result = recordTable.get(get);
-
-            if (result == null || result.isEmpty())
-                throw new RecordNotFoundException(recordId);
-
-        } catch (IOException e) {
-            throw new RecordException("Exception occurred while retrieving record '" + recordId
-                    + "' from HBase table", e);
-        }
-        return result;
-    }
-
-    // Retrieves the row from the table and check if it exists and has not been flagged as deleted
-    private Map<RecordId, Result> getRows(List<RecordId> recordIds, List<FieldType> fields)
-            throws RecordException {
-        Map<RecordId, Result> results = new HashMap<RecordId, Result>();
-
-        try {
-            List<Get> gets = new ArrayList<Get>();
-            for (RecordId recordId : recordIds) {
-                Get get = new Get(recordId.toBytes());
-                // Add the columns for the fields to get
-                addFieldsToGet(get, fields);
-                get.setMaxVersions(1); // Only retrieve the most recent version of each field
-                gets.add(get);
-            }
-
-            // Retrieve the data from the repository
-            int i = 0;
-            for (Result result : recordTable.get(gets)) {
-                if (result == null || result.isEmpty()) {
-                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException)
-                    continue;
-                }
-                // Check if the record was deleted
-                byte[] deleted = recdec.getLatest(result, RecordCf.DATA.bytes, RecordColumn.DELETED.bytes);
-                if ((deleted == null) || (Bytes.toBoolean(deleted))) {
-                    i++; // Skip this recordId (instead of throwing a RecordNotFoundException)
-                    continue;
-                }
-                results.put(recordIds.get(i++), result);
-            }
-        } catch (IOException e) {
-            throw new RecordException("Exception occurred while retrieving records '" + recordIds
-                    + "' from HBase table", e);
-        }
-        return results;
-    }
-
-    private void addFieldsToGet(Get get, List<FieldType> fields) {
-        if (fields != null && (!fields.isEmpty())) {
-            for (FieldType field : fields) {
-                get.addColumn(RecordCf.DATA.bytes, ((FieldTypeImpl) field).getQualifier());
-            }
-            RecordDecoder.addSystemColumnsToGet(get);
-        } else {
-            // Retrieve everything
-            get.addFamily(RecordCf.DATA.bytes);
-        }
-    }
-
-    @Override
     public void delete(RecordId recordId) throws RepositoryException {
         delete(recordId, null);
     }
-
     @Override
     public Record delete(RecordId recordId, List<MutationCondition> conditions)
+            throws RepositoryException {
+        return delete(recordId, conditions, null);
+    }
+    @Override
+    public void delete(Record record) throws RepositoryException {
+        delete(record.getId(), null, record.hasAttributes() ? record.getAttributes() : null);
+    }
+    
+    private  Record delete(RecordId recordId, List<MutationCondition> conditions, Map<String,String> attributes)
             throws RepositoryException {
         ArgumentValidator.notNull(recordId, "recordId");
         long before = System.currentTimeMillis();
@@ -1192,7 +919,14 @@ public class HBaseRepository extends BaseRepository {
             // We need to read the original record in order to put the delete marker in the non-versioned fields.
             // Throw RecordNotFoundException if there is no record to be deleted
             FieldTypes fieldTypes = typeManager.getFieldTypesSnapshot();
-            Record originalRecord = read(recordId, null, null, fieldTypes);
+            Record originalRecord = new UnmodifiableRecord(read(recordId, null, null, fieldTypes));
+
+            RecordEvent recordEvent = new RecordEvent();
+            recordEvent.setType(Type.DELETE);
+
+            for (RecordUpdateHook hook : updateHooks) {
+                hook.beforeDelete(originalRecord, this, fieldTypes, recordEvent);
+            }
 
             if (conditions != null) {
                 Record conditionsRecord = MutationConditionVerifier.checkConditions(originalRecord, conditions, this,
@@ -1218,8 +952,8 @@ public class HBaseRepository extends BaseRepository {
 
             }
 
-            RecordEvent recordEvent = new RecordEvent();
-            recordEvent.setType(Type.DELETE);
+            recordEvent.setAttributes(attributes);
+
             RowLogMessage walMessage = wal.putMessage(recordId.toBytes(), null, recordEvent.toJsonBytes(), put);
             if (!rowLocker.put(put, rowLock)) {
                 throw new RecordException("Exception occurred while deleting record '" + recordId + "' on HBase table");

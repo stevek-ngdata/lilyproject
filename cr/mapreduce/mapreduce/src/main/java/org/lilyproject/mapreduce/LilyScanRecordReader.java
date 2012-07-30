@@ -15,17 +15,16 @@
  */
 package org.lilyproject.mapreduce;
 
+import java.io.IOException;
+
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.repository.api.Record;
-import org.lilyproject.repository.api.RecordScan;
 import org.lilyproject.repository.api.RecordScanner;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.util.io.Closer;
-
-import java.io.IOException;
 
 /**
  * A Hadoop RecordReader based on Lily RecordScanners. Used by {@link LilyScanInputFormat}.
@@ -40,7 +39,7 @@ public class LilyScanRecordReader extends RecordReader<RecordIdWritable, RecordW
     
     public LilyScanRecordReader(LilyClient lilyClient, RecordScanner scanner) {
         this.lilyClient = lilyClient;
-        this.scanner = scanner;
+        this.scanner = scanner;        
     }
     
     @Override

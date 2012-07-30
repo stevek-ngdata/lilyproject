@@ -56,7 +56,7 @@ public interface RecordBuilder {
      * Sets record type of the record.
      * @see {@link Record#setRecordType(QName, Long)}
      * @param name QName of the record type
-     * @param the version of the record type
+     * @param version the version of the record type
      * @return the builder
      */
     RecordBuilder recordType(QName name, Long version);
@@ -75,7 +75,7 @@ public interface RecordBuilder {
      * @see {@link Record#setDefaultNamespace(String)}
      * @see {@link Record#setRecordType(String)}
      * @param name QName of the record type
-     * @param the version of the record type
+     * @param version the version of the record type
      * @return the builder
      */
     RecordBuilder recordType(String name, Long version) throws RecordException;
@@ -95,6 +95,14 @@ public interface RecordBuilder {
      * @return the builder
      */
     RecordBuilder id(RecordId id);
+
+    /**
+     * Set the id of the record to the master id of the given id (= the record id without any
+     * variant properties), extended with the supplied variant properties.
+     *
+     * @see {@link IdGenerator#newRecordId(String, java.util.Map)}
+     */
+    RecordBuilder id(RecordId id, Map<String, String> variantProperties);
 
     /**
      * Set the id of the record to a user specified ID.
@@ -205,6 +213,14 @@ public interface RecordBuilder {
      * @return the builder
      */
     RecordBuilder useLatestRecordType(boolean latestRT);
+
+    /**
+     * Adds an attribute to the record, this is <b>transient</b> data attached to a
+     * create/update/delete operation. Attributes are not returned on read.
+     *
+     * @return the builder
+     */
+    RecordBuilder attribute(String name, String value);
     
     /**
      * Clears all data from the builder object.

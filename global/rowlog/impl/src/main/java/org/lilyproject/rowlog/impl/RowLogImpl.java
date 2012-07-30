@@ -24,11 +24,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.*;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.zookeeper.KeeperException;
 import org.lilyproject.rowlock.RowLock;
 import org.lilyproject.rowlock.RowLocker;
 import org.lilyproject.rowlog.api.*;
@@ -169,12 +172,53 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
 
     @Override
-    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws InterruptedException, RowLogException {
+    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put)
+            throws InterruptedException, RowLogException {
+        // Take current snapshot of the subscriptions so that shard.putMessage and initializeSubscriptions
+        // use the exact same set of subscriptions.
+        List<RowLogSubscription> subscriptions = getSubscriptions();
+        return putMessageInternal(rowKey, data, payload, put, subscriptions);
+    }
+
+    @Override
+    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
+            List<String> subscriptionIds) throws RowLogException, InterruptedException {
+
+        // Translate the list of string subscription id's to RowLogSubscription objects
+        List<RowLogSubscription> subscriptions = new ArrayList<RowLogSubscription>();
+
+        for (String id : subscriptionIds) {
+            RowLogSubscription subscription = getSubscription(id);
+            if (subscription == null) {
+                // User specified a subscription this RowLog instance doesn't know about. It might be a recently
+                // created subscription for which we didn't receive the notification yet from the
+                // RowLogConfigurationManager. Therefore, before throwing an exception, actively poll the confMgr.
+                try {
+                    if (rowLogConfigurationManager.subscriptionExists(this.id, id)) {
+                        // It exists! Refresh our subscriptions: confMgr.getSubscriptions reads the data fresh
+                        // from ZooKeeper.
+                        subscriptionsChanged(rowLogConfigurationManager.getSubscriptions(this.id));
+                        subscription = getSubscription(id);
+                    }
+                } catch (KeeperException e) {
+                    throw new RowLogException("Error fetching information from rowlog conf.", e);
+                }
+
+                // If it's still null now, throw exception
+                if (subscription == null) {
+                    throw new RowLogException("Request to put message on rowlog for unknown subscription: " + id);
+                }
+            }
+            subscriptions.add(subscription);
+        }
+
+        return putMessageInternal(rowKey, data, payload, put, subscriptions);
+    }
+
+    private RowLogMessage putMessageInternal(byte[] rowKey, byte[] data, byte[] payload, Put put,
+            List<RowLogSubscription> subscriptions) throws RowLogException, InterruptedException {
         try {
-            // Take current snapshot of the subscriptions so that shard.putMessage and initializeSubscriptions
-            // use the exact same set of subscriptions.
-            List<RowLogSubscription> subscriptions = getSubscriptions();
-            if (subscriptions.isEmpty()) 
+            if (subscriptions.isEmpty())
                 return null;
 
             // Get a sequence number for this new message
@@ -226,7 +270,9 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
                 // important for the MQ case and since for the MQ currently the Put is always
                 // done here, this is sufficient.
                 if (rowLogConfig.isEnableNotify()) {
-                    processorNotifier.notifyProcessor(id);
+                    for (RowLogSubscription subscription : subscriptions) {
+                        processorNotifier.notifyProcessor(subscription.getRowLogId(), subscription.getId());
+                    }
                 }
             }
 
@@ -238,14 +284,23 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
 
     protected void putMessageOnShard(RowLogMessage message, List<RowLogSubscription> subscriptions)
             throws RowLogException {
-        List<String> subscriptionIds = getSubscriptionIds();
+        List<String> subscriptionIds = Lists.transform(subscriptions, new Function<RowLogSubscription, String>() {
+            @Override
+            public String apply(RowLogSubscription input) {
+                return input.getId();
+            }
+        });
         getShard(message).putMessage(message, subscriptionIds);
     }
 
     
     private void initializeSubscriptions(RowLogMessage message, Put put, List<RowLogSubscription> subscriptions)
             throws IOException {
-        String[] subscriptionIds = getSubscriptionIds().toArray(new String[0]);
+        String[] subscriptionIds = new String[subscriptions.size()];
+        for (int i = 0; i < subscriptions.size(); i++) {
+            subscriptionIds[i] = subscriptions.get(i).getId();
+        }
+
         ExecutionState executionState = new SubscriptionExecutionState(message.getTimestamp(),
                 subscriptionIds);
         byte[] qualifier = executionStateQualifier(message.getSeqNr(), message.getTimestamp());
@@ -360,7 +415,19 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     private String formatId(RowLogMessage message) {
         return Bytes.toStringBinary(message.getRowKey()) + ":" + message.getSeqNr();
     }
-    
+
+    /**
+     * @return null if there's no subscription with this id
+     */
+    private RowLogSubscription getSubscription(String id) {
+        for (RowLogSubscription subscription : subscriptionsList) {
+            if (subscription.getId().equals(id)) {
+                return subscription;
+            }
+        }
+        return null;
+    }
+
     @Override
     public List<RowLogSubscription> getSubscriptions() {
         return subscriptionsList;
@@ -618,7 +685,7 @@ public class RowLogImpl implements RowLog, RowLogImplMBean, SubscriptionsObserve
     }
     
     @Override
-    public void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
+    public synchronized void subscriptionsChanged(List<RowLogSubscription> newSubscriptions) {
         List<RowLogSubscription> subscriptionsList = new ArrayList<RowLogSubscription>(newSubscriptions);
         Collections.sort(subscriptionsList);
         this.subscriptionsList = Collections.unmodifiableList(subscriptionsList);

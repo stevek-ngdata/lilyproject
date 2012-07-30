@@ -15,21 +15,26 @@
  */
 package org.lilyproject.util.repo;
 
-import org.codehaus.jackson.*;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.ObjectNode;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.codehaus.jackson.JsonEncoding;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.util.ByteArrayBuilder;
 import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.SchemaId;
 import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.json.JsonFormat;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Represents the payload of an event about a create-update-delete operation on the repository.
@@ -42,10 +47,11 @@ public class RecordEvent {
     private Type type;
     private Set<SchemaId> updatedFields;
     private boolean recordTypeChanged = false;
-    /** For index-type events: name of the index for which this event matters. */
-    private String indexName;
     /** For index-type events: affected vtags */
     private Set<SchemaId> vtagsToIndex;
+    private IndexRecordFilterData indexRecordFilterData;
+    /** A copy of the attributes supplied via {@link Record#setAttributes(Map)}. */
+    private Map<String, String> attributes;
 
     public enum Type {
         CREATE("repo:record-created"),
@@ -105,8 +111,6 @@ public class RecordEvent {
                 versionUpdated = jp.getLongValue();
             } else if (fieldName.equals("recordTypeChanged")) {
                 recordTypeChanged = jp.getBooleanValue();
-            } else if (fieldName.equals("index")) {
-                indexName = jp.getText();
             } else if (fieldName.equals("updatedFields")) {
                 if (current != JsonToken.START_ARRAY) {
                     throw new RuntimeException("updatedFields is not a JSON array");
@@ -120,7 +124,19 @@ public class RecordEvent {
                 }
                 while (jp.nextToken() != JsonToken.END_ARRAY) {
                     addVTagToIndex(idGenerator.getSchemaId(jp.getBinaryValue()));
+                }            
+            } else if (fieldName.equals("attributes")) {
+                if (current != JsonToken.START_OBJECT) {
+                    throw new RuntimeException("Attributes is not a JSON object");
                 }
+                this.attributes = new HashMap<String, String>();
+                while (jp.nextToken() != JsonToken.END_OBJECT) {
+                    String key = jp.getCurrentName();
+                    String value = jp.getText();
+                    attributes.put(key, value);
+                }
+            } else if (fieldName.equals("indexFilterData")) {
+                this.indexRecordFilterData = new IndexRecordFilterData(jp, idGenerator);
             }
         }
     }
@@ -177,14 +193,6 @@ public class RecordEvent {
         updatedFields.add(fieldTypeId);
     }
 
-    public String getIndexName() {
-        return indexName;
-    }
-
-    public void setIndexName(String indexName) {
-        this.indexName = indexName;
-    }
-
     public Set<SchemaId> getVtagsToIndex() {
         return vtagsToIndex;
     }
@@ -194,6 +202,41 @@ public class RecordEvent {
             vtagsToIndex = new HashSet<SchemaId>();
         }
         vtagsToIndex.add(vtag);
+    }
+    
+    /**
+     * Transient attributes passed on from the Record during create/update operations,
+     * see also {@link Record#setAttributes(Map)}.
+     *
+     * @return A map of Strings containing attributes.
+     */ 
+    public Map<String,String> getAttributes() {
+        if (this.attributes == null) {
+            this.attributes = new HashMap<String,String>();
+        }
+        return this.attributes;
+    }
+
+    public boolean hasAttributes() {
+        return attributes != null && attributes.size() > 0;
+    }
+    
+    /**
+     * Transient attributes passed on from the Record during create/update operations,
+     * see also {@link Record#setAttributes(Map)}.
+     *
+     * @param attributes A map of Strings containing attributes.
+     */
+    public void setAttributes(Map<String,String> attributes) {
+        this.attributes = attributes;
+    }
+
+    public IndexRecordFilterData getIndexRecordFilterData() {
+        return indexRecordFilterData;
+    }
+
+    public void setIndexRecordFilterData(IndexRecordFilterData indexRecordFilterData) {
+        this.indexRecordFilterData = indexRecordFilterData;
     }
 
     public void toJson(JsonGenerator gen) throws IOException {
@@ -215,10 +258,6 @@ public class RecordEvent {
             gen.writeBooleanField("recordTypeChanged", true);
         }
 
-        if (indexName != null) {
-            gen.writeStringField("index", indexName);
-        }
-
         if (updatedFields != null && updatedFields.size() > 0) {
             gen.writeArrayFieldStart("updatedFields");
             for (SchemaId updatedField : updatedFields) {
@@ -233,6 +272,19 @@ public class RecordEvent {
                 gen.writeBinary(vtag.getBytes());
             }
             gen.writeEndArray();
+        }
+        
+        if (attributes != null && attributes.size() > 0) {
+            gen.writeObjectFieldStart("attributes");
+            for(String key : attributes.keySet()) {
+                gen.writeStringField(key, attributes.get(key));
+            }
+            gen.writeEndObject();
+        }
+
+        if (indexRecordFilterData != null) {
+            gen.writeFieldName("indexFilterData");
+            indexRecordFilterData.toJson(gen);
         }
 
         gen.writeEndObject();
@@ -288,11 +340,13 @@ public class RecordEvent {
         if (!ObjectUtils.safeEquals(other.updatedFields, this.updatedFields))
             return false;
 
-        if (!ObjectUtils.safeEquals(other.indexName, this.indexName))
-            return false;
-
         if (!ObjectUtils.safeEquals(other.vtagsToIndex, this.vtagsToIndex))
             return false;
+        
+        if(!ObjectUtils.safeEquals(other.attributes, this.attributes))
+            return false;
+
+        // TODO implement equals for IndexRecordFilterData
 
         return true;
     }
@@ -304,9 +358,197 @@ public class RecordEvent {
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (updatedFields != null ? updatedFields.hashCode() : 0);
         result = 31 * result + (recordTypeChanged ? 1 : 0);
-        result = 31 * result + (indexName != null ? indexName.hashCode() : 0);
         result = 31 * result + (vtagsToIndex != null ? vtagsToIndex.hashCode() : 0);
+        result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
         return result;
+    }
+
+    /**
+     * Data needed for IndexRecordFilter evaluation.
+     *
+     * <p>Information needed to decide if an IndexRecordFilter matches a record. Contains both the
+     * necessary information both from the old and new record state, so that we know what matched
+     * before and what matches now, which enables important optimisations.</p>
+     *
+     * <p>For example, this information is used by the IndexAwareMQFeeder to only sent events
+     * to subscriptions from relevant indexes, as well as by IndexUpdater to know what
+     * index inclusion rule matches before & now.</p>
+     *
+     * <p>At the time of this writing, the indexerconf only allows selection
+     * based on record type, on 1 field, and on information that is part of the record id.
+     * The model here is already a bit more flexible (can contain info on multiple fields) to allow for
+     * more powerful selections in the future.</p>
+     */
+    public static class IndexRecordFilterData {
+        private boolean newRecordExists;
+        private boolean oldRecordExists;
+        private SchemaId newRecordType;
+        private SchemaId oldRecordType;
+        private List<FieldChange> fieldChanges;
+
+        public IndexRecordFilterData() {
+        }
+
+        public IndexRecordFilterData(JsonParser jp, IdGenerator idGenerator) throws IOException {
+            JsonToken current = jp.getCurrentToken();
+
+            if (current != JsonToken.START_OBJECT) {
+                throw new RuntimeException("Not a JSON object.");
+            }
+
+            while (jp.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = jp.getCurrentName();
+                current = jp.nextToken(); // move from field name to field value
+                if (fieldName.equals("old")) {
+                    oldRecordExists = jp.getBooleanValue();
+                } else if (fieldName.equals("new")) {
+                    newRecordExists = jp.getBooleanValue();
+                } else if (fieldName.equals("newRecordType")) {
+                    newRecordType = idGenerator.getSchemaId(jp.getBinaryValue());
+                } else if (fieldName.equals("oldRecordType")) {
+                    oldRecordType = idGenerator.getSchemaId(jp.getBinaryValue());
+                } else if (fieldName.equals("fields")) {
+                    if (current != JsonToken.START_ARRAY) {
+                        throw new RuntimeException("updatedFields is not a JSON array");
+                    }
+                    fieldChanges = new ArrayList<FieldChange>();
+                    while (jp.nextToken() != JsonToken.END_ARRAY) {
+                        fieldChanges.add(new FieldChange(jp, idGenerator));
+                    }
+                }
+            }
+        }
+
+        public boolean getNewRecordExists() {
+            return newRecordExists;
+        }
+
+        public void setNewRecordExists(boolean newRecordExists) {
+            this.newRecordExists = newRecordExists;
+        }
+
+        public boolean getOldRecordExists() {
+            return oldRecordExists;
+        }
+
+        public void setOldRecordExists(boolean oldRecordExists) {
+            this.oldRecordExists = oldRecordExists;
+        }
+
+        public SchemaId getNewRecordType() {
+            return newRecordType;
+        }
+
+        public void setNewRecordType(SchemaId newRecordType) {
+            this.newRecordType = newRecordType;
+        }
+
+        public SchemaId getOldRecordType() {
+            return oldRecordType;
+        }
+
+        public void setOldRecordType(SchemaId oldRecordType) {
+            this.oldRecordType = oldRecordType;
+        }
+
+        public void addChangedField(SchemaId id, byte[] oldValue, byte[] newValue) {
+            if (fieldChanges == null) {
+                fieldChanges = new ArrayList<FieldChange>();
+            }
+            fieldChanges.add(new FieldChange(id, oldValue, newValue));
+        }
+
+        public List<FieldChange> getFieldChanges() {
+            return fieldChanges;
+        }
+
+        public void toJson(JsonGenerator gen) throws IOException {
+            gen.writeStartObject();
+
+            gen.writeBooleanField("old", oldRecordExists);
+
+            gen.writeBooleanField("new", newRecordExists);
+
+            if (newRecordType != null) {
+                gen.writeBinaryField("newRecordType", newRecordType.getBytes());
+            }
+
+            if (oldRecordType != null) {
+                gen.writeBinaryField("oldRecordType", oldRecordType.getBytes());
+            }
+
+            if (fieldChanges != null) {
+                gen.writeArrayFieldStart("fields");
+
+                for (FieldChange fieldChange : fieldChanges) {
+                    fieldChange.toJson(gen);
+                }
+
+                gen.writeEndArray();
+            }
+
+            gen.writeEndObject();
+        }
+    }
+
+    public static class FieldChange {
+        private SchemaId id;
+        private byte[] oldValue;
+        private byte[] newValue;
+
+        public FieldChange(SchemaId id, byte[] oldValue, byte[] newValue) {
+            this.id = id;
+            this.oldValue = oldValue;
+            this.newValue = newValue;
+        }
+
+        public FieldChange(JsonParser jp, IdGenerator idGenerator) throws IOException {
+            JsonToken current = jp.getCurrentToken();
+
+            if (current != JsonToken.START_OBJECT) {
+                throw new RuntimeException("Not a JSON object.");
+            }
+
+            while (jp.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = jp.getCurrentName();
+                current = jp.nextToken(); // move from field name to field value
+                if (fieldName.equals("id")) {
+                    this.id = idGenerator.getSchemaId(jp.getBinaryValue());
+                } else if (fieldName.equals("old")) {
+                    oldValue = jp.getBinaryValue();
+                } else if (fieldName.equals("new")) {
+                    newValue = jp.getBinaryValue();
+                }
+            }
+        }
+
+        public SchemaId getId() {
+            return id;
+        }
+
+        public byte[] getOldValue() {
+            return oldValue;
+        }
+
+        public byte[] getNewValue() {
+            return newValue;
+        }
+
+        public void toJson(JsonGenerator gen) throws IOException {
+            gen.writeStartObject();
+
+            gen.writeBinaryField("id", id.getBytes());
+
+            if (oldValue != null) {
+                gen.writeBinaryField("old", oldValue);
+            }
+
+            if (newValue != null) {
+                gen.writeBinaryField("new", newValue);
+            }
+
+            gen.writeEndObject();
+        }
     }
 }
 

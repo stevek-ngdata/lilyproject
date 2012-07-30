@@ -21,7 +21,7 @@ import org.lilyproject.util.ArgumentValidator;
  * ones). If the value of the variant property is specified, it has to match exactly. If the value is
  * <code>null</code>, any value will match.
  *
- * @author Jan Van Besien
+ *
  */
 public class LilyRecordVariantFilter extends FilterBase {
     private Map<String, String> variantProperties;

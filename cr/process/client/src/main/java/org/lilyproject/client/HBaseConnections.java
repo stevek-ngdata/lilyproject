@@ -48,6 +48,10 @@ public class HBaseConnections {
         return conf;
     }
 
+    public List<Configuration> getConfigurations() {
+        return Collections.unmodifiableList(configurations);
+    }
+
     private Map<String, String> toMap(Configuration conf) {
         Map<String, String> result = new HashMap<String, String>();
         Iterator<Map.Entry<String, String>> it = conf.iterator();

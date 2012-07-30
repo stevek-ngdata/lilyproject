@@ -1,0 +1,14 @@
+{
+    "scan" : {
+        "returnFields" : { 
+            "type" : "ALL"
+        },        
+        "recordFilter" : {
+            "@class": "org.lilyproject.repository.api.filter.RecordIdPrefixFilter",
+            "recordId" : "USER.angustura"
+        },   
+        "caching" : 1024,
+        "cacheBlocks" : false
+    },
+    "clearDerefMap" : true
+}

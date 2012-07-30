@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
@@ -30,31 +31,16 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <build />
+  <build/>
 
   <dependencies>
     <dependency>
       <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-impl</artifactId>
-      <exclusions>
-        <!-- Removing some dependencies which are not at all needed by the client. -->
-        <exclusion>
-          <groupId>org.lilyproject</groupId>
-          <artifactId>lily-rowlog-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.lilyproject</groupId>
-          <artifactId>lily-rowlog-impl</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.mortbay.jetty</groupId>
-          <artifactId>jetty</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.thoughtworks.paranamer</groupId>
-          <artifactId>paranamer-ant</artifactId>
-        </exclusion>
-      </exclusions>
+      <artifactId>lily-repository-remote-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-remote-impl</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lilyproject</groupId>

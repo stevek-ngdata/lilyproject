@@ -141,6 +141,11 @@
 
     <dependency>
       <groupId>org.lilyproject</groupId>
+      <artifactId>lily-indexer-integration-module</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.lilyproject</groupId>
       <artifactId>lily-general-module</artifactId>
     </dependency>
 

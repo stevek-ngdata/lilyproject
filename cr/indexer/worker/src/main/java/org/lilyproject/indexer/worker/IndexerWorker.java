@@ -15,23 +15,48 @@
  */
 package org.lilyproject.indexer.worker;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
-import org.lilyproject.hbaseindex.*;
-import org.lilyproject.indexer.engine.*;
+import org.lilyproject.indexer.derefmap.DerefMap;
+import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.IndexLocker;
+import org.lilyproject.indexer.engine.IndexUpdater;
+import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
+import org.lilyproject.indexer.engine.Indexer;
+import org.lilyproject.indexer.engine.IndexerMetrics;
+import org.lilyproject.indexer.engine.IndexerRegistry;
+import org.lilyproject.indexer.engine.SolrClientConfig;
+import org.lilyproject.indexer.engine.SolrShardManager;
+import org.lilyproject.indexer.engine.SolrShardManagerImpl;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexNotFoundException;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+import org.lilyproject.indexer.model.api.IndexerModel;
+import org.lilyproject.indexer.model.api.IndexerModelEvent;
+import org.lilyproject.indexer.model.api.IndexerModelListener;
 import org.lilyproject.indexer.model.indexerconf.IndexerConf;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
-import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.linkindex.LinkIndex;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.rowlog.api.RowLog;
 import org.lilyproject.rowlog.api.RowLogConfigurationManager;
@@ -42,15 +67,9 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
 
 /**
  * IndexerWorker is responsible for the incremental indexing updating, thus for starting
@@ -68,7 +87,7 @@ public class IndexerWorker {
 
     private Repository repository;
 
-    private LinkIndex linkIndex;
+    private Configuration hbaseConf;
 
     private ZooKeeperItf zk;
 
@@ -90,27 +109,33 @@ public class IndexerWorker {
 
     private BlockingQueue<IndexerModelEvent> eventQueue = new LinkedBlockingQueue<IndexerModelEvent>();
 
+    private EventWorker eventWorker;
+
     private Thread eventWorkerThread;
 
     private HttpClient httpClient;
 
     private MultiThreadedHttpConnectionManager connectionManager;
 
+    private IndexerRegistry indexerRegistry;
+
     private final Log log = LogFactory.getLog(getClass());
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
-            Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
-            SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings)
+                         Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
+                         SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings,
+                         IndexerRegistry indexerRegistry)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
         this.rowLog = rowLog;
-        this.linkIndex = new LinkIndex(new IndexManager(hbaseConf), repository);
+        this.hbaseConf = hbaseConf;
         this.zk = zk;
         this.rowLogConfMgr = rowLogConfMgr;
         this.settings = settings;
         this.solrClientConfig = solrClientConfig;
         this.hostName = hostName;
+        this.indexerRegistry = indexerRegistry;
     }
 
     @PostConstruct
@@ -118,9 +143,10 @@ public class IndexerWorker {
         connectionManager = new MultiThreadedHttpConnectionManager();
         connectionManager.getParams().setDefaultMaxConnectionsPerHost(settings.getSolrMaxConnectionsPerHost());
         connectionManager.getParams().setMaxTotalConnections(settings.getSolrMaxTotalConnections());
-      	httpClient = new HttpClient(connectionManager);
+        httpClient = new HttpClient(connectionManager);
 
-        eventWorkerThread = new Thread(new EventWorker(), "IndexerWorkerEventWorker");
+        eventWorker = new EventWorker();
+        eventWorkerThread = new Thread(eventWorker, "IndexerWorkerEventWorker");
         eventWorkerThread.start();
 
         synchronized (indexUpdatersLock) {
@@ -136,6 +162,7 @@ public class IndexerWorker {
 
     @PreDestroy
     public void stop() {
+        eventWorker.stop();
         eventWorkerThread.interrupt();
         try {
             Logs.logThreadJoin(eventWorkerThread);
@@ -170,16 +197,24 @@ public class IndexerWorker {
 
             checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
 
-            SolrShardManager solrShardMgr = new SolrShardManager(index.getName(), index.getSolrShards(), shardSelector,
-                    httpClient, solrClientConfig, true);
+            SolrShardManager solrShardMgr =
+                    new SolrShardManagerImpl(index.getName(), index.getSolrShards(), shardSelector,
+                            httpClient, solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
+
+            // create a deref map in case the indexer configuration contains deref fields
+            DerefMap derefMap = indexerConf.containsDerefExpressions() ?
+                    DerefMapHbaseImpl.create(index.getName(), hbaseConf, repository.getIdGenerator()) : null;
+
+            // create and register the indexer
             Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,
-                    indexerMetrics);
+                    indexerMetrics, derefMap);
+            indexerRegistry.register(indexer);
 
             IndexUpdaterMetrics updaterMetrics = new IndexUpdaterMetrics(index.getName());
-            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, linkIndex, indexLocker, rowLog,
-                    updaterMetrics);
+            IndexUpdater indexUpdater = new IndexUpdater(indexer, repository, indexLocker, rowLog,
+                    updaterMetrics, derefMap, index.getQueueSubscriptionId());
 
             List<RemoteListenerHandler> listenerHandlers = new ArrayList<RemoteListenerHandler>();
 
@@ -246,6 +281,8 @@ public class IndexerWorker {
     }
 
     private boolean removeIndexUpdater(String indexName) {
+        indexerRegistry.unregister(indexName);
+
         IndexUpdaterHandle handle = indexUpdaters.get(indexName);
 
         if (handle == null) {
@@ -291,7 +328,8 @@ public class IndexerWorker {
         private IndexUpdaterMetrics updaterMetrics;
 
         public IndexUpdaterHandle(IndexDefinition indexDef, List<RemoteListenerHandler> listenerHandlers,
-                SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics, IndexUpdaterMetrics updaterMetrics) {
+                                  SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics,
+                                  IndexUpdaterMetrics updaterMetrics) {
             this.indexDef = indexDef;
             this.listenerHandlers = listenerHandlers;
             this.solrShardMgr = solrShardMgr;
@@ -316,9 +354,15 @@ public class IndexerWorker {
     }
 
     private class EventWorker implements Runnable {
+        private volatile boolean stop = false;
+
+        public void stop() {
+            stop = true;
+        }
+
         @Override
         public void run() {
-            while (true) {
+            while (!stop) { // We need the stop flag because some code (HBase client code) eats interrupted flags
                 if (Thread.interrupted()) {
                     return;
                 }

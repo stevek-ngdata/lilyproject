@@ -1,13 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema elementFormDefault="unqualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:attributeGroup name="recordMatcherAttrs">
+    <xs:attribute name="recordType" type="xs:string" use="optional"/>
+    <xs:attribute name="field" type="xs:string" use="optional"/>
+    <xs:attribute name="variant" type="xs:string" use="optional"/>
+  </xs:attributeGroup>
   <xs:element name="indexer">
     <xs:complexType>
       <xs:all minOccurs="0">
         <xs:element minOccurs="0" ref="records"/>
+        <xs:element minOccurs="0" ref="recordFilter"/>
         <xs:element minOccurs="0" ref="formatters"/>
         <xs:element minOccurs="0" ref="fields"/>
         <xs:element minOccurs="0" ref="dynamicFields"/>
       </xs:all>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="recordFilter">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="1" minOccurs="0" name="includes">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="include">
+                <xs:complexType>
+                  <xs:attributeGroup ref="recordMatcherAttrs"/>
+                  <xs:attribute name="vtags" type="xs:string" use="required"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element maxOccurs="1" minOccurs="0" name="excludes">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="exclude">
+                <xs:complexType>
+                  <xs:attributeGroup ref="recordMatcherAttrs"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="records">
@@ -40,14 +75,11 @@
   <xs:element name="fields">
     <xs:complexType>
       <xs:sequence>
-        <xs:element maxOccurs="unbounded" minOccurs="0" name="field">
-          <xs:complexType>
-            <xs:attribute name="name" type="xs:string" use="required"/>
-            <xs:attribute name="value" type="xs:string" use="required"/>
-            <xs:attribute name="extractContent" type="xs:string" use="optional"/>
-            <xs:attribute name="formatter" type="xs:string" use="optional"/>
-          </xs:complexType>
-        </xs:element>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element minOccurs="0" ref="field"/>
+          <xs:element minOccurs="0" ref="match"/>
+          <xs:element minOccurs="0" ref="forEach"/>
+        </xs:choice>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -75,7 +107,34 @@
   </xs:element>
   <xs:element name="field">
     <xs:complexType>
-      <xs:attribute name="name" type="xs:QName" use="required"/>
+      <xs:attribute name="name" type="xs:string" use="required"/>
+      <xs:attribute name="value" type="xs:string" use="required"/>
+      <xs:attribute name="extractContent" type="xs:string" use="optional"/>
+      <xs:attribute name="formatter" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="match">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element minOccurs="0" ref="field"/>
+          <xs:element minOccurs="0" ref="match"/>
+          <xs:element minOccurs="0" ref="forEach"/>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attributeGroup ref="recordMatcherAttrs"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="forEach">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element minOccurs="0" ref="field"/>
+          <xs:element minOccurs="0" ref="match"/>
+          <xs:element minOccurs="0" ref="forEach"/>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attribute name="expr" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
 </xs:schema>

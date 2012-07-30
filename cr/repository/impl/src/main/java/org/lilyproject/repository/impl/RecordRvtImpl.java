@@ -305,4 +305,22 @@ public class RecordRvtImpl implements IdRecord, Cloneable {
         decode(false);
         return delegate.getFieldsById();
     }
+
+    @Override
+    public Map<String, String> getAttributes() {
+        decode(false);
+        return delegate.getAttributes();
+    }
+
+    @Override
+    public boolean hasAttributes() {
+        decode(false);
+        return delegate.hasAttributes();
+    }
+
+    @Override
+    public void setAttributes(Map<String, String> attributes) {
+        decode(true);
+        delegate.setAttributes(attributes);        
+    }
 }

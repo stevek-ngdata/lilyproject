@@ -19,6 +19,7 @@ import org.lilyproject.repository.api.FieldTypes;
 import org.lilyproject.repository.api.Record;
 import org.lilyproject.repository.api.Repository;
 import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.util.repo.RecordEvent;
 
 public interface RecordUpdateHook {
     /**
@@ -35,12 +36,28 @@ public interface RecordUpdateHook {
      *
      * <p>The hook should not modify the ID of the record, this will lead to unpredictable behavior.</p>
      *
-     * @param record the record supplied by the user (not validated)
+     * @param record the record supplied by the user (not validated). Only contains fields supplied by the user.
      * @param originalRecord the record as it is stored in the repository, containing all record
      *                       fields. Unmodifiable.
      * @param fieldTypes snapshot of the state of the field types when the update operation started (to
      *                   be insensitive to changes such as field type name changes)
+     * @param recordEvent the RecordEvent that will be added as payload to the WAL & MQ. Hooks can add their
+     *                    own data in here, but should not in any case modify any of the data managed by
+     *                    Lily itself. <b>Be very careful what you do!</b>
      */
-    void beforeUpdate(Record record, Record originalRecord, Repository repository, FieldTypes fieldTypes)
-            throws RepositoryException, InterruptedException;
+    void beforeUpdate(Record record, Record originalRecord, Repository repository, FieldTypes fieldTypes,
+            RecordEvent recordEvent) throws RepositoryException, InterruptedException;
+
+    /**
+     * Similar to {@link #beforeUpdate} but only provided with the new record, since there is no
+     * original record.
+     */
+    void beforeCreate(Record newRecord, Repository repository, FieldTypes fieldTypes, RecordEvent recordEvent)
+             throws RepositoryException, InterruptedException;
+
+    /**
+     * Similar to {@link #beforeUpdate} but only provided with orignal record since there is no new record.
+     */
+    void beforeDelete(Record originalRecord, Repository repository, FieldTypes fieldTypes, RecordEvent recordEvent)
+             throws RepositoryException, InterruptedException;
 }

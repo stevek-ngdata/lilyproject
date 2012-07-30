@@ -19,7 +19,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lilyproject.linkindex.LinkIndexUpdaterMetrics.Action;
 import org.lilyproject.repository.api.*;
+import org.lilyproject.util.repo.FieldFilter;
 import org.lilyproject.util.repo.RecordEvent;
+import org.lilyproject.util.repo.RecordEventHelper;
 import org.lilyproject.util.repo.RowLogContext;
 import org.lilyproject.util.repo.VTaggedRecord;
 import org.lilyproject.rowlog.api.RowLogMessage;
@@ -96,9 +98,12 @@ public class LinkIndexUpdater implements RowLogMessageListener {
             } else if (recordEvent.getType().equals(CREATE) || recordEvent.getType().equals(UPDATE)) {
                 boolean isNewRecord = recordEvent.getType().equals(CREATE);
 
+                RecordEventHelper eventHelper = new RecordEventHelper(recordEvent, LINK_FIELD_FILTER,
+                        repository.getTypeManager());
+
                 VTaggedRecord vtRecord;
                 try {
-                    vtRecord = new VTaggedRecord(recordId, recordEvent, LINK_FIELD_FILTER, repository);
+                    vtRecord = new VTaggedRecord(recordId, eventHelper, repository);
                 } catch (RecordNotFoundException e) {
                     // record not found: delete all links for all vtags
                     linkIndex.deleteLinks(recordId);
@@ -114,7 +119,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
                 Set<SchemaId> vtagsToProcess = new HashSet<SchemaId>();
 
                 // Modified vtag fields
-                vtagsToProcess.addAll(vtRecord.getModifiedVTags());
+                vtagsToProcess.addAll(eventHelper.getModifiedVTags());
 
                 // The vtags of the created/modified version, if any, and if any link fields changed
                 vtagsToProcess.addAll(vtRecord.getVTagsOfModifiedData());
@@ -205,7 +210,7 @@ public class LinkIndexUpdater implements RowLogMessageListener {
         }
     }
 
-    private static final VTaggedRecord.FieldFilter LINK_FIELD_FILTER = new VTaggedRecord.FieldFilter() {
+    private static final FieldFilter LINK_FIELD_FILTER = new FieldFilter() {
         @Override
         public boolean accept(FieldType fieldtype) {
             return fieldtype.getValueType().getDeepestValueType().getBaseName().equals("LINK");

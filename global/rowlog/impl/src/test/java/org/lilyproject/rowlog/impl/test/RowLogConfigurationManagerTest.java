@@ -288,42 +288,58 @@ public class RowLogConfigurationManagerTest {
 
     @Test
     public void testProcessorNotify() throws Exception {
-    	String rowLogId = "testProcessorNotifyRowLogId";
+    	String rowLogId1 = "testProcessorNotifyRowLogId1";
+        String rowLogId2 = "testProcessorNotifyRowLogId2";
+        String subscriptionId1 = "testSubscriptionId1";
+        String subscriptionId2 = "testSubscriptionId2";
 
         // Initialize
         RowLogConfigurationManagerImpl rowLogConfigurationManager = new RowLogConfigurationManagerImpl(zooKeeper);
 
-        ProcessorNotifyCallBack callBack1 = new ProcessorNotifyCallBack();
-        ProcessorNotifyCallBack callBack2 = new ProcessorNotifyCallBack();
+        ProcessorNotifyCallBack callBack1Sub1 = new ProcessorNotifyCallBack();
+        ProcessorNotifyCallBack callBack1Sub2 = new ProcessorNotifyCallBack();
+        ProcessorNotifyCallBack callBack2Sub1 = new ProcessorNotifyCallBack();
 
         // Add observers and expect an initial notify
-        callBack1.expect(true);
-        callBack2.expect(false);
-        rowLogConfigurationManager.addProcessorNotifyObserver(rowLogId, callBack1);
-        callBack1.validate();
-        callBack2.validate();
+        callBack1Sub1.expect(true);
+        callBack1Sub2.expect(false);
+        callBack2Sub1.expect(false);
+        rowLogConfigurationManager.setProcessorNotifyObserver(rowLogId1, subscriptionId1, callBack1Sub1);
+        callBack1Sub1.validate();
+        callBack1Sub2.validate();
+        callBack2Sub1.validate();
 
-        callBack1.expect(false);
-        callBack2.expect(true);
-        rowLogConfigurationManager.addProcessorNotifyObserver("someOtherRowLogId", callBack2);
-        callBack1.validate();
-        callBack2.validate();
+        callBack1Sub1.expect(false);
+        callBack1Sub2.expect(true);
+        rowLogConfigurationManager.setProcessorNotifyObserver(rowLogId1, subscriptionId2, callBack1Sub2);
+        callBack1Sub1.validate();
+        callBack1Sub2.validate();
+
+        callBack1Sub1.expect(false);
+        callBack1Sub2.expect(false);
+        callBack2Sub1.expect(true);
+        rowLogConfigurationManager.setProcessorNotifyObserver(rowLogId2, subscriptionId1, callBack2Sub1);
+        callBack1Sub1.validate();
+        callBack1Sub2.validate();
+        callBack2Sub1.validate();
 
         // Notify one processor
-        callBack1.expect(true);
-        callBack2.expect(false);
-        rowLogConfigurationManager.notifyProcessor(rowLogId);
-        callBack1.validate();
-        callBack2.validate();
+        callBack1Sub1.expect(true);
+        callBack1Sub2.expect(false);
+        callBack2Sub1.expect(false);
+        rowLogConfigurationManager.notifyProcessor(rowLogId1, subscriptionId1);
+        callBack1Sub1.validate();
+        callBack1Sub2.validate();
+        callBack2Sub1.validate();
     }
     
     private class ProcessorNotifyCallBack implements ProcessorNotifyObserver {
         
         private Semaphore semaphore = new Semaphore(0);
 		private boolean expect = false;
-        
+
         @Override
-        public void notifyProcessor() {
+        public void notifyProcessor(String rowLogId, String subscriptionId) {
             semaphore.release();
         }
 
@@ -332,8 +348,8 @@ public class RowLogConfigurationManagerTest {
 			semaphore.drainPermits();
         }
         
-        private void validate() throws Exception{
-        	Assert.assertEquals(expect, semaphore.tryAcquire(10, TimeUnit.SECONDS));
+        private void validate() throws Exception {
+        	Assert.assertEquals(expect, semaphore.tryAcquire(5, TimeUnit.SECONDS));
         }
     }
     

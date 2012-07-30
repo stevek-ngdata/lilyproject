@@ -71,8 +71,8 @@ public class LilyProxyTest {
         
         // Add index
         String indexName = "testIndex";
-        Assert.assertTrue("Adding index took too long", lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
-                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L));
+        lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
+                "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L);
        
         // Create record
         Record record = repository.newRecord();
@@ -127,8 +127,7 @@ public class LilyProxyTest {
             Assert.assertFalse(recordIds.contains(record.getId()));
             
             // Trigger batch build
-            Assert.assertTrue("Batch index build took too long",
-                    lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4));
+            lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4);
     
             // Now record should be in index 
             recordIds = querySolr("name2");        

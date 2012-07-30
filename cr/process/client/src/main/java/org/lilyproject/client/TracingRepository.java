@@ -1,25 +1,25 @@
 package org.lilyproject.client;
 
-import com.google.common.collect.Lists;
-import org.lilyproject.repository.api.*;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
+
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.TypeManager;
 
 public class TracingRepository {
 
     public static Repository wrap(Repository repository) {
-        TypeManager typeManager = (TypeManager)Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
-                new Class[] { TypeManager.class }, new TracingTypeManagerIH(repository.getTypeManager()));
-        
-        IdGenerator idGenerator = (IdGenerator)Proxy.newProxyInstance(IdGenerator.class.getClassLoader(),
-                new Class[] { IdGenerator.class }, new TracingIdGeneratorIH(repository.getIdGenerator()));
+        TypeManager typeManager = (TypeManager) Proxy.newProxyInstance(TypeManager.class.getClassLoader(),
+                new Class[]{TypeManager.class}, new TracingTypeManagerIH(repository.getTypeManager()));
 
-        return (Repository)Proxy.newProxyInstance(Repository.class.getClassLoader(),
-                new Class[] { Repository.class }, new TracingRepositoryIH(repository, typeManager, idGenerator));
+        IdGenerator idGenerator = (IdGenerator) Proxy.newProxyInstance(IdGenerator.class.getClassLoader(),
+                new Class[]{IdGenerator.class}, new TracingIdGeneratorIH(repository.getIdGenerator()));
+
+        return (Repository) Proxy.newProxyInstance(Repository.class.getClassLoader(),
+                new Class[]{Repository.class}, new TracingRepositoryIH(repository, typeManager, idGenerator));
     }
 
     private static final class TracingRepositoryIH implements InvocationHandler {
@@ -50,8 +50,8 @@ public class TracingRepository {
             }
         }
     }
-    
-    private static void logMethodCall(Method method, Object[] args) {        
+
+    private static void logMethodCall(Method method, Object[] args) {
         StringBuilder builder = new StringBuilder();
         builder.append(method.getDeclaringClass().getSimpleName()).append(".").append(method.getName());
         if (args != null) {
@@ -59,7 +59,7 @@ public class TracingRepository {
                 builder.append(i > 0 ? ", " : " ");
                 builder.append("arg").append(i).append(" = ");
                 if (args[i] != null && args[i].getClass().isArray()) {
-                    Object[] values = (Object[])args[i];
+                    Object[] values = (Object[]) args[i];
                     builder.append("[");
                     for (int j = 0; j < values.length; j++) {
                         if (j > 0)
@@ -74,10 +74,10 @@ public class TracingRepository {
         }
         System.out.println("===== " + builder.toString());
     }
-    
+
     private static final class TracingTypeManagerIH implements InvocationHandler {
         private final TypeManager delegate;
-        
+
         private TracingTypeManagerIH(TypeManager delegate) {
             this.delegate = delegate;
         }

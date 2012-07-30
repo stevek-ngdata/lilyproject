@@ -16,7 +16,7 @@
 package org.lilyproject.indexer.model.indexerconf;
 
 public class NameTemplateEvaluationException extends RuntimeException {
-    public NameTemplateEvaluationException(String message, String template) {
-        super("Error evaluating " + template + " : " + message);
+    public NameTemplateEvaluationException(String message) {
+        super("Error evaluating name template at: " + message);
     }
 }

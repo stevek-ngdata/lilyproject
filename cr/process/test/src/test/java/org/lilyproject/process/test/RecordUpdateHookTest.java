@@ -143,18 +143,17 @@ public class RecordUpdateHookTest {
         record.setField(fieldName, "foo");
         record = repository.create(record);
 
-        // The hook should not influence creates
-        assertEquals("foo", record.getField(fieldName));
+        assertEquals("foo-create-hook", record.getField(fieldName));
 
         record = repository.read(record.getId());
-        assertEquals("foo", record.getField(fieldName));
+        assertEquals("foo-create-hook", record.getField(fieldName));
 
         record.setField(fieldName, "bar");
         record = repository.update(record);
 
-        assertEquals("bar-hooked", record.getField(fieldName));
+        assertEquals("bar-update-hook", record.getField(fieldName));
 
         record = repository.read(record.getId());
-        assertEquals("bar-hooked", record.getField(fieldName));
+        assertEquals("bar-update-hook", record.getField(fieldName));
     }
 }

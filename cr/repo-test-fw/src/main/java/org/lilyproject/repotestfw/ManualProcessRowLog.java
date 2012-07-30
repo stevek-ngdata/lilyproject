@@ -15,12 +15,18 @@
  */
 package org.lilyproject.repotestfw;
 
-import org.apache.hadoop.hbase.client.Put;
-import org.lilyproject.rowlock.RowLock;
-import org.lilyproject.rowlog.api.*;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hadoop.hbase.client.Put;
+import org.lilyproject.rowlock.RowLock;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessage;
+import org.lilyproject.rowlog.api.RowLogShard;
+import org.lilyproject.rowlog.api.RowLogShardList;
+import org.lilyproject.rowlog.api.RowLogSubscription;
 
 /**
  * A RowLog implementation that delegates to another RowLog and allows to manually trigger the processing
@@ -47,8 +53,15 @@ public class ManualProcessRowLog implements RowLog {
     @Override
     public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put) throws RowLogException,
             InterruptedException {
+        List<String> subscriptionIds = getSubscriptionIds();
+        return putMessage(rowKey, data, payload, put, subscriptionIds);
+    }
 
-        RowLogMessage msg = delegate.putMessage(rowKey, data, payload, put);
+    @Override
+    public RowLogMessage putMessage(byte[] rowKey, byte[] data, byte[] payload, Put put,
+            List<String> subscriptionIds) throws RowLogException, InterruptedException {
+
+        RowLogMessage msg = delegate.putMessage(rowKey, data, payload, put, subscriptionIds);
         unprocessedMessages.add(msg);
 
         return msg;
@@ -87,6 +100,11 @@ public class ManualProcessRowLog implements RowLog {
     }
 
     @Override
+    public List<String> getSubscriptionIds() {
+        return delegate.getSubscriptionIds();
+    }
+
+    @Override
     public List<RowLogShard> getShards() {
         return delegate.getShards();
     }
@@ -105,4 +123,5 @@ public class ManualProcessRowLog implements RowLog {
     public RowLogConfig getConfig() {
         return delegate.getConfig();
     }
+
 }

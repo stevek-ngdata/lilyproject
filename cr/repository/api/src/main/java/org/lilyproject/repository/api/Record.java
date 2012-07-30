@@ -313,7 +313,7 @@ public interface Record {
     
     /**
      * Resolves the QName of the field and deletes it from the record.
-     * <p>
+     *
      * @see {@link #setDefaultNamespace(String)} 
      * @see {@link #delete(QName, boolean)}
      * @param fieldName the name part of the field to delete
@@ -324,7 +324,7 @@ public interface Record {
     
     /**
      * Resolves the QName of the field and checks if it exists.
-     * <p>
+     *
      * @see {@link #setDefaultNamespace(String)} 
      * @see {@link #hasField(QName)}
      * @param fieldName the name part of the field to check 
@@ -332,4 +332,33 @@ public interface Record {
      * @throws RecordException when the QName cannot be resolved
      */
     boolean hasField(String fieldName) throws RecordException;
+
+    /**
+     * Gets the transient set of attributes associated with this record. The returned map is never null
+     * and can be modified. For more details on transient attributes see {@link #setAttributes(Map)}.
+     */
+    Map<String, String> getAttributes();
+
+    /**
+     * Returns true if attributes are set in this record object. This method is cheaper than
+     * calling {@link #getAttributes()} when the record has no attributes. See {@link #setAttributes(Map)}.
+     */
+    boolean hasAttributes();
+    
+    /**
+     * Set the transient attributes associated with this record.
+     *
+     * <p>These transient attributes are not persisted in the repository, thus they do not behave like fields.
+     * As such, they are not returned when doing a {@link Repository#read}. Instead, the attributes are
+     * related to a particular create/update/delete operation.</p>
+     *
+     * <p>The purpose of these attributes is to be able to pass along data/hints to certain
+     * components, such as server-side repository decorators, secondary actions, message queue listeners
+     * and the like. The attributes are stored as part of the rowlog payload of a repository mutation event.</p>
+     *
+     * <p>The attributes are not preserved when cloning the record, or on a round-trip from the repository,
+     * thus in the record object returned from create, update, etc.</p>
+     */
+    void setAttributes(Map<String, String> attributes);
+    
 }

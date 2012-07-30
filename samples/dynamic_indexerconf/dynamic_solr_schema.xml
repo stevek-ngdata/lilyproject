@@ -74,6 +74,7 @@
     <!-- A Trie based date field for faster date range queries and date faceting. -->
     <fieldType name="tdate" class="solr.TrieDateField" omitNorms="true" precisionStep="6" positionIncrementGap="0"/>
 
+    <fieldType name="bytearray" class="solr.ByteField" omitNorms="true" />
  </types>
 
 
@@ -112,6 +113,9 @@
 
    <dynamicField name="*_datetime" type="tdate" indexed="true" stored="true" required="false"/>
    <dynamicField name="*_datetime_mv" type="tdate" indexed="true" stored="true" required="false" multiValued="true"/>
+
+   <dynamicField name="*_bytearray" type="bytearray" indexed="false" stored="false" required="false"/>
+   <dynamicField name="*_bytearray_mv" type="bytearray" indexed="false" stored="false" required="false" multiValued="true"/>
 
    <field name="everything" type="text_general" indexed="true" stored="true" required="false" multiValued="true"/>
 

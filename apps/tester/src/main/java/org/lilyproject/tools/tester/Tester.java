@@ -15,24 +15,41 @@
  */
 package org.lilyproject.tools.tester;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.zookeeper.KeeperException;
-import org.codehaus.jackson.*;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.node.ObjectNode;
 import org.joda.time.DateTime;
 import org.lilyproject.cli.OptionUtil;
 import org.lilyproject.client.NoServersException;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.testclientfw.BaseRepositoryTestTool;
 import org.lilyproject.testclientfw.Util;
-import org.lilyproject.tools.import_.cli.*;
+import org.lilyproject.tools.import_.cli.DefaultImportListener;
+import org.lilyproject.tools.import_.cli.ImportConflictException;
+import org.lilyproject.tools.import_.cli.ImportException;
+import org.lilyproject.tools.import_.cli.JsonImport;
 import org.lilyproject.tools.import_.json.JsonFormatException;
 import org.lilyproject.tools.import_.json.QNameConverter;
 import org.lilyproject.util.io.Closer;
@@ -64,7 +81,7 @@ public class Tester extends BaseRepositoryTestTool {
     public static void main(String[] args) throws Exception {
         new Tester().start(args);
     }
-    
+
     @Override
     protected String getCmdName() {
         return "lily-tester";
@@ -78,38 +95,38 @@ public class Tester extends BaseRepositoryTestTool {
     @Override
     public List<Option> getOptions() {
         List<Option> options = super.getOptions();
-        
+
         configFileOption = OptionBuilder
-            .withArgName("config.json")
-            .hasArg()
-            .withDescription("Test tool configuration file")
-            .withLongOpt("config")
-            .create("c");
+                .withArgName("config.json")
+                .hasArg()
+                .withDescription("Test tool configuration file")
+                .withLongOpt("config")
+                .create("c");
         options.add(configFileOption);
 
         dumpSampleConfigOption = OptionBuilder
-            .withDescription("Dumps a sample configuration to standard out")
-            .withLongOpt("dump-sample-config")
-            .create("d");
+                .withDescription("Dumps a sample configuration to standard out")
+                .withLongOpt("dump-sample-config")
+                .create("d");
         options.add(dumpSampleConfigOption);
-        
+
         iterationsOption = OptionBuilder
-            .withArgName("iterations")
-            .hasArg()
-            .withDescription("Number of times to run the scenario")
-            .withLongOpt("iterations")
-            .create("i");
+                .withArgName("iterations")
+                .hasArg()
+                .withDescription("Number of times to run the scenario")
+                .withLongOpt("iterations")
+                .create("i");
         options.add(iterationsOption);
-        
+
         return options;
     }
-    
+
     @Override
     public int run(CommandLine cmd) throws Exception {
         int result = super.run(cmd);
         if (result != 0)
             return result;
-        
+
         if (cmd.hasOption(dumpSampleConfigOption.getOpt())) {
             return dumpSampleConfig();
         }
@@ -118,24 +135,24 @@ public class Tester extends BaseRepositoryTestTool {
             printHelp();
             return 1;
         }
-        
+
         setupLily();
-        
+
         setupMetrics();
 
         String configFileName = cmd.getOptionValue(configFileOption.getOpt());
 
         workersRecordSpaces = new ArrayList<RecordSpaces>(workers);
         workersTestActions = new ArrayList[workers];
-        for (int i = 0; i < workers ; i++) {
+        for (int i = 0; i < workers; i++) {
             workersTestActions[i] = new ArrayList<TestAction>();
         }
-        
+
         InputStream is = new FileInputStream(configFileName);
         loadConfig(is);
         is.close();
-        
-        try {            
+
+        try {
             System.out.println("Running tests...");
             System.out.println("Tail the output files if you wonder what is happening.");
             nrOfIterations = OptionUtil.getIntOption(cmd, iterationsOption, 1000);
@@ -143,15 +160,18 @@ public class Tester extends BaseRepositoryTestTool {
         } finally {
             closeStreams();
         }
-        
+
         finishMetrics();
-        
+
         System.out.println("Test done.");
         return 0;
     }
-    
-    private void loadConfig(InputStream is) throws JsonParseException, IOException, JsonFormatException, RepositoryException, ImportConflictException, ImportException, InterruptedException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-        
+
+    private void loadConfig(InputStream is)
+            throws JsonParseException, IOException, JsonFormatException, RepositoryException, ImportConflictException,
+            ImportException, InterruptedException, SecurityException, IllegalArgumentException, NoSuchMethodException,
+            InstantiationException, IllegalAccessException, InvocationTargetException {
+
         jsonImport = new JsonImport(repository, new DefaultImportListener());
         JsonParser jp = JsonFormat.JSON_FACTORY_NON_STD.createJsonParser(is);
 
@@ -168,7 +188,7 @@ public class Tester extends BaseRepositoryTestTool {
             current = jp.nextToken(); // move from field name to field value
             if (fieldName.equals("namespaces")) {
                 if (current == JsonToken.START_OBJECT) {
-                    jsonImport.readNamespaces((ObjectNode)jp.readValueAsTree());
+                    jsonImport.readNamespaces((ObjectNode) jp.readValueAsTree());
                 } else {
                     System.out.println("Error: namespaces property should be an object. Skipping.");
                     jp.skipChildren();
@@ -215,11 +235,11 @@ public class Tester extends BaseRepositoryTestTool {
                     }
                 } else {
                     System.out.println("Error: recordSpaces property should be an array. Skipping.");
-                    jp.skipChildren();                    
+                    jp.skipChildren();
                 }
             } else if (fieldName.equals("stopConditions")) {
                 if (current == JsonToken.START_OBJECT) {
-                    readStopConditions((ObjectNode)jp.readValueAsTree());
+                    readStopConditions((ObjectNode) jp.readValueAsTree());
                 } else {
                     System.out.println("Error: stopConditions property should be an object. Skipping.");
                     jp.skipChildren();
@@ -227,8 +247,10 @@ public class Tester extends BaseRepositoryTestTool {
             }
         }
     }
-    
-    private void importFieldType(JsonNode fieldTypeNode) throws RepositoryException, ImportConflictException, ImportException, JsonFormatException, InterruptedException {
+
+    private void importFieldType(JsonNode fieldTypeNode)
+            throws RepositoryException, ImportConflictException, ImportException, JsonFormatException,
+            InterruptedException {
         int times = 0;
         JsonNode timesNode = fieldTypeNode.get("times");
         if (timesNode != null) {
@@ -246,8 +268,9 @@ public class Tester extends BaseRepositoryTestTool {
             }
         }
     }
-    
-    private void importRecordType(JsonNode recordTypeNode) throws JsonFormatException, RepositoryException, ImportException, InterruptedException {
+
+    private void importRecordType(JsonNode recordTypeNode)
+            throws JsonFormatException, RepositoryException, ImportException, InterruptedException {
         String recordTypeName = JsonUtil.getString(recordTypeNode, "name");
         QName recordTypeQName = QNameConverter.fromJson(recordTypeName, jsonImport.getNamespaces());
         recordType = repository.getTypeManager().newRecordType(recordTypeQName);
@@ -277,7 +300,7 @@ public class Tester extends BaseRepositoryTestTool {
         testRecordType.setRecordType(jsonImport.importRecordType(recordType));
         recordTypes.put(recordType.getName(), testRecordType);
     }
-    
+
     private int dumpSampleConfig() throws IOException {
         InputStream is = getClass().getClassLoader().getResourceAsStream("org/lilyproject/tools/tester/config.json");
         try {
@@ -287,45 +310,51 @@ public class Tester extends BaseRepositoryTestTool {
         }
         return 0;
     }
-    
-    private void prepareAction(JsonNode actionNode) throws IOException, SecurityException, IllegalArgumentException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+
+    private void prepareAction(JsonNode actionNode)
+            throws IOException, SecurityException, IllegalArgumentException, NoSuchMethodException,
+            InstantiationException, IllegalAccessException, InvocationTargetException {
+        final RoundRobinPrefixGenerator roundRobinPrefixGenerator = actionNode.get("recordIdPrefixNbrOfChars") != null ?
+                new RoundRobinPrefixGenerator(actionNode.get("recordIdPrefixNbrOfChars").getIntValue()) : null;
+
         for (int i = 0; i < workers; i++) {
             new RecordSpaces(recordSpacesConfig);
             TestActionContext testActionContext = new TestActionContext(recordTypes, fieldTypes,
-                    jsonImport.getNamespaces(), workersRecordSpaces.get(i), repository, metrics, errorStream);
+                    jsonImport.getNamespaces(), workersRecordSpaces.get(i), repository, metrics, errorStream,
+                    roundRobinPrefixGenerator);
             TestAction testAction = testActionFactory.getTestAction(actionNode, testActionContext);
             workersTestActions[i].add(testAction);
         }
     }
-    
+
     private void readStopConditions(JsonNode stopConditions) {
         maximumRunTime = JsonUtil.getInt(stopConditions, "maximumRunTime");
         maximumFailures = JsonUtil.getInt(stopConditions, "maximumFailures");
     }
-    
+
     private void createSchema(JsonNode configNode) throws IOException, RepositoryException, ImportConflictException,
-    ImportException, JsonFormatException, NoServersException, InterruptedException, KeeperException {
+            ImportException, JsonFormatException, NoServersException, InterruptedException, KeeperException {
 
         JsonImport jsonImport = new JsonImport(repository, new DefaultImportListener());
-        
+
         // Namespaces
         ObjectNode namespacesNode = JsonUtil.getObject(configNode, "namespaces", null);
         if (namespacesNode != null) {
             jsonImport.readNamespaces(namespacesNode);
         }
-        
+
         // Fields
         JsonNode fieldTypesNode = configNode.get("fieldTypes");
         if (fieldTypesNode != null && fieldTypesNode.isArray()) {
             for (JsonNode fieldTypeNode : fieldTypesNode) {
                 FieldType importFieldType = jsonImport.importFieldType(fieldTypeNode);
                 JsonNode propertiesNode = fieldTypeNode.get("properties");
-                
+
                 fieldTypes.put(importFieldType.getName(),
                         new TestFieldType(importFieldType, repository, propertiesNode));
             }
         }
-        
+
         // Record type
         JsonNode recordTypesNode = configNode.get("recordTypes");
         if (recordTypesNode != null && recordTypesNode.isArray()) {
@@ -346,7 +375,7 @@ public class Tester extends BaseRepositoryTestTool {
             }
         }
     }
-    
+
     private void openStreams(String failuresFileName) throws IOException, FileNotFoundException {
         errorStream = new PrintStream(Util.getOutputFileRollOldOne(failuresFileName));
         errorStream.println(new DateTime() + " Opening file");
@@ -363,7 +392,7 @@ public class Tester extends BaseRepositoryTestTool {
         for (int i = 0; i < workers; i++) {
             threads.add(new WorkerThread(workersTestActions[i]));
         }
-        
+
         for (Thread thread : threads) {
             thread.start();
         }
@@ -371,14 +400,14 @@ public class Tester extends BaseRepositoryTestTool {
             thread.join();
         }
     }
-    
+
     private class WorkerThread extends Thread {
         private final List<TestAction> testActions;
 
         public WorkerThread(List<TestAction> testActions) {
             this.testActions = testActions;
         }
-        
+
         @Override
         public void run() {
             for (int j = 0; j < nrOfIterations; j++) {
@@ -388,13 +417,13 @@ public class Tester extends BaseRepositoryTestTool {
                 if (checkStopConditions()) return;
             }
         }
-        
+
     }
-     
+
     private synchronized void incFailureCount(int amount) {
         failureCount = failureCount + amount;
     }
-    
+
     private synchronized int getFailureCount() {
         return failureCount;
     }
@@ -404,8 +433,8 @@ public class Tester extends BaseRepositoryTestTool {
             System.out.println("Stopping because maximum number of failures is reached: " + maximumFailures);
             return true;
         }
-        
-        int ran = (int)Math.floor((System.currentTimeMillis() - startTime) / 1000 / 60);
+
+        int ran = (int) Math.floor((System.currentTimeMillis() - startTime) / 1000 / 60);
         if (ran >= maximumRunTime) {
             System.out.println("Stopping because maximum running time is reached: " + maximumRunTime + " minutes.");
             return true;

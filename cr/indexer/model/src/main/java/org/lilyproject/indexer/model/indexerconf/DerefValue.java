@@ -20,10 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
 import org.lilyproject.repository.api.FieldType;
 import org.lilyproject.repository.api.RepositoryException;
 import org.lilyproject.repository.api.SchemaId;
@@ -32,11 +29,21 @@ import org.lilyproject.repository.api.TypeManager;
 public class DerefValue extends BaseValue {
     private List<Follow> follows = new ArrayList<Follow>();
     private List<Follow> crossRecordFollows = new ArrayList<Follow>();
+    private Value value;
     private FieldType targetField;
     private FieldType lastRealField;
 
-    protected DerefValue(FieldType targetField, boolean extractContent, String formatter) {
+    /**
+     * NOTE: targetField is the 'artificial' target field that takes the single/multivaluedness of the
+     * follows into account
+     */
+    protected DerefValue(List<Follow> follows, Value value, FieldType targetField, boolean extractContent, String formatter) {
         super(extractContent, formatter);
+        //NOTE: extractContent and formatter should be identical to the one for value
+        // so it doesn't matter which ones are used by the ValueEvaluator
+
+        this.follows = follows;
+        this.value = value;
         this.targetField = targetField;
     }
 
@@ -45,6 +52,15 @@ public class DerefValue extends BaseValue {
      */
     protected void init(TypeManager typeManager) throws RepositoryException, InterruptedException {
         follows = Collections.unmodifiableList(follows);
+
+        for (Follow follow: follows) {
+            if (follow instanceof MasterFollow
+                  || follow instanceof VariantFollow
+                  || follow instanceof ForwardVariantFollow
+                  || follow instanceof LinkFieldFollow) {
+                crossRecordFollows.add(follow);
+            }
+        }
         crossRecordFollows = Collections.unmodifiableList(crossRecordFollows);
 
         // To find the lastRealField:
@@ -74,7 +90,7 @@ public class DerefValue extends BaseValue {
         for (Follow follow : follows) {
             if (follow instanceof LinkFieldFollow) {
                 if (currentRootRecordFieldFollow != null) {
-                    ((LinkFieldFollow) follow).ownerFieldType = currentRootRecordFieldFollow.getFieldType();
+                    ((LinkFieldFollow) follow).setOwnerFieldType(currentRootRecordFieldFollow.getFieldType());
                 }
                 currentRootRecordFieldFollow = null;
             } else if (follow instanceof MasterFollow || follow instanceof VariantFollow ||
@@ -146,93 +162,10 @@ public class DerefValue extends BaseValue {
         return lastRealField;
     }
 
-    public static interface Follow {
-    }
-
-    public static class LinkFieldFollow implements Follow {
-        FieldType fieldType;
-        /**
-         * If the link field follow is after one or more record follows, then from the point of view
-         * of the link index, the link belongs to the same field as the top-level record field. We
-         * keep a reference to that field here.
-         */
-        FieldType ownerFieldType;
-
-        public LinkFieldFollow(FieldType fieldType) {
-            this.fieldType = fieldType;
-            this.ownerFieldType = fieldType;
-        }
-
-        public FieldType getFieldType() {
-            return fieldType;
-        }
-
-        public FieldType getOwnerFieldType() {
-            return ownerFieldType;
-        }
-    }
-
-    public static class RecordFieldFollow implements Follow {
-        FieldType fieldType;
-
-        public RecordFieldFollow(FieldType fieldType) {
-            this.fieldType = fieldType;
-        }
-
-        public FieldType getFieldType() {
-            return fieldType;
-        }
-    }
-
-    public static class MasterFollow implements Follow {
-    }
-
-    public static class VariantFollow implements Follow {
-        private Set<String> dimensions;
-
-        public VariantFollow(Set<String> dimensions) {
-            this.dimensions = dimensions;
-        }
-
-        public Set<String> getDimensions() {
-            return dimensions;
-        }
-    }
-
-    /**
-     * Follow definition for the +foo=value,+bar syntax to dereference towards more dimensioned variants. If a record
-     * has none of the defined variant dimensions, or only some, the indexer looks for variants which have all of the
-     * defined dimensions. If a record already has all of the defined variant dimensions, the indexer looks no further.
-     */
-    public static class ForwardVariantFollow implements Follow {
-
-        /**
-         * Dimensions to follow. A null value means "any value".
-         */
-        private Map<String, String> dimensions;
-
-        public ForwardVariantFollow(Map<String, String> dimensions) {
-            this.dimensions = dimensions;
-        }
-
-        public Map<String, String> getDimensions() {
-            return dimensions;
-        }
-
-        public Map<String, String> getValuedDimensions() {
-            return Maps.filterValues(dimensions, new Predicate<String>() {
-                @Override
-                public boolean apply(@Nullable String input) {
-                    return input != null;
-                }
-            });
-        }
-    }
-
     @Override
     public SchemaId getFieldDependency() {
         if (follows.get(0) instanceof LinkFieldFollow) {
-            return ((LinkFieldFollow) follows.get(0)).fieldType.getId();
+            return ((LinkFieldFollow) follows.get(0)).getFieldType().getId();
         } else {
             // A follow-variant is like a link to another document, but the link can never change as the
             // identity of the document never changes. Therefore, there is no dependency on a field.

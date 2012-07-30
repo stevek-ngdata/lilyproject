@@ -111,6 +111,7 @@
     <field name="nv_deref8" type="text" indexed="true" stored="true" required="false"/>
 
     <field name="v_field1" type="text" indexed="true" stored="true" required="false"/>
+    <field name="v_field2" type="text" indexed="true" stored="true" required="false"/>
     <field name="v_deref1" type="text" indexed="true" stored="true" required="false"/>
     <field name="v_deref2" type="text" indexed="true" stored="true" required="false"/>
     <field name="v_deref3" type="text" indexed="true" stored="true" required="false"/>
@@ -154,6 +155,24 @@
     <dynamicField name="*_literal_mv" type="string" indexed="true" stored="true" multiValued="true"/>
     <dynamicField name="*_long" type="long" indexed="true" stored="true"/>
     <dynamicField name="*_date" type="date" indexed="true" stored="true"/>
+    
+    <!-- fields used to test <match> -->
+    <field name="match1" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match2" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match3" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match4" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match5" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match6" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match7" type="string" indexed="true" stored="true" required="false"/>
+    <field name="match8" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch1" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch2" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch3" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch4" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch5" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch6" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch7" type="string" indexed="true" stored="true" required="false"/>
+    <field name="nvmatch8" type="string" indexed="true" stored="true" required="false"/>
   </fields>
 
   <!-- Field to use to determine and enforce document uniqueness.

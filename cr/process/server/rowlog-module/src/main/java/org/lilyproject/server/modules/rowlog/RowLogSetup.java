@@ -30,8 +30,22 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.zookeeper.KeeperException;
 import org.kauriproject.conf.Conf;
 import org.lilyproject.rowlock.RowLocker;
-import org.lilyproject.rowlog.api.*;
-import org.lilyproject.rowlog.impl.*;
+import org.lilyproject.rowlog.api.RowLog;
+import org.lilyproject.rowlog.api.RowLogConfig;
+import org.lilyproject.rowlog.api.RowLogConfigurationManager;
+import org.lilyproject.rowlog.api.RowLogException;
+import org.lilyproject.rowlog.api.RowLogMessageListenerMapping;
+import org.lilyproject.rowlog.api.RowLogProcessor;
+import org.lilyproject.rowlog.api.RowLogSubscription;
+import org.lilyproject.rowlog.impl.RowLogHashShardRouter;
+import org.lilyproject.rowlog.impl.RowLogImpl;
+import org.lilyproject.rowlog.impl.RowLogProcessorElection;
+import org.lilyproject.rowlog.impl.RowLogProcessorImpl;
+import org.lilyproject.rowlog.impl.RowLogProcessorSettings;
+import org.lilyproject.rowlog.impl.RowLogShardSetup;
+import org.lilyproject.rowlog.impl.WalListener;
+import org.lilyproject.rowlog.impl.WalProcessor;
+import org.lilyproject.rowlog.impl.WalRowLog;
 import org.lilyproject.util.LilyInfo;
 import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.hbase.LilyHBaseSchema;
@@ -69,7 +83,7 @@ public class RowLogSetup {
         this.lilyInfo = lilyInfo;
         this.hostName = hostName;
     }
-    
+
     private RowLogConfig createRowLogConfig(Conf initialConf) {
         boolean respectOrder = initialConf.getChild("respectOrder").getValueAsBoolean();
         boolean enableNotify = initialConf.getChild("enableNotify").getValueAsBoolean();
@@ -78,7 +92,7 @@ public class RowLogSetup {
         long wakeupTimeout = initialConf.getChild("wakeupTimeout").getValueAsLong();
         long orphanedMessageDelay = initialConf.getChild("orphanedMessageDelay").getValueAsLong();
         int deleteBufferSize = initialConf.getChild("deleteBufferSize").getValueAsInteger();
-        
+
         return new RowLogConfig(respectOrder, enableNotify, notifyDelay, minimalProcessDelay, wakeupTimeout,
                 orphanedMessageDelay, deleteBufferSize);
     }
@@ -88,7 +102,7 @@ public class RowLogSetup {
         if (!confMgr.rowLogExists("wal")) {
             confMgr.addRowLog("wal", createRowLogConfig(rowLogConf.getChild("mqConfig")));
         }
-        
+
         if (!confMgr.rowLogExists("mq")) {
             confMgr.addRowLog("mq", createRowLogConfig(rowLogConf.getChild("walConfig")));
         } else {
@@ -102,8 +116,9 @@ public class RowLogSetup {
                 }
             }
         }
-        
-        boolean linkIdxEnabled = rowLogConf.getChild("linkIndexUpdater").getAttributeAsBoolean("enabled", true);
+
+        // Link index updater disabled by default since this task can now be done my the derefMap
+        boolean linkIdxEnabled = rowLogConf.getChild("linkIndexUpdater").getAttributeAsBoolean("enabled", false);
         if (linkIdxEnabled) {
             if (!confMgr.subscriptionExists("wal", "LinkIndexUpdater")) {
                 // If the subscription already exists, this method will silently return
@@ -139,7 +154,9 @@ public class RowLogSetup {
         RowLogShardSetup.setupShards(shardCount, writeAheadLog, hbaseTableFactory);
 
         RowLogMessageListenerMapping.INSTANCE.put(WalListener.ID, new WalListener(writeAheadLog, rowLocker));
-        RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
+        // Instead of using the default MQFeeder, a custom one is used to do selective feeding of indexer
+        // related subscriptions, see IndexAwareMQFeeder.
+        // RowLogMessageListenerMapping.INSTANCE.put("MQFeeder", new MessageQueueFeeder(messageQueue));
 
         // Start the message queue processor
         Conf mqProcessorConf = rowLogConf.getChild("mqProcessor");
@@ -162,7 +179,7 @@ public class RowLogSetup {
         } else {
             log.info("Not participating in MQ processor election.");
         }
-        
+
         if (linkIdxEnabled) {
             confMgr.addListener("wal", "LinkIndexUpdater", "LinkIndexUpdaterListener");
         }
@@ -193,7 +210,7 @@ public class RowLogSetup {
             }
         } else {
             log.info("Not participating in WAL processor election.");
-        } 
+        }
     }
 
     private RowLogProcessorSettings createProcessorSettings(Conf conf) {
@@ -230,7 +247,7 @@ public class RowLogSetup {
         Closer.close(writeAheadLog);
         confMgr.removeListener("wal", "LinkIndexUpdater", "LinkIndexUpdaterListener");
         confMgr.removeListener("wal", "MQFeeder", "MQFeederListener");
-        RowLogMessageListenerMapping.INSTANCE.remove("MQFeeder");        
+        RowLogMessageListenerMapping.INSTANCE.remove("MQFeeder");
     }
 
     public RowLog getMessageQueue() {
@@ -246,9 +263,23 @@ public class RowLogSetup {
         public void run() {
             long timeOut = 5 * 60 * 1000; // 5 minutes
             long waitUntil = System.currentTimeMillis() + timeOut;
+
             while (RowLogMessageListenerMapping.INSTANCE.get("LinkIndexUpdater") == null) {
                 if (System.currentTimeMillis() > waitUntil) {
                     log.error("IMPORTANT: LinkIndexUpdater did not appear in RowLogMessageListenerMapping after" +
+                            " waiting for " + timeOut + "ms. Will not start up WAL processor.");
+                    return;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+
+            while (RowLogMessageListenerMapping.INSTANCE.get("LinkIndexUpdater") == null) {
+                if (System.currentTimeMillis() > waitUntil) {
+                    log.error("IMPORTANT: MQFeeder did not appear in RowLogMessageListenerMapping after" +
                             " waiting for " + timeOut + "ms. Will not start up WAL processor.");
                     return;
                 }

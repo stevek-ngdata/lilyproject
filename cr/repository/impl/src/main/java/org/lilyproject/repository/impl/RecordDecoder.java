@@ -106,7 +106,6 @@ public class RecordDecoder {
                                Result result, FieldTypes fieldTypes) throws InterruptedException, RepositoryException {
         Record record = newRecord(recordId);
         record.setVersion(requestedVersion);
-        Set<Scope> scopes = EnumSet.noneOf(Scope.class); // Set of scopes for which a field has been read
 
         // If the version is null, this means the record has no version an thus only contains non-versioned fields (if any)
         // All non-versioned fields are stored at version 1, so we extract the fields at version 1
@@ -129,42 +128,24 @@ public class RecordDecoder {
                                 extractField(key, ceilingEntry.getValue(), readContext, fieldTypes);
                         if (field != null) {
                             record.setField(field.getV1().getName(), field.getV2());
-                            scopes.add(field.getV1().getScope());
                         }
                     }
                 }
             }
         }
-
-        // We're only adding the record types if any fields were read.
-        if (!scopes.isEmpty()) {
-            if (requestedVersion == null) {
-                // There can only be non-versioned fields, so only read the non-versioned record type
-                Pair<SchemaId, Long> recordTypePair = extractLatestRecordType(Scope.NON_VERSIONED, result);
-                if (recordTypePair != null) {
-                    RecordType recordType =
-                            typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
-                    record.setRecordType(recordType.getName(), recordType.getVersion());
-                    if (readContext != null)
-                        readContext.setRecordTypeId(Scope.NON_VERSIONED, recordType);
-                }
-            } else {
-                // Get the record type for each scope
-                // At least the non-versioned record type should be read since that is also the record type of the whole record
-                scopes.add(Scope.NON_VERSIONED);
-                for (Scope scope : scopes) {
-                    Pair<SchemaId, Long> recordTypePair = extractVersionRecordType(scope, result, requestedVersion);
-                    if (recordTypePair != null) {
-                        RecordType recordType =
-                                typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
-                        record.setRecordType(scope, recordType.getName(), recordType.getVersion());
-                        if (readContext != null)
-                            readContext.setRecordTypeId(scope, recordType);
-                    }
-                }
+        
+        for (Scope scope : Scope.values()) {
+            Pair<SchemaId, Long> recordTypePair =  requestedVersion == null ? extractLatestRecordType(scope, result) : 
+                extractVersionRecordType(scope, result, requestedVersion);
+            if (recordTypePair != null) {
+                RecordType recordType =
+                        typeManager.getRecordTypeById(recordTypePair.getV1(), recordTypePair.getV2());
+                record.setRecordType(scope, recordType.getName(), recordType.getVersion());
+                if (readContext != null)
+                    readContext.setRecordTypeId(scope, recordType);
             }
         }
-
+           
         return record;
     }
 

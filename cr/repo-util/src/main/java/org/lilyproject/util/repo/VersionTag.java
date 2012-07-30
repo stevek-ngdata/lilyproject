@@ -89,7 +89,7 @@ public class VersionTag {
     public static IdRecord getIdRecord(RecordId recordId, SchemaId vtagId, Repository repository)
             throws RepositoryException, InterruptedException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, null, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(recordId, null, repository);
         return vtRecord.getIdRecord(vtagId);
     }
 
@@ -100,7 +100,7 @@ public class VersionTag {
     public static IdRecord getIdRecord(IdRecord idRecord, SchemaId vtagId, Repository repository)
             throws RepositoryException, InterruptedException {
 
-        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, null, repository);
+        VTaggedRecord vtRecord = new VTaggedRecord(idRecord, null, repository);
         return vtRecord.getIdRecord(vtagId);
     }
 

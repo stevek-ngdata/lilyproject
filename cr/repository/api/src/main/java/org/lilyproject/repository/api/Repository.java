@@ -302,7 +302,8 @@ public interface Repository extends Closeable {
      * @deprecated in favor of using varargs for the fieldNames. Please use
      *             {@link #readVersions(RecordId, Long, Long, QName...)} instead.
      *
-     *             Reads all versions of a record between fromVersion and toVersion (both included), limited to a subset
+     *             Reads all versions of a record between fromVersion and toVersion (both included), limited to a
+     *             subset
      *             of the fields.
      *
      *             <p>If the given list of fields is empty, all fields will be read.
@@ -387,12 +388,19 @@ public interface Repository extends Closeable {
             throws RepositoryException, InterruptedException;
 
     /**
-     * Returns the IdGenerator service.
+     * Delete a {@link Record} from the repository.
+     *
+     * @param record the record to delete. The provided record will be consulted for recordId and attributes.
+     */
+    void delete(Record record) throws RepositoryException, InterruptedException;
+
+    /**
+     * @return the IdGenerator service
      */
     IdGenerator getIdGenerator();
 
     /**
-     * Returns the TypeManager.
+     * @return the TypeManager service
      */
     TypeManager getTypeManager();
 

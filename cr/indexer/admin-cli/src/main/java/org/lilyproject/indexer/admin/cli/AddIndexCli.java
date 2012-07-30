@@ -42,6 +42,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         options.add(updateStateOption);
         options.add(buildStateOption);
         options.add(forceOption);
+        options.add(defaultBatchIndexConfigurationOption);
 
         return options;
     }
@@ -82,6 +83,12 @@ public class AddIndexCli extends BaseIndexerAdminCli {
 
         if (buildState != null)
             index.setBatchBuildState(buildState);
+        
+        if (defaultBatchIndexConfiguration != null)
+            index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
+        
+        if (batchIndexConfiguration != null)
+            index.setBatchIndexConfiguration(batchIndexConfiguration);
 
         model.addIndex(index);
 

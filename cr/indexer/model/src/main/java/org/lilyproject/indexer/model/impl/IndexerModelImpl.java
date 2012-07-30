@@ -21,7 +21,6 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import static org.apache.zookeeper.Watcher.Event.EventType.*;
 import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
@@ -31,6 +30,9 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.zookeeper.*;
 
 import javax.annotation.PreDestroy;
+
+import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
+
 
 import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
 
@@ -206,6 +208,11 @@ public class IndexerModelImpl implements WriteableIndexerModel {
             IndexerConfBuilder.validate(new ByteArrayInputStream(index.getConfiguration()));
         } catch (IndexerConfException e) {
             throw new IndexValidityException("The indexer configuration is not XML well-formed or valid.", e);
+        }
+        
+        if (index.getBatchIndexConfiguration() != null && index.getBatchBuildState() != 
+                IndexBatchBuildState.BUILD_REQUESTED) {
+            throw new IndexValidityException("The build state must be set to BUILD_REQUESTED when setting a batchIndexConfiguration");
         }
     }
 

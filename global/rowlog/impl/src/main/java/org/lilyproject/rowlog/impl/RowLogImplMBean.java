@@ -18,8 +18,7 @@ package org.lilyproject.rowlog.impl;
 import java.util.List;
 
 /**
- * MBean exposing the subscription ids known by the rowlog.
- * 
+ * MBean exposing the subscription ids known by the RowLog instance in this server (JVM).
  */
 public interface RowLogImplMBean {
     List<String> getSubscriptionIds();

@@ -47,13 +47,13 @@
     </dependency>
 
     <dependency>
-      <groupId>org.lilyproject</groupId>
-      <artifactId>lily-repository-impl</artifactId>
+      <groupId>net.iharder</groupId>
+      <artifactId>base64</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>net.iharder</groupId>
-      <artifactId>base64</artifactId>
+      <groupId>org.lilyproject</groupId>
+      <artifactId>lily-mapreduce</artifactId>
     </dependency>
 
     <dependency>
