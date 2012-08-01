@@ -495,7 +495,7 @@
           </exclusion>
           <!-- We use a more recent Avro in Lily (which has a different groupId). -->
           <exclusion>
-            <groupId>org.apache.hadoop</groupId>
+            <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
           </exclusion>
           <exclusion>
@@ -521,8 +521,12 @@
         <exclusions>
           <!-- We use a more recent Avro in Lily (which has a different groupId). -->
           <exclusion>
-            <groupId>org.apache.hadoop</groupId>
+            <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro-ipc</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
