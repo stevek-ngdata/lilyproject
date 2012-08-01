@@ -47,7 +47,10 @@ if [ -f "$LILY_CONF_DIR/lily-env.sh" ]; then
 fi
 
 # Source lily-env.sh for checking/setting JAVA_HOME
-. $LILY_HOME/bin/lily-env.sh
+# The 'if' makes that this also work when this script template is used outside Lily
+if [ -f "$LILY_HOME/bin/lily-env.sh" ]; then
+  . $LILY_HOME/bin/lily-env.sh
+fi
 
 # The repository suitable for bootstrapping Kauri
 LAUNCHER_M2_REPO=$LILY_HOME/lib
