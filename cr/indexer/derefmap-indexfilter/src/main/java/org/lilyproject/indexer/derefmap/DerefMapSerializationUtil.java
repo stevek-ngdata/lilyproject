@@ -5,17 +5,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import com.gotometrics.orderly.StringRowKey;
-import com.gotometrics.orderly.StructBuilder;
-import com.gotometrics.orderly.StructRowKey;
-import com.gotometrics.orderly.Termination;
-import com.gotometrics.orderly.VariableLengthByteArrayRowKey;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.lilyproject.bytes.api.DataInput;
+import org.lilyproject.bytes.api.DataOutput;
+import org.lilyproject.bytes.impl.DataInputImpl;
+import org.lilyproject.bytes.impl.DataOutputImpl;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
@@ -23,8 +20,6 @@ import org.lilyproject.repository.api.SchemaId;
 /**
  * Helper for the {@link org.lilyproject.indexer.derefmap.DerefMapHbaseImpl} to serialize/deserialize various elements
  * for storage in the hbase-index.
- *
- *
  */
 final class DerefMapSerializationUtil {
 
@@ -46,64 +41,46 @@ final class DerefMapSerializationUtil {
      * @return byte array with the serialized format
      */
     byte[] serializeDependenciesForward(Collection<DependencyEntry> dependencies) throws IOException {
-        final StructRowKey singleEntryRowKey = entrySerializationRowKey();
+        final DataOutputImpl dataOutput = new DataOutputImpl();
 
-        // calculate length
-        int totalLength = 0;
-        final Map<Object[], Integer> entriesWithSerializedLength = new HashMap<Object[], Integer>();
+        // total number of dependencies
+        dataOutput.writeInt(dependencies.size());
+
         for (DependencyEntry dependencyEntry : dependencies) {
-            final Object[] toSerialize = {
-                    // we store the master record id, because that is how they are stored in the backward table
-                    dependencyEntry.getDependency().getMaster().toBytes(),
-                    serializeVariantPropertiesPattern(createVariantPropertiesPattern(
-                            dependencyEntry.getDependency().getVariantProperties(),
-                            dependencyEntry.getMoreDimensionedVariants()))
-            };
-            final int serializedLength = singleEntryRowKey.getSerializedLength(toSerialize);
-            entriesWithSerializedLength.put(toSerialize, serializedLength);
-            totalLength += serializedLength;
+            // we store the master record id, because that is how they are stored in the backward table
+            final byte[] masterBytes = dependencyEntry.getDependency().getMaster().toBytes();
+            dataOutput.writeInt(masterBytes.length);
+            dataOutput.writeBytes(masterBytes);
+
+            final byte[] variantPropertiesBytes = serializeVariantPropertiesPattern(createVariantPropertiesPattern(
+                    dependencyEntry.getDependency().getVariantProperties(),
+                    dependencyEntry.getMoreDimensionedVariants()));
+            dataOutput.writeBytes(variantPropertiesBytes);
         }
 
-        // serialize
-        final byte[] serialized = new byte[totalLength];
-        int offset = 0;
-        for (Map.Entry<Object[], Integer> mapEntry : entriesWithSerializedLength.entrySet()) {
-            final Object[] toSerialize = mapEntry.getKey();
-            singleEntryRowKey.serialize(toSerialize, serialized, offset);
-            final Integer length = mapEntry.getValue();
-            offset += length;
-        }
-
-        return serialized;
+        return dataOutput.toByteArray();
     }
 
     Set<DependencyEntry> deserializeDependenciesForward(byte[] serialized) throws IOException {
-        final StructRowKey singleEntryRowKey = entrySerializationRowKey();
+        final DataInputImpl dataInput = new DataInputImpl(serialized);
+        final int nDependencies = dataInput.readInt();
 
-        final Set<DependencyEntry> result = new HashSet<DependencyEntry>();
+        final Set<DependencyEntry> result = new HashSet<DependencyEntry>(nDependencies);
 
-        final ImmutableBytesWritable bw = new ImmutableBytesWritable(serialized);
+        while (result.size() < nDependencies) {
+            final int masterBytesLength = dataInput.readInt();
+            final byte[] masterBytes = dataInput.readBytes(masterBytesLength);
 
-        while (bw.getSize() > 0) {
-            final Object[] deserializedEntry = (Object[]) singleEntryRowKey.deserialize(bw);
             final DerefMapVariantPropertiesPattern variantPropertiesPattern =
-                    deserializeVariantPropertiesPattern((byte[]) deserializedEntry[1]);
+                    deserializeVariantPropertiesPattern(dataInput);
 
             result.add(new DependencyEntry(
-                    idGenerator.newRecordId(idGenerator.fromBytes((byte[]) deserializedEntry[0]),
+                    idGenerator.newRecordId(idGenerator.fromBytes(masterBytes),
                             variantPropertiesPattern.getConcreteProperties()),
                     variantPropertiesPattern.getPatternProperties()));
         }
-        return result;
-    }
 
-    private StructRowKey entrySerializationRowKey() {
-        final StructRowKey singleEntryRowKey = new StructBuilder()
-                .add(new VariableLengthByteArrayRowKey()) // dependency master record id
-                .add(new VariableLengthByteArrayRowKey()) // variant property pattern
-                .toRowKey();
-        singleEntryRowKey.setTermination(Termination.MUST);
-        return singleEntryRowKey;
+        return result;
     }
 
     // LIST OF FIELDS IN THE BACKWARD TABLE
@@ -166,64 +143,41 @@ final class DerefMapSerializationUtil {
      */
     byte[] serializeVariantPropertiesPattern(DerefMapVariantPropertiesPattern variantPropertiesPattern)
             throws IOException {
-        final StringRowKey stringRowKey = terminatedStringRowKey();
+        final DataOutput dataOutput = new DataOutputImpl();
 
-        // calculate length
-        int totalLength = 0;
-        // this map stores the strings to serialize (in order, thus a linked hash map!!) with their serialization length
-        final Map<String, Integer> stringsWithSerializedLength = new LinkedHashMap<String, Integer>();
+        // total number of entries
+        dataOutput.writeInt(variantPropertiesPattern.pattern.size());
+
         for (Map.Entry<String, String> patternEntry : variantPropertiesPattern.pattern.entrySet()) {
             // name
             final String name = patternEntry.getKey();
-            final int nameLength = stringRowKey.getSerializedLength(name);
-            stringsWithSerializedLength.put(name, nameLength);
-            totalLength += nameLength;
+            dataOutput.writeUTF(name);
 
             // value (potentially null)
             final String value = patternEntry.getValue();
-            final int valueLength = stringRowKey.getSerializedLength(value);
-            stringsWithSerializedLength.put(value, valueLength);
-            totalLength += valueLength;
+            dataOutput.writeUTF(value);
         }
 
-        // serialize
-        final byte[] serialized = new byte[totalLength];
-        int offset = 0;
-        for (Map.Entry<String, Integer> mapEntry : stringsWithSerializedLength.entrySet()) {
-            final String string = mapEntry.getKey();
-            stringRowKey.serialize(string, serialized, offset);
-            final Integer length = mapEntry.getValue();
-            offset += length;
-        }
-
-        return serialized;
+        return dataOutput.toByteArray();
     }
 
     DerefMapVariantPropertiesPattern deserializeVariantPropertiesPattern(byte[] serialized) {
-        final StringRowKey stringRowKey = terminatedStringRowKey();
+        return deserializeVariantPropertiesPattern(new DataInputImpl(serialized));
+    }
 
+    DerefMapVariantPropertiesPattern deserializeVariantPropertiesPattern(DataInput dataInput) {
         final Map<String, String> pattern = new HashMap<String, String>();
 
-        final ImmutableBytesWritable bw = new ImmutableBytesWritable(serialized);
+        final int nEntries = dataInput.readInt();
 
-        try {
-            while (bw.getSize() > 0) {
-                final String name;
-                name = (String) stringRowKey.deserialize(bw);
-                final String value = (String) stringRowKey.deserialize(bw); // potentially null
-                pattern.put(name, value);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("index inconsistency?", e);
+        while (pattern.size() < nEntries) {
+            final String name = dataInput.readUTF();
+            final String value = dataInput.readUTF();
+
+            pattern.put(name, value);
         }
 
         return new DerefMapVariantPropertiesPattern(pattern);
-    }
-
-    private StringRowKey terminatedStringRowKey() {
-        final StringRowKey stringRowKey = new StringRowKey();
-        stringRowKey.setTermination(Termination.MUST);
-        return stringRowKey;
     }
 
     // RECORD ID
