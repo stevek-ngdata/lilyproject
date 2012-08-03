@@ -48,12 +48,14 @@ public class IndexesInfoImpl implements IndexesInfo {
     private ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<Runnable>(1), new ThreadPoolExecutor.DiscardPolicy());
 
+    /** Has the initial load of the indexes been done? */
+    private volatile boolean initialized = false;
+
     public IndexesInfoImpl(IndexerModel indexerModel, Repository repository) {
         this.indexerModel = indexerModel;
         this.repository = repository;
 
         indexerModel.registerListener(listener);
-        refresh();
     }
 
     @PreDestroy
@@ -96,16 +98,34 @@ public class IndexesInfoImpl implements IndexesInfo {
         this.recordFilterDependsOnRecordType = recordFilterDependsOnRecordType;
     }
 
+    /**
+     * Assures the indexes information is loaded on startup before the first information is consulted
+     * from IndexesInfo.
+     */
+    private void assureInitialized() {
+        if (!initialized) {
+            synchronized (this) {
+                if (!initialized) {
+                    refresh();
+                    initialized = true;
+                }
+            }
+        }
+    }
+
     @Override
     public Collection<IndexInfo> getIndexInfos() {
+        assureInitialized();
         return indexInfos.values();
     }
 
     public Set<QName> getRecordFilterFieldDependencies() {
+        assureInitialized();
         return recordFilterFieldDependencies;
     }
 
     public boolean getRecordFilterDependsOnRecordType() {
+        assureInitialized();
         return recordFilterDependsOnRecordType;
     }
 
