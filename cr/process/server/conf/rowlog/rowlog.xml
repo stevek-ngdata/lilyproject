@@ -5,10 +5,10 @@
   <!-- This is the initial config used at first startup. Afterwards, use lily-update-rowlog
        to change settings. -->
   <mqConfig>
-    <respectOrder>true</respectOrder>
-    <enableNotify>false</enableNotify>
+    <respectOrder>false</respectOrder>
+    <enableNotify>true</enableNotify>
     <notifyDelay>100</notifyDelay>
-    <minimalProcessDelay>5000</minimalProcessDelay>
+    <minimalProcessDelay>0</minimalProcessDelay>
     <wakeupTimeout>5000</wakeupTimeout>
     <orphanedMessageDelay>120000</orphanedMessageDelay>
     <deleteBufferSize>100</deleteBufferSize>
@@ -17,10 +17,10 @@
   <!-- This is the initial config used at first startup. Afterwards, use lily-update-rowlog
        to change settings. -->
   <walConfig>
-    <respectOrder>false</respectOrder>
-    <enableNotify>true</enableNotify>
+    <respectOrder>true</respectOrder>
+    <enableNotify>false</enableNotify>
     <notifyDelay>100</notifyDelay>
-    <minimalProcessDelay>0</minimalProcessDelay>
+    <minimalProcessDelay>5000</minimalProcessDelay>
     <wakeupTimeout>5000</wakeupTimeout>
     <orphanedMessageDelay>120000</orphanedMessageDelay>
     <deleteBufferSize>100</deleteBufferSize>
