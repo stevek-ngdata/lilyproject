@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lilyproject</groupId>
   <artifactId>lily-scan-records</artifactId>
-  <name>Lily: scan recoreds</name>
+  <name>Lily: scan records</name>
 
   <parent>
     <groupId>org.lilyproject</groupId>
