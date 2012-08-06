@@ -235,7 +235,7 @@ public class IndexerTest {
         if (derefMap != null) {
             DerefMapHbaseImpl.delete("test", hbaseConf);
         }
-        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, repository.getIdGenerator());
+        derefMap = DerefMapHbaseImpl.create("test", hbaseConf, null, repository.getIdGenerator());
         Indexer indexer = new Indexer("test", INDEXER_CONF, repository, solrShardManager, indexLocker,
                 new IndexerMetrics("test"), derefMap);
 

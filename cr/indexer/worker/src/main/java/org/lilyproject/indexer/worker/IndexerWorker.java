@@ -64,6 +64,7 @@ import org.lilyproject.rowlog.api.RowLogException;
 import org.lilyproject.rowlog.impl.RemoteListenerHandler;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.ObjectUtils;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
@@ -119,12 +120,14 @@ public class IndexerWorker {
 
     private IndexerRegistry indexerRegistry;
 
+    private HBaseTableFactory tableFactory;
+
     private final Log log = LogFactory.getLog(getClass());
 
     public IndexerWorker(IndexerModel indexerModel, Repository repository, RowLog rowLog, ZooKeeperItf zk,
-                         Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr,
-                         SolrClientConfig solrClientConfig, String hostName, IndexerWorkerSettings settings,
-                         IndexerRegistry indexerRegistry)
+            Configuration hbaseConf, RowLogConfigurationManager rowLogConfMgr, SolrClientConfig solrClientConfig,
+            String hostName, IndexerWorkerSettings settings, IndexerRegistry indexerRegistry,
+            HBaseTableFactory tableFactory)
             throws IOException, org.lilyproject.hbaseindex.IndexNotFoundException, InterruptedException {
         this.indexerModel = indexerModel;
         this.repository = repository;
@@ -136,6 +139,7 @@ public class IndexerWorker {
         this.solrClientConfig = solrClientConfig;
         this.hostName = hostName;
         this.indexerRegistry = indexerRegistry;
+        this.tableFactory = tableFactory;
     }
 
     @PostConstruct
@@ -205,7 +209,8 @@ public class IndexerWorker {
 
             // create a deref map in case the indexer configuration contains deref fields
             DerefMap derefMap = indexerConf.containsDerefExpressions() ?
-                    DerefMapHbaseImpl.create(index.getName(), hbaseConf, repository.getIdGenerator()) : null;
+                    DerefMapHbaseImpl.create(index.getName(), hbaseConf, tableFactory,
+                            repository.getIdGenerator()) : null;
 
             // create and register the indexer
             Indexer indexer = new Indexer(index.getName(), indexerConf, repository, solrShardMgr, indexLocker,

@@ -285,8 +285,7 @@ public class BatchBuildTest {
     @Test
     public void testClearDerefMap() throws Exception {
         DerefMap derefMap = DerefMapHbaseImpl
-                .create(INDEX_NAME, lilyProxy.getHBaseProxy().getConf(),
-                        repository.getIdGenerator());
+                .create(INDEX_NAME, lilyProxy.getHBaseProxy().getConf(), null, repository.getIdGenerator());
 
         Record linkedRecord = repository.recordBuilder()
                 .id("deref-test-linkedrecord")

@@ -35,18 +35,29 @@
                          Use \xFF notation for specifying bytes hexadecimal.
                          Each split key will also be prefixed with the splitKeyPrefix (if specified).
 
-            - splitKeyPrefix: when the split keys are auto-generated (= when using regionCount instead
-                              of splitKeys), it might be that all entries in the table start with a
-                              common prefix, this prefix can be specified with this setting.
+            - splitKeyPrefix: a common prefix that will be put in front of each split key, both in
+                              case of regionCount & splitKeys. A record id starts with \x00 for USER-type
+                              id's and \x01 for UUID-type ID's.
 
            When using custom record IDs, either use 1 initial region, or specify custom split keys.
       -->
       <regionCount>1</regionCount>
+      <!--
       <splitKeys></splitKeys>
+      -->
 
       <!-- UUID record id's all start with a 1-byte -->
       <splitKeyPrefix>\x01</splitKeyPrefix>
 
+      <!-- Here is an example of splits for USER id's, whereby the user ID's are hexadecimal (at
+           least in their first 2 characters). Note that the splitKeyPrefix is now \x00, because
+           USER id's are prefixed with a zero byte. 64 splits are created: for the first character
+           we run from 0 to f, for the second we use 0, 4, 8, c. Note that the first entry, 00,
+           is dropped because the first split in HBase automatically starts from a 'null' entry. -->
+      <!--
+      <splitKeys>04,08,0c,10,14,18,1c,20,24,28,2c,30,34,38,3c,40,44,48,4c,50,54,58,5c,60,64,68,6c,70,74,78,7c,80,84,88,8c,90,94,98,9c,a0,a4,a8,ac,b0,b4,b8,bc,c0,c4,c8,cc,d0,d4,d8,dc,e0,e4,e8,ec,f0,f4,f8,fc</splitKeys>
+      <splitKeyPrefix>\x00</splitKeyPrefix>
+      -->
     </splits>
 
     <!-- Maximum file size in bytes -->
@@ -89,7 +100,28 @@
       <splitKeyPrefix>\x00\x01</splitKeyPrefix>
     </splits>
   </table>
-  
+
+  <!-- The tables for derefs depend on the names of the indexes. -->
+  <!--
+  <table name="deref-forward-INDEX_NAME">
+    <splits>
+      <regionCount>1</regionCount>
+      <splitKeys></splitKeys>
+      <splitKeyPrefix>\x00\x01</splitKeyPrefix>
+    </splits>
+  </table>
+  -->
+
+  <!--
+  <table name="deref-backward-INDEX_NAME">
+    <splits>
+      <regionCount>1</regionCount>
+      <splitKeys></splitKeys>
+      <splitKeyPrefix>\x00\x01</splitKeyPrefix>
+    </splits>
+  </table>
+  -->
+
   <table name="blobincubator">
     <splits>
       <regionCount>1</regionCount>

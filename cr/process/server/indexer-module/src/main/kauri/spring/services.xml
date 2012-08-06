@@ -71,6 +71,10 @@
       id="indexerModel"
       service="org.lilyproject.indexer.model.api.WriteableIndexerModel"/>
 
+  <kauri:import-service
+      id="hbaseTableFactory"
+      service="org.lilyproject.util.hbase.HBaseTableFactory"/>
+
   <kauri:export-service
       ref="indexer"
       service="org.lilyproject.indexer.Indexer"/>
@@ -112,6 +116,7 @@
     <constructor-arg>
       <bean factory-bean="networkItfInfo" factory-method="getHostName"/>
     </constructor-arg>
+    <constructor-arg ref="hbaseTableFactory"/>
     <constructor-arg value="${indexer:masterNodes}"/>
   </bean>
 
@@ -137,6 +142,7 @@
       </bean>
     </constructor-arg>
     <constructor-arg ref="indexerRegistry"/>
+    <constructor-arg ref="hbaseTableFactory"/>
   </bean>
 
   <bean id="indexer" class="org.lilyproject.indexer.engine.IndexerApiImpl">

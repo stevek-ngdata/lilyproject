@@ -19,6 +19,7 @@ import org.lilyproject.hbaseindex.QueryResult;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.RecordId;
 import org.lilyproject.repository.api.SchemaId;
+import org.lilyproject.util.hbase.HBaseTableFactory;
 import org.lilyproject.util.io.Closer;
 
 /**
@@ -40,16 +41,16 @@ public class DerefMapHbaseImpl implements DerefMap {
 
     /**
      * Private constructor. Clients should use static factory methods {@link #delete(String,
-     * org.apache.hadoop.conf.Configuration)} and {@link #create(String, org.apache.hadoop.conf.Configuration,
-     * org.lilyproject.repository.api.IdGenerator)}
+     * org.apache.hadoop.conf.Configuration)} and {@link #create(String, Configuration, HBaseTableFactory,
+     * IdGenerator)}
      */
     private DerefMapHbaseImpl(final String indexName, final Configuration hbaseConfiguration,
-                              final IdGenerator idGenerator)
+                              final HBaseTableFactory tableFactory, final IdGenerator idGenerator)
             throws IndexNotFoundException, IOException, InterruptedException {
 
         this.serializationUtil = new DerefMapSerializationUtil(idGenerator);
 
-        final IndexManager indexManager = new IndexManager(hbaseConfiguration);
+        final IndexManager indexManager = new IndexManager(hbaseConfiguration, tableFactory);
 
         IndexDefinition forwardIndexDef = new IndexDefinition(forwardIndexName(indexName));
         // For the record ID we use a variable length byte array field of which the first two bytes are fixed length
@@ -81,9 +82,9 @@ public class DerefMapHbaseImpl implements DerefMap {
      * @throws InterruptedException
      */
     public static DerefMap create(final String indexName, final Configuration hbaseConfiguration,
-                                  final IdGenerator idGenerator)
+                                  final HBaseTableFactory tableFactory, final IdGenerator idGenerator)
             throws IndexNotFoundException, IOException, InterruptedException {
-        return new DerefMapHbaseImpl(indexName, hbaseConfiguration, idGenerator);
+        return new DerefMapHbaseImpl(indexName, hbaseConfiguration, tableFactory, idGenerator);
     }
 
     /**
