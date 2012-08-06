@@ -42,10 +42,6 @@ import org.lilyproject.util.json.JsonFormat;
 
 public class BatchIndexBuilder {
     /**
-<<<<<<< HEAD
-     *
-=======
->>>>>>> e0932a933af399648d5c66c1c976a9ec1716163f
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
