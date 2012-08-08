@@ -15,14 +15,19 @@
  */
 package org.lilyproject.indexer.model.impl;
 
-import org.lilyproject.indexer.model.api.*;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
+import org.lilyproject.indexer.model.api.BatchBuildInfo;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+
 public class IndexDefinitionImpl implements IndexDefinition {
-    private String name;
+    private final String name;
     private IndexGeneralState generalState = IndexGeneralState.ACTIVE;
     private IndexBatchBuildState buildState = IndexBatchBuildState.INACTIVE;
     private IndexUpdateState updateState = IndexUpdateState.SUBSCRIBE_AND_LISTEN;
@@ -36,6 +41,8 @@ public class IndexDefinitionImpl implements IndexDefinition {
     private BatchBuildInfo lastBatchBuildInfo;
     private ActiveBatchBuildInfo activeBatchBuildInfo;
     private boolean immutable;
+    private String zkConnectionString;
+    private String solrCollection;
 
     public IndexDefinitionImpl(String name) {
         this.name = name;
@@ -167,19 +174,45 @@ public class IndexDefinitionImpl implements IndexDefinition {
             throw new RuntimeException("This IndexDefinition is immutable");
     }
 
+    @Override
     public byte[] getDefaultBatchIndexConfiguration() {
         return defaultBatchIndexConfiguration;
     }
 
+    @Override
     public void setDefaultBatchIndexConfiguration(byte[] defaultBatchIndexConfiguration) {
         this.defaultBatchIndexConfiguration = defaultBatchIndexConfiguration;
     }
 
+    @Override
     public byte[] getBatchIndexConfiguration() {
         return batchIndexConfiguration;
     }
 
+    @Override
     public void setBatchIndexConfiguration(byte[] batchIndexConfiguration) {
         this.batchIndexConfiguration = batchIndexConfiguration;
     }
+
+    @Override
+    public String getZkConnectionString() {
+        return zkConnectionString;
+    }
+
+    @Override
+    public void setZkConnectionString(String zkConnectionString) {
+        this.zkConnectionString = zkConnectionString;
+    }
+
+    @Override
+    public String getSolrCollection() {
+        return solrCollection;
+    }
+
+    @Override
+    public void setSolrCollection(String collection) {
+        this.solrCollection = collection;
+    }
+
+
 }

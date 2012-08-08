@@ -15,12 +15,33 @@
  */
 package org.lilyproject.indexer.admin.cli;
 
-import org.apache.commons.cli.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.cli.BaseZkCliTool;
 import org.lilyproject.client.LilyClient;
-import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
+import org.lilyproject.indexer.model.api.IndexValidityException;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.indexer.model.impl.IndexerModelImpl;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
@@ -30,11 +51,6 @@ import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.StateWatchingZooKeeper;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.lilyproject.util.zookeeper.ZooKeeperOperation;
-
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
 
 public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
@@ -50,6 +66,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Option batchIndexConfigurationOption;
     protected Option defaultBatchIndexConfigurationOption;
     protected Option printBatchConfigurationOption;
+    protected Option solrCollectionOption;
 
     protected String indexName;
     protected Map<String, String> solrShards;
@@ -64,6 +81,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     private ZooKeeperItf zk;
     protected String outputFileName;
     protected boolean printBatchConfiguration;
+    protected String solrCollection;
 
     public BaseIndexerAdminCli() {
         // Here we instantiate various options, but it is up to subclasses to decide which ones
@@ -82,7 +100,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
         solrShardsOption = OptionBuilder
                 .withArgName("solr-shards")
-                .hasArg()
+                .hasOptionalArg()
                 .withDescription("Comma separated list of 'shardname:URL' pairs pointing to Solr instances.")
                 .withLongOpt("solr-shards")
                 .create("s");
@@ -100,7 +118,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Indexer configuration.")
                 .withLongOpt("indexer-config")
                 .create("c");
-        
+
         defaultBatchIndexConfigurationOption = OptionBuilder
                 .withArgName("batchconfig.json")
                 .hasOptionalArg()
@@ -108,7 +126,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 		"then the default batch index configuration will be removed.")
                 .withLongOpt("default-batch-config")
                 .create("dbi");
-                
+
         batchIndexConfigurationOption = OptionBuilder
                 .withArgName("batchconfig.json")
                 .hasArg()
@@ -145,11 +163,18 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Output file name")
                 .withLongOpt("output-file")
                 .create("o");
-        
+
         printBatchConfigurationOption = OptionBuilder
                 .withDescription("Print the batch index configuration")
                 .withLongOpt("print-batch-conf")
                 .create("pbc");
+
+        solrCollectionOption =  OptionBuilder
+                .withArgName("collection")
+                .hasArg()
+                .withDescription("Solr collection")
+                .withLongOpt("collection")
+                .create("sc");
     }
 
     @Override
@@ -262,12 +287,6 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
                 solrShards.put(shardName, shardAddress);
             }
-
-            if (solrShards.isEmpty()) {
-                // Probably cannot occur
-                System.out.println("No Solr shards specified though option is used.");
-                return 1;
-            }
         }
 
         if (cmd.hasOption(shardingConfigurationOption.getOpt())) {
@@ -364,28 +383,28 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 System.out.println("Use --" + forceOption.getLongOpt() + " to overwrite it.");
             }
         }
-        
+
         if (cmd.hasOption(defaultBatchIndexConfigurationOption.getOpt())) {
             String fileName = cmd.getOptionValue(defaultBatchIndexConfigurationOption.getOpt());
             if (fileName != null) {
                 File configurationFile = new File(fileName);
-            
+
                 if (!configurationFile.exists()) {
                     System.out.println("Specified default batch build configuration file not found:");
                     System.out.println(configurationFile.getAbsolutePath());
                     return 1;
                 }
-    
+
                 defaultBatchIndexConfiguration = FileUtils.readFileToByteArray(configurationFile);
             } else {
                 defaultBatchIndexConfiguration = new byte[0] ;
             }
         }
-        
+
         if (cmd.hasOption(batchIndexConfigurationOption.getOpt())) {
             File configurationFile = new File(cmd.getOptionValue(
                     batchIndexConfigurationOption.getOpt()));
-            
+
             if (!configurationFile.exists()) {
                 System.out.println("Specified batch build configuration file not found:");
                 System.out.println(configurationFile.getAbsolutePath());
@@ -394,7 +413,11 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
             batchIndexConfiguration = FileUtils.readFileToByteArray(configurationFile);
         }
-        
+
+        if (cmd.hasOption(solrCollectionOption.getOpt())) {
+            solrCollection = cmd.getOptionValue(solrCollectionOption.getOpt());
+        }
+
         printBatchConfiguration = cmd.hasOption(printBatchConfigurationOption.getOpt());
 
         return 0;

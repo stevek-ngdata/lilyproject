@@ -101,7 +101,7 @@ public class SolrTestingUtility {
                 is.close();
                 String solrVersion = properties.getProperty("solr.version");
                 solrWarPath = MavenUtil.findLocalMavenRepository().getAbsolutePath() +
-                        "/org/apache/solr/solr-webapp/" + solrVersion + "/solr-webapp-" + solrVersion + ".war";
+                        "/org/apache/solr/solr/" + solrVersion + "/solr-" + solrVersion + ".war";
             }
         }
 

@@ -35,7 +35,14 @@ import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.indexer.model.api.WriteableIndexerModel;
 import org.lilyproject.lilyservertestfw.LilyProxy;
-import org.lilyproject.repository.api.*;
+import org.lilyproject.repository.api.FieldType;
+import org.lilyproject.repository.api.QName;
+import org.lilyproject.repository.api.Record;
+import org.lilyproject.repository.api.RecordId;
+import org.lilyproject.repository.api.RecordType;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.Scope;
+import org.lilyproject.repository.api.TypeManager;
 
 
 public class LilyProxyTest {
@@ -52,12 +59,12 @@ public class LilyProxyTest {
         lilyProxy.start(schemaData, null);
         lilyClient = lilyProxy.getLilyServerProxy().getClient();
     }
-    
+
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         lilyProxy.stop();
     }
-    
+
     @Test
     public void testCreateRecord() throws Exception {
         repository = lilyClient.getRepository();
@@ -68,12 +75,12 @@ public class LilyProxyTest {
         RecordType recordType1 = typeManager.newRecordType(RECORDTYPE1);
         recordType1.addFieldTypeEntry(typeManager.newFieldTypeEntry(fieldType1.getId(), false));
         typeManager.createRecordType(recordType1);
-        
+
         // Add index
         String indexName = "testIndex";
         lilyProxy.getLilyServerProxy().addIndexFromResource(indexName,
                 "org/lilyproject/lilyservertestfw/test/lilytestutility_indexerconf.xml", 60000L);
-       
+
         // Create record
         Record record = repository.newRecord();
         record.setRecordType(RECORDTYPE1);
@@ -81,13 +88,13 @@ public class LilyProxyTest {
         record = repository.create(record);
         record = repository.read(record.getId());
         Assert.assertEquals("name1", (String)record.getField(FIELD1));
-        
+
         // Wait for messages to be processed
         Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
-        
+
         // Query Solr
         List<RecordId> recordIds = querySolr("name1");
-        
+
         Assert.assertTrue(recordIds.contains(record.getId()));
 
         System.out.println("Original record:" +record.getId().toString());
@@ -112,32 +119,34 @@ public class LilyProxyTest {
                 indexerModel.unlockIndex(lock);
             }
             lilyProxy.getLilyServerProxy().waitOnMQSubscription(subscriptionId, false, 60000L);
-    
+
             // Create record
             record = repository.newRecord();
             record.setRecordType(RECORDTYPE1);
             record.setField(FIELD1, "name2");
             record = repository.create(record);
-            
+
             // Wait for messages to be processed -- there shouldn't be any
             Assert.assertTrue("Processing messages took too long", lilyProxy.waitWalAndMQMessagesProcessed(60000L));
-    
-            // Record shouldn't be in index yet 
-            recordIds = querySolr("name2");        
+
+            // Record shouldn't be in index yet
+            recordIds = querySolr("name2");
             Assert.assertFalse(recordIds.contains(record.getId()));
-            
+
             // Trigger batch build
             lilyProxy.getLilyServerProxy().batchBuildIndex(indexName, 60000L * 4);
-    
-            // Now record should be in index 
-            recordIds = querySolr("name2");        
+
+            // Now record should be in index
+            recordIds = querySolr("name2");
             Assert.assertFalse(recordIds.contains(record.getId()));
         }
     }
-    
+
     private List<RecordId> querySolr(String name) throws SolrServerException {
         SolrServer solr = lilyProxy.getSolrProxy().getSolrServer();
         SolrQuery solrQuery = new SolrQuery();
+      //set default search field (no longer supported in schema.xml
+        solrQuery.set("df","name");
         solrQuery.setQuery(name);
         solrQuery.set("fl", "lily.id");
         QueryResponse response = solr.query(solrQuery);

@@ -15,13 +15,21 @@
  */
 package org.lilyproject.indexer.engine;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.solr.client.solrj.ResponseParser;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
 import org.apache.solr.client.solrj.impl.BinaryResponseParser;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.request.RequestWriter;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.lilyproject.indexer.model.sharding.DefaultShardSelectorBuilder;
@@ -30,16 +38,12 @@ import org.lilyproject.indexer.model.sharding.ShardSelectorException;
 import org.lilyproject.indexer.model.sharding.ShardingConfigException;
 import org.lilyproject.repository.api.RecordId;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.util.*;
-
 public class SolrShardManagerImpl implements SolrShardManager {
     /** Key = shard name, Value = Solr URL */
-    private Map<String, String> shards;
+    private final Map<String, String> shards;
     private Map<String, SolrClientHandle> shardConnections;
-    private ShardSelector selector;
-    private HttpClient httpClient;
+    private final ShardSelector selector;
+    private final HttpClient httpClient;
     private RequestWriter requestWriter;
     private ResponseParser responseParser;
 
@@ -85,7 +89,7 @@ public class SolrShardManagerImpl implements SolrShardManager {
         SortedMap<String, String> shards = new TreeMap<String, String>();
         shards.put("shard1", uri);
         ShardSelector selector = DefaultShardSelectorBuilder.createDefaultSelector(shards);
-        return new SolrShardManagerImpl("dummy", shards, selector, new HttpClient(new MultiThreadedHttpConnectionManager()),
+        return new SolrShardManagerImpl("dummy", shards, selector, new DefaultHttpClient(new ThreadSafeClientConnManager()),
                 new SolrClientConfig());
     }
 
@@ -108,7 +112,8 @@ public class SolrShardManagerImpl implements SolrShardManager {
     private void init(String indexName, boolean blockOnIOProblem) throws MalformedURLException {
         shardConnections = new HashMap<String, SolrClientHandle>();
         for (Map.Entry<String, String> shard : shards.entrySet()) {
-            CommonsHttpSolrServer solr = new CommonsHttpSolrServer(shard.getValue(), httpClient);
+            //ConcurrentUpdateSolrServer solr = new ConcurrentUpdateSolrServer(shard.getValue(), httpClient, 50, 5);
+            HttpSolrServer solr = new HttpSolrServer(shard.getValue(), httpClient);
             solr.setRequestWriter(requestWriter);
             solr.setParser(responseParser);
             SolrClientMetrics metrics = new SolrClientMetrics(indexName, shard.getKey());
@@ -120,6 +125,7 @@ public class SolrShardManagerImpl implements SolrShardManager {
         }
     }
 
+    @Override
     public SolrClient getSolrClient(RecordId recordId) throws ShardSelectorException {
         String shardName = selector.getShard(recordId);
         return shardConnections.get(shardName).solrClient;

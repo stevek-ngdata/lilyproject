@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
 import org.lilyproject.indexer.derefmap.DependencyEntry;
@@ -54,23 +55,23 @@ import org.lilyproject.util.repo.VTaggedRecord;
  * The Indexer adds records to, or removes records from, the index.
  */
 public class Indexer {
-    private String indexName;
-    private IndexerConf conf;
-    private Repository repository;
-    private TypeManager typeManager;
-    private SystemFields systemFields;
-    private SolrShardManager solrShardMgr;
-    private IndexLocker indexLocker;
-    private ValueEvaluator valueEvaluator;
-    private IndexerMetrics metrics;
+    private final String indexName;
+    private final IndexerConf conf;
+    private final Repository repository;
+    private final TypeManager typeManager;
+    private final SystemFields systemFields;
+    private final SolrShardManager solrShardMgr;
+    private final IndexLocker indexLocker;
+    private final ValueEvaluator valueEvaluator;
+    private final IndexerMetrics metrics;
 
     /**
      * Deref map used to store dependencies introduced via dereference expressions. It is <code>null</code> in case the
      * indexer configuration doesn't contain dereference expressions.
      */
-    private DerefMap derefMap;
+    private final DerefMap derefMap;
 
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     public Indexer(String indexName, IndexerConf conf, Repository repository, SolrShardManager solrShardMgr,
                    IndexLocker indexLocker, IndexerMetrics metrics, DerefMap derefMap) {
@@ -264,7 +265,7 @@ public class Indexer {
 
                 processDependencies(record, vtag, solrDocumentBuilder);
 
-                solrShardMgr.getSolrClient(record.getId()).add(solrDoc);
+                log.debug("index response " + solrShardMgr.getSolrClient(record.getId()).add(solrDoc).toString());
                 metrics.adds.inc();
 
                 if (log.isDebugEnabled()) {
@@ -352,8 +353,9 @@ public class Indexer {
     public void delete(RecordId recordId) throws SolrClientException, ShardSelectorException,
             InterruptedException {
         verifyLock(recordId);
-        solrShardMgr.getSolrClient(recordId)
+        UpdateResponse response = solrShardMgr.getSolrClient(recordId)
                 .deleteByQuery("lily.id:" + ClientUtils.escapeQueryChars(recordId.toString()));
+        log.debug(response.toString());
         metrics.deletesByQuery.inc();
     }
 

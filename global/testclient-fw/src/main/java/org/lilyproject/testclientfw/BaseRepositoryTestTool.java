@@ -22,16 +22,18 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.client.NoServersException;
-import org.lilyproject.repository.api.*;
-import org.lilyproject.util.hbase.HBaseAdminFactory;
+import org.lilyproject.repository.api.IdGenerator;
+import org.lilyproject.repository.api.Repository;
+import org.lilyproject.repository.api.RepositoryException;
+import org.lilyproject.repository.api.TypeManager;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZkConnectException;
 
@@ -102,11 +104,11 @@ public abstract class BaseRepositoryTestTool extends BaseTestTool {
     public void setupSolr() throws MalformedURLException {
         System.out.println("Using Solr instance at " + solrUrl);
 
-        MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
-        connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);
-        connectionManager.getParams().setMaxTotalConnections(50);
-        HttpClient httpClient = new HttpClient(connectionManager);
+        ThreadSafeClientConnManager connectionManager = new ThreadSafeClientConnManager();
+        connectionManager.setDefaultMaxPerRoute(5);
+        connectionManager.setMaxTotal(50);
+        HttpClient httpClient = new DefaultHttpClient(connectionManager);
 
-        solrServer = new CommonsHttpSolrServer(solrUrl, httpClient);
+        solrServer = new HttpSolrServer(solrUrl, httpClient);
     }
 }

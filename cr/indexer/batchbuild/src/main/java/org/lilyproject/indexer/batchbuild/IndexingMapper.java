@@ -24,17 +24,20 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import net.iharder.Base64;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.lilyproject.client.LilyClient;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.CloudSolrShardManager;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.Indexer;
 import org.lilyproject.indexer.engine.IndexerMetrics;
@@ -59,7 +62,7 @@ import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
 public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Result> {
     private Indexer indexer;
-    private MultiThreadedHttpConnectionManager connectionManager;
+    private ThreadSafeClientConnManager connectionManager;
     private IndexLocker indexLocker;
     private ZooKeeperItf zk;
     private LilyClient lilyClient;
@@ -85,37 +88,9 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
             byte[] indexerConfBytes = Base64.decode(jobConf.get("org.lilyproject.indexer.batchbuild.indexerconf"));
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(indexerConfBytes), repository);
 
-            Map<String, String> solrShards = new HashMap<String, String>();
-            for (int i = 1; true; i++) {
-                String shardName = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.name." + i);
-                String shardAddress = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.address." + i);
-                if (shardName == null)
-                    break;
-                solrShards.put(shardName, shardAddress);
-            }
-
-            ShardSelector shardSelector;
-            String shardingConf = jobConf.get("org.lilyproject.indexer.batchbuild.shardingconf");
-            if (shardingConf != null) {
-                byte[] shardingConfBytes = Base64.decode(shardingConf);
-                shardSelector = JsonShardSelectorBuilder.build(shardingConfBytes);
-            } else {
-                shardSelector = DefaultShardSelectorBuilder.createDefaultSelector(solrShards);
-            }
-
-            connectionManager = new MultiThreadedHttpConnectionManager();
-            connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);
-            connectionManager.getParams().setMaxTotalConnections(50);
-            HttpClient httpClient = new HttpClient(connectionManager);
-
-            SolrClientConfig solrConfig = new SolrClientConfig();
-            solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
-            solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
-
             String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
 
-            SolrShardManager solrShardMgr = new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient,
-                    solrConfig);
+            SolrShardManager solrShardMgr = getShardManager(jobConf);
 
             boolean enableLocking =
                     Boolean.parseBoolean(jobConf.get("org.lilyproject.indexer.batchbuild.enableLocking"));
@@ -135,6 +110,46 @@ public class IndexingMapper extends IdRecordMapper<ImmutableBytesWritable, Resul
 
         } catch (Exception e) {
             throw new IOException("Error in index build map task setup.", e);
+        }
+    }
+
+    private SolrShardManager getShardManager(Configuration jobConf) throws Exception{
+        String indexName = jobConf.get("org.lilyproject.indexer.batchbuild.indexname");
+        String shard1Name = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.name.1");
+
+        if (shard1Name == null) {
+            String zkConnectionString = jobConf.get("org.lilyproject.indexer.batchbuild.solr.zkConnectionString");
+            return new CloudSolrShardManager(zkConnectionString, jobConf.get("org.lilyproject.indexer.batchbuild.solr.collection"));
+        } else {
+            Map<String, String> solrShards = new HashMap<String, String>();
+            for (int i = 1; true; i++) {
+                String shardName = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.name." + i);
+                String shardAddress = jobConf.get("org.lilyproject.indexer.batchbuild.solrshard.address." + i);
+                if (shardName == null)
+                    break;
+                solrShards.put(shardName, shardAddress);
+            }
+
+            ShardSelector shardSelector;
+            String shardingConf = jobConf.get("org.lilyproject.indexer.batchbuild.shardingconf");
+            if (shardingConf != null) {
+                byte[] shardingConfBytes = Base64.decode(shardingConf);
+                shardSelector = JsonShardSelectorBuilder.build(shardingConfBytes);
+            } else {
+                shardSelector = DefaultShardSelectorBuilder.createDefaultSelector(solrShards);
+            }
+
+            connectionManager = new ThreadSafeClientConnManager();
+            connectionManager.setDefaultMaxPerRoute(5);
+            connectionManager.setMaxTotal(50);
+            HttpClient httpClient = new DefaultHttpClient(connectionManager);
+
+            SolrClientConfig solrConfig = new SolrClientConfig();
+            solrConfig.setRequestWriter(jobConf.get("org.lilyproject.indexer.batchbuild.requestwriter", null));
+            solrConfig.setResponseParser(jobConf.get("org.lilyproject.indexer.batchbuild.responseparser", null));
+
+            return new SolrShardManagerImpl(indexName, solrShards, shardSelector, httpClient,
+                    solrConfig);
         }
     }
 

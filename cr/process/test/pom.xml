@@ -48,6 +48,11 @@
       <groupId>org.lilyproject</groupId>
       <artifactId>lily-test-updatehook</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro-ipc</artifactId>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 

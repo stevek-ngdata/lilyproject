@@ -15,32 +15,61 @@
  */
 package org.lilyproject.indexer.model.impl;
 
+import static org.apache.zookeeper.Watcher.Event.EventType.NodeChildrenChanged;
+import static org.apache.zookeeper.Watcher.Event.EventType.NodeDataChanged;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
+
+import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
-import static org.apache.zookeeper.Watcher.Event.EventType.*;
-import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
+import org.lilyproject.indexer.model.api.BatchBuildInfo;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexConcurrentModificationException;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexExistsException;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexModelException;
+import org.lilyproject.indexer.model.api.IndexNotFoundException;
+import org.lilyproject.indexer.model.api.IndexUpdateException;
+import org.lilyproject.indexer.model.api.IndexValidityException;
+import org.lilyproject.indexer.model.api.IndexerModelEvent;
+import org.lilyproject.indexer.model.api.IndexerModelEventType;
+import org.lilyproject.indexer.model.api.IndexerModelListener;
+import org.lilyproject.indexer.model.api.WriteableIndexerModel;
+import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
 import org.lilyproject.indexer.model.indexerconf.IndexerConfException;
 import org.lilyproject.indexer.model.sharding.JsonShardSelectorBuilder;
 import org.lilyproject.indexer.model.sharding.ShardSelector;
 import org.lilyproject.indexer.model.sharding.ShardingConfigException;
 import org.lilyproject.util.Logs;
 import org.lilyproject.util.ObjectUtils;
-import org.lilyproject.util.zookeeper.*;
-
-import javax.annotation.PreDestroy;
-
-import org.lilyproject.indexer.model.indexerconf.IndexerConfBuilder;
-
-
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.*;
-
-import java.io.ByteArrayInputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import org.lilyproject.util.zookeeper.ZkLock;
+import org.lilyproject.util.zookeeper.ZkLockException;
+import org.lilyproject.util.zookeeper.ZkUtil;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
+import org.lilyproject.util.zookeeper.ZooKeeperOperation;
 
 // About how the indexer conf is stored in ZooKeeper
 // -------------------------------------------------
@@ -68,27 +97,27 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 public class IndexerModelImpl implements WriteableIndexerModel {
-    private ZooKeeperItf zk;
+    private final ZooKeeperItf zk;
 
     /**
      * Cache of the indexes as they are stored in ZK. Updated based on ZK watcher events. People who update
      * this cache should synchronize on {@link #indexes_lock}.
      */
-    private Map<String, IndexDefinition> indexes = new ConcurrentHashMap<String, IndexDefinition>(16, 0.75f, 1);
+    private final Map<String, IndexDefinition> indexes = new ConcurrentHashMap<String, IndexDefinition>(16, 0.75f, 1);
 
     private final Object indexes_lock = new Object();
 
-    private Set<IndexerModelListener> listeners = Collections.newSetFromMap(new IdentityHashMap<IndexerModelListener, Boolean>());
+    private final Set<IndexerModelListener> listeners = Collections.newSetFromMap(new IdentityHashMap<IndexerModelListener, Boolean>());
 
-    private Watcher watcher = new IndexModelChangeWatcher();
+    private final Watcher watcher = new IndexModelChangeWatcher();
 
-    private Watcher connectStateWatcher = new ConnectStateWatcher();
+    private final Watcher connectStateWatcher = new ConnectStateWatcher();
 
-    private IndexCacheRefresher indexCacheRefresher = new IndexCacheRefresher();
+    private final IndexCacheRefresher indexCacheRefresher = new IndexCacheRefresher();
 
     private boolean stopped = false;
 
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     private static final String INDEX_COLLECTION_PATH = "/lily/indexer/index";
 
@@ -121,7 +150,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
 
     @Override
     public void addIndex(IndexDefinition index) throws IndexExistsException, IndexModelException, IndexValidityException {
-        assertValid(index);        
+        assertValid(index);
 
         final String indexPath = INDEX_COLLECTION_PATH + "/" + index.getName();
         final byte[] data = IndexDefinitionConverter.INSTANCE.toJsonBytes(index);
@@ -170,9 +199,6 @@ public class IndexerModelImpl implements WriteableIndexerModel {
                 throw new IndexValidityException("Job state of last batch build cannot be null.");
         }
 
-        if (index.getSolrShards() == null || index.getSolrShards().isEmpty())
-            throw new IndexValidityException("Solr shards should not be null or empty.");
-
         for (String shard : index.getSolrShards().values()) {
             try {
                 URI uri = new URI(shard);
@@ -209,8 +235,8 @@ public class IndexerModelImpl implements WriteableIndexerModel {
         } catch (IndexerConfException e) {
             throw new IndexValidityException("The indexer configuration is not XML well-formed or valid.", e);
         }
-        
-        if (index.getBatchIndexConfiguration() != null && index.getBatchBuildState() != 
+
+        if (index.getBatchIndexConfiguration() != null && index.getBatchBuildState() !=
                 IndexBatchBuildState.BUILD_REQUESTED) {
             throw new IndexValidityException("The build state must be set to BUILD_REQUESTED when setting a batchIndexConfiguration");
         }
@@ -354,7 +380,7 @@ public class IndexerModelImpl implements WriteableIndexerModel {
 
                 if (success)
                     break;
-                
+
                 tryCount++;
                 if (tryCount > 10) {
                     throw new IndexModelException("Failed to delete index because it still has child data. Index: " + indexName);

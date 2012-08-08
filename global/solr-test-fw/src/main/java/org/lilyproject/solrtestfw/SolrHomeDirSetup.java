@@ -1,18 +1,21 @@
 package org.lilyproject.solrtestfw;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.input.NullInputStream;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.input.NullInputStream;
+
 public class SolrHomeDirSetup {
-    private File solrHomeDir;
-    private SolrDefinition solrDef;
-    private String autoCommitSetting;
+    private final File solrHomeDir;
+    private final SolrDefinition solrDef;
+    private final String autoCommitSetting;
+    private static final String[] SW_LANGS = new String[] {"ar","bg","ca","cz","da","de","el","en","es","eu","fa","fi",
+        "fr","ga","gl","hi","hu","hy","id","it","ja","lv","nl","no","pt","ro","ru","sv","th","tr"};
+    private static final String[] CONTRACT_LANGS = new String[] {"ca","fr","ga","it"};
 
     private SolrHomeDirSetup(File solrHomeDir, SolrDefinition solrDef, String autoCommitSetting) {
         this.solrHomeDir = solrHomeDir;
@@ -56,8 +59,16 @@ public class SolrHomeDirSetup {
     private void copyDefaultConfigToSolrHome(File solrConfDir) throws IOException {
         createEmptyFile(new File(solrConfDir, "synonyms.txt"));
         createEmptyFile(new File(solrConfDir, "stopwords.txt"));
-        createEmptyFile(new File(solrConfDir, "stopwords_en.txt"));
         createEmptyFile(new File(solrConfDir, "protwords.txt"));
+        for (String lang : SW_LANGS) {
+            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stopwords_" + lang  + ".txt"));
+        }
+        for (String lang : CONTRACT_LANGS) {
+            createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "contractions_" + lang  + ".txt"));
+        }
+        createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "hyphenations_ga.txt"));
+        createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stoptags_ja.txt"));
+        createEmptyFile(new File(solrConfDir, "lang" + File.separatorChar + "stemdict_nl.txt"));
     }
 
     private void writeSchema(File solrConfDir, byte[] schemaData) throws IOException {

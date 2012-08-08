@@ -15,14 +15,14 @@
  */
 package org.lilyproject.indexer.admin.cli;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.lilyproject.indexer.model.api.IndexDefinition;
 import org.lilyproject.indexer.model.api.IndexGeneralState;
 import org.lilyproject.util.ObjectUtils;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class UpdateIndexCli extends BaseIndexerAdminCli {
     @Override
@@ -48,7 +48,7 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
         options.add(forceOption);
         options.add(defaultBatchIndexConfigurationOption);
         options.add(batchIndexConfigurationOption);
-        
+
         return options;
     }
 
@@ -74,8 +74,18 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
 
             boolean changes = false;
 
-            if (solrShards != null && !solrShards.equals(index.getSolrShards())) {
+            if (solrShards != null && !solrShards.isEmpty() && !solrShards.equals(index.getSolrShards())) {
                 index.setSolrShards(solrShards);
+                changes = true;
+            }
+
+            if (index.getSolrShards() == null && solrShards.isEmpty() && !this.zkConnectionString.equals(index.getZkConnectionString())) {
+                index.setZkConnectionString(this.zkConnectionString);
+                changes = true;
+            }
+
+            if (this.solrCollection != null && !this.solrCollection.equals(index.getSolrCollection())) {
+                index.setSolrCollection(this.solrCollection);
                 changes = true;
             }
 
@@ -103,17 +113,17 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
                 index.setBatchBuildState(buildState);
                 changes = true;
             }
-            
+
             if (defaultBatchIndexConfiguration != null && !ObjectUtils.safeEquals(defaultBatchIndexConfiguration, index.getDefaultBatchIndexConfiguration())) {
                 if (defaultBatchIndexConfiguration.length == 0) {
                     index.setDefaultBatchIndexConfiguration(null);
                 } else {
                     index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
                 }
-                
+
                 changes = true;
             }
-            
+
             if (batchIndexConfiguration != null) {
                 index.setBatchIndexConfiguration(batchIndexConfiguration);
                 changes = true;

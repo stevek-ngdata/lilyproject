@@ -15,10 +15,11 @@
  */
 package org.lilyproject.indexer.admin.cli;
 
-import org.apache.commons.cli.*;
-import org.lilyproject.indexer.model.api.IndexDefinition;
-
 import java.util.List;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.lilyproject.indexer.model.api.IndexDefinition;
 
 public class AddIndexCli extends BaseIndexerAdminCli {
     @Override
@@ -43,6 +44,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         options.add(buildStateOption);
         options.add(forceOption);
         options.add(defaultBatchIndexConfigurationOption);
+        options.add(solrCollectionOption);
 
         return options;
     }
@@ -52,14 +54,10 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         int result = super.run(cmd);
         if (result != 0)
             return result;
-        
+
         if (indexName == null) {
             System.out.println("Specify index name with -" + nameOption.getOpt());
             return 1;
-        }
-        
-        if (solrShards == null) {
-            System.out.println("Specify Solr URL(s) with -" + solrShardsOption.getOpt());
         }
 
         if (indexerConfiguration == null) {
@@ -68,7 +66,15 @@ public class AddIndexCli extends BaseIndexerAdminCli {
 
         IndexDefinition index = model.newIndex(indexName);
 
-        index.setSolrShards(solrShards);
+        if (solrShards != null) {
+            index.setSolrShards(solrShards);
+        } else {
+            index.setZkConnectionString(this.zkConnectionString);
+        }
+
+        if (solrCollection != null) {
+            index.setSolrCollection(this.solrCollection);
+        }
 
         index.setConfiguration(indexerConfiguration);
 
@@ -83,10 +89,10 @@ public class AddIndexCli extends BaseIndexerAdminCli {
 
         if (buildState != null)
             index.setBatchBuildState(buildState);
-        
+
         if (defaultBatchIndexConfiguration != null)
             index.setDefaultBatchIndexConfiguration(defaultBatchIndexConfiguration);
-        
+
         if (batchIndexConfiguration != null)
             index.setBatchIndexConfiguration(batchIndexConfiguration);
 

@@ -15,6 +15,10 @@
  */
 package org.lilyproject.indexer.worker;
 
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
+import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,17 +30,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.zookeeper.KeeperException;
 import org.lilyproject.indexer.derefmap.DerefMap;
 import org.lilyproject.indexer.derefmap.DerefMapHbaseImpl;
+import org.lilyproject.indexer.engine.CloudSolrShardManager;
 import org.lilyproject.indexer.engine.IndexLocker;
 import org.lilyproject.indexer.engine.IndexUpdater;
 import org.lilyproject.indexer.engine.IndexUpdaterMetrics;
@@ -67,10 +74,6 @@ import org.lilyproject.util.ObjectUtils;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.zookeeper.ZooKeeperItf;
 
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_ADDED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_REMOVED;
-import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDATED;
-
 /**
  * IndexerWorker is responsible for the incremental indexing updating, thus for starting
  * index updaters on each Lily node for each index that is configured for updating (according
@@ -83,17 +86,17 @@ import static org.lilyproject.indexer.model.api.IndexerModelEventType.INDEX_UPDA
  * after all one can not expect these things to change momentarily.
  */
 public class IndexerWorker {
-    private IndexerModel indexerModel;
+    private final IndexerModel indexerModel;
 
-    private Repository repository;
+    private final Repository repository;
 
-    private Configuration hbaseConf;
+    private final Configuration hbaseConf;
 
-    private ZooKeeperItf zk;
+    private final ZooKeeperItf zk;
 
-    private RowLogConfigurationManager rowLogConfMgr;
+    private final RowLogConfigurationManager rowLogConfMgr;
 
-    private RowLog rowLog;
+    private final RowLog rowLog;
 
     private final SolrClientConfig solrClientConfig;
 
@@ -101,13 +104,13 @@ public class IndexerWorker {
 
     private final String hostName;
 
-    private IndexerModelListener listener = new MyListener();
+    private final IndexerModelListener listener = new MyListener();
 
-    private Map<String, IndexUpdaterHandle> indexUpdaters = new HashMap<String, IndexUpdaterHandle>();
+    private final Map<String, IndexUpdaterHandle> indexUpdaters = new HashMap<String, IndexUpdaterHandle>();
 
     private final Object indexUpdatersLock = new Object();
 
-    private BlockingQueue<IndexerModelEvent> eventQueue = new LinkedBlockingQueue<IndexerModelEvent>();
+    private final BlockingQueue<IndexerModelEvent> eventQueue = new LinkedBlockingQueue<IndexerModelEvent>();
 
     private EventWorker eventWorker;
 
@@ -115,9 +118,9 @@ public class IndexerWorker {
 
     private HttpClient httpClient;
 
-    private MultiThreadedHttpConnectionManager connectionManager;
+    private ThreadSafeClientConnManager connectionManager;
 
-    private IndexerRegistry indexerRegistry;
+    private final IndexerRegistry indexerRegistry;
 
     private final Log log = LogFactory.getLog(getClass());
 
@@ -140,10 +143,10 @@ public class IndexerWorker {
 
     @PostConstruct
     public void init() {
-        connectionManager = new MultiThreadedHttpConnectionManager();
-        connectionManager.getParams().setDefaultMaxConnectionsPerHost(settings.getSolrMaxConnectionsPerHost());
-        connectionManager.getParams().setMaxTotalConnections(settings.getSolrMaxTotalConnections());
-        httpClient = new HttpClient(connectionManager);
+        connectionManager = new ThreadSafeClientConnManager();
+        connectionManager.setDefaultMaxPerRoute(settings.getSolrMaxConnectionsPerHost());
+        connectionManager.setMaxTotal(settings.getSolrMaxTotalConnections());
+        httpClient = new DefaultHttpClient(connectionManager);
 
         eventWorker = new EventWorker();
         eventWorkerThread = new Thread(eventWorker, "IndexerWorkerEventWorker");
@@ -188,18 +191,8 @@ public class IndexerWorker {
             IndexerConf indexerConf = IndexerConfBuilder.build(new ByteArrayInputStream(index.getConfiguration()),
                     repository);
 
-            ShardSelector shardSelector;
-            if (index.getShardingConfiguration() == null) {
-                shardSelector = DefaultShardSelectorBuilder.createDefaultSelector(index.getSolrShards());
-            } else {
-                shardSelector = JsonShardSelectorBuilder.build(index.getShardingConfiguration());
-            }
+            SolrShardManager solrShardMgr = getSolrShardManager(index);
 
-            checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
-
-            SolrShardManager solrShardMgr =
-                    new SolrShardManagerImpl(index.getName(), index.getSolrShards(), shardSelector,
-                            httpClient, solrClientConfig, true);
             IndexLocker indexLocker = new IndexLocker(zk, settings.getEnableLocking());
             IndexerMetrics indexerMetrics = new IndexerMetrics(index.getName());
 
@@ -250,6 +243,26 @@ public class IndexerWorker {
                 }
             }
         }
+    }
+
+    private SolrShardManager getSolrShardManager(IndexDefinition index) throws Exception{
+        SolrShardManager solrShardManager = null;
+        if (index.getSolrShards().isEmpty()) {
+            solrShardManager = new CloudSolrShardManager(index.getZkConnectionString(), index.getSolrCollection());
+        } else {
+            ShardSelector shardSelector;
+            if (index.getShardingConfiguration() == null) {
+                shardSelector = DefaultShardSelectorBuilder.createDefaultSelector(index.getSolrShards());
+            } else {
+                shardSelector = JsonShardSelectorBuilder.build(index.getShardingConfiguration());
+            }
+
+            checkShardUsage(index.getName(), index.getSolrShards().keySet(), shardSelector.getShards());
+
+            solrShardManager = new SolrShardManagerImpl(index.getName(), index.getSolrShards(), shardSelector,
+                    httpClient, solrClientConfig, true);
+        }
+        return solrShardManager;
     }
 
     private void checkShardUsage(String indexName, Set<String> definedShards, Set<String> selectorShards) {
@@ -321,11 +334,11 @@ public class IndexerWorker {
     }
 
     private class IndexUpdaterHandle {
-        private IndexDefinition indexDef;
-        private List<RemoteListenerHandler> listenerHandlers;
-        private SolrShardManager solrShardMgr;
-        private IndexerMetrics indexerMetrics;
-        private IndexUpdaterMetrics updaterMetrics;
+        private final IndexDefinition indexDef;
+        private final List<RemoteListenerHandler> listenerHandlers;
+        private final SolrShardManager solrShardMgr;
+        private final IndexerMetrics indexerMetrics;
+        private final IndexUpdaterMetrics updaterMetrics;
 
         public IndexUpdaterHandle(IndexDefinition indexDef, List<RemoteListenerHandler> listenerHandlers,
                                   SolrShardManager solrShardMgr, IndexerMetrics indexerMetrics,

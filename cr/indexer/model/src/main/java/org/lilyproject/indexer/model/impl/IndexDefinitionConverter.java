@@ -15,22 +15,27 @@
  */
 package org.lilyproject.indexer.model.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import net.iharder.Base64;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
-import org.lilyproject.indexer.model.api.*;
+import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
+import org.lilyproject.indexer.model.api.BatchBuildInfo;
+import org.lilyproject.indexer.model.api.IndexBatchBuildState;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexGeneralState;
+import org.lilyproject.indexer.model.api.IndexUpdateState;
 import org.lilyproject.util.json.JsonFormat;
 import org.lilyproject.util.json.JsonFormatException;
 import org.lilyproject.util.json.JsonUtil;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 public class IndexDefinitionConverter {
     public static IndexDefinitionConverter INSTANCE = new IndexDefinitionConverter();
@@ -79,19 +84,22 @@ public class IndexDefinitionConverter {
             solrShards.put(shardName, address);
         }
 
+        if (node.has("zkConnectionString")) index.setZkConnectionString(node.get("zkConnectionString").getTextValue());
+        if (node.has("solrCollection")) index.setSolrCollection(node.get("solrCollection").getTextValue());
+
         ActiveBatchBuildInfo activeBatchBuild = null;
         if (node.get("activeBatchBuild") != null) {
             ObjectNode buildNode = JsonUtil.getObject(node, "activeBatchBuild");
             activeBatchBuild = new ActiveBatchBuildInfo();
             activeBatchBuild.setJobId(JsonUtil.getString(buildNode, "jobId"));
             activeBatchBuild.setSubmitTime(JsonUtil.getLong(buildNode, "submitTime"));
-            activeBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));       
+            activeBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));
             // no likely that this attribute isn't available but check for it just in case
             if (buildNode.has("batchIndexConfiguration")) {
                 activeBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
                         JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
             }
-            
+
         }
 
         BatchBuildInfo lastBatchBuild = null;
@@ -102,7 +110,7 @@ public class IndexDefinitionConverter {
             lastBatchBuild.setSubmitTime(JsonUtil.getLong(buildNode, "submitTime"));
             lastBatchBuild.setSuccess(JsonUtil.getBoolean(buildNode, "success"));
             lastBatchBuild.setJobState(JsonUtil.getString(buildNode, "jobState"));
-            lastBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));            
+            lastBatchBuild.setTrackingUrl(JsonUtil.getString(buildNode, "trackingUrl", null));
             ObjectNode countersNode = JsonUtil.getObject(buildNode, "counters");
             Iterator<String> it = countersNode.getFieldNames();
             while (it.hasNext()) {
@@ -110,20 +118,20 @@ public class IndexDefinitionConverter {
                 long value = JsonUtil.getLong(countersNode, key);
                 lastBatchBuild.addCounter(key, value);
             }
-            // this attribute isn't available after doing an upgrade so check 
+            // this attribute isn't available after doing an upgrade so check
             if (buildNode.has("batchIndexConfiguration")) {
                 lastBatchBuild.setBatchIndexConfiguration(serializeJsonNode(
                         JsonUtil.getObject(buildNode, "batchIndexConfiguration")));
             }
-            
+
         }
         byte[] batchIndexConfiguration = null;
-        if (node.get("batchIndexConfiguration") != null) {            
-            batchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "batchIndexConfiguration"));            
+        if (node.get("batchIndexConfiguration") != null) {
+            batchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "batchIndexConfiguration"));
         }
         byte[] defaultBatchIndexConfiguration = null;
-        if (node.get("defaultBatchIndexConfiguration") != null) {            
-            defaultBatchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "defaultBatchIndexConfiguration"));            
+        if (node.get("defaultBatchIndexConfiguration") != null) {
+            defaultBatchIndexConfiguration = serializeJsonNode(JsonUtil.getObject(node, "defaultBatchIndexConfiguration"));
         }
 
         index.setGeneralState(state);
@@ -149,12 +157,12 @@ public class IndexDefinitionConverter {
 
     public ObjectNode toJson(IndexDefinition index) {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
-        
-        node.put("name", index.getName());        
+
+        node.put("name", index.getName());
         node.put("generalState", index.getGeneralState().toString());
         node.put("batchBuildState", index.getBatchBuildState().toString());
         node.put("updateState", index.getUpdateState().toString());
-        
+
         node.put("zkDataVersion", index.getZkDataVersion());
 
         if (index.getQueueSubscriptionId() != null)
@@ -185,6 +193,13 @@ public class IndexDefinitionConverter {
             ObjectNode shardNode = shardsNode.addObject();
             shardNode.put("name", shard.getKey());
             shardNode.put("address", shard.getValue());
+        }
+
+        if (index.getZkConnectionString() != null) {
+            node.put("zkConnectionString", index.getZkConnectionString());
+        }
+        if (index.getSolrCollection() != null) {
+            node.put("solrCollection", index.getSolrCollection());
         }
 
         if (index.getActiveBatchBuildInfo() != null) {
@@ -220,7 +235,7 @@ public class IndexDefinitionConverter {
 
         return node;
     }
-    
+
     private JsonNode deserializeByteArray (byte[] b) {
         JsonNode node;
         try {
@@ -230,7 +245,7 @@ public class IndexDefinitionConverter {
         }
         return node;
     }
-    
+
     private byte[] serializeJsonNode (JsonNode node) {
         byte[] b;
         try {

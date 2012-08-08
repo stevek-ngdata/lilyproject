@@ -15,7 +15,10 @@
  */
 package org.lilyproject.lilyservertestfw;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
@@ -55,7 +58,7 @@ public class LilyServerProxy {
     public static final String LILY_CONF_CUSTOMDIR = "lily.conf.customdir";
     private static final String COUNTER_NUM_FAILED_RECORDS = "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     private Mode mode;
 
@@ -69,7 +72,7 @@ public class LilyServerProxy {
     private LilyClient lilyClient;
     private WriteableIndexerModel indexerModel;
     private ZooKeeperItf zooKeeper;
-    private boolean clearData;
+    private final boolean clearData;
 
     public LilyServerProxy() throws IOException {
         this(null);
@@ -78,23 +81,23 @@ public class LilyServerProxy {
     public LilyServerProxy(Mode mode) throws IOException {
         this(mode, true);
     }
-    
+
     /**
      * LilyServerProxy starts a proxy for lily which either :
      *   - connects to an already running lily (using launch-test-lily) (CONNECT mode)
      *   - starts a new LilyServerTestUtility (EMBED mode)
-     *   
-     * <p>In the EMBED mode the default configuration files used are the files present 
+     *
+     * <p>In the EMBED mode the default configuration files used are the files present
      *    in the resource "org/lilyproject/lilyservertestfw/conf/".
-     *    These files are copied into the resource at build-time from "cr/process/server/conf".  
-     * <br>On top of these default configuration files, custom configuration files can be used. 
-     *     The path to these custom configuration files should be put in the system property 
-     *     "lily.conf.customdir". 
+     *    These files are copied into the resource at build-time from "cr/process/server/conf".
+     * <br>On top of these default configuration files, custom configuration files can be used.
+     *     The path to these custom configuration files should be put in the system property
+     *     "lily.conf.customdir".
      * @param mode the mode (CONNECT or EMBED) in which to start the proxy.
      */
     public LilyServerProxy(Mode mode, boolean clearData) throws IOException {
         this.clearData = clearData;
-        
+
         if (mode == null) {
             String lilyModeProp = System.getProperty(LILY_MODE_PROP_NAME);
             if (lilyModeProp == null || lilyModeProp.equals("") || lilyModeProp.equals("embed")) {
@@ -135,9 +138,9 @@ public class LilyServerProxy {
                 File defaultConfDir = new File(testHome, "conf");
                 FileUtils.forceMkdir(defaultConfDir);
                 extractTemplateConf(defaultConfDir);
-                // Get custom conf dir 
+                // Get custom conf dir
                 String customConfDir = System.getProperty(LILY_CONF_CUSTOMDIR);
-                
+
                 lilyServerTestUtility = new LilyServerTestUtility(defaultConfDir.getAbsolutePath(), customConfDir,
                         testHome);
                 lilyServerTestUtility.start();
@@ -148,7 +151,7 @@ public class LilyServerProxy {
                 throw new RuntimeException("Unexpected mode: " + mode);
         }
     }
-    
+
     public void stop() {
         if (mode == Mode.CONNECT) {
             Closer.close(zooKeeper);
@@ -165,7 +168,7 @@ public class LilyServerProxy {
         // in retry loops when no servers are available
         Closer.close(lilyServerTestUtility);
     }
-    
+
     public synchronized LilyClient getClient() throws IOException, InterruptedException, KeeperException,
             ZkConnectException, NoServersException, RepositoryException {
         if (lilyClient == null) {
@@ -214,7 +217,7 @@ public class LilyServerProxy {
         }
         return indexerModel;
     }
-    
+
     private void extractTemplateConf(File confDir) throws URISyntaxException, IOException {
         URL confUrl = getClass().getClassLoader().getResource(ConfUtil.CONF_RESOURCE_PATH);
         ConfUtil.copyConfResources(confUrl, ConfUtil.CONF_RESOURCE_PATH, confDir);
@@ -222,7 +225,7 @@ public class LilyServerProxy {
 
     /**
      * Adds an index from in index configuration contained in a resource.
-     * 
+     *
      * <p>This method waits for the index subscription to be known by the MQ rowlog (or until a given timeout
      * has passed). Only when this is the case record creates or updates will result in messages to be created
      * on the MQ rowlog.
@@ -239,7 +242,7 @@ public class LilyServerProxy {
      *                            subscriptionId of the new index
      * @param waitForMQRowlog boolean indicating the call has to wait until the MQ rowlog knows the subscriptionId
      *                        of the new index.
-     *        This can only be true if the waitForIndexerModel is true as well. 
+     *        This can only be true if the waitForIndexerModel is true as well.
      * @param waitForIndexerRegistry boolean indicating the call has to wait until the IndexerRegistry knows about
      *                               the index, this is important for synchronous indexing.
      */
@@ -349,7 +352,7 @@ public class LilyServerProxy {
             log.info("Index '" + indexName + "' not known to indexerModel within " + timeout + "ms");
             return subscriptionId;
         }
-        
+
         IndexDefinition indexDefinition = indexerModel.getIndex(indexName);
         subscriptionId = indexDefinition.getQueueSubscriptionId();
         while (subscriptionId == null && System.currentTimeMillis() < tryUntil) {
@@ -419,7 +422,7 @@ public class LilyServerProxy {
     }
 
     private class JmxLiaison {
-        private String objectNameString;
+        private final String objectNameString;
         private ObjectName objectName;
         private MBeanServerConnection connection;
         private JMXConnector connector;
@@ -495,12 +498,14 @@ public class LilyServerProxy {
             while (System.currentTimeMillis() < tryUntil) {
                 Thread.sleep(100);
                 IndexDefinition definition = model.getIndex(indexName);
+
                 if (definition.getBatchBuildState() == IndexBatchBuildState.INACTIVE) {
                     Long amountFailed = definition.getLastBatchBuildInfo().getCounters().get(COUNTER_NUM_FAILED_RECORDS);
                     boolean successFlag = definition.getLastBatchBuildInfo().getSuccess();
                     if (successFlag && (amountFailed == null || amountFailed == 0L)) {
                         return;
                     } else {
+                        System.out.println(definition.getLastBatchBuildInfo().getTrackingUrl());
                         throw new Exception("Batch index build did not finish successfully: success flag = " +
                             successFlag + ", amount failed records = " + amountFailed + ", job state = " +
                             definition.getLastBatchBuildInfo().getJobState());
@@ -508,6 +513,7 @@ public class LilyServerProxy {
                 }
             }
         } catch (Exception e) {
+
             throw new Exception("Error checking if batch index job ended.", e);
         }
 

@@ -176,7 +176,7 @@ public class IndexerTest {
         SOLR_TEST_UTIL.setSolrDefinition(
                 new SolrDefinition(IOUtils.toByteArray(IndexerTest.class.getResourceAsStream("schema1.xml"))));
 
-        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl");
+        TestHelper.setupLogging("org.lilyproject.indexer", "org.lilyproject.rowlog.impl.RowLogImpl", "org.lilyproject.indexer.engine.test.IndexerTest");
 
         SOLR_TEST_UTIL.start();
 
@@ -751,6 +751,7 @@ public class IndexerTest {
             record = repository.create(record);
 
             commitIndex();
+            verifyResultCount("lily.id:" + record.getId().toString(), 1);
             verifyResultCount("nv_field1:apple", 1);
 
             // Update the record
@@ -788,6 +789,7 @@ public class IndexerTest {
             repository.delete(record.getId());
 
             commitIndex();
+
             verifyResultCount("nv_field1:pear", 0);
         }
 

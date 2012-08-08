@@ -42,10 +42,6 @@ import org.lilyproject.util.json.JsonFormat;
 
 public class BatchIndexBuilder {
     /**
-<<<<<<< HEAD
-     *
-=======
->>>>>>> e0932a933af399648d5c66c1c976a9ec1716163f
      * @return the ID of the started job
      */
     public static Job startBatchBuildJob(IndexDefinition index, Configuration mapReduceConf, Configuration hbaseConf,
@@ -81,11 +77,19 @@ public class BatchIndexBuilder {
             job.getConfiguration().set("org.lilyproject.indexer.batchbuild.shardingconf", shardingConfString);
         }
 
+
         int i = 0;
         for (Map.Entry<String, String> shard : index.getSolrShards().entrySet()) {
             i++;
             job.getConfiguration().set("org.lilyproject.indexer.batchbuild.solrshard.name." + i, shard.getKey());
             job.getConfiguration().set("org.lilyproject.indexer.batchbuild.solrshard.address." + i, shard.getValue());
+        }
+
+        if (index.getZkConnectionString() != null) {
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.solr.zkConnectionString", index.getZkConnectionString());
+        }
+        if (index.getSolrCollection() != null ) {
+            job.getConfiguration().set("org.lilyproject.indexer.batchbuild.solr.collection", index.getSolrCollection());
         }
 
         job.setNumReduceTasks(0);

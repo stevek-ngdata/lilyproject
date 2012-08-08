@@ -31,11 +31,12 @@ import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.lilyproject.util.io.Closer;
 import org.lilyproject.util.test.TestHomeUtil;
 import org.lilyproject.util.xml.DocumentHelper;
@@ -53,14 +54,14 @@ public class SolrProxy {
     private SolrTestingUtility solrTestingUtility;
     private Map<String, SolrServer> solrServers = new HashMap<String, SolrServer>();
 
-    private MultiThreadedHttpConnectionManager connectionManager;
+    private ThreadSafeClientConnManager connectionManager;
     private HttpClient httpClient;
 
     private String uri;
 
     private File testHome;
 
-    private boolean clearData;
+    private final boolean clearData;
 
     public SolrProxy() throws IOException {
         this(null);
@@ -69,7 +70,7 @@ public class SolrProxy {
     public SolrProxy(Mode mode) throws IOException {
         this(mode, true);
     }
-    
+
     /**
      * Creates a new SolrProxy
      * @param mode either EMBED or CONNECT
@@ -115,6 +116,7 @@ public class SolrProxy {
     /**
      * @deprecated use {@link #start(SolrDefinition)} instead
      */
+    @Deprecated
     public void start(byte[] solrSchemaData, byte[] solrConfigData) throws Exception {
         if (solrSchemaData != null || solrConfigData != null) {
             start(new SolrDefinition(solrSchemaData, solrConfigData));
@@ -148,12 +150,12 @@ public class SolrProxy {
                 throw new RuntimeException("Unexpected mode: " + mode);
         }
 
-        connectionManager = new MultiThreadedHttpConnectionManager();
-        connectionManager.getParams().setDefaultMaxConnectionsPerHost(5);
-        connectionManager.getParams().setMaxTotalConnections(50);
-        httpClient = new HttpClient(connectionManager);
+        connectionManager = new ThreadSafeClientConnManager();
+        connectionManager.setDefaultMaxPerRoute(5);
+        connectionManager.setMaxTotal(50);
+        httpClient = new DefaultHttpClient(connectionManager);
     }
-    
+
     public void stop() throws Exception {
         Closer.close(solrTestingUtility);
 
@@ -167,7 +169,7 @@ public class SolrProxy {
     private void initSolrServers(SolrDefinition solrDef) throws MalformedURLException {
         solrServers.clear();
         for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
-            SolrServer solrServer = new CommonsHttpSolrServer(getUri(core.getName()), httpClient);
+            SolrServer solrServer = new HttpSolrServer(getUri(core.getName()), httpClient);
             solrServers.put(core.getName(), solrServer);
         }
     }
@@ -178,7 +180,7 @@ public class SolrProxy {
     public SolrServer getSolrServer() {
         return solrServers.get("core0");
     }
-    
+
     public SolrServer getSolrServer(String coreName) {
         return solrServers.get(coreName);
     }
@@ -195,7 +197,7 @@ public class SolrProxy {
     public void commit(String coreName) throws Exception {
         solrServers.get(coreName).commit();
     }
-    
+
     public String getUri() {
         return uri;
     }
@@ -207,13 +209,15 @@ public class SolrProxy {
     /**
      * @deprecated use {@link #changeSolrDefinition} instead
      */
+    @Deprecated
     public void changeSolrConfig(byte[] newConfigData) throws Exception {
         changeSolrDefinition(new SolrDefinition(null, newConfigData));
     }
-    
+
     /**
      * @deprecated use {@link #changeSolrDefinition} instead
      */
+    @Deprecated
     public void changeSolrSchema(byte[] newSchemaData) throws Exception {
         changeSolrDefinition(new SolrDefinition(newSchemaData, null));
     }
@@ -221,6 +225,7 @@ public class SolrProxy {
     /**
      * @deprecated use {@link #changeSolrDefinition} instead
      */
+    @Deprecated
     public void changeSolrSchemaAndConfig(byte[] newSchemaData, byte[] newConfigData) throws Exception {
         changeSolrDefinition(new SolrDefinition(newSchemaData, newConfigData));
     }

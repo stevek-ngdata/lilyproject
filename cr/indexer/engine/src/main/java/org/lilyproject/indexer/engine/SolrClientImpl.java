@@ -19,20 +19,31 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.request.QueryRequest;
+import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 
 public class SolrClientImpl implements SolrClient {
 
-    private SolrServer solrServer;
+    private final SolrServer solrServer;
 
-    private String description;
+    private final String description;
+
+    private String collection;
 
     public SolrClientImpl(SolrServer solrServer, String description) {
         this.solrServer = solrServer;
         this.description = description;
+    }
+
+    public SolrClientImpl(SolrServer solrServer, String collection, String description) {
+        this.solrServer = solrServer;
+        this.description = description;
+        this.collection = collection;
     }
 
     @Override
@@ -42,8 +53,13 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse add(SolrInputDocument doc) throws SolrClientException {
+        UpdateRequest request = new UpdateRequest();
+        request.add(doc);
+        if (collection != null) {
+            request.setParam("collection", collection);
+        }
         try {
-            return solrServer.add(doc);
+            return request.process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }
@@ -51,8 +67,13 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse add(Collection<SolrInputDocument> docs) throws SolrClientException {
+        UpdateRequest request = new UpdateRequest();
+        request.add(docs);
+        if (collection != null) {
+            request.setParam("collection", collection);
+        }
         try {
-            return solrServer.add(docs);
+            return request.process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }
@@ -60,8 +81,13 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse deleteById(List<String> ids) throws SolrClientException {
+        UpdateRequest request = new UpdateRequest();
+        request.deleteById(ids);
+        if (collection != null) {
+            request.setParam("collection", collection);
+        }
         try {
-            return solrServer.deleteById(ids);
+            return request.process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }
@@ -69,8 +95,13 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse deleteById(String id) throws SolrClientException {
+        UpdateRequest request = new UpdateRequest();
+        request.deleteById(id);
+        if (collection != null) {
+            request.setParam("collection", collection);
+        }
         try {
-            return solrServer.deleteById(id);
+            return request.process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }
@@ -78,8 +109,14 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse deleteByQuery(String query) throws SolrClientException {
+        
+        UpdateRequest request = new UpdateRequest();
+        request.deleteByQuery(query);
+        if (collection != null) {
+            request.setParam("collection", collection);
+        }
         try {
-            return solrServer.deleteByQuery(query);
+            return request.process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }
@@ -87,8 +124,13 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse commit(boolean waitFlush, boolean waitSearcher) throws SolrClientException {
+        UpdateRequest request = new UpdateRequest();
+        request.setAction( UpdateRequest.ACTION.COMMIT, waitFlush, waitSearcher);
+        if (collection != null) {
+            request.setParam("collection", collection);
+        }
         try {
-            return solrServer.commit(waitFlush, waitSearcher);
+            return request.process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }
@@ -96,17 +138,18 @@ public class SolrClientImpl implements SolrClient {
 
     @Override
     public UpdateResponse commit() throws SolrClientException {
-        try {
-            return solrServer.commit();
-        } catch (Exception e) {
-            throw new SolrClientException(description, e);
-        }
+        return commit(true, true);
     }
 
     @Override
     public QueryResponse query(SolrParams params) throws SolrClientException {
+        if (collection != null) {
+            NamedList<String> nl = new NamedList<String>();
+            nl.add("collection", collection);
+            params = SolrParams.wrapAppended(SolrParams.toSolrParams(nl), params);
+        }
         try {
-            return solrServer.query(params);
+            return  new QueryRequest(params).process(solrServer);
         } catch (Exception e) {
             throw new SolrClientException(description, e);
         }

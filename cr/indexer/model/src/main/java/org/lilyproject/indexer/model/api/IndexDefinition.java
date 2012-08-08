@@ -23,7 +23,7 @@ public interface IndexDefinition {
     IndexGeneralState getGeneralState();
 
     void setGeneralState(IndexGeneralState state);
-    
+
     IndexBatchBuildState getBatchBuildState();
 
     void setBatchBuildState(IndexBatchBuildState state);
@@ -72,13 +72,19 @@ public interface IndexDefinition {
     ActiveBatchBuildInfo getActiveBatchBuildInfo();
 
     void setActiveBatchBuildInfo(ActiveBatchBuildInfo info);
-    
+
     /**
      * The JSON configuration for the batch indexer
      */
     byte[] getBatchIndexConfiguration ();
     void setBatchIndexConfiguration(byte[] batchIndexConfiguration);
-    
+
     byte[] getDefaultBatchIndexConfiguration();
     void setDefaultBatchIndexConfiguration(byte[] defaultBatchIndexConfiguration);
+
+    String getZkConnectionString();
+    void setZkConnectionString(String zkConnectionString);
+
+    String getSolrCollection();
+    void setSolrCollection(String collection);
 }
