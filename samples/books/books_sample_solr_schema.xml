@@ -92,6 +92,11 @@
 
 
  <fields>
+   <!-- This field needs to be available or else the deleteByQuery fails silently 
+    https://issues.apache.org/jira/browse/SOLR-3432
+    -->
+    <field name="_version_" type="long" indexed="true" stored="true"/> 
+
    <!-- Fields which are required by Lily -->
    <field name="lily.key" type="string" indexed="true" stored="true" required="true"/>
    <field name="lily.id" type="string" indexed="true" stored="true" required="true"/>
