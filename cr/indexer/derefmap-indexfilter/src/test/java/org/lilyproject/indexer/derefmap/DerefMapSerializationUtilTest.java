@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import junit.framework.Assert;
-import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.junit.Test;
 import org.lilyproject.repository.api.IdGenerator;
 import org.lilyproject.repository.api.SchemaId;

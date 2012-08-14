@@ -1,7 +1,7 @@
 package org.lilyproject.indexer.engine.test;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.thirdparty.guava.common.collect.Sets;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
