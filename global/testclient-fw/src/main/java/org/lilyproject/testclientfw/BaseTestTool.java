@@ -91,7 +91,7 @@ public abstract class BaseTestTool extends BaseZkCliTool {
         verboseOption = OptionBuilder
                 .withDescription("Be verbose")
                 .withLongOpt("verbose")
-                .create("v");
+                .create("vb");
         options.add(verboseOption);
 
         hbaseMetricsOption = OptionBuilder
