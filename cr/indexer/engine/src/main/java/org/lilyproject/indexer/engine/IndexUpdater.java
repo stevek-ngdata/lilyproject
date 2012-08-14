@@ -421,7 +421,7 @@ public class IndexUpdater implements RowLogMessageListener {
             } else {
                 // vtag didn't change, but some fields did change:
                 for (Scope scope : updatedFieldsByScope.keySet()) {
-                    final Set<SchemaId> fields = toFields(updatedFieldsByScope.get(scope));
+                    final Set<SchemaId> fields = toSchemaIds(updatedFieldsByScope.get(scope));
                     final DependantRecordIdsIterator dependants = derefMap.findDependantsOf(recordId, fields, vtag);
                     while (dependants.hasNext()) {
                         referrersAndVTags.put(dependants.next(), vtag);
@@ -462,7 +462,7 @@ public class IndexUpdater implements RowLogMessageListener {
         }
     }
 
-    private Set<SchemaId> toFields(Set<FieldType> fieldTypes) {
+    private Set<SchemaId> toSchemaIds(Set<FieldType> fieldTypes) {
         return new HashSet<SchemaId>(Collections2.transform(fieldTypes, new Function<FieldType, SchemaId>() {
             @Override
             public SchemaId apply(FieldType input) {
