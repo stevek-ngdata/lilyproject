@@ -79,6 +79,11 @@
       <artifactId>hbase</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+    </dependency>
+
     <!-- Temporary solution to collect all HBase test dependencies -->
     <dependency>
       <groupId>org.apache.hbase</groupId>

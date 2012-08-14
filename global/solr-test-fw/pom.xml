@@ -45,6 +45,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr</artifactId>
       <version>${version.solr}</version>
