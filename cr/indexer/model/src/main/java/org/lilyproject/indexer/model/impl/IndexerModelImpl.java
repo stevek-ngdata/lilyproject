@@ -67,6 +67,14 @@ import java.util.concurrent.ConcurrentHashMap;
 // of this znode is somewhat bigger is not really important.
 
 
+/**
+ * Implementation of IndexerModel.
+ *
+ * <p>Usage: typically in an application you will create just one instance of IndexerModel and share it.
+ * This is a relatively heavy object which runs threads. IMPORTANT: when done using it, call the stop()
+ * method to properly shut down everything.</p>
+ *
+ */
 public class IndexerModelImpl implements WriteableIndexerModel {
     private ZooKeeperItf zk;
 
