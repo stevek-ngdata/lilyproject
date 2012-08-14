@@ -191,6 +191,17 @@ public class IndexerModelImpl implements WriteableIndexerModel {
                 throw new IndexValidityException("Job id of active batch build cannot be null.");
         }
 
+       if (index.getSolrCollection() != null && (index.getSolrShards() != null || !index.getSolrShards().isEmpty())) {
+           throw new IndexValidityException("Ambiguous solr configuration in index defintion. Setting a solr " +
+                   "collection together with solr shards has no use. Set either the solr shards or collection.");
+       }
+
+       if (index.getSolrCollection() != null && (index.getZkConnectionString() != null || !index.getZkConnectionString().isEmpty())) {
+           throw new IndexValidityException("Ambiguous solr configuration in index defintion. Setting a solr " +
+                   "zookeeper connecion together with solr shards has no use. Set either the solr shards or " +
+                   "zookeeper connection.");
+       }
+
         if (index.getLastBatchBuildInfo() != null) {
             BatchBuildInfo info = index.getLastBatchBuildInfo();
             if (info.getJobId() == null)

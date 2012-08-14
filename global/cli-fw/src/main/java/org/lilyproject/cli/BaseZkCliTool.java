@@ -15,11 +15,11 @@
  */
 package org.lilyproject.cli;
 
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
-
-import java.util.List;
 
 /**
  * Base for CLI tools that need a ZooKeeper connect string.

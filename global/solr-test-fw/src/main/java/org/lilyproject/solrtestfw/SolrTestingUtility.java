@@ -23,17 +23,20 @@ import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.lilyproject.util.MavenUtil;
 import org.lilyproject.util.test.TestHomeUtil;
+import org.lilyproject.util.zookeeper.ZkUtil;
+import org.lilyproject.util.zookeeper.ZooKeeperItf;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 public class SolrTestingUtility {
-    private int solrPort = 8983;
+    private final int solrPort = 8983;
     private Server server;
     private SolrDefinition solrDef;
     private String autoCommitSetting;
     private String solrWarPath;
     private File solrHomeDir;
-    private boolean clearData;
+    private final boolean clearData;
+    private final boolean useSolrCloud;
 
     public SolrTestingUtility() throws IOException {
         this(null);
@@ -42,10 +45,15 @@ public class SolrTestingUtility {
     public SolrTestingUtility(File solrHomeDir) throws IOException {
         this(solrHomeDir, true);
     }
-    
+
     public SolrTestingUtility(File solrHomeDir, boolean clearData) throws IOException {
+        this(solrHomeDir, clearData, false);
+    }
+
+    public SolrTestingUtility(File solrHomeDir, boolean clearData, boolean useSolrCloud) throws IOException {
         this.clearData = clearData;
-        
+        this.useSolrCloud = useSolrCloud;
+
         if (solrHomeDir == null) {
             this.solrHomeDir = TestHomeUtil.createTestHome("lily-solrtesthome-");
         } else {
@@ -119,7 +127,14 @@ public class SolrTestingUtility {
         server.start();
     }
 
-    private Server createServer() {
+    private Server createServer() throws Exception{
+        if (this.useSolrCloud) {
+            // create path on zookeeper for solr cloud
+            ZooKeeperItf zk = ZkUtil.connect("localhost:2181", 10000);
+            ZkUtil.createPath(zk, "/solr");
+
+        }
+
         Server server = new Server(solrPort);
         WebAppContext ctx = new WebAppContext(solrWarPath, "/solr");
         // The reason to change the classloading behavior was primarily so that the logging libraries would
@@ -160,6 +175,15 @@ public class SolrTestingUtility {
 
     private void setSystemProperties() {
         System.setProperty("solr.solr.home", solrHomeDir.getAbsolutePath());
+        if (this.useSolrCloud) {
+            System.setProperty("zkHost", "localhost:2181/solr");
+            System.setProperty("bootstrap_confdir",solrHomeDir.getAbsolutePath() + "/core0/conf");
+            System.setProperty("collection.configName","core0");
+        }
+    }
+
+    public boolean isUseSolrCloud() {
+        return useSolrCloud;
     }
 
 }

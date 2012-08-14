@@ -15,6 +15,20 @@
  */
 package org.lilyproject.lilyservertestfw.launcher;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.management.ObjectName;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
@@ -31,22 +45,10 @@ import org.lilyproject.solrtestfw.SolrProxy;
 import org.lilyproject.util.Version;
 import org.lilyproject.util.test.TestHomeUtil;
 
-import javax.management.ObjectName;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.lang.management.ManagementFactory;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private Option enableHadoopOption;
     private Option enableSolrOption;
+    private Option enableSolrCloudOption;
     private Option enableLilyOption;
     private Option dataDirOption;
     private Option prepareOption;
@@ -54,18 +56,19 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
     private File testHome;
     private boolean clearData = true;
 
-    private HadoopLauncherService hadoopService = new HadoopLauncherService();
-    private SolrLauncherService solrService = new SolrLauncherService();
-    private LilyLauncherService lilyService = new LilyLauncherService();
+    private final HadoopLauncherService hadoopService = new HadoopLauncherService();
+    private final SolrLauncherService solrService = new SolrLauncherService();
+    private final LilyLauncherService lilyService = new LilyLauncherService();
 
-    private List<LauncherService> allServices = new ArrayList<LauncherService>();
-    private List<LauncherService> enabledServices = new ArrayList<LauncherService>();
+    private final List<LauncherService> allServices = new ArrayList<LauncherService>();
+    private final List<LauncherService> enabledServices = new ArrayList<LauncherService>();
 
     boolean enableHadoop;
     boolean enableSolr;
+    boolean enableSolrCloud;
     boolean enableLily;
 
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     public LilyLauncher() {
         allServices.add(solrService);
@@ -99,6 +102,12 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
                 .create("solr");
         options.add(enableSolrOption);
 
+        enableSolrCloudOption = OptionBuilder
+                .withDescription("Start Solr in cloud mode")
+                .withLongOpt("solrcloud")
+                .create("solrcloud");
+        options.add(enableSolrCloudOption);
+
         enableLilyOption = OptionBuilder
                 .withDescription("Start Lily")
                 .withLongOpt("lily")
@@ -124,7 +133,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         for (LauncherService service : allServices) {
             service.addOptions(options);
         }
-        
+
         return options;
     }
 
@@ -139,7 +148,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             return result;
 
         boolean prepareMode = cmd.hasOption(prepareOption.getOpt());
-        
+
         if (prepareMode) {
             System.out.println("----------------------------------------------------------");
             System.out.println("Running in prepare mode.");
@@ -158,6 +167,7 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableHadoop = cmd.hasOption(enableHadoopOption.getOpt());
             enableSolr = cmd.hasOption(enableSolrOption.getOpt());
             enableLily = cmd.hasOption(enableLilyOption.getOpt());
+            enableSolrCloud = cmd.hasOption(enableSolrCloudOption.getOpt());
         }
 
         // If none of the services are explicitly enabled, we default to starting them all. Otherwise
@@ -166,7 +176,10 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
             enableHadoop = true;
             enableSolr = true;
             enableLily = true;
+            enableSolrCloud = false;
         }
+
+        solrService.setEnableSolrCloud(enableSolrCloud);
 
         if (enableHadoop)
             enabledServices.add(hadoopService);
@@ -285,12 +298,12 @@ public class LilyLauncher extends BaseCliTool implements LilyLauncherMBean {
         }
     }
 
-    private AtomicBoolean resetRunning = new AtomicBoolean();
+    private final AtomicBoolean resetRunning = new AtomicBoolean();
 
     @Override
     public void resetLilyState() {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-        
+
         if (!resetRunning.compareAndSet(false, true)) {
             throw new RuntimeException("There is already a Lily state reset running.");
         }

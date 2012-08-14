@@ -40,11 +40,12 @@ public class SolrLauncherService implements LauncherService {
     private String solrConfig;
     private File testHome;
     private boolean clearData;
+    private boolean enableSolrCloud = false;
 
     private SolrTestingUtility solrTestingUtility;
     private int autoCommitTime = -1;
 
-    private Log log = LogFactory.getLog(getClass());
+    private final Log log = LogFactory.getLog(getClass());
 
     @Override
     public void addOptions(List<Option> options) {
@@ -93,7 +94,7 @@ public class SolrLauncherService implements LauncherService {
             if (result != 0)
                 return result;
         }
-        
+
         autoCommitSetting = "";
         if (cmd.hasOption(commitOption.getOpt())) {
             try {
@@ -104,7 +105,7 @@ public class SolrLauncherService implements LauncherService {
                 return 1;
             }
         }
-        
+
         return 0;
     }
 
@@ -166,9 +167,9 @@ public class SolrLauncherService implements LauncherService {
 
     @Override
     public int start(List<String> postStartupInfo) throws Exception {
-        solrTestingUtility = new SolrTestingUtility(testHome, clearData);
+        solrTestingUtility = new SolrTestingUtility(testHome, clearData, enableSolrCloud);
         solrTestingUtility.setAutoCommitSetting(autoCommitSetting);
-        
+
         byte[] schemaData = schema == null ? null : FileUtils.readFileToByteArray(new File(schema));
         byte[] solrConfigData = solrConfig == null ? null : FileUtils.readFileToByteArray(new File(solrConfig));
         solrTestingUtility.setSolrDefinition(new SolrDefinition(schemaData, solrConfigData));
@@ -184,7 +185,7 @@ public class SolrLauncherService implements LauncherService {
         postStartupInfo.add("Web GUI available at:");
         postStartupInfo.add("http://localhost:8983/solr/admin/");
         postStartupInfo.add("");
-        
+
         if (solrConfig == null) { // only show the autocommit information if the user is using the built-in solrconfig
             if (autoCommitTime == -1) {
                 postStartupInfo.add("Index is not auto-committed, you can commit it using:");
@@ -214,5 +215,13 @@ public class SolrLauncherService implements LauncherService {
 
     public SolrTestingUtility getSolrTestingUtility() {
         return solrTestingUtility;
+    }
+
+    public boolean isEnableSolrCloud() {
+        return enableSolrCloud;
+    }
+
+    public void setEnableSolrCloud(boolean enableSolrCloud) {
+        this.enableSolrCloud = enableSolrCloud;
     }
 }

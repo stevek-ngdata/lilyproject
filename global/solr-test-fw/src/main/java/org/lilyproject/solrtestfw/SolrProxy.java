@@ -63,6 +63,8 @@ public class SolrProxy {
 
     private final boolean clearData;
 
+    private final boolean enableSolrCloud;
+
     public SolrProxy() throws IOException {
         this(null);
     }
@@ -71,14 +73,20 @@ public class SolrProxy {
         this(mode, true);
     }
 
+    public SolrProxy(Mode mode, boolean clearData) throws IOException {
+        this(mode, clearData, false);
+    }
+
     /**
      * Creates a new SolrProxy
      * @param mode either EMBED or CONNECT
      * @param clearData it true, clears the data directories upon shutdown
+     * @param enableSolrCloud if true starts solr in cloud mode
      * @throws IOException
      */
-    public SolrProxy(Mode mode, boolean clearData) throws IOException {
+    public SolrProxy(Mode mode, boolean clearData, boolean enableSolrCloud) throws IOException {
         this.clearData = clearData;
+        this.enableSolrCloud = enableSolrCloud;
 
         if (mode == null) {
           String solrModeProp = System.getProperty(SOLR_MODE_PROP_NAME);
@@ -134,7 +142,7 @@ public class SolrProxy {
             case EMBED:
                 initTestHome();
                 System.out.println("SolrProxy embedded mode temp dir: " + testHome.getAbsolutePath());
-                solrTestingUtility = new SolrTestingUtility(testHome, clearData);
+                solrTestingUtility = new SolrTestingUtility(testHome, clearData, enableSolrCloud);
                 solrTestingUtility.setSolrDefinition(solrDef);
                 solrTestingUtility.start();
                 this.uri = solrTestingUtility.getUri();

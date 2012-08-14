@@ -44,7 +44,7 @@ public class SolrHomeDirSetup {
     private void writeCoresConf() throws FileNotFoundException {
         File coresFile = new File(solrHomeDir, "solr.xml");
         PrintWriter writer = new PrintWriter(coresFile);
-        writer.println("<solr persistent='false'>");
+        writer.println("<solr persistent='true'>");
         writer.println(" <cores adminPath='/admin/cores' defaultCoreName='" + SolrDefinition.DEFAULT_CORE_NAME + "'>");
         for (SolrDefinition.CoreDefinition core : solrDef.getCores()) {
             writer.println("  <core name='" + core.getName() + "' instanceDir='" + core.getName() + "'>");
