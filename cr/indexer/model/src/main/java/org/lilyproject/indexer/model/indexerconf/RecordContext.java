@@ -4,6 +4,10 @@ import org.lilyproject.repository.api.Record;
 
 public class RecordContext {
 
+    /**
+     * In case of embedded (nested) records, contextRecord contains the real repository record,
+     * and record the embedded (id-less) record.
+     */
     public final Record contextRecord;
     public final Record record;
     public final Dep dep;

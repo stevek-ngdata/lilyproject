@@ -13,12 +13,17 @@ public interface IndexUpdateBuilder {
     public void addField(String fieldName, List<String> value) throws InterruptedException, RepositoryException;
 
     public Repository getRepository();
+
     public SystemFields getSystemFields();
 
     public RecordContext getRecordContext();
+
     public void push(Record record, Dep dep);
+
     public void push(Record record, Record contextRecord, Dep dep);
+
     public RecordContext pop();
+
     public void addDependency(SchemaId field);
 
     public List<String> eval(Value value) throws RepositoryException, InterruptedException;

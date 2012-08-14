@@ -32,7 +32,7 @@ public class ForwardVariantFollow implements Follow {
     public void follow(IndexUpdateBuilder indexUpdateBuilder, FollowCallback callback)
             throws RepositoryException, InterruptedException {
         RecordContext ctx = indexUpdateBuilder.getRecordContext();
-        Set<String> currentDimensions = Sets.newHashSet(ctx.dep.vprops);
+        Set<String> currentDimensions = Sets.newHashSet(ctx.dep.moreDimensionedVariants);
         currentDimensions.addAll(ctx.dep.id.getVariantProperties().keySet());
 
         if (currentDimensions.containsAll(dimensions.keySet())) {
