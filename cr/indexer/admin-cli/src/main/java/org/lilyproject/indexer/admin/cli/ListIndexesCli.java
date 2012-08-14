@@ -15,19 +15,22 @@
  */
 package org.lilyproject.indexer.admin.cli;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.joda.time.DateTime;
-import org.lilyproject.indexer.model.api.*;
-import org.lilyproject.util.json.JsonFormat;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.joda.time.DateTime;
+import org.lilyproject.indexer.model.api.ActiveBatchBuildInfo;
+import org.lilyproject.indexer.model.api.BatchBuildInfo;
+import org.lilyproject.indexer.model.api.IndexDefinition;
+import org.lilyproject.indexer.model.api.IndexDefinitionNameComparator;
+import org.lilyproject.util.json.JsonFormat;
 
 public class ListIndexesCli extends BaseIndexerAdminCli {
     @Override
@@ -40,7 +43,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
     }
 
     @Override
-    public List<Option> getOptions() {        
+    public List<Option> getOptions() {
         List<Option> options = super.getOptions();
         options.add(this.printBatchConfigurationOption);
         return options;
@@ -64,10 +67,16 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
             System.out.println("  + Update state: " + index.getUpdateState());
             System.out.println("  + Batch build state: " + index.getBatchBuildState());
             System.out.println("  + Queue subscription ID: " + index.getQueueSubscriptionId());
-            System.out.println("  + Solr shards: ");
-            for (Map.Entry<String, String> shard : index.getSolrShards().entrySet()) {
-                System.out.println("    + " + shard.getKey() + ": " + shard.getValue());
+            if (index.getSolrShards() != null && !index.getSolrShards().isEmpty()) {
+                System.out.println("  + Solr shards: ");
+                for (Map.Entry<String, String> shard : index.getSolrShards().entrySet()) {
+                    System.out.println("    + " + shard.getKey() + ": " + shard.getValue());
+                }
+            } else {
+                System.out.println("  + Solr zookeeper: " + index.getZkConnectionString());
+                System.out.println("  + Solr collection: " + (index.getSolrCollection() != null ? index.getSolrCollection() : "none (using solr default)"));
             }
+
             if (this.printBatchConfiguration)
                 System.out.println("  + Default batch build config : " + prettyPrintBatchConf(index.getDefaultBatchIndexConfiguration(), 4));
 
@@ -113,7 +122,7 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
 
         return result.toString();
     }
-    
+
     private String prettyPrintBatchConf (byte[] conf, int extraIndent) throws Exception{
         if (conf == null) {
             return "null";
@@ -124,12 +133,12 @@ public class ListIndexesCli extends BaseIndexerAdminCli {
         StringBuffer output = new StringBuffer();
         output.append("\n");
         output.append(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(node));
-        
+
         return output.toString().replaceAll("\n", "\n" + new String(padding));
     }
 
-    private static final String COUNTER_MAP_INPUT_RECORDS = "org.apache.hadoop.mapreduce.TaskCounter:MAP_INPUT_RECORDS";
-    private static final String COUNTER_TOTAL_LAUNCHED_MAPS = "org.apache.hadoop.mapreduce.TaskCounter:TOTAL_LAUNCHED_MAPS";
-    private static final String COUNTER_NUM_FAILED_MAPS = "org.apache.hadoop.mapreduce.TaskCounter:NUM_FAILED_MAPS";
+    private static final String COUNTER_MAP_INPUT_RECORDS = "org.apache.hadoop.mapred.Task$Counter:MAP_INPUT_RECORDS";
+    private static final String COUNTER_TOTAL_LAUNCHED_MAPS = "org.apache.hadoop.mapred.JobInProgress$Counter:TOTAL_LAUNCHED_MAPS";
+    private static final String COUNTER_NUM_FAILED_MAPS = "org.apache.hadoop.mapred.JobInProgress$Counter:NUM_FAILED_MAPS";
     private static final String COUNTER_NUM_FAILED_RECORDS = "org.lilyproject.indexer.batchbuild.IndexBatchBuildCounters:NUM_FAILED_RECORDS";
 }

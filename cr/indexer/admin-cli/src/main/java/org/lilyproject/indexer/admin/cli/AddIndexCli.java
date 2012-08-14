@@ -45,6 +45,7 @@ public class AddIndexCli extends BaseIndexerAdminCli {
         options.add(forceOption);
         options.add(defaultBatchIndexConfigurationOption);
         options.add(solrCollectionOption);
+        options.add(solrZkOption);
 
         return options;
     }
@@ -70,6 +71,12 @@ public class AddIndexCli extends BaseIndexerAdminCli {
             index.setSolrShards(solrShards);
         } else {
             index.setZkConnectionString(this.zkConnectionString);
+        }
+
+        if (solrZk != null) {
+            index.setZkConnectionString(solrZk);
+        } else if (solrShards == null) {
+            index.setZkConnectionString(this.zkConnectionString + "/solr/");
         }
 
         if (solrCollection != null) {

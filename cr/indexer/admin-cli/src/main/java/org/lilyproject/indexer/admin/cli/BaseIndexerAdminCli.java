@@ -67,6 +67,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected Option defaultBatchIndexConfigurationOption;
     protected Option printBatchConfigurationOption;
     protected Option solrCollectionOption;
+    protected Option solrZkOption;
 
     protected String indexName;
     protected Map<String, String> solrShards;
@@ -82,6 +83,7 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
     protected String outputFileName;
     protected boolean printBatchConfiguration;
     protected String solrCollection;
+    protected String solrZk;
 
     public BaseIndexerAdminCli() {
         // Here we instantiate various options, but it is up to subclasses to decide which ones
@@ -175,6 +177,13 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
                 .withDescription("Solr collection")
                 .withLongOpt("collection")
                 .create("sc");
+
+        solrCollectionOption =  OptionBuilder
+                .withArgName("Zookeeper connection string")
+                .hasArg()
+                .withDescription("Zookeeper connection string for Solr")
+                .withLongOpt("solr-zk")
+                .create("sz");
     }
 
     @Override
@@ -416,6 +425,10 @@ public abstract class BaseIndexerAdminCli extends BaseZkCliTool {
 
         if (cmd.hasOption(solrCollectionOption.getOpt())) {
             solrCollection = cmd.getOptionValue(solrCollectionOption.getOpt());
+        }
+
+        if (cmd.hasOption(solrZkOption.getOpt())) {
+            solrZk = cmd.getOptionValue(solrZkOption.getOpt());
         }
 
         printBatchConfiguration = cmd.hasOption(printBatchConfigurationOption.getOpt());

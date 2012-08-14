@@ -79,7 +79,12 @@ public class UpdateIndexCli extends BaseIndexerAdminCli {
                 changes = true;
             }
 
-            if (index.getSolrShards() == null && solrShards.isEmpty() && !this.zkConnectionString.equals(index.getZkConnectionString())) {
+            if (index.getSolrShards() == null && solrShards.isEmpty() && solrZk == null && !this.zkConnectionString.equals(index.getZkConnectionString())) {
+                index.setZkConnectionString(this.zkConnectionString + "/solr/");
+                changes = true;
+            }
+
+            if (solrZk != null && this.solrZk.equals(index.getZkConnectionString())) {
                 index.setZkConnectionString(this.zkConnectionString);
                 changes = true;
             }
